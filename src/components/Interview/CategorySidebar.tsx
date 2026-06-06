@@ -268,7 +268,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({
                   size={16}
                   className={`
                     shrink-0 transition-transform
-                    ${isActive ? 'text-slate-500 rotate-90' : 'text-slate-400 dark:text-slate-600'}
+                    ${isActive ? 'text-slate-500 rotate-90' : 'text-slate-600 dark:text-slate-400'}
                   `}
                 />
               </button>

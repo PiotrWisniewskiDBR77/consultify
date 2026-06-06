@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# pre-commit — guard against Google-Drive sync pollution entering the repo.
+#
+# Why: this repo lives under ~/Documents which Google Drive for Desktop syncs.
+# Drive periodically creates duplicate files ("foo 2.ts", "foo 3.ts") and, on
+# multi-machine races, writes Git conflict markers INTO source files. Both break
+# the build. This hook refuses to commit either, so a polluted working tree can
+# never be captured in history. See docs/GDRIVE_SYNC.md.
+#
+set -euo pipefail
+
+fail=0
+
+# Only inspect what is actually staged.
+staged=$(git diff --cached --name-only --diff-filter=ACM || true)
+[ -z "$staged" ] && exit 0
+
+# 1) Drive duplicate-named files ("name 2.ext", "name 3.ext", *.driveupload, conflicted copies)
+dupes=$(printf '%s\n' "$staged" | grep -E '( [0-9]+\.[A-Za-z0-9]+$)|(\.driveupload)|( conflicted copy )' || true)
+if [ -n "$dupes" ]; then
+  echo "✗ pre-commit: refusing to commit Google-Drive duplicate file(s):" >&2
+  printf '    %s\n' $dupes >&2
+  echo "  Run: bash scripts/fix-gdrive-pollution.sh   (then re-stage)" >&2
+  fail=1
+fi
+
+# 2) Conflict markers inside staged text files
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  # skip binary
+  if git diff --cached --numstat -- "$f" | grep -q '^-' ; then continue; fi
+  if grep -nE '^(<{7}|={7}|>{7})( |$)' -- "$f" >/dev/null 2>&1; then
+    echo "✗ pre-commit: conflict markers in staged file: $f" >&2
+    fail=1
+  fi
+done <<< "$staged"
+
+if [ "$fail" -ne 0 ]; then
+  echo "" >&2
+  echo "Commit blocked. Clean the pollution (scripts/fix-gdrive-pollution.sh) and retry." >&2
+  exit 1
+fi
+
+exit 0

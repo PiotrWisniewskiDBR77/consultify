@@ -190,7 +190,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
           <motion.div
             className={`
               absolute inset-0 flex flex-col items-center justify-center
-              bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500
+              bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500
               ${roundedClasses[rounded]}
             `}
             initial={{ opacity: 0 }}
@@ -283,7 +283,7 @@ export const ResponsiveImage: React.FC<ResponsiveImageProps> = ({
 
       {/* Error State */}
       {hasError && (
-        <div className="absolute inset-0 flex items-center justify-center text-slate-400 dark:text-slate-500">
+        <div className="absolute inset-0 flex items-center justify-center text-slate-600 dark:text-slate-500">
           <ImageOff size={24} />
         </div>
       )}

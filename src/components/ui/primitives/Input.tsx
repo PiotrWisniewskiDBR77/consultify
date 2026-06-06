@@ -85,7 +85,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <div className="relative">
           {/* Left icon */}
           {icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none">
               {React.isValidElement(icon)
                 ? React.cloneElement(icon as React.ReactElement<{ size?: number }>, {
                     size: iconSize,
@@ -135,7 +135,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
+                className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff size={iconSize} /> : <Eye size={iconSize} />}
@@ -144,7 +144,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
             {/* Custom right icon */}
             {iconRight && !isPassword && !hasError && !hasSuccess && (
-              <span className="text-slate-400 dark:text-slate-500">
+              <span className="text-slate-600 dark:text-slate-500">
                 {React.isValidElement(iconRight)
                   ? React.cloneElement(iconRight as React.ReactElement<{ size?: number }>, {
                       size: iconSize,

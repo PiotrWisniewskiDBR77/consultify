@@ -23,6 +23,8 @@ import {
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 // Types
 export interface CompanyProfile {
   name?: string;
@@ -126,11 +128,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
   }, [companyProfile]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-48 py-0" />;
   }
 
   return (
@@ -156,7 +154,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
             </span>
             <ChevronRight
               size={16}
-              className={`text-slate-400 transition-transform ${
+              className={`text-slate-600 transition-transform ${
                 expandedSections.has('profile') ? 'rotate-90' : ''
               }`}
             />
@@ -241,7 +239,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   <div className="space-y-2">
                     {companyProfile.name ? (
                       <div className="flex items-center gap-2">
-                        <Building2 size={14} className="text-slate-400 shrink-0" />
+                        <Building2 size={14} className="text-slate-600 shrink-0" />
                         <span className="text-sm text-navy-900 dark:text-white font-medium">
                           {companyProfile.name}
                         </span>
@@ -261,7 +259,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
 
                     {companyProfile.size && (
                       <div className="flex items-center gap-2">
-                        <Users size={14} className="text-slate-400 shrink-0" />
+                        <Users size={14} className="text-slate-600 shrink-0" />
                         <span className="text-sm text-navy-900 dark:text-white">
                           {companyProfile.size} {isPolish ? 'pracowników' : 'employees'}
                         </span>
@@ -270,7 +268,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
 
                     {companyProfile.location && (
                       <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-slate-400 shrink-0" />
+                        <MapPin size={14} className="text-slate-600 shrink-0" />
                         <span className="text-sm text-navy-900 dark:text-white">
                           {companyProfile.location}
                         </span>
@@ -289,7 +287,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   )}
 
                   {!companyProfile.name && !companyProfile.industry && !companyProfile.size && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 italic">
                       {isPolish
                         ? 'Brak danych o firmie. Kliknij Edytuj, aby dodać.'
                         : 'No company data. Click Edit to add.'}
@@ -309,11 +307,11 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
           >
             <span className="text-sm font-medium text-navy-900 dark:text-white">
               {isPolish ? 'Kluczowe metryki' : 'Key Metrics'}
-              <span className="ml-1 text-xs text-slate-400">({keyMetrics.length})</span>
+              <span className="ml-1 text-xs text-slate-600">({keyMetrics.length})</span>
             </span>
             <ChevronRight
               size={16}
-              className={`text-slate-400 transition-transform ${
+              className={`text-slate-600 transition-transform ${
                 expandedSections.has('metrics') ? 'rotate-90' : ''
               }`}
             />
@@ -333,7 +331,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <p className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {isPolish
                     ? 'Metryki będą wyodrębnione z wywiadów'
                     : 'Metrics will be extracted from interviews'}
@@ -351,11 +349,11 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
           >
             <span className="text-sm font-medium text-navy-900 dark:text-white">
               {isPolish ? 'Interesariusze' : 'Stakeholders'}
-              <span className="ml-1 text-xs text-slate-400">({stakeholders.length})</span>
+              <span className="ml-1 text-xs text-slate-600">({stakeholders.length})</span>
             </span>
             <ChevronRight
               size={16}
-              className={`text-slate-400 transition-transform ${
+              className={`text-slate-600 transition-transform ${
                 expandedSections.has('stakeholders') ? 'rotate-90' : ''
               }`}
             />
@@ -400,7 +398,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <p className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {isPolish
                     ? 'Interesariusze zostaną zidentyfikowani z wywiadów'
                     : 'Stakeholders will be identified from interviews'}
@@ -419,11 +417,11 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
             <span className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">
               <AlertTriangle size={14} className="text-amber-500" />
               {isPolish ? 'Otwarte luki' : 'Open Gaps'}
-              <span className="text-xs text-slate-400">({openGaps.length})</span>
+              <span className="text-xs text-slate-600">({openGaps.length})</span>
             </span>
             <ChevronRight
               size={16}
-              className={`text-slate-400 transition-transform ${
+              className={`text-slate-600 transition-transform ${
                 expandedSections.has('gaps') ? 'rotate-90' : ''
               }`}
             />
@@ -452,7 +450,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <p className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {isPolish
                     ? 'Brak zidentyfikowanych luk informacyjnych'
                     : 'No information gaps identified'}
@@ -465,7 +463,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
 
       {/* Footer */}
       <div className="p-3 border-t border-slate-200 dark:border-navy-700">
-        <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
+        <p className="text-xs text-slate-600 dark:text-slate-500 text-center">
           {isPolish ? 'Dane aktualizowane automatycznie' : 'Data updated automatically'}
         </p>
       </div>

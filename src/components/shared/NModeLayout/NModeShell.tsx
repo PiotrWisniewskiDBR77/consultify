@@ -45,6 +45,9 @@ interface NModeShellExtraProps extends NModeShellProps {
   showModeSwitcher?: boolean;
   /** Build artifact code string from type + id */
   buildArtifactCode?: (type: string, id: string) => string;
+  /** Max columns for the properties strip (default 6). Use to balance a long
+   *  metric strip — e.g. 5 for 10 metrics → a symmetric 5×2 (#27b). */
+  propertiesMaxColumns?: number;
   /** Show loading state */
   loading?: boolean;
 }
@@ -56,6 +59,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   actions = [],
   actionsVisible = false,
   aiContextActions = [],
+  toolAIActions = [],
   renderActionBar,
   activeSection,
   onSectionChange,
@@ -65,6 +69,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   onPresentationModeChange,
   showModeSwitcher = true,
   buildArtifactCode,
+  propertiesMaxColumns,
   loading = false,
   children,
 }) => {
@@ -93,7 +98,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
           {presentationMode === 'n' && (
             <div className="col-span-full space-y-0 mt-4">
               {/* Properties Strip */}
-              <NModePropertiesStrip fields={properties} />
+              <NModePropertiesStrip fields={properties} maxColumns={propertiesMaxColumns} />
 
               {/* Action Bar — custom slot or standard NModeActionBar */}
               {renderActionBar ? (
@@ -101,12 +106,12 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
                   {renderActionBar()}
                 </div>
               ) : (
-                actionsVisible &&
-                actions.length > 0 && (
+                ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
                   <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
                     <NModeActionBar
-                      actions={actions}
+                      actions={actionsVisible ? actions : []}
                       aiContextActions={aiContextActions}
+                      toolAIActions={toolAIActions}
                       activeSection={activeSection}
                     />
                   </div>

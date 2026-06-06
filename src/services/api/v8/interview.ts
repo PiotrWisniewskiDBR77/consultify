@@ -726,6 +726,23 @@ export const V8InterviewApi = {
     selectedContextDocumentIds?: string[];
   }) => v8Post<{ insight: V8InterviewInsight }>('/interview/insights', payload),
 
+  // #28e — Server-backed insight duplicate/similarity check (mirrors
+  // POST /initiatives/similarity-check). Informational only; never blocks.
+  checkInsightSimilarity: (payload: { title: string; summary?: string; themes?: string[] }) =>
+    v8Post<{
+      verdict: 'duplicate' | 'similar' | 'related' | 'new';
+      topScore: number;
+      matches: Array<{
+        id: string;
+        title: string;
+        score: number;
+        verdict: 'duplicate' | 'similar' | 'related' | 'new';
+      }>;
+      method: 'embeddings' | 'token-overlap';
+      comparedCount: number;
+      truncated: boolean;
+    }>('/interview/insights/similarity-check', payload),
+
   listContextDocuments: (params?: { scope?: 'project' | 'user' | 'all'; projectId?: string }) =>
     v8Get<{ documents: V8ContextDocument[] }>('/interview/context-documents', params),
 
@@ -757,7 +774,7 @@ export const V8InterviewApi = {
     }
   ) => v8Patch<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}`, payload),
 
-  exportInsight: (id: string, payload: { target: 'tools' | 'assessment' }) =>
+  exportInsight: (id: string, payload: { target: 'tools' | 'assessment'; sectionIds?: string[] }) =>
     v8Post<{ success: boolean; target: string; targetId: string; assessmentType?: string }>(
       `/interview/insights/${encodeURIComponent(id)}/export`,
       payload
@@ -894,11 +911,24 @@ export const V8InterviewApi = {
   handoffFinding: (
     insightId: string,
     findingId: string,
-    payload?: { target_initiative_id?: string }
+    // D5 — when no target_initiative_id is given the backend now CREATES a
+    // real canonical entity (initiative | decision | task) from the finding
+    // instead of an orphan placeholder. target_type selects which; project_id
+    // optionally scopes it.
+    payload?: {
+      target_initiative_id?: string;
+      target_type?: 'initiative' | 'decision' | 'task';
+      project_id?: string;
+    }
   ) =>
     v8Post<{
       handoff_payload: Record<string, unknown>;
-      initiative: { id: string; type: 'linked' | 'handoff_request' };
+      initiative: {
+        id: string;
+        type: 'linked' | 'created';
+        targetType?: 'initiative' | 'decision' | 'task';
+        url?: string;
+      };
       findingId: string;
       insightId: string;
     }>(

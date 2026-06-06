@@ -58,6 +58,7 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
+import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import {
@@ -77,6 +78,7 @@ import {
   InterviewCategory,
 } from './CategorySidebar';
 import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
+import { ConversationalPanel } from './ConversationalPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
@@ -205,6 +207,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const [aiEvaluationUpdatedAt, setAiEvaluationUpdatedAt] = useState<string | null>(null);
   const [isAiEvaluating, setIsAiEvaluating] = useState(false);
   const [aiEvaluationError, setAiEvaluationError] = useState<string | null>(null);
+
+  // #11 — Pre-submit AI quality gate
+  const MIN_ANSWER_CHARS = 20;
+  type QualityGateItem = {
+    questionId: string;
+    index: number;
+    label: string;
+    reason: string;
+    category?: InterviewCategory;
+  };
+  const [qualityGate, setQualityGate] = useState<{
+    open: boolean;
+    items: QualityGateItem[];
+    checking: boolean;
+  }>({ open: false, items: [], checking: false });
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -425,6 +442,33 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   }, [assignmentInfo]);
   const statusConfig = STATUS_MAP[currentStatus] || STATUS_MAP.in_progress;
 
+  // #11c — Live (non-blocking) per-answer guidance. Pure local heuristic, no
+  // network: flags answers that are too short or required-but-empty so the
+  // respondent gets instant feedback in the Overview before they ever submit.
+  const liveWeakAnswers = useMemo(() => {
+    const ordered = [...questions].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    const out: Array<{ id: string; index: number; label: string; reason: string }> = [];
+    ordered.forEach((q, i) => {
+      const answer = (q.answerText || '').trim();
+      const requiredEmpty = Boolean(q.isRequired) && answer.length === 0;
+      const tooShort = answer.length > 0 && answer.length < MIN_ANSWER_CHARS;
+      if (!requiredEmpty && !tooShort) return;
+      out.push({
+        id: q.id,
+        index: i + 1,
+        label: q.questionText.length > 80 ? `${q.questionText.slice(0, 77)}…` : q.questionText,
+        reason: requiredEmpty
+          ? isPolish
+            ? 'wymagane — brak odpowiedzi'
+            : 'required — no answer'
+          : isPolish
+            ? 'odpowiedź wygląda na zbyt krótką'
+            : 'answer looks short',
+      });
+    });
+    return out;
+  }, [questions, isPolish]);
+
   const runAiQualityReview = useCallback(
     async (opts?: { silent?: boolean }) => {
       if (!session?.id) return null;
@@ -459,6 +503,66 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     [isPolish, session?.id]
   );
 
+  // #11 — Compute weak answers for the pre-submit quality gate.
+  // Combines a local heuristic (required-but-unanswered, or answered text that
+  // is too short) with the AI evaluation's structured weak-answer map (if any).
+  // Falls back silently to local-only when no AI signal is available.
+  const computeWeakAnswers = useCallback(
+    (evaluation?: InterviewAnswerEvaluation | null): QualityGateItem[] => {
+      const orderedQuestions = [...questions].sort(
+        (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+      );
+      const indexById = new Map<string, number>();
+      orderedQuestions.forEach((q, i) => indexById.set(q.id, i + 1));
+
+      const items = new Map<string, QualityGateItem>();
+      const labelFor = (q: InterviewQuestion) =>
+        q.questionText.length > 90 ? `${q.questionText.slice(0, 87)}…` : q.questionText;
+
+      // Local heuristic — never relies on the AI backend being available.
+      for (const q of orderedQuestions) {
+        const answer = (q.answerText || '').trim();
+        const tooShort = answer.length > 0 && answer.length < MIN_ANSWER_CHARS;
+        const requiredEmpty = Boolean(q.isRequired) && answer.length === 0;
+        if (!tooShort && !requiredEmpty) continue;
+        items.set(q.id, {
+          questionId: q.id,
+          index: indexById.get(q.id) || 0,
+          label: labelFor(q),
+          category: q.category,
+          reason: requiredEmpty
+            ? isPolish
+              ? 'Pytanie wymagane — brak odpowiedzi'
+              : 'Required — no answer yet'
+            : isPolish
+              ? 'Odpowiedź wygląda na zbyt krótką'
+              : 'Answer looks too short',
+        });
+      }
+
+      // AI signal (optional) — augments / overrides reason text where present.
+      const weakMap = evaluation?.weakAnswerMap || [];
+      for (const weak of weakMap) {
+        if (!weak.questionId) continue;
+        if (weak.verdict === 'sufficient') continue;
+        const q = questions.find((item) => item.id === weak.questionId);
+        if (!q) continue;
+        items.set(weak.questionId, {
+          questionId: weak.questionId,
+          index: indexById.get(weak.questionId) || 0,
+          label: labelFor(q),
+          category: q.category,
+          reason:
+            weak.feedback?.trim() ||
+            (isPolish ? 'AI: wymaga doprecyzowania' : 'AI: needs improvement'),
+        });
+      }
+
+      return Array.from(items.values()).sort((a, b) => a.index - b.index);
+    },
+    [questions, isPolish]
+  );
+
   const handleRuntimeModeSelect = useCallback(
     (nextMode: RuntimeMode) => {
       const previous = runtimeMode;
@@ -491,12 +595,17 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       if (
         session?.assignmentId ||
         session?.runtimeModeDefault === 'single_question' ||
-        session?.runtimeModeDefault === 'task_list'
+        session?.runtimeModeDefault === 'task_list' ||
+        session?.runtimeModeDefault === 'conversational'
       ) {
         setRuntimeMode(
           session?.assignmentId ? 'single_question' : (session?.runtimeModeDefault as RuntimeMode)
         );
-      } else if (saved === 'single_question' || saved === 'task_list') {
+      } else if (
+        saved === 'single_question' ||
+        saved === 'task_list' ||
+        saved === 'conversational'
+      ) {
         setRuntimeMode(saved);
       } else {
         setRuntimeMode('single_question');
@@ -561,7 +670,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             .then((res) => res.session)
             .catch(() => Api.get(`/interview/sessions/${initialSessionId}`))
             .catch(() => null);
-          if (!sessionRes && applyDemoSession(initialSessionId)) return;
+          // Trust guard — only fall back to demo data when the id is genuinely
+          // a demo id. Previously a failed REAL session load could surface demo
+          // scaffolding under the real session name.
+          if (
+            !sessionRes &&
+            isInterviewDemoId(initialSessionId) &&
+            applyDemoSession(initialSessionId)
+          )
+            return;
           currentSession = sessionRes as InterviewSession | null;
         } else {
           const sessionsRes = await V8InterviewApi.getSessions('active')
@@ -573,11 +690,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           if (sessions.length > 0) {
             currentSession = sessions[0] as InterviewSession;
           } else {
-            const firstDemoSession = Object.values(interviewDemoData.sessionDetailsById)[0];
-            if (firstDemoSession) {
-              applyDemoSession(firstDemoSession.session.id);
-              return;
-            }
+            // Trust guard — when a real project has no active sessions, create a
+            // real one. Never silently inject demo scaffolding under a real
+            // project (a consultant must never mistake demo data for their own).
             const newSession = await Api.post('/interview/sessions', { projectId });
             currentSession = newSession as InterviewSession;
           }
@@ -1062,8 +1177,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     }
   }, [session, sessionName, isPolish]);
 
-  // Submit session
-  const handleSubmitSession = useCallback(async () => {
+  // Submit session — core action (no gate). Used directly when the quality
+  // gate is bypassed or when there are no weak answers to flag.
+  const performSubmit = useCallback(async () => {
     if (isSubmittingSession) return;
     if (!session) {
       toast.error(
@@ -1164,6 +1280,69 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     runAiQualityReview,
     session,
   ]);
+
+  // #11 — Pre-submit AI quality gate wrapper.
+  // Before finalizing, evaluate answers (local heuristic + existing AI eval).
+  // If some are too short/weak, show a skippable modal. If the AI evaluation
+  // is unavailable the gate degrades to the local heuristic; if even that finds
+  // nothing (or evaluation throws), we never block the user — submit proceeds.
+  const handleSubmitSession = useCallback(
+    async (opts?: { bypassGate?: boolean }) => {
+      if (isSubmittingSession || qualityGate.checking) return;
+      if (!session || isLocked) {
+        await performSubmit();
+        return;
+      }
+
+      if (opts?.bypassGate) {
+        setQualityGate({ open: false, items: [], checking: false });
+        await performSubmit();
+        return;
+      }
+
+      setQualityGate((prev) => ({ ...prev, checking: true }));
+      let evaluation: InterviewAnswerEvaluation | null = aiEvaluation;
+      try {
+        // Refresh the AI signal silently; tolerate failure (local-only fallback).
+        const fresh = await runAiQualityReview({ silent: true });
+        if (fresh) evaluation = fresh;
+      } catch {
+        // ignore — fall back to whatever evaluation we already have
+      }
+
+      const weak = computeWeakAnswers(evaluation);
+      if (weak.length === 0) {
+        setQualityGate({ open: false, items: [], checking: false });
+        await performSubmit();
+        return;
+      }
+
+      setQualityGate({ open: true, items: weak, checking: false });
+    },
+    [
+      aiEvaluation,
+      computeWeakAnswers,
+      isLocked,
+      isSubmittingSession,
+      performSubmit,
+      qualityGate.checking,
+      runAiQualityReview,
+      session,
+    ]
+  );
+
+  // #11 — "Go back and improve" jumps to the first flagged question.
+  const handleQualityGateGoBack = useCallback(() => {
+    const first = qualityGate.items[0];
+    setQualityGate({ open: false, items: [], checking: false });
+    if (first?.category) {
+      setActiveCategory(first.category as InterviewCategory);
+      setActiveSection('questions');
+      requestAnimationFrame(() => {
+        questionsTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [qualityGate.items]);
 
   // V6-C04: Reviewer actions
   const handleSendBack = useCallback(async () => {
@@ -1392,7 +1571,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             animate={{ rotate: expandedSections.has(id) ? 180 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-600" />
           </motion.div>
         </div>
       </motion.button>
@@ -1432,7 +1611,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             {isPolish ? 'Gotowe' : 'Done'}
           </span>
         )}
-        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+        <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
           {progress?.answeredQuestions || 0}/{progress?.totalQuestions || 0}
         </span>
       </div>,
@@ -1478,12 +1657,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Ładowanie wywiadu...' : 'Loading interview...'}
-          </p>
-        </div>
+        <LoadingState
+          variant="spinner"
+          label={isPolish ? 'Ładowanie wywiadu...' : 'Loading interview...'}
+        />
       </div>
     );
   }
@@ -1892,6 +2069,49 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 ? `Postęp: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`
                 : `Progress: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`}
         </Callout>
+        {!isReviewerMode && !isLocked && liveWeakAnswers.length > 0 && (
+          <Callout
+            variant="warning"
+            title={
+              isPolish
+                ? `${liveWeakAnswers.length} odpowiedzi do dopracowania`
+                : `${liveWeakAnswers.length} answer(s) need more detail`
+            }
+            compact
+            action={{
+              label: isPolish ? 'Przejdź do pierwszej' : 'Go to first',
+              onClick: () => {
+                const first = liveWeakAnswers[0];
+                const q = questions.find((item) => item.id === first?.id);
+                if (q?.category) {
+                  setActiveCategory(q.category as InterviewCategory);
+                  setActiveSection('questions');
+                  requestAnimationFrame(() => {
+                    questionsTopRef.current?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'start',
+                    });
+                  });
+                }
+              },
+            }}
+          >
+            <p className="mb-1">
+              {isPolish
+                ? 'Te odpowiedzi wyglądają na krótkie — dodaj szczegóły lub przykłady (to tylko podpowiedź).'
+                : 'These answers look short — add detail or examples (this is just a hint).'}
+            </p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              {liveWeakAnswers.slice(0, 6).map((item) => (
+                <li key={item.id}>
+                  <strong className="tabular-nums">#{item.index}</strong> {item.label}
+                  {' · '}
+                  <span className="opacity-80">{item.reason}</span>
+                </li>
+              ))}
+            </ul>
+          </Callout>
+        )}
       </NModeSectionWrapper>
     );
 
@@ -1909,7 +2129,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           />
         </div>
 
-        {runtimeMode === 'single_question' ? (
+        {runtimeMode === 'conversational' && session?.id ? (
+          <ConversationalPanel
+            sessionId={session.id}
+            questions={questions.map((q) => ({
+              id: q.id,
+              questionText: q.questionText,
+              category: String(q.category),
+              status: String(q.status),
+            }))}
+            onQuestionAnswered={(questionId, answerText) => {
+              handleUpdateQuestion(questionId, { answerText, status: 'answered' as any });
+            }}
+            locked={isLocked}
+          />
+        ) : runtimeMode === 'single_question' ? (
           activeCategory ? (
             <InterviewSingleQuestionRuntime
               questions={questions}
@@ -1972,7 +2206,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   >
                     <cfg.icon
                       size={14}
-                      className={isActive ? 'text-primary-500' : 'text-slate-400'}
+                      className={isActive ? 'text-primary-500' : 'text-slate-600'}
                     />
                     {isPolish ? cfg.labelPl : cfg.labelEn}
                   </button>
@@ -2118,7 +2352,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {companyProfile.name ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Building2 size={14} className="text-slate-400" /> {companyProfile.name}
+                      <Building2 size={14} className="text-slate-600" /> {companyProfile.name}
                     </div>
                     {companyProfile.industry && (
                       <div className="text-xs text-slate-500">{companyProfile.industry}</div>
@@ -2128,7 +2362,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                     )}
                   </div>
                 ) : (
-                  <span className="text-slate-400">
+                  <span className="text-slate-600">
                     {isPolish ? 'Brak danych firmy' : 'No company data yet'}
                   </span>
                 )}
@@ -2285,7 +2519,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   ))}
                 </ul>
               ) : (
-                <div className="text-sm text-slate-400">
+                <div className="text-sm text-slate-600">
                   {isPolish ? 'Brak faktów' : 'No facts yet'}
                 </div>
               )}
@@ -2297,6 +2531,94 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
     return base;
   })();
+
+  // #11 — Pre-submit AI quality gate modal (shared across render branches).
+  const qualityGateModal = (
+    <AnimatePresence>
+      {qualityGate.open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setQualityGate({ open: false, items: [], checking: false })}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden"
+          >
+            <div className="flex items-start gap-3 px-5 pt-5 pb-3">
+              <div className="p-2 rounded-xl bg-amber-500/15 text-amber-500 shrink-0">
+                <AlertTriangle size={20} />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  {isPolish
+                    ? 'Niektóre odpowiedzi wyglądają na zbyt krótkie'
+                    : 'Some answers look too short'}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Możesz je poprawić teraz albo wysłać mimo to — to tylko podpowiedź, nie blokada.'
+                    : 'You can improve them now or submit anyway — this is a hint, not a hard block.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="px-5 pb-2 max-h-64 overflow-y-auto">
+              <ul className="space-y-2">
+                {qualityGate.items.map((item) => (
+                  <li
+                    key={item.questionId}
+                    className="flex items-start gap-3 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-800/40 px-3 py-2"
+                  >
+                    <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
+                      {item.index || '•'}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                        {item.label}
+                      </p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400">{item.reason}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200/70 dark:border-navy-700/70">
+              <button
+                type="button"
+                onClick={handleQualityGateGoBack}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
+              >
+                <ChevronLeft size={16} />
+                {isPolish ? 'Wróć i popraw' : 'Go back and improve'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleSubmitSession({ bypassGate: true });
+                }}
+                disabled={isSubmittingSession}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 hover:bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+              >
+                {isSubmittingSession ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Send size={16} />
+                )}
+                {isPolish ? 'Wyślij mimo to' : 'Submit anyway'}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   // ── Immersive single-question mode: bypass NModeShell entirely ──
   if (runtimeMode === 'single_question') {
@@ -2312,218 +2634,226 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     };
 
     return (
-      <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-[#0a0f1e] dark:to-navy-950">
-        {/* Minimal top bar */}
-        <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={onClose || (() => {})}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-          >
-            <ChevronLeft size={16} />
-            {isPolish ? 'Wróć' : 'Back'}
-          </button>
-          <div className="h-4 w-px bg-white/[0.08]" />
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[300px]">
-            {sessionName || (isPolish ? 'Sesja wywiadu' : 'Interview session')}
-          </span>
-          <span className={`ml-1 inline-flex h-2 w-2 rounded-full ${statusConfig.color}`} />
-          <div className="flex-1" />
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-            {answeredCount}/{totalCount}
-          </span>
-          <div className="w-24 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-primary-500 transition-all duration-500"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-            {progressPct}%
-          </span>
-          <div className="h-4 w-px bg-white/[0.08]" />
-          {isReviewerMode ? (
-            <>
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
-                <Shield size={10} />
-                {isPolish ? 'Recenzja' : 'Review'}
-              </span>
-              <button
-                type="button"
-                onClick={handleApprove}
-                disabled={isApproving}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition-colors disabled:opacity-50"
-              >
-                {isApproving ? (
-                  <Loader2 size={13} className="animate-spin" />
-                ) : (
-                  <ThumbsUp size={13} />
-                )}
-                {isPolish ? 'Zatwierdź' : 'Approve'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowSendBackForm(true)}
-                disabled={isSendingBack}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 hover:text-amber-400 transition-colors disabled:opacity-50"
-              >
-                <AlertTriangle size={13} />
-                {isPolish ? 'Odeślij' : 'Send back'}
-              </button>
-            </>
-          ) : (
+      <>
+        {qualityGateModal}
+        <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-[#0a0f1e] dark:to-navy-950">
+          {/* Minimal top bar */}
+          <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl">
             <button
               type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
+              onClick={onClose || (() => {})}
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
-              {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-              {isPolish ? 'Zapisz' : 'Save'}
+              <ChevronLeft size={16} />
+              {isPolish ? 'Wróć' : 'Back'}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => handleRuntimeModeSelect('task_list')}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPolish ? 'Przełącz na widok listy' : 'Switch to list view'}
-          >
-            <ArrowRight size={13} />
-            {isPolish ? 'Lista' : 'List'}
-          </button>
-        </div>
-
-        {/* Send-back form (immersive mode) */}
-        {showSendBackForm && isReviewerMode && (
-          <div className="shrink-0 px-6 py-3 border-b border-white/[0.06] bg-amber-500/[0.04]">
-            <div className="max-w-2xl mx-auto space-y-3">
-              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                {isPolish ? 'Powód odesłania:' : 'Reason for sending back:'}
-              </p>
-              <textarea
-                value={sendBackReason}
-                onChange={(e) => setSendBackReason(e.target.value)}
-                rows={2}
-                className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-                placeholder={
-                  isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'
-                }
+            <div className="h-4 w-px bg-white/[0.08]" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[300px]">
+              {sessionName || (isPolish ? 'Sesja wywiadu' : 'Interview session')}
+            </span>
+            <span className={`ml-1 inline-flex h-2 w-2 rounded-full ${statusConfig.color}`} />
+            <div className="flex-1" />
+            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
+              {answeredCount}/{totalCount}
+            </span>
+            <div className="w-24 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary-500 transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
               />
-              {sendBackMissingItems.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {sendBackMissingItems.map((item, idx) => (
-                    <label
-                      key={item.key}
-                      className="inline-flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={item.checked}
-                        onChange={() => {
-                          setSendBackMissingItems((prev) =>
-                            prev.map((it, i) => (i === idx ? { ...it, checked: !it.checked } : it))
-                          );
-                        }}
-                        className="rounded"
-                      />
-                      {item.label}
-                    </label>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-2">
+            </div>
+            <span className="text-xs tabular-nums text-slate-600 dark:text-slate-500">
+              {progressPct}%
+            </span>
+            <div className="h-4 w-px bg-white/[0.08]" />
+            {isReviewerMode ? (
+              <>
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
+                  <Shield size={10} />
+                  {isPolish ? 'Recenzja' : 'Review'}
+                </span>
                 <button
                   type="button"
-                  onClick={handleSendBack}
-                  disabled={!sendBackReason.trim() || isSendingBack}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+                  onClick={handleApprove}
+                  disabled={isApproving}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition-colors disabled:opacity-50"
                 >
-                  {isSendingBack ? (
-                    <Loader2 size={12} className="animate-spin" />
+                  {isApproving ? (
+                    <Loader2 size={13} className="animate-spin" />
                   ) : (
-                    <Send size={12} />
+                    <ThumbsUp size={13} />
                   )}
+                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSendBackForm(true)}
+                  disabled={isSendingBack}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 hover:text-amber-400 transition-colors disabled:opacity-50"
+                >
+                  <AlertTriangle size={13} />
                   {isPolish ? 'Odeślij' : 'Send back'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSendBackForm(false);
-                    setSendBackReason('');
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors"
-                >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
-                </button>
-              </div>
-            </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                {isPolish ? 'Zapisz' : 'Save'}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => handleRuntimeModeSelect('task_list')}
+              className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPolish ? 'Przełącz na widok listy' : 'Switch to list view'}
+            >
+              <ArrowRight size={13} />
+              {isPolish ? 'Lista' : 'List'}
+            </button>
           </div>
-        )}
 
-        {/* Immersive runtime -- no category gate, flat question list */}
-        <div className="flex-1 min-h-0">
-          {totalCount > 0 ? (
-            <InterviewSingleQuestionRuntime
-              questions={questions}
-              evidence={evidence}
-              activeCategory={activeCategory || 'strategy'}
-              onCategoryChange={setActiveCategory}
-              onUpdateQuestion={handleUpdateQuestion}
-              onUploadFile={handleUploadFile}
-              onAddLink={handleAddLink}
-              onAddVoiceEvidence={handleAddVoiceEvidence}
-              onSubmitSession={handleSubmitSession}
-              onSaveAndExit={onClose}
-              sessionName={sessionName}
-              readOnly={isLocked}
-              isSubmitting={isSubmittingSession}
-              immersive
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full py-20 px-6">
-              <div className="max-w-md text-center space-y-4">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-primary-500/10">
-                  <ClipboardList size={28} className="text-primary-500" />
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Brak pytań w tej sesji.' : 'No questions in this session.'}
+          {/* Send-back form (immersive mode) */}
+          {showSendBackForm && isReviewerMode && (
+            <div className="shrink-0 px-6 py-3 border-b border-white/[0.06] bg-amber-500/[0.04]">
+              <div className="max-w-2xl mx-auto space-y-3">
+                <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                  {isPolish ? 'Powód odesłania:' : 'Reason for sending back:'}
                 </p>
+                <textarea
+                  value={sendBackReason}
+                  onChange={(e) => setSendBackReason(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  placeholder={
+                    isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'
+                  }
+                />
+                {sendBackMissingItems.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {sendBackMissingItems.map((item, idx) => (
+                      <label
+                        key={item.key}
+                        className="inline-flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={item.checked}
+                          onChange={() => {
+                            setSendBackMissingItems((prev) =>
+                              prev.map((it, i) =>
+                                i === idx ? { ...it, checked: !it.checked } : it
+                              )
+                            );
+                          }}
+                          className="rounded"
+                        />
+                        {item.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSendBack}
+                    disabled={!sendBackReason.trim() || isSendingBack}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+                  >
+                    {isSendingBack ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Send size={12} />
+                    )}
+                    {isPolish ? 'Odeślij' : 'Send back'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSendBackForm(false);
+                      setSendBackReason('');
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors"
+                  >
+                    {isPolish ? 'Anuluj' : 'Cancel'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
+
+          {/* Immersive runtime -- no category gate, flat question list */}
+          <div className="flex-1 min-h-0">
+            {totalCount > 0 ? (
+              <InterviewSingleQuestionRuntime
+                questions={questions}
+                evidence={evidence}
+                activeCategory={activeCategory || 'strategy'}
+                onCategoryChange={setActiveCategory}
+                onUpdateQuestion={handleUpdateQuestion}
+                onUploadFile={handleUploadFile}
+                onAddLink={handleAddLink}
+                onAddVoiceEvidence={handleAddVoiceEvidence}
+                onSubmitSession={handleSubmitSession}
+                onSaveAndExit={onClose}
+                sessionName={sessionName}
+                readOnly={isLocked}
+                isSubmitting={isSubmittingSession}
+                immersive
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full py-20 px-6">
+                <div className="max-w-md text-center space-y-4">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-primary-500/10">
+                    <ClipboardList size={28} className="text-primary-500" />
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak pytań w tej sesji.' : 'No questions in this session.'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <NModeShell
-      header={{
-        title: sessionName,
-        onTitleChange: setSessionName,
-        titlePlaceholder: { en: 'Session name...', pl: 'Nazwa sesji...' },
-        artifactId: session?.id,
-        artifactType: 'tool',
-        onSave: handleSave,
-        saving: isSaving,
-        isDirty,
-        onChat: handleOpenChat,
-        onClose: onClose || (() => {}),
-        statusDotColor: statusConfig.color,
-      }}
-      properties={properties}
-      sections={sections}
-      actions={actions}
-      actionsVisible={actions.length > 0}
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-      presentationMode="n"
-      onPresentationModeChange={() => {}}
-      showModeSwitcher={false}
-      buildArtifactCode={(type, id) => buildArtifactCode(type as any, id)}
-    >
-      <div />
-    </NModeShell>
+    <>
+      {qualityGateModal}
+      <NModeShell
+        header={{
+          title: sessionName,
+          onTitleChange: setSessionName,
+          titlePlaceholder: { en: 'Session name...', pl: 'Nazwa sesji...' },
+          artifactId: session?.id,
+          artifactType: 'tool',
+          onSave: handleSave,
+          saving: isSaving,
+          isDirty,
+          onChat: handleOpenChat,
+          onClose: onClose || (() => {}),
+          statusDotColor: statusConfig.color,
+        }}
+        properties={properties}
+        sections={sections}
+        actions={actions}
+        actionsVisible={actions.length > 0}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        presentationMode="n"
+        onPresentationModeChange={() => {}}
+        showModeSwitcher={false}
+        buildArtifactCode={(type, id) => buildArtifactCode(type as any, id)}
+      >
+        <div />
+      </NModeShell>
+    </>
   );
 };
 

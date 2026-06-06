@@ -164,7 +164,7 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
         </div>
         <div className="space-y-1.5">
           {questionsLoading ? (
-            <div className="text-xs text-slate-400 dark:text-slate-500">
+            <div className="text-xs text-slate-600 dark:text-slate-500">
               {isPolish ? 'Ładowanie…' : 'Loading…'}
             </div>
           ) : questionItems.length > 0 ? (
@@ -177,13 +177,13 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
                   key={`${template.id}:q:${idx}`}
                   className="text-xs text-slate-700 dark:text-slate-200"
                 >
-                  <span className="text-slate-400 dark:text-slate-500 mr-2">{idx + 1}.</span>
+                  <span className="text-slate-600 dark:text-slate-500 mr-2">{idx + 1}.</span>
                   <span className="line-clamp-2">{text}</span>
                 </div>
               );
             })
           ) : (
-            <div className="text-xs text-slate-400 dark:text-slate-500">
+            <div className="text-xs text-slate-600 dark:text-slate-500">
               {isPolish ? 'Brak pytań do podglądu.' : 'No questions to preview.'}
             </div>
           )}

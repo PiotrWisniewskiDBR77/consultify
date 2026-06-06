@@ -10,6 +10,8 @@ import {
   FileText,
   Hash,
   HelpCircle,
+  Image as ImageIcon,
+  Lightbulb,
   Link2,
   Loader2,
   LogOut,
@@ -17,6 +19,7 @@ import {
   Paperclip,
   PauseCircle,
   Sparkles,
+  Trash2,
   Type,
   Waypoints,
   X,
@@ -200,6 +203,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   const [isPersisting, setIsPersisting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [liveInterim, setLiveInterim] = useState('');
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [guidanceOpen, setGuidanceOpen] = useState(false);
+  const [guidanceSeen, setGuidanceSeen] = useState(false);
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [linkName, setLinkName] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
@@ -223,6 +232,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   } | null>(null);
   const artifactCacheRef = useRef<ArtifactSearchResult[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const answerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -291,6 +302,71 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     if (!currentQuestion) return [];
     return evidence.filter((item) => item.questionId === currentQuestion.id);
   }, [currentQuestion, evidence]);
+
+  // Recording elapsed-time ticker (inline "● 0:12" indicator).
+  useEffect(() => {
+    if (!isRecording) {
+      setRecordingSeconds(0);
+      return;
+    }
+    setRecordingSeconds(0);
+    const interval = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
+  // Per-question guidance: reset open state, and remember if the hint was already opened
+  // (so the pulse stops nudging the same question twice).
+  const guidanceStorageKey = currentQuestion ? `iv_guidance_seen_${currentQuestion.id}` : null;
+  useEffect(() => {
+    setGuidanceOpen(false);
+    if (!guidanceStorageKey) {
+      setGuidanceSeen(false);
+      return;
+    }
+    try {
+      setGuidanceSeen(localStorage.getItem(guidanceStorageKey) === '1');
+    } catch {
+      setGuidanceSeen(false);
+    }
+  }, [guidanceStorageKey]);
+
+  // Static guidance pulled from the question's own template fields (deterministic, no fetch).
+  const questionGuidance = useMemo(() => {
+    if (!currentQuestion) return null;
+    const q = currentQuestion as InterviewQuestion & {
+      helpHint?: string;
+      guidance?: string;
+      instruction?: string;
+      exampleAnswer?: string;
+      example?: string;
+    };
+    const instruction =
+      q.guidance || q.instruction || q.description || q.helpHint || q.evidencePrompt || '';
+    const example = q.exampleAnswer || q.example || '';
+    const expected = q.expectedAnswerShape || '';
+    return { instruction, example, expected };
+  }, [currentQuestion]);
+
+  // Insert text at the answer textarea cursor (append with a separator otherwise).
+  const insertIntoAnswer = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setInputMode('voice_answer');
+    setAnswerDraft((prev) => {
+      const el = answerTextareaRef.current;
+      if (el && document.activeElement === el) {
+        const start = el.selectionStart ?? prev.length;
+        const end = el.selectionEnd ?? prev.length;
+        const before = prev.slice(0, start);
+        const after = prev.slice(end);
+        const sep = before && !/\s$/.test(before) ? ' ' : '';
+        return `${before}${sep}${trimmed}${after}`;
+      }
+      if (!prev) return trimmed;
+      const sep = /\s$/.test(prev) ? '' : ' ';
+      return `${prev}${sep}${trimmed}`;
+    });
+  }, []);
 
   const currentQuestionOptions = useMemo(
     () => (currentQuestion ? buildDefaultOptions(currentQuestion, isPolish) : []),
@@ -493,6 +569,79 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     [currentQuestion, onUploadFile]
   );
 
+  // Shared inline-attachment uploader used by the Image button, clipboard paste and drag&drop.
+  const uploadAttachments = useCallback(
+    async (files: File[]) => {
+      if (!currentQuestion || readOnly || files.length === 0) return;
+      setIsUploadingAttachment(true);
+      try {
+        for (const file of files) {
+          await onUploadFile(file, currentQuestion.category, currentQuestion.id);
+        }
+      } catch {
+        toast.error(isPolish ? 'Nie udało się dodać załącznika.' : 'Failed to add attachment.');
+      } finally {
+        setIsUploadingAttachment(false);
+      }
+    },
+    [currentQuestion, isPolish, onUploadFile, readOnly]
+  );
+
+  const handleImagePicked = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      try {
+        await uploadAttachments(files);
+      } finally {
+        event.target.value = '';
+      }
+    },
+    [uploadAttachments]
+  );
+
+  // Paste an image straight from the clipboard into the answer field.
+  const handleAnswerPaste = useCallback(
+    (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (readOnly) return;
+      const imageFiles = Array.from(event.clipboardData?.files || []).filter((f) =>
+        f.type.startsWith('image/')
+      );
+      if (imageFiles.length === 0) return;
+      event.preventDefault();
+      void uploadAttachments(imageFiles);
+    },
+    [readOnly, uploadAttachments]
+  );
+
+  // Drag & drop files/images directly onto the answer composer.
+  const handleAnswerDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDraggingFile(false);
+      if (readOnly) return;
+      const files = Array.from(event.dataTransfer?.files || []);
+      if (files.length > 0) void uploadAttachments(files);
+    },
+    [readOnly, uploadAttachments]
+  );
+
+  const openGuidance = useCallback(() => {
+    setGuidanceOpen((prev) => {
+      const next = !prev;
+      if (next && !guidanceSeen) {
+        setGuidanceSeen(true);
+        if (guidanceStorageKey) {
+          try {
+            localStorage.setItem(guidanceStorageKey, '1');
+          } catch {
+            /* ignore quota / privacy mode */
+          }
+        }
+      }
+      return next;
+    });
+  }, [guidanceSeen, guidanceStorageKey]);
+
   const handleAddLink = useCallback(async () => {
     if (!currentQuestion) return;
     if (!linkName.trim() || !linkUrl.trim()) return;
@@ -656,17 +805,22 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         const recognition = new SpeechRecognitionAPI();
         recognition.lang = isPolish ? 'pl-PL' : 'en-US';
         recognition.continuous = true;
-        recognition.interimResults = false;
+        recognition.interimResults = true;
         recognition.onresult = (e: any) => {
+          let interim = '';
           for (let i = e.resultIndex; i < e.results.length; i++) {
             if (e.results[i].isFinal) {
               liveTranscriptRef.current += e.results[i][0].transcript + ' ';
+            } else {
+              interim += e.results[i][0].transcript;
             }
           }
+          setLiveInterim(interim);
         };
         recognition.onerror = () => {};
         recognition.onend = () => {
           speechRecognitionRef.current = null;
+          setLiveInterim('');
         };
         recognition.start();
         speechRecognitionRef.current = recognition;
@@ -701,6 +855,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
         recorder.onstop = async () => {
           setIsRecording(false);
+          setLiveInterim('');
           mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
           mediaStreamRef.current = null;
           if (!currentQuestion) return;
@@ -741,9 +896,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
             if (!finalText) throw new Error('No transcript produced');
 
-            setInputMode('voice_answer');
+            // Insert inline at the cursor (append, never overwrite) — the main answer field
+            // IS the review surface, so no separate approval window is opened.
+            insertIntoAnswer(finalText);
             setVoiceTranscriptDraft(finalText);
-            setAnswerDraft(finalText);
 
             const created = await onAddVoiceEvidence(
               audioFile,
@@ -754,31 +910,28 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             await onUpdateQuestion(currentQuestion.id, {
               answerMode: 'voice_answer',
               voiceTranscript: finalText,
-              voiceTranscriptStatus: 'draft',
+              voiceTranscriptStatus: 'approved',
               voiceAudioEvidenceId: created?.id,
               status: 'in_progress',
             });
 
             toast.success(
               isPolish
-                ? `Transkrypcja gotowa${!serverText && browserTranscript ? ' (przeglądarka)' : ''}. Sprawdź tekst i zatwierdź.`
-                : `Transcript ready${!serverText && browserTranscript ? ' (browser)' : ''}. Review and approve.`
+                ? `Transkrypcja dodana${!serverText && browserTranscript ? ' (przeglądarka)' : ''}.`
+                : `Transcript added${!serverText && browserTranscript ? ' (browser)' : ''}.`
             );
           } catch (error) {
             if (browserTranscript) {
-              setInputMode('voice_answer');
+              insertIntoAnswer(browserTranscript);
               setVoiceTranscriptDraft(browserTranscript);
-              setAnswerDraft(browserTranscript);
               await onUpdateQuestion(currentQuestion.id, {
                 answerMode: 'voice_answer',
                 voiceTranscript: browserTranscript,
-                voiceTranscriptStatus: 'draft',
+                voiceTranscriptStatus: 'approved',
                 status: 'in_progress',
               });
               toast.success(
-                isPolish
-                  ? 'Transkrypcja (przeglądarka). Sprawdź tekst i zatwierdź.'
-                  : 'Transcript (browser). Review and approve.'
+                isPolish ? 'Transkrypcja dodana (przeglądarka).' : 'Transcript added (browser).'
               );
             } else {
               console.error('[InterviewSingleQuestionRuntime] Voice transcription failed:', error);
@@ -805,6 +958,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     }
   }, [
     currentQuestion,
+    insertIntoAnswer,
     isPolish,
     isRecording,
     isTranscribing,
@@ -918,7 +1072,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
             disabled={readOnly}
             className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-base text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <span className={answerDraft ? '' : 'text-slate-400 dark:text-slate-500'}>
+            <span className={answerDraft ? '' : 'text-slate-600 dark:text-slate-500'}>
               {answerDraft || (isPolish ? 'Wybierz opcję...' : 'Select an option...')}
             </span>
             <ChevronDown
@@ -955,7 +1109,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     if (QUESTION_INPUT_TYPES.date.has(normalizedType)) {
       return (
         <div className="flex items-center gap-3">
-          <Calendar size={18} className="text-slate-400 dark:text-slate-500 shrink-0" />
+          <Calendar size={18} className="text-slate-600 dark:text-slate-500 shrink-0" />
           <input
             type="date"
             value={answerDraft}
@@ -988,11 +1142,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
     return (
       <textarea
+        ref={answerTextareaRef}
         value={answerDraft}
         onChange={(event) => {
           setInputMode('text_answer');
           setAnswerDraft(event.target.value);
         }}
+        onPaste={handleAnswerPaste}
         disabled={readOnly}
         rows={QUESTION_INPUT_TYPES.shortText.has(normalizedType) ? 2 : immersive ? 5 : 7}
         className={`w-full rounded-xl border px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 ${
@@ -1007,7 +1163,16 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         }
       />
     );
-  }, [currentQuestion, currentQuestionOptions, answerDraft, readOnly, isPolish, dropdownOpen]);
+  }, [
+    currentQuestion,
+    currentQuestionOptions,
+    answerDraft,
+    readOnly,
+    isPolish,
+    dropdownOpen,
+    immersive,
+    handleAnswerPaste,
+  ]);
 
   const activeCategoryConfig = currentQuestion
     ? CATEGORY_CONFIG[currentQuestion.category] || CATEGORY_CONFIG.general
@@ -1045,7 +1210,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     return (
       <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 p-8 text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
-          <FileText size={24} className="text-slate-400" />
+          <FileText size={24} className="text-slate-600" />
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {isPolish ? 'Brak pytań w tej sekcji.' : 'No questions are available in this section.'}
@@ -1171,7 +1336,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         <Check size={12} className="text-emerald-500" />
                       )}
                     </div>
-                    <div className="divide-y divide-slate-100 dark:divide-navy-800">
+                    <div className="divide-y divide-slate-200 dark:divide-navy-800">
                       {catQs.map((q) => {
                         const answered = q.status === 'answered';
                         const snippet = q.answerText
@@ -1357,7 +1522,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           </div>
 
           {/* Bottom actions */}
-          <div className="shrink-0 border-t border-slate-100 dark:border-navy-800 px-3 py-2.5 space-y-0.5">
+          <div className="shrink-0 border-t border-slate-200 dark:border-navy-800 px-3 py-2.5 space-y-0.5">
             <button
               type="button"
               onClick={() => {
@@ -1424,7 +1589,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               </button>
             );
           })}
-          <div className="!mt-auto border-t border-slate-100 dark:border-navy-800 pt-3">
+          <div className="!mt-auto border-t border-slate-200 dark:border-navy-800 pt-3">
             <button
               type="button"
               onClick={() => {
@@ -1569,7 +1734,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
                               immersive
-                                ? 'bg-white/[0.04] text-slate-400 ring-1 ring-white/[0.06]'
+                                ? 'bg-white/[0.04] text-slate-600 ring-1 ring-white/[0.06]'
                                 : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
                             }`}
                           >
@@ -1594,19 +1759,124 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   </div>
 
                   {/* Question text — adaptive size for long descriptive questions */}
-                  <h2
-                    className={`font-semibold leading-snug text-slate-900 dark:text-white ${
-                      currentQuestion.questionText.length > 120
-                        ? immersive
-                          ? 'text-lg md:text-xl'
-                          : 'text-lg md:text-xl'
-                        : immersive
-                          ? 'text-2xl md:text-[28px]'
-                          : 'text-2xl md:text-3xl'
-                    }`}
-                  >
-                    {currentQuestion.questionText}
-                  </h2>
+                  <div className="flex items-start gap-2.5">
+                    <h2
+                      className={`flex-1 font-semibold leading-snug text-slate-900 dark:text-white ${
+                        currentQuestion.questionText.length > 120
+                          ? immersive
+                            ? 'text-lg md:text-xl'
+                            : 'text-lg md:text-xl'
+                          : immersive
+                            ? 'text-2xl md:text-[28px]'
+                            : 'text-2xl md:text-3xl'
+                      }`}
+                    >
+                      {currentQuestion.questionText}
+                    </h2>
+
+                    {/* Pulsing guidance affordance — "press me" hint icon */}
+                    <button
+                      type="button"
+                      onClick={openGuidance}
+                      title={isPolish ? 'Jak odpowiedzieć?' : 'How to answer?'}
+                      aria-label={
+                        isPolish ? 'Pokaż wskazówkę i przykład' : 'Show guidance and example'
+                      }
+                      aria-expanded={guidanceOpen}
+                      className={`relative shrink-0 mt-1 inline-flex items-center justify-center w-8 h-8 rounded-full border transition-colors ${
+                        guidanceOpen
+                          ? 'border-amber-400/50 bg-amber-400/15 text-amber-500 dark:text-amber-300'
+                          : immersive
+                            ? 'border-white/[0.08] bg-white/[0.04] text-amber-400/80 hover:bg-white/[0.08]'
+                            : 'border-amber-200/70 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/15'
+                      }`}
+                    >
+                      {!guidanceSeen && !guidanceOpen && (
+                        <span className="absolute inset-0 rounded-full ring-2 ring-amber-400/50 animate-ping" />
+                      )}
+                      <Lightbulb
+                        size={15}
+                        className={!guidanceSeen && !guidanceOpen ? 'animate-pulse' : ''}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Guidance reveal — static instruction + example, with AI deep-dive fallback */}
+                  {guidanceOpen && (
+                    <div
+                      className={`rounded-xl border p-4 space-y-3 ${
+                        immersive
+                          ? 'border-amber-500/15 bg-amber-500/[0.06]'
+                          : 'border-amber-200/70 dark:border-amber-500/15 bg-amber-50/70 dark:bg-amber-500/[0.06]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-600 dark:text-amber-400">
+                          <Lightbulb size={11} />
+                          {isPolish ? 'Jak odpowiedzieć' : 'How to answer'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setGuidanceOpen(false)}
+                          aria-label={isPolish ? 'Zamknij' : 'Close'}
+                          className="text-amber-500/70 hover:text-amber-600 dark:hover:text-amber-300 transition-colors"
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+
+                      <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-100/90">
+                        {questionGuidance?.instruction ||
+                          (isPolish
+                            ? 'Odpowiedz konkretnie i własnymi słowami — podaj liczby, przykłady lub kontekst, jeśli to możliwe. Możesz też nagrać odpowiedź lub dołączyć plik.'
+                            : 'Answer specifically in your own words — include numbers, examples or context where you can. You can also record your answer or attach a file.')}
+                      </p>
+
+                      {questionGuidance?.expected && (
+                        <p className="text-xs text-amber-700/90 dark:text-amber-300/80">
+                          {isPolish ? 'Oczekiwany format: ' : 'Expected format: '}
+                          <span className="font-medium">{questionGuidance.expected}</span>
+                        </p>
+                      )}
+
+                      {questionGuidance?.example && (
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-500 dark:text-amber-400">
+                            {isPolish ? 'Przykład' : 'Example'}
+                          </p>
+                          <p className="text-xs leading-relaxed italic text-amber-800 dark:text-amber-200/80">
+                            &ldquo;{questionGuidance.example}&rdquo;
+                          </p>
+                        </div>
+                      )}
+
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={handleAiExplain}
+                          disabled={aiExplaining}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors disabled:opacity-60"
+                        >
+                          {aiExplaining ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            <Sparkles size={11} />
+                          )}
+                          {aiExplaining
+                            ? isPolish
+                              ? 'Analizuję...'
+                              : 'Analyzing...'
+                            : aiExplainResult
+                              ? isPolish
+                                ? 'Ukryj rozwinięcie AI'
+                                : 'Hide AI deep-dive'
+                              : isPolish
+                                ? 'Rozwiń z AI i daj przykłady'
+                                : 'Expand with AI & give examples'}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {/* Guidance block — hint + evidence grouped before answer */}
                   {(currentQuestion.description ||
@@ -1709,38 +1979,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     </div>
                   )}
 
-                  {/* AI Explain question */}
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={handleAiExplain}
-                      disabled={aiExplaining}
-                      className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                        aiExplainResult
-                          ? 'text-primary-600 dark:text-primary-400'
-                          : 'text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400'
-                      }`}
-                    >
-                      {aiExplaining ? (
-                        <Loader2 size={12} className="animate-spin" />
-                      ) : (
-                        <HelpCircle size={12} />
-                      )}
-                      {aiExplaining
-                        ? isPolish
-                          ? 'Analizuję...'
-                          : 'Analyzing...'
-                        : aiExplainResult
-                          ? isPolish
-                            ? 'Ukryj wyjaśnienie'
-                            : 'Hide explanation'
-                          : isPolish
-                            ? 'Wyjaśnij to pytanie'
-                            : 'Explain this question'}
-                    </button>
-                  )}
-
-                  {/* AI Explain result */}
+                  {/* AI Explain result (triggered from the guidance panel) */}
                   {aiExplainResult && (
                     <div className="rounded-xl border border-primary-200/50 dark:border-primary-500/15 bg-primary-50/50 dark:bg-primary-500/5 p-4 space-y-3">
                       <p className="text-sm text-primary-800 dark:text-primary-200 leading-relaxed">
@@ -1773,12 +2012,61 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 </div>
 
                 <div className="space-y-4">
-                  {renderedInput}
+                  {/* Answer composer — supports drag & drop of files/images onto the field */}
+                  <div
+                    className="relative"
+                    onDragOver={(e) => {
+                      if (readOnly) return;
+                      e.preventDefault();
+                      if (!isDraggingFile) setIsDraggingFile(true);
+                    }}
+                    onDragLeave={(e) => {
+                      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                      setIsDraggingFile(false);
+                    }}
+                    onDrop={handleAnswerDrop}
+                  >
+                    {renderedInput}
 
-                  {/* ── Answer toolbar: Record + AI dropdown (chip standard) ── */}
+                    {/* Inline recording indicator (no separate window) */}
+                    {isRecording && (
+                      <div className="pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 border border-rose-500/40 px-2 py-0.5 text-[11px] font-medium text-rose-500 tabular-nums">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                        {Math.floor(recordingSeconds / 60)}:
+                        {String(recordingSeconds % 60).padStart(2, '0')}
+                      </div>
+                    )}
+
+                    {/* Live interim transcript preview while dictating */}
+                    {isRecording && liveInterim && (
+                      <p className="mt-1.5 text-xs italic text-slate-400 dark:text-slate-500">
+                        {liveInterim}
+                      </p>
+                    )}
+
+                    {/* Drag overlay */}
+                    {isDraggingFile && !readOnly && (
+                      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-primary-400 bg-primary-500/10 backdrop-blur-[1px]">
+                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 dark:text-primary-300">
+                          <Paperclip size={14} />
+                          {isPolish ? 'Upuść, aby dołączyć' : 'Drop to attach'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Answer toolbar: Record + attachments + AI dropdown (chip standard) ── */}
                   {!readOnly && (
-                    <div className="flex items-center gap-1.5">
-                      {/* Record voice answer */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleImagePicked}
+                      />
+                      {/* Record voice answer (inline) */}
                       <button
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
@@ -1787,12 +2075,52 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           isRecording
                             ? 'border-rose-500/40 bg-rose-500/15 text-rose-500 animate-pulse'
                             : immersive
-                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
+                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
                         {isRecording ? <PauseCircle size={11} /> : <Mic size={11} />}
-                        {isRecording ? 'Stop' : isPolish ? 'Nagraj' : 'Record'}
+                        {isRecording
+                          ? isPolish
+                            ? 'Stop'
+                            : 'Stop'
+                          : isPolish
+                            ? 'Nagraj'
+                            : 'Record'}
+                      </button>
+
+                      {/* Attach file (inline) */}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAttachment}
+                        className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] disabled:opacity-60 ${
+                          immersive
+                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
+                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                        }`}
+                      >
+                        <Paperclip size={11} />
+                        {isPolish ? 'Plik' : 'File'}
+                      </button>
+
+                      {/* Attach image (inline) */}
+                      <button
+                        type="button"
+                        onClick={() => imageInputRef.current?.click()}
+                        disabled={isUploadingAttachment}
+                        className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] disabled:opacity-60 ${
+                          immersive
+                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
+                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                        }`}
+                      >
+                        {isUploadingAttachment ? (
+                          <Loader2 size={11} className="animate-spin" />
+                        ) : (
+                          <ImageIcon size={11} />
+                        )}
+                        {isPolish ? 'Obraz' : 'Image'}
                       </button>
 
                       {/* AI Improve dropdown */}
@@ -1808,7 +2136,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   ? 'border-primary-500/20 bg-primary-500/10 text-primary-400'
                                   : 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
                                 : immersive
-                                  ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-primary-300'
+                                  ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-primary-300'
                                   : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                             }`}
                           >
@@ -1874,7 +2202,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   onClick={() => handleAiImprove(item.mode)}
                                   className={`w-full text-left flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[11px] transition-colors ${
                                     immersive
-                                      ? 'text-slate-300 hover:bg-white/[0.06] hover:text-white'
+                                      ? 'text-slate-600 hover:bg-white/[0.06] hover:text-white'
                                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                                   }`}
                                 >
@@ -1933,13 +2261,79 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           onClick={() => setAiImproveResult(null)}
                           className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                             immersive
-                              ? 'border-white/[0.08] text-slate-400 hover:text-slate-200'
+                              ? 'border-white/[0.08] text-slate-600 hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
                           }`}
                         >
                           {isPolish ? 'Odrzuć' : 'Dismiss'}
                         </button>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Inline attachments — thumbnails for images, chips for files/audio */}
+                  {currentEvidence.some((e) => ['file', 'audio'].includes(e.evidenceType)) && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {currentEvidence
+                        .filter((e) => ['file', 'audio'].includes(e.evidenceType))
+                        .map((item) => {
+                          const isImage =
+                            item.evidenceType === 'file' &&
+                            (item.mimeType?.startsWith('image/') ||
+                              (item.fileType || '').startsWith('image/'));
+                          const isAudio = item.evidenceType === 'audio';
+                          if (isImage && item.url) {
+                            return (
+                              <div
+                                key={item.id}
+                                className="group relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200/70 dark:border-navy-700/70 bg-slate-50 dark:bg-navy-950"
+                              >
+                                <img
+                                  src={item.url}
+                                  alt={item.title || item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  disabled
+                                  title={
+                                    isPolish
+                                      ? 'Usuń w panelu Dowody'
+                                      : 'Remove from the Evidence panel'
+                                  }
+                                  className="absolute top-1 right-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-black/50 text-white/90 opacity-0 group-hover:opacity-100 transition-opacity cursor-not-allowed"
+                                  aria-label={isPolish ? 'Usuń' : 'Remove'}
+                                >
+                                  <X size={11} />
+                                </button>
+                              </div>
+                            );
+                          }
+                          return (
+                            <span
+                              key={item.id}
+                              className="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 px-2.5 py-1.5 text-[11px] text-slate-600 dark:text-slate-300"
+                            >
+                              {isAudio ? <Mic size={11} /> : <Paperclip size={11} />}
+                              <span className="truncate max-w-[160px]">
+                                {item.title || item.name}
+                              </span>
+                              <button
+                                type="button"
+                                disabled
+                                title={
+                                  isPolish
+                                    ? 'Usuń w panelu Dowody'
+                                    : 'Remove from the Evidence panel'
+                                }
+                                className="inline-flex items-center justify-center text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                aria-label={isPolish ? 'Usuń' : 'Remove'}
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            </span>
+                          );
+                        })}
                     </div>
                   )}
 
@@ -1977,7 +2371,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           }}
                           className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
                             immersive
-                              ? 'border-white/[0.08] text-slate-400 hover:text-slate-200'
+                              ? 'border-white/[0.08] text-slate-600 hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-navy-700/70 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900'
                           }`}
                         >
@@ -2024,7 +2418,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       : 'border-slate-200/40 dark:border-navy-700/40'
                   }`}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Dodatkowy kontekst' : 'Additional context'}
                   </p>
 
@@ -2057,25 +2451,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       />
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
-                          immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
-                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
-                        }`}
-                      >
-                        <Paperclip size={11} />
-                        {isPolish ? 'Plik' : 'File'}
-                      </button>
-
-                      <button
-                        type="button"
                         onClick={() => setShowLinkForm((prev) => !prev)}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
                           showLinkForm
                             ? 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
                             : immersive
-                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200'
+                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2088,7 +2469,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         onClick={() => setArtifactPopoverOpen(true)}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
                           immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-primary-300'
+                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-primary-300'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2129,36 +2510,32 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     </div>
                   )}
 
-                  {/* Attached evidence chips */}
-                  {currentEvidence.length > 0 && (
+                  {/* Attached link/artifact chips (files & audio render inline above) */}
+                  {currentEvidence.some((e) => e.evidenceType === 'link') && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {currentEvidence.map((item) => {
-                        const isArtifact =
-                          item.evidenceType === 'link' &&
-                          (item.url || '').startsWith('artifact://');
-                        const EvidIcon = isArtifact
-                          ? Waypoints
-                          : item.evidenceType === 'link'
-                            ? Link2
-                            : item.evidenceType === 'audio'
-                              ? Mic
-                              : Paperclip;
-                        return (
-                          <span
-                            key={item.id}
-                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] ${
-                              isArtifact
-                                ? 'border-primary-200/70 dark:border-primary-500/20 bg-primary-50/50 dark:bg-primary-500/5 text-primary-600 dark:text-primary-300'
-                                : 'border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 text-slate-600 dark:text-slate-300'
-                            }`}
-                          >
-                            <EvidIcon size={10} />
-                            <span className="truncate max-w-[140px]">
-                              {item.title || item.name}
+                      {currentEvidence
+                        .filter((e) => e.evidenceType === 'link')
+                        .map((item) => {
+                          const isArtifact =
+                            item.evidenceType === 'link' &&
+                            (item.url || '').startsWith('artifact://');
+                          const EvidIcon = isArtifact ? Waypoints : Link2;
+                          return (
+                            <span
+                              key={item.id}
+                              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] ${
+                                isArtifact
+                                  ? 'border-primary-200/70 dark:border-primary-500/20 bg-primary-50/50 dark:bg-primary-500/5 text-primary-600 dark:text-primary-300'
+                                  : 'border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 text-slate-600 dark:text-slate-300'
+                              }`}
+                            >
+                              <EvidIcon size={10} />
+                              <span className="truncate max-w-[140px]">
+                                {item.title || item.name}
+                              </span>
                             </span>
-                          </span>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   )}
                 </div>
@@ -2203,8 +2580,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   {isPolish ? 'Zapisano' : 'Saved'}
                 </>
               )}
-              <span className="text-slate-300 dark:text-navy-700 mx-1">|</span>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+              <span className="text-slate-600 dark:text-navy-700 mx-1">|</span>
+              <span className="text-[11px] text-slate-600 dark:text-slate-500">
                 Esc={isPolish ? 'zapisz' : 'save'} · Enter={isPolish ? 'dalej' : 'next'}
               </span>
             </div>
@@ -2217,7 +2594,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 aria-label={isPolish ? 'Poprzednie pytanie' : 'Previous question'}
                 className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium disabled:opacity-50 ${
                   immersive
-                    ? 'border-white/[0.08] text-slate-400 hover:text-slate-200 hover:border-white/[0.15]'
+                    ? 'border-white/[0.08] text-slate-600 hover:text-slate-200 hover:border-white/[0.15]'
                     : 'border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200'
                 }`}
               >

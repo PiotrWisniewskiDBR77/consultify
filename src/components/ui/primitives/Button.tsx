@@ -14,7 +14,7 @@ import { HTMLMotionProps, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import React, { forwardRef } from 'react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
+export type ButtonVariant = 'primary' | 'brand' | 'secondary' | 'ghost' | 'danger' | 'outline';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
@@ -40,11 +40,21 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary: `
     text-white
     bg-gradient-to-br from-primary-500 to-primary-600
-    shadow-[0_4px_14px_rgba(124,58,237,0.25)]
+    shadow-[0_4px_14px_rgba(165,28,48,0.25)]
     hover:from-primary-600 hover:to-primary-700
-    hover:shadow-[0_6px_20px_rgba(124,58,237,0.35)]
+    hover:shadow-[0_6px_20px_rgba(165,28,48,0.35)]
     focus-visible:ring-primary-500/30
     dark:from-primary-500 dark:to-primary-600
+  `,
+  brand: `
+    text-white
+    bg-crimson-600
+    shadow-[0_4px_14px_rgba(165,28,48,0.25)]
+    hover:bg-crimson-700
+    active:bg-crimson-800
+    hover:shadow-[0_6px_20px_rgba(165,28,48,0.35)]
+    focus-visible:ring-crimson-600/30
+    dark:bg-crimson-500 dark:hover:bg-crimson-600 dark:active:bg-crimson-700
   `,
   secondary: `
     text-navy-900 dark:text-white

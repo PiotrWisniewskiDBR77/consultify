@@ -12,6 +12,7 @@ import {
   BookOpen,
   Brain,
   CheckCircle2,
+  CheckSquare,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -20,22 +21,30 @@ import {
   Download,
   ExternalLink,
   Eye,
+  EyeOff,
   FileText,
   Flame,
+  GitCompare,
+  Heart,
   History,
   Layers,
+  LayoutGrid,
   Lightbulb,
   Link2,
   Loader2,
   Map as MapIcon,
   MessageSquare,
+  Network,
   Plus,
+  Quote,
   Radio,
   RefreshCw,
   Rocket,
+  Scale,
   Send,
   ShieldAlert,
   Sparkles,
+  Square,
   Star,
   Target,
   TrendingUp,
@@ -46,14 +55,14 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
-import remarkGfm from 'remark-gfm';
 
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
+import { NModeSectionWrapper } from '@/components/shared/NModeLayout';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
 import type { NModePropertyField, NModeSection } from '@/components/shared/NModeLayout/types';
 import {
   ActivityLogCanvas,
@@ -68,6 +77,7 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
+import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
@@ -246,6 +256,48 @@ function uniqueNonEmpty(items: Array<string | null | undefined>): string[] {
   return result;
 }
 
+/**
+ * #23b — Strip Markdown markup to clean plain text for PREVIEW sub-texts only.
+ * Conservative: removes leading heading hashes, bold/italic/strike markers,
+ * inline-code backticks, link/image syntax, leading list/quote markers, and
+ * collapses Markdown table rows (`| a | b |`) into a readable `a · b`.
+ * The full section bodies still render via ReactMarkdown — do NOT use this there.
+ */
+function stripMarkdownPreview(input?: string): string {
+  if (!input) return '';
+  return input
+    .split('\n')
+    .map((line) => {
+      let l = line.trim();
+      // Drop table separator rows like `| --- | :--: |`
+      if (/^\|?[\s:|-]+\|[\s:|-]*$/.test(l) && l.includes('-')) return '';
+      // Collapse table rows `| a | b |` → `a · b`
+      if (l.startsWith('|') || /\|.*\|/.test(l)) {
+        l = l
+          .replace(/^\||\|$/g, '')
+          .split('|')
+          .map((cell) => cell.trim())
+          .filter(Boolean)
+          .join(' · ');
+      }
+      // Strip leading heading hashes, blockquote `>` and list markers
+      l = l
+        .replace(/^#{1,6}\s+/, '')
+        .replace(/^>\s?/, '')
+        .replace(/^(?:[-*+]|\d+\.)\s+/, '');
+      return l;
+    })
+    .join(' ')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1') // images → alt text
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // links → label
+    .replace(/(\*\*|__)(.*?)\1/g, '$2') // bold
+    .replace(/(\*|_)(.*?)\1/g, '$2') // italic
+    .replace(/~~(.*?)~~/g, '$1') // strikethrough
+    .replace(/`([^`]+)`/g, '$1') // inline code
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function extractQuotedLines(content?: string): string[] {
   if (!content) return [];
   const blockQuotes = Array.from(content.matchAll(/(^>\s?.+$)/gm)).map((match) =>
@@ -408,36 +460,27 @@ const STATUS_CONFIG: Record<
 
 // ── N-mode section definitions (without component — assigned later) ──────────
 
+// Section nav model (#22 / #23c).
+//
+// MERGES — content is preserved by composing the removed sections' rendered
+// JSX into the surviving section's component (see `composedComponentById`
+// inside `nModeSectionsWithContent`). Only the NAV entries are consolidated:
+//   • material-quality  ← absorbs truth-review-summary  → "Quality & Trust"
+//   • source-pack       ← absorbs source-sessions       → "Sources"
+//   • candidate-triage  ← absorbs traceability          → "Findings & Evidence"
+//   • full-analysis     — removed (covered by Consulting Readout / raw markdown
+//                          stays reachable via Report Pack export)
+//
+// NEW analytical "between the lines" sections (#22c / #23d) derive purely from
+// data already in scope (no new backend calls); each shows an informative
+// empty-state until the underlying multi-respondent data exists.
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'artifact-actions', icon: Rocket, label: { en: 'Next Actions', pl: 'Dalsze akcje' } },
-  {
-    id: 'truth-review-summary',
-    icon: ShieldAlert,
-    label: { en: 'Truth & Review', pl: 'Prawda i review' },
-  },
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
   {
     id: 'consulting-readout',
     icon: Sparkles,
     label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' },
-  },
-  {
-    id: 'material-quality',
-    icon: AlertCircle,
-    label: { en: 'Material Quality', pl: 'Jakość materiału' },
-  },
-  { id: 'report-pack', icon: FileText, label: { en: 'Report Pack', pl: 'Pakiet raportu' } },
-  { id: 'candidate-triage', icon: Eye, label: { en: 'Candidate Triage', pl: 'Triage kandydatów' } },
-  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
-  {
-    id: 'source-pack',
-    icon: Link2,
-    label: { en: 'Source Pack', pl: 'Pakiet źródeł' },
-  },
-  {
-    id: 'analysis-matrix',
-    icon: BarChart3,
-    label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' },
   },
   { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
   {
@@ -446,15 +489,68 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' },
   },
   { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
+
+  // ── Między wierszami / Between the lines ──────────────────────────────────
+  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
   { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
-  { id: 'evidence-map', icon: MapIcon, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
-  { id: 'traceability', icon: Target, label: { en: 'Traceability', pl: 'Traceability' } },
-  { id: 'full-analysis', icon: FileText, label: { en: 'Full Analysis', pl: 'Pełna Analiza' } },
   {
-    id: 'source-sessions',
-    icon: MessageSquare,
-    label: { en: 'Source Sessions', pl: 'Sesje Źródłowe' },
+    id: 'analysis-matrix',
+    icon: BarChart3,
+    label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' },
   },
+  {
+    id: 'consensus-divergence',
+    icon: GitCompare,
+    label: { en: 'Consensus & Divergence', pl: 'Zgoda i rozbieżności' },
+  },
+  {
+    id: 'implicit-assumptions',
+    icon: Brain,
+    label: { en: 'Implicit Assumptions', pl: 'Ukryte założenia' },
+  },
+  { id: 'silences', icon: EyeOff, label: { en: 'Silences', pl: 'Przemilczenia' } },
+  {
+    id: 'quote-comparison',
+    icon: Quote,
+    label: { en: 'Quote Comparison', pl: 'Porównanie cytatów' },
+  },
+  {
+    id: 'sentiment-tone',
+    icon: Heart,
+    label: { en: 'Sentiment & Tone', pl: 'Sentyment i ton' },
+  },
+  { id: 'power-dynamics', icon: Scale, label: { en: 'Power Dynamics', pl: 'Dynamika władzy' } },
+  {
+    id: 'hypothesis-board',
+    icon: Network,
+    label: { en: 'Hypothesis Board', pl: 'Tablica hipotez' },
+  },
+
+  // ── Dowody / Evidence ─────────────────────────────────────────────────────
+  { id: 'evidence-map', icon: MapIcon, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
+  {
+    id: 'candidate-triage',
+    icon: Eye,
+    label: { en: 'Findings & Evidence', pl: 'Wnioski i dowody' },
+  },
+  {
+    id: 'source-pack',
+    icon: Link2,
+    label: { en: 'Sources', pl: 'Źródła' },
+  },
+
+  // ── Dostarczane / Deliverables ────────────────────────────────────────────
+  { id: 'report-pack', icon: FileText, label: { en: 'Report Pack', pl: 'Pakiet raportu' } },
+
+  // ── Audyt / Audit ─────────────────────────────────────────────────────────
+  {
+    id: 'material-quality',
+    icon: AlertCircle,
+    label: { en: 'Quality & Trust', pl: 'Jakość i zaufanie' },
+  },
+  // TODO(#23c): move Comments into a drawer / secondary affordance and Activity
+  // into the header meta line; kept as Audit sections for now to avoid losing
+  // the existing CommentsCanvas / ActivityLogCanvas wiring.
   { id: 'comments', icon: MessageSquare, label: { en: 'Comments', pl: 'Komentarze' } },
   { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' } },
 ];
@@ -513,6 +609,31 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [isExportingTools, setIsExportingTools] = useState(false);
   const [isExportingAssessment, setIsExportingAssessment] = useState(false);
   const [isExportingNotebook, setIsExportingNotebook] = useState(false);
+
+  // #25 — smart export generator (preview-pane dialog with section selection)
+  type ExportTargetId =
+    | 'note'
+    | 'tools'
+    | 'assessment'
+    | 'markdown'
+    | 'report'
+    | 'deck'
+    | 'table'
+    | 'idea'
+    | 'initiative';
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportTarget, setExportTarget] = useState<ExportTargetId>('note');
+  const [exportSelectedIds, setExportSelectedIds] = useState<Set<string>>(new Set());
+  const [exportRunning, setExportRunning] = useState(false);
+
+  // #26 toolbar — uniform outline dropdowns (Export ▾ / ✨ AI ▾)
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [aiMenuOpen, setAiMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
+  const aiMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // #26b — "Submit for Information" (no review/approval gate; just notifies)
+  const [submittingForInfo, setSubmittingForInfo] = useState(false);
 
   // Handoff modal state
   const [handoffModalOpen, setHandoffModalOpen] = useState(false);
@@ -818,6 +939,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
+  // #26 — close toolbar dropdowns on outside click / Escape (repo pattern)
+  useEffect(() => {
+    if (!exportMenuOpen && !aiMenuOpen) return;
+    const handlePointer = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (exportMenuOpen && exportMenuRef.current && !exportMenuRef.current.contains(target)) {
+        setExportMenuOpen(false);
+      }
+      if (aiMenuOpen && aiMenuRef.current && !aiMenuRef.current.contains(target)) {
+        setAiMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setExportMenuOpen(false);
+        setAiMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointer);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handlePointer);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [exportMenuOpen, aiMenuOpen]);
+
   useEffect(() => {
     const loadInsight = async () => {
       const applyDemoInsight = (id: string) => {
@@ -1053,7 +1200,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight?.content) return '';
     const firstParagraph = insight.content
       .split('\n\n')
-      .map((part) => part.replace(/^#+\s+/, '').trim())
+      .map((part) => stripMarkdownPreview(part))
       .find(Boolean);
     return firstParagraph || '';
   }, [insight?.content]);
@@ -1077,7 +1224,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       )
       .flatMap((section) => [...section.bullets, ...section.paragraphs]);
 
-    return uniqueNonEmpty([...fromSummaries, ...fromNarrative]).slice(0, 10);
+    return uniqueNonEmpty([...fromSummaries, ...fromNarrative])
+      .map(stripMarkdownPreview)
+      .filter(Boolean)
+      .slice(0, 10);
   }, [parsedInsightSections, sourceSessionSummaries, sourceSessions]);
 
   const opportunityReadout = useMemo(() => {
@@ -1089,7 +1239,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       )
       .flatMap((section) => [...section.bullets, ...section.paragraphs]);
 
-    return uniqueNonEmpty(fromNarrative).slice(0, 10);
+    return uniqueNonEmpty(fromNarrative).map(stripMarkdownPreview).filter(Boolean).slice(0, 10);
   }, [parsedInsightSections]);
 
   const hiddenSignals = useMemo(() => {
@@ -1101,11 +1251,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       )
       .flatMap((section) => [...section.bullets, ...section.paragraphs]);
 
-    return uniqueNonEmpty(fromNarrative).slice(0, 8);
+    return uniqueNonEmpty(fromNarrative).map(stripMarkdownPreview).filter(Boolean).slice(0, 8);
   }, [parsedInsightSections]);
 
   const evidenceQuotes = useMemo(
-    () => extractQuotedLines(insight?.content).slice(0, 6),
+    () =>
+      extractQuotedLines(insight?.content).map(stripMarkdownPreview).filter(Boolean).slice(0, 6),
     [insight?.content]
   );
 
@@ -1577,6 +1728,42 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
+  // #25 — best-effort section-filtered markdown. Matches selected section
+  // labels (en + pl) against the insight's markdown headings and keeps the
+  // matched heading blocks. If no headings match (content not section-headed),
+  // returns null so callers fall back to the full content.
+  const buildFilteredMarkdown = useCallback(
+    (sectionIds: string[]): string | null => {
+      const content = insight?.content;
+      if (!content) return null;
+      const selected = new Set(sectionIds);
+      const wanted = INSIGHT_SECTIONS.filter((s) => selected.has(s.id)).flatMap((s) =>
+        [s.label.en, s.label.pl].map((l) => l.toLowerCase().trim())
+      );
+      if (wanted.length === 0) return null;
+      const lines = content.split('\n');
+      const blocks: { heading: string; body: string[] }[] = [];
+      let current: { heading: string; body: string[] } | null = null;
+      for (const line of lines) {
+        const headingMatch = /^#{1,6}\s+(.*)$/.exec(line);
+        if (headingMatch) {
+          if (current) blocks.push(current);
+          current = { heading: headingMatch[1].toLowerCase().trim(), body: [line] };
+        } else if (current) {
+          current.body.push(line);
+        }
+      }
+      if (current) blocks.push(current);
+      if (blocks.length === 0) return null;
+      const kept = blocks.filter((b) =>
+        wanted.some((w) => b.heading.includes(w) || w.includes(b.heading))
+      );
+      if (kept.length === 0) return null;
+      return kept.map((b) => b.body.join('\n').trim()).join('\n\n');
+    },
+    [insight?.content]
+  );
+
   const handleCopy = async () => {
     if (!insight?.content) return;
     try {
@@ -1587,9 +1774,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleExportMarkdown = () => {
+  const handleExportMarkdown = (sectionIds?: string[]) => {
     if (!insight?.content) return;
-    const blob = new Blob([insight.content], { type: 'text/markdown' });
+    // #25 — when a section subset is supplied, emit a section-filtered markdown
+    // document (best-effort heading match against the raw content). Falls back
+    // to the full content if the subset can't be resolved.
+    const markdown =
+      sectionIds && sectionIds.length > 0
+        ? buildFilteredMarkdown(sectionIds) || insight.content
+        : insight.content;
+    const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1599,12 +1793,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     toast.success(isPolish ? 'Pobrano plik Markdown' : 'Downloaded Markdown file');
   };
 
-  const handleExportToTools = async () => {
+  const handleExportToTools = async (sectionIds?: string[]) => {
     if (!insight) return;
     setIsExportingTools(true);
     try {
-      const exportRes = await V8InterviewApi.exportInsight(insight.id, { target: 'tools' }).catch(
-        () => Api.post(`/interview/insights/${insight.id}/export`, { target: 'tools' })
+      // #25: server honors `sectionIds` for the tools target — only the
+      // selected sections are exported when provided.
+      const exportRes = await V8InterviewApi.exportInsight(insight.id, {
+        target: 'tools',
+        ...(sectionIds ? { sectionIds } : {}),
+      } as { target: 'tools' }).catch(() =>
+        Api.post(`/interview/insights/${insight.id}/export`, {
+          target: 'tools',
+          ...(sectionIds ? { sectionIds } : {}),
+        })
       );
       toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
       const activityRes = await V8InterviewApi.getInsightActivity(insightId)
@@ -1620,14 +1822,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleExportToAssessment = async () => {
+  const handleExportToAssessment = async (sectionIds?: string[]) => {
     if (!insight) return;
     setIsExportingAssessment(true);
     try {
+      // #25: server honors `sectionIds` for the assessment target — only the
+      // selected sections are exported when provided.
       const exportRes = await V8InterviewApi.exportInsight(insight.id, {
         target: 'assessment',
-      }).catch(() =>
-        Api.post(`/interview/insights/${insight.id}/export`, { target: 'assessment' })
+        ...(sectionIds ? { sectionIds } : {}),
+      } as { target: 'assessment' }).catch(() =>
+        Api.post(`/interview/insights/${insight.id}/export`, {
+          target: 'assessment',
+          ...(sectionIds ? { sectionIds } : {}),
+        })
       );
       toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
       const activityRes = await V8InterviewApi.getInsightActivity(insightId)
@@ -1644,15 +1852,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  const handleExportToNotebook = async () => {
+  const handleExportToNotebook = async (sectionIds?: string[]) => {
     if (!insight) return;
     setIsExportingNotebook(true);
     try {
+      // #25 — Note target exports the selected sections as fragments. When a
+      // subset is chosen we send a section-filtered markdown body + the section
+      // id list (consumed as fragments downstream once supported).
+      const content =
+        sectionIds && sectionIds.length > 0
+          ? buildFilteredMarkdown(sectionIds) || insight.content || ''
+          : insight.content || '';
       await Api.post('/my-work/notebook/pages', {
         title: insight.title,
-        content: insight.content || '',
+        content,
         source: 'interview_insight',
-        metadata: { insightId: insight.id },
+        metadata: { insightId: insight.id, ...(sectionIds ? { sectionIds } : {}) },
       });
       toast.success(isPolish ? 'Zapisano w Notatniku' : 'Saved to Notebook');
     } catch {
@@ -1661,6 +1876,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setIsExportingNotebook(false);
     }
   };
+
+  // #26b — Submit for Information: notify org managers/owners; no review gate.
+  const handleSubmitForInformation = useCallback(async () => {
+    if (!insight) return;
+    setSubmittingForInfo(true);
+    try {
+      await Api.post(`/v8/interview/insights/${insight.id}/submit-for-information`, {});
+      toast.success(isPolish ? 'Wysłano do wiadomości' : 'Sent for information');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się wysłać' : 'Failed to send');
+    } finally {
+      setSubmittingForInfo(false);
+    }
+  }, [insight, isPolish]);
 
   const handleOpenHandoff = useCallback(
     (finding: {
@@ -2309,7 +2538,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // ── Section content assignment ─────────────────────────────────────────────
 
   const nModeSectionsWithContent = useMemo<NModeSection[]>(() => {
-    return INSIGHT_SECTIONS.map((section) => {
+    // Build a component for every id we render — including the ids whose nav
+    // entry was merged away (#23c). Their JSX is still produced here and then
+    // composed into the surviving section below, so no content is lost.
+    const renderIds: string[] = [
+      ...INSIGHT_SECTIONS.map((s) => s.id),
+      // merged-away ids (content folded into a surviving section)
+      'truth-review-summary',
+      'source-sessions',
+      'traceability',
+    ];
+
+    const componentById: Record<string, React.ReactNode> = {};
+
+    for (const sectionId of renderIds) {
+      const section = { id: sectionId } as { id: string };
       let component: React.ReactNode = null;
 
       switch (section.id) {
@@ -2396,7 +2639,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Co można twierdzić' : 'Safe claims'}
                   </div>
                   <div className="mt-3 space-y-2">
@@ -2434,7 +2677,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                       {isPolish ? 'Blokery publish/handoff' : 'Publish/handoff blockers'}
                     </div>
                     <button
@@ -2467,7 +2710,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                       {isPolish ? 'Sprzeczności' : 'Contradictions'}
                     </div>
                     <button
@@ -2523,7 +2766,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Official answers' : 'Official answers'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -2531,7 +2774,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Issues / Risks' : 'Issues / risks'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -2539,7 +2782,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Signals / Opportunities' : 'Signals / opportunities'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -2594,7 +2837,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Official Answers' : 'Official Answers'}
                   </div>
                   {officialAnswers.length > 0 ? (
@@ -2617,7 +2860,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Issues / Risks' : 'Issues / Risks'}
                   </div>
                   {issuesReadout.length > 0 ? (
@@ -2642,7 +2885,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Signals / Opportunities' : 'Signals / Opportunities'}
                   </div>
                   {uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).length > 0 ? (
@@ -2701,7 +2944,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Wynik' : 'Score'}
                       </div>
                       <div className={`mt-1 text-2xl font-semibold ${postureColor}`}>
@@ -2709,7 +2952,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Jakość odpowiedzi' : 'Answer quality'}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2717,7 +2960,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Pokrycie' : 'Coverage'}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2725,7 +2968,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Sesje / respondenci' : 'Sessions / respondents'}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2740,7 +2983,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {isPolish ? 'Ograniczenia materiału' : 'Material limitations'}
                       </h4>
                       {quality.limitations.length > 0 ? (
-                        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                        <ul className="mt-3 space-y-2 text-sm text-slate-600">
                           {quality.limitations.map((item) => (
                             <li key={item} className="flex gap-2">
                               <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-400" />
@@ -2761,7 +3004,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       <h4 className="text-sm font-semibold text-white">
                         {isPolish ? 'Braki i follow-up' : 'Gaps and follow-up'}
                       </h4>
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
                         <div>
                           {isPolish ? 'Cienkie odpowiedzi' : 'Thin answers'}:{' '}
                           <span className="text-slate-200">{quality.thin_answer_count}</span>
@@ -2780,7 +3023,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         </div>
                       </div>
                       {quality.recommended_followups.length > 0 && (
-                        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                        <ul className="mt-3 space-y-2 text-sm text-slate-600">
                           {quality.recommended_followups.map((item) => (
                             <li key={item} className="flex gap-2">
                               <MessageSquare size={15} className="mt-0.5 shrink-0 text-blue-400" />
@@ -2794,7 +3037,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Role w materiale' : 'Roles covered'}
                       </div>
                       <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
@@ -2806,7 +3049,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Działy w materiale' : 'Departments covered'}
                       </div>
                       <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
@@ -2873,7 +3116,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Kompletność' : 'Completeness'}
                       </div>
                       <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -2881,7 +3124,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Arkusze' : 'Worksheets'}
                       </div>
                       <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
@@ -2889,7 +3132,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Gotowe / częściowe' : 'Generated / partial'}
                       </div>
                       <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
@@ -2897,7 +3140,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </div>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Zdegradowane' : 'Degraded'}
                       </div>
                       <div
@@ -3236,7 +3479,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Sesje' : 'Sessions'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3244,7 +3487,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Fragmenty' : 'Fragments'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3252,7 +3495,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Aktywne dowody' : 'Active evidence'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3260,7 +3503,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Stan' : 'State'}
                   </div>
                   <div
@@ -3283,7 +3526,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Readback OK' : 'Readback OK'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
@@ -3291,7 +3534,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Zakwestionowane' : 'Challenged'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
@@ -3299,7 +3542,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Potrzeba evidence' : 'Needs evidence'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
@@ -3307,7 +3550,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Niepotwierdzone' : 'Unresolved'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3448,7 +3691,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Posture' : 'Posture'}
                   </div>
                   <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -3466,7 +3709,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Sesje źródłowe' : 'Source sessions'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3474,7 +3717,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Lenses' : 'Lenses'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3482,7 +3725,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Consensus' : 'Consensus'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -3563,7 +3806,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Consensus topics' : 'Consensus topics'}
                   </div>
                   {consensusTopics.length > 0 ? (
@@ -3592,7 +3835,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Local-only signals' : 'Local-only signals'}
                   </div>
                   {localOnlyTopics.length > 0 ? (
@@ -3622,7 +3865,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {analysisLensMode === 'stakeholder'
                       ? isPolish
                         ? 'Stakeholder lenses'
@@ -3707,13 +3950,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     <table className="min-w-full text-sm">
                       <thead>
                         <tr className="bg-white/70 dark:bg-navy-900/30">
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Temat' : 'Topic'}
                           </th>
                           {activeAnalysisColumns.map((column) => (
                             <th
                               key={column.id}
-                              className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500"
+                              className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500"
                             >
                               {column.label}
                             </th>
@@ -3967,7 +4210,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
                                 </p>
                               )}
@@ -4232,7 +4475,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
                                 </p>
                               )}
@@ -4479,7 +4722,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                <p className="text-xs italic text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
                                 </p>
                               )}
@@ -4814,7 +5057,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Kandydaci' : 'Candidates'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -4822,7 +5065,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Ready' : 'Ready'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
@@ -4830,7 +5073,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Braki evidence' : 'Needs evidence'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
@@ -4838,7 +5081,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   </div>
                 </div>
                 <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Do rozbicia' : 'Needs split'}
                   </div>
                   <div className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
@@ -4938,7 +5181,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3 space-y-3">
                             <div className="flex items-center justify-between gap-3">
                               <div>
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Client readback' : 'Client readback'}
                                 </div>
                                 <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
@@ -4951,7 +5194,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               {readbackLoadingId === linkedFinding.id && (
                                 <Loader2
                                   size={14}
-                                  className="animate-spin text-slate-400 flex-shrink-0"
+                                  className="animate-spin text-slate-600 flex-shrink-0"
                                 />
                               )}
                             </div>
@@ -5231,7 +5474,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         )}
 
                         <div className="space-y-3">
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Wspierane tematy' : 'Supported topics'}
                           </div>
                           {supportedTopics.length > 0 ? (
@@ -5293,7 +5536,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                         {localSupportedTopics.length > 0 && (
                           <div className="space-y-2">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                               {isPolish ? 'Lokalne sygnały' : 'Local signals'}
                             </div>
                             <div className="flex flex-wrap gap-1.5">
@@ -5384,7 +5627,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Official answers' : 'Official answers'}
                           </div>
                           {summary.facts.length > 0 ? (
@@ -5397,14 +5640,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               </div>
                             ))
                           ) : (
-                            <div className="text-sm text-slate-400 dark:text-slate-500">
+                            <div className="text-sm text-slate-600 dark:text-slate-500">
                               {isPolish ? 'Brak zebranych faktów' : 'No facts captured'}
                             </div>
                           )}
                         </div>
 
                         <div className="space-y-2">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Gaps / constraints' : 'Gaps / constraints'}
                           </div>
                           {uniqueNonEmpty([
@@ -5427,7 +5670,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 </div>
                               ))
                           ) : (
-                            <div className="text-sm text-slate-400 dark:text-slate-500">
+                            <div className="text-sm text-slate-600 dark:text-slate-500">
                               {isPolish ? 'Brak luk lub ograniczeń' : 'No gaps or constraints'}
                             </div>
                           )}
@@ -5440,7 +5683,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       key={sessionId}
                       className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 border border-dashed border-slate-300 dark:border-navy-600 px-4 py-4"
                     >
-                      <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
+                      <div className="flex items-center gap-3 text-slate-600 dark:text-slate-500">
                         <Link2 size={16} className="opacity-50" />
                         <div>
                           <div className="text-sm font-medium">
@@ -5462,96 +5705,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           break;
         }
 
-        case 'full-analysis':
-          component = (
-            <div className="space-y-4">
-              <Callout
-                variant="warning"
-                title={isPolish ? 'Raw AI narrative' : 'Raw AI narrative'}
-                compact
-              >
-                {isPolish
-                  ? 'Ta sekcja pokazuje pełny output AI w markdownzie. Traktuj ją jako warstwę roboczą pod consulting readout.'
-                  : 'This section shows the full AI markdown output. Treat it as the working layer behind the consulting readout.'}
-              </Callout>
-              {insight?.status === 'generating' ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Sparkles size={48} className="text-amber-400 animate-pulse mb-6" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    {isPolish ? 'AI generuje wnioski...' : 'AI is generating insights...'}
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
-                    {isPolish
-                      ? 'Analizujemy wybrane sesje wywiadów i przygotowujemy kompleksową analizę.'
-                      : 'We are analyzing selected interview sessions and preparing a comprehensive analysis.'}
-                  </p>
-                </div>
-              ) : insight?.content ? (
-                <div className="prose prose-slate dark:prose-invert prose-sm max-w-none">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 pb-2 border-b border-slate-200 dark:border-navy-700">
-                          {children}
-                        </h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="text-xl font-semibold text-slate-800 dark:text-white mt-6 mb-3">
-                          {children}
-                        </h2>
-                      ),
-                      h3: ({ children }) => (
-                        <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200 mt-4 mb-2">
-                          {children}
-                        </h3>
-                      ),
-                      p: ({ children }) => (
-                        <p className="text-slate-600 dark:text-slate-300 mb-3 leading-relaxed">
-                          {children}
-                        </p>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="list-disc list-inside space-y-1 mb-4">{children}</ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="list-decimal list-inside space-y-1 mb-4">{children}</ol>
-                      ),
-                      li: ({ children }) => (
-                        <li className="text-slate-600 dark:text-slate-300">{children}</li>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-semibold text-slate-800 dark:text-white">
-                          {children}
-                        </strong>
-                      ),
-                      blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-primary-500 pl-4 py-2 my-4 bg-slate-50 dark:bg-navy-800/50 rounded-r-lg">
-                          {children}
-                        </blockquote>
-                      ),
-                    }}
-                  >
-                    {insight.content}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <FileText size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
-                  <p className="text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Brak treści' : 'No content'}
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-          break;
-
         case 'source-sessions':
           component = (
             <div className="space-y-2">
               {sourceSessions.length === 0 ? (
-                <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+                <div className="text-center py-6 text-slate-600 dark:text-slate-500">
                   <MessageSquare size={24} className="mx-auto mb-2 opacity-50" />
                   <p className="text-sm">{isPolish ? 'Brak sesji' : 'No sessions'}</p>
                 </div>
@@ -5570,7 +5728,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           {session.name}
                         </p>
                         {session.templateName && (
-                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
                             {session.templateName}
                           </p>
                         )}
@@ -5623,30 +5781,685 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             />
           );
           break;
+
+        // ── #22c — Consensus & Divergence Matrix ──────────────────────────────
+        case 'consensus-divergence': {
+          const hasMatrix =
+            consensusTopics.length > 0 ||
+            localOnlyTopics.length > 0 ||
+            contradictedTopics.length > 0;
+          const distinctVoices = analysis?.scope.distinctStakeholderCount ?? 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Consensus & Divergence Matrix', pl: 'Macierz zgody i rozbieżności' }}
+              isEmpty={!hasMatrix}
+              emptyState={{
+                icon: GitCompare,
+                message: {
+                  pl: 'Ta sekcja pokazuje, gdzie respondenci się zgadzają, a gdzie się różnią. Pojawi się, gdy insight łączy wiele perspektyw (≥2 respondentów lub sesji) i AI wykryje wspólne, lokalne lub sprzeczne tematy.',
+                  en: 'This section maps where respondents agree vs. disagree. It populates once the insight spans multiple perspectives (≥2 respondents or sessions) and the AI detects shared, local, or contradicted topics.',
+                },
+              }}
+            >
+              <Callout
+                variant="info"
+                title={isPolish ? 'Czytaj zgodę i rozbieżności' : 'Read agreement and divergence'}
+              >
+                {isPolish
+                  ? `Zbudowane z ${distinctVoices} odrębnych perspektyw. Wspólne tematy to twardy konsensus; lokalne to pojedyncze głosy; sprzeczne wymagają rozstrzygnięcia operatora.`
+                  : `Derived from ${distinctVoices} distinct perspectives. Shared topics are hard consensus; local topics are single-voice; contradicted topics need operator adjudication.`}
+              </Callout>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {(
+                  [
+                    {
+                      key: 'consensus',
+                      topics: consensusTopics,
+                      title: isPolish ? 'Konsensus' : 'Consensus',
+                      tone: 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
+                      empty: isPolish ? 'Brak wspólnych tematów' : 'No shared topics yet',
+                    },
+                    {
+                      key: 'local',
+                      topics: localOnlyTopics,
+                      title: isPolish ? 'Lokalne / pojedyncze głosy' : 'Local / single voice',
+                      tone: 'border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300',
+                      empty: isPolish ? 'Brak lokalnych tematów' : 'No local-only topics',
+                    },
+                    {
+                      key: 'divergence',
+                      topics: contradictedTopics,
+                      title: isPolish
+                        ? 'Rozbieżności / sprzeczności'
+                        : 'Divergence / contradiction',
+                      tone: 'border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300',
+                      empty: isPolish ? 'Brak sprzeczności' : 'No contradictions',
+                    },
+                  ] as const
+                ).map((col) => (
+                  <div
+                    key={col.key}
+                    className={`rounded-2xl border px-4 py-4 space-y-3 ${col.tone}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                        {col.title}
+                      </div>
+                      <span className="text-xs font-semibold opacity-70">{col.topics.length}</span>
+                    </div>
+                    {col.topics.length > 0 ? (
+                      <ul className="space-y-2">
+                        {col.topics.slice(0, 8).map((topic) => (
+                          <li
+                            key={topic.id}
+                            className="rounded-xl bg-white/70 dark:bg-navy-900/40 px-3 py-2"
+                          >
+                            <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                              {topic.label}
+                            </div>
+                            {topic.divergenceNote && (
+                              <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                                {topic.divergenceNote}
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="text-xs text-slate-600 dark:text-slate-400">{col.empty}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #22c — Implicit Assumptions ───────────────────────────────────────
+        case 'implicit-assumptions': {
+          // Derive from existing AI signals/narrative: low-confidence or
+          // single-voice topics carry implicit, unvalidated assumptions, plus
+          // any "between the lines" narrative observations already parsed.
+          const assumptionTopics = (analysis?.topics || []).filter(
+            (topic) =>
+              topic.confidenceLevel === 'low' ||
+              topic.confidenceLevel === 'insufficient' ||
+              (topic.supportingSessionIds.length <= 1 && !topic.isContradicted)
+          );
+          const assumptionNarrative = hiddenSignals;
+          const hasAssumptions = assumptionTopics.length > 0 || assumptionNarrative.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Implicit Assumptions', pl: 'Ukryte założenia' }}
+              isEmpty={!hasAssumptions}
+              emptyState={{
+                icon: Brain,
+                message: {
+                  pl: 'Tu pojawią się niewypowiedziane założenia — twierdzenia oparte na jednym głosie, niskiej pewności lub przyjęte bez dowodu. Populuje się z analizy AI i tematów o słabym pokryciu.',
+                  en: 'Unstated assumptions surface here — claims resting on a single voice, low confidence, or taken as given without evidence. Populates from AI analysis and weakly-covered topics.',
+                },
+              }}
+            >
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Założenia do zweryfikowania' : 'Assumptions to validate'}
+                compact
+              >
+                {isPolish
+                  ? 'To, co zespół traktuje jako oczywiste, ale nie zostało potwierdzone wieloma źródłami. Każda pozycja to kandydat do walidacji w kolejnej sesji.'
+                  : 'What the team treats as given but multiple sources have not confirmed. Each item is a candidate to validate in a follow-up session.'}
+              </Callout>
+              {assumptionTopics.length > 0 && (
+                <div className="space-y-2">
+                  {assumptionTopics.slice(0, 8).map((topic) => (
+                    <div
+                      key={topic.id}
+                      className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                          {topic.label}
+                        </div>
+                        <span className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                          {topic.confidenceLevel}
+                        </span>
+                      </div>
+                      {topic.description && (
+                        <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                          {topic.description}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {assumptionNarrative.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    {isPolish ? 'Z narracji AI' : 'From AI narrative'}
+                  </div>
+                  <ul className="list-disc list-inside space-y-1">
+                    {assumptionNarrative.slice(0, 6).map((line, i) => (
+                      <li key={i} className="text-sm text-slate-700 dark:text-slate-300">
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #22c — Silences (what was NOT said) ───────────────────────────────
+        case 'silences': {
+          const coverageGaps = analysis?.synthesis.coverageGaps || [];
+          const silences = uniqueNonEmpty([...coverageGaps, ...v6MissingData]);
+          const hasSilences = silences.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Silences & Gaps', pl: 'Przemilczenia i luki' }}
+              isEmpty={!hasSilences}
+              emptyState={{
+                icon: EyeOff,
+                message: {
+                  pl: 'Tu pojawi się to, czego NIE powiedziano — tematy oczekiwane, lecz nieporuszone, pytania bez odpowiedzi i luki w pokryciu. Populuje się z luk pokrycia AI i brakujących danych insightu.',
+                  en: 'What was notably NOT said appears here — expected-but-absent topics, unanswered questions, and coverage gaps. Populates from AI coverage gaps and the insight’s missing-data list.',
+                },
+              }}
+            >
+              <Callout
+                variant="info"
+                title={isPolish ? 'Cisza też jest sygnałem' : 'Silence is also a signal'}
+                compact
+              >
+                {isPolish
+                  ? 'Nieobecność tematu bywa równie istotna jak jego obecność — może wskazywać unikanie, ślepą plamę albo lukę w scenariuszu wywiadu.'
+                  : 'The absence of a topic can matter as much as its presence — it may signal avoidance, a blind spot, or a gap in the interview guide.'}
+              </Callout>
+              <ul className="space-y-2">
+                {silences.slice(0, 12).map((item, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 bg-slate-50/60 dark:bg-navy-900/30 px-3 py-2.5"
+                  >
+                    <EyeOff
+                      size={14}
+                      className="mt-0.5 flex-shrink-0 text-slate-400 dark:text-slate-500"
+                    />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #23d — Cross-person Quote Comparison ───────────────────────────────
+        case 'quote-comparison': {
+          const lensesWithVoice = visiblePeopleLenses.filter(
+            (lens) => lens.localSummary || lens.supportedTopicIds.length > 0
+          );
+          const hasComparison = lensesWithVoice.length >= 2 || evidenceQuotes.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Cross-person Quote Comparison', pl: 'Porównanie cytatów osób' }}
+              isEmpty={!hasComparison}
+              emptyState={{
+                icon: Quote,
+                message: {
+                  pl: 'Tu zestawimy obok siebie, jak różne osoby mówią o tym samym. Populuje się, gdy insight ma ≥2 perspektywy z lokalnym podsumowaniem lub gdy w treści są cytaty źródłowe.',
+                  en: 'Side-by-side of how different people talk about the same thing. Populates when the insight has ≥2 perspectives with a local summary, or when source quotes exist in the content.',
+                },
+              }}
+            >
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Te same tematy, różne głosy' : 'Same topics, different voices'}
+                compact
+              >
+                {isPolish
+                  ? 'Porównaj sformułowania osób, aby zobaczyć niuanse, nacisk i rozbieżności, które giną w syntezie.'
+                  : 'Compare how each person frames things to surface nuance, emphasis, and divergence that a synthesis flattens.'}
+              </Callout>
+              {lensesWithVoice.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {lensesWithVoice.slice(0, 6).map((lens) => (
+                    <div
+                      key={lens.id}
+                      className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-3"
+                    >
+                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {lens.label}
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                        {[lens.role, lens.department].filter(Boolean).join(' · ') ||
+                          (isPolish ? 'Perspektywa' : 'Perspective')}
+                      </div>
+                      <blockquote className="mt-2 border-l-2 border-primary-400 pl-3 text-sm italic text-slate-700 dark:text-slate-300">
+                        {lens.localSummary ||
+                          (isPolish
+                            ? 'Brak lokalnego podsumowania dla tej osoby.'
+                            : 'No local summary for this person.')}
+                      </blockquote>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {evidenceQuotes.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    {isPolish ? 'Cytaty z treści' : 'Quotes from content'}
+                  </div>
+                  {evidenceQuotes.map((quote, i) => (
+                    <blockquote
+                      key={i}
+                      className="border-l-2 border-slate-300 dark:border-navy-600 pl-3 text-sm italic text-slate-700 dark:text-slate-300"
+                    >
+                      &ldquo;{quote}&rdquo;
+                    </blockquote>
+                  ))}
+                </div>
+              )}
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #23d — Sentiment / Tone Map ────────────────────────────────────────
+        case 'sentiment-tone': {
+          // Proxy tone from confidence + contradiction state of existing topics.
+          const toneTopics = analysis?.topics || [];
+          const toneBuckets = {
+            positive: toneTopics.filter((t) => t.kind === 'opportunity' && !t.isContradicted),
+            tense: toneTopics.filter((t) => t.isContradicted),
+            concern: toneTopics.filter((t) => t.kind === 'issue' && !t.isContradicted),
+          };
+          const hasTone = toneTopics.length > 0 || v6Signals.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Sentiment & Tone Map', pl: 'Mapa sentymentu i tonu' }}
+              isEmpty={!hasTone}
+              emptyState={{
+                icon: Heart,
+                message: {
+                  pl: 'Tu zmapujemy emocjonalny ton wokół tematów — entuzjazm, napięcie, obawy. Populuje się z tematów AI (szanse vs. problemy vs. sprzeczności) i wykrytych sygnałów.',
+                  en: 'The emotional tone around topics is mapped here — enthusiasm, tension, concern. Populates from AI topics (opportunities vs. issues vs. contradictions) and detected signals.',
+                },
+              }}
+            >
+              <Callout
+                variant="info"
+                title={isPolish ? 'Ton jako proxy' : 'Tone as a proxy'}
+                compact
+              >
+                {isPolish
+                  ? 'Ton jest przybliżony ze stanu tematów (szansa, problem, sprzeczność). To wskazówka kierunku, nie pomiar afektu.'
+                  : 'Tone is approximated from topic state (opportunity, issue, contradiction). Treat it as directional, not a literal affect measurement.'}
+              </Callout>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(
+                  [
+                    {
+                      key: 'positive',
+                      topics: toneBuckets.positive,
+                      title: isPolish ? 'Pozytywny / energia' : 'Positive / energy',
+                      tone: 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-300',
+                    },
+                    {
+                      key: 'concern',
+                      topics: toneBuckets.concern,
+                      title: isPolish ? 'Obawa / problem' : 'Concern / problem',
+                      tone: 'border-amber-500/20 bg-amber-500/[0.06] text-amber-700 dark:text-amber-300',
+                    },
+                    {
+                      key: 'tense',
+                      topics: toneBuckets.tense,
+                      title: isPolish ? 'Napięcie / sprzeczność' : 'Tension / contradiction',
+                      tone: 'border-rose-500/20 bg-rose-500/[0.06] text-rose-700 dark:text-rose-300',
+                    },
+                  ] as const
+                ).map((col) => (
+                  <div
+                    key={col.key}
+                    className={`rounded-2xl border px-4 py-4 space-y-2 ${col.tone}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                        {col.title}
+                      </div>
+                      <span className="text-xs font-semibold opacity-70">{col.topics.length}</span>
+                    </div>
+                    {col.topics.slice(0, 6).map((topic) => (
+                      <div key={topic.id} className="text-sm text-slate-700 dark:text-slate-200">
+                        {topic.label}
+                      </div>
+                    ))}
+                    {col.topics.length === 0 && (
+                      <div className="text-xs opacity-70">
+                        {isPolish ? 'Brak tematów' : 'No topics'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #23d — Power Dynamics ──────────────────────────────────────────────
+        case 'power-dynamics': {
+          const roleGroups = new Map<string, typeof visiblePeopleLenses>();
+          for (const lens of visiblePeopleLenses) {
+            const key = lens.role || (isPolish ? 'Nieokreślona rola' : 'Unspecified role');
+            const arr = roleGroups.get(key) || [];
+            arr.push(lens);
+            roleGroups.set(key, arr);
+          }
+          const hasPower = roleGroups.size > 0 && visiblePeopleLenses.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Power Dynamics', pl: 'Dynamika władzy' }}
+              isEmpty={!hasPower}
+              emptyState={{
+                icon: Scale,
+                message: {
+                  pl: 'Tu pokażemy, czyj głos dominuje — wpływ ról i działów na insight. Populuje się, gdy respondenci mają przypisane role/działy w analizie perspektyw.',
+                  en: 'Whose voice dominates — the weight of roles and departments behind the insight — appears here. Populates when respondents carry role/department metadata in the perspective analysis.',
+                },
+              }}
+            >
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Czyj głos waży najwięcej' : 'Whose voice carries weight'}
+                compact
+              >
+                {isPolish
+                  ? 'Insight zbudowany głównie z jednej roli lub działu może odzwierciedlać ich interes, a nie obraz całości. Sprawdź balans przed publikacją.'
+                  : 'An insight built mostly from one role or department may reflect their interest, not the whole picture. Check the balance before publishing.'}
+              </Callout>
+              <div className="space-y-2">
+                {Array.from(roleGroups.entries())
+                  .sort((a, b) => b[1].length - a[1].length)
+                  .map(([role, lenses]) => {
+                    const share = Math.round(
+                      (lenses.length / Math.max(visiblePeopleLenses.length, 1)) * 100
+                    );
+                    return (
+                      <div
+                        key={role}
+                        className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                            {role}
+                          </div>
+                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            {lenses.length} · {share}%
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70 dark:bg-navy-700/60">
+                          <div
+                            className="h-full rounded-full bg-primary-500"
+                            style={{ width: `${share}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
+
+        // ── #23d — Hypothesis Board ────────────────────────────────────────────
+        case 'hypothesis-board': {
+          // Treat triage candidates as working hypotheses, bucketed by status.
+          const openHyp = candidates.filter(
+            (c) =>
+              c.triage_status === 'candidate' ||
+              c.triage_status === 'needs_evidence' ||
+              c.triage_status === 'needs_split'
+          );
+          const testingHyp = candidates.filter((c) => c.triage_status === 'ready_for_review');
+          const resolvedHyp = candidates.filter(
+            (c) => c.triage_status === 'promoted' || c.triage_status === 'rejected'
+          );
+          const hasHyp = candidates.length > 0;
+          component = (
+            <NModeSectionWrapper
+              heading={{ en: 'Hypothesis Board', pl: 'Tablica hipotez' }}
+              isEmpty={!hasHyp}
+              emptyState={{
+                icon: Network,
+                message: {
+                  pl: 'Tu kandydaci stają się hipotezami roboczymi w kolumnach: otwarte → w teście → rozstrzygnięte. Populuje się z triage kandydatów tego insightu.',
+                  en: 'Candidates become working hypotheses across columns: open → testing → resolved. Populates from this insight’s candidate triage.',
+                },
+              }}
+            >
+              <Callout
+                variant="info"
+                title={isPolish ? 'Od hipotezy do findingu' : 'From hypothesis to finding'}
+                compact
+              >
+                {isPolish
+                  ? 'Każda hipoteza przesuwa się w prawo, gdy zbiera dowody — aż do promocji w finding P10 lub odrzucenia.'
+                  : 'Each hypothesis moves right as it gathers evidence — until it is promoted into a P10 finding or rejected.'}
+              </Callout>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {(
+                  [
+                    {
+                      key: 'open',
+                      items: openHyp,
+                      title: isPolish ? 'Otwarte' : 'Open',
+                      tone: 'border-slate-200/70 dark:border-navy-700/60',
+                    },
+                    {
+                      key: 'testing',
+                      items: testingHyp,
+                      title: isPolish ? 'W teście' : 'Testing',
+                      tone: 'border-amber-500/20',
+                    },
+                    {
+                      key: 'resolved',
+                      items: resolvedHyp,
+                      title: isPolish ? 'Rozstrzygnięte' : 'Resolved',
+                      tone: 'border-emerald-500/20',
+                    },
+                  ] as const
+                ).map((col) => (
+                  <div
+                    key={col.key}
+                    className={`rounded-2xl border bg-white/40 dark:bg-navy-900/20 px-3 py-3 space-y-2 ${col.tone}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                        {col.title}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        {col.items.length}
+                      </span>
+                    </div>
+                    {col.items.slice(0, 8).map((c) => (
+                      <div
+                        key={c.id}
+                        className="rounded-xl bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/50 px-3 py-2"
+                      >
+                        <div className="text-sm text-slate-800 dark:text-slate-100">
+                          {c.candidate_statement}
+                        </div>
+                        <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          {c.confidence_hint}
+                        </div>
+                      </div>
+                    ))}
+                    {col.items.length === 0 && (
+                      <div className="text-xs text-slate-500 dark:text-slate-500">
+                        {isPolish ? 'Pusto' : 'Empty'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </NModeSectionWrapper>
+          );
+          break;
+        }
       }
 
-      const badgeMap: Record<string, number | undefined> = {
-        'truth-review-summary': truthReviewSummary.publishBlockers.length || undefined,
-        'report-pack': reportPack?.degraded
-          ? reportPack.degradedReasons.length || 1
-          : reportPack?.worksheets.length,
-        'candidate-triage': candidates.length || undefined,
-        comments: nComments.length,
-        'source-sessions': sourceSessions.length,
-        'activity-log': activityEntries.length,
-        themes: v6Themes.length || undefined,
-        'issues-risks': v6Issues.length || undefined,
-        opportunities: v6Opportunities.length || undefined,
-        signals: v6Signals.length || undefined,
-        'evidence-map': v6EvidenceMap.length || undefined,
-      };
+      componentById[section.id] = component;
+    }
 
+    // #23c — compose merged content under a single surviving section. Each
+    // merged sub-block is preserved verbatim; only the nav entry is shared.
+    const mergedDivider = (title: { en: string; pl: string }) => (
+      <div className="flex items-center gap-3 pt-2">
+        <div className="h-px flex-1 bg-slate-200/70 dark:bg-navy-700/60" />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-500">
+          {isPolish ? title.pl : title.en}
+        </span>
+        <div className="h-px flex-1 bg-slate-200/70 dark:bg-navy-700/60" />
+      </div>
+    );
+
+    const composedComponentById: Record<string, React.ReactNode> = { ...componentById };
+
+    // Quality & Trust = Material Quality + Truth & Review
+    composedComponentById['material-quality'] = (
+      <div className="space-y-6">
+        {componentById['material-quality']}
+        {mergedDivider({ en: 'Truth & Review', pl: 'Prawda i review' })}
+        {componentById['truth-review-summary']}
+      </div>
+    );
+    // Sources = Source Pack + Source Sessions
+    composedComponentById['source-pack'] = (
+      <div className="space-y-6">
+        {componentById['source-pack']}
+        {mergedDivider({ en: 'Source Sessions', pl: 'Sesje źródłowe' })}
+        {componentById['source-sessions']}
+      </div>
+    );
+    // Findings & Evidence = Candidate Triage + Traceability
+    composedComponentById['candidate-triage'] = (
+      <div className="space-y-6">
+        {componentById['candidate-triage']}
+        {mergedDivider({ en: 'Traceability', pl: 'Traceability' })}
+        {componentById['traceability']}
+      </div>
+    );
+
+    const badgeMap: Record<string, number | undefined> = {
+      'report-pack': reportPack?.degraded
+        ? reportPack.degradedReasons.length || 1
+        : reportPack?.worksheets.length,
+      'candidate-triage': candidates.length || undefined,
+      comments: nComments.length,
+      'material-quality': truthReviewSummary.publishBlockers.length || undefined,
+      'source-pack': sourceSessions.length || undefined,
+      'activity-log': activityEntries.length,
+      themes: v6Themes.length || undefined,
+      'issues-risks': v6Issues.length || undefined,
+      opportunities: v6Opportunities.length || undefined,
+      signals: v6Signals.length || undefined,
+      'evidence-map': v6EvidenceMap.length || undefined,
+      'hypothesis-board': candidates.length || undefined,
+    };
+
+    // Adaptive sidebar (#22): only sections with a definite zero count are
+    // treated as empty (conservative — never hide a section that might have
+    // content). Core sections always show. The new "between the lines"
+    // analytical sections (#22c/#23d) self-render an informative empty-state,
+    // so they are hidden from the nav until their derived data exists, except
+    // the one or two flagged alwaysShow.
+    const definiteCounts: Record<string, number> = {
+      'candidate-triage': candidates.length,
+      comments: nComments.length,
+      themes: v6Themes.length,
+      'issues-risks': v6Issues.length,
+      opportunities: v6Opportunities.length,
+      signals: v6Signals.length,
+      'evidence-map': v6EvidenceMap.length,
+      'activity-log': activityEntries.length,
+      // derived analytical sections — hidden until their data exists
+      'consensus-divergence':
+        consensusTopics.length + localOnlyTopics.length + contradictedTopics.length,
+      'implicit-assumptions':
+        (analysis?.topics || []).filter(
+          (t) =>
+            t.confidenceLevel === 'low' ||
+            t.confidenceLevel === 'insufficient' ||
+            (t.supportingSessionIds.length <= 1 && !t.isContradicted)
+        ).length + hiddenSignals.length,
+      silences: (analysis?.synthesis.coverageGaps || []).length + v6MissingData.length,
+      'quote-comparison':
+        visiblePeopleLenses.filter((l) => l.localSummary || l.supportedTopicIds.length > 0).length +
+        evidenceQuotes.length,
+      'sentiment-tone': (analysis?.topics || []).length + v6Signals.length,
+      'power-dynamics': visiblePeopleLenses.length,
+      'hypothesis-board': candidates.length,
+    };
+    // alwaysShow: the two most important differentiators stay visible even empty.
+    const alwaysShowSet = new Set([
+      'artifact-actions',
+      'executive-summary',
+      'consensus-divergence',
+      'silences',
+    ]);
+
+    // Sidebar grouping (#22b/#22): 5 themed groups.
+    const groupLabels = isPolish
+      ? ['Wgląd', 'Między wierszami', 'Dowody', 'Dostarczane', 'Audyt']
+      : ['Insight', 'Between the lines', 'Evidence', 'Deliverables', 'Audit'];
+    const groupIndexById: Record<string, number> = {
+      // 0 — Wgląd / Insight
+      'executive-summary': 0,
+      'consulting-readout': 0,
+      'artifact-actions': 0,
+      themes: 0,
+      'issues-risks': 0,
+      opportunities: 0,
+      // 1 — Między wierszami / Between the lines
+      people: 1,
+      signals: 1,
+      'analysis-matrix': 1,
+      'consensus-divergence': 1,
+      'implicit-assumptions': 1,
+      silences: 1,
+      'quote-comparison': 1,
+      'sentiment-tone': 1,
+      'power-dynamics': 1,
+      'hypothesis-board': 1,
+      // 2 — Dowody / Evidence
+      'evidence-map': 2,
+      'candidate-triage': 2,
+      'source-pack': 2,
+      // 3 — Dostarczane / Deliverables
+      'report-pack': 3,
+      // 4 — Audyt / Audit
+      'material-quality': 4,
+      comments: 4,
+      'activity-log': 4,
+    };
+
+    const order = groupLabels;
+    return INSIGHT_SECTIONS.map((section) => {
       return {
         ...section,
-        component,
+        component: composedComponentById[section.id] ?? null,
         badge: badgeMap[section.id],
+        hasData: section.id in definiteCounts ? definiteCounts[section.id] > 0 : undefined,
+        alwaysShow: alwaysShowSet.has(section.id),
+        group: groupLabels[groupIndexById[section.id] ?? 4],
       } as NModeSection;
-    });
+    }).sort((a, b) => order.indexOf(a.group ?? '') - order.indexOf(b.group ?? ''));
   }, [
     executiveSummary,
     insight,
@@ -5677,6 +6490,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     candidates,
     candidateSummary,
     candidateActionLoadingId,
+    consensusTopics,
+    localOnlyTopics,
+    contradictedTopics,
+    visiblePeopleLenses,
     nComments,
     commentDraft,
     commentDateFilter,
@@ -5712,14 +6529,174 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     handleWorksheetStatusUpdate,
   ]);
 
+  // #25 — content-bearing sections offered in the export dialog. We exclude the
+  // pure-UI / audit sections (next-actions, comments, activity log) that have no
+  // exportable narrative body.
+  const exportableSections = useMemo(() => {
+    const excluded = new Set(['artifact-actions', 'comments', 'activity-log']);
+    return nModeSectionsWithContent.filter((s) => !excluded.has(s.id));
+  }, [nModeSectionsWithContent]);
+
+  // #25 — target catalogue. `supported` targets feed the existing export
+  // handlers with the chosen section ids; unsupported ones are shown but
+  // disabled-with-tooltip (honest over fake).
+  const exportTargets = useMemo<
+    {
+      id: ExportTargetId;
+      label: { en: string; pl: string };
+      icon: React.FC<{ size?: number; className?: string }>;
+      supported: boolean;
+      hint: { en: string; pl: string };
+    }[]
+  >(
+    () => [
+      {
+        id: 'note',
+        label: { en: 'Note (fragments)', pl: 'Notatka (fragmenty)' },
+        icon: BookOpen,
+        supported: true,
+        hint: {
+          en: 'Selected sections become notebook fragments.',
+          pl: 'Wybrane sekcje stają się fragmentami notatnika.',
+        },
+      },
+      {
+        id: 'tools',
+        label: { en: 'Tools / Idea', pl: 'Narzędzia / Pomysł' },
+        icon: Target,
+        supported: true,
+        hint: {
+          en: 'Hand selected sections to a Discovery tool.',
+          pl: 'Przekaż wybrane sekcje do narzędzia Discovery.',
+        },
+      },
+      {
+        id: 'assessment',
+        label: { en: 'Assessment / Table', pl: 'Ocena / Tabela' },
+        icon: BarChart3,
+        supported: true,
+        hint: {
+          en: 'Map selected sections into an assessment.',
+          pl: 'Zmapuj wybrane sekcje do oceny.',
+        },
+      },
+      {
+        id: 'markdown',
+        label: { en: 'Markdown file', pl: 'Plik Markdown' },
+        icon: Download,
+        supported: true,
+        hint: {
+          en: 'Download the selected sections as a .md file.',
+          pl: 'Pobierz wybrane sekcje jako plik .md.',
+        },
+      },
+      {
+        id: 'report',
+        label: { en: 'Report', pl: 'Raport' },
+        icon: FileText,
+        supported: false,
+        hint: {
+          en: 'Section-aware Report export is not wired yet.',
+          pl: 'Eksport raportu z wyborem sekcji nie jest jeszcze podłączony.',
+        },
+      },
+      {
+        id: 'deck',
+        label: { en: 'Deck', pl: 'Prezentacja' },
+        icon: LayoutGrid,
+        supported: false,
+        hint: {
+          en: 'Deck export is not wired yet.',
+          pl: 'Eksport prezentacji nie jest jeszcze podłączony.',
+        },
+      },
+      {
+        id: 'initiative',
+        label: { en: 'Initiative', pl: 'Inicjatywa' },
+        icon: Rocket,
+        supported: false,
+        hint: {
+          en: 'Use a finding’s "Create initiative" handoff instead.',
+          pl: 'Użyj przekazania "Utwórz inicjatywę" przy wniosku.',
+        },
+      },
+    ],
+    []
+  );
+
+  const openExportDialog = useCallback(() => {
+    // Default: all sections with hasData selected.
+    const defaults = exportableSections.filter((s) => s.hasData !== false).map((s) => s.id);
+    setExportSelectedIds(new Set(defaults));
+    setExportTarget('note');
+    setExportDialogOpen(true);
+  }, [exportableSections]);
+
+  const toggleExportSection = useCallback((id: string) => {
+    setExportSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAllExportSections = useCallback(() => {
+    setExportSelectedIds(new Set(exportableSections.map((s) => s.id)));
+  }, [exportableSections]);
+
+  const clearExportSections = useCallback(() => {
+    setExportSelectedIds(new Set());
+  }, []);
+
+  const runSmartExport = useCallback(async () => {
+    const ids = Array.from(exportSelectedIds);
+    if (ids.length === 0) {
+      toast.error(isPolish ? 'Wybierz co najmniej jedną sekcję' : 'Select at least one section');
+      return;
+    }
+    setExportRunning(true);
+    try {
+      switch (exportTarget) {
+        case 'note':
+          await handleExportToNotebook(ids);
+          break;
+        case 'tools':
+        case 'idea':
+          await handleExportToTools(ids);
+          break;
+        case 'assessment':
+        case 'table':
+          await handleExportToAssessment(ids);
+          break;
+        case 'markdown':
+          handleExportMarkdown(ids);
+          break;
+        default:
+          // unsupported targets are disabled in the UI; guard anyway
+          toast.error(
+            isPolish ? 'Ten cel nie jest jeszcze obsługiwany' : 'This target is not supported yet'
+          );
+          return;
+      }
+      setExportDialogOpen(false);
+    } finally {
+      setExportRunning(false);
+    }
+  }, [
+    exportSelectedIds,
+    exportTarget,
+    isPolish,
+    handleExportToNotebook,
+    handleExportToTools,
+    handleExportToAssessment,
+    handleExportMarkdown,
+  ]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-full bg-white dark:bg-navy-950 py-0" />;
   }
 
   if (error) {
@@ -5750,6 +6727,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         statusDotColor: statusConfig.color,
       }}
       properties={propertyFields}
+      propertiesMaxColumns={5}
       sections={nModeSectionsWithContent}
       activeSection={activeNSection}
       onSectionChange={setActiveNSection}
@@ -5758,90 +6736,154 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
       renderActionBar={() => (
         <div className="flex items-center gap-2 flex-wrap">
+          {/* #26 — Primary action: Submit for Information (no review/approval gate) */}
           <button
-            onClick={handleRegenerate}
-            disabled={isRegenerating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-all disabled:opacity-50"
+            onClick={handleSubmitForInformation}
+            disabled={submittingForInfo || insight?.status !== 'completed'}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-xs font-semibold shadow-sm hover:from-primary-500 hover:to-indigo-500 transition-all disabled:opacity-50"
           >
-            <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-            {isPolish ? 'Regeneruj' : 'Regenerate'}
-          </button>
-
-          <button
-            onClick={handleExportToTools}
-            disabled={isExportingTools || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            {isExportingTools ? (
+            {submittingForInfo ? (
               <Loader2 size={14} className="animate-spin" />
             ) : (
-              <Target size={14} />
+              <Send size={14} />
             )}
-            {isPolish ? 'Do Tools' : 'Export Tools'}
-          </button>
-
-          <button
-            onClick={handleExportToAssessment}
-            disabled={isExportingAssessment || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            {isExportingAssessment ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <BarChart3 size={14} />
-            )}
-            {isPolish ? 'Do Assessment' : 'Export Assessment'}
-          </button>
-
-          <button
-            onClick={handleExportToNotebook}
-            disabled={isExportingNotebook || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            {isExportingNotebook ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <BookOpen size={14} />
-            )}
-            {isPolish ? 'Do Notatnika' : 'To Notebook'}
-          </button>
-
-          <button
-            onClick={handleExportMarkdown}
-            disabled={insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            <Download size={14} />
-            {isPolish ? 'Markdown' : 'Download MD'}
-          </button>
-
-          <button
-            onClick={handleCopy}
-            disabled={insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-          >
-            <Copy size={14} />
-            {isPolish ? 'Kopiuj' : 'Copy'}
+            {isPolish ? 'Wyślij do wiadomości' : 'Submit for Information'}
           </button>
 
           <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
 
-          {(!insight?.reviewStatus || insight.reviewStatus === 'draft') &&
-            (insight?.status === 'completed' || insight?.status === 'failed') && (
-              <button
-                onClick={() => handleLifecycleTransition('submit_review')}
-                disabled={lifecycleTransitioning}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-              >
-                {lifecycleTransitioning ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Eye size={14} />
-                )}
-                {isPolish ? 'Wyślij do recenzji' : 'Submit for Review'}
-              </button>
+          {/* #26 — Export ▾ : uniform outline dropdown (all secondary exports) */}
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              onClick={() => {
+                setExportMenuOpen((v) => !v);
+                setAiMenuOpen(false);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 text-xs font-medium transition-all"
+            >
+              <ExternalLink size={14} />
+              {isPolish ? 'Eksport' : 'Export'}
+              <ChevronDown size={13} className={exportMenuOpen ? 'rotate-180' : ''} />
+            </button>
+            {exportMenuOpen && (
+              <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    openExportDialog();
+                  }}
+                  disabled={insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <Sparkles size={14} />
+                  {isPolish ? 'Inteligentny eksport…' : 'Smart export…'}
+                </button>
+                <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportToTools();
+                  }}
+                  disabled={isExportingTools || insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  {isExportingTools ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Target size={14} />
+                  )}
+                  {isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
+                </button>
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportToAssessment();
+                  }}
+                  disabled={isExportingAssessment || insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  {isExportingAssessment ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <BarChart3 size={14} />
+                  )}
+                  {isPolish ? 'Eksportuj do Assessment' : 'Export to Assessment'}
+                </button>
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportToNotebook();
+                  }}
+                  disabled={isExportingNotebook || insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  {isExportingNotebook ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <BookOpen size={14} />
+                  )}
+                  {isPolish ? 'Do Notatnika' : 'To Notebook'}
+                </button>
+                <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleExportMarkdown();
+                  }}
+                  disabled={insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <Download size={14} />
+                  {isPolish ? 'Pobierz Markdown' : 'Download MD'}
+                </button>
+                <button
+                  onClick={() => {
+                    setExportMenuOpen(false);
+                    handleCopy();
+                  }}
+                  disabled={insight?.status !== 'completed'}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <Copy size={14} />
+                  {isPolish ? 'Kopiuj markdown' : 'Copy markdown'}
+                </button>
+              </div>
             )}
+          </div>
 
+          {/* #26 — ✨ AI ▾ : uniform outline dropdown (Regenerate) */}
+          <div className="relative" ref={aiMenuRef}>
+            <button
+              onClick={() => {
+                setAiMenuOpen((v) => !v);
+                setExportMenuOpen(false);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 text-xs font-medium transition-all"
+            >
+              <Sparkles size={14} />
+              {isPolish ? 'AI' : 'AI'}
+              <ChevronDown size={13} className={aiMenuOpen ? 'rotate-180' : ''} />
+            </button>
+            {aiMenuOpen && (
+              <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                <button
+                  onClick={() => {
+                    setAiMenuOpen(false);
+                    handleRegenerate();
+                  }}
+                  disabled={isRegenerating}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
+                  {isPolish ? 'Regeneruj' : 'Regenerate'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Legacy lifecycle controls — only surface for insights already in a
+              review/published state (older data). New insights use the
+              informational "Submit for Information" flow above (#26b). */}
           {insight?.reviewStatus === 'in_review' && (
             <>
               <button
@@ -5905,7 +6947,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   setHandoffModalOpen(false);
                   setHandoffFinding(null);
                 }}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -5951,7 +6993,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       ))}
                     </ul>
                   ) : (
-                    <span className="text-xs italic text-slate-400">
+                    <span className="text-xs italic text-slate-600">
                       {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
                     </span>
                   )}
@@ -5987,6 +7029,250 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           </div>
         </div>
       )}
+
+      {/* #25 — Smart export generator: preview-pane dialog. Left = section
+          checkbox table; right = target picker + live preview of selection. */}
+      {exportDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => !exportRunning && setExportDialogOpen(false)}
+          />
+          <div className="relative w-full max-w-3xl mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+              <div className="flex items-center gap-2">
+                <Sparkles size={18} className="text-blue-500" />
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  {isPolish ? 'Inteligentny eksport' : 'Smart export'}
+                </h3>
+              </div>
+              <button
+                onClick={() => !exportRunning && setExportDialogOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Target picker */}
+            <div className="px-6 pt-4">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                {isPolish ? 'Cel eksportu' : 'Export target'}
+              </label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {exportTargets.map((t) => {
+                  const Icon = t.icon;
+                  const active = exportTarget === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => t.supported && setExportTarget(t.id)}
+                      disabled={!t.supported}
+                      title={(isPolish ? t.hint.pl : t.hint.en) || undefined}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                        active
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                          : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                      } ${!t.supported ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    >
+                      <Icon size={14} />
+                      {isPolish ? t.label.pl : t.label.en}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+                {isPolish
+                  ? exportTargets.find((t) => t.id === exportTarget)?.hint.pl
+                  : exportTargets.find((t) => t.id === exportTarget)?.hint.en}
+              </p>
+              {(exportTarget === 'tools' || exportTarget === 'assessment') && (
+                <p className="mt-1 flex items-start gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
+                  <span>
+                    {isPolish
+                      ? 'Wybór sekcji dotyczy również tego celu — wyeksportowane zostaną tylko zaznaczone sekcje.'
+                      : 'Section selection applies to this target too — only the selected sections are exported.'}
+                  </span>
+                </p>
+              )}
+            </div>
+
+            {/* Body: left = section table, right = preview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0 mt-3 border-t border-slate-200 dark:border-navy-700">
+              {/* Left: section checkbox table */}
+              <div className="flex flex-col min-h-0 border-r border-slate-200 dark:border-navy-700">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Sekcje' : 'Sections'} ({exportSelectedIds.size}/
+                    {exportableSections.length})
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={selectAllExportSections}
+                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {isPolish ? 'Wszystkie' : 'All'}
+                    </button>
+                    <span className="text-slate-300 dark:text-navy-600">·</span>
+                    <button
+                      onClick={clearExportSections}
+                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {isPolish ? 'Żadne' : 'None'}
+                    </button>
+                  </div>
+                </div>
+                <div className="overflow-y-auto px-2 py-2 max-h-[42vh]">
+                  {exportableSections.map((s) => {
+                    const checked = exportSelectedIds.has(s.id);
+                    const empty = s.hasData === false;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => toggleExportSection(s.id)}
+                        className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-navy-800"
+                      >
+                        {checked ? (
+                          <CheckSquare size={15} className="shrink-0 text-blue-500" />
+                        ) : (
+                          <Square
+                            size={15}
+                            className="shrink-0 text-slate-300 dark:text-navy-600"
+                          />
+                        )}
+                        <span
+                          className={`flex-1 text-xs ${
+                            empty
+                              ? 'text-slate-400 dark:text-slate-500'
+                              : 'text-slate-700 dark:text-slate-200'
+                          }`}
+                        >
+                          {isPolish ? s.label.pl : s.label.en}
+                        </span>
+                        {typeof s.badge === 'number' && s.badge > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                            {s.badge}
+                          </span>
+                        )}
+                        {empty && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                            {isPolish ? 'pusta' : 'empty'}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {exportableSections.length === 0 && (
+                    <p className="px-2 py-4 text-xs text-slate-400">
+                      {isPolish ? 'Brak sekcji do eksportu.' : 'No exportable sections.'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: live preview */}
+              <div className="flex flex-col min-h-0">
+                <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    {isPolish ? 'Podgląd' : 'Preview'}
+                  </span>
+                </div>
+                <div className="overflow-y-auto px-4 py-3 max-h-[42vh] text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                  {exportSelectedIds.size === 0 ? (
+                    <p className="text-slate-400 dark:text-slate-500 italic">
+                      {isPolish
+                        ? 'Wybierz sekcje, aby zobaczyć podgląd.'
+                        : 'Select sections to preview.'}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                        {isPolish
+                          ? `${exportSelectedIds.size} sekcji zostanie wyeksportowanych do: ${
+                              exportTargets.find((t) => t.id === exportTarget)?.label.pl
+                            }`
+                          : `${exportSelectedIds.size} section(s) will be exported to: ${
+                              exportTargets.find((t) => t.id === exportTarget)?.label.en
+                            }`}
+                      </p>
+                      <ul className="space-y-1">
+                        {exportableSections
+                          .filter((s) => exportSelectedIds.has(s.id))
+                          .map((s) => (
+                            <li key={s.id} className="flex items-center gap-2">
+                              <CheckCircle2 size={13} className="shrink-0 text-emerald-500" />
+                              <span className="flex-1">{isPolish ? s.label.pl : s.label.en}</span>
+                              <span className="text-[10px] text-slate-400">{s.group}</span>
+                            </li>
+                          ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                {isPolish
+                  ? 'Filtrowanie sekcji odbywa się po stronie klienta (serwerowy filtr — TODO).'
+                  : 'Section filtering is applied client-side (server-side filter — TODO).'}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => !exportRunning && setExportDialogOpen(false)}
+                  className="px-4 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  onClick={runSmartExport}
+                  disabled={exportRunning || exportSelectedIds.size === 0}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+                >
+                  {exportRunning ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={14} />
+                  )}
+                  {isPolish ? 'Eksportuj' : 'Export'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* C-mode (ClickUp): every section at once in a dense grid. Renders only
+          when presentationMode === 'c' (NModeShell gates children), so N-mode is
+          untouched. Each section keeps its own crash boundary. (#21) */}
+      <div className="grid grid-cols-1 gap-5 pb-6 2xl:grid-cols-2">
+        {nModeSectionsWithContent
+          .filter((s) => s.alwaysShow || s.hasData !== false)
+          .map((s) => (
+            <section
+              key={s.id}
+              className="rounded-2xl border border-slate-200/60 bg-white/40 p-4 dark:border-white/[0.06] dark:bg-white/[0.02]"
+            >
+              <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-500">
+                {isPolish ? s.label.pl : s.label.en}
+                {typeof s.badge === 'number' && s.badge > 0 ? (
+                  <span className="rounded-full bg-slate-100 px-1.5 text-[10px] text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                    {s.badge}
+                  </span>
+                ) : null}
+              </div>
+              <SectionErrorBoundary
+                sectionLabel={isPolish ? s.label.pl : s.label.en}
+                isPolish={isPolish}
+              >
+                {s.component}
+              </SectionErrorBoundary>
+            </section>
+          ))}
+      </div>
     </NModeShell>
   );
 };

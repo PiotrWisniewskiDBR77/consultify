@@ -35,6 +35,8 @@ const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicR
 const SubscriberDashboardPage = React.lazy(
   () => import('./views/subscriber/SubscriberDashboardPage')
 );
+// Audit Orchestrator hub (audit #19 family).
+const AuditsHub = React.lazy(() => import('./components/Audit/AuditsHub'));
 
 type AuthBootState = {
   inflightMeRequest: Promise<User | null> | null;
@@ -443,6 +445,20 @@ function AppContent() {
               }
             >
               <SubscriberDashboardPage />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/audits"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <AuditsHub />
             </React.Suspense>
           }
         />

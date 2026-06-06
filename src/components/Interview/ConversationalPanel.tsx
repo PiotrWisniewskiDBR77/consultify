@@ -20,6 +20,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { TeresaMark } from '@/components/shared/TeresaMark';
+
+import { getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
 const API_BASE = '/api/interview';
@@ -74,7 +77,12 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
   const fetchMessages = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/sessions/${sessionId}/transcript`);
+      // I3 — include auth + org headers. The legacy interview router requires
+      // verifyToken + requireOrgAccess; a bare fetch only succeeded when an
+      // access_token cookie happened to be set, and never sent the org header.
+      const res = await fetch(`${API_BASE}/sessions/${sessionId}/transcript`, {
+        headers: getHeaders(),
+      });
       if (!res.ok) return;
       const data = await res.json();
       setMessages(data.messages || []);
@@ -108,7 +116,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
       setLoading(true);
       const res = await fetch(`${API_BASE}/sessions/${sessionId}/transcript`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ role: 'user', content: text }),
       });
       if (!res.ok) throw new Error('Failed to send message');
@@ -144,7 +152,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
 
       const res = await fetch(`${API_BASE}/sessions/${sessionId}/ai-parse`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ text: transcript }),
       });
 
@@ -226,7 +234,7 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
+          <div className="flex flex-col items-center justify-center h-full text-gray-600 dark:text-gray-500">
             <MessageSquare className="w-10 h-10 mb-2 opacity-40" />
             <p className="text-sm">{t('interview.conversational.startConversation')}</p>
           </div>
@@ -238,10 +246,17 @@ export const ConversationalPanel: React.FC<ConversationalPanelProps> = ({
             className={`rounded-xl border p-3 ${roleColors[msg.role] || roleColors.system}`}
           >
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                {msg.role}
-              </span>
-              <span className="text-xs text-gray-400 dark:text-gray-500">
+              {msg.role === 'ai' ? (
+                <span className="inline-flex items-center gap-1 text-crimson-700 dark:text-crimson-300">
+                  <TeresaMark size={13} />
+                  <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
+                </span>
+              ) : (
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {msg.role}
+                </span>
+              )}
+              <span className="text-xs text-gray-600 dark:text-gray-500">
                 {new Date(msg.createdAt).toLocaleTimeString()}
               </span>
             </div>

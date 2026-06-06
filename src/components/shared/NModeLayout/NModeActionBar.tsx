@@ -18,6 +18,12 @@ interface NModeActionBarProps {
   actions: NModeAction[];
   /** AI actions that appear based on active section */
   aiContextActions?: NModeAIContextAction[];
+  /**
+   * Tool-level AI actions — whole-artifact AI, always visible regardless of the
+   * active section (vs. aiContextActions which are section-scoped). Rendered as a
+   * right-aligned group. Part of the 3-level AI model: tool / section / field.
+   */
+  toolAIActions?: NModeAction[];
   /** Currently active section id (for AI context) */
   activeSection: string;
 }
@@ -70,6 +76,7 @@ const ActionButton: React.FC<{ action: NModeAction; isPolish: boolean; className
 export const NModeActionBar: React.FC<NModeActionBarProps> = ({
   actions,
   aiContextActions = [],
+  toolAIActions = [],
   activeSection,
 }) => {
   const { i18n } = useTranslation();
@@ -88,6 +95,17 @@ export const NModeActionBar: React.FC<NModeActionBarProps> = ({
       {/* Section-specific AI action (pushed to the right) */}
       {sectionAIAction && (
         <ActionButton action={sectionAIAction.action} isPolish={isPolish} className="ml-auto" />
+      )}
+
+      {/* Tool-level AI actions — whole-artifact, always visible regardless of
+          section. Right-aligned group (ml-auto on the first when no section
+          AI action already pushed the row right). */}
+      {toolAIActions.length > 0 && (
+        <div className={`flex items-center gap-2 ${sectionAIAction ? '' : 'ml-auto'}`}>
+          {toolAIActions.map((action) => (
+            <ActionButton key={action.id} action={action} isPolish={isPolish} />
+          ))}
+        </div>
       )}
     </div>
   );

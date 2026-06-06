@@ -173,7 +173,7 @@ export const SufficiencyIndicator: React.FC<SufficiencyIndicatorProps> = ({
                   ) : (
                     <AlertCircle
                       size={16}
-                      className="shrink-0 mt-0.5 text-slate-400 dark:text-slate-500"
+                      className="shrink-0 mt-0.5 text-slate-600 dark:text-slate-500"
                     />
                   )}
                   <span className={c.met ? 'line-through' : ''}>{c.label}</span>

@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+
 const CATEGORY_ICONS: Record<string, React.ComponentType<any>> = {
   strategy: Target,
   operations: Settings,
@@ -84,7 +86,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   // Get category icon
   const getCategoryIcon = (category: string) => {
     const Icon = CATEGORY_ICONS[category] || FileText;
-    return <Icon size={14} className="text-slate-400" />;
+    return <Icon size={14} className="text-slate-600" />;
   };
 
   return (
@@ -147,13 +149,11 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         </div>
 
         {!hasSummary ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500">
-            <FileText size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="text-lg mb-2">No summary generated yet</p>
-            <p className="text-sm">
-              Click "Generate Summary" to create a summary from your answers.
-            </p>
-          </div>
+          <EmptyState
+            icon={<FileText />}
+            title="No summary generated yet"
+            description='Click "Generate Summary" to create a summary from your answers.'
+          />
         ) : (
           <div className="space-y-6">
             {/* Key Facts */}
@@ -163,7 +163,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Key Facts (As-Is)
               </h3>
               {session.summaryFacts.length === 0 ? (
-                <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                <p className="text-sm text-slate-600 dark:text-slate-500 italic">
                   No facts extracted yet.
                 </p>
               ) : (
@@ -175,7 +175,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-slate-400 uppercase">{item.category}</span>
+                        <span className="text-xs text-slate-600 uppercase">{item.category}</span>
                         <p className="text-sm text-slate-700 dark:text-slate-300">{item.fact}</p>
                       </div>
                     </div>
@@ -191,7 +191,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Information Gaps
               </h3>
               {session.summaryGaps.length === 0 ? (
-                <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                <p className="text-sm text-slate-600 dark:text-slate-500 italic">
                   No gaps identified.
                 </p>
               ) : (
@@ -203,7 +203,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-slate-400 uppercase">{item.category}</span>
+                        <span className="text-xs text-slate-600 uppercase">{item.category}</span>
                         <p className="text-sm text-slate-700 dark:text-slate-300">{item.gap}</p>
                       </div>
                     </div>
@@ -219,7 +219,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Constraints & Limitations
               </h3>
               {session.summaryConstraints.length === 0 ? (
-                <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                <p className="text-sm text-slate-600 dark:text-slate-500 italic">
                   No constraints identified.
                 </p>
               ) : (
@@ -231,7 +231,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-slate-400 uppercase">{item.category}</span>
+                        <span className="text-xs text-slate-600 uppercase">{item.category}</span>
                         <p className="text-sm text-slate-700 dark:text-slate-300">
                           {item.constraint}
                         </p>
@@ -249,7 +249,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 Current Pain Points
               </h3>
               {session.summaryPainPoints.length === 0 ? (
-                <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                <p className="text-sm text-slate-600 dark:text-slate-500 italic">
                   No pain points identified.
                 </p>
               ) : (
@@ -261,7 +261,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     >
                       <div className="mt-0.5">{getCategoryIcon(item.category)}</div>
                       <div className="flex-1">
-                        <span className="text-xs text-slate-400 uppercase">{item.category}</span>
+                        <span className="text-xs text-slate-600 uppercase">{item.category}</span>
                         <p className="text-sm text-slate-700 dark:text-slate-300">
                           {item.painPoint}
                         </p>
