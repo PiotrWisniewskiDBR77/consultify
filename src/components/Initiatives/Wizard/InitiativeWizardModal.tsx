@@ -34,6 +34,10 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import {
+  type WizardStep as SharedWizardStep,
+  WizardStepper,
+} from '@/components/shared/WizardModal';
 import { Api } from '@/services/api';
 import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
@@ -2189,14 +2193,16 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     </div>
   );
 
-  const STEP_DEFS: Array<{ id: WizardStep; label: string }> = [
-    { id: 'insights', label: t.stepInsights },
-    { id: 'intent', label: language === 'pl' ? 'Intencja' : 'Intent' },
-    { id: 'candidates', label: language === 'pl' ? 'Kandydaci' : 'Candidates' },
-    { id: 'governance', label: 'Governance' },
-    { id: 'result', label: language === 'pl' ? 'Wynik' : 'Result' },
-  ];
-  const currentStepIndex = STEP_DEFS.findIndex((entry) => entry.id === step);
+  // §5 wizard harmonization — map the bespoke step model onto the shared
+  // <WizardStepper>. The ordered step ids drive index↔id translation; per-step
+  // status mirrors the prior completed/active logic, and reachability (so users
+  // can't skip ahead) is carried from the old stepReachable gate.
+  const STEP_ORDER: WizardStep[] = ['insights', 'intent', 'candidates', 'governance', 'result'];
+  const currentStepIndex = STEP_ORDER.indexOf(step);
+  // Reachability gate (unchanged semantics): a step is reachable when its
+  // prerequisite content exists. We collapse this to a single maxReachableIndex
+  // (the highest contiguously-reachable step) so the shared stepper can gate
+  // forward jumps while still allowing the user to step back freely.
   const stepReachable: Record<WizardStep, boolean> = {
     insights: true,
     intent: true,
@@ -2204,50 +2210,66 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     governance: actionableCandidates.length > 0,
     result: createdInitiatives.length > 0,
   };
+  const maxReachableIndex = (() => {
+    let reach = currentStepIndex; // already-visited steps stay reachable
+    for (let i = 0; i < STEP_ORDER.length; i += 1) {
+      if (stepReachable[STEP_ORDER[i]]) reach = Math.max(reach, i);
+      else break;
+    }
+    return reach;
+  })();
 
-  const renderStepper = () => (
-    <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
-      <div className="grid grid-cols-5 gap-1.5">
-        {STEP_DEFS.map((entry, index) => {
-          const isActive = entry.id === step;
-          const isComplete = index < currentStepIndex;
-          const canJump = stepReachable[entry.id];
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              onClick={() => {
-                if (canJump) setStep(entry.id);
-              }}
-              disabled={!canJump}
-              className={`rounded-xl border px-2 py-1.5 text-left transition-all hover:border-primary-500/50 disabled:cursor-not-allowed disabled:opacity-60 ${
-                isActive
-                  ? 'border-primary-500/40 bg-primary-50 text-primary-700 ring-1 ring-primary-500/20 dark:bg-primary-500/15 dark:text-primary-200'
-                  : isComplete
-                    ? 'border-slate-200 bg-white text-slate-600 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
-                    : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold ${
-                    isActive
-                      ? 'bg-primary-500 text-white'
-                      : isComplete
-                        ? 'bg-slate-200 text-slate-700 dark:bg-navy-700 dark:text-slate-200'
-                        : 'bg-slate-200/80 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
-                  }`}
-                >
-                  {index + 1}
-                </span>
-                <span className="text-xs font-semibold leading-none">{entry.label}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  // Per-step status: a step before the active one (or whose downstream content
+  // already exists) is 'complete'; the active/next reachable step is 'ready';
+  // everything else is 'empty'. Mirrors the old isComplete/active styling.
+  const stepStatusFor = (id: WizardStep, index: number): SharedWizardStep['status'] => {
+    if (index < currentStepIndex) return 'complete';
+    if (id === 'result' && createdInitiatives.length > 0) return 'complete';
+    if (index === currentStepIndex) return 'ready';
+    return index <= maxReachableIndex ? 'ready' : 'empty';
+  };
+
+  const stepperSteps: SharedWizardStep[] = [
+    {
+      id: 'insights',
+      label: { pl: t.stepInsights, en: WIZARD_COPY.en.stepInsights },
+      hint: {
+        pl: 'Wybierz wnioski z wywiadów',
+        en: 'Pick interview insights',
+      },
+      status: stepStatusFor('insights', 0),
+      optional: true,
+    },
+    {
+      id: 'intent',
+      label: { pl: 'Intencja', en: 'Intent' },
+      hint: { pl: 'Cel, priorytety, rdzeń', en: 'Goal, priorities, core' },
+      status: stepStatusFor('intent', 1),
+    },
+    {
+      id: 'candidates',
+      label: { pl: 'Kandydaci', en: 'Candidates' },
+      hint: { pl: 'Triage i podobieństwa', en: 'Triage & similarity' },
+      status: stepStatusFor('candidates', 2),
+    },
+    {
+      id: 'governance',
+      label: { pl: 'Governance', en: 'Governance' },
+      hint: { pl: 'Wybór i shortlist gate', en: 'Selection & shortlist gate' },
+      status: stepStatusFor('governance', 3),
+    },
+    {
+      id: 'result',
+      label: { pl: 'Wynik', en: 'Result' },
+      hint: { pl: 'Drafty i ślad audytu', en: 'Drafts & audit trail' },
+      status: stepStatusFor('result', 4),
+    },
+  ];
+
+  const handleStepperChange = (index: number) => {
+    const target = STEP_ORDER[index];
+    if (target && index <= maxReachableIndex) setStep(target);
+  };
 
   const goToPreviousStep = () => {
     if (step === 'intent') setStep('insights');
@@ -2282,7 +2304,19 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           </button>
         </div>
 
-        {renderStepper()}
+        {/* §5 — shared stepper (managed violet accent) replaces the bespoke header */}
+        <WizardStepper
+          steps={stepperSteps}
+          activeStepIndex={currentStepIndex}
+          maxReachableIndex={maxReachableIndex}
+          onStepChange={handleStepperChange}
+          isPolish={language === 'pl'}
+          // Managed accent for the INITIATIVE wizard (violet) — distinct from
+          // insight (blue) and survey (emerald), same family. The hex is a
+          // managed design token passed to the shared stepper's inline style.
+          // eslint-disable-next-line no-restricted-syntax
+          accentColor="#8b5cf6"
+        />
 
         {/* Content */}
         <div className="flex-1 space-y-4 overflow-auto p-3">

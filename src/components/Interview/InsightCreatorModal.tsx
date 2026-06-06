@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
+import { type WizardStep, WizardStepper } from '@/components/shared/WizardModal';
 import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { type V8ContextDocument, V8InterviewApi } from '@/services/api/v8/interview';
@@ -1507,6 +1508,21 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     setCurrentStep((step) => Math.max(step - 1, 0));
   };
 
+  // §5 — Pill navigation for the shared stepper. Backward/same jumps are free;
+  // a forward jump runs the same blocker guard as goToNextStep so users can't
+  // skip past an unsatisfied gating step. The stepper already disables pills
+  // beyond maxReachableIndex, so this only fires for reachable targets.
+  const handleStepChange = (index: number) => {
+    if (index > currentStep) {
+      const blocker = getStepBlockerMessage(currentStep);
+      if (blocker) {
+        toast.error(blocker);
+        return;
+      }
+    }
+    setCurrentStep(Math.min(Math.max(index, 0), CREATOR_STEPS.length - 1));
+  };
+
   const handleFormSubmit = (event: React.FormEvent) => {
     if (currentStep !== CREATOR_STEPS.length - 1) {
       event.preventDefault();
@@ -1571,69 +1587,36 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     }
   };
 
-  const renderStepper = () => (
-    <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2.5 dark:border-white/[0.08] dark:bg-navy-950/30">
-      <div className="grid grid-cols-5 gap-1.5">
-        {CREATOR_STEPS.map((step, index) => {
-          const isActive = index === currentStep;
-          const isComplete = index < currentStep && canCompleteStep(index);
-          const isVisited = index <= currentStep;
-          return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => setCurrentStep(index)}
-              title={isPolish ? step.hintPl : step.hintEn}
-              aria-current={isActive ? 'step' : undefined}
-              className={`group relative rounded-xl border px-2 py-1.5 text-left transition-all ${
-                isActive
-                  ? 'border-primary-500/40 bg-primary-50 text-primary-700 ring-1 ring-primary-500/20 dark:bg-primary-500/15 dark:text-primary-200'
-                  : isComplete
-                    ? 'border-emerald-300/50 bg-white text-slate-600 dark:border-emerald-500/20 dark:bg-navy-900/70 dark:text-slate-300'
-                    : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
-              } hover:border-primary-500/50`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold transition-colors ${
-                    isActive
-                      ? 'bg-primary-600 text-white shadow-sm shadow-primary-500/30'
-                      : isComplete
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-slate-200/80 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
-                  }`}
-                >
-                  {isComplete ? <Check size={12} strokeWidth={3} /> : index + 1}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-semibold leading-tight">
-                    {isPolish ? step.labelPl : step.labelEn}
-                  </span>
-                  <span
-                    className={`mt-0.5 hidden truncate text-[10px] leading-tight sm:block ${
-                      isActive ? 'text-primary-500/80 dark:text-primary-300/70' : 'text-slate-400'
-                    }`}
-                  >
-                    {isPolish ? step.hintPl : step.hintEn}
-                  </span>
-                </span>
-              </div>
-              {/* progress fill underline */}
-              <span
-                className={`absolute inset-x-2 bottom-1 h-0.5 rounded-full transition-colors ${
-                  isActive
-                    ? 'bg-primary-500/60'
-                    : isVisited
-                      ? 'bg-emerald-400/40'
-                      : 'bg-transparent'
-                }`}
-              />
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  // §5 — Map the bespoke CREATOR_STEPS to the shared <WizardStepper> contract.
+  // Per-step status mirrors the old pill logic: the active step is 'ready', any
+  // earlier step that satisfies canCompleteStep is 'complete', everything else is
+  // 'empty'. Labels/hints carry over their EN/PL pairs verbatim.
+  const wizardSteps: WizardStep[] = CREATOR_STEPS.map((step, index) => {
+    let status: WizardStep['status'] = 'empty';
+    if (index < currentStep && canCompleteStep(index)) {
+      status = 'complete';
+    } else if (index === currentStep) {
+      status = 'ready';
+    }
+    return {
+      id: step.id,
+      label: { en: step.labelEn, pl: step.labelPl },
+      hint: { en: step.hintEn, pl: step.hintPl },
+      status,
+    };
+  });
+
+  // §5 — Reachability gate for the shared stepper: the user may jump to any
+  // already-visited step, plus exactly one step ahead — and only when every
+  // gating step up to the current one is satisfied (mirrors goToNextStep's
+  // getStepBlockerMessage/canCompleteStep guard, so users can't skip ahead).
+  const maxReachableIndex = (() => {
+    const ahead = Math.min(currentStep + 1, CREATOR_STEPS.length - 1);
+    for (let index = 0; index <= currentStep; index += 1) {
+      if (!canCompleteStep(index)) return currentStep;
+    }
+    return ahead;
+  })();
 
   const renderGlobalLoadError = () => {
     if (!loadError || CREATOR_STEPS[currentStep]?.id === 'source') return null;
@@ -2592,7 +2575,14 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           </button>
         </div>
 
-        {renderStepper()}
+        <WizardStepper
+          steps={wizardSteps}
+          activeStepIndex={currentStep}
+          maxReachableIndex={maxReachableIndex}
+          onStepChange={handleStepChange}
+          isPolish={isPolish}
+          accentColor="#3b82f6"
+        />
 
         {/* Content */}
         <form onSubmit={handleFormSubmit} className="flex-1 space-y-4 overflow-auto p-3">
