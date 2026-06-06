@@ -2081,6 +2081,50 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     )}
                   </div>
 
+                  {/* #11c — Per-question instant feedback. Non-blocking inline hint when a
+                      free-text answer looks too short. Lets the respondent jump straight
+                      into AI Improve. Skipped for choice/rating/number/date inputs. */}
+                  {(() => {
+                    if (readOnly) return null;
+                    const t = normalizeAnswerType(currentQuestion.answerType);
+                    const isFreeText =
+                      !QUESTION_INPUT_TYPES.yesNo.has(t) &&
+                      !QUESTION_INPUT_TYPES.singleChoice.has(t) &&
+                      !QUESTION_INPUT_TYPES.multiChoice.has(t) &&
+                      !QUESTION_INPUT_TYPES.rating.has(t) &&
+                      !QUESTION_INPUT_TYPES.dropdown.has(t) &&
+                      !QUESTION_INPUT_TYPES.date.has(t) &&
+                      !QUESTION_INPUT_TYPES.number.has(t);
+                    const trimmed = answerDraft.trim();
+                    const tooShort =
+                      isFreeText && trimmed.length > 0 && trimmed.length < 20 && !aiImproveResult;
+                    if (!tooShort) return null;
+                    return (
+                      <div className="flex items-start gap-2 rounded-lg border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/60 dark:bg-amber-500/[0.07] px-3 py-2">
+                        <Sparkles
+                          size={13}
+                          className="mt-0.5 shrink-0 text-amber-500 dark:text-amber-400"
+                        />
+                        <div className="min-w-0 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">
+                          <span>
+                            {isPolish
+                              ? 'Wygląda na zbyt krótkie — spróbuj dodać konkretny przykład albo liczbę.'
+                              : 'This looks short — try adding a concrete example or a number.'}
+                          </span>
+                          {trimmed.length >= 3 && (
+                            <button
+                              type="button"
+                              onClick={() => setAiDropdownOpen(true)}
+                              className="ml-1.5 font-semibold underline decoration-dotted underline-offset-2 hover:text-amber-800 dark:hover:text-amber-200"
+                            >
+                              {isPolish ? 'Użyj AI, aby rozwinąć' : 'Use AI to expand'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* ── Answer toolbar: Record + attachments + AI dropdown (chip standard) ── */}
                   {!readOnly && (
                     <div className="flex flex-wrap items-center gap-1.5">
