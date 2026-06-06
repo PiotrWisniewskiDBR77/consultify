@@ -65,6 +65,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Select } from '@/components/shared/forms';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import { LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
@@ -2077,23 +2078,21 @@ ${sourceText || '(none)'}`;
                   <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                     {isPolish ? 'Tryb runtime' : 'Runtime mode'}
                   </label>
-                  <select
+                  <Select
                     value={template.runtimeModeDefault || 'one_question_per_screen'}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       setTemplate((prev) => ({
                         ...prev,
-                        runtimeModeDefault: e.target.value as RuntimeModeDefault,
+                        runtimeModeDefault: value as RuntimeModeDefault,
                       }))
                     }
                     disabled={isApplicationTemplate}
-                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
-                  >
-                    {RUNTIME_MODE_OPTIONS.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {isPolish ? opt.labelPl : opt.labelEn}
-                      </option>
-                    ))}
-                  </select>
+                    aria-label={isPolish ? 'Tryb runtime' : 'Runtime mode'}
+                    options={RUNTIME_MODE_OPTIONS.map((opt) => ({
+                      value: opt.id,
+                      label: isPolish ? opt.labelPl : opt.labelEn,
+                    }))}
+                  />
                 </div>
               </div>
 
@@ -2939,18 +2938,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                 {isPolish ? 'Typ odpowiedzi' : 'Answer Type'}
               </label>
-              <select
+              <Select
                 value={question.answerType}
-                onChange={(e) => onUpdate({ answerType: e.target.value as AnswerType })}
+                onChange={(value) => onUpdate({ answerType: value as AnswerType })}
                 disabled={readOnly}
-                className={fieldClassName}
-              >
-                {ANSWER_TYPES.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {isPolish ? type.labelPl : type.labelEn}
-                  </option>
-                ))}
-              </select>
+                aria-label={isPolish ? 'Typ odpowiedzi' : 'Answer Type'}
+                options={ANSWER_TYPES.map((type) => ({
+                  value: type.id,
+                  label: isPolish ? type.labelPl : type.labelEn,
+                }))}
+              />
               {/* Inline preview of how the chosen type renders to a respondent */}
               <div className="mt-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-950/40 px-3 py-2">
                 <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">

@@ -1790,6 +1790,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       <InitiativeWizardModal
         isOpen={showInitiativeWizard}
+        language={i18n.language === 'pl' ? 'pl' : 'en'}
         projectId={currentProjectId || undefined}
         existingInitiatives={allInitiatives}
         onClose={() => setShowInitiativeWizard(false)}

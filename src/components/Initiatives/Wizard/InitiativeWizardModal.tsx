@@ -34,6 +34,7 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { Select } from '@/components/shared/forms';
 import {
   type WizardStep as SharedWizardStep,
   WizardStepper,
@@ -282,6 +283,7 @@ interface CapacitySignal {
 // ---- Localized copy for the additive steps (#29b, #29c, #29f) ----------------
 const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
   pl: {
+    wizardTitle: 'Kreator Inicjatyw AI',
     stepInsights: 'Wnioski',
     selectInsightsTitle: 'Wybierz wnioski do analizy',
     selectInsightsHint:
@@ -387,6 +389,7 @@ const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
     close: 'Zamknij',
   },
   en: {
+    wizardTitle: 'AI Initiative Wizard',
     stepInsights: 'Insights',
     selectInsightsTitle: 'Select insights to analyze',
     selectInsightsHint:
@@ -1671,19 +1674,20 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           {t.transformDecision}
         </label>
-        <select
+        <Select
           value={mode}
-          onChange={(event) => setMode(event.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-        >
-          <option value="create_first_portfolio">{t.modeCreateFirstPortfolio}</option>
-          <option value="generate_from_evidence">{t.modeGenerateFromEvidence}</option>
-          <option value="prioritize_by_goal">{t.modePrioritizeByGoal}</option>
-          <option value="match_existing">{t.modeMatchExisting}</option>
-          <option value="refresh_portfolio">{t.modeRefreshPortfolio}</option>
-          <option value="build_waves">{t.modeBuildWaves}</option>
-          <option value="improve_portfolio">{t.modeImprovePortfolio}</option>
-        </select>
+          onChange={setMode}
+          aria-label={t.transformDecision}
+          options={[
+            { value: 'create_first_portfolio', label: t.modeCreateFirstPortfolio },
+            { value: 'generate_from_evidence', label: t.modeGenerateFromEvidence },
+            { value: 'prioritize_by_goal', label: t.modePrioritizeByGoal },
+            { value: 'match_existing', label: t.modeMatchExisting },
+            { value: 'refresh_portfolio', label: t.modeRefreshPortfolio },
+            { value: 'build_waves', label: t.modeBuildWaves },
+            { value: 'improve_portfolio', label: t.modeImprovePortfolio },
+          ]}
+        />
       </div>
 
       <div>
@@ -1723,31 +1727,37 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
           />
         </label>
-        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
           {t.horizonLabel}
-          <select
-            value={timeHorizon}
-            onChange={(event) => setTimeHorizon(event.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-          >
-            <option value="30_days">{t.horizon30Days}</option>
-            <option value="90_days">{t.horizon90Days}</option>
-            <option value="6_months">{t.horizon6Months}</option>
-            <option value="12_months">{t.horizon12Months}</option>
-          </select>
-        </label>
-        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <div className="mt-1.5">
+            <Select
+              value={timeHorizon}
+              onChange={setTimeHorizon}
+              aria-label={t.horizonLabel}
+              options={[
+                { value: '30_days', label: t.horizon30Days },
+                { value: '90_days', label: t.horizon90Days },
+                { value: '6_months', label: t.horizon6Months },
+                { value: '12_months', label: t.horizon12Months },
+              ]}
+            />
+          </div>
+        </div>
+        <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
           {t.riskLabel}
-          <select
-            value={riskAppetite}
-            onChange={(event) => setRiskAppetite(event.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-          >
-            <option value="conservative">{t.riskConservative}</option>
-            <option value="balanced">{t.riskBalanced}</option>
-            <option value="bold">{t.riskBold}</option>
-          </select>
-        </label>
+          <div className="mt-1.5">
+            <Select
+              value={riskAppetite}
+              onChange={setRiskAppetite}
+              aria-label={t.riskLabel}
+              options={[
+                { value: 'conservative', label: t.riskConservative },
+                { value: 'balanced', label: t.riskBalanced },
+                { value: 'bold', label: t.riskBold },
+              ]}
+            />
+          </div>
+        </div>
       </div>
 
       <div>
@@ -2452,7 +2462,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100"
           >
             <Sparkles size={20} className="text-slate-500 dark:text-slate-400" />
-            AI Initiative Wizard
+            {t.wizardTitle}
           </h2>
           <button
             type="button"

@@ -31,6 +31,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DatePicker, Select } from '@/components/shared/forms';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import { type WizardStep, WizardStepper } from '@/components/shared/WizardModal';
@@ -1934,22 +1935,25 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={activeBasketId}
-            onChange={(event) => applyBasket(event.target.value)}
-            className="min-w-[220px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-            aria-label={isPolish ? 'Wybierz koszyk źródeł' : 'Select source basket'}
-          >
-            <option value="">
-              {isPolish ? 'Zbuduj nowy (bez koszyka)' : 'Build new (no basket)'}
-            </option>
-            {baskets.map((basket) => (
-              <option key={basket.id} value={basket.id}>
-                {basket.name} · {basket.sessionIds.length} {isPolish ? 'sesji' : 'sessions'} ·{' '}
-                {isPolish ? `użyto ${basket.usageCount}×` : `used ${basket.usageCount}×`}
-              </option>
-            ))}
-          </select>
+          <div className="min-w-[220px] flex-1">
+            <Select
+              value={activeBasketId}
+              onChange={(value) => applyBasket(value)}
+              aria-label={isPolish ? 'Wybierz koszyk źródeł' : 'Select source basket'}
+              options={[
+                {
+                  value: '',
+                  label: isPolish ? 'Zbuduj nowy (bez koszyka)' : 'Build new (no basket)',
+                },
+                ...baskets.map((basket) => ({
+                  value: basket.id,
+                  label: `${basket.name} · ${basket.sessionIds.length} ${
+                    isPolish ? 'sesji' : 'sessions'
+                  } · ${isPolish ? `użyto ${basket.usageCount}×` : `used ${basket.usageCount}×`}`,
+                })),
+              ]}
+            />
+          </div>
           {activeBasket && (
             <button
               type="button"
@@ -2042,26 +2046,24 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           )}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <input
-            type="date"
+          <DatePicker
             value={filterDateFrom}
-            onChange={(event) => {
-              const nextFrom = event.target.value;
+            isPolish={isPolish}
+            placeholder={isPolish ? 'Data od' : 'Date from'}
+            onChange={(nextFrom) => {
               setFilterDateFrom(nextFrom);
               setUseDateFilter(Boolean(nextFrom || filterDateTo));
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
             aria-label={isPolish ? 'Data od' : 'Date from'}
           />
-          <input
-            type="date"
+          <DatePicker
             value={filterDateTo}
-            onChange={(event) => {
-              const nextTo = event.target.value;
+            isPolish={isPolish}
+            placeholder={isPolish ? 'Data do' : 'Date to'}
+            onChange={(nextTo) => {
               setFilterDateTo(nextTo);
               setUseDateFilter(Boolean(filterDateFrom || nextTo));
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
             aria-label={isPolish ? 'Data do' : 'Date to'}
           />
         </div>
@@ -2086,23 +2088,18 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               </button>
             )}
           </div>
-          <select
+          <Select
             value={filterRole}
-            onChange={(event) => {
-              const nextRole = event.target.value;
+            onChange={(nextRole) => {
               setFilterRole(nextRole);
               setUseRoleFilter(Boolean(nextRole));
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
             aria-label={isPolish ? 'Filtr roli respondenta' : 'Respondent role filter'}
-          >
-            <option value="">{isPolish ? 'Wszystkie role' : 'All roles'}</option>
-            {roleOptions.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: isPolish ? 'Wszystkie role' : 'All roles' },
+              ...roleOptions.map((role) => ({ value: role, label: role })),
+            ]}
+          />
         </div>
 
         <div>
@@ -2123,23 +2120,21 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               </button>
             )}
           </div>
-          <select
+          <Select
             value={filterDepartment}
-            onChange={(event) => {
-              const nextDepartment = event.target.value;
+            onChange={(nextDepartment) => {
               setFilterDepartment(nextDepartment);
               setUseDepartmentFilter(Boolean(nextDepartment));
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
             aria-label={isPolish ? 'Filtr działu respondenta' : 'Respondent department filter'}
-          >
-            <option value="">{isPolish ? 'Wszystkie działy' : 'All departments'}</option>
-            {departmentOptions.map((department) => (
-              <option key={department} value={department}>
-                {department}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: isPolish ? 'Wszystkie działy' : 'All departments' },
+              ...departmentOptions.map((department) => ({
+                value: department,
+                label: department,
+              })),
+            ]}
+          />
         </div>
       </div>
 
