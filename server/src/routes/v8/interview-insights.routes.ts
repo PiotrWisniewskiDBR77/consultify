@@ -973,6 +973,25 @@ router.post(
             decisionMakerId: userId,
             createdBy: userId,
           });
+
+          // V-A S3 — mirror the initiative branch: tag the decision with its
+          // interview-insight source so the Interview hub can surface it. The
+          // canonical createDecision INSERT doesn't write source_type/source_id,
+          // so set them in a column-aware follow-up UPDATE (the columns are
+          // optional — guard on their existence; failure must not break create).
+          try {
+            const { getTableColumns } = await import('../../utils/dbSchema.js');
+            const cols = await getTableColumns('decisions');
+            if (cols.has('source_type') && cols.has('source_id')) {
+              await queryHelpers.queryRun(
+                `UPDATE decisions SET source_type = ?, source_id = ? WHERE id = ?`,
+                ['interview_insight', findingId, decision.id]
+              );
+            }
+          } catch (tagErr) {
+            logger.warn('[InsightHandoff] source-tag UPDATE skipped', tagErr);
+          }
+
           initiativeRef = {
             id: decision.id,
             type: 'created',
@@ -996,6 +1015,25 @@ router.post(
             } as any,
             userId
           );
+
+          // V-A S3 — mirror the initiative branch: tag the task with its
+          // interview-insight source so the Interview hub can surface it. The
+          // canonical createTask INSERT doesn't write source_type/source_id, so
+          // set them in a column-aware follow-up UPDATE (the columns are
+          // optional — guard on their existence; failure must not break create).
+          try {
+            const { getTableColumns } = await import('../../utils/dbSchema.js');
+            const cols = await getTableColumns('tasks');
+            if (cols.has('source_type') && cols.has('source_id')) {
+              await queryHelpers.queryRun(
+                `UPDATE tasks SET source_type = ?, source_id = ? WHERE id = ?`,
+                ['interview_insight', findingId, task.id]
+              );
+            }
+          } catch (tagErr) {
+            logger.warn('[InsightHandoff] source-tag UPDATE skipped', tagErr);
+          }
+
           initiativeRef = {
             id: task.id,
             type: 'created',
