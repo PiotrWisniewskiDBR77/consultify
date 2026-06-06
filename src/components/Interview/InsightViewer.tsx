@@ -6466,6 +6466,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       'sentiment-tone': (analysis?.topics || []).length + v6Signals.length,
       'power-dynamics': visiblePeopleLenses.length,
       'hypothesis-board': candidates.length,
+      // people / analysis-matrix derive entirely from lens data — gate them like
+      // their "between the lines" siblings so a fresh insight (no lenses) doesn't
+      // render two large explanatory-only panels in the dense C-board.
+      people: visiblePeopleLenses.length,
+      'analysis-matrix':
+        (analysis?.people.stakeholderLenses || []).length +
+        (analysis?.people.sessionLenses || []).length,
     };
     // alwaysShow: the two most important differentiators stay visible even empty.
     const alwaysShowSet = new Set([
