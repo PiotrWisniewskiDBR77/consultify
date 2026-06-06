@@ -587,7 +587,16 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -631,7 +640,16 @@ async function ensureInterviewSessionV6Columns(): Promise<void> {
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -663,7 +681,16 @@ async function ensureInterviewSessionLifecycleColumns(): Promise<void> {
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -751,7 +778,16 @@ async function ensureInterviewAssignmentLifecycleColumns(): Promise<void> {
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -799,7 +835,16 @@ async function ensureInterviewTemplateV6Columns(): Promise<void> {
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -847,11 +892,28 @@ async function ensureInterviewTemplateQuestionV6Columns(): Promise<void> {
       name: 'section_title',
       sql: `ALTER TABLE interview_library_template_questions ADD COLUMN section_title TEXT`,
     },
+    {
+      name: 'guidance',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN guidance TEXT`,
+    },
+    {
+      name: 'example_answer',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN example_answer TEXT`,
+    },
   ];
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -1226,6 +1288,8 @@ const buildTemplateQuestionResponse = (row: any) => {
     allowFileUpload: row.allow_file_upload === 1,
     allowUrl: row.allow_url === 1,
     allowContextNote: row.allow_context_note !== 0,
+    guidance: row.guidance || '',
+    exampleAnswer: row.example_answer || '',
   };
 };
 
@@ -5239,6 +5303,8 @@ export const InterviewController = {
       allowFileUpload,
       allowUrl,
       allowContextNote,
+      guidance,
+      exampleAnswer,
     } = req.body || {};
 
     const template = await queryHelpers.queryOne(
@@ -5257,8 +5323,8 @@ export const InterviewController = {
     const qid = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_library_template_questions
-       (id, template_id, category, question_text, sort_order, answer_type, is_required, section_title, help_hint, answer_options, expected_answer_shape, description, evidence_prompt, allow_voice, allow_file_upload, allow_url, allow_context_note, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, template_id, category, question_text, sort_order, answer_type, is_required, section_title, help_hint, answer_options, expected_answer_shape, description, evidence_prompt, allow_voice, allow_file_upload, allow_url, allow_context_note, guidance, example_answer, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         qid,
         id,
@@ -5277,6 +5343,8 @@ export const InterviewController = {
         allowFileUpload ? 1 : 0,
         allowUrl ? 1 : 0,
         allowContextNote === false ? 0 : 1,
+        typeof guidance === 'string' && guidance.trim() ? guidance.trim() : null,
+        typeof exampleAnswer === 'string' && exampleAnswer.trim() ? exampleAnswer.trim() : null,
         new Date().toISOString(),
       ]
     );
@@ -5314,6 +5382,8 @@ export const InterviewController = {
       allowFileUpload,
       allowUrl,
       allowContextNote,
+      guidance,
+      exampleAnswer,
     } = req.body || {};
 
     const template = await queryHelpers.queryOne(
@@ -5398,6 +5468,16 @@ export const InterviewController = {
     if (allowContextNote !== undefined) {
       updates.push('allow_context_note = ?');
       params.push(allowContextNote ? 1 : 0);
+    }
+    if (guidance !== undefined) {
+      updates.push('guidance = ?');
+      params.push(typeof guidance === 'string' && guidance.trim() ? guidance.trim() : null);
+    }
+    if (exampleAnswer !== undefined) {
+      updates.push('example_answer = ?');
+      params.push(
+        typeof exampleAnswer === 'string' && exampleAnswer.trim() ? exampleAnswer.trim() : null
+      );
     }
 
     if (updates.length === 0) {
