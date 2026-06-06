@@ -61,6 +61,7 @@ import {
 import { StatusPill } from '@/components/shared/StatusPill';
 import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import {
   V8InterviewApi,
@@ -163,6 +164,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  // Standard-C parity: N⇄C presentation toggle for the non-immersive workspace
+  // shell (matches Insight/Initiative). entityType 'tool' is reused because the
+  // interview artifact already identifies as artifactType 'tool' (no dedicated
+  // enum value exists in usePresentationMode's EntityType).
+  const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
+    entityType: 'tool',
+  });
   const { currentUser, currentOrganization } = useAppStore();
   const openChatWithContext = useOpenChatWithContext();
   const interviewDemoData = useMemo(
@@ -2495,11 +2503,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       </NModeSectionWrapper>
     );
 
+    // Standard-C group labels (#22b) — bilingual headers for the C-board tabs
+    // and the grouped N-mode nav. Three lanes: the live interview, supporting
+    // context, and the read-only summary.
+    const groupInterview = isPolish ? 'Wywiad' : 'Interview';
+    const groupContext = isPolish ? 'Kontekst' : 'Context';
+    const groupSummary = isPolish ? 'Podsumowanie' : 'Summary';
+
     const base: NModeSection[] = [
       {
         id: 'overview',
         icon: BarChart3,
         label: { en: 'Overview', pl: 'Podgląd' },
+        group: groupInterview,
+        cSpan: 2,
         component: overview,
       },
       {
@@ -2507,6 +2524,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         icon: FileText,
         label: { en: 'Questions', pl: 'Pytania' },
         badge: questions.filter((q) => q.status !== 'answered').length,
+        // Full width: the interactive fill/answer flow has its own internal
+        // layout and must breathe — never cram it into a 1-col board panel.
+        group: groupInterview,
+        cSpan: 3,
         component: questionsSection,
       },
       {
@@ -2514,6 +2535,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         icon: FileText,
         label: { en: 'Notes', pl: 'Notatki' },
         badge: notes.length,
+        group: groupInterview,
+        cSpan: 2,
         component: notesSection,
       },
       {
@@ -2521,12 +2544,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         icon: Paperclip,
         label: { en: 'Files & links', pl: 'Pliki i linki' },
         badge: evidence.length,
+        group: groupContext,
+        cSpan: 1,
         component: evidenceSection,
       },
       {
         id: 'company-facts',
         icon: Building2,
         label: { en: 'Company facts', pl: 'Fakty' },
+        group: groupContext,
+        cSpan: 1,
         component: companyFactsSection,
       },
       {
@@ -2534,6 +2561,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         icon: Users,
         label: { en: 'Stakeholders', pl: 'Interesariusze' },
         badge: stakeholders.length,
+        group: groupContext,
+        cSpan: 1,
         component: stakeholdersSection,
       },
       {
@@ -2541,6 +2570,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         icon: AlertTriangle,
         label: { en: 'Open gaps', pl: 'Luki' },
         badge: openGaps.length,
+        group: groupContext,
+        cSpan: 2,
         component: gapsSection,
       },
     ];
@@ -2550,6 +2581,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         id: 'summary',
         icon: Sparkles,
         label: { en: 'Summary', pl: 'Podsumowanie' },
+        group: groupSummary,
+        cSpan: 3,
         component: (
           <NModeSectionWrapper
             heading={{ en: 'Summary (facts only)', pl: 'Podsumowanie (tylko fakty)' }}
@@ -2912,9 +2945,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         actionsVisible={actions.length > 0}
         activeSection={activeSection}
         onSectionChange={setActiveSection}
-        presentationMode="n"
-        onPresentationModeChange={() => {}}
-        showModeSwitcher={false}
+        presentationMode={presentationMode}
+        onPresentationModeChange={setPresentationMode}
+        showModeSwitcher={true}
         buildArtifactCode={(type, id) => buildArtifactCode(type as any, id)}
       >
         <div />
