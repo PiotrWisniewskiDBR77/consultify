@@ -134,6 +134,28 @@ function getAnswerTypeLabel(
   return { label: isPolish ? 'Tekst' : 'Text', icon: 'text' };
 }
 
+// Demo seed data tags evidence/linked items with raw ids like `seed_iq_…` that leak
+// into chip labels (e.g. "Answer – Q seed_iq…"). Detect them so we can hide or clean up.
+function isSeedEvidence(item: { id?: string; title?: string; name?: string }): boolean {
+  const id = String(item.id || '');
+  const title = String(item.title || '');
+  const name = String(item.name || '');
+  return /(^|[\s_])seed_/i.test(id) || /seed_[a-z0-9]/i.test(title) || /seed_[a-z0-9]/i.test(name);
+}
+
+// Produce a clean, human label for an evidence chip — never expose a raw `seed_…` id.
+function cleanEvidenceLabel(item: { title?: string; name?: string }, fallback: string): string {
+  const raw = String(item.title || item.name || '').trim();
+  if (!raw) return fallback;
+  // Strip any raw seed token (e.g. "Answer – Q seed_iq_123") and tidy trailing separators.
+  const cleaned = raw
+    .replace(/seed_[a-z0-9_]+/gi, '')
+    .replace(/[–\-•·:]\s*$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return cleaned || fallback;
+}
+
 function parseMultiChoiceValue(answerDraft: string): Set<string> {
   try {
     const parsed = JSON.parse(answerDraft);
@@ -455,10 +477,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     return () => clearTimeout(t);
   }, [autoSaved]);
 
+  // Only show the separate amber "review transcript" box when the draft transcript is
+  // genuinely DIFFERENT from what's already in the answer field. Otherwise it just echoes
+  // the same text twice (the duplicated-"No stress" bug from legacy/seed draft transcripts).
   const voiceNeedsApproval =
     inputMode === 'voice_answer' &&
-    voiceTranscriptDraft &&
-    currentQuestion?.voiceTranscriptStatus === 'draft';
+    !!voiceTranscriptDraft &&
+    currentQuestion?.voiceTranscriptStatus === 'draft' &&
+    voiceTranscriptDraft.trim() !== answerDraft.trim();
 
   const handleApproveTranscript = useCallback(async () => {
     if (!currentQuestion) return;
@@ -2271,11 +2297,16 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     </div>
                   )}
 
-                  {/* Inline attachments — thumbnails for images, chips for files/audio */}
-                  {currentEvidence.some((e) => ['file', 'audio'].includes(e.evidenceType)) && (
+                  {/* Inline attachments — thumbnails for images, chips for files/audio.
+                      Demo seed items (raw `seed_…` ids) are hidden so they don't look tacky. */}
+                  {currentEvidence.some(
+                    (e) => ['file', 'audio'].includes(e.evidenceType) && !isSeedEvidence(e)
+                  ) && (
                     <div className="flex flex-wrap gap-2 pt-1">
                       {currentEvidence
-                        .filter((e) => ['file', 'audio'].includes(e.evidenceType))
+                        .filter(
+                          (e) => ['file', 'audio'].includes(e.evidenceType) && !isSeedEvidence(e)
+                        )
                         .map((item) => {
                           const isImage =
                             item.evidenceType === 'file' &&
@@ -2316,7 +2347,16 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             >
                               {isAudio ? <Mic size={11} /> : <Paperclip size={11} />}
                               <span className="truncate max-w-[160px]">
-                                {item.title || item.name}
+                                {cleanEvidenceLabel(
+                                  item,
+                                  isAudio
+                                    ? isPolish
+                                      ? 'Nagranie'
+                                      : 'Recording'
+                                    : isPolish
+                                      ? 'Załącznik'
+                                      : 'Attachment'
+                                )}
                               </span>
                               <button
                                 type="button"
@@ -2510,11 +2550,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     </div>
                   )}
 
-                  {/* Attached link/artifact chips (files & audio render inline above) */}
-                  {currentEvidence.some((e) => e.evidenceType === 'link') && (
+                  {/* Attached link/artifact chips (files & audio render inline above).
+                      Seed demo items (raw `seed_…` ids) are filtered out. */}
+                  {currentEvidence.some((e) => e.evidenceType === 'link' && !isSeedEvidence(e)) && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {currentEvidence
-                        .filter((e) => e.evidenceType === 'link')
+                        .filter((e) => e.evidenceType === 'link' && !isSeedEvidence(e))
                         .map((item) => {
                           const isArtifact =
                             item.evidenceType === 'link' &&
@@ -2531,7 +2572,10 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             >
                               <EvidIcon size={10} />
                               <span className="truncate max-w-[140px]">
-                                {item.title || item.name}
+                                {cleanEvidenceLabel(
+                                  item,
+                                  isArtifact ? (isPolish ? 'Artefakt' : 'Artifact') : 'Link'
+                                )}
                               </span>
                             </span>
                           );
