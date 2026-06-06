@@ -25,8 +25,10 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import {
+  computeCompletion,
   createProgram,
   deleteProgram,
+  generateSurveys,
   getProgram,
   listPrograms,
   updateProgram,
@@ -53,14 +55,17 @@ function authContext(req: AuthRequest): { organizationId: string; userId: string
 }
 
 // ---------------------------------------------------------------------------
-// GET /programs — list for org (newest first)
+// GET /programs — paginated list for org (newest first). Accepts ?limit&offset
+// and returns { programs, total, limit, offset } (#19e).
 // ---------------------------------------------------------------------------
 router.get('/programs', async (req: AuthRequest, res) => {
   const { organizationId } = authContext(req);
   if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
   try {
-    const programs = await listPrograms(organizationId);
-    return res.json({ programs });
+    const limit = req.query.limit !== undefined ? Number(req.query.limit) : undefined;
+    const offset = req.query.offset !== undefined ? Number(req.query.offset) : undefined;
+    const result = await listPrograms(organizationId, { limit, offset });
+    return res.json(result);
   } catch (error) {
     logger.error('[audit-programs] list failed', { error });
     return res.status(500).json({ error: 'Failed to list audit programs' });
@@ -138,6 +143,42 @@ router.patch('/programs/:id', async (req: AuthRequest, res) => {
   } catch (error) {
     logger.error('[audit-programs] update failed', { error });
     return res.status(500).json({ error: 'Failed to update audit program' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /programs/:id/generate-surveys — bulk-create interview assignments for
+// every selected template × assignee, reusing the interview assignment service
+// (#19). Idempotent: a program already generated returns alreadyGenerated:true.
+// Robust to partial failures — reports created/failed counts + per-pair errors.
+// ---------------------------------------------------------------------------
+router.post('/programs/:id/generate-surveys', async (req: AuthRequest, res) => {
+  const { organizationId, userId } = authContext(req);
+  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+  try {
+    const result = await generateSurveys(organizationId, userId, req.params.id);
+    if (!result) return res.status(404).json({ error: 'Audit program not found' });
+    return res.json(result);
+  } catch (error) {
+    logger.error('[audit-programs] generate-surveys failed', { error });
+    return res.status(500).json({ error: 'Failed to generate surveys' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /programs/:id/completion — completion rollup over the program's generated
+// assignments (#19e). Returns { generated, total, done, percent, byStatus }.
+// ---------------------------------------------------------------------------
+router.get('/programs/:id/completion', async (req: AuthRequest, res) => {
+  const { organizationId } = authContext(req);
+  if (!organizationId) return res.status(400).json({ error: 'Missing organization context' });
+  try {
+    const completion = await computeCompletion(organizationId, req.params.id);
+    if (!completion) return res.status(404).json({ error: 'Audit program not found' });
+    return res.json({ completion });
+  } catch (error) {
+    logger.error('[audit-programs] completion failed', { error });
+    return res.status(500).json({ error: 'Failed to compute completion' });
   }
 });
 

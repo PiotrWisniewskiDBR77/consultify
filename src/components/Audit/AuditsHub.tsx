@@ -30,6 +30,7 @@ import {
   Loader2,
   Plus,
   Search,
+  Send,
   ShieldCheck,
   Trash2,
   Users,
@@ -42,10 +43,15 @@ import {
   type AuditProgram,
   type AuditProgramStatus,
   deleteProgram,
+  generateSurveys,
+  getCompletion,
   listPrograms,
+  type ProgramCompletion,
 } from './auditApi';
 import { AuditOrchestratorWizard } from './AuditOrchestratorWizard';
 import { getPresetById } from './auditPresets';
+
+const PAGE_SIZE = 50;
 
 const STATUS_FILTERS: Array<AuditProgramStatus | 'all'> = [
   'all',
@@ -69,21 +75,26 @@ export const AuditsHub: React.FC = () => {
   const navigate = useNavigate();
 
   const [programs, setPrograms] = useState<AuditProgram[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<AuditProgramStatus | 'all'>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPresetId, setWizardPresetId] = useState<string | null>(null);
 
+  // Load the first page (resets the list). Used on mount + after mutations.
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const list = await listPrograms();
-      setPrograms(list);
+      const res = await listPrograms({ limit: PAGE_SIZE, offset: 0 });
+      setPrograms(res.programs);
+      setTotal(res.total);
     } catch (e) {
       setError(
         e instanceof Error
@@ -95,6 +106,29 @@ export const AuditsHub: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Append the next page server-side (#19e pagination).
+  const loadMore = useCallback(async () => {
+    setLoadingMore(true);
+    setError(null);
+    try {
+      const res = await listPrograms({ limit: PAGE_SIZE, offset: programs.length });
+      setPrograms((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...res.programs.filter((p) => !seen.has(p.id))];
+      });
+      setTotal(res.total);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : tr('Failed to load programs', 'Nie udało się załadować programów')
+      );
+    } finally {
+      setLoadingMore(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programs.length]);
 
   useEffect(() => {
     load();
@@ -135,6 +169,55 @@ export const AuditsHub: React.FC = () => {
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : tr('Failed to delete', 'Nie udało się usunąć'));
+    }
+  };
+
+  const handleGenerate = async (program: AuditProgram) => {
+    const templateCount = program.config.templateIds?.length ?? 0;
+    const assigneeCount = program.config.assigneeIds?.length ?? 0;
+    const pairs = templateCount * assigneeCount;
+    if (pairs === 0) {
+      setError(
+        tr(
+          'Pick at least one template and one assignee before generating surveys.',
+          'Wybierz co najmniej jeden szablon i jedną osobę przed wygenerowaniem ankiet.'
+        )
+      );
+      return;
+    }
+    if (
+      !window.confirm(
+        tr(
+          `Generate ${pairs} survey assignment(s) (${templateCount} templates × ${assigneeCount} assignees)?`,
+          `Wygenerować ${pairs} przydziałów ankiet (${templateCount} szablonów × ${assigneeCount} osób)?`
+        )
+      )
+    ) {
+      return;
+    }
+    setGeneratingId(program.id);
+    setError(null);
+    try {
+      const res = await generateSurveys(program.id);
+      if (res.alreadyGenerated) {
+        setError(tr('Surveys were already generated.', 'Ankiety zostały już wygenerowane.'));
+      } else if (res.failed > 0) {
+        setError(
+          tr(
+            `Generated ${res.created} of ${res.requested}; ${res.failed} failed.`,
+            `Wygenerowano ${res.created} z ${res.requested}; ${res.failed} nie powiodło się.`
+          )
+        );
+      }
+      await load();
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : tr('Failed to generate surveys', 'Nie udało się wygenerować ankiet')
+      );
+    } finally {
+      setGeneratingId(null);
     }
   };
 
@@ -255,6 +338,10 @@ export const AuditsHub: React.FC = () => {
                 {filtered.map((p) => {
                   const templateCount = p.config.templateIds?.length ?? 0;
                   const assigneeCount = p.config.assigneeIds?.length ?? 0;
+                  const generated = p.config.surveysGenerated === true;
+                  const generatedCount = p.config.generation?.created ?? 0;
+                  const pairs = templateCount * assigneeCount;
+                  const isGenerating = generatingId === p.id;
                   return (
                     <li key={p.id}>
                       <button
@@ -283,7 +370,7 @@ export const AuditsHub: React.FC = () => {
                                 {p.objective}
                               </p>
                             )}
-                            <div className="mt-2 flex items-center gap-3 text-xs text-slate-400">
+                            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400">
                               <span className="inline-flex items-center gap-1">
                                 <ClipboardList className="h-3.5 w-3.5" />
                                 {templateCount} {tr('templates', 'szablonów')}
@@ -292,32 +379,102 @@ export const AuditsHub: React.FC = () => {
                                 <Users className="h-3.5 w-3.5" />
                                 {assigneeCount} {tr('assignees', 'osób')}
                               </span>
+                              {generated && (
+                                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                  <Send className="h-3.5 w-3.5" />
+                                  {generatedCount} {tr('surveys', 'ankiet')}
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void handleDelete(p.id);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
+                          <div className="flex items-center gap-1">
+                            <span
+                              role="button"
+                              tabIndex={generated || isGenerating ? -1 : 0}
+                              aria-disabled={generated || isGenerating}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (generated || isGenerating) return;
+                                void handleGenerate(p);
+                              }}
+                              onKeyDown={(e) => {
+                                if (
+                                  (e.key === 'Enter' || e.key === ' ') &&
+                                  !generated &&
+                                  !isGenerating
+                                ) {
+                                  e.stopPropagation();
+                                  void handleGenerate(p);
+                                }
+                              }}
+                              aria-label={
+                                generated
+                                  ? tr('Surveys generated', 'Ankiety wygenerowane')
+                                  : tr('Generate surveys', 'Generuj ankiety')
+                              }
+                              title={
+                                generated
+                                  ? tr('Surveys already generated', 'Ankiety już wygenerowane')
+                                  : tr(`Generate ${pairs} survey(s)`, `Generuj ${pairs} ankiet`)
+                              }
+                              className={`rounded-lg p-1.5 ${
+                                generated || isGenerating
+                                  ? 'cursor-not-allowed text-slate-200 dark:text-white/20'
+                                  : 'text-slate-300 hover:bg-primary-50 hover:text-primary-500 dark:hover:bg-primary-500/10'
+                              }`}
+                            >
+                              {isGenerating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </span>
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 void handleDelete(p.id);
-                              }
-                            }}
-                            aria-label={tr('Delete', 'Usuń')}
-                            className="rounded-lg p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </span>
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.stopPropagation();
+                                  void handleDelete(p.id);
+                                }
+                              }}
+                              aria-label={tr('Delete', 'Usuń')}
+                              className="rounded-lg p-1.5 text-slate-300 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </span>
+                          </div>
                         </div>
                       </button>
                     </li>
                   );
                 })}
               </ul>
+            )}
+            {/* Load more (#19e server-side pagination). Only when more rows exist
+                AND the user isn't narrowing the current page via search/status. */}
+            {!loading && programs.length < total && (
+              <div className="mt-3 flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => void loadMore()}
+                  disabled={loadingMore}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-60 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.06]"
+                >
+                  {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {tr('Load more', 'Załaduj więcej')}
+                </button>
+                <span className="text-[11px] text-slate-400">
+                  {tr(
+                    `Showing ${programs.length} of ${total}`,
+                    `Pokazano ${programs.length} z ${total}`
+                  )}
+                </span>
+              </div>
             )}
           </div>
 
@@ -366,6 +523,32 @@ const ProgramDashboard: React.FC<{
   const preset = getPresetById(program.preset);
   const plan = Array.isArray(program.config.plan) ? program.config.plan : [];
 
+  // Real completion rollup (#19e): fetch when the program is generated.
+  const [completion, setCompletion] = useState<ProgramCompletion | null>(null);
+  const [completionLoading, setCompletionLoading] = useState(false);
+
+  useEffect(() => {
+    if (!surveysGenerated) {
+      setCompletion(null);
+      return;
+    }
+    let cancelled = false;
+    setCompletionLoading(true);
+    getCompletion(program.id)
+      .then((c) => {
+        if (!cancelled) setCompletion(c);
+      })
+      .catch(() => {
+        if (!cancelled) setCompletion(null);
+      })
+      .finally(() => {
+        if (!cancelled) setCompletionLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [program.id, surveysGenerated]);
+
   return (
     <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-white/[0.08] dark:bg-navy-900">
       <div>
@@ -382,23 +565,51 @@ const ProgramDashboard: React.FC<{
         <Stat label={tr('Assignees', 'Przypisani')} value={assigneeCount} />
       </div>
 
-      {/* Completion (#19e): true rollup requires joining interview sessions —
-          documented TODO. The MVP surfaces the planned size + generation flag. */}
+      {/* Completion (#19e): real rollup over the program's generated interview
+          assignments (submitted/approved/completed vs total). */}
       <div className="rounded-xl bg-slate-50 p-3 dark:bg-white/[0.04]">
-        <div className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-300">
-          {tr('Completion', 'Postęp')}
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            {tr('Completion', 'Postęp')}
+          </span>
+          {surveysGenerated && completion && (
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+              {completion.percent}%
+            </span>
+          )}
         </div>
-        <p className="text-xs text-slate-500">
-          {surveysGenerated
-            ? tr(
-                'Surveys generated — completion tracking from interview sessions is a planned enhancement.',
-                'Ankiety wygenerowane — śledzenie postępu z sesji wywiadów to planowane rozszerzenie.'
-              )
-            : tr(
-                'Surveys not generated yet. Bulk generation from templates × assignees is the next step (MVP boundary).',
-                'Ankiety jeszcze niewygenerowane. Masowe generowanie z szablonów × osób to kolejny krok (granica MVP).'
+        {!surveysGenerated ? (
+          <p className="text-xs text-slate-500">
+            {tr(
+              'Not generated. Use "Generate surveys" to fan out templates × assignees into interview assignments.',
+              'Niewygenerowane. Użyj „Generuj ankiety”, aby rozłożyć szablony × osoby na przydziały wywiadów.'
+            )}
+          </p>
+        ) : completionLoading ? (
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {tr('Loading…', 'Ładowanie…')}
+          </div>
+        ) : completion ? (
+          <div className="space-y-1.5">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/[0.08]">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all"
+                style={{ width: `${completion.percent}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-500">
+              {tr(
+                `${completion.done} of ${completion.total} surveys completed`,
+                `${completion.done} z ${completion.total} ankiet ukończonych`
               )}
-        </p>
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-slate-500">
+            {tr('Completion unavailable.', 'Postęp niedostępny.')}
+          </p>
+        )}
       </div>
 
       {plan.length > 0 && (

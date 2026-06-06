@@ -23,6 +23,15 @@ export interface AuditProgramConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   plan?: AuditPlanRow[] | any[];
   surveysGenerated?: boolean;
+  /** Ids of interview assignments created by bulk generation (#19). */
+  generatedAssignmentIds?: string[];
+  /** Snapshot of the last generation run. */
+  generation?: {
+    requested: number;
+    created: number;
+    failed: number;
+    at: string;
+  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
@@ -77,13 +86,57 @@ export interface AuditUserOption {
   email?: string;
 }
 
+/** Paginated list envelope from GET /audit/programs (#19e). */
+export interface ListProgramsResult {
+  programs: AuditProgram[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/** Result of POST /audit/programs/:id/generate-surveys (#19). */
+export interface GenerateSurveysResult {
+  program: AuditProgram;
+  requested: number;
+  created: number;
+  failed: number;
+  errors: Array<{ templateId: string; assigneeId: string; message: string }>;
+  alreadyGenerated: boolean;
+}
+
+/** Completion rollup from GET /audit/programs/:id/completion (#19e). */
+export interface ProgramCompletion {
+  generated: boolean;
+  total: number;
+  done: number;
+  percent: number;
+  byStatus: Record<string, number>;
+}
+
 // ---------------------------------------------------------------------------
 // Program CRUD
 // ---------------------------------------------------------------------------
 
-export async function listPrograms(): Promise<AuditProgram[]> {
-  const res = await Api.get('/audit/programs');
-  return (res?.data?.programs ?? []) as AuditProgram[];
+export interface ListProgramsParams {
+  limit?: number;
+  offset?: number;
+}
+
+export async function listPrograms(params: ListProgramsParams = {}): Promise<ListProgramsResult> {
+  const search = new URLSearchParams();
+  if (params.limit !== undefined) search.set('limit', String(params.limit));
+  if (params.offset !== undefined) search.set('offset', String(params.offset));
+  const qs = search.toString();
+  const res = await Api.get(`/audit/programs${qs ? `?${qs}` : ''}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = res?.data ?? {};
+  const programs = (data.programs ?? []) as AuditProgram[];
+  return {
+    programs,
+    total: Number(data.total ?? programs.length),
+    limit: Number(data.limit ?? programs.length),
+    offset: Number(data.offset ?? 0),
+  };
 }
 
 export async function getProgram(id: string): Promise<AuditProgram | null> {
@@ -103,6 +156,28 @@ export async function updateProgram(id: string, input: UpdateProgramInput): Prom
 
 export async function deleteProgram(id: string): Promise<void> {
   await Api.delete(`/audit/programs/${id}`);
+}
+
+/**
+ * Bulk-generate the underlying interview assignments for a program (#19):
+ * cartesian of selected templateIds × assigneeIds, created via the canonical
+ * interview assignment path server-side. Idempotent + partial-failure aware.
+ */
+export async function generateSurveys(id: string): Promise<GenerateSurveysResult> {
+  const res = await Api.post(`/audit/programs/${id}/generate-surveys`, {});
+  return res?.data as GenerateSurveysResult;
+}
+
+/** Completion rollup for a program (#19e). */
+export async function getCompletion(id: string): Promise<ProgramCompletion> {
+  const res = await Api.get(`/audit/programs/${id}/completion`);
+  return (res?.data?.completion ?? {
+    generated: false,
+    total: 0,
+    done: 0,
+    percent: 0,
+    byStatus: {},
+  }) as ProgramCompletion;
 }
 
 // ---------------------------------------------------------------------------

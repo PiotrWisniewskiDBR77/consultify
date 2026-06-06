@@ -27,6 +27,8 @@
 import { randomUUID } from 'crypto';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
+import interviewAssignmentService from './InterviewAssignmentService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,10 +53,23 @@ export interface AuditProgramConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   plan?: any[];
   /**
-   * Whether the underlying surveys/assignments have been generated yet. The MVP
-   * leaves generation as a manual next step, so this starts false.
+   * Whether the underlying surveys/assignments have been generated. Set true by
+   * generateSurveys() once at least one assignment is created (#19).
    */
   surveysGenerated?: boolean;
+  /**
+   * Ids of the interview assignments created by bulk generation (#19). One per
+   * template × assignee pair. Used to compute the completion rollup (#19e) and to
+   * keep the generation idempotent (skip already-generated programs).
+   */
+  generatedAssignmentIds?: string[];
+  /** Snapshot of the last generation run (succeeded/failed counts + when). */
+  generation?: {
+    requested: number;
+    created: number;
+    failed: number;
+    at: string;
+  };
   /** Anything else the wizard wants to round-trip. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
@@ -167,16 +182,64 @@ function mapRow(row: Record<string, unknown> | undefined | null): AuditProgram |
 // CRUD (all org-scoped)
 // ---------------------------------------------------------------------------
 
-export async function listPrograms(organizationId: string): Promise<AuditProgram[]> {
+export interface ListProgramsOptions {
+  /** Page size. Clamped to [1, 200]. Defaults to 50. */
+  limit?: number;
+  /** Row offset (>= 0). Defaults to 0. */
+  offset?: number;
+}
+
+export interface ListProgramsResult {
+  programs: AuditProgram[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+const DEFAULT_LIST_LIMIT = 50;
+const MAX_LIST_LIMIT = 200;
+
+function clampLimit(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_LIST_LIMIT;
+  return Math.min(Math.floor(n), MAX_LIST_LIMIT);
+}
+
+function clampOffset(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.floor(n);
+}
+
+/**
+ * Paginated, org-scoped list (#19e). Returns the requested page plus the total
+ * count so the hub can render "load more" / page indicators honestly.
+ */
+export async function listPrograms(
+  organizationId: string,
+  options: ListProgramsOptions = {}
+): Promise<ListProgramsResult> {
   await ensureSchema();
-  const rows = await dbAll<Record<string, unknown>>(
-    `SELECT * FROM audit_programs
-       WHERE organization_id = ?
-       ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC`,
+  const limit = clampLimit(options.limit);
+  const offset = clampOffset(options.offset);
+
+  const countRow = await dbGet<{ total: number }>(
+    `SELECT COUNT(*) AS total FROM audit_programs WHERE organization_id = ?`,
     [organizationId],
     { fallback: false }
   );
-  return (rows || []).map(mapRow).filter((p): p is AuditProgram => p !== null);
+  const total = Number(countRow?.total ?? 0);
+
+  const rows = await dbAll<Record<string, unknown>>(
+    `SELECT * FROM audit_programs
+       WHERE organization_id = ?
+       ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC
+       LIMIT ? OFFSET ?`,
+    [organizationId, limit, offset],
+    { fallback: false }
+  );
+  const programs = (rows || []).map(mapRow).filter((p): p is AuditProgram => p !== null);
+  return { programs, total, limit, offset };
 }
 
 export async function getProgram(organizationId: string, id: string): Promise<AuditProgram | null> {
@@ -281,4 +344,196 @@ export async function deleteProgram(organizationId: string, id: string): Promise
     { fallback: false }
   );
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Bulk survey generation (#19) — fan out templates × assignees into real
+// interview assignments by REUSING the canonical interview assignment service
+// (server/src/services/InterviewAssignmentService.ts, the same `create` path the
+// /interview/assignments endpoint / AssignInterviewModal use). We do NOT
+// re-implement assignment logic here — we just orchestrate the cartesian fan-out
+// and record the resulting assignment ids on the program config.
+// ---------------------------------------------------------------------------
+
+export interface GenerateSurveysResult {
+  program: AuditProgram;
+  requested: number;
+  created: number;
+  failed: number;
+  /** Per-pair failures, for honest reporting. */
+  errors: Array<{ templateId: string; assigneeId: string; message: string }>;
+  /** True when nothing was generated because it was already done. */
+  alreadyGenerated: boolean;
+}
+
+/** Default due date for generated assignments when none is configured: +14 days. */
+function defaultDueAt(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 14);
+  return d.toISOString();
+}
+
+export async function generateSurveys(
+  organizationId: string,
+  userId: string,
+  id: string
+): Promise<GenerateSurveysResult | null> {
+  await ensureSchema();
+  const program = await getProgram(organizationId, id);
+  if (!program) return null;
+
+  const templateIds = (program.config.templateIds || [])
+    .map((t) => String(t || '').trim())
+    .filter(Boolean);
+  const assigneeIds = (program.config.assigneeIds || [])
+    .map((a) => String(a || '').trim())
+    .filter(Boolean);
+
+  // Idempotency: don't re-fan-out a program that already generated surveys.
+  if (program.config.surveysGenerated === true) {
+    return {
+      program,
+      requested: 0,
+      created: 0,
+      failed: 0,
+      errors: [],
+      alreadyGenerated: true,
+    };
+  }
+
+  const errors: GenerateSurveysResult['errors'] = [];
+  const createdAssignmentIds: string[] = [];
+  const dueAt = (program.config.dueAt as string) || defaultDueAt();
+  let requested = 0;
+
+  for (const templateId of templateIds) {
+    for (const assigneeId of assigneeIds) {
+      requested += 1;
+      try {
+        // REUSE the canonical assignment creation path. One assignment per pair
+        // (single assignee → non-team assignment). processRef tags the program so
+        // the assignments are linkable back even outside config.
+        const assignment = await interviewAssignmentService.create({
+          organizationId,
+          templateId,
+          assigneeUserIds: [assigneeId],
+          dueAt,
+          priority: 'medium',
+          createdBy: userId,
+          processRef: `audit_program:${program.id}`,
+        });
+        createdAssignmentIds.push(assignment.id);
+      } catch (error) {
+        const message = String((error as Error)?.message || error || 'unknown error');
+        errors.push({ templateId, assigneeId, message });
+        logger.error('[audit-programs] generateSurveys pair failed', {
+          programId: program.id,
+          templateId,
+          assigneeId,
+          error: message,
+        });
+      }
+    }
+  }
+
+  const created = createdAssignmentIds.length;
+  const failed = errors.length;
+
+  // Persist results onto the program config. Mark generated only if at least one
+  // assignment landed — otherwise leave it false so the action can be retried.
+  const nextConfig: AuditProgramConfig = {
+    ...program.config,
+    surveysGenerated: created > 0,
+    generatedAssignmentIds: createdAssignmentIds,
+    generation: {
+      requested,
+      created,
+      failed,
+      at: new Date().toISOString(),
+    },
+  };
+
+  const updated = await updateProgram(organizationId, id, {
+    config: nextConfig,
+    // Promote a draft to active once surveys exist.
+    status: created > 0 && program.status === 'draft' ? 'active' : program.status,
+  });
+
+  return {
+    program: updated || program,
+    requested,
+    created,
+    failed,
+    errors,
+    alreadyGenerated: false,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Completion rollup (#19e) — count how many of the program's generated
+// assignments reached a submitted/approved/completed state vs the total
+// generated. Queries the interview_assignments table by the stored ids.
+// ---------------------------------------------------------------------------
+
+export interface ProgramCompletion {
+  /** True once surveys have been generated for the program. */
+  generated: boolean;
+  /** Total generated assignments tracked for this program. */
+  total: number;
+  /** Submitted/approved/completed count. */
+  done: number;
+  /** Integer percentage (0–100); 0 when nothing generated. */
+  percent: number;
+  /** Coarse status buckets for richer dashboards. */
+  byStatus: Record<string, number>;
+}
+
+/** Statuses that count as "done" for rollup purposes. */
+const DONE_STATUSES = new Set(['submitted', 'approved', 'completed']);
+
+export async function computeCompletion(
+  organizationId: string,
+  id: string
+): Promise<ProgramCompletion | null> {
+  await ensureSchema();
+  const program = await getProgram(organizationId, id);
+  if (!program) return null;
+
+  const ids = (program.config.generatedAssignmentIds || [])
+    .map((x) => String(x || '').trim())
+    .filter(Boolean);
+
+  if (!program.config.surveysGenerated || ids.length === 0) {
+    return { generated: false, total: 0, done: 0, percent: 0, byStatus: {} };
+  }
+
+  const placeholders = ids.map(() => '?').join(', ');
+  const rows = await dbAll<{ status: string; count: number }>(
+    `SELECT status, COUNT(*) AS count
+       FROM interview_assignments
+       WHERE organization_id = ? AND id IN (${placeholders})
+       GROUP BY status`,
+    [organizationId, ...ids],
+    { fallback: false }
+  );
+
+  const byStatus: Record<string, number> = {};
+  let totalFound = 0;
+  let done = 0;
+  for (const row of rows || []) {
+    const status = String(row.status || 'unknown');
+    const count = Number(row.count || 0);
+    byStatus[status] = count;
+    totalFound += count;
+    if (DONE_STATUSES.has(status)) done += count;
+  }
+
+  // Use the recorded id count as the denominator so deleted/missing assignments
+  // still count against the total (honest completion, not survivorship-biased).
+  const total = ids.length;
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  // Surface any tracked-but-missing assignments so the UI can be honest.
+  if (totalFound < total) byStatus.missing = (byStatus.missing || 0) + (total - totalFound);
+
+  return { generated: true, total, done, percent, byStatus };
 }
