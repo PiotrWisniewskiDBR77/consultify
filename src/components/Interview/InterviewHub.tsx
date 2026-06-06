@@ -2135,6 +2135,38 @@ export const InterviewHub: React.FC = () => {
     { value: 'failed', label: 'Failed' },
   ];
 
+  // Per-column Source / Exported filter derivation — mirrors EXACTLY the rendered
+  // cells in renderInsightsTable (Source ~5658, Exported ~5667). Source collapses
+  // to "has sessions" vs "no source"; Exported keys off the same boolean flags as
+  // the rendered chips (tools / assessment / none).
+  const getInsightSourceKey = useCallback((i: (typeof insights)[number]) => {
+    const sessionCount = i.sourceSessionCount ? i.sourceSessionCount : i.sessionId ? 1 : 0;
+    return sessionCount > 0 ? 'sessions' : 'none';
+  }, []);
+  const getInsightExportKeys = useCallback((i: (typeof insights)[number]) => {
+    const keys: string[] = [];
+    if (i.exportedToTools) keys.push('tools');
+    if (i.exportedToAssessment) keys.push('assessment');
+    if (keys.length === 0) keys.push('none');
+    return keys;
+  }, []);
+  const INSIGHT_SOURCE_FILTER_OPTIONS = useMemo(() => {
+    const present = new Set<string>(insights.map((i) => getInsightSourceKey(i)));
+    return [
+      { value: 'sessions', label: isPolish ? 'Z sesji' : 'From sessions' },
+      { value: 'none', label: isPolish ? 'Bez źródła' : 'No source' },
+    ].filter((o) => present.has(o.value));
+  }, [insights, getInsightSourceKey, isPolish]);
+  const INSIGHT_EXPORTS_FILTER_OPTIONS = useMemo(() => {
+    const present = new Set<string>();
+    insights.forEach((i) => getInsightExportKeys(i).forEach((k) => present.add(k)));
+    return [
+      { value: 'tools', label: isPolish ? 'Narzędzia' : 'Tools' },
+      { value: 'assessment', label: isPolish ? 'Ocena' : 'Assessment' },
+      { value: 'none', label: isPolish ? 'Nigdzie' : 'Not exported' },
+    ].filter((o) => present.has(o.value));
+  }, [insights, getInsightExportKeys, isPolish]);
+
   // Insights filtered by table header filters
   const insightsForTable = useMemo(() => {
     let result = filteredInsights;
@@ -2155,8 +2187,16 @@ export const InterviewHub: React.FC = () => {
         )
       );
     }
+    const sourceFilter = insightTableFilters.source as string[] | undefined;
+    if (sourceFilter?.length) {
+      result = result.filter((i) => sourceFilter.includes(getInsightSourceKey(i)));
+    }
+    const exportsFilter = insightTableFilters.exports as string[] | undefined;
+    if (exportsFilter?.length) {
+      result = result.filter((i) => getInsightExportKeys(i).some((k) => exportsFilter.includes(k)));
+    }
     return result;
-  }, [filteredInsights, insightTableFilters]);
+  }, [filteredInsights, insightTableFilters, getInsightSourceKey, getInsightExportKeys]);
 
   // Insight statistics
   const insightStats = useMemo(() => {
@@ -4489,6 +4529,48 @@ export const InterviewHub: React.FC = () => {
       });
     });
 
+    // Header click-sort — applied on top of the already-filtered `rows`. Mirrors
+    // the Assignments comparator (field + direction). No active field = identity.
+    const sortedRows = sessionSortField
+      ? [...rows].sort((a, b) => {
+          const dir = sessionSortAsc ? 1 : -1;
+          if (sessionSortField === 'name') {
+            return (a.name || '').localeCompare(b.name || '') * dir;
+          }
+          if (sessionSortField === 'status') {
+            const statusOrder: Record<string, number> = {
+              sent_back: 0,
+              assigned: 1,
+              in_progress: 2,
+              submitted: 3,
+              approved: 4,
+              completed: 5,
+            };
+            return (
+              ((statusOrder[getSessionWorkflowStatus(a)] ?? 99) -
+                (statusOrder[getSessionWorkflowStatus(b)] ?? 99)) *
+              dir
+            );
+          }
+          if (sessionSortField === 'due') {
+            const aD = a.dueAt ? new Date(a.dueAt).getTime() : Infinity;
+            const bD = b.dueAt ? new Date(b.dueAt).getTime() : Infinity;
+            return (aD - bD) * dir;
+          }
+          if (sessionSortField === 'submitted') {
+            const aS = a.submittedAt ? new Date(a.submittedAt).getTime() : Infinity;
+            const bS = b.submittedAt ? new Date(b.submittedAt).getTime() : Infinity;
+            return (aS - bS) * dir;
+          }
+          if (sessionSortField === 'overdue') {
+            const aO = getSessionDaysOverdue(a) ?? Infinity;
+            const bO = getSessionDaysOverdue(b) ?? Infinity;
+            return (aO - bO) * dir;
+          }
+          return 0;
+        })
+      : rows;
+
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
         {activeSessionFilterChips.length > 0 ? (
@@ -4555,7 +4637,18 @@ export const InterviewHub: React.FC = () => {
                 {/* #10 — template filter lives on the Name header; assignee now
                     has its own dedicated column (below). */}
                 <div className="flex items-center gap-1">
-                  <span>{isPolish ? 'Nazwa' : 'Name'}</span>
+                  <span
+                    className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                    onClick={() => toggleSessionSort('name')}
+                  >
+                    {isPolish ? 'Nazwa' : 'Name'}
+                    {sessionSortField === 'name' && (
+                      <ChevronDown
+                        size={12}
+                        className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
+                      />
+                    )}
+                  </span>
                   <FilterDropdown
                     column={sessionTemplateFilterCol}
                     value={sessionsTableFilters.template as string[] | undefined}
@@ -4611,13 +4704,21 @@ export const InterviewHub: React.FC = () => {
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span
-                      className={
+                      className={[
+                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
                         (sessionsTableFilters.status as string[] | undefined)?.length
                           ? 'text-primary-500'
-                          : ''
-                      }
+                          : '',
+                      ].join(' ')}
+                      onClick={() => toggleSessionSort('status')}
                     >
                       {isPolish ? 'Status' : 'Status'}
+                      {sessionSortField === 'status' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
                     </span>
                     <FilterDropdown
                       column={sessionStatusFilterCol}
@@ -4646,28 +4747,49 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('due') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   style={{ width: sessionsColumnWidths.due }}
+                  onClick={() => toggleSessionSort('due')}
                 >
                   {isPolish ? 'Termin' : 'Due'}
+                  {sessionSortField === 'due' && (
+                    <ChevronDown
+                      size={12}
+                      className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
+                    />
+                  )}
                   {renderSessionResizer('due')}
                 </th>
               )}
               {!hiddenSet.has('submitted') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   style={{ width: sessionsColumnWidths.submitted }}
+                  onClick={() => toggleSessionSort('submitted')}
                 >
                   {isPolish ? 'Wysłano' : 'Submitted'}
+                  {sessionSortField === 'submitted' && (
+                    <ChevronDown
+                      size={12}
+                      className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
+                    />
+                  )}
                   {renderSessionResizer('submitted')}
                 </th>
               )}
               {!hiddenSet.has('overdue') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   style={{ width: sessionsColumnWidths.overdue }}
+                  onClick={() => toggleSessionSort('overdue')}
                 >
                   {isPolish ? 'Po terminie' : 'Overdue'}
+                  {sessionSortField === 'overdue' && (
+                    <ChevronDown
+                      size={12}
+                      className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
+                    />
+                  )}
                   {renderSessionResizer('overdue')}
                 </th>
               )}
@@ -4760,7 +4882,7 @@ export const InterviewHub: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {rows.map((session) => {
+            {sortedRows.map((session) => {
               const progress = getSessionProgress(session);
               const workflowStatus = getSessionWorkflowStatus(session);
               const statusConfig = getSessionStatusConfig(workflowStatus);
@@ -5558,6 +5680,67 @@ export const InterviewHub: React.FC = () => {
       filterType: 'multiselect',
       filterOptions: INSIGHT_STATUS_FILTER_OPTIONS,
     };
+    const sourceCol: ColumnDef = {
+      id: 'source',
+      label: isPolish ? 'Źródło' : 'Source',
+      width: insightColumnWidths.source ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS.source,
+      minWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.source.minWidth,
+      maxWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.source.maxWidth,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: INSIGHT_SOURCE_FILTER_OPTIONS,
+    };
+    const exportsCol: ColumnDef = {
+      id: 'exports',
+      label: isPolish ? 'Wyeksportowano' : 'Exported to',
+      width: insightColumnWidths.exports ?? INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS.exports,
+      minWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.exports.minWidth,
+      maxWidth: INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS.exports.maxWidth,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: INSIGHT_EXPORTS_FILTER_OPTIONS,
+    };
+
+    // Header click-sort — applied on top of the already-filtered/grouped `rows`.
+    const insightStatusRank = (i: (typeof rows)[number]) => {
+      const s =
+        (i.reviewStatus === 'in_review' || i.reviewStatus === 'published'
+          ? i.reviewStatus
+          : i.status) || 'completed';
+      const order: Record<string, number> = {
+        draft: 0,
+        generating: 1,
+        completed: 2,
+        in_review: 3,
+        published: 4,
+        failed: 5,
+      };
+      return order[s] ?? 99;
+    };
+    const sortedInsightRows = insightSortField
+      ? [...rows].sort((a, b) => {
+          const dir = insightSortAsc ? 1 : -1;
+          if (insightSortField === 'title') {
+            return (a.title || '').localeCompare(b.title || '') * dir;
+          }
+          if (insightSortField === 'type') {
+            const aT = String((a as any).promptType || (a as any).insightType || 'summary');
+            const bT = String((b as any).promptType || (b as any).insightType || 'summary');
+            return aT.localeCompare(bT) * dir;
+          }
+          if (insightSortField === 'status') {
+            return (insightStatusRank(a) - insightStatusRank(b)) * dir;
+          }
+          if (insightSortField === 'date') {
+            const aD = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const bD = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return (aD - bD) * dir;
+          }
+          return 0;
+        })
+      : rows;
 
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
@@ -5587,10 +5770,17 @@ export const InterviewHub: React.FC = () => {
                 </button>
               </th>
               <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                 style={{ width: insightColumnWidths.title }}
+                onClick={() => toggleInsightSort('title')}
               >
                 {isPolish ? 'Tytuł' : 'Title'}
+                {insightSortField === 'title' && (
+                  <ChevronDown
+                    size={12}
+                    className={`inline-block ml-0.5 transition-transform ${insightSortAsc ? '' : 'rotate-180'}`}
+                  />
+                )}
                 {renderInsightResizer('title')}
               </th>
               {!hiddenSet.has('type') && (
@@ -5600,13 +5790,21 @@ export const InterviewHub: React.FC = () => {
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span
-                      className={
+                      className={[
+                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
                         (insightTableFilters.type as string[] | undefined)?.length
                           ? 'text-primary-500'
-                          : ''
-                      }
+                          : '',
+                      ].join(' ')}
+                      onClick={() => toggleInsightSort('type')}
                     >
                       {typeCol.label}
+                      {insightSortField === 'type' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${insightSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
                     </span>
                     <FilterDropdown
                       column={typeCol}
@@ -5631,13 +5829,21 @@ export const InterviewHub: React.FC = () => {
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span
-                      className={
+                      className={[
+                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
                         (insightTableFilters.status as string[] | undefined)?.length
                           ? 'text-primary-500'
-                          : ''
-                      }
+                          : '',
+                      ].join(' ')}
+                      onClick={() => toggleInsightSort('status')}
                     >
                       {statusCol.label}
+                      {insightSortField === 'status' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${insightSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
                     </span>
                     <FilterDropdown
                       column={statusCol}
@@ -5660,7 +5866,29 @@ export const InterviewHub: React.FC = () => {
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: insightColumnWidths.source }}
                 >
-                  {isPolish ? 'Źródło' : 'Source'}
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className={
+                        (insightTableFilters.source as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {sourceCol.label}
+                    </span>
+                    <FilterDropdown
+                      column={sourceCol}
+                      value={insightTableFilters.source as string[] | undefined}
+                      onChange={(v) =>
+                        setInsightTableFilters((f) => ({ ...f, source: v as string[] }))
+                      }
+                      isOpen={openInsightFilterId === 'source'}
+                      onToggle={() =>
+                        setOpenInsightFilterId((id) => (id === 'source' ? null : 'source'))
+                      }
+                      onClose={() => setOpenInsightFilterId(null)}
+                    />
+                  </div>
                   {renderInsightResizer('source')}
                 </th>
               )}
@@ -5669,16 +5897,45 @@ export const InterviewHub: React.FC = () => {
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: insightColumnWidths.exports }}
                 >
-                  {isPolish ? 'Wyeksportowano' : 'Exported to'}
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className={
+                        (insightTableFilters.exports as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {exportsCol.label}
+                    </span>
+                    <FilterDropdown
+                      column={exportsCol}
+                      value={insightTableFilters.exports as string[] | undefined}
+                      onChange={(v) =>
+                        setInsightTableFilters((f) => ({ ...f, exports: v as string[] }))
+                      }
+                      isOpen={openInsightFilterId === 'exports'}
+                      onToggle={() =>
+                        setOpenInsightFilterId((id) => (id === 'exports' ? null : 'exports'))
+                      }
+                      onClose={() => setOpenInsightFilterId(null)}
+                    />
+                  </div>
                   {renderInsightResizer('exports')}
                 </th>
               )}
               {!hiddenSet.has('date') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   style={{ width: insightColumnWidths.date }}
+                  onClick={() => toggleInsightSort('date')}
                 >
                   {isPolish ? 'Data' : 'Date'}
+                  {insightSortField === 'date' && (
+                    <ChevronDown
+                      size={12}
+                      className={`inline-block ml-0.5 transition-transform ${insightSortAsc ? '' : 'rotate-180'}`}
+                    />
+                  )}
                   {renderInsightResizer('date')}
                 </th>
               )}
@@ -5770,7 +6027,7 @@ export const InterviewHub: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {rows.map((insight) => {
+            {sortedInsightRows.map((insight) => {
               const promptType =
                 (insight as any).promptType || (insight as any).insightType || 'summary';
               const topicCollections = [
@@ -6253,6 +6510,49 @@ export const InterviewHub: React.FC = () => {
       filterOptions: TEMPLATE_STATUS_FILTER_OPTIONS,
     };
 
+    // Header click-sort — applied on top of the already-filtered templates list.
+    // lastUsed has no dedicated backend field yet, so it sorts by the best
+    // available recency proxy (updatedAt → createdAt).
+    const templateStatusRank = (t: InterviewTemplate) => {
+      const s = String(t.status || 'draft').toLowerCase();
+      const order: Record<string, number> = {
+        draft: 0,
+        in_review: 1,
+        approved: 2,
+        published: 2,
+        archived: 3,
+      };
+      return order[s] ?? 99;
+    };
+    const sortedTemplates = templateSortField
+      ? [...templatesForTable].sort((a, b) => {
+          const dir = templateSortAsc ? 1 : -1;
+          if (templateSortField === 'name') {
+            return (a.name || '').localeCompare(b.name || '') * dir;
+          }
+          if (templateSortField === 'category') {
+            return (a.category || '').localeCompare(b.category || '') * dir;
+          }
+          if (templateSortField === 'questions') {
+            return ((a.questionCount || 0) - (b.questionCount || 0)) * dir;
+          }
+          if (templateSortField === 'usage') {
+            return (getTemplateUsageCount(a) - getTemplateUsageCount(b)) * dir;
+          }
+          if (templateSortField === 'lastUsed') {
+            const aD = a.updatedAt || a.createdAt;
+            const bD = b.updatedAt || b.createdAt;
+            const aT = aD ? new Date(aD).getTime() : 0;
+            const bT = bD ? new Date(bD).getTime() : 0;
+            return (aT - bT) * dir;
+          }
+          if (templateSortField === 'status') {
+            return (templateStatusRank(a) - templateStatusRank(b)) * dir;
+          }
+          return 0;
+        })
+      : templatesForTable;
+
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
@@ -6285,7 +6585,18 @@ export const InterviewHub: React.FC = () => {
                 style={{ width: templatesColumnWidths.name }}
               >
                 <div className="flex items-center gap-1">
-                  <span>{isPolish ? 'Nazwa' : 'Name'}</span>
+                  <span
+                    className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                    onClick={() => toggleTemplateSort('name')}
+                  >
+                    {isPolish ? 'Nazwa' : 'Name'}
+                    {templateSortField === 'name' && (
+                      <ChevronDown
+                        size={12}
+                        className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
+                      />
+                    )}
+                  </span>
                 </div>
                 {renderTemplateResizer('name')}
               </th>
@@ -6297,13 +6608,21 @@ export const InterviewHub: React.FC = () => {
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span
-                      className={
+                      className={[
+                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
                         (templatesTableFilters.category as string[] | undefined)?.length
                           ? 'text-primary-500'
-                          : ''
-                      }
+                          : '',
+                      ].join(' ')}
+                      onClick={() => toggleTemplateSort('category')}
                     >
                       {isPolish ? 'Kategoria' : 'Category'}
+                      {templateSortField === 'category' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
                     </span>
                     <FilterDropdown
                       column={templateCategoryCol}
@@ -6328,7 +6647,18 @@ export const InterviewHub: React.FC = () => {
                   style={{ width: templatesColumnWidths.questions }}
                 >
                   <div className="flex items-center justify-center gap-1">
-                    <span>{isPolish ? 'Pytania' : 'Questions'}</span>
+                    <span
+                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      onClick={() => toggleTemplateSort('questions')}
+                    >
+                      {isPolish ? 'Pytania' : 'Questions'}
+                      {templateSortField === 'questions' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
+                    </span>
                   </div>
                   {renderTemplateResizer('questions')}
                 </th>
@@ -6341,7 +6671,18 @@ export const InterviewHub: React.FC = () => {
                   style={{ width: templatesColumnWidths.usage }}
                 >
                   <div className="flex items-center justify-center gap-1">
-                    <span>{isPolish ? 'Użycia' : 'Usage'}</span>
+                    <span
+                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      onClick={() => toggleTemplateSort('usage')}
+                    >
+                      {isPolish ? 'Użycia' : 'Usage'}
+                      {templateSortField === 'usage' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
+                    </span>
                   </div>
                   {renderTemplateResizer('usage')}
                 </th>
@@ -6367,7 +6708,18 @@ export const InterviewHub: React.FC = () => {
                   style={{ width: templatesColumnWidths.lastUsed }}
                 >
                   <div className="flex items-center justify-center gap-1">
-                    <span>{isPolish ? 'Ostatnio użyty' : 'Last used'}</span>
+                    <span
+                      className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      onClick={() => toggleTemplateSort('lastUsed')}
+                    >
+                      {isPolish ? 'Ostatnio użyty' : 'Last used'}
+                      {templateSortField === 'lastUsed' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
+                    </span>
                   </div>
                   {renderTemplateResizer('lastUsed')}
                 </th>
@@ -6380,13 +6732,21 @@ export const InterviewHub: React.FC = () => {
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span
-                      className={
+                      className={[
+                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
                         (templatesTableFilters.status as string[] | undefined)?.length
                           ? 'text-primary-500'
-                          : ''
-                      }
+                          : '',
+                      ].join(' ')}
+                      onClick={() => toggleTemplateSort('status')}
                     >
                       {isPolish ? 'Status' : 'Status'}
+                      {templateSortField === 'status' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${templateSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
                     </span>
                     <FilterDropdown
                       column={templateStatusCol}
@@ -6518,7 +6878,7 @@ export const InterviewHub: React.FC = () => {
           </thead>
 
           <tbody>
-            {templatesForTable.map((template) => {
+            {sortedTemplates.map((template) => {
               const isSelected = selectedTemplateId === template.id;
               const isTemplateSelected = selectedTemplateIds.has(template.id);
               const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
@@ -7151,6 +7511,45 @@ export const InterviewHub: React.FC = () => {
     'dueAt' | 'status' | 'progress' | null
   >('dueAt');
   const [assignmentSortAsc, setAssignmentSortAsc] = useState(true);
+
+  // Sorting state — Sessions / Insights / Templates header click-sort. Mirrors the
+  // Assignments pattern (field + asc toggle, click cycles asc→desc, click a new
+  // field resets to asc). Sort applies on top of the already-filtered/grouped list.
+  type SessionSortField = 'name' | 'status' | 'due' | 'submitted' | 'overdue';
+  const [sessionSortField, setSessionSortField] = useState<SessionSortField | null>(null);
+  const [sessionSortAsc, setSessionSortAsc] = useState(true);
+  const toggleSessionSort = (field: SessionSortField) => {
+    if (sessionSortField === field) {
+      setSessionSortAsc((prev) => !prev);
+    } else {
+      setSessionSortField(field);
+      setSessionSortAsc(true);
+    }
+  };
+
+  type InsightSortField = 'title' | 'type' | 'status' | 'date';
+  const [insightSortField, setInsightSortField] = useState<InsightSortField | null>(null);
+  const [insightSortAsc, setInsightSortAsc] = useState(true);
+  const toggleInsightSort = (field: InsightSortField) => {
+    if (insightSortField === field) {
+      setInsightSortAsc((prev) => !prev);
+    } else {
+      setInsightSortField(field);
+      setInsightSortAsc(true);
+    }
+  };
+
+  type TemplateSortField = 'name' | 'category' | 'questions' | 'usage' | 'lastUsed' | 'status';
+  const [templateSortField, setTemplateSortField] = useState<TemplateSortField | null>(null);
+  const [templateSortAsc, setTemplateSortAsc] = useState(true);
+  const toggleTemplateSort = (field: TemplateSortField) => {
+    if (templateSortField === field) {
+      setTemplateSortAsc((prev) => !prev);
+    } else {
+      setTemplateSortField(field);
+      setTemplateSortAsc(true);
+    }
+  };
 
   // Table View Settings — Assignments (Inbox + Managed)
   const [inboxHiddenColumns, setInboxHiddenColumns] = useState<string[]>(() =>
@@ -10967,6 +11366,7 @@ Return ONLY the answer text (no markdown fences).`;
 
       <InitiativeWizardModal
         isOpen={showInitiativeWizard}
+        language={isPolish ? 'pl' : 'en'}
         projectId={currentProjectId || undefined}
         existingInitiatives={interviewInitiatives.map((initiative) => ({
           id: initiative.id,
