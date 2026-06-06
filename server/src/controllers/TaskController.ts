@@ -548,7 +548,11 @@ export class TaskController {
         taskType,
         search,
         scope,
+        source,
       } = query as any;
+
+      // Mirror the Initiatives `?source` filter (e.g. ?source=interview_insight).
+      const normalizedSourceFilter = source ? String(source).trim().toLowerCase() : '';
 
       // V4-TASK-01: scope=personal|initiative|program — validate required params
       if (scope === 'initiative' && !initiativeId) {
@@ -684,6 +688,12 @@ export class TaskController {
         if (search) {
           s += ` AND (t.title LIKE ? OR t.description LIKE ?)`;
           p.push(`%${search}%`, `%${search}%`);
+        }
+        // Source lineage filter (org scope preserved by WHERE t.organization_id = ?).
+        // No-ops gracefully when the tasks.source_type column is absent.
+        if (normalizedSourceFilter && taskColumns.has('source_type')) {
+          s += ` AND LOWER(COALESCE(t.source_type, '')) = ?`;
+          p.push(normalizedSourceFilter);
         }
 
         // For regular users, show only tasks assigned to them or reported by them

@@ -47,6 +47,10 @@ router.get(
 
     const limit = Number(req.query.limit) || 50;
     const onlyPending = String(req.query.onlyPending ?? 'true') !== 'false';
+    // Mirror the Initiatives `?source` filter (e.g. ?source=interview_insight).
+    const normalizedSourceFilter = req.query.source
+      ? String(req.query.source).trim().toLowerCase()
+      : '';
 
     const decisionCols = await getTableColumns('decisions');
     const prioritySelect = decisionCols.has('priority') ? 'd.priority' : `'MEDIUM' as priority`;
@@ -58,6 +62,11 @@ router.get(
     const workflowStatusSelect = decisionCols.has('workflow_status')
       ? 'd.workflow_status'
       : `'proposed' as workflow_status`;
+
+    // Source lineage filter (org scope preserved below). No-ops when the
+    // source_type column is absent.
+    const applySourceFilter = !!(normalizedSourceFilter && decisionCols.has('source_type'));
+    const sourceWhere = applySourceFilter ? `AND LOWER(COALESCE(d.source_type, '')) = ?` : '';
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -83,10 +92,11 @@ router.get(
         WHERE d.organization_id = ?
           AND d.decision_maker_id = ?
           ${onlyPending ? "AND lower(coalesce(d.status,'')) IN ('pending','escalated')" : ''}
+          ${sourceWhere}
         ORDER BY d.created_at DESC
         LIMIT ?
       `,
-        [orgId, userId, limit]
+        [orgId, userId, ...(applySourceFilter ? [normalizedSourceFilter] : []), limit]
       )) || [];
 
     const now = Date.now();

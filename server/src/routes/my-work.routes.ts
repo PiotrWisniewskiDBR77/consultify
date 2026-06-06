@@ -967,6 +967,19 @@ router.get(
     const customFieldsSelect = taskCols.has('custom_fields_json')
       ? 't.custom_fields_json as customFields'
       : 'NULL as customFields';
+    // Mirror the Initiatives/Decisions `?source` lineage filter (e.g.
+    // ?source=interview_insight). No-ops when the source_type column is absent.
+    const tSourceTypeSelect = taskCols.has('source_type')
+      ? 't.source_type'
+      : 'NULL as source_type';
+    const tSourceIdSelect = taskCols.has('source_id') ? 't.source_id' : 'NULL as source_id';
+    const normalizedTaskSource = req.query.source
+      ? String(req.query.source).trim().toLowerCase()
+      : '';
+    const applyTaskSourceFilter = !!(normalizedTaskSource && taskCols.has('source_type'));
+    const taskSourceWhere = applyTaskSourceFilter
+      ? `AND LOWER(COALESCE(t.source_type, '')) = ?`
+      : '';
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -987,6 +1000,8 @@ router.get(
           a.avatar_url as assigneeAvatarUrl,
           t.estimated_hours as estimatedHours,
           t.checklist,
+          ${tSourceTypeSelect} as "sourceType",
+          ${tSourceIdSelect} as "sourceId",
           ${customFieldsSelect}
         FROM tasks t
         LEFT JOIN initiatives i ON t.initiative_id = i.id
@@ -995,13 +1010,14 @@ router.get(
         WHERE t.organization_id = ?
           AND t.assignee_id = ?
           ${onlyOpen ? "AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')" : ''}
+          ${taskSourceWhere}
         ORDER BY
           CASE lower(coalesce(t.priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
           COALESCE(t.due_date, '9999-12-31') ASC,
           t.updated_at DESC
         LIMIT ?
       `,
-        [orgId, userId, limit]
+        [orgId, userId, ...(applyTaskSourceFilter ? [normalizedTaskSource] : []), limit]
       )) || [];
 
     const parseCustomFields = (raw: string | null) => {

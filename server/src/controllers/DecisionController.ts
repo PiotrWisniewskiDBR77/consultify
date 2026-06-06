@@ -299,10 +299,13 @@ export class DecisionController {
    */
   static getDecisions = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const { projectId, status, relatedObjectId, taskId, initiativeId, limit, offset } = req.query;
+      const { projectId, status, relatedObjectId, taskId, initiativeId, source, limit, offset } =
+        req.query;
       const orgId = req.user?.organizationId;
       const decisionCols = await getTableColumns('decisions');
       const hasEscalationLevelCol = decisionCols.has('escalation_level');
+      // Mirror the Initiatives `?source` filter semantics (e.g. ?source=interview_insight).
+      const normalizedSourceFilter = source ? source.toString().trim().toLowerCase() : '';
 
       let sql = `
         SELECT 
@@ -343,6 +346,12 @@ export class DecisionController {
       if (relatedObjectId) {
         sql += ` AND (d.initiative_id = ? OR d.task_id = ? OR d.project_id = ?)`;
         params.push(relatedObjectId, relatedObjectId, relatedObjectId);
+      }
+      // Source lineage filter (org scope preserved above). No-ops gracefully when
+      // the source_type column is absent.
+      if (normalizedSourceFilter && decisionCols.has('source_type')) {
+        sql += ` AND LOWER(COALESCE(d.source_type, '')) = ?`;
+        params.push(normalizedSourceFilter);
       }
 
       sql += ` ORDER BY d.created_at DESC`;
