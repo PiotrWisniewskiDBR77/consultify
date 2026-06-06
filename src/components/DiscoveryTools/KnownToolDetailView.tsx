@@ -2221,8 +2221,36 @@ export function KnownToolDetailView(props: {
       </div>
     );
 
+    // ── Standard-C group tabs (mirrors InsightViewer/InitiativeDocumentView) ──
+    // Every per-tool branch below returns the same 4 sections (goal / process /
+    // outcomes / example). A bilingual groupLabels array switched on isPolish +
+    // a per-section group assignment makes NModeShell's C-board render top group
+    // tabs; wide narrative sections get cSpan: 2 so they breathe in the dense
+    // 3-column grid. N-mode uses the same group fields for sidebar headers.
+    const groupLabels = isPolish
+      ? ['Przegląd', 'Jak to działa', 'Przykład']
+      : ['Overview', 'How it works', 'Example'];
+    const groupIndexById: Record<string, number> = {
+      goal: 0, // Overview / Przegląd
+      process: 1, // How it works / Jak to działa
+      outcomes: 1,
+      example: 2, // Example / Przykład
+    };
+    const cSpanById: Record<string, 1 | 2 | 3> = {
+      goal: 2, // multi-card positioning grids
+      process: 2, // stepper + decision-situation grids
+      outcomes: 2, // 3-column outcome blocks
+      example: 3, // wide 3-col case grids
+    };
+    const withGroup = (list: NModeSection[]): NModeSection[] =>
+      list.map((section) => ({
+        ...section,
+        group: groupLabels[groupIndexById[section.id] ?? 0],
+        cSpan: cSpanById[section.id] ?? section.cSpan,
+      }));
+
     if (tool?.toolType === 'dynamic-swot') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2247,11 +2275,11 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: exampleSection,
         },
-      ];
+      ]);
     }
 
     if (tool?.toolType === 'market-forces' || toolType === 'market-forces') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2276,11 +2304,11 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: marketExampleSection,
         },
-      ];
+      ]);
     }
 
     if (tool?.toolType === 'growth-paths' || toolType === 'growth-paths') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2305,11 +2333,11 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: growthExampleSection,
         },
-      ];
+      ]);
     }
 
     if (tool?.toolType === 'portfolio-priority' || toolType === 'portfolio-priority') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2334,11 +2362,11 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: portfolioExampleSection,
         },
-      ];
+      ]);
     }
 
     if (tool?.toolType === 'risk-uncertainty' || toolType === 'risk-uncertainty') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2363,10 +2391,10 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: riskExampleSection,
         },
-      ];
+      ]);
     }
 
-    return [
+    return withGroup([
       {
         id: 'goal',
         icon: Target,
@@ -2391,7 +2419,7 @@ export function KnownToolDetailView(props: {
         label: { en: 'Example', pl: 'Przykład' },
         component: exampleSection,
       },
-    ];
+    ]);
   }, [tool, isPolish, toolType]);
 
   return (

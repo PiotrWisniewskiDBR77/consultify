@@ -1483,6 +1483,48 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       </div>
     );
 
+    // ── Standard-C group tabs (mirrors InsightViewer/InitiativeDocumentView) ──
+    // A bilingual groupLabels array switched on isPolish, plus a per-section
+    // group + cSpan assignment, so NModeShell's C-board renders top group tabs
+    // and lets wide/table-heavy sections breathe in the dense 3-column grid.
+    const groupLabels = isPolish
+      ? ['Sesja', 'Analiza', 'Outputs', 'Współpraca', 'Zapisy']
+      : ['Session', 'Analysis', 'Outputs', 'Collaboration', 'Records'];
+    const phaseGroupIndex = (stepId: string): number => {
+      if (['mission', 'context', 'input', 'signals'].includes(stepId)) return 0;
+      if (
+        ['insights', 'synthesis', 'swot', 'forces', 'options', 'items', 'assumptions'].includes(
+          stepId
+        )
+      ) {
+        return 1;
+      }
+      if (['outputs', 'report', 'initiatives', 'results', 'summary'].includes(stepId)) return 2;
+      return 0;
+    };
+    // Static (non-phase) sections: group + Standard-C span/hidden hints.
+    const staticGroupIndexById: Record<string, number> = {
+      work: 0,
+      review: 1,
+      outputs: 2,
+      'ai-collaboration': 3,
+      comments: 4,
+      activity: 4,
+      'used-in': 4,
+    };
+    const cSpanById: Record<string, 1 | 2 | 3> = {
+      work: 3, // wide step canvas + tool workspace
+      review: 2, // readiness + generation grids
+      outputs: 3, // output contract grid + initiatives + candidates
+      'ai-collaboration': 2,
+    };
+    const cHiddenById = (id: string): boolean => {
+      if (id === 'comments') return nModeComments.length === 0;
+      if (id === 'activity') return history.length === 0;
+      if (id === 'used-in') return toolBacklinks.length === 0;
+      return false;
+    };
+
     if (isStrategicPhaseTool) {
       const renderPhaseCanvas = (phaseStep: StepDefinition, extras?: React.ReactNode) => {
         const phaseIndex = stepDefs.findIndex((step) => step.id === phaseStep.id) + 1;
@@ -1609,6 +1651,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             badge: isOutputs
               ? generatedInitiatives.length + (swotData?.outputCandidates?.length || 0)
               : undefined,
+            group: groupLabels[phaseGroupIndex(step.id)],
+            cSpan: 3 as const, // phase canvases are wide step workspaces
             component: renderPhaseCanvas(step),
           };
         }),
@@ -1616,12 +1660,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           id: 'ai-collaboration',
           icon: Sparkles,
           label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
+          group: groupLabels[3],
+          cSpan: 2 as const,
           component: aiCollaborationSection,
         },
       ] as NModeSection[];
     }
 
-    return [
+    const defaultSections: NModeSection[] = [
       {
         id: 'work',
         icon: Target,
@@ -1731,6 +1777,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         ),
       },
     ];
+
+    return defaultSections.map((section) => ({
+      ...section,
+      group: groupLabels[staticGroupIndexById[section.id] ?? 4],
+      cSpan: cSpanById[section.id] ?? section.cSpan,
+      cHidden: cHiddenById(section.id) || section.cHidden,
+    }));
   }, [
     activeChatMessages,
     activityEntries,
