@@ -27,6 +27,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MultiSelect, type MultiSelectOption } from '@/components/shared/forms';
+import { type WizardStep, WizardStepper } from '@/components/shared/WizardModal';
 
 import {
   type AuditProgram,
@@ -192,11 +193,60 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
     }
   };
 
-  const stepLabels: Record<StepId, string> = {
-    objective: tr('Objective', 'Cel'),
-    templates: tr('Templates', 'Szablony'),
-    assignees: tr('Assignees', 'Przypisani'),
-    review: tr('Review', 'Podsumowanie'),
+  // §5 — Map the wizard steps to the shared <WizardStepper> contract (clickable
+  // pills + progress bar + managed accent), mirroring InsightCreatorModal. The
+  // step labels/hints carry their EN/PL pairs. Per-step status drives the pill
+  // state and the canonical "empty step" affordance (§5b): a picker step with
+  // nothing selected yet shows as 'empty' (muted) rather than falsely complete.
+  const stepMeta: Record<StepId, { label: WizardStep['label']; hint: WizardStep['hint'] }> = {
+    objective: {
+      label: { en: 'Objective', pl: 'Cel' },
+      hint: { en: 'Name + preset', pl: 'Nazwa + szablon' },
+    },
+    templates: {
+      label: { en: 'Templates', pl: 'Szablony' },
+      hint: { en: 'What to ask', pl: 'O co pytać' },
+    },
+    assignees: {
+      label: { en: 'Assignees', pl: 'Przypisani' },
+      hint: { en: 'Who fills it', pl: 'Kto wypełnia' },
+    },
+    review: {
+      label: { en: 'Review', pl: 'Podsumowanie' },
+      hint: { en: 'Create program', pl: 'Utwórz program' },
+    },
+  };
+
+  const stepHasContent = (id: StepId): boolean => {
+    switch (id) {
+      case 'objective':
+        return name.trim().length > 0;
+      case 'templates':
+        return selectedTemplateIds.length > 0;
+      case 'assignees':
+        return selectedAssigneeIds.length > 0;
+      case 'review':
+        return false;
+    }
+  };
+
+  const wizardSteps: WizardStep[] = STEP_ORDER.map((id, index) => {
+    let status: WizardStep['status'] = 'empty';
+    if (index === stepIndex) {
+      status = 'ready';
+    } else if (index < stepIndex && stepHasContent(id)) {
+      status = 'complete';
+    }
+    return { id, label: stepMeta[id].label, hint: stepMeta[id].hint, status };
+  });
+
+  // Reachability gate: the user may revisit any already-visited step and step
+  // exactly one ahead — but only when step 0's hard requirement (name) is met,
+  // so they can't skip the gate. Mirrors canProceed() for step 'objective'.
+  const maxReachableIndex = name.trim().length > 0 ? STEP_ORDER.length - 1 : stepIndex;
+
+  const handleStepChange = (index: number) => {
+    if (index <= maxReachableIndex) setStepIndex(index);
   };
 
   return (
@@ -225,40 +275,15 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
           </button>
         </div>
 
-        {/* Stepper */}
-        <div className="flex items-center gap-1 border-b border-slate-200 px-5 py-3 dark:border-white/[0.08]">
-          {STEP_ORDER.map((s, i) => {
-            const done = i < stepIndex;
-            const active = i === stepIndex;
-            return (
-              <React.Fragment key={s}>
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
-                      active
-                        ? 'bg-primary-500 text-white'
-                        : done
-                          ? 'bg-primary-500/20 text-primary-600 dark:text-primary-300'
-                          : 'bg-slate-100 text-slate-400 dark:bg-white/[0.06]'
-                    }`}
-                  >
-                    {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
-                  </span>
-                  <span
-                    className={`text-xs ${
-                      active ? 'font-medium text-slate-900 dark:text-white' : 'text-slate-400'
-                    }`}
-                  >
-                    {stepLabels[s]}
-                  </span>
-                </div>
-                {i < STEP_ORDER.length - 1 && (
-                  <div className="mx-1 h-px flex-1 bg-slate-200 dark:bg-white/[0.08]" />
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
+        {/* Stepper (shared §5 header: progress bar + clickable pills + accent). */}
+        <WizardStepper
+          steps={wizardSteps}
+          activeStepIndex={stepIndex}
+          maxReachableIndex={maxReachableIndex}
+          onStepChange={handleStepChange}
+          isPolish={isPolish}
+          accentColor="#3b82f6"
+        />
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5">

@@ -39,6 +39,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { StatusPill } from '@/components/shared/StatusPill';
+
 import {
   type AuditProgram,
   type AuditProgramStatus,
@@ -61,11 +63,15 @@ const STATUS_FILTERS: Array<AuditProgramStatus | 'all'> = [
   'archived',
 ];
 
-const statusClasses: Record<AuditProgramStatus, string> = {
-  draft: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
-  active: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
-  completed: 'bg-blue-500/15 text-blue-600 dark:text-blue-300',
-  archived: 'bg-amber-500/15 text-amber-600 dark:text-amber-300',
+// Map our domain status to a status string the canonical StatusPill recognizes
+// for tone purposes (it owns the color SSOT). 'active' isn't a StatusPill token,
+// so we alias it to 'executing' (emerald) to preserve the "ongoing" semantics;
+// the visible text still comes from our bilingual statusLabel().
+const STATUS_PILL_ALIAS: Record<AuditProgramStatus, string> = {
+  draft: 'draft',
+  active: 'executing',
+  completed: 'completed',
+  archived: 'archived',
 };
 
 export const AuditsHub: React.FC = () => {
@@ -359,11 +365,11 @@ export const AuditsHub: React.FC = () => {
                               <span className="truncate font-medium text-slate-900 dark:text-white">
                                 {p.name}
                               </span>
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusClasses[p.status]}`}
-                              >
-                                {statusLabel(p.status)}
-                              </span>
+                              <StatusPill
+                                status={STATUS_PILL_ALIAS[p.status]}
+                                label={statusLabel(p.status)}
+                                withDot={false}
+                              />
                             </div>
                             {p.objective && (
                               <p className="mt-1 line-clamp-1 text-xs text-slate-500">
@@ -621,9 +627,9 @@ const ProgramDashboard: React.FC<{
             {plan.map((row, i) => (
               <li key={(row?.areaKey as string) ?? i} className="flex justify-between text-xs">
                 <span className="text-slate-600 dark:text-slate-300">
-                  {String(row?.area ?? '')}
+                  {String(row?.area ?? '') || '—'}
                 </span>
-                <span className="text-slate-400">{String(row?.suggestedRole ?? '')}</span>
+                <span className="text-slate-400">{String(row?.suggestedRole ?? '') || '—'}</span>
               </li>
             ))}
           </ul>
