@@ -132,6 +132,9 @@ export const NModeCBoard: React.FC<NModeCBoardProps> = ({ sections }) => {
       )}
 
       {/* ── Fixed 3-column dense panel grid (full width) ───────────────────── */}
+      {/* Natural document order (no grid-flow-dense): dense reflow pulled tall
+          panels up beside short ones and created worse vertical gaps. Reading
+          order top-to-bottom matters more than perfect cell-packing here. */}
       <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
         {shown.map((section) => {
           const Icon = section.icon;

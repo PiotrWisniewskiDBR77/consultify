@@ -103,6 +103,7 @@ import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
   type NModeAction,
   NModeCanvas,
+  NModeCBoard,
   NModeHeader,
   NModeLeftNav,
   NModePropertiesStrip,
@@ -126,7 +127,6 @@ import {
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
-import { InitiativeCompactPanel } from './InitiativeCompactPanel';
 import {
   extractInitiativeKpiRows,
   type InitiativeKpiEditorRow,
@@ -4470,6 +4470,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: ListChecks,
         label: { en: 'Tasks', pl: 'Zadania' },
         badge: tasks.length > 0 ? tasks.length : undefined,
+        cSpan: 2,
         component: null,
       },
       {
@@ -4477,6 +4478,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: Scale,
         label: { en: 'Decisions', pl: 'Decyzje' },
         badge: decisions.length > 0 ? decisions.length : undefined,
+        cSpan: 2,
         component: null,
       },
       {
@@ -4489,6 +4491,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'timeline',
         icon: Calendar,
         label: { en: 'Timeline', pl: 'Harmonogram' },
+        cSpan: 3,
         component: null,
       },
       {
@@ -4496,6 +4499,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: Scale,
         label: { en: 'Risk & RAID', pl: 'Ryzyko i RAID' },
         badge: raidItems.length > 0 ? raidItems.length : undefined,
+        cSpan: 2,
         component: null,
       },
       // --- Cele i mierniki ---
@@ -4509,6 +4513,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'kpi',
         icon: TrendingUp,
         label: { en: 'KPIs & Benefits', pl: 'KPI i korzyści' },
+        cSpan: 2,
         component: null,
       },
       {
@@ -4516,6 +4521,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: GitBranch,
         label: { en: 'Dependencies', pl: 'Zależności' },
         badge: dependencies.length > 0 ? dependencies.length : undefined,
+        cSpan: 2,
         component: null,
       },
       // --- Finanse ---
@@ -4523,12 +4529,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'financial-analysis',
         icon: DollarSign,
         label: { en: 'Financial Analysis', pl: 'Analiza finansowa' },
+        cSpan: 2,
         component: null,
       },
       {
         id: 'financial-impact',
         icon: DollarSign,
         label: { en: 'Financial Impact', pl: 'Wpływ finansowy' },
+        cSpan: 2,
         component: null,
       },
       // --- Governance (rzadko używane) ---
@@ -4537,6 +4545,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: ShieldCheck,
         label: { en: 'RACI', pl: 'RACI' },
         badge: stakeholders.length > 0 ? stakeholders.length : undefined,
+        cSpan: 2,
         component: null,
       },
       {
@@ -4581,6 +4590,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: History,
         label: { en: 'Activity Log', pl: 'Dziennik aktywności' },
         badge: history.length > 0 ? history.length : undefined,
+        cSpan: 2,
         component: null,
       },
     ];
@@ -7929,27 +7939,41 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // NOTE: the "legacy D-mode cards + scroll" block further down (the ternary's else
   // branch) is dead code — 'c' is fully handled here before that ternary is reached.
   if (presentationMode === 'c') {
+    // Standard C (ClickUp-style dense board) — unified with the Insight detail
+    // view via the shared NModeCBoard, driven by the SAME section data as the
+    // N-mode left-nav/canvas. Header keeps the mode toggle so the user can flip
+    // back to N. (The legacy InitiativeCompactPanel is retained in the module
+    // for the portfolio quick-peek drawer; this detail surface now uses the
+    // standard board — owner decision 2026-06-06.)
     return (
       <InitiativeContext.Provider value={contextValue}>
-        <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950 p-4">
-          <InitiativeCompactPanel
-            initiative={initiative as any}
-            initiativeId={initiativeId}
-            isOpen
-            onClose={onBack || (() => setPresentationMode('n'))}
-            onOpenFull={(updated) => {
-              setInitiative((prev: any) => ({ ...(prev || {}), ...(updated || {}) }));
-              setPresentationMode('n');
-            }}
-            onUpdate={(updated) => {
-              setInitiative((prev: any) => ({ ...(prev || {}), ...(updated || {}) }));
-              if (updated?.status) {
-                onStatusChange?.(String(updated.status));
-              }
-            }}
-            mode="embedded"
-            users={users as any}
-          />
+        <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+          <div className="min-h-screen">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <NModeHeader
+                title={titleDraft || initiative?.name || ''}
+                onTitleChange={setTitleDraft}
+                titleReadOnly={!canEditCards}
+                titleInputId={titleInputId}
+                artifactId={initiativeId}
+                artifactType="initiative"
+                onSave={() => handleSave(false)}
+                saving={isMutating}
+                isDirty={hasUnsavedChanges}
+                onChat={handleOpenChat}
+                onClose={onBack || (() => {})}
+                statusDotColor={statusMeta.dotColor}
+                presentationMode={presentationMode}
+                onPresentationModeChange={setPresentationMode}
+                buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
+              />
+
+              <div className="col-span-full space-y-0 mt-4">
+                <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
+                <NModeCBoard sections={orderedNModeSectionsWithContent} />
+              </div>
+            </div>
+          </div>
         </div>
       </InitiativeContext.Provider>
     );
