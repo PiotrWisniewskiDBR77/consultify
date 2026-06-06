@@ -257,6 +257,42 @@ function uniqueNonEmpty(items: Array<string | null | undefined>): string[] {
 }
 
 /**
+ * Coerce a loosely-typed API array (session summary `facts`/`gaps`/`constraints`/
+ * `painPoints`) into a clean `string[]`. The backend sometimes returns these as
+ * objects (e.g. `{ text }`, `{ fact }`, `{ statement }`) rather than plain
+ * strings — rendering those directly yields "[object Object]". This normalizes
+ * each element to a meaningful string and drops empties.
+ */
+function toTextList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item): string => {
+      if (typeof item === 'string') return item;
+      if (item == null) return '';
+      if (typeof item === 'number' || typeof item === 'boolean') return String(item);
+      if (typeof item === 'object') {
+        const o = item as Record<string, unknown>;
+        const pick =
+          o.text ??
+          o.fact ??
+          o.value ??
+          o.statement ??
+          o.label ??
+          o.title ??
+          o.content ??
+          o.description ??
+          o.name ??
+          o.summary;
+        if (typeof pick === 'string') return pick;
+        if (typeof pick === 'number' || typeof pick === 'boolean') return String(pick);
+      }
+      return '';
+    })
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
  * #23b — Strip Markdown markup to clean plain text for PREVIEW sub-texts only.
  * Conservative: removes leading heading hashes, bold/italic/strike markers,
  * inline-code backticks, link/image syntax, leading list/quote markers, and
@@ -475,12 +511,23 @@ const STATUS_CONFIG: Record<
 // data already in scope (no new backend calls); each shows an informative
 // empty-state until the underlying multi-respondent data exists.
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
-  { id: 'artifact-actions', icon: Rocket, label: { en: 'Next Actions', pl: 'Dalsze akcje' } },
-  { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
+  {
+    id: 'artifact-actions',
+    icon: Rocket,
+    label: { en: 'Next Actions', pl: 'Dalsze akcje' },
+    cSpan: 2,
+  },
+  {
+    id: 'executive-summary',
+    icon: Star,
+    label: { en: 'Executive Summary', pl: 'Podsumowanie' },
+    cSpan: 2,
+  },
   {
     id: 'consulting-readout',
     icon: Sparkles,
     label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' },
+    cSpan: 3,
   },
   { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
   {
@@ -491,17 +538,19 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
 
   // ── Między wierszami / Between the lines ──────────────────────────────────
-  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
+  { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' }, cSpan: 2 },
   { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
   {
     id: 'analysis-matrix',
     icon: BarChart3,
     label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' },
+    cSpan: 2,
   },
   {
     id: 'consensus-divergence',
     icon: GitCompare,
     label: { en: 'Consensus & Divergence', pl: 'Zgoda i rozbieżności' },
+    cSpan: 2,
   },
   {
     id: 'implicit-assumptions',
@@ -527,11 +576,17 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   },
 
   // ── Dowody / Evidence ─────────────────────────────────────────────────────
-  { id: 'evidence-map', icon: MapIcon, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
+  {
+    id: 'evidence-map',
+    icon: MapIcon,
+    label: { en: 'Evidence Map', pl: 'Mapa dowodów' },
+    cSpan: 2,
+  },
   {
     id: 'candidate-triage',
     icon: Eye,
     label: { en: 'Findings & Evidence', pl: 'Wnioski i dowody' },
+    cSpan: 2,
   },
   {
     id: 'source-pack',
@@ -540,19 +595,25 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   },
 
   // ── Dostarczane / Deliverables ────────────────────────────────────────────
-  { id: 'report-pack', icon: FileText, label: { en: 'Report Pack', pl: 'Pakiet raportu' } },
+  {
+    id: 'report-pack',
+    icon: FileText,
+    label: { en: 'Report Pack', pl: 'Pakiet raportu' },
+    cSpan: 3,
+  },
 
   // ── Audyt / Audit ─────────────────────────────────────────────────────────
   {
     id: 'material-quality',
     icon: AlertCircle,
     label: { en: 'Quality & Trust', pl: 'Jakość i zaufanie' },
+    cSpan: 2,
   },
   // TODO(#23c): move Comments into a drawer / secondary affordance and Activity
   // into the header meta line; kept as Audit sections for now to avoid losing
   // the existing CommentsCanvas / ActivityLogCanvas wiring.
   { id: 'comments', icon: MessageSquare, label: { en: 'Comments', pl: 'Komentarze' } },
-  { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' } },
+  { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' }, cSpan: 2 },
 ];
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -1047,10 +1108,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 (acc, [sessionId, summary]) => {
                   acc[sessionId] = summary
                     ? {
-                        facts: Array.isArray(summary.facts) ? summary.facts : [],
-                        gaps: Array.isArray(summary.gaps) ? summary.gaps : [],
-                        constraints: Array.isArray(summary.constraints) ? summary.constraints : [],
-                        painPoints: Array.isArray(summary.painPoints) ? summary.painPoints : [],
+                        facts: toTextList(summary.facts),
+                        gaps: toTextList(summary.gaps),
+                        constraints: toTextList(summary.constraints),
+                        painPoints: toTextList(summary.painPoints),
                       }
                     : DEFAULT_SESSION_SUMMARY;
                   return acc;

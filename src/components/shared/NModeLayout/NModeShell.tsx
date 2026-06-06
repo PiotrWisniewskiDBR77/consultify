@@ -160,11 +160,14 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
                 )
               )}
 
-              {/* Top group-tabs + fixed 3-column dense grid. Consumers may still
-                  override with custom `children` (legacy bespoke C-mode). */}
-              {children ?? <NModeCBoard sections={sections} />}
+              {/* Top group-tabs + fixed 3-column dense grid (Standard C). */}
+              <NModeCBoard sections={sections} />
             </div>
           )}
+
+          {/* Always-rendered children (modals, overlays, dialogs) — available in
+              BOTH N and C modes, not gated by presentation mode. */}
+          {children}
         </div>
       </div>
     </div>

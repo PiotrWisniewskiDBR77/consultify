@@ -28,6 +28,14 @@ const isVisible = (s: NModeSection): boolean => Boolean(s.alwaysShow) || s.hasDa
 
 const ALL = '__all__';
 
+// Static class strings so Tailwind's content scanner keeps them. xl: only — at
+// md (2-col) a span-3 would overflow, so clamp to the grid width there.
+const SPAN_CLASS: Record<number, string> = {
+  1: '',
+  2: 'md:col-span-2 xl:col-span-2',
+  3: 'md:col-span-2 xl:col-span-3',
+};
+
 interface GroupTabProps {
   label: string;
   count: number;
@@ -128,10 +136,11 @@ export const NModeCBoard: React.FC<NModeCBoardProps> = ({ sections }) => {
         {shown.map((section) => {
           const Icon = section.icon;
           const label = isPolish ? section.label.pl : section.label.en;
+          const spanClass = SPAN_CLASS[section.cSpan ?? 1] ?? '';
           return (
             <section
               key={section.id}
-              className="overflow-hidden rounded-2xl border border-slate-200/50 bg-white/60 p-4 backdrop-blur-sm dark:border-navy-700/30 dark:bg-navy-900/30"
+              className={`overflow-hidden rounded-2xl border border-slate-200/50 bg-white/60 p-4 backdrop-blur-sm dark:border-navy-700/30 dark:bg-navy-900/30 ${spanClass}`}
             >
               <header className="mb-2.5 flex items-center gap-2">
                 <Icon size={14} className="flex-shrink-0 text-slate-500 dark:text-slate-400" />

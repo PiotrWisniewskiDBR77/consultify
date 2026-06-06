@@ -47,6 +47,12 @@ export interface NModeSection {
    * e.g. INSIGHT / BETWEEN THE LINES / EVIDENCE / DELIVERABLES / AUDIT.
    */
   group?: string;
+  /**
+   * Standard-C (ClickUp board) column span, 1–3 (default 1). Heavy sections
+   * whose content has internal columns or wide tables (e.g. an executive
+   * summary or a multi-column readout) should set 2 or 3 so they breathe in the
+   * dense 3-column grid. Ignored by N-mode. */
+  cSpan?: 1 | 2 | 3;
   /** The section canvas content (rendered when active) */
   component: React.ReactNode;
 }
