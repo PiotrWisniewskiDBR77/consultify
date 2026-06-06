@@ -841,6 +841,13 @@ export const InterviewHub: React.FC = () => {
   }>({ managed: {}, inbox: {} });
   const [openAssignmentFilterId, setOpenAssignmentFilterId] = useState<string | null>(null);
 
+  // Per-column header filters for the Templates table (category / status).
+  // Mirrors the Sessions / Insights pattern: layered on top of the existing
+  // toolbar filters (source / area / status enum) + search; column visibility,
+  // sorting and widths all keep working unchanged.
+  const [templatesTableFilters, setTemplatesTableFilters] = useState<TableFilters>({});
+  const [openTemplateFilterId, setOpenTemplateFilterId] = useState<string | null>(null);
+
   // Reset preview expansion state when changing selection (KANON v3: stabilny panel)
   useEffect(() => {
     setInsightPreviewDetailsExpanded(false);
@@ -2243,6 +2250,53 @@ export const InterviewHub: React.FC = () => {
 
     return result;
   }, [templates, searchQuery, templateSourceFilter, templateAreaTagFilter, templateStatusFilter]);
+
+  // Per-column filter options for the Templates table header dropdowns.
+  // Category options are derived from the (toolbar-)filtered template list so
+  // only categories that can actually appear are offered. Status options are
+  // the canonical template-status enum (draft / in_review / approved /
+  // archived), labelled via the shared getTemplateStatusChip helper so the
+  // dropdown labels match the chips rendered in the rows.
+  const TEMPLATE_CATEGORY_FILTER_OPTIONS = useMemo(() => {
+    const categories = new Set<string>();
+    filteredTemplates.forEach((t) => {
+      const c = (t.category ?? '').trim();
+      if (c) categories.add(c);
+    });
+    return Array.from(categories)
+      .sort((a, b) => a.localeCompare(b))
+      .map((c) => ({ value: c, label: c }));
+  }, [filteredTemplates]);
+
+  const TEMPLATE_STATUS_FILTER_OPTIONS = useMemo(
+    () =>
+      (['draft', 'in_review', 'approved', 'archived'] as const).map((s) => ({
+        value: s,
+        label: getTemplateStatusChip(s, isPolish).label,
+      })),
+    [isPolish]
+  );
+
+  // Templates filtered by the per-column header filters (category / status),
+  // layered on top of filteredTemplates. Used by the table renderer only; the
+  // cards renderer keeps using filteredTemplates.
+  const templatesForTable = useMemo(() => {
+    let result = filteredTemplates;
+    const categoryFilter = templatesTableFilters.category as string[] | undefined;
+    if (categoryFilter?.length) {
+      result = result.filter((t) => categoryFilter.includes((t.category ?? '').trim()));
+    }
+    const statusFilter = templatesTableFilters.status as string[] | undefined;
+    if (statusFilter?.length) {
+      result = result.filter((t) => {
+        const s = String(t.status || 'draft').toLowerCase();
+        // 'approved' option also matches legacy 'published', matching the chip.
+        const normalized = s === 'published' ? 'approved' : s;
+        return statusFilter.includes(normalized);
+      });
+    }
+    return result;
+  }, [filteredTemplates, templatesTableFilters]);
 
   // -------------------------
   // Assignments (Assigned tab) status filter
@@ -4498,16 +4552,13 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center align-middle"
                       style={{ width: sessionsColumnWidths.status }}
                     >
-                      <div
-                        className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} ${statusConfig.bgColor}`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
-                        <span
-                          className={`text-xs font-medium ${statusConfig.textColor} whitespace-nowrap`}
-                        >
-                          {isPolish ? statusConfig.label.pl : statusConfig.label.en}
-                        </span>
-                      </div>
+                      {/* Shared StatusPill (SSOT) for tone, with the
+                          session-specific bilingual label from
+                          getSessionStatusConfig. */}
+                      <StatusPill
+                        status={workflowStatus}
+                        label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
+                      />
                     </td>
                   )}
 
@@ -5742,7 +5793,7 @@ export const InterviewHub: React.FC = () => {
     onOpenFull?: (id: string) => void;
   }) => {
     const hiddenSet = new Set(templatesHiddenColumns);
-    const visibleTemplateIds = filteredTemplates.map((template) => template.id);
+    const visibleTemplateIds = templatesForTable.map((template) => template.id);
     const selectedVisibleCount = visibleTemplateIds.filter((id) =>
       selectedTemplateIds.has(id)
     ).length;
@@ -5825,6 +5876,32 @@ export const InterviewHub: React.FC = () => {
       );
     };
 
+    // Per-column filter column defs (category / status), matching the
+    // Sessions / Insights header FilterDropdown pattern.
+    const templateCategoryCol: ColumnDef = {
+      id: 'category',
+      label: isPolish ? 'Kategoria' : 'Category',
+      width:
+        templatesColumnWidths.category ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS.category ?? 120,
+      minWidth: INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS.category?.minWidth ?? 80,
+      maxWidth: INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS.category?.maxWidth,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: TEMPLATE_CATEGORY_FILTER_OPTIONS,
+    };
+    const templateStatusCol: ColumnDef = {
+      id: 'status',
+      label: isPolish ? 'Status' : 'Status',
+      width: templatesColumnWidths.status ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS.status ?? 120,
+      minWidth: INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS.status?.minWidth ?? 80,
+      maxWidth: INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS.status?.maxWidth,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: TEMPLATE_STATUS_FILTER_OPTIONS,
+    };
+
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
@@ -5868,7 +5945,27 @@ export const InterviewHub: React.FC = () => {
                   style={{ width: templatesColumnWidths.category }}
                 >
                   <div className="flex items-center justify-center gap-1">
-                    <span>{isPolish ? 'Kategoria' : 'Category'}</span>
+                    <span
+                      className={
+                        (templatesTableFilters.category as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {isPolish ? 'Kategoria' : 'Category'}
+                    </span>
+                    <FilterDropdown
+                      column={templateCategoryCol}
+                      value={templatesTableFilters.category as string[] | undefined}
+                      onChange={(v) =>
+                        setTemplatesTableFilters((f) => ({ ...f, category: v as string[] }))
+                      }
+                      isOpen={openTemplateFilterId === 'category'}
+                      onToggle={() =>
+                        setOpenTemplateFilterId((id) => (id === 'category' ? null : 'category'))
+                      }
+                      onClose={() => setOpenTemplateFilterId(null)}
+                    />
                   </div>
                   {renderTemplateResizer('category')}
                 </th>
@@ -5931,7 +6028,27 @@ export const InterviewHub: React.FC = () => {
                   style={{ width: templatesColumnWidths.status }}
                 >
                   <div className="flex items-center justify-center gap-1">
-                    <span>{isPolish ? 'Status' : 'Status'}</span>
+                    <span
+                      className={
+                        (templatesTableFilters.status as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {isPolish ? 'Status' : 'Status'}
+                    </span>
+                    <FilterDropdown
+                      column={templateStatusCol}
+                      value={templatesTableFilters.status as string[] | undefined}
+                      onChange={(v) =>
+                        setTemplatesTableFilters((f) => ({ ...f, status: v as string[] }))
+                      }
+                      isOpen={openTemplateFilterId === 'status'}
+                      onToggle={() =>
+                        setOpenTemplateFilterId((id) => (id === 'status' ? null : 'status'))
+                      }
+                      onClose={() => setOpenTemplateFilterId(null)}
+                    />
                   </div>
                   {renderTemplateResizer('status')}
                 </th>
@@ -6050,7 +6167,7 @@ export const InterviewHub: React.FC = () => {
           </thead>
 
           <tbody>
-            {filteredTemplates.map((template) => {
+            {templatesForTable.map((template) => {
               const isSelected = selectedTemplateId === template.id;
               const isTemplateSelected = selectedTemplateIds.has(template.id);
               const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
@@ -6161,7 +6278,11 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center"
                       style={{ width: templatesColumnWidths.category }}
                     >
-                      <span className={INTERVIEW_META_CHIP_CLASS}>{template.category}</span>
+                      {(template.category ?? '').trim() ? (
+                        <span className={INTERVIEW_META_CHIP_CLASS}>{template.category}</span>
+                      ) : (
+                        <span className="text-slate-400 dark:text-slate-500">—</span>
+                      )}
                     </td>
                   )}
 
@@ -6222,12 +6343,14 @@ export const InterviewHub: React.FC = () => {
                     >
                       {/* V-A S5 — real status chip (draft/in_review/approved/
                           archived), not the old fabricated Default|Active. The
-                          "Default" template flag is now a small separate marker. */}
+                          "Default" template flag is now a small separate marker.
+                          Uses the shared StatusPill (SSOT) for tone, with the
+                          template-specific label from getTemplateStatusChip. */}
                       <div className="inline-flex items-center gap-1.5">
-                        {(() => {
-                          const chip = getTemplateStatusChip(template.status, isPolish);
-                          return <span className={chip.className}>{chip.label}</span>;
-                        })()}
+                        <StatusPill
+                          status={String(template.status || 'draft')}
+                          label={getTemplateStatusChip(template.status, isPolish).label}
+                        />
                         {template.isDefault && (
                           <span
                             className="inline-flex items-center rounded-full border border-blue-300/70 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:border-blue-300/[0.22] dark:bg-blue-300/[0.10] dark:text-blue-100"
@@ -6397,7 +6520,7 @@ export const InterviewHub: React.FC = () => {
               );
             })}
 
-            {filteredTemplates.length === 0 && (
+            {templatesForTable.length === 0 && (
               <tr>
                 <td colSpan={colSpan} className="px-4 py-12 text-center">
                   <div className="flex flex-col items-center">
@@ -8017,14 +8140,12 @@ Return ONLY the answer text (no markdown fences).`;
                       className="px-4 py-3 text-center align-middle"
                       style={{ width: columnWidths.status }}
                     >
-                      <span
-                        className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} ${getAssignmentStatusColor(
-                          assignment.status
-                        )}`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                        {getAssignmentStatusLabel(assignment.status)}
-                      </span>
+                      {/* Shared StatusPill (SSOT) for tone, with the
+                          assignment-specific bilingual label. */}
+                      <StatusPill
+                        status={String(assignment.status || 'assigned')}
+                        label={getAssignmentStatusLabel(assignment.status)}
+                      />
                     </td>
                   )}
                   {!hiddenSet.has('progress') && (
