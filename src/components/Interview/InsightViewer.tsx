@@ -58,6 +58,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
+import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import { NModeSectionWrapper } from '@/components/shared/NModeLayout';
@@ -709,6 +710,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   } | null>(null);
   const [handoffSubmitting, setHandoffSubmitting] = useState(false);
   const handoffSubmitLockRef = useRef(false);
+  // Link-to-existing picker: the org's initiatives, loaded when the handoff
+  // modal opens. Without a real target_initiative_id the link mode submits a
+  // bogus placeholder, so the "Link to existing" button stays disabled until
+  // the user picks a concrete initiative here.
+  const [handoffInitiatives, setHandoffInitiatives] = useState<
+    Array<{ id: string; title: string; status?: string }>
+  >([]);
+  const [handoffInitiativesLoading, setHandoffInitiativesLoading] = useState(false);
+  const [handoffTargetInitiativeId, setHandoffTargetInitiativeId] = useState('');
 
   // Lifecycle transition state
   const [lifecycleTransitioning, setLifecycleTransitioning] = useState(false);
@@ -1963,10 +1973,48 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       index: number;
     }) => {
       setHandoffFinding(finding);
+      setHandoffTargetInitiativeId('');
       setHandoffModalOpen(true);
     },
     []
   );
+
+  // Load the org's initiatives for the link-to-existing picker whenever the
+  // handoff modal opens. Reuses the canonical /initiatives list endpoint
+  // (response is either an array or { initiatives: [...] }).
+  useEffect(() => {
+    if (!handoffModalOpen) return;
+    let cancelled = false;
+    setHandoffInitiativesLoading(true);
+    void (async () => {
+      try {
+        const res: unknown = await Api.getInitiatives();
+        const list = Array.isArray(res)
+          ? res
+          : ((res as { initiatives?: unknown[] } | null)?.initiatives ?? []);
+        const normalized = (Array.isArray(list) ? list : [])
+          .map((raw) => {
+            const item = raw as { id?: unknown; title?: unknown; name?: unknown; status?: unknown };
+            const id = item?.id != null ? String(item.id) : '';
+            const title =
+              (typeof item?.title === 'string' && item.title) ||
+              (typeof item?.name === 'string' && item.name) ||
+              id;
+            const status = typeof item?.status === 'string' ? item.status : undefined;
+            return { id, title, status };
+          })
+          .filter((i) => i.id);
+        if (!cancelled) setHandoffInitiatives(normalized);
+      } catch {
+        if (!cancelled) setHandoffInitiatives([]);
+      } finally {
+        if (!cancelled) setHandoffInitiativesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [handoffModalOpen]);
 
   const handleHandoffSubmit = useCallback(
     async (mode: 'link' | 'create') => {
@@ -1984,6 +2032,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           return;
         }
+        // Link mode requires a real, user-picked target initiative id.
+        if (mode === 'link' && !handoffTargetInitiativeId) {
+          toast.error(
+            isPolish
+              ? 'Wybierz inicjatywę docelową, aby ją powiązać.'
+              : 'Pick a target initiative to link to.'
+          );
+          return;
+        }
+        const targetInitiativeId = handoffTargetInitiativeId;
+        const targetInitiativeName =
+          handoffInitiatives.find((i) => i.id === targetInitiativeId)?.title || targetInitiativeId;
         let lastError: unknown;
 
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -1991,15 +2051,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             const res = await V8InterviewApi.handoffFinding(
               insight.id,
               findingId,
-              mode === 'link' ? { target_initiative_id: 'select' } : undefined
+              mode === 'link' ? { target_initiative_id: targetInitiativeId } : undefined
             );
             setHandoffModalOpen(false);
             setHandoffFinding(null);
+            setHandoffTargetInitiativeId('');
             const initiativeId = res?.initiative?.id;
+            const linkedLabel =
+              mode === 'link' ? targetInitiativeName : initiativeId ? `${initiativeId}` : '';
             toast.success(
               isPolish
-                ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${initiativeId ? ` (${initiativeId})` : ''}`
-                : `Initiative ${mode === 'create' ? 'created' : 'linked'}${initiativeId ? ` (${initiativeId})` : ''}`
+                ? `Inicjatywa ${mode === 'create' ? 'utworzona' : 'powiązana'}${linkedLabel ? ` (${linkedLabel})` : ''}`
+                : `Initiative ${mode === 'create' ? 'created' : 'linked'}${linkedLabel ? ` (${linkedLabel})` : ''}`
             );
             return;
           } catch (err: unknown) {
@@ -2054,7 +2117,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setHandoffSubmitting(false);
       }
     },
-    [insight, handoffFinding, handoffSubmitting, isPolish]
+    [
+      insight,
+      handoffFinding,
+      handoffSubmitting,
+      handoffTargetInitiativeId,
+      handoffInitiatives,
+      isPolish,
+    ]
   );
 
   const handleLifecycleTransition = useCallback(
@@ -7067,12 +7137,56 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   )}
                 </div>
               </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {isPolish ? 'Powiąż z istniejącą inicjatywą' : 'Link to existing initiative'}
+                </label>
+                <div className="mt-1">
+                  <Select
+                    value={handoffTargetInitiativeId}
+                    onChange={setHandoffTargetInitiativeId}
+                    disabled={handoffSubmitting || handoffInitiativesLoading}
+                    options={handoffInitiatives.map((i) => ({
+                      value: i.id,
+                      label: i.status ? `${i.title} · ${i.status}` : i.title,
+                    }))}
+                    placeholder={
+                      handoffInitiativesLoading
+                        ? isPolish
+                          ? 'Ładowanie inicjatyw…'
+                          : 'Loading initiatives…'
+                        : handoffInitiatives.length === 0
+                          ? isPolish
+                            ? 'Brak istniejących inicjatyw'
+                            : 'No existing initiatives'
+                          : isPolish
+                            ? 'Wybierz inicjatywę…'
+                            : 'Select an initiative…'
+                    }
+                    aria-label={
+                      isPolish ? 'Wybierz inicjatywę docelową' : 'Select target initiative'
+                    }
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Wybierz inicjatywę powyżej, aby ją powiązać, lub utwórz nową poniżej.'
+                    : 'Pick an initiative above to link, or create a new one below.'}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/50">
               <button
                 onClick={() => handleHandoffSubmit('link')}
-                disabled={handoffSubmitting}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-600 text-sm font-medium transition-all disabled:opacity-50"
+                disabled={handoffSubmitting || !handoffTargetInitiativeId}
+                title={
+                  !handoffTargetInitiativeId
+                    ? isPolish
+                      ? 'Najpierw wybierz inicjatywę docelową powyżej'
+                      : 'Pick a target initiative above first'
+                    : undefined
+                }
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-600 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {handoffSubmitting ? (
                   <Loader2 size={14} className="animate-spin" />
