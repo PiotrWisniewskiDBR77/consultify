@@ -24,7 +24,8 @@ import { useTranslation } from 'react-i18next';
 import { SectionErrorBoundary } from './SectionErrorBoundary';
 import type { NModeSection } from './types';
 
-const isVisible = (s: NModeSection): boolean => Boolean(s.alwaysShow) || s.hasData !== false;
+const isVisible = (s: NModeSection): boolean =>
+  Boolean(s.alwaysShow) || (s.hasData !== false && !s.cHidden);
 
 const ALL = '__all__';
 

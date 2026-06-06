@@ -53,6 +53,13 @@ export interface NModeSection {
    * summary or a multi-column readout) should set 2 or 3 so they breathe in the
    * dense 3-column grid. Ignored by N-mode. */
   cSpan?: 1 | 2 | 3;
+  /**
+   * Standard-C (ClickUp board) ONLY: when true, this section is hidden from the
+   * dense board (e.g. an empty count-bearing section that would otherwise render
+   * a full empty-state panel and leave a gap). The N-mode left-nav/canvas ignore
+   * this flag, so the section stays reachable there — keeping N-mode behaviour
+   * unchanged. Distinct from `hasData`, which affects BOTH modes. */
+  cHidden?: boolean;
   /** The section canvas content (rendered when active) */
   component: React.ReactNode;
 }

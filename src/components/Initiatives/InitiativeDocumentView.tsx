@@ -4471,6 +4471,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Tasks', pl: 'Zadania' },
         badge: tasks.length > 0 ? tasks.length : undefined,
         cSpan: 2,
+        cHidden: tasks.length === 0,
         component: null,
       },
       {
@@ -4479,6 +4480,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Decisions', pl: 'Decyzje' },
         badge: decisions.length > 0 ? decisions.length : undefined,
         cSpan: 2,
+        cHidden: decisions.length === 0,
         component: null,
       },
       {
@@ -4500,6 +4502,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Risk & RAID', pl: 'Ryzyko i RAID' },
         badge: raidItems.length > 0 ? raidItems.length : undefined,
         cSpan: 2,
+        cHidden: raidItems.length === 0,
         component: null,
       },
       // --- Cele i mierniki ---
@@ -4522,6 +4525,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Dependencies', pl: 'Zależności' },
         badge: dependencies.length > 0 ? dependencies.length : undefined,
         cSpan: 2,
+        cHidden: dependencies.length === 0,
         component: null,
       },
       // --- Finanse ---
@@ -4546,6 +4550,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'RACI', pl: 'RACI' },
         badge: stakeholders.length > 0 ? stakeholders.length : undefined,
         cSpan: 2,
+        cHidden: stakeholders.length === 0,
         component: null,
       },
       {
@@ -4570,6 +4575,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           attachments.length + linkedItems.length > 0
             ? attachments.length + linkedItems.length
             : undefined,
+        cHidden: attachments.length + linkedItems.length === 0,
         component: null,
       },
       {
@@ -4583,6 +4589,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: MessageSquare,
         label: { en: 'Comments', pl: 'Komentarze' },
         badge: comments.length > 0 ? comments.length : undefined,
+        cHidden: comments.length === 0,
         component: null,
       },
       {
@@ -4591,6 +4598,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Activity Log', pl: 'Dziennik aktywności' },
         badge: history.length > 0 ? history.length : undefined,
         cSpan: 2,
+        cHidden: history.length === 0,
         component: null,
       },
     ];
