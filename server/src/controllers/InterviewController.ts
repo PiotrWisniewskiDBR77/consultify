@@ -716,6 +716,46 @@ async function ensureInterviewAssignmentAiReviewColumns(): Promise<void> {
   }
 }
 
+/**
+ * Lazy-ensure lifecycle columns on interview_assignments (archive/restore).
+ * DB_MANAGED_SCHEMA is off in dev, so we ADD COLUMN only when missing.
+ * Escalation columns (escalated_at, escalation_count, escalate_to) are ensured by
+ * InterviewAssignmentService.ensureSchemaCompatibility; we add only the archive pair here.
+ */
+async function ensureInterviewAssignmentLifecycleColumns(): Promise<void> {
+  const cols = await getTableColumns('interview_assignments');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'archived_at',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN archived_at TIMESTAMP`,
+    },
+    {
+      name: 'archived_by',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN archived_by TEXT`,
+    },
+    // Defensive: ensure escalation columns exist even if the service path has not
+    // run yet (additive, mirrors InterviewAssignmentService DDL names).
+    {
+      name: 'escalated_at',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN escalated_at TIMESTAMP`,
+    },
+    {
+      name: 'escalation_count',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN escalation_count INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'escalate_to',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN escalate_to TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      await queryHelpers.queryRun(column.sql);
+    }
+  }
+}
+
 async function ensureInterviewTemplateV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_library_templates');
   const missingColumns: Array<{ name: string; sql: string }> = [
@@ -802,6 +842,10 @@ async function ensureInterviewTemplateQuestionV6Columns(): Promise<void> {
     {
       name: 'allow_context_note',
       sql: `ALTER TABLE interview_library_template_questions ADD COLUMN allow_context_note INTEGER DEFAULT 1`,
+    },
+    {
+      name: 'section_title',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN section_title TEXT`,
     },
   ];
 
@@ -1172,6 +1216,7 @@ const buildTemplateQuestionResponse = (row: any) => {
     sortOrder: row.sort_order || 0,
     answerType: row.answer_type || 'open',
     isRequired: row.is_required === 1,
+    sectionTitle: row.section_title || null,
     helpHint: row.help_hint || null,
     answerOptions: parseJson(row.answer_options, [] as unknown[]),
     expectedAnswerShape: row.expected_answer_shape || '',
@@ -1742,6 +1787,38 @@ function normalizeSessionLifecycleParam(raw: unknown): InterviewSessionLifecycle
   return 'active';
 }
 
+/**
+ * Assignment lifecycle (archive only — assignments have no trash bin).
+ * - active   → not archived (default list)
+ * - archived → archived only
+ * - all      → no filter
+ */
+export type InterviewAssignmentLifecycle = 'active' | 'archived' | 'all';
+
+function buildAssignmentLifecycleClause(
+  lifecycle: InterviewAssignmentLifecycle | undefined,
+  assignmentAlias: string
+): string {
+  const a = assignmentAlias;
+  switch (lifecycle) {
+    case 'archived':
+      return ` AND ${a}.archived_at IS NOT NULL`;
+    case 'all':
+      return '';
+    case 'active':
+    default:
+      return ` AND ${a}.archived_at IS NULL`;
+  }
+}
+
+function normalizeAssignmentLifecycleParam(raw: unknown): InterviewAssignmentLifecycle {
+  const value = String(raw ?? '').toLowerCase();
+  if (value === 'archived' || value === 'all' || value === 'active') {
+    return value;
+  }
+  return 'active';
+}
+
 export async function loadManagedInterviewSessionsForManager(
   organizationId: string,
   userId: string,
@@ -2145,6 +2222,125 @@ async function applySessionLifecycleAction(params: {
       break;
   }
   return 'ok';
+}
+
+/**
+ * Insight export section filter (#25).
+ *
+ * The frontend may pass `sectionIds` to export only a subset of an insight's
+ * content. An insight's structured payload is grouped into top-level "sections"
+ * (executiveSummary, themes, issues, opportunities, signals, evidenceMap,
+ * missingData) and each grouped item is keyed by its title. A sectionId can
+ * therefore be either:
+ *   - a top-level group key (e.g. "themes", "issues", "executiveSummary"), or
+ *   - an item identifier of the form "<group>:<title>" or a bare item title.
+ *
+ * Returns a filtered copy of the insight plus a human-readable filtered content
+ * snapshot. Unknown ids are ignored. If the filter yields nothing, the caller
+ * should fall back to the full insight (handled at the call site).
+ */
+type FilterableInsight = {
+  title?: string;
+  content?: string;
+  description?: string;
+  executiveSummary?: string;
+  themes?: Array<{ title?: string; description?: string }>;
+  issues?: Array<{ title?: string; description?: string }>;
+  opportunities?: Array<{ title?: string; description?: string }>;
+  signals?: Array<{ title?: string; description?: string }>;
+  evidenceMap?: Array<{ question_text?: string }>;
+  missingData?: string[];
+  [key: string]: unknown;
+};
+
+const INSIGHT_SECTION_GROUPS = [
+  'executiveSummary',
+  'themes',
+  'issues',
+  'opportunities',
+  'signals',
+  'evidenceMap',
+  'missingData',
+] as const;
+
+function filterInsightBySectionIds(
+  insight: FilterableInsight,
+  sectionIds: string[]
+): { filtered: FilterableInsight; matched: boolean; markdown: string } {
+  const wanted = new Set(
+    (sectionIds || [])
+      .map((s) =>
+        String(s || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  );
+
+  const groupWanted = (group: string): boolean => wanted.has(group.toLowerCase());
+
+  const itemWanted = (group: string, title: string): boolean => {
+    const t = String(title || '')
+      .trim()
+      .toLowerCase();
+    if (!t) return false;
+    return wanted.has(t) || wanted.has(`${group.toLowerCase()}:${t}`);
+  };
+
+  const filtered: FilterableInsight = { title: insight.title };
+  let matched = false;
+  const mdParts: string[] = [];
+
+  // executiveSummary is a scalar — matched only by its group key.
+  if (insight.executiveSummary && groupWanted('executiveSummary')) {
+    filtered.executiveSummary = insight.executiveSummary;
+    mdParts.push(`## Executive Summary\n\n${insight.executiveSummary}`);
+    matched = true;
+  }
+
+  const listGroups: Array<keyof FilterableInsight> = [
+    'themes',
+    'issues',
+    'opportunities',
+    'signals',
+  ];
+  for (const group of listGroups) {
+    const items = Array.isArray(insight[group])
+      ? (insight[group] as Array<{ title?: string; description?: string }>)
+      : [];
+    if (items.length === 0) continue;
+    const keepWholeGroup = groupWanted(String(group));
+    const kept = items.filter(
+      (item) => keepWholeGroup || itemWanted(String(group), String(item?.title || ''))
+    );
+    if (kept.length > 0) {
+      (filtered as any)[group] = kept;
+      matched = true;
+      const heading = String(group).charAt(0).toUpperCase() + String(group).slice(1);
+      const body = kept
+        .map((item) => {
+          const title = String(item?.title || '').trim();
+          const desc = String(item?.description || '').trim();
+          return `- **${title}**${desc ? `: ${desc}` : ''}`;
+        })
+        .join('\n');
+      mdParts.push(`## ${heading}\n\n${body}`);
+    }
+  }
+
+  if (Array.isArray(insight.evidenceMap) && groupWanted('evidenceMap')) {
+    filtered.evidenceMap = insight.evidenceMap;
+    matched = true;
+  }
+  if (Array.isArray(insight.missingData) && groupWanted('missingData')) {
+    filtered.missingData = insight.missingData;
+    matched = true;
+    if (insight.missingData.length > 0) {
+      mdParts.push(`## Missing Data\n\n${insight.missingData.map((m) => `- ${m}`).join('\n')}`);
+    }
+  }
+
+  return { filtered, matched, markdown: mdParts.join('\n\n') };
 }
 
 export const InterviewController = {
@@ -3592,6 +3788,9 @@ export const InterviewController = {
   getManagedAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { status, projectId } = req.query as any;
+    // Lazy-ensure lifecycle columns before filtering on archived_at (dev schema).
+    await ensureInterviewAssignmentLifecycleColumns();
+    const lifecycle = normalizeAssignmentLifecycleParam(req.query.lifecycle);
     const scope = await resolveInterviewManagerScope({
       userId: user.id,
       organizationId: user.organizationId,
@@ -3600,6 +3799,8 @@ export const InterviewController = {
     const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
     const params: unknown[] = [user.organizationId, ...scopeClause.params];
     let where = `WHERE a.organization_id = ?${scopeClause.clause}`;
+    // Default excludes archived; ?lifecycle=archived|all to include.
+    where += buildAssignmentLifecycleClause(lifecycle, 'a');
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -3652,6 +3853,8 @@ export const InterviewController = {
         isTeamAssignment: r.is_team_assignment === 1,
         reminderCount: r.reminder_count || 0,
         escalationCount: r.escalation_count || 0,
+        escalatedAt: r.escalated_at || null,
+        archivedAt: r.archived_at || null,
         createdAt: r.created_at,
         template: {
           id: r.template_id,
@@ -3683,6 +3886,184 @@ export const InterviewController = {
     });
 
     res.json(mapped);
+  }),
+
+  /**
+   * Manual "escalate now" (#9b). Advances the escalation counter and notifies the
+   * designated escalation target (escalate_to, falling back to created_by) in-app,
+   * recording the event in interview_notifications. Mirrors the core of
+   * InterviewAssignmentService.checkAndEscalate but for a single org-scoped assignment,
+   * without the overdue/24h gating (the manager is explicitly forcing it).
+   */
+  escalateAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewAssignmentLifecycleColumns();
+
+    const assignment = await queryHelpers.queryOne<any>(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, admin.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const targetUserId = String(assignment.escalate_to || assignment.created_by || '').trim();
+
+    if (targetUserId) {
+      // Resolve target + template/assignee names for a useful notification body.
+      const target = await queryHelpers.queryOne<any>(
+        `SELECT id, email, first_name, last_name FROM users WHERE id = ?`,
+        [targetUserId]
+      );
+      const template = await queryHelpers.queryOne<any>(
+        `SELECT name FROM interview_library_templates WHERE id = ?`,
+        [assignment.template_id]
+      );
+      const assignee = assignment.assignee_user_id
+        ? await queryHelpers.queryOne<any>(
+            `SELECT first_name, last_name, email FROM users WHERE id = ?`,
+            [assignment.assignee_user_id]
+          )
+        : null;
+      const templateName = String(template?.name || 'Interview');
+      const assigneeName =
+        `${String(assignee?.first_name || '').trim()} ${String(assignee?.last_name || '').trim()}`.trim() ||
+        assignee?.email ||
+        'the assignee';
+
+      if (target?.id) {
+        try {
+          await notificationService.send({
+            userId: target.id,
+            organizationId: admin.organizationId,
+            type: 'interview_escalation',
+            title: 'Interview Assignment Escalated',
+            body: `The interview "${templateName}" assigned to ${assigneeName} has been escalated for your attention.`,
+            entityType: 'interview_assignment',
+            entityId: id,
+            actionUrl: `/interview?assignmentId=${id}`,
+            priority: 'high',
+            actorId: admin.id,
+          });
+        } catch (e) {
+          logger.warn('[InterviewController] Failed to send interview_escalation notification', e);
+        }
+
+        // Best-effort audit row (table is created by InterviewAssignmentService).
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO interview_notifications (id, assignment_id, user_id, type, channel, title, body, sent_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              `in_${uuidv4()}`,
+              id,
+              target.id,
+              'escalation',
+              'in_app',
+              'Interview Assignment Escalated',
+              `Manually escalated by ${admin.id}`,
+              now,
+            ]
+          );
+        } catch {
+          // interview_notifications may not exist yet in some dev schemas — ignore.
+        }
+      }
+    } else {
+      logger.warn(
+        `[InterviewController] escalateAssignment: no escalation target resolved for ${id}`
+      );
+    }
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments
+       SET escalated_at = ?, escalation_count = COALESCE(escalation_count, 0) + 1, updated_at = ?
+       WHERE id = ?`,
+      [now, now, id]
+    );
+
+    const updated = await queryHelpers.queryOne<any>(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    res.json({
+      success: true,
+      ...(updated || {}),
+      status: normalizeAssignmentStatusForClient((updated as any)?.status),
+      escalatedAt: (updated as any)?.escalated_at || null,
+      escalationCount: (updated as any)?.escalation_count || 0,
+      archivedAt: (updated as any)?.archived_at || null,
+      escalationTargetId: targetUserId || null,
+    });
+  }),
+
+  /** Archive an assignment (#8) — org-scoped, sets archived_at/by. */
+  archiveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewAssignmentLifecycleColumns();
+
+    const assignment = await queryHelpers.queryOne<any>(
+      `SELECT id FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, admin.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET archived_at = ?, archived_by = ?, updated_at = ? WHERE id = ?`,
+      [now, admin.id, now, id]
+    );
+
+    const updated = await queryHelpers.queryOne<any>(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    res.json({
+      success: true,
+      ...(updated || {}),
+      status: normalizeAssignmentStatusForClient((updated as any)?.status),
+      archivedAt: (updated as any)?.archived_at || null,
+    });
+  }),
+
+  /** Restore (un-archive) an assignment (#8) — org-scoped, clears archived_at/by. */
+  restoreAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewAssignmentLifecycleColumns();
+
+    const assignment = await queryHelpers.queryOne<any>(
+      `SELECT id FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, admin.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET archived_at = NULL, archived_by = NULL, updated_at = ? WHERE id = ?`,
+      [now, id]
+    );
+
+    const updated = await queryHelpers.queryOne<any>(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    res.json({
+      success: true,
+      ...(updated || {}),
+      status: normalizeAssignmentStatusForClient((updated as any)?.status),
+      archivedAt: (updated as any)?.archived_at || null,
+    });
   }),
 
   getOverdueAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -4848,6 +5229,7 @@ export const InterviewController = {
       sortOrder,
       answerType,
       isRequired,
+      sectionTitle,
       helpHint,
       answerOptions,
       expectedAnswerShape,
@@ -4875,8 +5257,8 @@ export const InterviewController = {
     const qid = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_library_template_questions
-       (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, expected_answer_shape, description, evidence_prompt, allow_voice, allow_file_upload, allow_url, allow_context_note, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, template_id, category, question_text, sort_order, answer_type, is_required, section_title, help_hint, answer_options, expected_answer_shape, description, evidence_prompt, allow_voice, allow_file_upload, allow_url, allow_context_note, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         qid,
         id,
@@ -4885,6 +5267,7 @@ export const InterviewController = {
         typeof sortOrder === 'number' ? sortOrder : 0,
         answerType || 'open',
         isRequired ? 1 : 0,
+        typeof sectionTitle === 'string' && sectionTitle.trim() ? sectionTitle.trim() : null,
         helpHint || null,
         JSON.stringify(Array.isArray(answerOptions) ? answerOptions : []),
         expectedAnswerShape || null,
@@ -4921,6 +5304,7 @@ export const InterviewController = {
       sortOrder,
       answerType,
       isRequired,
+      sectionTitle,
       helpHint,
       answerOptions,
       expectedAnswerShape,
@@ -4972,6 +5356,12 @@ export const InterviewController = {
     if (isRequired !== undefined) {
       updates.push('is_required = ?');
       params.push(isRequired ? 1 : 0);
+    }
+    if (sectionTitle !== undefined) {
+      updates.push('section_title = ?');
+      params.push(
+        typeof sectionTitle === 'string' && sectionTitle.trim() ? sectionTitle.trim() : null
+      );
     }
     if (helpHint !== undefined) {
       updates.push('help_hint = ?');
@@ -7282,12 +7672,19 @@ ${JSON.stringify(questions || [], null, 2)}
   exportInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { target } = req.body;
+    const { target, sectionIds } = req.body || {};
 
     if (!target || !['tools', 'assessment'].includes(target)) {
       res.status(400).json({ error: 'target must be "tools" or "assessment"' });
       return;
     }
+
+    // #25 — optional section filter. When provided we export only the selected
+    // sections of the insight; unknown ids are ignored and an empty result falls
+    // back to the full insight (logged). Omitted/empty → unchanged behavior.
+    const requestedSectionIds: string[] = Array.isArray(sectionIds)
+      ? sectionIds.map((s: unknown) => String(s || '').trim()).filter(Boolean)
+      : [];
 
     // Load insight so we can create an actual downstream artifact (Tools/Assessment).
     // NOTE: There are environments with different `interview_insights` schemas.
@@ -7320,6 +7717,42 @@ ${JSON.stringify(questions || [], null, 2)}
     if (!insightRow) {
       res.status(404).json({ error: 'Insight not found' });
       return;
+    }
+
+    // #25 — Build the optional section-filtered snapshot. We load the FULL
+    // structured insight (themes/issues/opportunities/signals/etc.) and filter it
+    // by the requested section ids. Robust: unknown ids ignored; empty match falls
+    // back to the full insight content with a logged note.
+    let sectionFilter: {
+      sectionIds: string[];
+      filtered: FilterableInsight;
+      markdown: string;
+    } | null = null;
+    if (requestedSectionIds.length > 0) {
+      try {
+        const interviewInsightService = await import('../services/InterviewInsightService.js');
+        const fullInsight = (await interviewInsightService.getById(id)) as FilterableInsight | null;
+        if (fullInsight) {
+          const { filtered, matched, markdown } = filterInsightBySectionIds(
+            fullInsight,
+            requestedSectionIds
+          );
+          if (matched) {
+            sectionFilter = { sectionIds: requestedSectionIds, filtered, markdown };
+          } else {
+            logger.warn(
+              `[InterviewController] exportInsight: sectionIds ${JSON.stringify(
+                requestedSectionIds
+              )} matched no sections for insight ${id}; falling back to full content`
+            );
+          }
+        }
+      } catch (e) {
+        logger.warn(
+          '[InterviewController] exportInsight: section filter failed, exporting full',
+          e
+        );
+      }
     }
 
     // Resolve a usable sessionId (optional).
@@ -7491,8 +7924,14 @@ ${JSON.stringify(questions || [], null, 2)}
           sessionId: sessionId || null,
           category: insightRow.category,
           title: insightRow.title,
-          description: insightRow.description || insightRow.content || null,
+          description: sectionFilter
+            ? sectionFilter.markdown || insightRow.description || insightRow.content || null
+            : insightRow.description || insightRow.content || null,
           insightType: insightRow.insight_type || insightRow.prompt_type || null,
+          // #25 — only present when a section filter was applied and matched.
+          sectionFilter: sectionFilter
+            ? { sectionIds: sectionFilter.sectionIds, sections: sectionFilter.filtered }
+            : undefined,
           exportedAt: now,
         },
         organizationContext: orgContext,
@@ -7622,8 +8061,14 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId: sessionId || null,
         category: insightRow.category,
         title: insightRow.title,
-        description: insightRow.description || insightRow.content || null,
+        description: sectionFilter
+          ? sectionFilter.markdown || insightRow.description || insightRow.content || null
+          : insightRow.description || insightRow.content || null,
         insightType: insightRow.insight_type || insightRow.prompt_type || null,
+        // #25 — only present when a section filter was applied and matched.
+        sectionFilter: sectionFilter
+          ? { sectionIds: sectionFilter.sectionIds, sections: sectionFilter.filtered }
+          : undefined,
         exportedAt: now,
       },
       organizationContext: orgContext,

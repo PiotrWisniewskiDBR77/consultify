@@ -184,6 +184,27 @@ router.post(
   InterviewController.approveAssignment
 );
 
+/** POST /interview/assignments/:id/escalate - Manual "escalate now" (#9b) */
+router.post(
+  '/assignments/:id/escalate',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.escalateAssignment
+);
+
+/** POST /interview/assignments/:id/archive - Archive an assignment (#8) */
+router.post(
+  '/assignments/:id/archive',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.archiveAssignment
+);
+
+/** POST /interview/assignments/:id/restore - Un-archive an assignment (#8) */
+router.post(
+  '/assignments/:id/restore',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.restoreAssignment
+);
+
 // ==========================================
 // TEAM MEMBER ROUTES (for team assignments)
 // ==========================================
