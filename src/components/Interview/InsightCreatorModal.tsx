@@ -719,6 +719,39 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           : 'Some sessions from the basket are no longer available and were skipped.'
       );
     }
+    return nextSessions;
+  };
+
+  // #28d — 1-click "new lens from this basket": reuse a saved basket's source
+  // selection, then jump the user straight to the Analysis step so they only pick
+  // a fresh angle + generate ("z jednych źródeł różne insighty pod różnym kątem").
+  // Non-destructive to the basket; it only re-applies the stored selection and
+  // resets the angle pickers so the consultant consciously chooses a new lens.
+  const startNewLensFromBasket = (basketId: string) => {
+    const basket = baskets.find((b) => b.id === basketId);
+    if (!basket) return;
+    const appliedSessions = applyBasket(basketId);
+    if (!appliedSessions || appliedSessions.length === 0) {
+      toast.error(
+        isPolish
+          ? 'Koszyk nie zawiera już dostępnych sesji źródłowych.'
+          : 'This basket has no available source sessions left.'
+      );
+      return;
+    }
+    // Pre-clear the previous angle so the user consciously picks a new lens.
+    setAnalysisMode('general_consulting_synthesis');
+    setSelectedAnalysisModes(['general_consulting_synthesis']);
+    setSelectedTopicFocus([]);
+    setLeadingQuestion('');
+    // Jump straight to the Analysis step (skip People/Source — sources reused).
+    const analysisIndex = CREATOR_STEPS.findIndex((step) => step.id === 'analysis');
+    setCurrentStep(analysisIndex >= 0 ? analysisIndex : currentStep);
+    toast.success(
+      isPolish
+        ? 'Nowy kąt — wybierz soczewkę i wygeneruj.'
+        : 'New lens — pick an angle and generate.'
+    );
   };
 
   // Save the current source selection as a reusable basket.
@@ -1917,6 +1950,21 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               </option>
             ))}
           </select>
+          {activeBasket && (
+            <button
+              type="button"
+              onClick={() => startNewLensFromBasket(activeBasket.id)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/30 transition-colors hover:bg-primary-500"
+              title={
+                isPolish
+                  ? 'Użyj tych źródeł i przejdź od razu do wyboru kąta analizy'
+                  : 'Reuse these sources and jump straight to choosing the analysis angle'
+              }
+            >
+              <Sparkles size={14} />
+              {isPolish ? 'Nowy kąt' : 'New lens'}
+            </button>
+          )}
           <button
             type="button"
             onClick={openSaveBasket}
