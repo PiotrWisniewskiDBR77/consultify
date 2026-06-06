@@ -35,6 +35,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Select } from '@/components/shared/forms';
+import { Button } from '@/components/ui/primitives';
 import {
   type WizardStep as SharedWizardStep,
   WizardStepper,
@@ -2351,13 +2352,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       </div>
 
       <div className="mt-5 flex justify-center">
-        <button
-          type="button"
-          onClick={onClose}
-          className="min-w-[180px] rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-500"
-        >
+        <Button type="button" variant="primary" onClick={onClose} className="min-w-[180px]">
           {t.close}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -2532,72 +2529,74 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             </div>
 
             {step !== 'insights' && (
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={goToPreviousStep}
                 disabled={isWorking}
-                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
               >
                 {t.back}
-              </button>
+              </Button>
             )}
 
             {step === 'insights' && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 data-testid="initiative-wizard-insights-next"
                 disabled={isWorking}
                 onClick={() => setStep('intent')}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-w-[180px]"
               >
                 {t.next}
                 <ArrowRight size={16} />
-              </button>
+              </Button>
             )}
 
             {step === 'intent' && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 disabled={isWorking}
                 onClick={startWizard}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                loading={isWorking}
+                icon={isWorking ? undefined : <Sparkles size={16} />}
+                className="min-w-[180px]"
               >
-                {isWorking ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Sparkles size={16} />
-                )}
                 {t.generateCandidates}
-              </button>
+              </Button>
             )}
             {step === 'candidates' && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 data-testid="initiative-wizard-governance-preview"
                 disabled={actionableCandidates.length === 0}
                 onClick={() => setStep('governance')}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-w-[180px]"
               >
                 {t.governancePreview}
                 <ArrowRight size={16} />
-              </button>
+              </Button>
             )}
             {step === 'governance' && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 data-testid="initiative-wizard-create-drafts"
                 disabled={isWorking || !shortlistGateOk || candidatesToCreate.length === 0}
                 onClick={createDrafts}
                 title={!shortlistGateOk ? t.shortlistGateTitle : undefined}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 font-medium text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                loading={isWorking}
+                icon={isWorking ? undefined : <Check size={16} />}
+                className="min-w-[180px]"
               >
-                {isWorking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                 {createProgress
                   ? `${t.bulkProgress} ${createProgress.done}/${createProgress.total}`
                   : language === 'pl'
                     ? `Utwórz drafty (${candidatesToCreate.length})`
                     : `Create drafts (${candidatesToCreate.length})`}
-              </button>
+              </Button>
             )}
           </div>
         )}
