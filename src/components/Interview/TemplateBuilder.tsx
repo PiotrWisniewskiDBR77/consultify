@@ -98,12 +98,9 @@ interface TemplateQuestion {
   evidencePrompt?: string;
   /**
    * Optional section/group header that this question opens.
-   * UI-only for now: the question-save whitelist on the backend
-   * (interview_library_template_questions) has no section column, so this
-   * value does NOT round-trip through the API yet. It lives in builder state.
-   * TODO(backend): persist section grouping (add `section_title` column to
-   * interview_library_template_questions + plumb through POST/PATCH question
-   * handlers in InterviewController) so sections survive reload.
+   * Persisted: the `section_title` column on
+   * interview_library_template_questions round-trips through the POST/PATCH
+   * question handlers and the GET mapper, so section headers survive reload.
    */
   sectionTitle?: string;
   // UI state
@@ -603,6 +600,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               : true,
           description: q.description || '',
           evidencePrompt: q.evidencePrompt || q.evidence_prompt || '',
+          sectionTitle: q.sectionTitle || q.section_title || undefined,
         }))
       );
     } catch (error) {
@@ -1011,6 +1009,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               allowContextNote: question.allowContextNote !== false,
               description: question.description || '',
               evidencePrompt: question.evidencePrompt || '',
+              sectionTitle: question.sectionTitle || '',
             };
 
             if (question.isNew) {
