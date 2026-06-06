@@ -9,7 +9,7 @@
  * - Walidację scope przydziałów (organizacja vs projekt)
  */
 
-import { AlertTriangle, FileText, Loader2, UserPlus, Users, X } from 'lucide-react';
+import { AlertTriangle, FileText, UserPlus, Users, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +24,7 @@ import {
   Select,
   type SelectOption,
 } from '@/components/shared/forms';
-import { LoadingState } from '@/components/ui/primitives';
+import { Button, LoadingState, Switch } from '@/components/ui/primitives';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -105,14 +105,11 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           const templatesData = await Api.get('/interview/templates');
           templatesRes = Array.isArray(templatesData) ? templatesData : [];
         } catch (err: any) {
-          console.error('[AssignInterviewModal] Failed to load templates:', err);
-          console.error('[AssignInterviewModal] Error details:', {
-            status: err?.response?.status,
-            statusText: err?.response?.statusText,
-            data: err?.response?.data,
-            message: err?.message,
-            stack: err?.stack,
-          });
+          console.error(
+            '[AssignInterviewModal] Failed to load templates:',
+            err?.response?.status,
+            err?.message
+          );
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load templates';
           if (err?.response?.status === 403) {
             toast.error(
@@ -140,14 +137,11 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
               ? usersData
               : [];
         } catch (err: any) {
-          console.error('[AssignInterviewModal] Failed to load users:', err);
-          console.error('[AssignInterviewModal] Error details:', {
-            status: err?.response?.status,
-            statusText: err?.response?.statusText,
-            data: err?.response?.data,
-            message: err?.message,
-            stack: err?.stack,
-          });
+          console.error(
+            '[AssignInterviewModal] Failed to load users:',
+            err?.response?.status,
+            err?.message
+          );
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load users';
           if (err?.response?.status === 403) {
             toast.error(
@@ -362,15 +356,15 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <UserPlus size={20} className="text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-c-accent-soft flex items-center justify-center">
+              <UserPlus size={20} className="text-c-accent" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -432,20 +426,17 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                 {/* Team Assignment Toggle */}
                 {selectedUserIds.length >= 2 && (
                   <div className="mt-1 p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700 rounded-xl">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isTeamAssignment}
-                        onChange={(e) => setIsTeamAssignment(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-navy-500 bg-white dark:bg-navy-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
-                      />
-                      <div className="flex items-center gap-2">
-                        <Users size={16} className="text-slate-500 dark:text-slate-400" />
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                    <Switch
+                      checked={isTeamAssignment}
+                      onCheckedChange={setIsTeamAssignment}
+                      aria-label={isPolish ? 'Przydzielenie zespołowe' : 'Team assignment'}
+                      label={
+                        <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                          <Users size={16} className="text-slate-500 dark:text-slate-400" />
                           {isPolish ? 'Przydzielenie zespołowe' : 'Team assignment'}
                         </span>
-                      </div>
-                    </label>
+                      }
+                    />
 
                     {isTeamAssignment && (
                       <div className="mt-3 pl-7">
@@ -499,13 +490,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                       : 'Additional instructions for assignees...'
                   }
                   rows={3}
-                  className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none resize-none"
+                  className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/40 focus:outline-none resize-none transition-colors"
                 />
               </div>
 
               {/* Scope Warning */}
               {assignmentScope.type === 'projects' && (
-                <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
                   <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-amber-300">
                     {isPolish
@@ -520,30 +511,24 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-          >
+          <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
             {isPolish ? 'Anuluj' : 'Cancel'}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={isSubmitting || isLoading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            loading={isSubmitting}
+            icon={isSubmitting ? undefined : <UserPlus size={16} />}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                {isPolish ? 'Przydzielanie...' : 'Assigning...'}
-              </>
-            ) : (
-              <>
-                <UserPlus size={16} />
-                {isPolish ? 'Przydziel' : 'Assign'}
-              </>
-            )}
-          </button>
+            {isSubmitting
+              ? isPolish
+                ? 'Przydzielanie...'
+                : 'Assigning...'
+              : isPolish
+                ? 'Przydziel'
+                : 'Assign'}
+          </Button>
         </div>
       </div>
     </div>
