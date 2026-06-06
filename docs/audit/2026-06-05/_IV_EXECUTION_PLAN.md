@@ -89,7 +89,7 @@
 - [x] **#28** Graficzne polish 5 kroków (progress, hover tooltips, drag-drop zone, custom checkboxy)
 - [x] **#28b** Step 2 „People" — naprawić puste sloty checkbox (bug/placeholder?)
 - [x] **#28c** ⭐ **Source Basket** — tabela insight_source_baskets + CRUD + UI (Use existing/Build new/Save) w InsightCreatorModal ✅ (agent D)
-- [~] **#28d** Generate variant — Source Basket gotowy (fundament); 1-klik „nowy lens z tego koszyka" do dodania osobno ✅cz. (agent D)
+- [x] **#28d** Generate variant — 1-klik „Nowy kąt" z zapisanego koszyka → Analysis step (różne insighty z jednych źródeł) ✅
 - [x] **#28e** Duplicate-detect przed Run (podobny insight istnieje?)
 
 ### 3C. Generator Inicjatyw ⭐⭐⭐
@@ -99,7 +99,7 @@
 - [x] **#29d** ⭐ similarity check (embeddings+Jaccard fallback): endpoint /initiatives/similarity-check + flagi NEW/SIMILAR/DUPLICATE/RELATED per kandydat w wizardzie ✅ (agent E)
 - [x] **#29e** Merge/Extend/Create-anyway flow przy podobnych
 - [x] **#29f** Bulk-create 1-3 (soft limit) w stanie DRAFT + source tagging ✅ (agent H)
-- [~] **#29g** PL/EN: notatka konsultanta zlokalizowana (PL z diakrytykami + „Najważniejsze insighty") ✅ · Esc anuluje + root-cause isPolish=false do sprawdzenia
+- [x] **#29g** PL/EN: notatka źródła/kontekstu — root-cause naprawiony (InitiativeSourceLink self-lokalizuje, koniec isPolish=false) ✅
 - [x] **#29h** Progresywne wypełnianie: wizard wypełnia rdzeń (Problem/Solution/Scope/KPI z insightu), reszta pusta z AI-assist
 
 ### 3D. Generator Ankiet (TemplateBuilder)
