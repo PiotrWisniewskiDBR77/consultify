@@ -35,7 +35,7 @@ import { DatePicker, Select } from '@/components/shared/forms';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import { type WizardStep, WizardStepper } from '@/components/shared/WizardModal';
-import { LoadingState } from '@/components/ui/primitives';
+import { Button, LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { type V8ContextDocument, V8InterviewApi } from '@/services/api/v8/interview';
 
@@ -2635,54 +2635,49 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
         {/* Footer */}
         <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08]">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isGenerating}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
-          >
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isGenerating}>
             {isPolish ? 'Anuluj' : 'Cancel'}
-          </button>
+          </Button>
           <div className="flex-1" />
           {currentStep > 0 && (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={goToPreviousStep}
               disabled={isGenerating}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
             >
               {isPolish ? 'Wstecz' : 'Back'}
-            </button>
+            </Button>
           )}
           {!isLastStep && (
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={goToNextStep}
               disabled={isGenerating}
-              className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-w-[180px]"
             >
               {isPolish ? 'Dalej' : 'Next'}
-            </button>
+            </Button>
           )}
           {isLastStep && (
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={submitInsight}
               disabled={!canGenerate}
-              className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              loading={isGenerating}
+              icon={isGenerating ? undefined : <Sparkles size={16} />}
+              className="min-w-[180px]"
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  {isPolish ? 'Wykonywanie...' : 'Running...'}
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} />
-                  {isPolish ? 'Wykonaj' : 'Run'}
-                </>
-              )}
-            </button>
+              {isGenerating
+                ? isPolish
+                  ? 'Wykonywanie...'
+                  : 'Running...'
+                : isPolish
+                  ? 'Wykonaj'
+                  : 'Run'}
+            </Button>
           )}
         </div>
       </div>
