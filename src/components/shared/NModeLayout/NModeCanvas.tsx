@@ -9,7 +9,9 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { SectionErrorBoundary } from './SectionErrorBoundary';
 import type { NModeSection } from './types';
 
 interface NModeCanvasProps {
@@ -29,6 +31,8 @@ export const NModeCanvas: React.FC<NModeCanvasProps> = ({
   reducedMotion = false,
   motionDuration = 0.22,
 }) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
   const activeSectionDef = sections.find((s) => s.id === activeSection);
 
   return (
@@ -44,8 +48,22 @@ export const NModeCanvas: React.FC<NModeCanvasProps> = ({
           {/* ═══════════════════════════════════════════════
               N BLOCKS KIT — flat, quiet UI (§2.5.3 / §2.5.5)
               Typography + whitespace, NOT frames.
+              A per-section boundary isolates a crashing section so it can't take
+              down the whole detail view (#24) — applies to ALL NModeShell views.
               ═══════════════════════════════════════════════ */}
-          {activeSectionDef?.component}
+          <SectionErrorBoundary
+            key={activeSection}
+            sectionLabel={
+              activeSectionDef
+                ? isPolish
+                  ? activeSectionDef.label.pl
+                  : activeSectionDef.label.en
+                : undefined
+            }
+            isPolish={isPolish}
+          >
+            {activeSectionDef?.component}
+          </SectionErrorBoundary>
         </motion.div>
       </AnimatePresence>
     </div>

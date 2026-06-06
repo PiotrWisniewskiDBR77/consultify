@@ -61,6 +61,7 @@ import assessmentWorkflowV2Routes from './routes/assessment-workflow-v2.routes.j
 import assessmentEvidenceRoutes from './routes/assessmentEvidence.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import auditEventsRoutes from './routes/audit-events.routes.js';
+import auditProgramsRouter from './routes/audit-programs.routes.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
 // Route Imports
 import authRoutes from './routes/auth.routes.js';
@@ -79,6 +80,7 @@ import budgetsRoutes from './routes/budgets.routes.js';
 import capabilityRoutes from './routes/capability.routes.js';
 import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
+import clientErrorRoutes from './routes/client-errors.routes.js';
 import cloudRoutes from './routes/cloud.routes.js';
 import competencyRoutes from './routes/competency.routes.js';
 import complianceRoutes from './routes/compliance.routes.js';
@@ -351,6 +353,8 @@ export class ApiGateway {
       // TypeScript routes (migrated)
       logger.info('[ApiGateway] Mounting /api/auth');
       app.use('/api/auth', authRoutes);
+      app.use('/api/errors', clientErrorRoutes);
+      app.use('/api/audit', auditProgramsRouter);
       logger.info('[ApiGateway] Mounting /api/billing');
       app.use('/api/billing', billingRoutes);
       app.use('/api/superadmin/billing', billingAdminRoutes);

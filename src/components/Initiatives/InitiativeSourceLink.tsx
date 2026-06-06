@@ -24,20 +24,28 @@ export function getSourceDisplayLabel(sourceType: string, isPolish = false): str
   return sourceType || '';
 }
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 interface InitiativeSourceLinkProps {
   sourceType?: string | null;
   sourceId?: string | null;
+  /**
+   * Optional explicit language override. When omitted the component
+   * self-localizes from the active i18n language, so callers no longer
+   * need to pass this to get the correct PL/EN labels.
+   */
   isPolish?: boolean;
 }
 
 export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
   sourceType,
   sourceId,
-  isPolish = false,
+  isPolish: isPolishProp,
 }) => {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const isPolish = isPolishProp ?? i18n.language === 'pl';
 
   if (!sourceType || !sourceId) {
     return null;
@@ -61,7 +69,7 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
       case 'conclusion_readout':
         return <FileText size={16} className="text-primary-400" />;
       default:
-        return <ExternalLink size={16} className="text-slate-400" />;
+        return <ExternalLink size={16} className="text-slate-600" />;
     }
   };
 
@@ -93,13 +101,13 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
     <div className="bg-navy-900 rounded-xl border border-navy-700 p-5">
       <div className="flex items-center gap-2 mb-2">
         {getSourceIcon()}
-        <span className="text-xs font-semibold text-slate-400 uppercase">
+        <span className="text-xs font-semibold text-slate-600 uppercase">
           {isPolish ? 'Źródło' : 'Source'} {getSourceLabel()}
         </span>
       </div>
       <button
         onClick={handleNavigate}
-        className="flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-colors group"
+        className="flex items-center gap-2 text-sm text-slate-600 hover:text-white transition-colors group"
       >
         <span className="font-mono text-xs">{sourceId}</span>
         <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />

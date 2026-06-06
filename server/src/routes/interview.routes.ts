@@ -77,6 +77,28 @@ router.post('/sessions', InterviewController.createSession);
 router.patch('/sessions/:id', InterviewController.updateSession);
 
 // ==========================================
+// SESSION LIFECYCLE (Archive / Trash)
+// ==========================================
+
+/** POST /interview/sessions/bulk - Bulk archive/restore/trash/untrash (must precede /:id) */
+router.post('/sessions/bulk', InterviewController.bulkSessionLifecycle);
+
+/** POST /interview/sessions/:id/archive - Archive a session */
+router.post('/sessions/:id/archive', InterviewController.archiveSession);
+
+/** POST /interview/sessions/:id/restore - Un-archive a session */
+router.post('/sessions/:id/restore', InterviewController.restoreSession);
+
+/** POST /interview/sessions/:id/trash - Move a session to trash */
+router.post('/sessions/:id/trash', InterviewController.trashSession);
+
+/** POST /interview/sessions/:id/untrash - Restore a session from trash */
+router.post('/sessions/:id/untrash', InterviewController.untrashSession);
+
+/** DELETE /interview/sessions/:id - Permanently delete a trashed session */
+router.delete('/sessions/:id', InterviewController.deleteSession);
+
+// ==========================================
 // ASSIGNMENTS ROUTES (Workflow)
 // ==========================================
 
@@ -160,6 +182,27 @@ router.post(
   '/assignments/:id/approve',
   requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   InterviewController.approveAssignment
+);
+
+/** POST /interview/assignments/:id/escalate - Manual "escalate now" (#9b) */
+router.post(
+  '/assignments/:id/escalate',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.escalateAssignment
+);
+
+/** POST /interview/assignments/:id/archive - Archive an assignment (#8) */
+router.post(
+  '/assignments/:id/archive',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.archiveAssignment
+);
+
+/** POST /interview/assignments/:id/restore - Un-archive an assignment (#8) */
+router.post(
+  '/assignments/:id/restore',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  InterviewController.restoreAssignment
 );
 
 // ==========================================
@@ -275,6 +318,13 @@ router.post(
   '/templates/:id/restore',
   requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
   InterviewController.restoreTemplate
+);
+
+/** POST /interview/templates/:id/default - Set/unset template as org default */
+router.post(
+  '/templates/:id/default',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.setTemplateDefault
 );
 
 /** POST /interview/templates/:id/questions - Add template question */

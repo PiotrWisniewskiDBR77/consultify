@@ -34,8 +34,10 @@ export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export { NModeSectionWrapper } from './NModeSectionWrapper';
 export { NModeShell } from './NModeShell';
+export { SummaryCard } from './SummaryCard';
 
 // ── Types ───────────────────────────────────────────────────────────────────
+export type { SummaryCardMetric, SummaryCardMetricTone, SummaryCardProps } from './SummaryCard';
 export type {
   ActionVariant,
   NModeAction,

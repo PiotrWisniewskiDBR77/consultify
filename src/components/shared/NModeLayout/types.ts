@@ -33,6 +33,20 @@ export interface NModeSection {
   label: { en: string; pl: string };
   /** Optional badge count (e.g. number of comments) */
   badge?: number;
+  /**
+   * Adaptive sidebar (#22): when explicitly `false`, the section is treated as
+   * empty and hidden from the nav unless `alwaysShow` is set or the user flips
+   * "Show all sections". Leave undefined to always show (back-compat default).
+   */
+  hasData?: boolean;
+  /** Always render in the nav even when `hasData === false` (e.g. Summary). */
+  alwaysShow?: boolean;
+  /**
+   * Optional group label for the sidebar (#22b). When any section sets a group,
+   * the (non-reorderable) nav renders grouped headers instead of a flat list —
+   * e.g. INSIGHT / BETWEEN THE LINES / EVIDENCE / DELIVERABLES / AUDIT.
+   */
+  group?: string;
   /** The section canvas content (rendered when active) */
   component: React.ReactNode;
 }
@@ -153,6 +167,12 @@ export interface NModeShellProps {
   actionsVisible?: boolean;
   /** AI context actions — shown in action bar based on active section */
   aiContextActions?: NModeAIContextAction[];
+  /**
+   * Tool-level AI actions — whole-artifact AI, always visible in the action bar
+   * regardless of active section (vs. aiContextActions which are section-scoped).
+   * Part of the 3-level AI model: tool / section / field.
+   */
+  toolAIActions?: NModeAction[];
   /**
    * Custom action bar renderer. When provided, replaces the standard
    * NModeActionBar with arbitrary content inside the same styled container.

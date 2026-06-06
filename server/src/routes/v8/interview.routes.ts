@@ -18,7 +18,7 @@ import {
   loadManagedInterviewSessionsForManager,
 } from '../../controllers/InterviewController.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { requirePermission } from '../../middleware/permission.middleware.js';
+import { requireAnyPermission, requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   getManagedAssignments,
@@ -194,6 +194,9 @@ router.get(
  */
 router.get(
   '/sessions/accepted',
+  // V-A S1 — mirror the legacy gate (interview.routes.ts:64-68). These are
+  // manager-scoped reads; the V8 path had dropped the capability gate.
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const sessions = await loadAcceptedInterviewSessionsForManager(organizationId, userId);
@@ -203,6 +206,7 @@ router.get(
 
 router.get(
   '/sessions/managed',
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId, userRole } = getV8Context(req);
     const scope = await resolveInterviewManagerScope({
@@ -347,22 +351,34 @@ router.get(
   })
 );
 
+// V-A S1 — restore the function-level authorization the legacy /api/interview
+// stack enforces but the V8 production path dropped. Mirror the legacy gates
+// exactly (interview.routes.ts:104-161):
+//   start / submit  → no permission gate; the controller validates the caller
+//                     is the assignee (assignee acts on their own assignment).
+//   remind          → INTERVIEW_REMIND
+//   send-back/approve → INTERVIEW_ASSIGN_MANAGE  (manager-only)
+// Without these, any authenticated org member could approve/send-back any
+// submitted assignment in their org (intra-org privilege escalation).
 router.post('/assignments/:id/start', v8Wrap(InterviewController.startAssignment, interviewMeta));
 
 router.post('/assignments/:id/submit', v8Wrap(InterviewController.submitAssignment, interviewMeta));
 
 router.post(
   '/assignments/:id/remind',
+  requirePermission('INTERVIEW_REMIND'),
   v8Wrap(InterviewController.sendAssignmentReminder, interviewMeta)
 );
 
 router.post(
   '/assignments/:id/send-back',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   v8Wrap(InterviewController.sendBackAssignment, interviewMeta)
 );
 
 router.post(
   '/assignments/:id/approve',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   v8Wrap(InterviewController.approveAssignment, interviewMeta)
 );
 
@@ -1011,9 +1027,14 @@ router.post(
 
     if (!normalizedTitle) {
       try {
+        // Scope the title lookup by org as well. The id is already validated to
+        // belong to this org via `approvedRows` above, but adding the explicit
+        // organization_id guard keeps this defensive and mirrors sibling
+        // queries (so a future refactor of the validation can't turn this into
+        // a cross-org name leak).
         const sessionRow = await queryHelpers.queryOne(
-          `SELECT name FROM interview_sessions WHERE id = ?`,
-          [normalizedSessionIds[0]]
+          `SELECT name FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+          [normalizedSessionIds[0], organizationId]
         );
         const sessionName = String((sessionRow as any)?.name || '').trim();
         normalizedTitle = sessionName
@@ -1269,9 +1290,11 @@ router.post(
 
     if (existing?.target_id) {
       const column = target === 'tools' ? 'exported_to_tools' : 'exported_to_assessment';
+      // `id` is already org-validated above; the org guard mirrors sibling
+      // writes and keeps this defensive against future refactors.
       await queryHelpers.queryRun(
-        `UPDATE interview_insights SET ${column} = 1, updated_at = ? WHERE id = ?`,
-        [new Date().toISOString(), id]
+        `UPDATE interview_insights SET ${column} = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [new Date().toISOString(), id, organizationId]
       );
       void logInsightActivity({
         organizationId,
@@ -1340,6 +1363,10 @@ router.post(
         },
         boundedInsightPayload,
         organizationContext: orgContext,
+        // D2 — ToolInitiativeService reads `context.org`. Mirror the org context
+        // under that key so the downstream generator actually sees it (the
+        // `organizationContext` key it was written under was never read).
+        org: orgContext,
       };
 
       await queryHelpers.queryRun(
@@ -1365,8 +1392,8 @@ router.post(
 
       try {
         await queryHelpers.queryRun(
-          `UPDATE interview_insights SET exported_to_tools = 1, updated_at = ? WHERE id = ?`,
-          [now, id]
+          `UPDATE interview_insights SET exported_to_tools = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+          [now, id, organizationId]
         );
       } catch {
         /* ignore */
@@ -1418,6 +1445,10 @@ router.post(
       },
       boundedInsightPayload,
       organizationContext: orgContext,
+      // D1 — assessmentInitiativeService reads `contextSnapshot.org`. Mirror
+      // the org context under that key so the DRD assessment generator sees it
+      // (the `organizationContext` key it was written under was never read).
+      org: orgContext,
     };
 
     await queryHelpers.queryRun(
@@ -1453,8 +1484,8 @@ router.post(
 
     try {
       await queryHelpers.queryRun(
-        `UPDATE interview_insights SET exported_to_assessment = 1, updated_at = ? WHERE id = ?`,
-        [now, id]
+        `UPDATE interview_insights SET exported_to_assessment = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [now, id, organizationId]
       );
     } catch {
       /* ignore */

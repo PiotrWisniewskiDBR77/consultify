@@ -14,15 +14,18 @@
 
 import {
   AlertTriangle,
+  Archive,
   ArrowRight,
+  ArrowUpRight,
   BarChart3,
   Bell,
   Brain,
   Calendar,
+  CalendarClock,
   Check,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
-  CircleHelp,
   ClipboardList,
   Clock,
   Columns3,
@@ -30,8 +33,10 @@ import {
   Download,
   Edit3,
   ExternalLink,
+  Eye,
   FilePlus,
   FileText,
+  Gauge,
   Grid3X3,
   Inbox,
   LayoutGrid,
@@ -42,11 +47,14 @@ import {
   MessageSquare,
   Minus,
   MoreVertical,
+  RefreshCw,
   Rocket,
   RotateCcw,
   Send,
   Settings2,
   Sparkles,
+  Star,
+  StarOff,
   Target,
   Trash2,
   UserPlus,
@@ -75,6 +83,9 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { StatusPill } from '@/components/shared/StatusPill';
+import { TeresaMark } from '@/components/shared/TeresaMark';
+import { LoadingState } from '@/components/ui/primitives';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -83,7 +94,6 @@ import {
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { getPriorityStyle, getStatusStyle, getTypeStyle } from '@/constants/statusColors';
-import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
@@ -136,6 +146,25 @@ const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) 
   toast.error(getSafeInterviewErrorMessage(error, defaultMessage));
 };
 
+/**
+ * Strip raw markdown so an insight's row sub-text reads as clean plain text.
+ * Removes leading heading hashes, bold/italic markers, inline-code backticks,
+ * list bullets, and collapses markdown table pipes / whitespace. Used ONLY for
+ * the Insights table row description preview (not for full rendering).
+ */
+const stripInsightMarkdownPreview = (raw: string): string => {
+  if (!raw) return '';
+  return raw
+    .replace(/`+/g, '') // inline code / fences
+    .replace(/^\s*#{1,6}\s*/gm, '') // leading heading hashes
+    .replace(/\*\*/g, '') // bold
+    .replace(/[*_]/g, '') // italics / emphasis
+    .replace(/^\s*[-+>]\s+/gm, '') // list bullets / blockquotes
+    .replace(/\|/g, ' ') // collapse table pipes
+    .replace(/\s+/g, ' ') // collapse whitespace/newlines
+    .trim();
+};
+
 const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-inbox-table-view';
 const INTERVIEW_INBOX_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-inbox-show-row-description';
@@ -157,16 +186,33 @@ const INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-initiatives-show-row-description';
 const INTERVIEW_CREATE_SESSION_TOAST_ID = 'interview-create-session';
 
-const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
+// V-B — column-width persistence storage keys (one per resizable table).
+const INTERVIEW_INBOX_COL_WIDTHS_KEY = 'consultify-interview-inbox-col-widths';
+const INTERVIEW_MANAGED_COL_WIDTHS_KEY = 'consultify-interview-managed-col-widths';
+const INTERVIEW_SESSIONS_COL_WIDTHS_KEY = 'consultify-interview-sessions-col-widths';
+const INTERVIEW_INSIGHTS_COL_WIDTHS_KEY = 'consultify-interview-insights-col-widths';
+const INTERVIEW_TEMPLATES_COL_WIDTHS_KEY = 'consultify-interview-templates-col-widths';
+const INTERVIEW_INITIATIVES_COL_WIDTHS_KEY = 'consultify-interview-initiatives-col-widths';
+
+// #9/#9b — opt-in columns are hidden by default; users reveal them via the
+// view-settings (hidden-columns) menu. submitted/overdue/aiScore/escalation.
+const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [
+  'submitted',
+  'aiScore',
+  'escalation',
+];
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
-  template: 420,
-  assignee: 190,
+  template: 360,
+  assignee: 180,
   status: 140,
-  progress: 170,
-  due: 170,
+  progress: 150,
+  due: 150,
+  submitted: 150,
+  aiScore: 120,
+  escalation: 160,
   actions: 56,
 };
 const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
@@ -174,11 +220,14 @@ const INTERVIEW_ASSIGNMENTS_TABLE_RESIZE_BOUNDS: Record<
   { minWidth: number; maxWidth: number }
 > = {
   select: { minWidth: 44, maxWidth: 44 },
-  template: { minWidth: 280, maxWidth: 680 },
-  assignee: { minWidth: 150, maxWidth: 280 },
+  template: { minWidth: 240, maxWidth: 680 },
+  assignee: { minWidth: 140, maxWidth: 280 },
   status: { minWidth: 120, maxWidth: 220 },
-  progress: { minWidth: 140, maxWidth: 260 },
-  due: { minWidth: 140, maxWidth: 260 },
+  progress: { minWidth: 130, maxWidth: 260 },
+  due: { minWidth: 130, maxWidth: 260 },
+  submitted: { minWidth: 130, maxWidth: 240 },
+  aiScore: { minWidth: 100, maxWidth: 200 },
+  escalation: { minWidth: 140, maxWidth: 260 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
 const INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
@@ -206,6 +255,7 @@ const INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   type: 150,
   status: 140,
   source: 130,
+  exports: 150,
   date: 140,
   actions: 56,
 };
@@ -218,14 +268,19 @@ const INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS: Record<
   type: { minWidth: 120, maxWidth: 240 },
   status: { minWidth: 120, maxWidth: 220 },
   source: { minWidth: 110, maxWidth: 220 },
+  exports: { minWidth: 120, maxWidth: 240 },
   date: { minWidth: 120, maxWidth: 220 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
-  name: 430,
+  name: 360,
   category: 170,
   questions: 120,
+  // #16 — Usage count / AI quality score / Last used columns.
+  usage: 120,
+  quality: 130,
+  lastUsed: 140,
   status: 150,
   actions: 56,
 };
@@ -237,6 +292,10 @@ const INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS: Record<
   name: { minWidth: 300, maxWidth: 700 },
   category: { minWidth: 120, maxWidth: 280 },
   questions: { minWidth: 90, maxWidth: 180 },
+  // #16 — new columns
+  usage: { minWidth: 90, maxWidth: 200 },
+  quality: { minWidth: 100, maxWidth: 220 },
+  lastUsed: { minWidth: 110, maxWidth: 220 },
   status: { minWidth: 120, maxWidth: 220 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
@@ -303,6 +362,38 @@ function saveHiddenColumns(storageKey: string, hiddenColumns: string[]) {
       storageKey,
       JSON.stringify(Array.from(new Set(hiddenColumns.filter((x) => typeof x === 'string'))))
     );
+  } catch {
+    /* ignore */
+  }
+}
+
+// V-B — column-width persistence for the hand-written Interview tables. Mirrors
+// the existing hidden-columns/boolean persistence so resizing survives reload
+// (the module-wide "resize lost on reload" bug the Sessions + Visual audits
+// flagged). Merges persisted widths onto the provided defaults so new columns
+// still get a sensible width.
+function loadColumnWidths(
+  storageKey: string,
+  defaults: Record<string, number>
+): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return { ...defaults };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return { ...defaults };
+    const merged: Record<string, number> = { ...defaults };
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof v === 'number' && v > 0) merged[k] = v;
+    }
+    return merged;
+  } catch {
+    return { ...defaults };
+  }
+}
+
+function saveColumnWidths(storageKey: string, widths: Record<string, number>) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(widths));
   } catch {
     /* ignore */
   }
@@ -494,6 +585,28 @@ interface InterviewAssignment {
     totalQuestions: number;
     completenessPercent: number;
   };
+  // Manager AI snapshot (#11b/#9). Populated server-side when the assignment is
+  // submitted/evaluated; absent until then. We read it opportunistically and
+  // degrade gracefully ("AI assessment not available", "—") when missing.
+  aiReview?: {
+    overallScore?: number;
+    overallVerdict?: 'ready_for_approval' | 'needs_improvement' | 'insufficient' | 'empty';
+    recommendations?: string[];
+    weakAnswerMap?: Array<{
+      key: string;
+      label: string;
+      score?: number;
+      verdict?: string;
+      feedback?: string;
+      isRequired?: boolean;
+    }>;
+  } | null;
+  aiReviewedAt?: string;
+  // Escalation metadata (#9b). The backend escalation engine owns these; the UI
+  // only displays them and offers a manual trigger when an endpoint exists.
+  escalatedAt?: string;
+  escalationTarget?: { id?: string; name?: string; email?: string } | null;
+  escalationLevel?: number;
 }
 
 function normalizeInterviewAssignmentStatus(status?: string): InterviewAssignment['status'] {
@@ -548,15 +661,44 @@ const INTERVIEW_PROGRESS_TRACK_CLASS =
   'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-700';
 const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-primary-500 transition-all';
 
+// V-A S5 — canonical template-status chip. The real status enum is
+// draft / in_review / approved / archived; the table cell previously showed a
+// fabricated Default|Active badge that ignored `template.status` entirely, and
+// the cards branch only modeled a binary approved/draft. One helper, used in
+// both, so a draft never reads as "Active" again.
+function getTemplateStatusChip(
+  status: string | undefined,
+  isPolish: boolean
+): { label: string; className: string } {
+  const s = String(status || 'draft').toLowerCase();
+  if (s === 'approved' || s === 'published') {
+    return {
+      label: isPolish ? 'Opublikowany' : 'Published',
+      className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100`,
+    };
+  }
+  if (s === 'in_review') {
+    return {
+      label: isPolish ? 'W recenzji' : 'In review',
+      className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100`,
+    };
+  }
+  if (s === 'archived') {
+    return {
+      label: isPolish ? 'Zarchiwizowany' : 'Archived',
+      className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-slate-300/80 bg-slate-100 text-slate-600 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-300`,
+    };
+  }
+  return {
+    label: isPolish ? 'Wersja robocza' : 'Draft',
+    className: `${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100`,
+  };
+}
+
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
-  const {
-    setOpen: setHelpOpen,
-    setActiveTab: setHelpTab,
-    setKnowledgeModuleIdOverride,
-  } = useHelpSidePanel();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentProjectId,
@@ -593,9 +735,9 @@ export const InterviewHub: React.FC = () => {
   const [sessionsHiddenColumns, setSessionsHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
   );
-  const [sessionsColumnWidths, setSessionsColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS,
-  });
+  const [sessionsColumnWidths, setSessionsColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(INTERVIEW_SESSIONS_COL_WIDTHS_KEY, INTERVIEW_SESSIONS_TABLE_DEFAULT_WIDTHS)
+  );
   const [showSessionRowDescription, setShowSessionRowDescription] = useState(() =>
     loadBooleanSetting(INTERVIEW_SESSIONS_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
@@ -604,15 +746,24 @@ export const InterviewHub: React.FC = () => {
   const [templateSourceFilter, setTemplateSourceFilter] = useState<TemplateSourceFilter>('all');
   const [templateAreaTagFilter, setTemplateAreaTagFilter] = useState<string[]>([]);
   const [isTemplateAreaFilterOpen, setIsTemplateAreaFilterOpen] = useState(false);
-  const [templateStatusFilter, setTemplateStatusFilter] = useState<'all' | 'default' | 'active'>(
-    'all'
-  );
+  // V-A S5 — filter by the real status enum, not isDefault. Was 'all'|'default'|
+  // 'active' (which keyed off isDefault, so drafts/archived were unreachable).
+  const [templateStatusFilter, setTemplateStatusFilter] = useState<
+    'all' | 'draft' | 'in_review' | 'approved' | 'archived'
+  >('all');
   const [templatesHiddenColumns, setTemplatesHiddenColumns] = useState<string[]>(() =>
-    loadHiddenColumns(INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
+    // #16 — `quality` and `lastUsed` are backend-pending placeholders, so they
+    // start hidden (still toggleable from the column menu). `usage` ships visible
+    // because it is derived from real assignment data.
+    loadHiddenColumns(
+      INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY,
+      ['quality', 'lastUsed'],
+      ['name', 'actions']
+    )
   );
-  const [templatesColumnWidths, setTemplatesColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS,
-  });
+  const [templatesColumnWidths, setTemplatesColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS)
+  );
   const [showTemplateRowDescription, setShowTemplateRowDescription] = useState(() =>
     loadBooleanSetting(INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
@@ -644,21 +795,51 @@ export const InterviewHub: React.FC = () => {
   const [showInitiativeRowDescription, setShowInitiativeRowDescription] = useState(() =>
     loadBooleanSetting(INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
-  const [initiativesColumnWidths, setInitiativesColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_INITIATIVES_TABLE_DEFAULT_WIDTHS,
-  });
+  const [initiativesColumnWidths, setInitiativesColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(
+      INTERVIEW_INITIATIVES_COL_WIDTHS_KEY,
+      INTERVIEW_INITIATIVES_TABLE_DEFAULT_WIDTHS
+    )
+  );
   const [isInitiativesViewSettingsOpen, setIsInitiativesViewSettingsOpen] = useState(false);
   const initiativesViewSettingsRef = useRef<HTMLDivElement | null>(null);
   const [showInterviewInitiativeWizard, setShowInterviewInitiativeWizard] = useState(false);
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
+  // #6 — Inbox (my_assignments) own-work filter. Deliberately scoped to the
+  // logged-in user's own assignments and framed around the worker's workflow
+  // (All / Answered / Approved / Sent back) — NOT the org-wide "Overdue"/"To
+  // approve" manager framing, which lives on the Assigned tab.
+  const [inboxStatusFilter, setInboxStatusFilter] = useState<
+    'all' | 'answered' | 'approved' | 'sent_back'
+  >('all');
+  // #8c — Assigned (managed) lifecycle filter. Mirrors the Sessions lifecycle
+  // chip-row UX. Assignments have an archive lifecycle (no trash), filtered
+  // server-side via ?lifecycle=active|archived|all. Default = active.
+  const [managedLifecycle, setManagedLifecycle] = useState<'active' | 'archived'>('active');
+  const [managedLifecycleBusy, setManagedLifecycleBusy] = useState(false);
   const [selectedInsightId, setSelectedInsightId] = useState<string | null>(null);
   const [insightPreviewDetailsExpanded, setInsightPreviewDetailsExpanded] = useState(false);
   const [insightPreviewAiActiveId, setInsightPreviewAiActiveId] = useState<string | null>(null);
   const [insightTableFilters, setInsightTableFilters] = useState<TableFilters>({});
-  const [insightColumnWidths, setInsightColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS,
-  });
+  const [insightColumnWidths, setInsightColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(INTERVIEW_INSIGHTS_COL_WIDTHS_KEY, INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS)
+  );
   const [openInsightFilterId, setOpenInsightFilterId] = useState<string | null>(null);
+
+  // #10 — per-column header filters for the Sessions table (status / assignee /
+  // template). Non-destructive: layered on top of the existing custom table
+  // (search + lifecycle + bulk + hidden columns + widths all keep working).
+  const [sessionsTableFilters, setSessionsTableFilters] = useState<TableFilters>({});
+  const [openSessionFilterId, setOpenSessionFilterId] = useState<string | null>(null);
+
+  // #10 — per-column header filters for the Assigned / Inbox tables (status /
+  // assignee / template). Keyed by view ('managed' = Assigned, 'inbox') so the
+  // two shared renderings don't clobber each other's filters.
+  const [assignmentsTableFilters, setAssignmentsTableFilters] = useState<{
+    managed: TableFilters;
+    inbox: TableFilters;
+  }>({ managed: {}, inbox: {} });
+  const [openAssignmentFilterId, setOpenAssignmentFilterId] = useState<string | null>(null);
 
   // Reset preview expansion state when changing selection (KANON v3: stabilny panel)
   useEffect(() => {
@@ -754,13 +935,29 @@ export const InterviewHub: React.FC = () => {
     // Assigned should open on the full manager list.
     // Narrow slices like "To approve" and "Overdue" are entered explicitly from Command Row chips.
     if (activeTab !== 'managed') return;
-    if (assignmentStatusFilter === 'submitted' || assignmentStatusFilter === 'overdue') return;
+    if (
+      assignmentStatusFilter === 'submitted' ||
+      assignmentStatusFilter === 'overdue' ||
+      assignmentStatusFilter === 'sent_back'
+    )
+      return;
     if (assignmentStatusFilter !== 'all') {
       setAssignmentStatusFilter('all');
     }
   }, [activeTab, assignmentStatusFilter]);
 
   const [sessions, setSessions] = useState<InterviewSession[]>([]);
+  // #8b — Sessions archive/trash lifecycle. The managed-sessions list is filtered
+  // server-side via ?lifecycle=active|archived|trash; the active filter also drives
+  // which kebab/bulk actions a row exposes (rows in the "Archive" view are archived,
+  // rows in the "Trash" view are trashed, etc.).
+  const [sessionLifecycle, setSessionLifecycle] = useState<'active' | 'archived' | 'trash'>(
+    'active'
+  );
+  // Type-to-confirm permanent-delete dialog (only reachable from the Trash view).
+  const [sessionDeleteTarget, setSessionDeleteTarget] = useState<InterviewSession | null>(null);
+  const [sessionDeleteConfirmText, setSessionDeleteConfirmText] = useState('');
+  const [sessionLifecycleBusy, setSessionLifecycleBusy] = useState(false);
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
   const [interviewInitiatives, setInterviewInitiatives] = useState<InterviewInitiativeDraft[]>([]);
   const [selectedInterviewInitiativeId, setSelectedInterviewInitiativeId] = useState<string | null>(
@@ -771,6 +968,7 @@ export const InterviewHub: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUsingDemoData, setIsUsingDemoData] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [sessionsLoadError, setSessionsLoadError] = useState<string | null>(null);
   const [insightsLoadError, setInsightsLoadError] = useState<string | null>(null);
   const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
   const [assignmentsLoadError, setAssignmentsLoadError] = useState<string | null>(null);
@@ -788,6 +986,12 @@ export const InterviewHub: React.FC = () => {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showSendBackModal, setShowSendBackModal] = useState(false);
   const [showInsightModal, setShowInsightModal] = useState(false);
+  // #11b — Manager approve flow with AI snapshot panel.
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  // #7b — Manager "Change due date" inline modal.
+  const [showDueDateModal, setShowDueDateModal] = useState(false);
+  const [dueDateDraft, setDueDateDraft] = useState<string>('');
+  const [manageAssignmentBusy, setManageAssignmentBusy] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<Set<string>>(new Set());
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
@@ -869,15 +1073,41 @@ export const InterviewHub: React.FC = () => {
     return [];
   }, []);
 
-  const loadManagedSessions = useCallback(async (): Promise<InterviewSession[]> => {
-    const sessionsRes = await V8InterviewApi.getManagedSessions()
-      .then((res) => res.sessions)
-      .catch(() => Api.get('/interview/sessions/managed'))
-      .catch(() => []);
-    return Array.isArray(sessionsRes)
-      ? (sessionsRes as InterviewSession[]).map(normalizeInterviewSessionRecord)
-      : [];
-  }, []);
+  const loadManagedSessions = useCallback(
+    async (lifecycle: 'active' | 'archived' | 'trash' = 'active'): Promise<InterviewSession[]> => {
+      // The v8 managed-sessions endpoint ignores lifecycle, so only the default
+      // "active" view can use the v8 fast path. Archive/Trash views must go through
+      // the legacy /interview/sessions/managed?lifecycle= endpoint (#8b backend).
+      const sessionsRes =
+        lifecycle === 'active'
+          ? await V8InterviewApi.getManagedSessions()
+              .then((res) => res.sessions)
+              .catch(() => Api.get('/interview/sessions/managed'))
+              .catch(() => [])
+          : await Api.get(
+              `/interview/sessions/managed?lifecycle=${encodeURIComponent(lifecycle)}`
+            ).catch(() => []);
+      return Array.isArray(sessionsRes)
+        ? (sessionsRes as InterviewSession[]).map(normalizeInterviewSessionRecord)
+        : [];
+    },
+    []
+  );
+
+  // #8b — Re-fetch only the sessions list (used after lifecycle actions and when
+  // the user switches the Active | Archive | Trash filter). Keeps selection in sync.
+  const refreshSessions = useCallback(
+    async (lifecycle: 'active' | 'archived' | 'trash' = sessionLifecycle) => {
+      try {
+        const next = await loadManagedSessions(lifecycle);
+        setSessions(next);
+        setSessionsLoadError(null);
+      } catch (error) {
+        console.error('[InterviewHub] Failed to refresh sessions:', error);
+      }
+    },
+    [loadManagedSessions, sessionLifecycle]
+  );
 
   const loadMyAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
     const assignmentsRes = await V8InterviewApi.getMyAssignments()
@@ -889,15 +1119,27 @@ export const InterviewHub: React.FC = () => {
       : [];
   }, []);
 
-  const loadManagedAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
-    const assignmentsRes = await V8InterviewApi.getManagedAssignments()
-      .then((res) => res.assignments)
-      .catch(() => Api.get('/interview/assignments/managed'))
-      .catch(() => []);
-    return Array.isArray(assignmentsRes)
-      ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
-      : [];
-  }, []);
+  // #8c — Managed assignments list is filtered server-side via
+  // ?lifecycle=active|archived|all (active = default, excludes archived).
+  // The v8 fast path returns only active rows, so non-active views go through
+  // the /interview/assignments/managed?lifecycle= endpoint.
+  const loadManagedAssignments = useCallback(
+    async (lifecycle: 'active' | 'archived' | 'all' = 'active'): Promise<InterviewAssignment[]> => {
+      const assignmentsRes =
+        lifecycle === 'active'
+          ? await V8InterviewApi.getManagedAssignments()
+              .then((res) => res.assignments)
+              .catch(() => Api.get('/interview/assignments/managed'))
+              .catch(() => [])
+          : await Api.get(
+              `/interview/assignments/managed?lifecycle=${encodeURIComponent(lifecycle)}`
+            ).catch(() => []);
+      return Array.isArray(assignmentsRes)
+        ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
+        : [];
+    },
+    []
+  );
 
   const loadOverdueAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
     const assignmentsRes = await V8InterviewApi.getOverdueAssignments()
@@ -908,6 +1150,21 @@ export const InterviewHub: React.FC = () => {
       ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
       : [];
   }, []);
+
+  // #8c — Re-fetch only the managed-assignments list (used after archive/restore
+  // actions and when the user switches the Active | Archive filter). Mirrors the
+  // Sessions refreshSessions pattern.
+  const refreshManagedAssignments = useCallback(
+    async (lifecycle: 'active' | 'archived' = managedLifecycle) => {
+      try {
+        const next = await loadManagedAssignments(lifecycle);
+        setManagedAssignments(next);
+      } catch (error) {
+        console.error('[InterviewHub] Failed to refresh managed assignments:', error);
+      }
+    },
+    [loadManagedAssignments, managedLifecycle]
+  );
 
   // V3-A02: Dynamic documents state with sessionStorage persistence (shared hook)
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
@@ -1043,9 +1300,15 @@ export const InterviewHub: React.FC = () => {
 
       if (sessionsRes.status === 'fulfilled') {
         setSessions(Array.isArray(sessionsRes.value) ? sessionsRes.value : []);
+        setSessionsLoadError(null);
       } else {
         console.error('[InterviewHub] Failed to load sessions:', sessionsRes.reason);
         setSessions([]);
+        setSessionsLoadError(
+          isPolish
+            ? 'Nie udalo sie pobrac sesji. Sprobuj odswiezyc.'
+            : 'Failed to load sessions. Try refreshing.'
+        );
       }
 
       if (insightsRes.status === 'fulfilled') {
@@ -1096,6 +1359,34 @@ export const InterviewHub: React.FC = () => {
     loadData();
   }, [isPolish, loadManagedSessions, normalizeTemplateRecord, unwrapApiList]);
 
+  // #8b — Re-fetch the sessions list when the Active | Archive | Trash filter
+  // changes. The first run is skipped (the main load effect already fetched the
+  // default "active" list) to avoid a redundant double fetch on mount.
+  const sessionLifecycleHydrated = useRef(false);
+  useEffect(() => {
+    if (!sessionLifecycleHydrated.current) {
+      sessionLifecycleHydrated.current = true;
+      return;
+    }
+    setSelectedSessionIds(new Set());
+    void refreshSessions(sessionLifecycle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionLifecycle]);
+
+  // #8c — Re-fetch the managed-assignments list when the Active | Archive filter
+  // changes. First run skipped (main load effect already fetched the default
+  // "active" list) to avoid a redundant double fetch on mount.
+  const managedLifecycleHydrated = useRef(false);
+  useEffect(() => {
+    if (!managedLifecycleHydrated.current) {
+      managedLifecycleHydrated.current = true;
+      return;
+    }
+    setSelectedAssignmentIds(new Set());
+    void refreshManagedAssignments(managedLifecycle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [managedLifecycle]);
+
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
@@ -1130,6 +1421,302 @@ export const InterviewHub: React.FC = () => {
       );
     }
   }, [isPolish, unwrapApiList]);
+
+  const loadTemplates = useCallback(async () => {
+    try {
+      const templatesRes = await Api.get('/interview/templates');
+      setTemplates(unwrapApiList(templatesRes, 'templates').map(normalizeTemplateRecord));
+    } catch (error) {
+      console.error('[InterviewHub] Failed to load templates:', error);
+    }
+  }, [normalizeTemplateRecord, unwrapApiList]);
+
+  // ── Bulk actions ────────────────────────────────────────────────────────
+  // Cheap, fully-wired bulk operations backed by existing endpoints.
+  const [bulkActionBusy, setBulkActionBusy] = useState(false);
+
+  const handleBulkRemind = useCallback(async () => {
+    const ids = Array.from(selectedAssignmentIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    setBulkActionBusy(true);
+    let sent = 0;
+    for (const id of ids) {
+      try {
+        await V8InterviewApi.remindAssignment(id);
+        sent += 1;
+      } catch {
+        // continue; per-item failures are tolerated and reflected in the count
+      }
+    }
+    setBulkActionBusy(false);
+    setSelectedAssignmentIds(new Set());
+    if (sent > 0) {
+      toast.success(isPolish ? `Wysłano ${sent} przypomnień` : `${sent} reminders sent`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się wysłać przypomnień' : 'Could not send reminders');
+    }
+  }, [selectedAssignmentIds, bulkActionBusy, isPolish]);
+
+  // #8 — Bulk approve over the selected managed rows. Only 'submitted' rows are
+  // approvable; others are skipped honestly (reflected in the count). Backed by
+  // the existing per-assignment approve endpoint (no bulk route exists).
+  const handleBulkApproveAssignments = useCallback(async () => {
+    const ids = Array.from(selectedAssignmentIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    const approvable = (managedAssignments || []).filter(
+      (a) => ids.includes(a.id) && a.status === 'submitted'
+    );
+    if (approvable.length === 0) {
+      toast.error(
+        isPolish
+          ? 'Brak przesłanych przydziałów do zatwierdzenia'
+          : 'No submitted assignments to approve'
+      );
+      return;
+    }
+    setBulkActionBusy(true);
+    let done = 0;
+    for (const a of approvable) {
+      try {
+        await V8InterviewApi.approveAssignment(a.id);
+        done += 1;
+      } catch {
+        // per-item failures tolerated; reflected in count
+      }
+    }
+    try {
+      const [myRes, managedRes, overdueRes] = await Promise.all([
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setMyAssignments(myRes);
+      setManagedAssignments(managedRes);
+      setOverdueAssignments(overdueRes);
+    } catch {
+      /* ignore refresh failure */
+    }
+    setBulkActionBusy(false);
+    setSelectedAssignmentIds(new Set());
+    if (done > 0) {
+      toast.success(isPolish ? `Zatwierdzono ${done}` : `${done} approved`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się zatwierdzić' : 'Could not approve');
+    }
+  }, [
+    selectedAssignmentIds,
+    bulkActionBusy,
+    managedAssignments,
+    isPolish,
+    loadMyAssignments,
+    loadManagedAssignments,
+    loadOverdueAssignments,
+  ]);
+
+  // #8 — Bulk send-back over the selected managed rows. Uses a generic reason
+  // (per-item reasons remain available via the single-row Send-back modal).
+  const handleBulkSendBackAssignments = useCallback(async () => {
+    const ids = Array.from(selectedAssignmentIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    const eligible = (managedAssignments || []).filter(
+      (a) => ids.includes(a.id) && a.status === 'submitted'
+    );
+    if (eligible.length === 0) {
+      toast.error(
+        isPolish
+          ? 'Brak przesłanych przydziałów do zwrotu'
+          : 'No submitted assignments to send back'
+      );
+      return;
+    }
+    const reason = isPolish
+      ? 'Zwrócono zbiorczo do poprawy.'
+      : 'Returned for revision (bulk action).';
+    setBulkActionBusy(true);
+    let done = 0;
+    for (const a of eligible) {
+      try {
+        await V8InterviewApi.sendBackAssignment(a.id, { reason });
+        done += 1;
+      } catch {
+        // per-item failures tolerated
+      }
+    }
+    try {
+      const [myRes, managedRes, overdueRes] = await Promise.all([
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setMyAssignments(myRes);
+      setManagedAssignments(managedRes);
+      setOverdueAssignments(overdueRes);
+    } catch {
+      /* ignore refresh failure */
+    }
+    setBulkActionBusy(false);
+    setSelectedAssignmentIds(new Set());
+    if (done > 0) {
+      toast.success(isPolish ? `Zwrócono ${done}` : `${done} sent back`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się zwrócić' : 'Could not send back');
+    }
+  }, [
+    selectedAssignmentIds,
+    bulkActionBusy,
+    managedAssignments,
+    isPolish,
+    loadMyAssignments,
+    loadManagedAssignments,
+    loadOverdueAssignments,
+  ]);
+
+  // #8 / #8c — Assignment archive lifecycle. Per-row archive/restore backed by
+  // POST /interview/assignments/:id/{archive,restore}. After each action we
+  // re-fetch the list for the current lifecycle filter so the affected row drops
+  // out of view.
+  const handleAssignmentLifecycleAction = useCallback(
+    async (assignment: InterviewAssignment, action: 'archive' | 'restore') => {
+      if (managedLifecycleBusy) return;
+      setManagedLifecycleBusy(true);
+      try {
+        await Api.post(`/interview/assignments/${assignment.id}/${action}`, {});
+        toast.success(
+          action === 'archive'
+            ? isPolish
+              ? 'Przydział zarchiwizowany'
+              : 'Assignment archived'
+            : isPolish
+              ? 'Przydział przywrócony'
+              : 'Assignment restored'
+        );
+        await refreshManagedAssignments();
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        console.error(`[InterviewHub] Assignment ${action} failed:`, error);
+      } finally {
+        setManagedLifecycleBusy(false);
+      }
+    },
+    [isPolish, managedLifecycleBusy, refreshManagedAssignments]
+  );
+
+  // #8 — Bulk archive/restore over the current selection. No bulk route exists,
+  // so we fan out per-assignment archive/restore calls.
+  const handleBulkAssignmentLifecycle = useCallback(
+    async (action: 'archive' | 'restore') => {
+      const ids = Array.from(selectedAssignmentIds);
+      if (ids.length === 0 || managedLifecycleBusy) return;
+      setManagedLifecycleBusy(true);
+      let done = 0;
+      for (const id of ids) {
+        try {
+          await Api.post(`/interview/assignments/${id}/${action}`, {});
+          done += 1;
+        } catch {
+          // per-item failures tolerated; reflected in the count
+        }
+      }
+      await refreshManagedAssignments();
+      setManagedLifecycleBusy(false);
+      setSelectedAssignmentIds(new Set());
+      if (done > 0) {
+        toast.success(
+          action === 'archive'
+            ? isPolish
+              ? `Zarchiwizowano ${done}`
+              : `${done} archived`
+            : isPolish
+              ? `Przywrócono ${done}`
+              : `${done} restored`
+        );
+      } else {
+        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+      }
+    },
+    [isPolish, managedLifecycleBusy, refreshManagedAssignments, selectedAssignmentIds]
+  );
+
+  const downloadCsv = useCallback((rows: string[][], filename: string) => {
+    const escapeCell = (value: string) => {
+      const v = value ?? '';
+      return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+    };
+    const csv = rows.map((row) => row.map(escapeCell).join(',')).join('\r\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const handleBulkExportSessions = useCallback(() => {
+    const ids = selectedSessionIds;
+    if (ids.size === 0) return;
+    const selected = sessions.filter((s) => ids.has(s.id));
+    if (selected.length === 0) return;
+    const header = ['id', 'name', 'status', 'assignee', 'startedAt'];
+    const rows: string[][] = [
+      header,
+      ...selected.map((s) => [
+        s.id,
+        s.name || '',
+        normalizeInterviewAssignmentStatus(s.assignmentStatus || s.status || 'in_progress'),
+        s.assigneeName || s.respondentName || '',
+        s.startedAt || '',
+      ]),
+    ];
+    downloadCsv(rows, `interview-sessions-${new Date().toISOString().slice(0, 10)}.csv`);
+    setSelectedSessionIds(new Set());
+    toast.success(isPolish ? 'Eksport pobrany' : 'Export downloaded');
+  }, [selectedSessionIds, sessions, downloadCsv, isPolish]);
+
+  const handleBulkCloneTemplates = useCallback(async () => {
+    const ids = Array.from(selectedTemplateIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    setBulkActionBusy(true);
+    let cloned = 0;
+    for (const id of ids) {
+      try {
+        await Api.post(`/interview/templates/${id}/clone`, {});
+        cloned += 1;
+      } catch {
+        // tolerate per-item failures
+      }
+    }
+    setBulkActionBusy(false);
+    setSelectedTemplateIds(new Set());
+    if (cloned > 0) {
+      await loadTemplates();
+      toast.success(isPolish ? `Sklonowano ${cloned} szablonów` : `${cloned} templates cloned`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się sklonować szablonów' : 'Could not clone templates');
+    }
+  }, [selectedTemplateIds, bulkActionBusy, isPolish, loadTemplates]);
+
+  const handleBulkExportInsights = useCallback(() => {
+    const ids = selectedInsightIds;
+    if (ids.size === 0) return;
+    const selected = insights.filter((i) => ids.has(i.id));
+    if (selected.length === 0) return;
+    const header = ['id', 'title', 'type', 'status'];
+    const rows: string[][] = [
+      header,
+      ...selected.map((i) => [
+        i.id,
+        i.title || '',
+        i.insightType || i.type || i.category || '',
+        i.reviewStatus || i.status || '',
+      ]),
+    ];
+    downloadCsv(rows, `interview-insights-${new Date().toISOString().slice(0, 10)}.csv`);
+    setSelectedInsightIds(new Set());
+    toast.success(isPolish ? 'Eksport pobrany' : 'Export downloaded');
+  }, [selectedInsightIds, insights, downloadCsv, isPolish]);
 
   // Load assignments data
   useEffect(() => {
@@ -1368,8 +1955,56 @@ export const InterviewHub: React.FC = () => {
       );
     }
 
+    // #10 — per-column header filters (AND across columns, OR within a column).
+    const statusF = sessionsTableFilters.status as string[] | undefined;
+    if (statusF?.length) {
+      result = result.filter((s) => statusF.includes(getSessionWorkflowStatus(s)));
+    }
+    const assigneeF = sessionsTableFilters.assignee as string[] | undefined;
+    if (assigneeF?.length) {
+      result = result.filter((s) => assigneeF.includes(s.assigneeName || s.respondentName || '—'));
+    }
+    const templateF = sessionsTableFilters.template as string[] | undefined;
+    if (templateF?.length) {
+      result = result.filter((s) =>
+        templateF.includes(s.templateName || s.templateCategory || '—')
+      );
+    }
+
     return result;
-  }, [getSessionWorkflowStatus, searchQuery, sessionStatusFilter, sessions]);
+  }, [getSessionWorkflowStatus, searchQuery, sessionStatusFilter, sessions, sessionsTableFilters]);
+
+  // #10 — filter-option lists for the Sessions header dropdowns, derived from the
+  // current session data (no extra fetch). Status uses the fixed workflow set.
+  const sessionFilterOptions = useMemo(() => {
+    const statusValues = new Set<string>();
+    const assignees = new Set<string>();
+    const templatesSet = new Set<string>();
+    for (const s of sessions) {
+      statusValues.add(getSessionWorkflowStatus(s));
+      assignees.add(s.assigneeName || s.respondentName || '—');
+      templatesSet.add(s.templateName || s.templateCategory || '—');
+    }
+    const statusLabels: Record<string, { pl: string; en: string }> = {
+      assigned: { pl: 'Przydzielony', en: 'Assigned' },
+      in_progress: { pl: 'W trakcie', en: 'In Progress' },
+      submitted: { pl: 'Wysłany', en: 'Submitted' },
+      approved: { pl: 'Zatwierdzony', en: 'Approved' },
+      completed: { pl: 'Zakończony', en: 'Completed' },
+    };
+    const statusOrder = ['assigned', 'in_progress', 'submitted', 'approved', 'completed'];
+    return {
+      status: statusOrder
+        .filter((v) => statusValues.has(v))
+        .map((v) => ({ value: v, label: statusLabels[v]?.[isPolish ? 'pl' : 'en'] || v })),
+      assignee: Array.from(assignees)
+        .sort()
+        .map((v) => ({ value: v, label: v })),
+      template: Array.from(templatesSet)
+        .sort()
+        .map((v) => ({ value: v, label: v })),
+    };
+  }, [sessions, getSessionWorkflowStatus, isPolish]);
 
   // Filter insights
   const filteredInsights = useMemo(() => {
@@ -1536,9 +2171,11 @@ export const InterviewHub: React.FC = () => {
       .join('\n');
     return [
       isPolish
-        ? 'Stworz inicjatywy transformacyjne na podstawie materialu z modulu Wywiad. Zachowaj evidence, confidence, limits i governance proposal -> approval -> execution -> audit.'
+        ? 'Stwórz inicjatywy transformacyjne na podstawie materiału z modułu Wywiad. Zachowaj dowody, pewność, ograniczenia oraz governance: propozycja → akceptacja → realizacja → audyt.'
         : 'Create transformation initiatives from Interview material. Preserve evidence, confidence, limits and proposal -> approval -> execution -> audit governance.',
-      insightLines ? `\nTop insights:\n${insightLines}` : '',
+      insightLines
+        ? `\n${isPolish ? 'Najważniejsze insighty' : 'Top insights'}:\n${insightLines}`
+        : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -1560,12 +2197,19 @@ export const InterviewHub: React.FC = () => {
   const filteredTemplates = useMemo(() => {
     let result = templates;
 
-    // Filter by status-like chips (All / Default / Active)
-    if (templateStatusFilter !== 'all') {
-      result =
-        templateStatusFilter === 'default'
-          ? result.filter((t) => t.isDefault)
-          : result.filter((t) => !t.isDefault);
+    // V-A S5 — filter by the real status enum (draft/in_review/approved/
+    // archived). 'approved' also matches legacy 'published'. Default-to-draft
+    // for rows with no status so they remain findable. "All" excludes
+    // archived (a terminal/hidden state) so archiving actually hides the
+    // template; only the explicit "Archived" chip surfaces them.
+    if (templateStatusFilter === 'all') {
+      result = result.filter((t) => String(t.status || 'draft').toLowerCase() !== 'archived');
+    } else {
+      result = result.filter((t) => {
+        const s = String(t.status || 'draft').toLowerCase();
+        if (templateStatusFilter === 'approved') return s === 'approved' || s === 'published';
+        return s === templateStatusFilter;
+      });
     }
 
     if (templateSourceFilter !== 'all') {
@@ -1645,6 +2289,37 @@ export const InterviewHub: React.FC = () => {
     [insights]
   );
 
+  // #6 — Inbox (my_assignments) own-work counts. Scoped strictly to the
+  // logged-in user's own assignments and framed around their workflow, NOT the
+  // org-wide manager framing. "Answered" = the user has submitted; "Sent back"
+  // = returned to them for revision.
+  const inboxStatusCounts = useMemo(() => {
+    const list = myAssignments || [];
+    return {
+      all: list.length,
+      answered: list.filter((a) => a.status === 'submitted').length,
+      approved: list.filter((a) => a.status === 'approved' || a.status === 'completed').length,
+      sent_back: list.filter((a) => a.status === 'sent_back').length,
+    };
+  }, [myAssignments]);
+
+  const filteredMyAssignments = useMemo(() => {
+    const list = myAssignments || [];
+    if (inboxStatusFilter === 'answered') return list.filter((a) => a.status === 'submitted');
+    if (inboxStatusFilter === 'approved')
+      return list.filter((a) => a.status === 'approved' || a.status === 'completed');
+    if (inboxStatusFilter === 'sent_back') return list.filter((a) => a.status === 'sent_back');
+    return list;
+  }, [myAssignments, inboxStatusFilter]);
+
+  // #12 — DECISION: Sessions and Assigned are intentionally SEPARATE tabs and are
+  // NOT merged into a single "Work" tab. They model two different mental models:
+  //   • Sessions  = the sender/owner view of interview sessions THEY created
+  //                 (lifecycle: Active/Archive/Trash, AI insights, exports).
+  //   • Assigned  = the manager view of work assigned to OTHERS
+  //                 (approve / send-back / reassign / due-date / escalate).
+  // Merging them would conflate "my sessions" with "other people's work" and
+  // break the role-scoped chip rows + bulk actions below. Keep them distinct.
   // Manager (PM/ADMIN): wszystkie zakładki
   const tabs = useMemo(() => {
     const baseTabs: Array<{
@@ -1940,6 +2615,171 @@ export const InterviewHub: React.FC = () => {
     [isPolish]
   );
 
+  // V-A S5 — Archive / Restore. The backend routes (POST /templates/:id/archive
+  // and /restore) were fully implemented but completely unwired in the UI —
+  // dead routes, broken lifecycle. Wired here as row actions.
+  const handleArchiveTemplate = useCallback(
+    async (template: InterviewTemplate) => {
+      try {
+        await Api.post(`/interview/templates/${template.id}/archive`, {});
+        toast.success(isPolish ? 'Szablon zarchiwizowany' : 'Template archived');
+        const templatesRes = await Api.get('/interview/templates').catch(() => []);
+        setTemplates(
+          (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
+        );
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się zarchiwizować' : 'Failed to archive template');
+        console.error('[InterviewHub] Failed to archive template:', error);
+      }
+    },
+    [isPolish]
+  );
+
+  const handleRestoreTemplate = useCallback(
+    async (template: InterviewTemplate) => {
+      try {
+        await Api.post(`/interview/templates/${template.id}/restore`, {});
+        toast.success(isPolish ? 'Szablon przywrócony' : 'Template restored');
+        const templatesRes = await Api.get('/interview/templates').catch(() => []);
+        setTemplates(
+          (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
+        );
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się przywrócić' : 'Failed to restore template');
+        console.error('[InterviewHub] Failed to restore template:', error);
+      }
+    },
+    [isPolish]
+  );
+
+  // #16 — Usage count for a template. Derived from real assignment data (the same
+  // source the template preview footer uses), falling back to the backend
+  // `sessionsUsed` counter when assignments aren't loaded. No fabricated numbers.
+  const getTemplateUsageCount = useCallback(
+    (template: InterviewTemplate): number => {
+      const fromAssignments =
+        (myAssignments || []).filter((a) => a.templateId === template.id).length +
+        (managedAssignments || []).filter((a) => a.templateId === template.id).length;
+      if (fromAssignments > 0) return fromAssignments;
+      return typeof template.sessionsUsed === 'number' ? template.sessionsUsed : 0;
+    },
+    [myAssignments, managedAssignments]
+  );
+
+  // #15 — Set / unset a template as the org default. Single default per org:
+  // setting one clears the flag on every other template (enforced server-side).
+  // POST /interview/templates/:id/default { isDefault } returns the updated row;
+  // we optimistically reconcile local state to keep the kebab label in sync.
+  const handleToggleTemplateDefault = useCallback(
+    async (template: InterviewTemplate) => {
+      const nextDefault = !template.isDefault;
+      try {
+        await Api.post(`/interview/templates/${template.id}/default`, {
+          isDefault: nextDefault,
+        });
+        setTemplates((prev) =>
+          prev.map((t) => {
+            if (t.id === template.id) return { ...t, isDefault: nextDefault };
+            // Single default per org: clear any other default when setting one.
+            if (nextDefault && t.isDefault) return { ...t, isDefault: false };
+            return t;
+          })
+        );
+        toast.success(
+          isPolish
+            ? nextDefault
+              ? 'Ustawiono jako domyślny szablon'
+              : 'Usunięto status domyślnego szablonu'
+            : nextDefault
+              ? 'Set as default template'
+              : 'Default template unset'
+        );
+      } catch (error) {
+        toast.error(
+          isPolish
+            ? 'Nie udało się zmienić domyślnego szablonu'
+            : 'Failed to change default template'
+        );
+        console.error('[InterviewHub] Failed to toggle template default:', error);
+      }
+    },
+    [isPolish]
+  );
+
+  // #8b — Session archive/trash lifecycle actions. Endpoints live on the legacy
+  // /interview router (POST /sessions/:id/{archive,restore,trash,untrash}, DELETE
+  // /sessions/:id, POST /sessions/bulk). After each action we re-fetch the list
+  // for the currently-active lifecycle filter so the affected row drops out.
+  const handleSessionLifecycleAction = useCallback(
+    async (session: InterviewSession, action: 'archive' | 'restore' | 'trash' | 'untrash') => {
+      if (sessionLifecycleBusy) return;
+      setSessionLifecycleBusy(true);
+      const successMsg: Record<typeof action, { pl: string; en: string }> = {
+        archive: { pl: 'Sesja zarchiwizowana', en: 'Session archived' },
+        restore: { pl: 'Sesja przywrócona', en: 'Session restored' },
+        trash: { pl: 'Przeniesiono do kosza', en: 'Moved to trash' },
+        untrash: { pl: 'Sesja przywrócona', en: 'Session restored' },
+      };
+      try {
+        await Api.post(`/interview/sessions/${session.id}/${action}`, {});
+        toast.success(isPolish ? successMsg[action].pl : successMsg[action].en);
+        await refreshSessions();
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        console.error(`[InterviewHub] Session ${action} failed:`, error);
+      } finally {
+        setSessionLifecycleBusy(false);
+      }
+    },
+    [isPolish, refreshSessions, sessionLifecycleBusy]
+  );
+
+  // Permanent delete — only valid once a session is trashed (server returns 409
+  // otherwise). Gated behind a type-to-confirm dialog.
+  const handleConfirmDeleteSession = useCallback(async () => {
+    if (!sessionDeleteTarget || sessionLifecycleBusy) return;
+    setSessionLifecycleBusy(true);
+    try {
+      await Api.delete(`/interview/sessions/${sessionDeleteTarget.id}`);
+      toast.success(isPolish ? 'Sesja usunięta na stałe' : 'Session permanently deleted');
+      setSessionDeleteTarget(null);
+      setSessionDeleteConfirmText('');
+      await refreshSessions();
+    } catch (error) {
+      toast.error(isPolish ? 'Nie udało się usunąć sesji' : 'Could not delete session');
+      console.error('[InterviewHub] Permanent delete failed:', error);
+    } finally {
+      setSessionLifecycleBusy(false);
+    }
+  }, [isPolish, refreshSessions, sessionDeleteTarget, sessionLifecycleBusy]);
+
+  // Bulk archive/trash over the current selection (POST /sessions/bulk).
+  const handleBulkSessionLifecycle = useCallback(
+    async (action: 'archive' | 'restore' | 'trash' | 'untrash') => {
+      const ids = Array.from(selectedSessionIds);
+      if (ids.length === 0 || sessionLifecycleBusy) return;
+      setSessionLifecycleBusy(true);
+      try {
+        await Api.post('/interview/sessions/bulk', { ids, action });
+        const doneMsg: Record<typeof action, { pl: string; en: string }> = {
+          archive: { pl: 'Zarchiwizowano sesje', en: 'Sessions archived' },
+          restore: { pl: 'Przywrócono sesje', en: 'Sessions restored' },
+          trash: { pl: 'Przeniesiono do kosza', en: 'Sessions moved to trash' },
+          untrash: { pl: 'Przywrócono sesje', en: 'Sessions restored' },
+        };
+        toast.success(`${isPolish ? doneMsg[action].pl : doneMsg[action].en} (${ids.length})`);
+        setSelectedSessionIds(new Set());
+        await refreshSessions();
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się wykonać akcji' : 'Could not complete the action');
+        console.error(`[InterviewHub] Bulk ${action} failed:`, error);
+      } finally {
+        setSessionLifecycleBusy(false);
+      }
+    },
+    [isPolish, refreshSessions, selectedSessionIds, sessionLifecycleBusy]
+  );
+
   // Assignment management actions
   const handleOpenReminderModal = useCallback((assignment: InterviewAssignment) => {
     setSelectedAssignment(assignment);
@@ -2028,6 +2868,113 @@ export const InterviewHub: React.FC = () => {
       loadMyAssignments,
       loadOverdueAssignments,
     ]
+  );
+
+  // #11b — Open the manager Approve flow with the AI snapshot panel.
+  const handleOpenApproveModal = useCallback((assignment: InterviewAssignment) => {
+    setSelectedAssignment(assignment);
+    setShowApproveModal(true);
+  }, []);
+
+  // #7b — Open the "Change due date" modal, prefilled from the current due date.
+  const handleOpenDueDateModal = useCallback((assignment: InterviewAssignment) => {
+    setSelectedAssignment(assignment);
+    setDueDateDraft(assignment.dueAt ? assignment.dueAt.slice(0, 10) : '');
+    setShowDueDateModal(true);
+  }, []);
+
+  // #7b — Persist a new due date via the existing manageAssignment endpoint
+  // (mode: 'update' keeps the same assignee/template). Honest error surfacing.
+  const handleChangeDueDate = useCallback(async () => {
+    if (!selectedAssignment || manageAssignmentBusy) return;
+    setManageAssignmentBusy(true);
+    try {
+      await V8InterviewApi.manageAssignment(selectedAssignment.id, {
+        assigneeUserId: selectedAssignment.assigneeUserId,
+        templateId: selectedAssignment.templateId,
+        dueAt: dueDateDraft ? new Date(dueDateDraft).toISOString() : null,
+        priority: selectedAssignment.priority,
+        notes: selectedAssignment.notes ?? null,
+        mode: 'update',
+      });
+      toast.success(isPolish ? 'Termin zaktualizowany' : 'Due date updated');
+      setShowDueDateModal(false);
+      setSelectedAssignment(null);
+      const [myRes, managedRes, overdueRes] = await Promise.all([
+        loadMyAssignments(),
+        loadManagedAssignments(),
+        loadOverdueAssignments(),
+      ]);
+      setMyAssignments(myRes);
+      setManagedAssignments(managedRes);
+      setOverdueAssignments(overdueRes);
+    } catch (error: any) {
+      console.error('[InterviewHub] Failed to change due date:', error);
+      safeToastError(
+        error,
+        isPolish ? 'Nie udało się zmienić terminu' : 'Failed to change due date',
+        isPolish
+      );
+    } finally {
+      setManageAssignmentBusy(false);
+    }
+  }, [
+    dueDateDraft,
+    isPolish,
+    loadManagedAssignments,
+    loadMyAssignments,
+    loadOverdueAssignments,
+    manageAssignmentBusy,
+    selectedAssignment,
+  ]);
+
+  // #7b — Reassign: reuse the existing, fully-wired AssignInterviewModal
+  // preselected to this assignment's template. The manager picks a new
+  // assignee there. (No dedicated reassign endpoint is exposed to the client,
+  // so we route through the real assignment-creation flow rather than fabricate
+  // a route.)
+  const handleReassignAssignment = useCallback(
+    (assignment: InterviewAssignment) => {
+      const tpl = templates.find((t) => t.id === assignment.templateId) ?? null;
+      setSelectedTemplateForAssign(tpl);
+      setShowAssignModal(true);
+    },
+    [templates]
+  );
+
+  // #9b — Manual "Escalate now". Triggers the backend escalation engine for a
+  // single assignment via POST /interview/assignments/:id/escalate. On success
+  // we refresh the managed list so the escalation columns update.
+  const [escalateBusyId, setEscalateBusyId] = useState<string | null>(null);
+  const handleEscalateNow = useCallback(
+    async (assignment: InterviewAssignment) => {
+      if (escalateBusyId) return;
+      if (assignment.escalatedAt || assignment.escalationTarget) {
+        toast(
+          isPolish
+            ? `Już eskalowano${
+                assignment.escalationTarget?.name ? ` do: ${assignment.escalationTarget.name}` : ''
+              }`
+            : `Already escalated${
+                assignment.escalationTarget?.name ? ` to ${assignment.escalationTarget.name}` : ''
+              }`,
+          { icon: 'ℹ️' }
+        );
+        return;
+      }
+      setEscalateBusyId(assignment.id);
+      try {
+        await Api.post(`/interview/assignments/${assignment.id}/escalate`, {});
+        toast.success(isPolish ? 'Eskalowano' : 'Escalated');
+        await refreshManagedAssignments();
+      } catch (error) {
+        toast.error(isPolish ? 'Nie udało się eskalować' : 'Could not escalate');
+        console.error('[InterviewHub] Escalate now failed:', error);
+      } finally {
+        setEscalateBusyId(null);
+      }
+    },
+    [escalateBusyId, isPolish, refreshManagedAssignments]
   );
 
   const getManagedAssignmentForSession = useCallback(
@@ -2159,12 +3106,12 @@ export const InterviewHub: React.FC = () => {
 
     // Interview Inbox counters/status chips — Command Row (single line)
     // MUST: Inbox (moja) / Do zatwierdzenia / Zaległe with counters; click sets filter.
-    if (activeTab === 'my_assignments' || activeTab === 'managed') {
-      const myInboxCount = (myAssignments || []).filter(
-        (a) => a.status !== 'approved' && a.status !== 'completed'
-      ).length;
+    // #6 — Inbox (my_assignments): own-work chips ONLY. All / Answered /
+    // Approved / Sent back, derived from the logged-in user's own assignments.
+    // Deliberately NO org-wide "Overdue"/"To approve" framing here — that lives
+    // on the manager Assigned tab below.
+    if (activeTab === 'my_assignments') {
       const selectedCount = selectedAssignmentIds.size;
-
       const chipBase = MENU_3_CHIP_BASE;
       const chipInactive = MENU_3_CHIP_INACTIVE;
       const chipActive = MENU_3_CHIP_ACTIVE;
@@ -2175,66 +3122,157 @@ export const InterviewHub: React.FC = () => {
         'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
-        id: 'all' | 'my' | 'to-approve' | 'overdue';
+        id: 'all' | 'answered' | 'approved' | 'sent_back';
         label: string;
         count: number;
-        disabled?: boolean;
+        icon?: React.ElementType;
         onClick: () => void;
       }> = [
         {
           id: 'all',
-          label: 'ALL',
-          count: myInboxCount,
-          onClick: () => {
-            setActiveTab('my_assignments');
-            setAssignmentStatusFilter('all');
-            setActiveDocumentId(null);
-          },
+          label: isPolish ? 'Wszystkie' : 'All',
+          count: inboxStatusCounts.all,
+          onClick: () => setInboxStatusFilter('all'),
         },
         {
-          id: 'my',
-          label: isPolish ? 'Inbox (moja)' : 'My inbox',
-          count: myInboxCount,
-          onClick: () => {
-            setActiveTab('my_assignments');
-            setAssignmentStatusFilter('all');
-            setActiveDocumentId(null);
-          },
+          id: 'answered',
+          label: isPolish ? 'Odpowiedziane' : 'Answered',
+          count: inboxStatusCounts.answered,
+          icon: Send,
+          onClick: () => setInboxStatusFilter((prev) => (prev === 'answered' ? 'all' : 'answered')),
         },
         {
-          id: 'to-approve' as const,
-          label: isPolish ? 'Do zatwierdzenia' : 'To approve',
-          count: canViewManaged ? (managedAssignmentStatusCounts.submitted ?? 0) : 0,
-          disabled: !canViewManaged,
-          onClick: () => {
-            if (!canViewManaged) return;
-            setActiveTab('managed');
-            setAssignmentStatusFilter('submitted');
-            setActiveDocumentId(null);
-          },
+          id: 'approved',
+          label: isPolish ? 'Zatwierdzone' : 'Approved',
+          count: inboxStatusCounts.approved,
+          icon: CheckCircle2,
+          onClick: () => setInboxStatusFilter((prev) => (prev === 'approved' ? 'all' : 'approved')),
         },
         {
-          id: 'overdue' as const,
-          label: isPolish ? 'Zaległe' : 'Overdue',
-          count: canViewManaged ? overdueAssignments.length : 0,
-          disabled: !canViewManaged,
-          onClick: () => {
-            if (!canViewManaged) return;
-            setActiveTab('managed');
-            setAssignmentStatusFilter('overdue');
-            setActiveDocumentId(null);
-          },
+          id: 'sent_back',
+          label: isPolish ? 'Do poprawy' : 'Sent back',
+          count: inboxStatusCounts.sent_back,
+          icon: RotateCcw,
+          onClick: () =>
+            setInboxStatusFilter((prev) => (prev === 'sent_back' ? 'all' : 'sent_back')),
         },
       ];
 
-      const activeId: 'my' | 'to-approve' | 'overdue' | null =
-        activeTab === 'my_assignments' && assignmentStatusFilter === 'all'
-          ? null
+      if (selectedCount > 0) {
+        return (
+          <div className={MENU_3_ROW_CLASS}>
+            <div className={MENU_3_INNER_CLASS}>
+              <div className={MENU_3_RIGHT_CLASS}>
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAssignmentIds(new Set())}
+                  className={bulkGhostPill}
+                >
+                  {isPolish ? 'Odznacz' : 'Clear'}
+                </button>
+              </div>
+              <div className="shrink-0" />
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
+            <div className={MENU_3_LEFT_CLASS}>
+              {buttons.map((b) => {
+                const Icon = b.icon;
+                const isActive = inboxStatusFilter === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={b.onClick}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                  >
+                    {b.id === 'all' ? (
+                      <span className={MENU_3_ALL_DOT_CLASS} />
+                    ) : Icon ? (
+                      <Icon size={14} />
+                    ) : null}
+                    <span>{b.label}</span>
+                    <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
+                      {b.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="shrink-0" />
+          </div>
+        </div>
+      );
+    }
+
+    // #7b/#8/#8c — Assigned (managed): manager chips + lifecycle chip-row +
+    // bulk actions (Approve / Send back / Remind / Archive).
+    if (activeTab === 'managed') {
+      const selectedCount = selectedAssignmentIds.size;
+      const chipBase = MENU_3_CHIP_BASE;
+      const chipInactive = MENU_3_CHIP_INACTIVE;
+      const chipActive = MENU_3_CHIP_ACTIVE;
+      const badgeBase = MENU_3_BADGE_BASE;
+      const badgeInactive = MENU_3_BADGE_INACTIVE;
+      const badgeActive = MENU_3_BADGE_ACTIVE;
+      const bulkGhostPill =
+        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+
+      const buttons: Array<{
+        id: 'all' | 'to-approve' | 'overdue' | 'sent_back';
+        label: string;
+        count: number;
+        icon?: React.ElementType;
+        onClick: () => void;
+      }> = [
+        {
+          id: 'all',
+          label: isPolish ? 'Wszystkie' : 'All',
+          count: managedAssignmentStatusCounts.all,
+          onClick: () => setAssignmentStatusFilter('all'),
+        },
+        {
+          id: 'to-approve',
+          label: isPolish ? 'Do zatwierdzenia' : 'To approve',
+          count: managedAssignmentStatusCounts.submitted ?? 0,
+          icon: Check,
+          onClick: () =>
+            setAssignmentStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
+        },
+        {
+          id: 'overdue',
+          label: isPolish ? 'Zaległe' : 'Overdue',
+          count: overdueAssignments.length,
+          icon: AlertTriangle,
+          onClick: () =>
+            setAssignmentStatusFilter((prev) => (prev === 'overdue' ? 'all' : 'overdue')),
+        },
+        {
+          id: 'sent_back',
+          label: isPolish ? 'Do poprawy' : 'Sent back',
+          count: managedAssignmentStatusCounts.sent_back ?? 0,
+          icon: RotateCcw,
+          onClick: () =>
+            setAssignmentStatusFilter((prev) => (prev === 'sent_back' ? 'all' : 'sent_back')),
+        },
+      ];
+
+      const activeChipId =
+        assignmentStatusFilter === 'submitted'
+          ? 'to-approve'
           : assignmentStatusFilter === 'overdue'
             ? 'overdue'
-            : assignmentStatusFilter === 'submitted'
-              ? 'to-approve'
-              : null;
+            : assignmentStatusFilter === 'sent_back'
+              ? 'sent_back'
+              : 'all';
 
       if (selectedCount > 0) {
         return (
@@ -2255,32 +3293,66 @@ export const InterviewHub: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Przypomnienie zbiorcze w przygotowaniu'
-                        : 'Bulk reminder coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
+                  onClick={handleBulkApproveAssignments}
+                  disabled={bulkActionBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {bulkActionBusy ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Check size={14} />
+                  )}
+                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkSendBackAssignments}
+                  disabled={bulkActionBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <RotateCcw size={14} />
+                  {isPolish ? 'Zwróć' : 'Send back'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkRemind}
+                  disabled={bulkActionBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   <Bell size={14} />
                   {isPolish ? 'Przypomnij' : 'Remind'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorcza zmiana terminu w przygotowaniu'
-                        : 'Bulk due date coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Calendar size={14} />
-                  {isPolish ? 'Termin' : 'Due date'}
-                </button>
+                {/* #8 — Bulk Archive (active view) / Restore (archive view),
+                    backed by POST /interview/assignments/:id/{archive,restore}. */}
+                {managedLifecycle === 'archived' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkAssignmentLifecycle('restore')}
+                    disabled={managedLifecycleBusy}
+                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {managedLifecycleBusy ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <RotateCcw size={14} />
+                    )}
+                    {isPolish ? 'Przywróć' : 'Restore'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkAssignmentLifecycle('archive')}
+                    disabled={managedLifecycleBusy}
+                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {managedLifecycleBusy ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Archive size={14} />
+                    )}
+                    {isPolish ? 'Archiwizuj' : 'Archive'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -2291,32 +3363,58 @@ export const InterviewHub: React.FC = () => {
         <div className={MENU_3_ROW_CLASS}>
           <div className={MENU_3_INNER_CLASS}>
             <div className={MENU_3_LEFT_CLASS}>
-              {buttons.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={b.onClick}
-                  disabled={!!b.disabled}
-                  className={`${chipBase} ${
-                    (b.id === 'all' ? activeId === null : activeId === b.id)
-                      ? chipActive
-                      : chipInactive
-                  } ${b.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
-                >
-                  {b.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
-                  <span>{b.label}</span>
-                  <span
-                    className={`${badgeBase} ${
-                      (b.id === 'all' ? activeId === null : activeId === b.id)
-                        ? badgeActive
-                        : badgeInactive
-                    }`}
+              {buttons.map((b) => {
+                const Icon = b.icon;
+                const isActive = activeChipId === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={b.onClick}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
                   >
-                    {b.count}
-                  </span>
-                </button>
-              ))}
+                    {b.id === 'all' ? (
+                      <span className={MENU_3_ALL_DOT_CLASS} />
+                    ) : Icon ? (
+                      <Icon size={14} />
+                    ) : null}
+                    <span>{b.label}</span>
+                    <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
+                      {b.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <div className="shrink-0" />
+            {/* #8c — Lifecycle filter: Active | Archive, mirroring the Sessions
+                chip-row. Passes ?lifecycle= to the managed-assignments fetch
+                (assignments have no trash). */}
+            <div className="flex shrink-0 items-center gap-1.5">
+              {(
+                [
+                  { id: 'active', label: isPolish ? 'Aktywne' : 'Active', icon: List },
+                  { id: 'archived', label: isPolish ? 'Archiwum' : 'Archive', icon: Archive },
+                ] as const
+              ).map((lc) => {
+                const isActive = managedLifecycle === lc.id;
+                const Icon = lc.icon;
+                return (
+                  <button
+                    key={lc.id}
+                    type="button"
+                    disabled={managedLifecycleBusy}
+                    onClick={() => setManagedLifecycle(lc.id)}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive} ${
+                      managedLifecycleBusy ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    aria-pressed={isActive}
+                  >
+                    <Icon size={14} />
+                    <span>{lc.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
@@ -2422,18 +3520,68 @@ export const InterviewHub: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Eksport zaznaczonych sesji w przygotowaniu'
-                        : 'Selected sessions export coming soon'
-                    )
-                  }
+                  onClick={handleBulkExportSessions}
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Download size={14} />
-                  {isPolish ? 'Eksport' : 'Export'}
+                  {isPolish ? 'Eksport CSV' : 'Export CSV'}
                 </button>
+                {/* #8b — Bulk lifecycle actions (scoped to the active filter). */}
+                {sessionLifecycle === 'active' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSessionLifecycle('archive')}
+                      disabled={sessionLifecycleBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <Archive size={14} />
+                      {isPolish ? 'Archiwizuj' : 'Archive'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSessionLifecycle('trash')}
+                      disabled={sessionLifecycleBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <Trash2 size={14} />
+                      {isPolish ? 'Do kosza' : 'Trash'}
+                    </button>
+                  </>
+                ) : null}
+                {sessionLifecycle === 'archived' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSessionLifecycle('restore')}
+                      disabled={sessionLifecycleBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <RotateCcw size={14} />
+                      {isPolish ? 'Przywróć' : 'Restore'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBulkSessionLifecycle('trash')}
+                      disabled={sessionLifecycleBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      <Trash2 size={14} />
+                      {isPolish ? 'Do kosza' : 'Trash'}
+                    </button>
+                  </>
+                ) : null}
+                {sessionLifecycle === 'trash' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkSessionLifecycle('untrash')}
+                    disabled={sessionLifecycleBusy}
+                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <RotateCcw size={14} />
+                    {isPolish ? 'Przywróć' : 'Restore'}
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>
@@ -2467,7 +3615,32 @@ export const InterviewHub: React.FC = () => {
                 );
               })}
             </div>
-            <div className="shrink-0" />
+            {/* #8b — Lifecycle filter: Active | Archive | Trash. Sets the
+                ?lifecycle= param on the managed-sessions fetch and refetches. */}
+            <div className="flex shrink-0 items-center gap-1.5">
+              {(
+                [
+                  { id: 'active', label: isPolish ? 'Aktywne' : 'Active', icon: List },
+                  { id: 'archived', label: isPolish ? 'Archiwum' : 'Archive', icon: Archive },
+                  { id: 'trash', label: isPolish ? 'Kosz' : 'Trash', icon: Trash2 },
+                ] as const
+              ).map((lc) => {
+                const Icon = lc.icon;
+                const isActive = sessionLifecycle === lc.id;
+                return (
+                  <button
+                    key={lc.id}
+                    type="button"
+                    onClick={() => setSessionLifecycle(lc.id)}
+                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                    aria-pressed={isActive}
+                  >
+                    <Icon size={14} />
+                    <span>{lc.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
@@ -2486,7 +3659,7 @@ export const InterviewHub: React.FC = () => {
         'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
-        id: 'all' | 'default' | 'active';
+        id: 'all' | 'draft' | 'in_review' | 'approved' | 'archived';
         label: string;
         count: number;
         onClick: () => void;
@@ -2494,20 +3667,38 @@ export const InterviewHub: React.FC = () => {
         {
           id: 'all',
           label: isPolish ? 'Wszystkie' : 'All',
-          count: templates.length,
+          // "All" excludes archived (matches the filter behavior).
+          count: templates.filter((t) => String(t.status || 'draft').toLowerCase() !== 'archived')
+            .length,
           onClick: () => setTemplateStatusFilter('all'),
         },
         {
-          id: 'default',
-          label: isPolish ? 'Domyślne' : 'Default',
-          count: templates.filter((t) => t.isDefault).length,
-          onClick: () => setTemplateStatusFilter('default'),
+          id: 'draft',
+          label: isPolish ? 'Robocze' : 'Draft',
+          count: templates.filter((t) => !t.status || String(t.status).toLowerCase() === 'draft')
+            .length,
+          onClick: () => setTemplateStatusFilter('draft'),
         },
         {
-          id: 'active',
-          label: isPolish ? 'Aktywne' : 'Active',
-          count: templates.filter((t) => !t.isDefault).length,
-          onClick: () => setTemplateStatusFilter('active'),
+          id: 'in_review',
+          label: isPolish ? 'W recenzji' : 'In review',
+          count: templates.filter((t) => String(t.status).toLowerCase() === 'in_review').length,
+          onClick: () => setTemplateStatusFilter('in_review'),
+        },
+        {
+          id: 'approved',
+          label: isPolish ? 'Opublikowane' : 'Published',
+          count: templates.filter((t) => {
+            const s = String(t.status).toLowerCase();
+            return s === 'approved' || s === 'published';
+          }).length,
+          onClick: () => setTemplateStatusFilter('approved'),
+        },
+        {
+          id: 'archived',
+          label: isPolish ? 'Zarchiwizowane' : 'Archived',
+          count: templates.filter((t) => String(t.status).toLowerCase() === 'archived').length,
+          onClick: () => setTemplateStatusFilter('archived'),
         },
       ];
 
@@ -2530,34 +3721,17 @@ export const InterviewHub: React.FC = () => {
               <div className={MENU_3_RIGHT_CLASS}>
                 <button
                   type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorcze klonowanie szablonów w przygotowaniu'
-                        : 'Bulk template cloning coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
+                  onClick={handleBulkCloneTemplates}
+                  disabled={bulkActionBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  <Copy size={14} />
+                  {bulkActionBusy ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Copy size={14} />
+                  )}
                   {isPolish ? 'Klonuj' : 'Clone'}
                 </button>
-                {canAssign ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      toast(
-                        isPolish
-                          ? 'Zbiorcze przydzielanie szablonów w przygotowaniu'
-                          : 'Bulk template assignment coming soon'
-                      )
-                    }
-                    className={MENU_3_ACTION_NEUTRAL}
-                  >
-                    <UserPlus size={14} />
-                    {isPolish ? 'Przydziel' : 'Assign'}
-                  </button>
-                ) : null}
               </div>
             </div>
           </div>
@@ -2666,31 +3840,11 @@ export const InterviewHub: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorczy eksport wniosków w przygotowaniu'
-                        : 'Bulk insight export coming soon'
-                    )
-                  }
+                  onClick={handleBulkExportInsights}
                   className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Download size={14} />
-                  {isPolish ? 'Eksport' : 'Export'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorcze przekazanie do narzędzi w przygotowaniu'
-                        : 'Bulk Tools export coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Send size={14} />
-                  Tools
+                  {isPolish ? 'Eksport CSV' : 'Export CSV'}
                 </button>
               </div>
             </div>
@@ -2787,22 +3941,6 @@ export const InterviewHub: React.FC = () => {
                   className={bulkGhostPill}
                 >
                   {isPolish ? 'Odznacz' : 'Clear'}
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    toast(
-                      isPolish
-                        ? 'Zbiorcze przekazanie inicjatyw w przygotowaniu'
-                        : 'Bulk initiative promotion coming soon'
-                    )
-                  }
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Rocket size={14} />
-                  {isPolish ? 'Przekaż dalej' : 'Move forward'}
                 </button>
               </div>
             </div>
@@ -2999,8 +4137,86 @@ export const InterviewHub: React.FC = () => {
       );
     };
 
+    // #10 — column defs for the header filter dropdowns (status / assignee /
+    // template). Options derive from the live data via `sessionFilterOptions`.
+    const sessionStatusFilterCol: ColumnDef = {
+      id: 'status',
+      label: isPolish ? 'Status' : 'Status',
+      width: sessionsColumnWidths.status ?? 120,
+      minWidth: 80,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: sessionFilterOptions.status,
+    };
+    const sessionAssigneeFilterCol: ColumnDef = {
+      id: 'assignee',
+      label: isPolish ? 'Przydzielony' : 'Assignee',
+      width: 160,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: sessionFilterOptions.assignee,
+    };
+    const sessionTemplateFilterCol: ColumnDef = {
+      id: 'template',
+      label: isPolish ? 'Szablon' : 'Template',
+      width: 160,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: sessionFilterOptions.template,
+    };
+    const activeSessionFilterChips = (
+      [
+        { col: sessionStatusFilterCol, key: 'status' as const },
+        { col: sessionAssigneeFilterCol, key: 'assignee' as const },
+        { col: sessionTemplateFilterCol, key: 'template' as const },
+      ] as const
+    ).flatMap(({ col, key }) => {
+      const values = (sessionsTableFilters[key] as string[] | undefined) ?? [];
+      return values.map((v) => {
+        const opt = col.filterOptions?.find((o) => o.value === v);
+        return { key, value: v, label: `${col.label}: ${opt?.label ?? v}` };
+      });
+    });
+
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
+        {activeSessionFilterChips.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.06]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Filtry' : 'Filters'}
+            </span>
+            {activeSessionFilterChips.map((chip) => (
+              <button
+                key={`${chip.key}-${chip.value}`}
+                type="button"
+                onClick={() =>
+                  setSessionsTableFilters((prev) => ({
+                    ...prev,
+                    [chip.key]: ((prev[chip.key] as string[] | undefined) ?? []).filter(
+                      (v) => v !== chip.value
+                    ),
+                  }))
+                }
+                className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-600 transition-colors hover:bg-primary-500/20 dark:text-primary-300"
+              >
+                <span className="max-w-[200px] truncate">{chip.label}</span>
+                <X size={11} />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSessionsTableFilters({})}
+              className="ml-1 text-[11px] font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              {isPolish ? 'Wyczyść wszystkie' : 'Clear all'}
+            </button>
+          </div>
+        ) : null}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead>
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
@@ -3030,7 +4246,35 @@ export const InterviewHub: React.FC = () => {
                 className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: sessionsColumnWidths.name }}
               >
-                {isPolish ? 'Nazwa' : 'Name'}
+                {/* #10 — assignee + template filters live on the Name header since
+                    they are shown as row meta rather than standalone columns. */}
+                <div className="flex items-center gap-1">
+                  <span>{isPolish ? 'Nazwa' : 'Name'}</span>
+                  <FilterDropdown
+                    column={sessionAssigneeFilterCol}
+                    value={sessionsTableFilters.assignee as string[] | undefined}
+                    onChange={(v) =>
+                      setSessionsTableFilters((f) => ({ ...f, assignee: v as string[] }))
+                    }
+                    isOpen={openSessionFilterId === 'assignee'}
+                    onToggle={() =>
+                      setOpenSessionFilterId((id) => (id === 'assignee' ? null : 'assignee'))
+                    }
+                    onClose={() => setOpenSessionFilterId(null)}
+                  />
+                  <FilterDropdown
+                    column={sessionTemplateFilterCol}
+                    value={sessionsTableFilters.template as string[] | undefined}
+                    onChange={(v) =>
+                      setSessionsTableFilters((f) => ({ ...f, template: v as string[] }))
+                    }
+                    isOpen={openSessionFilterId === 'template'}
+                    onToggle={() =>
+                      setOpenSessionFilterId((id) => (id === 'template' ? null : 'template'))
+                    }
+                    onClose={() => setOpenSessionFilterId(null)}
+                  />
+                </div>
                 {renderSessionResizer('name')}
               </th>
               {!hiddenSet.has('status') && (
@@ -3038,7 +4282,29 @@ export const InterviewHub: React.FC = () => {
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.status }}
                 >
-                  {isPolish ? 'Status' : 'Status'}
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className={
+                        (sessionsTableFilters.status as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {isPolish ? 'Status' : 'Status'}
+                    </span>
+                    <FilterDropdown
+                      column={sessionStatusFilterCol}
+                      value={sessionsTableFilters.status as string[] | undefined}
+                      onChange={(v) =>
+                        setSessionsTableFilters((f) => ({ ...f, status: v as string[] }))
+                      }
+                      isOpen={openSessionFilterId === 'status'}
+                      onToggle={() =>
+                        setOpenSessionFilterId((id) => (id === 'status' ? null : 'status'))
+                      }
+                      onClose={() => setOpenSessionFilterId(null)}
+                    />
+                  </div>
                   {renderSessionResizer('status')}
                 </th>
               )}
@@ -3336,6 +4602,62 @@ export const InterviewHub: React.FC = () => {
                                 },
                               ]
                             : []),
+                          // #8b — Lifecycle actions, scoped to the active filter.
+                          ...(sessionLifecycle === 'active'
+                            ? [
+                                {
+                                  id: 'archive',
+                                  label: isPolish ? 'Archiwizuj' : 'Archive',
+                                  icon: Archive,
+                                  divider: true,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => handleSessionLifecycleAction(session, 'archive'),
+                                },
+                              ]
+                            : []),
+                          ...(sessionLifecycle === 'archived'
+                            ? [
+                                {
+                                  id: 'restore',
+                                  label: isPolish ? 'Przywróć' : 'Restore',
+                                  icon: RotateCcw,
+                                  divider: true,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => handleSessionLifecycleAction(session, 'restore'),
+                                },
+                                {
+                                  id: 'trash',
+                                  label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                                  icon: Trash2,
+                                  variant: 'danger' as const,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => handleSessionLifecycleAction(session, 'trash'),
+                                },
+                              ]
+                            : []),
+                          ...(sessionLifecycle === 'trash'
+                            ? [
+                                {
+                                  id: 'untrash',
+                                  label: isPolish ? 'Przywróć' : 'Restore',
+                                  icon: RotateCcw,
+                                  divider: true,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => handleSessionLifecycleAction(session, 'untrash'),
+                                },
+                                {
+                                  id: 'delete-forever',
+                                  label: isPolish ? 'Usuń na stałe' : 'Delete forever',
+                                  icon: Trash2,
+                                  variant: 'danger' as const,
+                                  disabled: sessionLifecycleBusy,
+                                  onClick: () => {
+                                    setSessionDeleteConfirmText('');
+                                    setSessionDeleteTarget(session);
+                                  },
+                                },
+                              ]
+                            : []),
                         ]}
                       />
                     </div>
@@ -3346,17 +4668,43 @@ export const InterviewHub: React.FC = () => {
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center">
-                    <MessageSquare className="w-12 h-12 text-slate-600 mb-3" />
-                    <p className="text-slate-600 dark:text-slate-400 text-sm">
-                      {isPolish ? 'Brak sesji managera' : 'No manager sessions yet'}
+                <td colSpan={visibleColumns.length} className="px-4 py-12">
+                  <div className="mx-auto max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center">
+                    <div className="mb-3 flex items-center justify-center gap-2 text-crimson-700 dark:text-crimson-300">
+                      <TeresaMark size={18} />
+                      <span className="text-xs font-semibold uppercase tracking-wide">Teresa</span>
+                    </div>
+                    <p className="text-base font-semibold text-slate-900 dark:text-white">
+                      {isPolish ? 'Przeprowadź pierwszy wywiad' : 'Run your first interview'}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-md">
+                    <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">
                       {isPolish
-                        ? 'Tutaj pojawiają się wszystkie uruchomione sesje z workflow managera: w trakcie, wysłane, do poprawy i zatwierdzone.'
-                        : 'This view shows manager workflow sessions across in progress, submitted, sent back, and approved states.'}
+                        ? 'Rozpocznij pierwszy wywiad z interesariuszem. Wybierz szablon lub zbuduj go od podstaw.'
+                        : 'Start your first stakeholder interview. Pick a template or build one from scratch.'}
                     </p>
+                    <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('templates');
+                          setActiveDocumentId(null);
+                        }}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-crimson-600 px-4 text-xs font-semibold text-white transition hover:bg-crimson-700"
+                      >
+                        <FileText size={14} />
+                        {isPolish ? 'Użyj szablonu' : 'Use a template'}
+                      </button>
+                      {canAssign ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowAssignModal(true)}
+                          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                        >
+                          <UserPlus size={14} />
+                          {isPolish ? 'Nowa sesja' : 'New session'}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -3721,6 +5069,7 @@ export const InterviewHub: React.FC = () => {
       ...(!hiddenSet.has('type') ? ['type'] : []),
       ...(!hiddenSet.has('status') ? ['status'] : []),
       ...(!hiddenSet.has('source') ? ['source'] : []),
+      ...(!hiddenSet.has('exports') ? ['exports'] : []),
       ...(!hiddenSet.has('date') ? ['date'] : []),
       'actions',
     ];
@@ -3913,6 +5262,15 @@ export const InterviewHub: React.FC = () => {
                   {renderInsightResizer('source')}
                 </th>
               )}
+              {!hiddenSet.has('exports') && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: insightColumnWidths.exports }}
+                >
+                  {isPolish ? 'Wyeksportowano' : 'Exported to'}
+                  {renderInsightResizer('exports')}
+                </th>
+              )}
               {!hiddenSet.has('date') && (
                 <th
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
@@ -3953,6 +5311,7 @@ export const InterviewHub: React.FC = () => {
                           { id: 'type', label: isPolish ? 'Typ' : 'Type' },
                           { id: 'status', label: isPolish ? 'Status' : 'Status' },
                           { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
+                          { id: 'exports', label: isPolish ? 'Wyeksportowano' : 'Exported to' },
                           { id: 'date', label: isPolish ? 'Data' : 'Date' },
                         ] as const
                       ).map((column) => {
@@ -4064,21 +5423,18 @@ export const InterviewHub: React.FC = () => {
                 },
               };
               const statusCopy = statusConfig[status] || statusConfig.completed;
-              const statusStyle = getStatusStyle(statusCopy.statusKey);
-              const sourceStyle = getTypeStyle('source');
               const sc = {
                 label: statusCopy.label,
-                bg: `border border-current/20 ${statusStyle.bg}`,
-                text: statusStyle.text,
-                dot: statusStyle.dot,
               };
 
               const isSelected = opts?.selectedId === insight.id;
               const isInsightSelected = selectedInsightIds.has(insight.id);
+              // Only selected/checked rows carry a left accent (primary). Unselected
+              // rows are clean — status now lives in the StatusPill, not a left bar.
               const rowAccentClass =
                 isSelected || isInsightSelected
                   ? 'shadow-[inset_4px_0_0_theme(colors.primary.500)]'
-                  : typeConfig.accentColor;
+                  : '';
               const rowToneClass =
                 isSelected || isInsightSelected
                   ? 'bg-primary-50 dark:bg-primary-500/[0.14]'
@@ -4086,6 +5442,7 @@ export const InterviewHub: React.FC = () => {
               const rowDescription = String(
                 insight.description || insight.content || insight.sourceQuote || ''
               ).trim();
+              const rowDescriptionPreview = stripInsightMarkdownPreview(rowDescription);
               const handleClick = opts?.onRowClick
                 ? () => opts.onRowClick!(insight.id)
                 : () => handleViewInsight(insight);
@@ -4128,10 +5485,6 @@ export const InterviewHub: React.FC = () => {
                   </td>
                   <td className="px-3 py-3" style={{ width: insightColumnWidths.title }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <span
-                        className={`h-8 w-1.5 shrink-0 rounded-full shadow-[0_0_14px] shadow-slate-500/20 ${sc.dot}`}
-                        aria-hidden="true"
-                      />
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${typeConfig.bgColor}`}
                       >
@@ -4144,12 +5497,12 @@ export const InterviewHub: React.FC = () => {
                         >
                           {insight.title}
                         </span>
-                        {showInsightRowDescription && rowDescription ? (
+                        {showInsightRowDescription && rowDescriptionPreview ? (
                           <span
                             className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
-                            title={rowDescription}
+                            title={rowDescriptionPreview}
                           >
-                            {rowDescription}
+                            {rowDescriptionPreview}
                           </span>
                         ) : null}
                         {(crossPerspectiveCount > 0 || divergenceCount > 0) && (
@@ -4188,12 +5541,10 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center align-middle"
                       style={{ width: insightColumnWidths.status }}
                     >
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sc.bg} ${sc.text}`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} aria-hidden="true" />
-                        {isPolish ? sc.label.pl : sc.label.en}
-                      </span>
+                      <StatusPill
+                        status={statusCopy.statusKey}
+                        label={isPolish ? sc.label.pl : sc.label.en}
+                      />
                     </td>
                   )}
                   {!hiddenSet.has('source') && (
@@ -4201,15 +5552,56 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center align-middle"
                       style={{ width: insightColumnWidths.source }}
                     >
-                      <span
-                        className={`inline-flex items-center justify-center rounded-full border border-current/20 px-2.5 py-1 text-xs font-semibold ${sourceStyle.bg} ${sourceStyle.text}`}
-                      >
-                        {insight.sourceSessionCount
-                          ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
+                      {(() => {
+                        const sessionCount = insight.sourceSessionCount
+                          ? insight.sourceSessionCount
                           : insight.sessionId
-                            ? `1 ${isPolish ? 'sesji' : 'session'}`
-                            : '-'}
-                      </span>
+                            ? 1
+                            : 0;
+                        if (sessionCount === 0) {
+                          return (
+                            <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                            <ClipboardList size={11} />
+                            {sessionCount}{' '}
+                            {sessionCount === 1
+                              ? isPolish
+                                ? 'sesja'
+                                : 'session'
+                              : isPolish
+                                ? 'sesji'
+                                : 'sessions'}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  )}
+                  {!hiddenSet.has('exports') && (
+                    <td
+                      className="px-3 py-3 text-center align-middle"
+                      style={{ width: insightColumnWidths.exports }}
+                    >
+                      {insight.exportedToTools || insight.exportedToAssessment ? (
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
+                          {insight.exportedToTools && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                              <Send size={10} />
+                              {isPolish ? 'Narzędzia' : 'Tools'}
+                            </span>
+                          )}
+                          {insight.exportedToAssessment && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                              <FileText size={10} />
+                              {isPolish ? 'Ocena' : 'Assessment'}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                      )}
                     </td>
                   )}
                   {!hiddenSet.has('date') && (
@@ -4230,6 +5622,16 @@ export const InterviewHub: React.FC = () => {
                         iconVariant="vertical"
                         className="opacity-40 transition-opacity group-hover:opacity-100"
                         actions={[
+                          ...(opts?.onRowClick
+                            ? [
+                                {
+                                  id: 'preview',
+                                  label: isPolish ? 'Otwórz w podglądzie' : 'Open in side preview',
+                                  icon: Eye,
+                                  onClick: () => opts.onRowClick!(insight.id),
+                                },
+                              ]
+                            : []),
                           {
                             id: 'open',
                             label: isPolish ? 'Otwórz' : 'Open',
@@ -4352,6 +5754,10 @@ export const InterviewHub: React.FC = () => {
       'name',
       ...(!hiddenSet.has('category') ? ['category'] : []),
       ...(!hiddenSet.has('questions') ? ['questions'] : []),
+      // #16 — Usage count / AI quality score / Last used
+      ...(!hiddenSet.has('usage') ? ['usage'] : []),
+      ...(!hiddenSet.has('quality') ? ['quality'] : []),
+      ...(!hiddenSet.has('lastUsed') ? ['lastUsed'] : []),
       ...(!hiddenSet.has('status') ? ['status'] : []),
       'actions',
     ];
@@ -4480,6 +5886,45 @@ export const InterviewHub: React.FC = () => {
                 </th>
               )}
 
+              {/* #16 — Usage count */}
+              {!hiddenSet.has('usage') && (
+                <th
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  style={{ width: templatesColumnWidths.usage }}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>{isPolish ? 'Użycia' : 'Usage'}</span>
+                  </div>
+                  {renderTemplateResizer('usage')}
+                </th>
+              )}
+
+              {/* #16 — AI quality score */}
+              {!hiddenSet.has('quality') && (
+                <th
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  style={{ width: templatesColumnWidths.quality }}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>{isPolish ? 'Jakość AI' : 'AI quality'}</span>
+                  </div>
+                  {renderTemplateResizer('quality')}
+                </th>
+              )}
+
+              {/* #16 — Last used */}
+              {!hiddenSet.has('lastUsed') && (
+                <th
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  style={{ width: templatesColumnWidths.lastUsed }}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>{isPolish ? 'Ostatnio użyty' : 'Last used'}</span>
+                  </div>
+                  {renderTemplateResizer('lastUsed')}
+                </th>
+              )}
+
               {!hiddenSet.has('status') && (
                 <th
                   className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
@@ -4524,6 +5969,10 @@ export const InterviewHub: React.FC = () => {
                             { id: 'name', label: isPolish ? 'Nazwa' : 'Name', alwaysVisible: true },
                             { id: 'category', label: isPolish ? 'Kategoria' : 'Category' },
                             { id: 'questions', label: isPolish ? 'Pytania' : 'Questions' },
+                            // #16 — Usage count / AI quality score / Last used
+                            { id: 'usage', label: isPolish ? 'Użycia' : 'Usage' },
+                            { id: 'quality', label: isPolish ? 'Jakość AI' : 'AI quality' },
+                            { id: 'lastUsed', label: isPolish ? 'Ostatnio użyty' : 'Last used' },
                             { id: 'status', label: isPolish ? 'Status' : 'Status' },
                             {
                               id: 'actions',
@@ -4567,7 +6016,7 @@ export const InterviewHub: React.FC = () => {
                                 {col.label}
                               </span>
                               {alwaysVisible ? (
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                <span className="text-[10px] text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Wymagane' : 'Required'}
                                 </span>
                               ) : null}
@@ -4725,24 +6174,69 @@ export const InterviewHub: React.FC = () => {
                     </td>
                   )}
 
+                  {/* #16 — Usage count (real, derived from assignment data). */}
+                  {!hiddenSet.has('usage') && (
+                    <td
+                      className="px-3 py-3 text-center text-sm text-slate-500 dark:text-slate-400"
+                      style={{ width: templatesColumnWidths.usage }}
+                    >
+                      {(() => {
+                        const usageCount = getTemplateUsageCount(template);
+                        return usageCount > 0 ? (
+                          <span className="tabular-nums">{usageCount}</span>
+                        ) : (
+                          <span className="text-slate-400 dark:text-slate-500">—</span>
+                        );
+                      })()}
+                    </td>
+                  )}
+
+                  {/* #16 — AI quality score. No backend field exists yet, so render
+                      an honest em-dash placeholder instead of a fabricated score.
+                      TODO(#16): backend field ai_quality_score on the template row. */}
+                  {!hiddenSet.has('quality') && (
+                    <td
+                      className="px-3 py-3 text-center text-sm"
+                      style={{ width: templatesColumnWidths.quality }}
+                    >
+                      <span className="text-slate-400 dark:text-slate-500">—</span>
+                    </td>
+                  )}
+
+                  {/* #16 — Last used. No backend field exists yet (updatedAt is
+                      edit time, not last-used), so render an em-dash placeholder.
+                      TODO(#16): backend field last_used_at on the template row. */}
+                  {!hiddenSet.has('lastUsed') && (
+                    <td
+                      className="px-3 py-3 text-center text-sm"
+                      style={{ width: templatesColumnWidths.lastUsed }}
+                    >
+                      <span className="text-slate-400 dark:text-slate-500">—</span>
+                    </td>
+                  )}
+
                   {!hiddenSet.has('status') && (
                     <td
                       className="px-3 py-3 text-center"
                       style={{ width: templatesColumnWidths.status }}
                     >
-                      {template.isDefault ? (
-                        <span
-                          className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100`}
-                        >
-                          {isPolish ? 'Domyślny' : 'Default'}
-                        </span>
-                      ) : (
-                        <span
-                          className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100`}
-                        >
-                          {isPolish ? 'Aktywny' : 'Active'}
-                        </span>
-                      )}
+                      {/* V-A S5 — real status chip (draft/in_review/approved/
+                          archived), not the old fabricated Default|Active. The
+                          "Default" template flag is now a small separate marker. */}
+                      <div className="inline-flex items-center gap-1.5">
+                        {(() => {
+                          const chip = getTemplateStatusChip(template.status, isPolish);
+                          return <span className={chip.className}>{chip.label}</span>;
+                        })()}
+                        {template.isDefault && (
+                          <span
+                            className="inline-flex items-center rounded-full border border-blue-300/70 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:border-blue-300/[0.22] dark:bg-blue-300/[0.10] dark:text-blue-100"
+                            title={isPolish ? 'Domyślny szablon' : 'Default template'}
+                          >
+                            {isPolish ? 'Domyślny' : 'Default'}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   )}
 
@@ -4760,6 +6254,15 @@ export const InterviewHub: React.FC = () => {
                             id: 'open',
                             label: isPolish ? 'Otwórz' : 'Open',
                             icon: ChevronRight,
+                            onClick: () => handleViewTemplate(template),
+                          },
+                          // #15 — View usage. Opens the template preview, whose
+                          // footer surfaces the real usage count + actions.
+                          {
+                            id: 'view-usage',
+                            label: isPolish ? 'Zobacz użycie' : 'View usage',
+                            icon: BarChart3,
+                            rightLabel: String(getTemplateUsageCount(template)),
                             onClick: () => handleViewTemplate(template),
                           },
                           ...(canAssign
@@ -4832,6 +6335,49 @@ export const InterviewHub: React.FC = () => {
                                 },
                               ]
                             : []),
+                          // #15 — Set / Unset default. Wired to POST
+                          // /interview/templates/:id/default via
+                          // handleToggleTemplateDefault (single default per org).
+                          ...(canAssign
+                            ? [
+                                {
+                                  id: 'toggle-default',
+                                  label: template.isDefault
+                                    ? isPolish
+                                      ? 'Usuń jako domyślny'
+                                      : 'Unset default'
+                                    : isPolish
+                                      ? 'Ustaw jako domyślny'
+                                      : 'Set as default',
+                                  icon: template.isDefault ? StarOff : Star,
+                                  onClick: () => handleToggleTemplateDefault(template),
+                                  divider: true,
+                                },
+                              ]
+                            : []),
+                          // V-A S5 — Archive (active templates) / Restore
+                          // (archived templates) — backend was wired, UI wasn't.
+                          ...(canAssign && !template.isDefault
+                            ? String(template.status || '').toLowerCase() === 'archived'
+                              ? [
+                                  {
+                                    id: 'restore',
+                                    label: isPolish ? 'Przywróć szablon' : 'Restore template',
+                                    icon: RotateCcw,
+                                    onClick: () => handleRestoreTemplate(template),
+                                    divider: true,
+                                  },
+                                ]
+                              : [
+                                  {
+                                    id: 'archive',
+                                    label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
+                                    icon: Archive,
+                                    onClick: () => handleArchiveTemplate(template),
+                                    divider: true,
+                                  },
+                                ]
+                            : []),
                           ...(canAssign && !template.isDefault
                             ? [
                                 {
@@ -4840,7 +6386,6 @@ export const InterviewHub: React.FC = () => {
                                   icon: Trash2,
                                   onClick: () => handleDeleteTemplate(template),
                                   variant: 'danger' as const,
-                                  divider: true,
                                 },
                               ]
                             : []),
@@ -4886,7 +6431,7 @@ export const InterviewHub: React.FC = () => {
     if (filteredTemplates.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <FileText size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
+          <FileText size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {isPolish ? 'Brak szablonów' : 'No templates found'}
           </p>
@@ -4995,7 +6540,7 @@ export const InterviewHub: React.FC = () => {
                       </span>
                     ))}
                     {areaTags.length > 4 && (
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-500">
                         +{areaTags.length - 4}
                       </span>
                     )}
@@ -5003,7 +6548,7 @@ export const InterviewHub: React.FC = () => {
                 )}
               </div>
 
-              <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+              <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-800 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
                 <span>
                   {template.questionCount} {isPolish ? 'pytań' : 'questions'}
                 </span>
@@ -5137,9 +6682,9 @@ export const InterviewHub: React.FC = () => {
   const [inboxHiddenColumns, setInboxHiddenColumns] = useState<string[]>(() =>
     loadInterviewAssignmentsHiddenColumns(INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY, true)
   );
-  const [inboxAssignmentColumnWidths, setInboxAssignmentColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS,
-  });
+  const [inboxAssignmentColumnWidths, setInboxAssignmentColumnWidths] = useState<ColumnWidths>(() =>
+    loadColumnWidths(INTERVIEW_INBOX_COL_WIDTHS_KEY, INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS)
+  );
   const [showInboxAssignmentRowDescription, setShowInboxAssignmentRowDescription] = useState(() =>
     loadBooleanSetting(INTERVIEW_INBOX_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
@@ -5149,9 +6694,31 @@ export const InterviewHub: React.FC = () => {
       true
     )
   );
-  const [managedAssignmentColumnWidths, setManagedAssignmentColumnWidths] = useState<ColumnWidths>({
-    ...INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS,
-  });
+  const [managedAssignmentColumnWidths, setManagedAssignmentColumnWidths] = useState<ColumnWidths>(
+    () =>
+      loadColumnWidths(INTERVIEW_MANAGED_COL_WIDTHS_KEY, INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_WIDTHS)
+  );
+
+  // V-B — persist every resizable table's column widths on change, so resizing
+  // survives reload (the module-wide bug). One effect per table.
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_SESSIONS_COL_WIDTHS_KEY, sessionsColumnWidths);
+  }, [sessionsColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_TEMPLATES_COL_WIDTHS_KEY, templatesColumnWidths);
+  }, [templatesColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_INSIGHTS_COL_WIDTHS_KEY, insightColumnWidths);
+  }, [insightColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_INITIATIVES_COL_WIDTHS_KEY, initiativesColumnWidths);
+  }, [initiativesColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_INBOX_COL_WIDTHS_KEY, inboxAssignmentColumnWidths);
+  }, [inboxAssignmentColumnWidths]);
+  useEffect(() => {
+    saveColumnWidths(INTERVIEW_MANAGED_COL_WIDTHS_KEY, managedAssignmentColumnWidths);
+  }, [managedAssignmentColumnWidths]);
   const [showManagedAssignmentRowDescription, setShowManagedAssignmentRowDescription] = useState(
     () => loadBooleanSetting(INTERVIEW_MANAGED_ASSIGNMENTS_ROW_DESCRIPTION_STORAGE_KEY, true)
   );
@@ -5545,10 +7112,36 @@ Return ONLY the answer text (no markdown fences).`;
     const setColumnWidths = showAssignee
       ? setManagedAssignmentColumnWidths
       : setInboxAssignmentColumnWidths;
+
+    // #10 — per-column header filters for this table view. Keyed by view so the
+    // Assigned (managed) and Inbox renderings keep independent filter state.
+    const filterViewKey: 'managed' | 'inbox' = showAssignee ? 'managed' : 'inbox';
+    const tableFilters = assignmentsTableFilters[filterViewKey];
+    const setTableFilters = (updater: (prev: TableFilters) => TableFilters) =>
+      setAssignmentsTableFilters((prev) => ({
+        ...prev,
+        [filterViewKey]: updater(prev[filterViewKey]),
+      }));
+    const getAssignmentTemplateValue = (a: InterviewAssignment) =>
+      a.template?.name || (isPolish ? 'Wywiad' : 'Interview');
+    const getAssignmentAssigneeValue = (a: InterviewAssignment) =>
+      a.assignee?.name || a.assignee?.email || (isPolish ? 'Nieznany' : 'Unknown');
+
+    // #10 — apply per-column header filters (AND across columns, OR within a
+    // column) up front so selection / bulk / row rendering all share one list.
+    const columnFilteredAssignments = assignments.filter((a) => {
+      const statusF = tableFilters.status as string[] | undefined;
+      if (statusF?.length && !statusF.includes(a.status)) return false;
+      const assigneeF = tableFilters.assignee as string[] | undefined;
+      if (assigneeF?.length && !assigneeF.includes(getAssignmentAssigneeValue(a))) return false;
+      const templateF = tableFilters.template as string[] | undefined;
+      if (templateF?.length && !templateF.includes(getAssignmentTemplateValue(a))) return false;
+      return true;
+    });
     const showRowDescription = showAssignee
       ? showManagedAssignmentRowDescription
       : showInboxAssignmentRowDescription;
-    const visibleAssignmentIds = assignments.map((assignment) => assignment.id);
+    const visibleAssignmentIds = columnFilteredAssignments.map((assignment) => assignment.id);
     const selectedVisibleCount = visibleAssignmentIds.filter((id) =>
       selectedAssignmentIds.has(id)
     ).length;
@@ -5574,6 +7167,12 @@ Return ONLY the answer text (no markdown fences).`;
         return next;
       });
     };
+    // #9 — opt-in columns (submitted / aiScore / escalation) are only offered on
+    // the manager-facing Assigned view (showAssignee). They stay hidden in the
+    // worker Inbox where the data isn't actionable.
+    const showSubmittedColumn = showAssignee && !hiddenSet.has('submitted');
+    const showAiScoreColumn = showAssignee && !hiddenSet.has('aiScore');
+    const showEscalationColumn = showAssignee && !hiddenSet.has('escalation');
     const visibleColumns = [
       'select',
       'template',
@@ -5581,6 +7180,9 @@ Return ONLY the answer text (no markdown fences).`;
       ...(!hiddenSet.has('status') ? ['status'] : []),
       ...(!hiddenSet.has('progress') ? ['progress'] : []),
       ...(!hiddenSet.has('due') ? ['due'] : []),
+      ...(showSubmittedColumn ? ['submitted'] : []),
+      ...(showAiScoreColumn ? ['aiScore'] : []),
+      ...(showEscalationColumn ? ['escalation'] : []),
       'actions',
     ];
     const tableMinWidth = visibleColumns.reduce(
@@ -5653,9 +7255,9 @@ Return ONLY the answer text (no markdown fences).`;
         case 'medium':
           return 'text-amber-400';
         case 'low':
-          return 'text-slate-400';
+          return 'text-slate-600';
         default:
-          return 'text-slate-400';
+          return 'text-slate-600';
       }
     };
 
@@ -5787,7 +7389,7 @@ Return ONLY the answer text (no markdown fences).`;
     };
 
     // Sort assignments based on current sort field
-    const sortedAssignments = [...assignments].sort((a, b) => {
+    const sortedAssignments = [...columnFilteredAssignments].sort((a, b) => {
       if (!assignmentSortField) return 0;
       const dir = assignmentSortAsc ? 1 : -1;
       if (assignmentSortField === 'dueAt') {
@@ -5862,8 +7464,105 @@ Return ONLY the answer text (no markdown fences).`;
       }
     };
 
+    // #10 — column defs + options for the header filter dropdowns. Options are
+    // derived from the (unfiltered) assignments so a value stays selectable even
+    // after it's filtered out.
+    const assignmentStatusOptionOrder = [
+      'assigned',
+      'in_progress',
+      'submitted',
+      'sent_back',
+      'review',
+      'approved',
+      'completed',
+      'rejected',
+      'accepted',
+    ];
+    const assignmentStatusValues = new Set<string>(assignments.map((a) => a.status));
+    const assignmentStatusFilterCol: ColumnDef = {
+      id: 'status',
+      label: isPolish ? 'Status' : 'Status',
+      width: columnWidths.status ?? 120,
+      minWidth: 80,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: assignmentStatusOptionOrder
+        .filter((v) => assignmentStatusValues.has(v))
+        .map((v) => ({ value: v, label: getStatusLabel(v) })),
+    };
+    const assignmentTemplateFilterCol: ColumnDef = {
+      id: 'template',
+      label: isPolish ? 'Szablon' : 'Template',
+      width: columnWidths.template ?? 200,
+      minWidth: 120,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(new Set(assignments.map(getAssignmentTemplateValue)))
+        .sort()
+        .map((v) => ({ value: v, label: v })),
+    };
+    const assignmentAssigneeFilterCol: ColumnDef = {
+      id: 'assignee',
+      label: isPolish ? 'Przydzielony do' : 'Assignee',
+      width: columnWidths.assignee ?? 160,
+      minWidth: 100,
+      resizable: true,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(new Set(assignments.map(getAssignmentAssigneeValue)))
+        .sort()
+        .map((v) => ({ value: v, label: v })),
+    };
+    const activeAssignmentFilterChips = (
+      [
+        { col: assignmentTemplateFilterCol, key: 'template' as const },
+        { col: assignmentAssigneeFilterCol, key: 'assignee' as const },
+        { col: assignmentStatusFilterCol, key: 'status' as const },
+      ] as const
+    ).flatMap(({ col, key }) => {
+      const values = (tableFilters[key] as string[] | undefined) ?? [];
+      return values.map((v) => {
+        const opt = col.filterOptions?.find((o) => o.value === v);
+        return { key, value: v, label: `${col.label}: ${opt?.label ?? v}` };
+      });
+    });
+
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.08] rounded-xl backdrop-blur overflow-hidden">
+        {activeAssignmentFilterChips.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.08]">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Filtry' : 'Filters'}
+            </span>
+            {activeAssignmentFilterChips.map((chip) => (
+              <button
+                key={`${chip.key}-${chip.value}`}
+                type="button"
+                onClick={() =>
+                  setTableFilters((prev) => ({
+                    ...prev,
+                    [chip.key]: ((prev[chip.key] as string[] | undefined) ?? []).filter(
+                      (v) => v !== chip.value
+                    ),
+                  }))
+                }
+                className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[11px] font-medium text-primary-600 transition-colors hover:bg-primary-500/20 dark:text-primary-300"
+              >
+                <span className="max-w-[200px] truncate">{chip.label}</span>
+                <X size={11} />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setTableFilters(() => ({}))}
+              className="ml-1 text-[11px] font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              {isPolish ? 'Wyczyść wszystkie' : 'Clear all'}
+            </button>
+          </div>
+        ) : null}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead>
             <tr className="border-b border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-navy-900/40">
@@ -5893,7 +7592,29 @@ Return ONLY the answer text (no markdown fences).`;
                 className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: columnWidths.template }}
               >
-                {isPolish ? 'Szablon' : 'Template'}
+                <div className="flex items-center gap-1">
+                  <span
+                    className={
+                      (tableFilters.template as string[] | undefined)?.length
+                        ? 'text-primary-500'
+                        : ''
+                    }
+                  >
+                    {isPolish ? 'Szablon' : 'Template'}
+                  </span>
+                  <FilterDropdown
+                    column={assignmentTemplateFilterCol}
+                    value={tableFilters.template as string[] | undefined}
+                    onChange={(v) => setTableFilters((f) => ({ ...f, template: v as string[] }))}
+                    isOpen={openAssignmentFilterId === `${filterViewKey}:template`}
+                    onToggle={() =>
+                      setOpenAssignmentFilterId((id) =>
+                        id === `${filterViewKey}:template` ? null : `${filterViewKey}:template`
+                      )
+                    }
+                    onClose={() => setOpenAssignmentFilterId(null)}
+                  />
+                </div>
                 {renderAssignmentResizer('template')}
               </th>
               {hasAssigneeColumn && (
@@ -5901,23 +7622,68 @@ Return ONLY the answer text (no markdown fences).`;
                   className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.assignee }}
                 >
-                  {isPolish ? 'Przydzielony do' : 'Assignee'}
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className={
+                        (tableFilters.assignee as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : ''
+                      }
+                    >
+                      {isPolish ? 'Przydzielony do' : 'Assignee'}
+                    </span>
+                    <FilterDropdown
+                      column={assignmentAssigneeFilterCol}
+                      value={tableFilters.assignee as string[] | undefined}
+                      onChange={(v) => setTableFilters((f) => ({ ...f, assignee: v as string[] }))}
+                      isOpen={openAssignmentFilterId === `${filterViewKey}:assignee`}
+                      onToggle={() =>
+                        setOpenAssignmentFilterId((id) =>
+                          id === `${filterViewKey}:assignee` ? null : `${filterViewKey}:assignee`
+                        )
+                      }
+                      onClose={() => setOpenAssignmentFilterId(null)}
+                    />
+                  </div>
                   {renderAssignmentResizer('assignee')}
                 </th>
               )}
               {!hiddenSet.has('status') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.status }}
-                  onClick={() => toggleAssignmentSort('status')}
                 >
-                  {isPolish ? 'Status' : 'Status'}
-                  {assignmentSortField === 'status' && (
-                    <ChevronDown
-                      size={12}
-                      className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className={[
+                        'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
+                        (tableFilters.status as string[] | undefined)?.length
+                          ? 'text-primary-500'
+                          : '',
+                      ].join(' ')}
+                      onClick={() => toggleAssignmentSort('status')}
+                    >
+                      {isPolish ? 'Status' : 'Status'}
+                      {assignmentSortField === 'status' && (
+                        <ChevronDown
+                          size={12}
+                          className={`inline-block ml-0.5 transition-transform ${assignmentSortAsc ? '' : 'rotate-180'}`}
+                        />
+                      )}
+                    </span>
+                    <FilterDropdown
+                      column={assignmentStatusFilterCol}
+                      value={tableFilters.status as string[] | undefined}
+                      onChange={(v) => setTableFilters((f) => ({ ...f, status: v as string[] }))}
+                      isOpen={openAssignmentFilterId === `${filterViewKey}:status`}
+                      onToggle={() =>
+                        setOpenAssignmentFilterId((id) =>
+                          id === `${filterViewKey}:status` ? null : `${filterViewKey}:status`
+                        )
+                      }
+                      onClose={() => setOpenAssignmentFilterId(null)}
                     />
-                  )}
+                  </div>
                   {renderAssignmentResizer('status')}
                 </th>
               )}
@@ -5951,6 +7717,33 @@ Return ONLY the answer text (no markdown fences).`;
                     />
                   )}
                   {renderAssignmentResizer('due')}
+                </th>
+              )}
+              {showSubmittedColumn && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: columnWidths.submitted }}
+                >
+                  {isPolish ? 'Przesłano' : 'Submitted'}
+                  {renderAssignmentResizer('submitted')}
+                </th>
+              )}
+              {showAiScoreColumn && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: columnWidths.aiScore }}
+                >
+                  {isPolish ? 'Ocena AI' : 'AI Score'}
+                  {renderAssignmentResizer('aiScore')}
+                </th>
+              )}
+              {showEscalationColumn && (
+                <th
+                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: columnWidths.escalation }}
+                >
+                  {isPolish ? 'Eskalacja' : 'Escalation'}
+                  {renderAssignmentResizer('escalation')}
                 </th>
               )}
               <th
@@ -5997,6 +7790,23 @@ Return ONLY the answer text (no markdown fences).`;
                           { id: 'status', label: isPolish ? 'Status' : 'Status' },
                           { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
                           { id: 'due', label: isPolish ? 'Do terminu' : 'Days to Due' },
+                          // #9/#9b — opt-in columns, only meaningful on the
+                          // manager Assigned view.
+                          {
+                            id: 'submitted',
+                            label: isPolish ? 'Przesłano' : 'Submitted',
+                            disabled: !assignmentsViewSettingsShowAssignee,
+                          },
+                          {
+                            id: 'aiScore',
+                            label: isPolish ? 'Ocena AI' : 'AI Score',
+                            disabled: !assignmentsViewSettingsShowAssignee,
+                          },
+                          {
+                            id: 'escalation',
+                            label: isPolish ? 'Eskalacja' : 'Escalation',
+                            disabled: !assignmentsViewSettingsShowAssignee,
+                          },
                           {
                             id: 'actions',
                             label: isPolish ? 'Akcje' : 'Actions',
@@ -6018,7 +7828,7 @@ Return ONLY the answer text (no markdown fences).`;
                             key={col.id}
                             className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
                               alwaysVisible || col.disabled
-                                ? 'cursor-default text-slate-400 dark:text-slate-500'
+                                ? 'cursor-default text-slate-600 dark:text-slate-500'
                                 : 'cursor-pointer text-slate-700 dark:text-slate-200'
                             }`}
                           >
@@ -6265,6 +8075,77 @@ Return ONLY the answer text (no markdown fences).`;
                       })()}
                     </td>
                   )}
+                  {showSubmittedColumn && (
+                    <td
+                      className="px-4 py-3 text-center align-middle"
+                      style={{ width: columnWidths.submitted }}
+                    >
+                      {assignment.submittedAt ? (
+                        <span
+                          className="inline-flex items-center gap-1 text-xs text-slate-700 dark:text-slate-200"
+                          title={new Date(assignment.submittedAt).toLocaleString()}
+                        >
+                          <Send size={11} className="text-slate-400" />
+                          {new Date(assignment.submittedAt).toLocaleDateString()}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                  )}
+                  {showAiScoreColumn && (
+                    <td
+                      className="px-4 py-3 text-center align-middle"
+                      style={{ width: columnWidths.aiScore }}
+                    >
+                      {(() => {
+                        const score = assignment.aiReview?.overallScore;
+                        if (typeof score !== 'number') {
+                          return <span className="text-xs text-slate-400">—</span>;
+                        }
+                        const pct = Math.round(score <= 1 ? score * 100 : score);
+                        const tone =
+                          pct >= 75
+                            ? 'text-emerald-600 dark:text-emerald-300'
+                            : pct >= 50
+                              ? 'text-amber-600 dark:text-amber-300'
+                              : 'text-rose-600 dark:text-rose-300';
+                        return (
+                          <span
+                            className={`inline-flex items-center gap-1 text-xs font-semibold ${tone}`}
+                            title={isPolish ? 'Ocena jakości AI' : 'AI quality score'}
+                          >
+                            <Gauge size={12} />
+                            {pct}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  )}
+                  {showEscalationColumn && (
+                    <td
+                      className="px-4 py-3 text-center align-middle"
+                      style={{ width: columnWidths.escalation }}
+                    >
+                      {assignment.escalatedAt || assignment.escalationTarget ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full border border-amber-300/70 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-200"
+                          title={
+                            assignment.escalationTarget?.name ||
+                            assignment.escalationTarget?.email ||
+                            (isPolish ? 'Eskalowano' : 'Escalated')
+                          }
+                        >
+                          <ArrowUpRight size={11} />
+                          {assignment.escalationTarget?.name ||
+                            assignment.escalationTarget?.email ||
+                            (isPolish ? 'Eskalowano' : 'Escalated')}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                  )}
                   <td
                     className="px-3 py-3 text-right"
                     style={{ width: columnWidths.actions }}
@@ -6344,24 +8225,19 @@ Return ONLY the answer text (no markdown fences).`;
                                 },
                               ]
                             : []),
-                          ...(showAssignee &&
-                          canAssign &&
-                          assignment.status !== 'completed' &&
-                          assignment.status !== 'approved'
+                          // #7b — Manager row actions (Assigned tab kebab):
+                          // Approve, Send back, Reassign, Change due date,
+                          // Remind, Escalate now, Archive/Restore. All wired to
+                          // real endpoints.
+                          ...(showAssignee && canAssign
                             ? [
-                                {
-                                  id: 'remind',
-                                  label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
-                                  icon: Bell,
-                                  onClick: () => handleOpenReminderModal(assignment),
-                                },
                                 ...(assignment.status === 'submitted'
                                   ? [
                                       {
                                         id: 'approve',
                                         label: isPolish ? 'Zatwierdź' : 'Approve',
                                         icon: Check,
-                                        onClick: () => handleApproveAssignment(assignment),
+                                        onClick: () => handleOpenApproveModal(assignment),
                                       },
                                       {
                                         id: 'sendback',
@@ -6372,6 +8248,56 @@ Return ONLY the answer text (no markdown fences).`;
                                       },
                                     ]
                                   : []),
+                                ...(assignment.status !== 'completed' &&
+                                assignment.status !== 'approved'
+                                  ? [
+                                      {
+                                        id: 'reassign',
+                                        label: isPolish ? 'Przypisz ponownie' : 'Reassign',
+                                        icon: UserPlus,
+                                        onClick: () => handleReassignAssignment(assignment),
+                                      },
+                                      {
+                                        id: 'due-date',
+                                        label: isPolish ? 'Zmień termin' : 'Change due date',
+                                        icon: CalendarClock,
+                                        onClick: () => handleOpenDueDateModal(assignment),
+                                      },
+                                      {
+                                        id: 'remind',
+                                        label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
+                                        icon: Bell,
+                                        onClick: () => handleOpenReminderModal(assignment),
+                                      },
+                                      {
+                                        id: 'escalate',
+                                        label: isPolish ? 'Eskaluj teraz' : 'Escalate now',
+                                        icon: ArrowUpRight,
+                                        disabled:
+                                          Boolean(assignment.escalatedAt) ||
+                                          Boolean(assignment.escalationTarget),
+                                        onClick: () => handleEscalateNow(assignment),
+                                      },
+                                    ]
+                                  : []),
+                                // #8 — Per-row Archive / Restore.
+                                managedLifecycle === 'archived'
+                                  ? {
+                                      id: 'restore',
+                                      label: isPolish ? 'Przywróć' : 'Restore',
+                                      icon: RotateCcw,
+                                      disabled: managedLifecycleBusy,
+                                      onClick: () =>
+                                        handleAssignmentLifecycleAction(assignment, 'restore'),
+                                    }
+                                  : {
+                                      id: 'archive',
+                                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                                      icon: Archive,
+                                      disabled: managedLifecycleBusy,
+                                      onClick: () =>
+                                        handleAssignmentLifecycleAction(assignment, 'archive'),
+                                    },
                               ]
                             : []),
                         ]}
@@ -6389,7 +8315,10 @@ Return ONLY the answer text (no markdown fences).`;
                     (hasAssigneeColumn ? 1 : 0) +
                     (!hiddenSet.has('status') ? 1 : 0) +
                     (!hiddenSet.has('progress') ? 1 : 0) +
-                    (!hiddenSet.has('due') ? 1 : 0)
+                    (!hiddenSet.has('due') ? 1 : 0) +
+                    (showSubmittedColumn ? 1 : 0) +
+                    (showAiScoreColumn ? 1 : 0) +
+                    (showEscalationColumn ? 1 : 0)
                   }
                   className="px-4 py-12 text-center"
                 >
@@ -6411,11 +8340,7 @@ Return ONLY the answer text (no markdown fences).`;
   // Render list content based on active tab
   const renderListContent = () => {
     if (isLoading || assignmentsLoading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-        </div>
-      );
+      return <LoadingState variant="spinner" className="h-64 py-0" />;
     }
 
     if (loadError) {
@@ -6423,22 +8348,28 @@ Return ONLY the answer text (no markdown fences).`;
         <div className="flex items-center justify-center h-full p-6">
           <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
             <div className="text-lg font-semibold text-slate-900 dark:text-white">
-              {isPolish
-                ? 'Realne zrodlo Interview wymaga uwagi'
-                : 'Real interview source needs attention'}
+              {isPolish ? 'Nie udało się załadować wywiadów' : 'Could not load your interviews'}
             </div>
-            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{loadError}</div>
-            <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">
               {isPolish
-                ? 'Nie wstrzyknieto danych demo. Sprawdz aktywna baze, scope organizacji i data-context.'
-                : 'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context.'}
+                ? 'Coś poszło nie tak podczas ładowania wywiadów. Odśwież stronę lub skontaktuj się z pomocą techniczną, jeśli problem się powtarza.'
+                : 'Something went wrong loading your interviews. Please refresh or contact support if the issue persists.'}
             </div>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-crimson-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-crimson-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600/30"
+            >
+              <RefreshCw size={14} />
+              {isPolish ? 'Odśwież' : 'Refresh'}
+            </button>
           </div>
         </div>
       );
     }
 
     const tabDegradedMessage = (() => {
+      if (activeTab === 'sessions') return sessionsLoadError;
       if (activeTab === 'insights') return insightsLoadError;
       if (activeTab === 'initiatives') return initiativesLoadError;
       if (
@@ -6472,6 +8403,7 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="h-full overflow-hidden">
+          {renderDegradedBanner()}
           {viewMode === 'table' ? (
             <TableWithPreviewLayout<InterviewSession & { title: string }>
               selectedId={previewSessionId}
@@ -6791,7 +8723,7 @@ Return ONLY the answer text (no markdown fences).`;
                 groupEntriesSorted.map(([groupName, groupInsights]) => (
                   <div key={groupName}>
                     <div className="flex items-center gap-2 mb-2 px-1">
-                      <FileText size={14} className="text-slate-400" />
+                      <FileText size={14} className="text-slate-600" />
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {groupName}
                       </span>
@@ -6958,8 +8890,8 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <div className="h-full overflow-auto p-4">
           {renderDegradedBanner()}
-          <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
-            <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
+          <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
+            <table className="w-full table-fixed rounded-xl" style={{ minWidth: tableMinWidth }}>
               <thead>
                 <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
                   <th
@@ -7106,7 +9038,7 @@ Return ONLY the answer text (no markdown fences).`;
                                     {column.label}
                                   </span>
                                   {alwaysVisible ? (
-                                    <span className="text-[10px] font-medium text-slate-400">
+                                    <span className="text-[10px] font-medium text-slate-600">
                                       {isPolish ? 'Wymagane' : 'Required'}
                                     </span>
                                   ) : null}
@@ -7242,7 +9174,7 @@ Return ONLY the answer text (no markdown fences).`;
                               {String(initiative.priority).toLowerCase()}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-slate-400">—</span>
+                            <span className="text-[11px] text-slate-600">—</span>
                           )}
                         </td>
                       ) : null}
@@ -7264,7 +9196,7 @@ Return ONLY the answer text (no markdown fences).`;
                               {isPolish ? 'Insight' : 'Insight'}
                             </button>
                           ) : (
-                            <span className="text-[11px] text-slate-400">—</span>
+                            <span className="text-[11px] text-slate-600">—</span>
                           )}
                         </td>
                       ) : null}
@@ -7366,24 +9298,33 @@ Return ONLY the answer text (no markdown fences).`;
                         {interviewInitiatives.length === 0 ? (
                           <>
                             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                              {canCreateInsights
-                                ? isPolish
-                                  ? 'Uzyj przycisku "Dodaj inicjatywy" w prawym gornym rogu, aby przeprowadzic kreator z evidence z wywiadow.'
-                                  : 'Use the "Add initiatives" button in the top right to run the wizard with interview evidence.'
-                                : isPolish
-                                  ? 'Brak uprawnien do uruchamiania kreatora inicjatyw. Skontaktuj sie z adminem lub PMO.'
-                                  : 'You do not have permission to run the initiative wizard. Contact your admin or PMO.'}
+                              {isPolish
+                                ? 'Brak inicjatyw — przekaż wnioski z zakładki Wnioski lub uruchom kreator inicjatyw.'
+                                : 'No initiatives yet — promote insights from the Insights tab or run the initiative wizard.'}
                             </p>
-                            {canCreateInsights ? (
+                            <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row">
                               <button
                                 type="button"
-                                onClick={() => setShowInitiativeWizard(true)}
-                                className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-full border border-blue-300/70 bg-blue-500/10 px-3 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-500/15 dark:border-blue-400/25 dark:text-blue-200"
+                                onClick={() => {
+                                  setActiveTab('insights');
+                                  setActiveDocumentId(null);
+                                }}
+                                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-crimson-600 px-3 text-[11px] font-semibold text-white transition hover:bg-crimson-700"
                               >
-                                <Sparkles size={14} />
-                                {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                                <Lightbulb size={14} />
+                                {isPolish ? 'Przejdź do Wniosków' : 'Go to Insights'}
                               </button>
-                            ) : null}
+                              {canCreateInsights ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowInitiativeWizard(true)}
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                                >
+                                  <Sparkles size={14} />
+                                  {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                                </button>
+                              ) : null}
+                            </div>
                           </>
                         ) : null}
                       </div>
@@ -7561,7 +9502,7 @@ Return ONLY the answer text (no markdown fences).`;
     }
 
     if (activeTab === 'my_assignments') {
-      const rows = myAssignments || [];
+      const rows = filteredMyAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
       const selectedItem = selected
         ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & {
@@ -7980,7 +9921,7 @@ Return ONLY the answer text (no markdown fences).`;
         return (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             {renderDegradedBanner()}
-            <AlertTriangle size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
+            <AlertTriangle size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
             <p className="text-lg font-medium text-slate-900 dark:text-white">
               {isPolish ? 'Brak wniosków do przeglądu' : 'No insights pending review'}
             </p>
@@ -8118,14 +10059,14 @@ Return ONLY the answer text (no markdown fences).`;
             type="button"
             onClick={() => setIsTemplateAreaFilterOpen((prev) => !prev)}
             className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
-            title={isPolish ? 'Filtr obszarów' : 'Area filter'}
+            title={isPolish ? 'Obszar pytań' : 'Question area'}
           >
             <span className={templateAreaTagFilter.length > 0 ? 'text-primary-500' : ''}>
               {templateAreaTagFilter.length > 0
-                ? `${isPolish ? 'Obszary' : 'Areas'} (${templateAreaTagFilter.length})`
+                ? `${isPolish ? 'Obszar' : 'Area'}: ${templateAreaTagFilter.length}`
                 : isPolish
-                  ? 'Wszystkie obszary'
-                  : 'All areas'}
+                  ? 'Obszar: wszystkie'
+                  : 'Area: all'}
             </span>
             <ChevronDown size={14} />
           </button>
@@ -8173,9 +10114,9 @@ Return ONLY the answer text (no markdown fences).`;
             value={templateSourceFilter}
             onChange={(e) => setTemplateSourceFilter(e.target.value as TemplateSourceFilter)}
             className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Filtr źródła' : 'Source filter'}
+            title={isPolish ? 'Źródło szablonu' : 'Template source'}
           >
-            <option value="all">{isPolish ? 'Wszystkie źródła' : 'All sources'}</option>
+            <option value="all">{isPolish ? 'Źródło: wszystkie' : 'Source: all'}</option>
             <option value="application">{isPolish ? 'Aplikacja' : 'Application'}</option>
             <option value="organization">{isPolish ? 'Organizacja' : 'Organization'}</option>
             <option value="user">{isPolish ? 'Użytkownik' : 'User'}</option>
@@ -8381,7 +10322,6 @@ Return ONLY the answer text (no markdown fences).`;
           }
           className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
-          <Sparkles size={15} />
           <span>{isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}</span>
         </button>
       );
@@ -8432,12 +10372,6 @@ Return ONLY the answer text (no markdown fences).`;
     ]
   );
 
-  const openContextualHelp = useCallback(() => {
-    setKnowledgeModuleIdOverride('interview');
-    setHelpTab('knowledge');
-    setHelpOpen(true);
-  }, [setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
-
   return (
     <div className="h-full" data-testid="interview-hub">
       <ModuleHub
@@ -8458,18 +10392,6 @@ Return ONLY the answer text (no markdown fences).`;
         onClearFilters={handleClearFilters}
         rightControls={rightControls}
         primaryCta={primaryCta}
-        toolControl={
-          <button
-            type="button"
-            onClick={openContextualHelp}
-            className="inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-            data-testid="contextual-help-entry-interview"
-            title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
-          >
-            <CircleHelp size={16} />
-            <span>{t('help.entrypoint.contextual', 'Help')}</span>
-          </button>
-        }
         commandRowContent={commandRowContent}
         forceCommandRow={hasBulkSelection}
         availableViewModes={['table']}
@@ -8628,6 +10550,86 @@ Return ONLY the answer text (no markdown fences).`;
         </div>
       )}
 
+      {/* #8b — Permanent delete confirmation (type-to-confirm). Only reachable
+          from the Trash view; the backend rejects deletes on non-trashed sessions. */}
+      {sessionDeleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Usuń sesję na stałe' : 'Delete session forever'}
+              </h2>
+              <button
+                onClick={() => {
+                  setSessionDeleteTarget(null);
+                  setSessionDeleteConfirmText('');
+                }}
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                {isPolish
+                  ? 'Tej operacji nie można cofnąć. Sesja oraz jej pytania, notatki i dowody zostaną trwale usunięte.'
+                  : 'This cannot be undone. The session and its questions, notes and evidence will be permanently removed.'}
+              </p>
+              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
+                <div className="text-sm text-slate-900 dark:text-white font-medium truncate">
+                  {sessionDeleteTarget.name || 'Discovery Interview'}
+                </div>
+              </div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                {isPolish ? (
+                  <>
+                    Wpisz{' '}
+                    <span className="font-semibold text-rose-600 dark:text-rose-400">DELETE</span>,
+                    aby potwierdzić
+                  </>
+                ) : (
+                  <>
+                    Type{' '}
+                    <span className="font-semibold text-rose-600 dark:text-rose-400">DELETE</span>{' '}
+                    to confirm
+                  </>
+                )}
+              </label>
+              <input
+                type="text"
+                value={sessionDeleteConfirmText}
+                onChange={(e) => setSessionDeleteConfirmText(e.target.value)}
+                autoFocus
+                placeholder="DELETE"
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/40"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setSessionDeleteTarget(null);
+                    setSessionDeleteConfirmText('');
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleConfirmDeleteSession}
+                  disabled={
+                    sessionDeleteConfirmText.trim().toUpperCase() !== 'DELETE' ||
+                    sessionLifecycleBusy
+                  }
+                  className="flex-1 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 size={16} className="inline mr-2" />
+                  {isPolish ? 'Usuń na stałe' : 'Delete forever'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Send Back Modal */}
       {showSendBackModal && selectedAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -8689,6 +10691,217 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* #11b — Manager Approve flow with AI snapshot. Shows AI score, weak/short
+          answers, and a 1-click "Send back" prefilled from the AI assessment.
+          Degrades gracefully when no AI assessment exists. */}
+      {showApproveModal && selectedAssignment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[88vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Check size={18} className="text-emerald-500" />
+                {isPolish ? 'Zatwierdź wywiad' : 'Approve interview'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowApproveModal(false);
+                  setSelectedAssignment(null);
+                }}
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4 overflow-auto">
+              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
+                <div className="text-sm text-slate-900 dark:text-white font-medium">
+                  {selectedAssignment.template?.name || 'Interview'}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {selectedAssignment.assignee?.name ||
+                    selectedAssignment.assignee?.email ||
+                    (isPolish ? 'Nieznany' : 'Unknown')}
+                </div>
+              </div>
+
+              {/* AI snapshot panel */}
+              {(() => {
+                const ai = selectedAssignment.aiReview;
+                if (!ai || (typeof ai.overallScore !== 'number' && !ai.weakAnswerMap?.length)) {
+                  return (
+                    <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800/60 p-3 mb-4 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                      <Sparkles size={14} className="text-slate-400" />
+                      {isPolish
+                        ? 'Ocena AI niedostępna dla tego wywiadu.'
+                        : 'AI assessment not available for this interview.'}
+                    </div>
+                  );
+                }
+                const pct =
+                  typeof ai.overallScore === 'number'
+                    ? Math.round(ai.overallScore <= 1 ? ai.overallScore * 100 : ai.overallScore)
+                    : null;
+                const weak = (ai.weakAnswerMap || []).filter(
+                  (w) => w.verdict === 'needs_improvement' || w.verdict === 'insufficient'
+                );
+                return (
+                  <div className="rounded-lg border border-primary-200/70 dark:border-primary-400/20 bg-primary-50/60 dark:bg-primary-500/[0.08] p-3 mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300 flex items-center gap-1.5">
+                        <Gauge size={14} />
+                        {isPolish ? 'Ocena AI' : 'AI assessment'}
+                      </span>
+                      {pct !== null ? (
+                        <span
+                          className={`text-sm font-bold ${
+                            pct >= 75
+                              ? 'text-emerald-600 dark:text-emerald-300'
+                              : pct >= 50
+                                ? 'text-amber-600 dark:text-amber-300'
+                                : 'text-rose-600 dark:text-rose-300'
+                          }`}
+                        >
+                          {pct}/100
+                        </span>
+                      ) : null}
+                    </div>
+                    {weak.length > 0 ? (
+                      <div className="mt-2.5">
+                        <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                          {isPolish ? 'Słabe / krótkie odpowiedzi:' : 'Weak / short answers:'}
+                        </div>
+                        <ul className="space-y-1 max-h-40 overflow-auto">
+                          {weak.slice(0, 8).map((w) => (
+                            <li
+                              key={w.key}
+                              className="text-xs text-slate-700 dark:text-slate-200 flex items-start gap-1.5"
+                            >
+                              <AlertTriangle size={11} className="mt-0.5 shrink-0 text-amber-500" />
+                              <span className="min-w-0">
+                                <span className="font-medium">{w.label}</span>
+                                {w.feedback ? (
+                                  <span className="text-slate-500 dark:text-slate-400">
+                                    {' '}
+                                    — {w.feedback}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">
+                        {isPolish
+                          ? 'Brak słabych odpowiedzi wykrytych przez AI.'
+                          : 'No weak answers flagged by AI.'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // 1-click Send back, prefilled from the AI assessment.
+                    setShowApproveModal(false);
+                    handleOpenSendBackModal(selectedAssignment);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-rose-300 dark:border-rose-400/30 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-medium transition-colors"
+                >
+                  <RotateCcw size={16} className="inline mr-2" />
+                  {isPolish ? 'Zwróć do poprawy' : 'Send back'}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const a = selectedAssignment;
+                    setShowApproveModal(false);
+                    setSelectedAssignment(null);
+                    await handleApproveAssignment(a);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-colors"
+                >
+                  <Check size={16} className="inline mr-2" />
+                  {isPolish ? 'Zatwierdź' : 'Approve'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* #7b — Change due date modal (wired to manageAssignment, mode 'update'). */}
+      {showDueDateModal && selectedAssignment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <CalendarClock size={18} className="text-primary-500" />
+                {isPolish ? 'Zmień termin' : 'Change due date'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowDueDateModal(false);
+                  setSelectedAssignment(null);
+                }}
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="bg-slate-50 dark:bg-navy-800 rounded-lg p-3 mb-4">
+                <div className="text-sm text-slate-900 dark:text-white font-medium">
+                  {selectedAssignment.template?.name || 'Interview'}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {selectedAssignment.assignee?.name ||
+                    selectedAssignment.assignee?.email ||
+                    (isPolish ? 'Nieznany' : 'Unknown')}
+                </div>
+              </div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                {isPolish ? 'Nowy termin' : 'New due date'}
+              </label>
+              <input
+                type="date"
+                value={dueDateDraft}
+                onChange={(e) => setDueDateDraft(e.target.value)}
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDueDateModal(false);
+                    setSelectedAssignment(null);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleChangeDueDate}
+                  disabled={manageAssignmentBusy}
+                  className="flex-1 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {manageAssignmentBusy ? (
+                    <Loader2 size={16} className="inline mr-2 animate-spin" />
+                  ) : (
+                    <CalendarClock size={16} className="inline mr-2" />
+                  )}
+                  {isPolish ? 'Zapisz' : 'Save'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -8797,7 +11010,7 @@ Return ONLY the answer text (no markdown fences).`;
                     <div key={template.id} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <FileText size={14} className="text-blue-400" />
-                        <span className="text-sm text-slate-300">{template.name}</span>
+                        <span className="text-sm text-slate-600">{template.name}</span>
                       </div>
                       <span className="text-xs text-slate-500">
                         {template.questionCount} {isPolish ? 'pytań' : 'questions'}
