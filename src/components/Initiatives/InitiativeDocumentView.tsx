@@ -26,11 +26,13 @@ import {
   Flag,
   FolderOpen,
   GitBranch,
+  GitFork,
   History,
   Link2,
   ListChecks,
   Loader2,
   MessageSquare,
+  Monitor,
   MoreVertical,
   Play,
   Plus,
@@ -104,6 +106,7 @@ import {
   NModePropertiesStrip,
   type NModePropertyField,
   type NModeSection,
+  ToolbarIconButton,
 } from '../shared/NModeLayout';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
@@ -7367,7 +7370,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         isMutating ||
                         (createKpiMode === 'manual' ? !createKpiName.trim() : !createKpiLibraryId)
                       }
-                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 text-xs font-medium disabled:opacity-50"
                     >
                       {createKpiMode === 'linked'
                         ? isPolish
@@ -8301,7 +8304,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
                     Container matches the shared NModeShell action-bar standard (slate, borderless)
                     so the Initiative toolbar reads identically to the Insight toolbar. */}
-                <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
+                <div className="sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 mb-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     {(() => {
                       const primaryGroup = nModeActions.filter((a) => a.variant === 'success');
@@ -8375,7 +8378,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             : 'No permission to use AI in this context.'
                                           : undefined
                                       }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                     >
                                       {tasksAiRequest?.mode === 'analyze' ? (
                                         <Loader2 size={13} className="animate-spin" />
@@ -8413,7 +8416,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             : 'No permission to use AI in this context.'
                                           : undefined
                                       }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                     >
                                       {tasksAiRequest?.mode === 'addOne' ? (
                                         <Loader2 size={13} className="animate-spin" />
@@ -8456,7 +8459,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             : 'No permission to use AI in this context.'
                                           : undefined
                                       }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                     >
                                       {decisionsAiRequest?.mode === 'analyze' ? (
                                         <Loader2 size={13} className="animate-spin" />
@@ -8494,7 +8497,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                             : 'No permission to use AI in this context.'
                                           : undefined
                                       }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                     >
                                       {decisionsAiRequest?.mode === 'addOne' ? (
                                         <Loader2 size={13} className="animate-spin" />
@@ -8536,7 +8539,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                   >
                                     {commentsAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8577,7 +8580,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                   >
                                     {resourcesAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8618,7 +8621,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                   >
                                     {timelineAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8659,7 +8662,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                   >
                                     {dependenciesAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8700,7 +8703,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                   >
                                     {kpisAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8741,7 +8744,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                   >
                                     {teamAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8782,7 +8785,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                   >
                                     {targetStateAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8823,7 +8826,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                           : 'No permission to use AI in this context.'
                                         : undefined
                                     }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                   >
                                     {gatesAiRequest ? (
                                       <Loader2 size={13} className="animate-spin" />
@@ -8898,7 +8901,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                         : 'No permission to use AI in this context.'
                                       : undefined
                                   }
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
                                 >
                                   {activeNSection === 'risk-raid' ? (
                                     isRaidAnalyzing ? (
@@ -8924,6 +8927,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         </>
                       );
                     })()}
+                    {/* ── Fork + Present ─────────────────────────────── */}
+                    <div className="flex-1 min-w-0" />
+                    <ToolbarIconButton
+                      icon={<GitFork size={14} />}
+                      tooltip={isPolish ? 'Forkuj' : 'Fork'}
+                      onClick={() => {}}
+                    />
+                    <ToolbarIconButton
+                      icon={<Monitor size={14} />}
+                      tooltip={isPolish ? 'Prezentuj' : 'Present'}
+                      onClick={() => {}}
+                    />
                   </div>
                 </div>
 

@@ -25,7 +25,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
+import { CheckCircle2, GripVertical } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -99,10 +99,18 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
                 : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
             }
           />
-          <span className="whitespace-nowrap">
+          <span className="whitespace-nowrap flex-1 min-w-0 truncate">
             {isPolish ? section.label.pl : section.label.en}
           </span>
-          {section.badge !== undefined && section.badge > 0 && (
+          {/* Mark Complete ✓ badge — AI signal only */}
+          {section.completed && (
+            <CheckCircle2
+              size={13}
+              className="shrink-0 text-success-500 dark:text-success-400"
+              aria-label={isPolish ? 'Sekcja ukończona' : 'Section complete'}
+            />
+          )}
+          {section.badge !== undefined && section.badge > 0 && !section.completed && (
             <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
               {section.badge}
             </span>
@@ -122,6 +130,21 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [showAll, setShowAll] = useState(false);
+
+  // Mark Complete progress: count completable sections (exclude alwaysShow-only)
+  const completableSections = useMemo(
+    () => sections.filter((s) => s.hasData !== false || s.alwaysShow),
+    [sections]
+  );
+  const completedCount = useMemo(
+    () => completableSections.filter((s) => s.completed).length,
+    [completableSections]
+  );
+  const progressPct =
+    completableSections.length > 0
+      ? Math.round((completedCount / completableSections.length) * 100)
+      : 0;
+  const showProgress = completableSections.length > 0 && completedCount > 0;
 
   // Adaptive sidebar (#22): hide sections explicitly marked empty unless the
   // user opts to see them all. Consumers that don't set `hasData` are unaffected.
@@ -180,10 +203,18 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
                 : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
             }
           />
-          <span className="whitespace-nowrap">
+          <span className="whitespace-nowrap flex-1 min-w-0 truncate">
             {isPolish ? section.label.pl : section.label.en}
           </span>
-          {section.badge !== undefined && section.badge > 0 && (
+          {/* Mark Complete ✓ badge — AI signal only */}
+          {section.completed && (
+            <CheckCircle2
+              size={13}
+              className="shrink-0 text-success-500 dark:text-success-400"
+              aria-label={isPolish ? 'Sekcja ukończona' : 'Section complete'}
+            />
+          )}
+          {section.badge !== undefined && section.badge > 0 && !section.completed && (
             <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
               {section.badge}
             </span>
@@ -296,6 +327,26 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
                 ? `Pokaż wszystkie sekcje (${hiddenCount})`
                 : `Show all sections (${hiddenCount})`}
           </button>
+        )}
+
+        {/* ── Mark Complete progress bar ─────────────────────────── */}
+        {showProgress && (
+          <div className="mt-3 px-3 pb-1 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                {isPolish ? 'Sekcje gotowe' : 'Sections complete'}
+              </span>
+              <span className="text-[10px] font-medium text-success-600 dark:text-success-400">
+                {completedCount}&thinsp;/&thinsp;{completableSections.length}
+              </span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-success-500 dark:bg-success-400 transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
         )}
       </div>
     </nav>

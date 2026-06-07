@@ -60,6 +60,13 @@ export interface NModeSection {
    * this flag, so the section stays reachable there — keeping N-mode behaviour
    * unchanged. Distinct from `hasData`, which affects BOTH modes. */
   cHidden?: boolean;
+  /**
+   * Mark Complete — AI signal only. When true the section header in
+   * NModeSectionWrapper shows a success tint, and the nav item shows a ✓ badge.
+   * Fields remain fully editable (this is a read/review signal, not a lock).
+   * Value is persisted in `section_completions JSONB` on the artifact row.
+   */
+  completed?: boolean;
   /** The section canvas content (rendered when active) */
   component: React.ReactNode;
 }

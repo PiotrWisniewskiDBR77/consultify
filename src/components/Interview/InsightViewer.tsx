@@ -25,6 +25,7 @@ import {
   FileText,
   Flame,
   GitCompare,
+  GitFork,
   Heart,
   History,
   Layers,
@@ -34,6 +35,7 @@ import {
   Loader2,
   Map as MapIcon,
   MessageSquare,
+  Monitor,
   Network,
   Plus,
   Quote,
@@ -61,7 +63,7 @@ import { ArtifactActionPanel } from '@/components/shared/artifact-actions/Artifa
 import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
-import { NModeSectionWrapper } from '@/components/shared/NModeLayout';
+import { NModeSectionWrapper, ToolbarIconButton } from '@/components/shared/NModeLayout';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
 import type { NModePropertyField, NModeSection } from '@/components/shared/NModeLayout/types';
@@ -7007,7 +7009,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               variant="outline"
               size="sm"
               icon={<Sparkles />}
-              className="text-c-accent border-c-accent/30 hover:bg-c-accent/5 dark:hover:bg-c-accent/10"
+              className="bg-teal-50 border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40"
               onClick={() => {
                 setAiMenuOpen((v) => !v);
                 setExportMenuOpen(false);
@@ -7077,6 +7079,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </button>
             </>
           )}
+          {/* ── Fork + Present ─────────────────────────────── */}
+          <div className="flex-1 min-w-0" />
+          <ToolbarIconButton
+            icon={<GitFork size={14} />}
+            tooltip={isPolish ? 'Forkuj' : 'Fork'}
+            onClick={() => {}}
+          />
+          <ToolbarIconButton
+            icon={<Monitor size={14} />}
+            tooltip={isPolish ? 'Prezentuj' : 'Present'}
+            onClick={() => {}}
+          />
         </div>
       )}
     >
