@@ -69,6 +69,8 @@ last_updated: 2026-06-07
 | **I-12** 🔴 | Ikony+kolory „Co dalej" zgodne z §7.3a | Raport=slate/FileText, Deck=fuchsia/Presentation, Tabela=emerald/Table, Idea=amber/Lightbulb, Notatka=sky/StickyNote, Inicjatywa=indigo/Rocket | Błędne ikony lub kolory | PASS/FAIL/N-A |
 | **I-13** 🔴 | Stopka: space-y-2.5, BEZ dividerów między kartami | Inspect gap między kartą AI a „Co dalej" — ~10px, brak `<hr>` / `border-t` między kartami z ramką | Duże odstępy lub twarde linie między każdą kartą | PASS/FAIL |
 | **I-14** 🔴 | Actions na dole: brak redundancji | Sekcja Actions (jeśli istnieje): NIE zawiera „Open" (jest w headerze), NIE zawiera Export/Pobierz (są w ⋮ Details). Jeśli po odjęciu duplikatów nic nie zostaje → sekcja Actions w ogóle nie istnieje | Duplikat „Open" w dolnym pasku | PASS/FAIL |
+| **I-15** 🔴 | Licznik słów widoczny w sekcji Details | Inspect nagłówek sekcji „Details" → po prawej stronie widoczny tekst `~N słów` (`text-[10px]`, muted). Sprawdź z treścią: widoczny. Sprawdź z empty state: ukryty. | Brak licznika słów przy wypełnionej treści; widoczny w empty state | PASS/FAIL |
+| **I-16** 🔴 | Header preview: anatomia elementów po prawej (pin → Open → ×) | Inspect prawą stronę headera preview → kolejność: [ikona pin/copy] · [przycisk „Open"] · [przycisk „×"]. | „×" przed „Open"; brak ikony pin/copy; „Open" na samym końcu po „×" | PASS/FAIL |
 
 **Status Fazy 1:** `PASS` / `FAIL (punkty: ___)`
 
@@ -179,6 +181,24 @@ last_updated: 2026-06-07
 |---|---|---|---|---|
 | **D-19** | AI buttons w prawym klastrze Menu 3 | (N/A dopóki standard AI nie jest wdrożony) Jeśli istnieją → są po PRAWEJ stronie Menu 3, oddzielone od chipów/przycisków bulk. | AI buttons pomieszane z chipami/bulk | PASS/FAIL/N-A |
 
+### 5e — GridView (widok kart) — gdy moduł ma widok grid
+
+> ⚠️ Sprawdzaj TYLKO jeśli moduł ma włączony widok grid (ikona ⊞ w segmencie Menu 2).
+> Przełącz widok, przeprowadź wszystkie checks poniżej, potem wróć do widoku listy.
+> Kanon §8.1 — referencja wizualna: Interview → Templates grid.
+
+| # | Check | Jak sprawdzić | FAIL gdy | Wynik |
+|---|---|---|---|---|
+| **GV-1** 🔴 | Grid view istnieje i przełącza się | Klik ikona ⊞ w segmencie widoku → układ zmienia się na 3-kolumnowe karty. Segment wyróżnia aktywną ikonę. | Ikona ⊞ nie robi nic; strona pusta; brak segmentu gdy grid istnieje | PASS/FAIL/N-A |
+| **GV-2** 🔴 | Strefa 1: Badge row — Źródło + Status (+ opcjonalna specjalna) | Inspect kartę → w górze chipy Źródła (System/Organization) + Statusu, w tej kolejności. Kolory: System=slate, Organization=indigo, Published=emerald, Draft=amber. | Brak odznak; odznaka statusu bez źródła; kolejność odwrotna; kolory hardcoded | PASS/FAIL |
+| **GV-3** 🔴 | Strefa 2: Title — 1–2 linie, truncate, tooltip | Znajdź kartę z długim tytułem → obcięta po 2 liniach (`line-clamp-2`); hover → natywny tooltip z pełnym tytułem (sprawdź `title` atrybut). | Tytuł na >2 linie (rozciąga kartę); brak tooltipa; nie obcięty | PASS/FAIL |
+| **GV-4** | Strefa 3: Description — 2 linie, muted; ukryta gdy brak | Karta z opisem → max 2 linie, kolor muted (`text-slate-500`). Karta bez opisu → strefa ukryta (NIE pusty box zachowujący wysokość). | >2 linie opisu; puste miejsce gdy brak opisu; font zbyt ciemny | PASS/FAIL |
+| **GV-5** 🔴 | Strefa 4: Stats footer — dokładnie 3 wartości | W stopce każdej karty policz widoczne wartości tekstu → dokładnie 3, w układzie `justify-between`. | <3 lub >3 widocznych wartości; wartości w środku (nie justify-between) | PASS/FAIL |
+| **GV-6** 🔴 | ⋮ kebab karty = identyczny jak kebab tabeli | Otwórz ⋮ na karcie → porównaj sekcje z kebabem w widoku tabeli → te same pozycje w tej samej kolejności. Sprawdź per status (draft/published). | Kebab karty ma inne pozycje / brak manage zone / brak danger zone | PASS/FAIL |
+| **GV-7** 🔴 | Single-click karty = boczny preview (identycznie z tabelą) | Klik kartę (nie ⋮) → boczny panel preview, URL bez zmian. Double-click → pełna karta. | Single-click otwiera pełną kartę lub nawiguje do innego ekranu | PASS/FAIL |
+| **GV-8** 🔴 | Grid responsywny: 3→2→1 kolumny | Przy szerokości >1024px: 3 kolumny. Zmniejsz do 768–1023px: 2 kolumny. Poniżej 768px: 1 kolumna. Sprawdź w DevTools. | Stałe 3 kolumny niezależnie od szerokości | PASS/FAIL |
+| **GV-9** | Brak border-l akcentu na kartach | Inspect każdą kartę → brak `border-left` z kolorowym hue. Akcent kolorowy = tylko badge, nie boczna kreska. | `border-l-[3px]` z kolorem statusu/typu (stary wzorzec) | PASS/FAIL |
+
 **Status Fazy 5:** `PASS` / `FAIL (punkty: ___)`
 
 ---
@@ -229,7 +249,7 @@ npx eslint src/components/[PLIK].tsx --max-warnings=0 2>&1 | tail -10
 | Faza 2 — Kebab ⋮ | | |
 | Faza 3 — Pasek bulk | | |
 | Faza 4 — Nagłówek/Kolumny | | |
-| Faza 5 — Menu 2/3 | | |
+| Faza 5 — Menu 2/3 + Grid | | |
 | Faza 6 — Kolory/Runtime | | |
 | Bramki | | |
 
@@ -262,3 +282,8 @@ npx eslint src/components/[PLIK].tsx --max-warnings=0 2>&1 | tail -10
 | Przyciski bulk po prawej stronie | Faza 3-D5: screenshot → sprawdź `left` przycisków |
 | Draft inicjatywy otwiera /initiatives | Faza 1-I2: dla cross-module sprawdź czy URL pozostaje bez zmian |
 | HMR stale cache Vite | Bramki: curl plik aby sprawdzić świeżość kodu |
+| Grid: kebab karty inny niż kebab tabeli | GV-6: otwórz oba side-by-side → porównaj sekcje per status |
+| Grid: title rozciąga kartę (brak line-clamp) | GV-3: inspect `line-clamp-2`; sprawdź bardzo długi tytuł |
+| Grid: stats footer ≠ 3 wartości | GV-5: policz wartości w stopce każdej karty |
+| Grid: view segment niewidoczny lub to dropdown | C-4 + GV-1: sprawdź czy jest segment ikon, nie „Table ▾" |
+| Brak licznika słów w preview | I-15: inspect nagłówek „Details" → szukaj `~N słów` po prawej |

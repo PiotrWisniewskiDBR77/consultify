@@ -218,20 +218,25 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 > ale **kolejność obecnych stref się nie zmienia**.
 
 ```
-┌─ 1 HEADER (sticky)  tytuł · [Open] · [X]           ┐
-│  2 META BAR         status·typ·sesje·data           │
-│  3 DETAILS (⋮)      OPIS — wypełnia centrum, scroll  │  ⋮ = Copy · Copy prompt · Export · Download
+┌─ 1 HEADER (sticky)  tytuł · [📌/🔗] · [Open] · [X] ┐
+│  2 META BAR         status · typ · sesje · data      │
+│  3 DETAILS (⋮)  ~N słów   OPIS — centrum, scroll    │  ⋮ = Copy · Copy prompt · Export · Download
 │     · · · · · · · · · · · · · · · · · · · · · · · ·  │
-│  4 AI               Podsumuj · Zasugeruj            │  stopka, space-y-2.5, bez dividerów
+│  4 AI               Podsumuj · Zasugeruj             │  stopka, space-y-2.5, bez dividerów
 │  5 RELATIONS        (jeśli są)                       │
 │  6 CO DALEJ         Dokumenty: … / W aplikacji: …    │  (create-strip, §7.3a)
 │  7 ACTIONS          OPCJONALNE — patrz niżej         │
-└─────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────┘
 ```
 
-1. **Header (sticky `top-0 z-10`)**: opcjonalny kicker „Preview" (11px uppercase) + tytuł encji (1 linia, truncate+tooltip, semibold) + akcje right: **„Open" (ghost/outline pill — JEDYNE „Open" w całym preview)** + „Close (X)".
+1. **Header (sticky `top-0 z-10`)**: opcjonalny kicker „Preview" (11px uppercase) + tytuł encji (1 linia, truncate+tooltip, semibold) + **akcje right (kolejność lewa→prawa):**
+   - **Ikona pin/kopiuj** — `Pin` lub `Copy` (lucide), `size-4`, icon-only ghost button. Pin = schowaj w skrótach / Kopiuj = skopiuj link do encji. Opcjonalnie jedno lub oba.
+   - **„Open" (ghost/outline pill) — JEDYNE „Open" w całym preview.** Klik = pełna karta + trwały tab w Menu 3.
+   - **„×" (close)** — zawsze ostatni.
+
 2. **Entity Meta Bar**: statusy/typ/sesje/priorytet/SLA/data (poziom +2, `p-4`, `rounded-lg`) — to stan, nie treść.
-3. **Details (treść — wypełnia centrum)**: nagłówek „Details" (overline) + **⋮ (tu żyją: Rozwiń/Zwiń · Kopiuj · Kopiuj prompt · Export do Tools · Pobierz)**; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state, nie blank. **Details NIGDY nie ustępuje miejsca przyciskom** — opis zostaje w środku, akcje schodzą na dół.
+
+3. **Details (treść — wypełnia centrum)**: nagłówek sekcji „Details" (overline) + **licznik słów po prawej** (`~N słów`, `text-[10px] text-slate-400`; widoczny gdy treść > 0 słów; ukryty w empty state) + **⋮ (tu żyją: Rozwiń/Zwiń · Kopiuj · Kopiuj prompt · Export do Tools · Pobierz)**; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state, nie blank. **Details NIGDY nie ustępuje miejsca przyciskom** — opis zostaje w środku, akcje schodzą na dół.
 4. **Stopka — KOLEJNOŚĆ SZTYWNA (MUST), góra→dół; karty z ramką, `space-y-2.5`, BEZ dividerów między nimi:**
    1. **AI**: label „AI" + ikona; chipy outline (`Podsumuj`, `Zasugeruj działania`); rozwijane bullety. AI asystuje treści → jest **najwyżej** w stopce, **nad** akcjami tworzenia.
    2. **Relations** (jeśli są): **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
@@ -258,12 +263,101 @@ Grupowanie w pasku: **Dokumenty** = Raport·Deck·Tabela; **W aplikacji** = Idea
 
 ---
 
-## 8) Widoki alternatywne (cards / kanban / timeline / calendar)
+## 8) Widoki alternatywne — GridView (karty) i Kanban
+
+### 8.0 Zasady wspólne — wszystkie widoki alternatywne
 **MUST:**
-- Każdy alternatywny widok renderowany **wewnątrz tego samego `TableWithPreviewLayout`** (select→preview i J/K przeżywają). Wzór wzorcowy: Insights „report".
-- Przełącznik widoku = **segmentowany ikonowy** (nie dropdown „Table ▾"), kanoniczna kolejność ikon (`view-modes-standard.md`).
-- **Karty** (`GridView`): header (typ + status right) → tytuł (1–2 linie) → sygnały (progress/priorytet/due) → akcje (⋮ + opc. 1 CTA). Akcent `border-l-[3px]` w kolorze typu, tło `bg-slate-50/80 dark:bg-navy-800/60`, hover lift. Menu ⋮ jak w tabeli. Brak własnych mini‑toolbarów (filtry/sort żyją w Menu 2).
-- **Kanban (prezentacja tabeli jako tablica):** kolumny = wartości jednego pola (status/etap), karta = `GridView`. Pełna specyfikacja kanban (kolumny, drag&drop, WIP, kolejność) zostanie dopisana w kolejnych historiach — **na bieżącym case (Wywiad Inbox) nie ma kanbana, więc go nie opisujemy tu**; reguły lock w §23, przełącznik w `view-modes-standard.md`. To świadoma luka „do dopisania", nie pominięcie.
+- Każdy widok alternatywny renderowany **wewnątrz tego samego `TableWithPreviewLayout`** (select→preview i J/K przeżywają). Wzór wzorcowy: Interview → Templates grid.
+- Przełącznik widoku = **segmentowany ikonowy w Menu 2** (nie dropdown „Table ▾"). Kolejność ikon: lista (≡) → grid (⊞) → kanban → timeline. Każdy nowy widok = 1 ikona doklejona do segmentu. Nigdy dropdown. **Segment ukryty gdy tylko 1 widok aktywny.**
+- Filtry, sortowanie, wyszukiwanie — wyłącznie w Menu 2. Karty i Kanban **nie mają własnych mini-toolbarów**.
+- ⋮ menu karty = **ta sama `RowActionsMenu`** co w tabeli — identyczne sekcje, identyczne pozycje, identyczne uprawnienia. Zero rozbieżności między widokami.
+
+### 8.1 GridView — anatomia karty (ŻELAZNY UKŁAD)
+> **WZORZEC ZATWIERDZONY przez ownera 2026-06-07.**
+> Referencja wizualna: Interview → Templates → widok grid.
+> Kolejność 4 stref jest sztywna. Strefa bez danych = ukryta (NIE pusty box). Komponent: `GridCard`.
+> Moduł dostarcza `props`, nie redefiniuje CSS.
+
+```
+┌──────────────────────────────────────────────────────┐
+│ [Źródło▸System]  [Status▸Published]  [★ Default]   │  ← 1 BADGE ROW (lewy, flex-wrap)
+│                                                       │
+│ Digital Maturity Discovery                            │  ← 2 TITLE (semibold, 1–2 linie)
+│ Standard template for digital transformation          │  ← 3 DESCRIPTION (muted, max 2 linie)
+│                                                       │
+│ ─────────────────────────────────────────────────── │  ← separator border-t
+│ 12 questions          14 min          digital   [⋮] │  ← 4 STATS FOOTER (3 wartości + kebab)
+└──────────────────────────────────────────────────────┘
+```
+
+**Strefa 1 — Badge row (MUST gdy dane):**
+- Layout: `flex flex-wrap gap-1.5 items-center`
+- Kolejność odznak: `[Źródło (System/Organization)]` → `[Status (Draft/Published/…)]` → `[Specjalna (Default/Featured)]`
+- Styl: `rounded-full text-[11px] font-medium px-2 py-0.5 border`
+- Kolory: System=slate, Organization=indigo, Published=emerald, Draft=amber, In review=sky, Default/Featured=rose/crimson
+- Brak danych = cała strefa ukryta (zero pustego wiersza)
+
+**Strefa 2 — Title (MUST):**
+- `text-sm font-semibold text-slate-900 dark:text-slate-100`
+- `line-clamp-2`, `title` attribute gdy ucięty (tooltip natywny)
+- Min 1 linia widoczna zawsze
+
+**Strefa 3 — Description (gdy dostępna):**
+- `text-xs text-slate-500 dark:text-slate-400 line-clamp-2`
+- Max 2 linie — reszta obcięta; NIE expandable w gridzie (expandable tylko w preview)
+- Brak opisu = strefa ukryta; title zajmuje całą treść
+
+**Strefa 4 — Stats footer (MUST):**
+- Separator nad stopką: `border-t border-slate-100 dark:border-white/[0.05] mt-3 pt-3`
+- Layout: `flex items-center justify-between text-[11px] text-slate-500`
+- **Dokładnie 3 wartości** — moduł definiuje które: `[główna metryka]` · `[czas/rozmiar]` · `[kategoria/tag/area]`
+  - Przykład Templates: `N questions · N min · {tag}`
+  - Przykład Insights: `N sesji · {status} · {obszar}`
+  - Przykład Initiatives: `N zadań · {priorytet} · {obszar}`
+- Wartość 4+ = pominięta lub dostępna w ⋮
+- ⋮ kebab: `size-4`, `opacity-0 group-hover:opacity-100` (lub zawsze widoczny — decyzja per-moduł; **MUST być dostępny**)
+
+**Kontener karty:**
+- `bg-white dark:bg-navy-900 rounded-xl border border-slate-200/60 dark:border-white/[0.06] p-4`
+- Hover: `shadow-md` lub `translate-y-[-1px]` lift — jedno z dwóch, spójne w module
+- **NIE ma `border-l-[3px]` akcentu kolorowego** — kolor statusu wyraża badge, nie boczna kreska
+
+**Layout siatki (MUST):**
+| Viewport | Kolumny |
+|---|---|
+| ≥1024px (desktop) | `grid-cols-3` |
+| 768–1023px (tablet) | `grid-cols-2` |
+| <768px (mobile) | `grid-cols-1` |
+| Gap | `gap-4` (16px) |
+
+**Interakcja karty (MUST — identyczna z wierszem tabeli):**
+- Single-click → boczny preview pane; URL bez zmian
+- Double-click / Enter → pełna karta
+- ⋮ → `RowActionsMenu` z identycznymi sekcjami jak w tabeli
+- J/K → nawigacja kart z auto-update preview
+- Select (checkbox / klik) → bulk bar w Menu 3 (formuła 2)
+
+### 8.2 Kanban — karty w kolumnach
+> Kanban = inny układ **tych samych kart** (`GridCard`). Karta jest identyczna — kolumna to tylko kontener.
+> Stan na 2026-06-07: brak wdrożenia. Reguły poniżej obowiązują przy implementacji.
+
+**Kolumna:**
+- Header: `[Nazwa statusu]` (semibold) + `(N)` licznik + opcjonalny `WIP: N/max` badge
+- Kolejność kolumn = kolejność wartości enuma (persystowana, edytowalna przez admina)
+- Pusta kolumna = widoczna jako placeholder z etykietą (NIE ukryta — ukryte kolumny dezorientują)
+- Szerokość kolumny: `min-w-[260px] max-w-[320px]`; poziome przewijanie deski gdy nie mieści się na ekranie
+
+**Karta w Kanbanie:**
+- Identyczna z `GridCard` — ten sam komponent, te same strefy
+- Badge statusu może być pominięty (kolumna go wyraża) — decyzja per-moduł
+- Interakcja i ⋮: identyczne z gridem
+
+**Drag & drop:**
+- Przeciągnięcie między kolumnami = zmiana wartości pola grupującego (status, etap itd.)
+- Zablokowane przejścia (reguły RBAC/statusów) → karta wraca + toast error
+- Drop w tej samej kolumnie → reorder (jeśli moduł obsługuje manual order)
+
+**Pełna specyfikacja Kanban** (WIP limits, multi-field grouping, wąskie widoki, klawiszatura) zostanie uzupełniona gdy moduł wdroży widok. To świadoma luka, nie pominięcie.
 
 ---
 
