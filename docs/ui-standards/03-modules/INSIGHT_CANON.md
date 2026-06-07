@@ -41,6 +41,20 @@
 
 ---
 
+## Warstwa 1 — Identity
+
+Stały pasek na górze widoku. Zawsze widoczny, nie scrolluje.
+
+| Element | Spec | Interakcja |
+|---------|------|-----------|
+| **Title** | `text-[20px] font-semibold text-slate-900 dark:text-slate-100` · max 120 znaków · placeholder "Bez tytułu" | Klik → inline edit. Blur → auto-save. |
+| **Status dot** | `w-2.5 h-2.5 rounded-full` · kolor odpowiada polu STATUS w Properties Strip | Zmienia się automatycznie gdy STATUS się zmienia. Nie klikalny. |
+| **Artifact ID** | Format: `INS-XXXX` (4 znaki alfanumeryczne) · `text-[11px] text-slate-400 font-mono` | Klik → kopiuje do schowka → inline "Skopiowano ✓" przez 1.5s. |
+| **Saved** | `text-[11px] text-slate-400` | "Zapisuję..." gdy trwa zapis. "Zapisano ✓" przez 2s po auto-save. Idle = niewidoczny. |
+| **N/C toggle** | `[N]` Normal (z lewą nawigacją) · `[C]` Canvas (pełna szerokość bez nav) | Przełącza widoczność lewej nawigacji. Stan w localStorage. |
+
+---
+
 ## Warstwa 2 — Properties Strip
 
 Dokładnie **6 pól** — niezmienne. Zmiany statusu odbywają się przez klik na dane pole w stripie, nie przez przyciski w toolbarze.
@@ -58,63 +72,34 @@ Dokładnie **6 pól** — niezmienne. Zmiany statusu odbywają się przez klik n
 
 ## Warstwa 3 — Toolbar
 
+> Pełna specyfikacja toolbara → [BLOCK_TYPES_CANON.md § Toolbar artefaktu](./BLOCK_TYPES_CANON.md)
+
 ### Układ
 
 ```
-[≡ Sections ▾]  [New]  [Export]  │  [⚡ AI Consultant ▾]
-                                                    (prawa krawędź)
-                                          [⚡ AI Consultant]  ← poza toolbarem,
-                                                    stały przycisk top-right
+[≡ Sections ▾]  [New]  [Export ▾]    · aktywna sekcja ·    │    [⚡ AI ▾]    [⎊]  [▶]    [⚡ AI Consultant]
 ```
 
-### Przyciski — specyfikacja
+### Elementy (skrót — pełna spec w BLOCK_TYPES_CANON)
 
-**`≡ Sections ▾`** — dropdown z checkboxami wszystkich sekcji insightu.
-- Zaznaczone = widoczne w lewym nav.
-- System ustawia defaults (które sekcje są domyślnie widoczne).
-- Użytkownik może odkrywać dodatkowe sekcje lub ukrywać nieużywane.
-- Zastępuje przycisk "Show all sections (X)" na dole sidebara (który zostaje usunięty).
+| Element | Typ | Kolor |
+|---------|-----|-------|
+| `≡ Sections ▾` | Ghost | `border-slate-200 text-slate-600` |
+| `New` | Subtle fill | `bg-slate-100 text-slate-700` |
+| `Export ▾` | Ghost | → Notatki · → Idee · → Prezentacja · → PDF |
+| `· aktywna sekcja ·` | Label | `text-[12px] text-slate-400` centered |
+| `│` | Separator | `w-px h-5 bg-slate-200 dark:bg-navy-700` |
+| `⚡ AI Consultant ▾` | Split · teal | `bg-teal-50 border-teal-200 text-teal-700` |
+| `⎊` | Icon ghost | Fork — nowy insight z tą samą strukturą + tag "Forked from" |
+| `▶` | Icon ghost | Present — fullscreen, kolejność sidebarowa, reorder w trybie |
+| `⚡ AI Consultant` | Solid teal | `bg-teal-600 text-white` — prawy panel ~360px |
 
-**`New`** — kontekstowy przycisk tworzący nowy element w **aktywnej sekcji**.
-- Na Next Actions → nowa akcja
-- Na Themes → nowy temat (manualny)
-- Na Hypothesis Board → nowa hipoteza
-- Na sekcjach systemowych (Activity Log, Sources) → nieaktywny (disabled, nie ukryty)
+### Zasady
 
-**`Export`** — eksportuje insight (PDF / DOCX / Executive Memo / Slide Pack). Otwiera modal wyboru formatu.
-
-**`│`** — wizualny separator (border-l) oddzielający akcje funkcjonalne od AI.
-
-**`⚡ AI Consultant ▾`** — split button, AI na poziomie aktywnej sekcji:
-- **Klik** → otwiera chat osadzony w kontekście aktywnej sekcji; AI zagaja rozmowę.
-- **▾** → menu akcji: `Uzupełnij` · `Proponuj zmiany` · `Refresh` · `Kontynuuj`
-
-**`⚡ AI Consultant`** (poza toolbarem, prawy górny róg widoku) — AI na poziomie całego insightu:
-- **Klik** → wysuwa prawy panel (~360px, slide-in).
-- Panel zawiera: menu akcji (`Uzupełnij puste sekcje` · `Synthesize` · `Refresh wszystkiego` · `Kontynuuj` · `Quality check`) + chat z pełnym kontekstem insightu (AI zagaja).
-
-### Zasady toolbara
-
-- **Zero czerwonych** przycisków w toolbarze.
-- Destruktywne akcje (usuń, archiwizuj) żyją wyłącznie w menu kontekstowym `⋯` na poziomie konkretnego elementu w karcie.
-- Zmiany statusu insightu (Complete / Archive) → klik na pole STATUS w Properties Strip.
-
-### Standard wizualny przycisków
-
-```
-Wysokość:    h-8 (32px)
-Tekst:       text-[13px] font-medium
-Promień:     rounded-lg
-Odstępy:     gap-2 między przyciskami w grupie
-Separator:   border-l slate-200/dark:navy-700 między grupą funkcjonalną a AI
-Kolor:       do ustalenia osobno
-```
-
-| Typ | Użycie | Styl |
-|-----|--------|------|
-| **Ghost** | `≡ Sections ▾`, `Export` | border + transparent bg, slate text |
-| **Subtle fill** | `New` | jasne tło (slate-100) bez bordera |
-| **AI accent** | `⚡ AI Consultant ▾`, `⚡ AI Consultant` | wyróżniony kolor AI (TBD) |
+- **Zero czerwonych** przycisków. Zero gradientów.
+- Destruktywne akcje (usuń, archiwizuj, share) → kebab `⋯` na poziomie tabeli/listy.
+- Zmiany statusu insightu → klik na pole STATUS w Properties Strip.
+- Standard: `h-8 · text-[13px] font-medium · rounded-lg · gap-2`
 
 ---
 

@@ -735,6 +735,57 @@ Traceability jest zachowana — klient może zawsze zapytać o źródło analizy
 
 ---
 
+## Canon Completeness Checklist
+
+> Używaj tej listy do weryfikacji każdego kanonu artefaktu przed startem implementacji. Kanon jest gotowy gdy wszystkie pola są zaznaczone.
+
+```
+WARSTWA 1 — IDENTITY
+□ Title: font, max długość, inline edit, auto-save
+□ Status dot: kolory i stany, powiązanie z Properties Strip
+□ Artifact ID: format (INI-XXXX / INS-XXXX), UX kopiowania, feedback
+□ Saved indicator: stany (idle / saving / saved)
+□ N/C toggle: zachowanie, localStorage
+
+WARSTWA 2 — PROPERTIES STRIP
+□ Dokładnie 6 pól — niezmienne
+□ Każde pole: wartości + pełna semantyka kolorów
+□ Click-to-change behavior
+
+WARSTWA 3 — TOOLBAR
+□ Układ zgodny z BLOCK_TYPES_CANON § Toolbar
+□ Export destinations: → Notatki · → Idee · → Prezentacja · → PDF
+□ AI kolor: teal (bg-teal-600 solid / bg-teal-50 subtle)
+□ Fork (⎊): nowy artefakt + tag "Forked from"
+□ Present (▶): kolejność sidebarowa, reorder w trybie
+
+WARSTWA 4 — CONTENT
+□ Wszystkie karty z pełnym kontraktem (10 pól inicjatywa / 11 pól insight)
+□ cSpan + cHidden per każda karta
+□ Canvas grid reference: 2-col, 530px, gap 24px
+□ Grupy nawigacyjne kompletne
+
+STANY SPECJALNE
+□ Mark Complete: visual state, AI lock, progress bar, DB storage
+□ Empty state: komunikat + CTA per karta (pole "Pusty stan")
+□ Loading: szkielet podczas AI genesis (⚠ patrz: Loading States — do dodania)
+□ Error: AI failure handling (⚠ patrz: Error States — do dodania)
+
+EKSPORT
+□ Export destinations = BLOCK_TYPES_CANON SSOT
+□ Kolejność kanoniczna zdefiniowana
+□ Per-karta pole "Eksport" wypełnione
+
+CROSS-REFERENCES
+□ Link do BLOCK_TYPES_CANON na górze dokumentu
+□ Toolbar sekcja referuje BLOCK_TYPES_CANON
+□ Brak "TBD" w żadnym polu
+```
+
+> ⚠ **Do dodania w przyszłości:** Loading States (szkielet podczas genesis), Error States (AI failure UX), Mobile Behavior (< 768px), Keyboard Navigation / Accessibility, Multi-user Conflict Resolution. Te sekcje nie blokują V1 implementacji ale muszą powstać przed GA.
+
+---
+
 ## Odniesienia
 
 - [Canon inicjatyw](./INITIATIVE_CANON.md) — mapowanie bloków do kart inicjatyw
