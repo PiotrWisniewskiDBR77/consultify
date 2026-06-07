@@ -10054,7 +10054,6 @@ Return ONLY the answer text (no markdown fences).`;
                     copyToClipboard(buildAiPrompt('summarize'));
                   }
                 }}
-                showActionPanel
               />
             );
           }}

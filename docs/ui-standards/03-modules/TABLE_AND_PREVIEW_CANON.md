@@ -215,11 +215,16 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 2. **Entity Meta Bar**: statusy/typ/priorytet/SLA (poziom +2, `p-4`, `rounded-lg`) — to stan, nie treść.
 3. **Details**: nagłówek „Details" (overline) + ⋮; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (np. cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state z podpowiedzią, nie blank. Cel: preview ma od razu „opowiadać" encję, nie zmuszać do „Open".
 4. **Stopka — KOLEJNOŚĆ SZTYWNA (MUST):**
-   1. **AI hints**: label „AI Insights" + ikona + ⋮; **3 chipy** outline; rozwijane bullety.
+   1. **„Co dalej" / create-strip (opcjonalny, gdy encja jest źródłem cross-module)**: ZWARTY pasek
+      małych przycisków (`h-8 rounded-full`, ikona+label, neutralne), pogrupowany „Dokumenty / W aplikacji".
+      **NIGDY wielkie karty w body** — opis (Details) zostaje w centrum, akcje tworzenia są zwarte na dole.
+      (Insight: `ArtifactActionPanel variant="compact"`; `variant="full"` tylko w pełnej karcie.)
    2. divider (`border-t`)
-   3. **Relations**: **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
+   3. **AI hints**: label „AI Insights" + ikona + ⋮; **3 chipy** outline; rozwijane bullety.
    4. divider (`border-t`)
-   5. **Actions**: pille `h-9 rounded-full`, hierarchia primary→secondary→ghost; **te same akcje co full view** (parytet, te same guardraile; destrukcyjne = confirm).
+   5. **Relations**: **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
+   6. divider (`border-t`)
+   7. **Actions**: pille `h-9 rounded-full`, hierarchia primary→secondary→ghost; **te same akcje co full view** (parytet, te same guardraile; destrukcyjne = confirm).
 
 ---
 

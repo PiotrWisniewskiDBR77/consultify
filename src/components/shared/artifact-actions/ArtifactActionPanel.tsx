@@ -639,94 +639,157 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
     );
   };
 
+  // Compact = a thin two-group strip (Documents / In app) of small buttons.
+  // Used only in the Insight preview pane footer — keeps the description in the
+  // center and the create-actions compact at the bottom (canon §7.3).
+  const renderCompactButton = (target: ArtifactActionTarget) => {
+    const meta = TARGET_META[target];
+    const Icon = meta.icon;
+    const created = createdTargets[target];
+    const loading = loadingTarget === target;
+    const isDocumentTarget = DOC_TARGETS.includes(target);
+    const stripped = (isPolish ? meta.labelPl : meta.labelEn)
+      .replace(/^Utwórz\s+/i, '')
+      .replace(/^Create\s+/i, '');
+    const label = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+    return (
+      <button
+        key={target}
+        type="button"
+        onClick={() =>
+          created
+            ? navigate(created.path)
+            : isDocumentTarget
+              ? setComposerTarget(target)
+              : setProposalTarget(target)
+        }
+        disabled={loading || isActionDisabled}
+        title={isPolish ? meta.descriptionPl : meta.descriptionEn}
+        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/70 px-2.5 text-[11px] font-medium text-slate-700 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08]"
+      >
+        {loading ? (
+          <Loader2 size={13} className="animate-spin" />
+        ) : created ? (
+          <ExternalLink size={13} />
+        ) : (
+          <Icon size={13} />
+        )}
+        {created ? created.label : label}
+      </button>
+    );
+  };
+
   return (
     <>
-      <div
-        className={`rounded-3xl border border-slate-200/70 bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/70 ${isCompact ? 'p-3' : 'p-5'}`}
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
-              <BookOpen size={12} />
-              {isPolish ? 'Co dalej z tym insightem?' : 'What next with this insight?'}
-            </div>
-            {!isCompact && (
-              <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-                {isPolish
-                  ? 'Insight jest artefaktem źródłowym. Z tego miejsca tworzysz dokumenty albo działania w aplikacji, a system zapisuje pełny backlink i lineage.'
-                  : 'This insight is the source artifact. Create documents or app actions here while the system keeps backlink and lineage.'}
-              </p>
-            )}
-            {!isCompact && readinessWarnings.length > 0 && (
-              <div className="mt-3 rounded-2xl border border-amber-300/40 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
-                <div className="font-semibold">
-                  {isPolish ? 'Warunki downstream' : 'Downstream conditions'}
-                </div>
-                <ul className="mt-1 list-disc space-y-1 pl-4">
-                  {readinessWarnings.slice(0, 3).map((warning) => (
-                    <li key={warning}>{warning}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+      {isCompact ? (
+        <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-2.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
+          <div className="mb-2 inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+            <BookOpen size={11} />
+            {isPolish ? 'Co dalej z insightem' : 'What next with this insight'}
           </div>
-          {!isCompact && (
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-                <div className="text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Pewność' : 'Confidence'}
-                </div>
-                <div className="font-semibold text-slate-900 dark:text-slate-100">
-                  {source.confidence || '-'}
-                </div>
-              </div>
-              <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-                <div className="text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Dowody' : 'Evidence'}
-                </div>
-                <div className="font-semibold text-slate-900 dark:text-slate-100">
-                  {source.evidenceCount ?? 0}
-                </div>
-              </div>
-              <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-                <div className="text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Sesje' : 'Sessions'}
-                </div>
-                <div className="font-semibold text-slate-900 dark:text-slate-100">
-                  {source.sourceSessionCount ?? 0}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className={`mt-4 grid gap-3 ${isCompact ? 'grid-cols-1' : 'lg:grid-cols-2'}`}>
-          <div className="space-y-2">
-            {!isCompact && (
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-0.5 w-[68px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
                 {isPolish ? 'Dokumenty' : 'Documents'}
-              </div>
-            )}
-            <div
-              className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}
-            >
-              {DOC_TARGETS.map(renderAction)}
+              </span>
+              {DOC_TARGETS.map(renderCompactButton)}
             </div>
-          </div>
-          <div className="space-y-2">
-            {!isCompact && (
-              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                {isPolish ? 'Działania w aplikacji' : 'App actions'}
-              </div>
-            )}
-            <div
-              className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}
-            >
-              {APP_TARGETS.map(renderAction)}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-0.5 w-[68px] shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                {isPolish ? 'W aplikacji' : 'In app'}
+              </span>
+              {APP_TARGETS.map(renderCompactButton)}
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className={`rounded-3xl border border-slate-200/70 bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/70 ${isCompact ? 'p-3' : 'p-5'}`}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
+                <BookOpen size={12} />
+                {isPolish ? 'Co dalej z tym insightem?' : 'What next with this insight?'}
+              </div>
+              {!isCompact && (
+                <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
+                  {isPolish
+                    ? 'Insight jest artefaktem źródłowym. Z tego miejsca tworzysz dokumenty albo działania w aplikacji, a system zapisuje pełny backlink i lineage.'
+                    : 'This insight is the source artifact. Create documents or app actions here while the system keeps backlink and lineage.'}
+                </p>
+              )}
+              {!isCompact && readinessWarnings.length > 0 && (
+                <div className="mt-3 rounded-2xl border border-amber-300/40 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
+                  <div className="font-semibold">
+                    {isPolish ? 'Warunki downstream' : 'Downstream conditions'}
+                  </div>
+                  <ul className="mt-1 list-disc space-y-1 pl-4">
+                    {readinessWarnings.slice(0, 3).map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            {!isCompact && (
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
+                  <div className="text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Pewność' : 'Confidence'}
+                  </div>
+                  <div className="font-semibold text-slate-900 dark:text-slate-100">
+                    {source.confidence || '-'}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
+                  <div className="text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Dowody' : 'Evidence'}
+                  </div>
+                  <div className="font-semibold text-slate-900 dark:text-slate-100">
+                    {source.evidenceCount ?? 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
+                  <div className="text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Sesje' : 'Sessions'}
+                  </div>
+                  <div className="font-semibold text-slate-900 dark:text-slate-100">
+                    {source.sourceSessionCount ?? 0}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className={`mt-4 grid gap-3 ${isCompact ? 'grid-cols-1' : 'lg:grid-cols-2'}`}>
+            <div className="space-y-2">
+              {!isCompact && (
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  {isPolish ? 'Dokumenty' : 'Documents'}
+                </div>
+              )}
+              <div
+                className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}
+              >
+                {DOC_TARGETS.map(renderAction)}
+              </div>
+            </div>
+            <div className="space-y-2">
+              {!isCompact && (
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  {isPolish ? 'Działania w aplikacji' : 'App actions'}
+                </div>
+              )}
+              <div
+                className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}
+              >
+                {APP_TARGETS.map(renderAction)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {composerTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-xl rounded-3xl border border-white/[0.08] bg-navy-900 p-5 shadow-2xl">

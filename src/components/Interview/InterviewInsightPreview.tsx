@@ -46,7 +46,6 @@ export interface InterviewInsightPreviewBodyProps {
   detailsExpanded: boolean;
   onToggleDetailsExpanded: () => void;
   onDetailsAction: (action: string) => void;
-  showActionPanel?: boolean;
 }
 
 export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyProps> = ({
@@ -61,7 +60,6 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
   detailsExpanded,
   onToggleDetailsExpanded,
   onDetailsAction,
-  showActionPanel = false,
 }) => {
   const pills: MetaPill[] = [
     {
@@ -129,22 +127,6 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
           },
         ]}
       />
-      {showActionPanel && (
-        <ArtifactActionPanel
-          variant="compact"
-          isPolish={isPolish}
-          source={{
-            type: 'interview_insight',
-            id: insight.id,
-            title: insight.title || (isPolish ? 'Insight' : 'Insight'),
-            status: insight.status,
-            content: detailsText,
-            confidence: insight.confidence || null,
-            evidenceCount: 0,
-            sourceSessionCount: insight.sourceSessionCount || (insight.sessionId ? 1 : 0),
-          }}
-        />
-      )}
     </div>
   );
 };
@@ -153,14 +135,24 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
 
 export interface InterviewInsightPreviewFooterProps {
   insight: {
+    id?: string;
     exportedToTools?: boolean;
     exportedToAssessment?: boolean;
     title?: string;
+    status?: string;
+    content?: string;
+    description?: string;
+    sourceQuote?: string;
+    confidence?: string;
+    sourceSessionCount?: number;
+    sessionId?: string;
   };
   isPolish: boolean;
   onOpenFull: () => void;
   onExportToTools?: () => void;
   onCopyLink?: () => void;
+  /** Show the compact "What next" create-strip above the AI hints (default true). */
+  showActionPanel?: boolean;
 }
 
 export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFooterProps> = ({
@@ -169,6 +161,7 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
   onOpenFull,
   onExportToTools,
   onCopyLink,
+  showActionPanel = true,
 }) => {
   const buttons: ActionRow['buttons'] = [
     {
@@ -211,6 +204,25 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
 
   return (
     <div className="space-y-0">
+      {showActionPanel && (
+        <>
+          <ArtifactActionPanel
+            variant="compact"
+            isPolish={isPolish}
+            source={{
+              type: 'interview_insight',
+              id: insight.id || '',
+              title: insight.title || (isPolish ? 'Insight' : 'Insight'),
+              status: insight.status,
+              content: insight.content || insight.description || insight.sourceQuote || '',
+              confidence: insight.confidence || null,
+              evidenceCount: 0,
+              sourceSessionCount: insight.sourceSessionCount || (insight.sessionId ? 1 : 0),
+            }}
+          />
+          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        </>
+      )}
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip hints={aiHints} />
       </div>
