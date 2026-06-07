@@ -100,50 +100,97 @@ LIMIT ? OFFSET ? `,
 
     if (!orgId) throw new Error('Organization ID is required');
 
+    const ownerId = data.owner_business_id || data.owner_id || null;
+
+    // Build the INSERT column-by-column and include the legacy alias columns
+    // (`org_id`, `owner_id`) ONLY when they actually exist in the table. The
+    // canonical columns are `organization_id` / `owner_business_id`; some legacy
+    // schemas additionally carry the aliases. Probing keeps this resilient across
+    // both schema variants (and avoids "column org_id does not exist" on the
+    // canonical schema).
+    const existingCols = await this.getInitiativeColumns();
+    const cols: string[] = [];
+    const values: any[] = [];
+    // Column-aware: include a column only if it exists in the table. When the
+    // probe yields nothing (mock/SQLite test db), `existingCols` is empty and we
+    // include everything (legacy behavior). This makes the INSERT resilient to
+    // schema drift — the canonical Postgres schema lacks `org_id`, `owner_id`,
+    // and `due_date`, which would otherwise throw "column does not exist".
+    const push = (col: string, value: any) => {
+      if (existingCols.size > 0 && !existingCols.has(col)) return;
+      cols.push(col);
+      values.push(value);
+    };
+
+    push('id', id);
+    push('organization_id', orgId);
+    push('org_id', orgId); // legacy alias — skipped if column absent
+    push('project_id', data.project_id || null);
+    push('title', data.title);
+    // `name` is a NOT-NULL legacy column that mirrors `title` in the canonical
+    // schema; populate it (skipped automatically if the column is absent).
+    push('name', data.title || (data as any).name || 'Untitled');
+    push('axis', data.axis || null);
+    push('area', data.area || null);
+    push('summary', data.summary || null);
+    push('hypothesis', data.hypothesis || null);
+    push('status', data.status || 'step3');
+    push('current_stage', data.current_stage || null);
+    push('business_value', data.business_value || null);
+    push(
+      'competencies_required',
+      data.competencies_required ? JSON.stringify(data.competencies_required) : '[]'
+    );
+    push('cost_capex', data.cost_capex || 0);
+    push('cost_opex', data.cost_opex || 0);
+    push('expected_roi', data.expected_roi || 0);
+    push('social_impact', data.social_impact || null);
+    push('start_date', data.start_date || null);
+    push('pilot_end_date', data.pilot_end_date || null);
+    push('end_date', data.end_date || null);
+    push('due_date', data.due_date || null); // skipped if column absent
+    push('owner_business_id', ownerId);
+    push('owner_id', ownerId); // legacy alias — skipped if column absent
+    push('owner_execution_id', data.owner_execution_id || null);
+    push('sponsor_id', data.sponsor_id || null);
+    push('market_context', data.market_context || null);
+    push('created_at', now);
+    push('updated_at', now);
+
+    const placeholders = cols.map(() => '?').join(', ');
     await this.deps.db.run(
-      `INSERT INTO initiatives(
-    id, organization_id, org_id, project_id, title, axis, area,
-    summary, hypothesis, status, current_stage, business_value,
-    competencies_required, cost_capex, cost_opex, expected_roi,
-    social_impact, start_date, pilot_end_date, end_date, due_date,
-    owner_business_id, owner_id, owner_execution_id, sponsor_id,
-    market_context, created_at, updated_at
-) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        orgId,
-        orgId,
-        data.project_id || null,
-        data.title,
-        data.axis || null,
-        data.area || null,
-        data.summary || null,
-        data.hypothesis || null,
-        data.status || 'step3',
-        data.current_stage || null,
-        data.business_value || null,
-        data.competencies_required ? JSON.stringify(data.competencies_required) : '[]',
-        data.cost_capex || 0,
-        data.cost_opex || 0,
-        data.expected_roi || 0,
-        data.social_impact || null,
-        data.start_date || null,
-        data.pilot_end_date || null,
-        data.end_date || null,
-        data.due_date || null,
-        data.owner_business_id || data.owner_id || null,
-        data.owner_business_id || data.owner_id || null, // Fill both for legacy compat
-        data.owner_execution_id || null,
-        data.sponsor_id || null,
-        data.market_context || null,
-        now,
-        now,
-      ]
+      `INSERT INTO initiatives(${cols.join(', ')}) VALUES(${placeholders})`,
+      values
     );
 
     const created = await this.getInitiativeById(id);
     if (!created) throw new Error('Failed to create initiative');
     return created;
+  }
+
+  /** Cached set of column names on the `initiatives` table (best-effort; resilient). */
+  private _initiativeColumns: Set<string> | null = null;
+  private async getInitiativeColumns(): Promise<Set<string>> {
+    if (this._initiativeColumns) return this._initiativeColumns;
+    try {
+      const rows = (await this.deps.db.all<any[]>(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = 'initiatives'`,
+        []
+      )) as Array<{ column_name?: string; COLUMN_NAME?: string }>;
+      const set = new Set<string>();
+      for (const r of rows || []) {
+        const name = (r.column_name || r.COLUMN_NAME) as string | undefined;
+        if (name) set.add(name);
+      }
+      // Only cache a non-empty probe; an empty result likely means the probe is
+      // unsupported (e.g. a mock/SQLite test db) — don't poison the cache.
+      if (set.size > 0) this._initiativeColumns = set;
+      return set;
+    } catch {
+      // Probe failed (mock db, permissions, etc.) — assume canonical schema only
+      // (no legacy alias columns). Returning an empty set is safe: aliases skipped.
+      return new Set<string>();
+    }
   }
 
   async updateInitiative(

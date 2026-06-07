@@ -7793,8 +7793,6 @@ ${JSON.stringify(questions || [], null, 2)}
     const { id } = req.params;
     const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } = req.body;
 
-    logger.info(`[updateInsight] START id=${id} body-keys=${Object.keys(req.body).join(',')}`);
-
     const updates: string[] = [];
     const values: any[] = [];
 
@@ -7816,9 +7814,7 @@ ${JSON.stringify(questions || [], null, 2)}
     }
     // Lifecycle: archive / restore (soft, reversible). Ensure columns exist first.
     if (archived !== undefined) {
-      logger.info(`[updateInsight] calling ensureInterviewInsightLifecycleColumns`);
       await ensureInterviewInsightLifecycleColumns();
-      logger.info(`[updateInsight] ensureInterviewInsightLifecycleColumns done`);
       if (archived) {
         updates.push('archived_at = ?', 'archived_by = ?');
         values.push(new Date().toISOString(), user.id);
@@ -7830,9 +7826,7 @@ ${JSON.stringify(questions || [], null, 2)}
 
     // Mark Complete — AI signal only; persisted as JSON { sectionId: boolean, ... }
     if (sectionCompletions !== undefined && sectionCompletions !== null) {
-      logger.info(`[updateInsight] calling ensureInsightSectionCompletionsColumn`);
       await ensureInsightSectionCompletionsColumn();
-      logger.info(`[updateInsight] ensureInsightSectionCompletionsColumn done`);
       updates.push('section_completions = ?');
       values.push(
         typeof sectionCompletions === 'string'
@@ -7851,12 +7845,10 @@ ${JSON.stringify(questions || [], null, 2)}
     values.push(id);
     values.push(user.organizationId);
 
-    logger.info(`[updateInsight] running UPDATE, updates=[${updates.join(', ')}]`);
     await queryHelpers.queryRun(
       `UPDATE interview_insights SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
       values
     );
-    logger.info(`[updateInsight] UPDATE done`);
 
     if (typeof title === 'string') {
       void logInterviewInsightActivity({

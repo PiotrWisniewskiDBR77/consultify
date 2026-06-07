@@ -22,21 +22,30 @@ import {
   Copy,
   Crosshair,
   DollarSign,
+  Download,
   Edit3,
   ExternalLink,
+  FileDown,
+  FileText,
+  FileType,
   Flag,
   FolderOpen,
   GitBranch,
   GitFork,
+  GraduationCap,
   History,
+  Lightbulb,
   Link2,
   ListChecks,
   Loader2,
   MessageSquare,
   Monitor,
   MoreVertical,
+  NotebookPen,
+  Package,
   Play,
   Plus,
+  Presentation,
   Scale,
   Search,
   Shield,
@@ -50,15 +59,13 @@ import {
   Users,
   X,
   XCircle,
-  FileText,
-  GraduationCap,
-  Lightbulb,
-  Package,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
+import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -79,6 +86,7 @@ import {
   saveInitiativeWriteTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
+import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -529,6 +537,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
+
+  // Present mode (Phase A3) — fullscreen card-by-card walk of the canonical sections.
+  const [presentOpen, setPresentOpen] = useState(false);
+  // Fork (Phase A4) — in-flight guard for the toolbar Fork action.
+  const [isForking, setIsForking] = useState(false);
+  // Smart Export dialog (Phase E) — section picker + target chooser.
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportSelectedSectionIds, setExportSelectedSectionIds] = useState<Set<string> | null>(
+    null
+  );
+  const [isExporting, setIsExporting] = useState<null | 'markdown' | 'pdf' | 'notebook'>(null);
 
   // N-mode comment state (for CommentsCanvas — identical to Task)
   const [nCommentDraft, setNCommentDraft] = useState('');
@@ -1164,7 +1183,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           sectionCompletions: prevMap,
           section_completions: prevMap,
         }));
-        toast.error(isPolish ? 'Nie udało się zapisać statusu sekcji' : 'Failed to save section status');
+        toast.error(
+          isPolish ? 'Nie udało się zapisać statusu sekcji' : 'Failed to save section status'
+        );
       }
     },
     [sectionCompletions, initiativeId, isPolish]
@@ -1194,10 +1215,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     () => parseJsonField(initiative?.changeLog ?? initiative?.change_log),
     [initiative, parseJsonField]
   );
-  const okrItems = useMemo(
-    () => parseJsonField(initiative?.okrs),
-    [initiative, parseJsonField]
-  );
+  const okrItems = useMemo(() => parseJsonField(initiative?.okrs), [initiative, parseJsonField]);
 
   const [hypothesisDraft, setHypothesisDraft] = useState('');
   const [lessonsDraft, setLessonsDraft] = useState('');
@@ -8018,7 +8036,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       }
                     }}
                     placeholder={
-                      isPolish ? 'Opisz zmianę i naciśnij Enter…' : 'Describe a change, press Enter…'
+                      isPolish
+                        ? 'Opisz zmianę i naciśnij Enter…'
+                        : 'Describe a change, press Enter…'
                     }
                     className="flex-1 rounded-lg border border-slate-300/50 dark:border-navy-600/60 bg-transparent px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400"
                   />
@@ -8162,7 +8182,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         }
                         rows={2}
                         placeholder={
-                          isPolish ? 'Kluczowe rezultaty (po jednym w wierszu)…' : 'Key results (one per line)…'
+                          isPolish
+                            ? 'Kluczowe rezultaty (po jednym w wierszu)…'
+                            : 'Key results (one per line)…'
                         }
                         className="w-full bg-transparent text-xs text-slate-600 dark:text-slate-300 focus:outline-none resize-none border-t border-slate-100 dark:border-navy-700/40 pt-2"
                       />
@@ -8282,9 +8304,114 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // no `heading` is passed here (avoids a double header). The contextual
       // section-AI + Mark Complete affordances live in the toolbar.
       const completed = !!sectionCompletions[section.id];
+
+      // Canon B5: key empty-able sections get a "way forward" CTA in their empty
+      // state. The CTA reuses each section's EXISTING handler (no new endpoints).
+      // teal styling = AI affordance; add-actions reuse local mutators.
+      type EmptyCfg = {
+        isEmpty: boolean;
+        emptyState: NonNullable<React.ComponentProps<typeof NModeSectionWrapper>['emptyState']>;
+      };
+      const aiCta = {
+        label: { en: 'Generate with AI', pl: 'Generuj z AI' },
+        onClick: () => {
+          if (!canUseAi) return;
+          void handleGenerateAI(section.id);
+        },
+      };
+      const emptyConfigById: Record<string, EmptyCfg> = {
+        hypothesis: {
+          isEmpty: !(hypothesisDraft || '').trim(),
+          emptyState: {
+            icon: Lightbulb,
+            message: {
+              en: 'No hypothesis yet — state what you believe and how you’ll test it.',
+              pl: 'Brak hipotezy — opisz, co zakładasz i jak to zweryfikujesz.',
+            },
+            cta: aiCta,
+          },
+        },
+        'lessons-learned': {
+          isEmpty: !(lessonsDraft || '').trim(),
+          emptyState: {
+            icon: GraduationCap,
+            message: {
+              en: 'No lessons captured yet — what worked, what didn’t?',
+              pl: 'Brak wniosków — co zadziałało, a co nie?',
+            },
+            cta: aiCta,
+          },
+        },
+        'change-log': {
+          isEmpty: changeLogItems.length === 0,
+          emptyState: {
+            icon: FileText,
+            message: {
+              en: 'No change-log entries yet.',
+              pl: 'Brak wpisów w dzienniku zmian.',
+            },
+            cta: {
+              label: { en: 'Add entry', pl: 'Dodaj wpis' },
+              onClick: () => setActiveNSection('change-log'),
+            },
+          },
+        },
+        okr: {
+          isEmpty: okrItems.length === 0,
+          emptyState: {
+            icon: Target,
+            message: {
+              en: 'No objectives yet — define an objective and its key results.',
+              pl: 'Brak celów — zdefiniuj cel i kluczowe rezultaty.',
+            },
+            cta: {
+              label: { en: 'Add objective', pl: 'Dodaj cel' },
+              onClick: () => {
+                addOkr(isPolish ? 'Nowy cel' : 'New objective');
+              },
+            },
+          },
+        },
+        'deliverables-milestones': {
+          isEmpty: deliverableItems.length === 0,
+          emptyState: {
+            icon: Package,
+            message: {
+              en: 'No deliverables or milestones yet.',
+              pl: 'Brak produktów ani kamieni milowych.',
+            },
+            cta: {
+              label: { en: 'Add milestone', pl: 'Dodaj kamień milowy' },
+              onClick: () =>
+                setDeliverableItems((prev) => [...prev, { id: genId(), text: '', done: false }]),
+            },
+          },
+        },
+        kpi: {
+          isEmpty: localKpis.length === 0,
+          emptyState: {
+            icon: TrendingUp,
+            message: {
+              en: 'No KPIs yet — generate measurable success metrics.',
+              pl: 'Brak KPI — wygeneruj mierzalne wskaźniki sukcesu.',
+            },
+            cta: aiCta,
+          },
+        },
+      };
+      const emptyCfg = emptyConfigById[section.id];
+      // Don't show the empty state on a section the user marked complete.
+      const showEmpty = !!emptyCfg && emptyCfg.isEmpty && !completed && canEditCards;
+
       const wrappedComponent =
         component != null ? (
-          <NModeSectionWrapper completed={completed}>{component}</NModeSectionWrapper>
+          <NModeSectionWrapper
+            completed={completed}
+            isEmpty={showEmpty}
+            emptyState={emptyCfg?.emptyState}
+          >
+            {component}
+          </NModeSectionWrapper>
         ) : (
           component
         );
@@ -8417,6 +8544,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     addOkr,
     updateOkr,
     removeOkr,
+    canUseAi,
+    handleGenerateAI,
+    setActiveNSection,
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
@@ -8439,6 +8569,336 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setActiveNSection(orderedNModeSectionsWithContent[0].id);
     }
   }, [orderedNModeSectionsWithContent, activeNSection]);
+
+  // ── Smart Export / Present (Phase A3 + E) ──────────────────────────────────
+  // Canonical, presentable sections in nav order, EXCLUDING Comments + Activity
+  // Log (records, not deliverable content). Drives Present mode, the export
+  // section picker, the markdown builder and the deck-card mapper.
+  const EXPORT_EXCLUDED_SECTION_IDS = useMemo(() => new Set(['comments', 'activity-log']), []);
+
+  const exportableSections = useMemo(
+    () =>
+      orderedNModeSectionsWithContent.filter(
+        (section) => !EXPORT_EXCLUDED_SECTION_IDS.has(section.id)
+      ),
+    [orderedNModeSectionsWithContent, EXPORT_EXCLUDED_SECTION_IDS]
+  );
+
+  const sectionLabel = useCallback(
+    (section: NModeSection): string => (isPolish ? section.label.pl : section.label.en),
+    [isPolish]
+  );
+
+  // Plain-text body for a single canonical section. Pulls from the same reactive
+  // state the canvas renders, so exports always mirror what the user sees.
+  const buildSectionBody = useCallback(
+    (sectionId: string): string => {
+      const lines = (arr: { text: string; done?: boolean }[]): string =>
+        arr
+          .filter((i) => (i.text || '').trim())
+          .map((i) => `- ${i.text.trim()}`)
+          .join('\n');
+      const strLines = (arr: string[]): string =>
+        arr
+          .filter((s) => (s || '').trim())
+          .map((s) => `- ${s.trim()}`)
+          .join('\n');
+
+      switch (sectionId) {
+        case 'initiative-definition':
+          return [
+            initiative?.title || initiative?.name
+              ? `**${initiative?.title || initiative?.name}**`
+              : '',
+            (summary || initiative?.summary || initiative?.description || '').toString().trim(),
+            inScopeItems.length
+              ? `\n_${isPolish ? 'W zakresie' : 'In scope'}_\n${strLines(inScopeItems)}`
+              : '',
+            outScopeItems.length
+              ? `\n_${isPolish ? 'Poza zakresem' : 'Out of scope'}_\n${strLines(outScopeItems)}`
+              : '',
+            killCriteriaItems.length
+              ? `\n_${isPolish ? 'Kryteria zatrzymania' : 'Kill criteria'}_\n${strLines(killCriteriaItems)}`
+              : '',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        case 'target-state-scope':
+          return targetStateItems.length || successCriteriaItems.length
+            ? [
+                successCriteriaItems.length
+                  ? `_${isPolish ? 'Kryteria sukcesu' : 'Success criteria'}_\n${lines(successCriteriaItems)}`
+                  : '',
+                targetStateItems.length
+                  ? `_${isPolish ? 'Stan docelowy' : 'Target state'}_\n${lines(targetStateItems)}`
+                  : '',
+              ]
+                .filter(Boolean)
+                .join('\n\n')
+            : '';
+        case 'deliverables-milestones':
+          return lines(deliverableItems);
+        case 'kpi':
+          return localKpis
+            .map(
+              (k) => `- ${toEnglishKpiName(k.name || '', isPolish)}${k.unit ? ` (${k.unit})` : ''}`
+            )
+            .join('\n');
+        case 'tasks':
+          return tasks
+            .map((t: any) => `- ${t.title || t.name || ''}`.trim())
+            .filter((l) => l !== '-')
+            .join('\n');
+        case 'decisions':
+          return decisions
+            .map((d: any) => `- ${d.title || d.name || ''}`.trim())
+            .filter((l) => l !== '-')
+            .join('\n');
+        case 'risk-raid':
+          return raidItems
+            .map((r: any) => `- [${r.type || 'RAID'}] ${r.title || r.description || ''}`.trim())
+            .join('\n');
+        case 'okr':
+          return okrItems
+            .map((o: any) => `- ${o.objective || ''}`.trim())
+            .filter((l) => l !== '-')
+            .join('\n');
+        case 'change-log':
+          return changeLogItems
+            .map((e: any) => `- ${e.change || e.text || ''}`.trim())
+            .filter((l) => l !== '-')
+            .join('\n');
+        case 'hypothesis':
+          return (hypothesisDraft || '').trim();
+        case 'lessons-learned':
+          return (lessonsDraft || '').trim();
+        default:
+          return '';
+      }
+    },
+    [
+      initiative,
+      summary,
+      inScopeItems,
+      outScopeItems,
+      killCriteriaItems,
+      targetStateItems,
+      successCriteriaItems,
+      deliverableItems,
+      localKpis,
+      tasks,
+      decisions,
+      raidItems,
+      okrItems,
+      changeLogItems,
+      hypothesisDraft,
+      lessonsDraft,
+      isPolish,
+    ]
+  );
+
+  // Markdown across a chosen set of section ids, in canonical (nav) order.
+  const buildExportMarkdown = useCallback(
+    (sectionIds: Set<string>): string => {
+      const title = String(initiative?.title || initiative?.name || 'Initiative').trim();
+      const parts: string[] = [`# ${title}`, ''];
+      for (const section of exportableSections) {
+        if (!sectionIds.has(section.id)) continue;
+        const body = buildSectionBody(section.id);
+        parts.push(`## ${sectionLabel(section)}`);
+        parts.push(body.trim() ? body : isPolish ? '_(brak treści)_' : '_(no content)_');
+        parts.push('');
+      }
+      return parts.join('\n');
+    },
+    [exportableSections, buildSectionBody, sectionLabel, initiative, isPolish]
+  );
+
+  // Map chosen sections → PresentMode DeckCards (canonical order). Title card +
+  // one card per section; cSpan drives a heading-level hint.
+  const buildDeckCards = useCallback(
+    (sectionIds: Set<string>): DeckCard[] => {
+      const blankBg = { type: 'theme' as const };
+      const blankAnim = { entrance: 'fade' as const, block_stagger: false };
+      const mkCard = (
+        id: string,
+        order: number,
+        title: string,
+        body: string,
+        level: number
+      ): DeckCard => {
+        const blocks: CardBlock[] = [
+          {
+            block_id: `${id}-h`,
+            card_id: id,
+            type: 'heading',
+            content: { text: title, level },
+            is_refreshable: false,
+            position: { area: 'full', order: 0 },
+            ai_editable: false,
+          },
+        ];
+        if (body.trim()) {
+          blocks.push({
+            block_id: `${id}-p`,
+            card_id: id,
+            type: 'paragraph',
+            content: { text: body },
+            is_refreshable: false,
+            position: { area: 'full', order: 1 },
+            ai_editable: false,
+          });
+        }
+        return {
+          card_id: id,
+          deck_id: `initiative-${initiativeId}`,
+          order_index: order,
+          intent: 'content',
+          layout_id: 'default',
+          title,
+          blocks,
+          source_refs: [],
+          has_refreshable_data: false,
+          background: blankBg,
+          animations: blankAnim,
+          is_locked: false,
+        };
+      };
+
+      const title = String(initiative?.title || initiative?.name || 'Initiative').trim();
+      const cards: DeckCard[] = [mkCard('title-card', 0, title, '', 1)];
+      let order = 1;
+      for (const section of exportableSections) {
+        if (!sectionIds.has(section.id)) continue;
+        // cSpan>=3 → "feature" section gets a larger heading hint (level 1), else level 2.
+        const level = (section.cSpan ?? 1) >= 3 ? 1 : 2;
+        cards.push(
+          mkCard(section.id, order++, sectionLabel(section), buildSectionBody(section.id), level)
+        );
+      }
+      return cards;
+    },
+    [exportableSections, buildSectionBody, sectionLabel, initiative, initiativeId]
+  );
+
+  const presentDeckCards = useMemo(() => {
+    const allIds = new Set(exportableSections.map((s) => s.id));
+    return buildDeckCards(allIds);
+  }, [exportableSections, buildDeckCards]);
+
+  // Effective export selection: defaults to all exportable sections until the
+  // user toggles something.
+  const effectiveExportSelection = useMemo(() => {
+    if (exportSelectedSectionIds) return exportSelectedSectionIds;
+    return new Set(exportableSections.map((s) => s.id));
+  }, [exportSelectedSectionIds, exportableSections]);
+
+  const toggleExportSection = useCallback(
+    (id: string) => {
+      setExportSelectedSectionIds((prev) => {
+        const base = prev ?? new Set(exportableSections.map((s) => s.id));
+        const next = new Set(base);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    },
+    [exportableSections]
+  );
+
+  const handleExportMarkdown = useCallback(() => {
+    setIsExporting('markdown');
+    try {
+      const md = buildExportMarkdown(effectiveExportSelection);
+      const safeName = String(initiative?.title || initiative?.name || 'initiative')
+        .replace(/[^\w.-]+/g, '_')
+        .slice(0, 80);
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName || 'initiative'}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(isPolish ? 'Pobrano Markdown' : 'Markdown downloaded');
+      setShowExportDialog(false);
+    } catch {
+      toast.error(isPolish ? 'Eksport nie powiódł się' : 'Export failed');
+    } finally {
+      setIsExporting(null);
+    }
+  }, [buildExportMarkdown, effectiveExportSelection, initiative, isPolish]);
+
+  const handleExportReportPDF = useCallback(async () => {
+    setIsExporting('pdf');
+    try {
+      const safeName = String(initiative?.title || initiative?.name || 'initiative')
+        .replace(/[^\w.-]+/g, '_')
+        .slice(0, 80);
+      const ok = await exportReportToPDF('initiative-export-printable', safeName || 'initiative');
+      if (ok === false) {
+        toast.error(isPolish ? 'Eksport PDF nie powiódł się' : 'PDF export failed');
+      } else {
+        toast.success(isPolish ? 'Wyeksportowano PDF' : 'PDF exported');
+        setShowExportDialog(false);
+      }
+    } catch {
+      toast.error(isPolish ? 'Eksport PDF nie powiódł się' : 'PDF export failed');
+    } finally {
+      setIsExporting(null);
+    }
+  }, [initiative, isPolish]);
+
+  const handleExportDeck = useCallback(() => {
+    // No server-side deck exists for an ad-hoc initiative, so "Deck" opens the
+    // in-app Present mode walk of the selected sections (reuses the same mapping).
+    setShowExportDialog(false);
+    setPresentOpen(true);
+  }, []);
+
+  const handleExportNotebook = useCallback(async () => {
+    setIsExporting('notebook');
+    try {
+      const md = buildExportMarkdown(effectiveExportSelection);
+      await Api.post('/my-work/notebook/pages', {
+        title: String(initiative?.title || initiative?.name || 'Initiative'),
+        content: md,
+        source: 'initiative',
+        metadata: {
+          initiativeId,
+          sectionIds: Array.from(effectiveExportSelection),
+        },
+      });
+      toast.success(isPolish ? 'Zapisano w Notatniku' : 'Saved to Notebook');
+      setShowExportDialog(false);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zapisać w Notatniku' : 'Failed to save to Notebook');
+    } finally {
+      setIsExporting(null);
+    }
+  }, [buildExportMarkdown, effectiveExportSelection, initiative, initiativeId, isPolish]);
+
+  // Fork (Phase A4) — clone the initiative server-side, then deep-link to the copy.
+  const handleFork = useCallback(async () => {
+    if (isForking) return;
+    setIsForking(true);
+    try {
+      const forked = await V8PlanningApi.forkInitiative(initiativeId);
+      const newId = String((forked as any)?.id || '');
+      toast.success(isPolish ? 'Inicjatywa sklonowana' : 'Initiative forked');
+      if (newId) {
+        window.location.assign(
+          `${window.location.origin}/initiatives?open=${encodeURIComponent(newId)}&mode=doc`
+        );
+      }
+    } catch (e: any) {
+      toast.error(e?.message || (isPolish ? 'Nie udało się sklonować' : 'Failed to fork'));
+    } finally {
+      setIsForking(false);
+    }
+  }, [isForking, initiativeId, isPolish]);
 
   // N-mode status actions for NModeActionBar
   // Dynamically built from statusActions (workflow transitions) + contextActions (create buttons)
@@ -9571,12 +10031,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <ToolbarIconButton
                       icon={<GitFork size={14} />}
                       tooltip={isPolish ? 'Forkuj' : 'Fork'}
-                      onClick={() => {}}
+                      onClick={() => void handleFork()}
+                    />
+                    <ToolbarIconButton
+                      icon={<Download size={14} />}
+                      tooltip={isPolish ? 'Eksportuj' : 'Export'}
+                      onClick={() => setShowExportDialog(true)}
                     />
                     <ToolbarIconButton
                       icon={<Monitor size={14} />}
                       tooltip={isPolish ? 'Prezentuj' : 'Present'}
-                      onClick={() => {}}
+                      onClick={() => setPresentOpen(true)}
                     />
 
                     {/* ── Slot 9: artifact-level AI (solid teal) ─────────────
@@ -9629,6 +10094,193 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           </div>
         ) : null}
       </div>
+
+      {/* ── Present mode (Phase A3) — fullscreen card walk of canonical sections ── */}
+      {presentOpen && presentDeckCards.length > 0 && (
+        <PresentMode
+          cards={presentDeckCards}
+          title={String(initiative?.title || initiative?.name || 'Initiative')}
+          onExit={() => setPresentOpen(false)}
+        />
+      )}
+
+      {/* ── Smart Export dialog (Phase E) — section picker + targets ───────────── */}
+      {showExportDialog && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowExportDialog(false)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                {isPolish ? 'Eksportuj inicjatywę' : 'Export initiative'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowExportDialog(false)}
+                className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                aria-label={isPolish ? 'Zamknij' : 'Close'}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Section picker */}
+            <div className="px-5 py-4 overflow-y-auto">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Sekcje do eksportu' : 'Sections to export'}
+                </p>
+                <div className="flex gap-2 text-xs">
+                  <button
+                    type="button"
+                    className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    onClick={() =>
+                      setExportSelectedSectionIds(new Set(exportableSections.map((s) => s.id)))
+                    }
+                  >
+                    {isPolish ? 'Wszystkie' : 'All'}
+                  </button>
+                  <span className="text-slate-300 dark:text-navy-600">·</span>
+                  <button
+                    type="button"
+                    className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    onClick={() => setExportSelectedSectionIds(new Set())}
+                  >
+                    {isPolish ? 'Żadne' : 'None'}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                {exportableSections.map((section) => {
+                  const checked = effectiveExportSelection.has(section.id);
+                  return (
+                    <label
+                      key={section.id}
+                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/60 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleExportSection(section.id)}
+                        className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                      />
+                      <span className="text-sm text-slate-700 dark:text-slate-200">
+                        {sectionLabel(section)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Targets */}
+            <div className="px-5 py-4 border-t border-slate-200 dark:border-navy-700 space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Format' : 'Format'}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportMarkdown}
+                  disabled={isExporting !== null || effectiveExportSelection.size === 0}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                >
+                  {isExporting === 'markdown' ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <FileType size={15} />
+                  )}
+                  Markdown
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleExportReportPDF()}
+                  disabled={isExporting !== null || effectiveExportSelection.size === 0}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                >
+                  {isExporting === 'pdf' ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <FileDown size={15} />
+                  )}
+                  {isPolish ? 'Raport (PDF)' : 'Report (PDF)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportDeck}
+                  disabled={effectiveExportSelection.size === 0}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                >
+                  <Presentation size={15} />
+                  {isPolish ? 'Prezentacja' : 'Deck'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleExportNotebook()}
+                  disabled={isExporting !== null || effectiveExportSelection.size === 0}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                >
+                  {isExporting === 'notebook' ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <NotebookPen size={15} />
+                  )}
+                  {isPolish ? 'Notatnik' : 'Notebook'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Off-screen printable container — captured by exportReportToPDF. */}
+          <div
+            id="initiative-export-printable"
+            aria-hidden="true"
+            style={{
+              position: 'fixed',
+              left: '-10000px',
+              top: 0,
+              width: '794px',
+              background: '#ffffff',
+              color: '#0f172a',
+              padding: '40px',
+              fontFamily: 'system-ui, sans-serif',
+            }}
+          >
+            <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '16px' }}>
+              {String(initiative?.title || initiative?.name || 'Initiative')}
+            </h1>
+            {exportableSections
+              .filter((s) => effectiveExportSelection.has(s.id))
+              .map((section) => {
+                const body = buildSectionBody(section.id);
+                return (
+                  <div key={section.id} style={{ marginBottom: '20px' }}>
+                    <h2
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        marginBottom: '6px',
+                        borderBottom: '1px solid #e2e8f0',
+                        paddingBottom: '4px',
+                      }}
+                    >
+                      {sectionLabel(section)}
+                    </h2>
+                    <div style={{ fontSize: '13px', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                      {body.trim() || (isPolish ? '(brak treści)' : '(no content)')}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
     </InitiativeContext.Provider>
   );
 };

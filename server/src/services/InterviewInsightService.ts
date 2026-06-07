@@ -360,6 +360,7 @@ export interface Insight {
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
   archivedAt?: string | null;
+  sectionCompletions?: Record<string, boolean> | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -2452,6 +2453,9 @@ ${answerText}
       exportedToTools: row.exported_to_tools === 1,
       exportedToAssessment: row.exported_to_assessment === 1,
       archivedAt: row.archived_at || null,
+      sectionCompletions: row.section_completions
+        ? safeJsonObject<Record<string, boolean>>(row.section_completions, {})
+        : null,
       createdBy: row.created_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

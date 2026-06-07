@@ -770,6 +770,17 @@ export const V8InterviewApi = {
       {}
     ),
 
+  /**
+   * Fork an insight into a new, independent copy (Phase A4).
+   * Backend returns `{ data: { insight: <newInsight with new id> } }`; the
+   * v8 client unwraps `.data`, so we resolve to the new insight object.
+   */
+  forkInsight: (id: string) =>
+    v8Post<{ insight: V8InterviewInsight }>(
+      `/interview/insights/${encodeURIComponent(id)}/fork`,
+      {}
+    ).then((res) => res.insight),
+
   updateInsight: (
     id: string,
     payload: {

@@ -60,6 +60,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
+import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
+import type { DeckCard } from '@/components/Presentations/wizard/types';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
@@ -98,6 +100,7 @@ import {
   type V8InterviewReportReadiness,
   type V8InterviewReportWorksheetStatus,
 } from '@/services/api/v8/interview';
+import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
 
@@ -658,6 +661,11 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
 
 // ── Component ────────────────────────────────────────────────────────────────
 
+// Phase E — id of the hidden, print-only container captured by the Report (PDF)
+// export. Holds the canonical insight sections so the PDF is always complete
+// regardless of which C-board section is currently active on screen.
+const REPORT_PRINT_ELEMENT_ID = 'insight-report-print-root';
+
 export const InsightViewer: React.FC<InsightViewerProps> = ({
   insightId,
   onClose,
@@ -764,6 +772,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [exportTarget, setExportTarget] = useState<ExportTargetId>('note');
   const [exportSelectedIds, setExportSelectedIds] = useState<Set<string>>(new Set());
   const [exportRunning, setExportRunning] = useState(false);
+
+  // Phase A3 — fullscreen Present mode (read-only deck over canonical sections)
+  const [presentOpen, setPresentOpen] = useState(false);
+  // Phase A4 — Fork in-flight guard
+  const [isForking, setIsForking] = useState(false);
 
   // #26 toolbar — uniform outline dropdowns (Export ▾ / ✨ AI ▾)
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -1920,6 +1933,52 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setIsRegenerating(false);
     }
   };
+
+  // ── Phase A4 — Fork ────────────────────────────────────────────────────────
+  // Creates an independent copy of this insight (new id) and opens it. Reuses
+  // the same `moduleHub.openDocuments.interview` mechanism the source-session
+  // open uses, so the forked insight lands as a fresh tab in the Interview hub.
+  const handleFork = useCallback(async () => {
+    if (!insight || isForking) return;
+    setIsForking(true);
+    try {
+      const newInsight = await V8InterviewApi.forkInsight(insight.id);
+      if (!newInsight?.id) {
+        toast.error(isPolish ? 'Nie udało się utworzyć kopii' : 'Failed to fork insight');
+        return;
+      }
+      toast.success(isPolish ? 'Utworzono kopię insightu' : 'Insight forked');
+      try {
+        const raw = window.sessionStorage.getItem('moduleHub.openDocuments.interview');
+        const parsed = raw ? JSON.parse(raw) : {};
+        const openDocuments = Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
+        const exists = openDocuments.some((d: any) => d?.id === newInsight.id);
+        const newDoc = {
+          id: newInsight.id,
+          type: 'interview_insight',
+          name: newInsight.title || (isPolish ? 'Insight' : 'Insight'),
+          status: newInsight.status || 'active',
+          data: {
+            id: newInsight.id,
+            name: newInsight.title || 'Insight',
+            status: newInsight.status || 'active',
+          },
+        };
+        const nextDocuments = exists ? openDocuments : [...openDocuments, newDoc];
+        window.sessionStorage.setItem(
+          'moduleHub.openDocuments.interview',
+          JSON.stringify({ openDocuments: nextDocuments, activeDocumentId: newInsight.id })
+        );
+      } catch {
+        // sessionStorage best-effort; navigation still happens below.
+      }
+      navigate(ROUTES.INTERVIEW);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się utworzyć kopii' : 'Failed to fork insight');
+    } finally {
+      setIsForking(false);
+    }
+  }, [insight, isForking, isPolish, navigate]);
 
   // #25 — best-effort section-filtered markdown. Matches selected section
   // labels (en + pl) against the insight's markdown headings and keeps the
@@ -6004,6 +6063,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   pl: 'Ta sekcja pokazuje, gdzie respondenci się zgadzają, a gdzie się różnią. Pojawi się, gdy insight łączy wiele perspektyw (≥2 respondentów lub sesji) i AI wykryje wspólne, lokalne lub sprzeczne tematy.',
                   en: 'This section maps where respondents agree vs. disagree. It populates once the insight spans multiple perspectives (≥2 respondents or sessions) and the AI detects shared, local, or contradicted topics.',
                 },
+                cta: {
+                  label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' },
+                  onClick: handleRegenerate,
+                },
               }}
             >
               <Callout
@@ -6109,6 +6172,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   pl: 'Tu pojawią się niewypowiedziane założenia — twierdzenia oparte na jednym głosie, niskiej pewności lub przyjęte bez dowodu. Populuje się z analizy AI i tematów o słabym pokryciu.',
                   en: 'Unstated assumptions surface here — claims resting on a single voice, low confidence, or taken as given without evidence. Populates from AI analysis and weakly-covered topics.',
                 },
+                cta: {
+                  label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' },
+                  onClick: handleRegenerate,
+                },
               }}
             >
               <Callout
@@ -6183,6 +6250,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   pl: 'Tu pojawi się to, czego NIE powiedziano — tematy oczekiwane, lecz nieporuszone, pytania bez odpowiedzi i luki w pokryciu. Populuje się z luk pokrycia AI i brakujących danych insightu.',
                   en: 'What was notably NOT said appears here — expected-but-absent topics, unanswered questions, and coverage gaps. Populates from AI coverage gaps and the insight’s missing-data list.',
                 },
+                cta: {
+                  label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' },
+                  onClick: handleRegenerate,
+                },
               }}
             >
               <Callout
@@ -6233,6 +6304,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 message: {
                   pl: 'Tu zestawimy obok siebie, jak różne osoby mówią o tym samym. Populuje się, gdy insight ma ≥2 perspektywy z lokalnym podsumowaniem lub gdy w treści są cytaty źródłowe.',
                   en: 'Side-by-side of how different people talk about the same thing. Populates when the insight has ≥2 perspectives with a local summary, or when source quotes exist in the content.',
+                },
+                cta: {
+                  label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' },
+                  onClick: handleRegenerate,
                 },
               }}
             >
@@ -6313,6 +6388,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 message: {
                   pl: 'Tu zmapujemy emocjonalny ton wokół tematów — entuzjazm, napięcie, obawy. Populuje się z tematów AI (szanse vs. problemy vs. sprzeczności) i wykrytych sygnałów.',
                   en: 'The emotional tone around topics is mapped here — enthusiasm, tension, concern. Populates from AI topics (opportunities vs. issues vs. contradictions) and detected signals.',
+                },
+                cta: {
+                  label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' },
+                  onClick: handleRegenerate,
                 },
               }}
             >
@@ -7169,6 +7248,77 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     return nModeSectionsWithContent.filter((s) => !excluded.has(s.id));
   }, [nModeSectionsWithContent]);
 
+  // ── Phase A3 / Phase E — canonical section → DeckCard mapping ──────────────
+  // Used by both Present mode (fullscreen deck) and the `deck` export target.
+  // We walk INSIGHT_SECTIONS in CANONICAL order (the nav order, NOT any drag
+  // order) so the deck always reflects the doctrine sequence. Body text is
+  // derived from the section's rendered narrative (best-effort markdown match)
+  // with sensible fallbacks for the summary-style sections.
+  const buildDeckCards = useCallback((): DeckCard[] => {
+    const cards: DeckCard[] = [];
+    INSIGHT_SECTIONS.forEach((section, index) => {
+      // Resolve a plain-text body for this section.
+      let body = stripMarkdownPreview(buildFilteredMarkdown([section.id]) || '');
+      if (!body) {
+        if (section.id === 'executive-summary' || section.id === 'executive-memo') {
+          body = executiveSummary;
+        } else if (section.id === 'consulting-readout' || section.id === 'consulting-narrative') {
+          body = stripMarkdownPreview(insight?.content || '');
+        }
+      }
+      body = (body || '').trim();
+      // Skip sections that have no derivable content — a deck of empty slides
+      // helps no one.
+      if (!body) return;
+
+      const cardTitle = isPolish ? section.label.pl : section.label.en;
+      // cSpan drives a coarse layout hint: 3-wide sections get the full-bleed
+      // content layout, everything else a standard single-column body.
+      const layoutId = section.cSpan && section.cSpan >= 3 ? 'content_wide' : 'content_standard';
+
+      cards.push({
+        card_id: `insight-${insight?.id ?? 'unknown'}-${section.id}`,
+        deck_id: `insight-${insight?.id ?? 'unknown'}`,
+        order_index: index,
+        intent: index === 0 ? 'cover' : 'content',
+        layout_id: layoutId,
+        title: cardTitle,
+        blocks: [
+          {
+            block_id: `insight-${section.id}-body`,
+            card_id: `insight-${insight?.id ?? 'unknown'}-${section.id}`,
+            type: 'paragraph',
+            content: { text: body.slice(0, 1200) },
+            is_refreshable: false,
+            position: { area: 'full', order: 0 },
+            ai_editable: false,
+          },
+        ],
+        source_refs: [],
+        has_refreshable_data: false,
+        background: { type: 'theme' },
+        animations: { entrance: 'fade', block_stagger: false },
+        is_locked: false,
+      });
+    });
+    return cards;
+  }, [buildFilteredMarkdown, executiveSummary, insight?.content, insight?.id, isPolish]);
+
+  const presentCards = useMemo<DeckCard[]>(
+    () => (presentOpen ? buildDeckCards() : []),
+    [presentOpen, buildDeckCards]
+  );
+
+  // Plain-text canonical sections used by the hidden Report (PDF) print root.
+  const reportPrintSections = useMemo(
+    () =>
+      buildDeckCards().map((card) => ({
+        title: card.title,
+        body: String((card.blocks[0]?.content as { text?: string } | undefined)?.text ?? ''),
+      })),
+    [buildDeckCards]
+  );
+
   // #25 — target catalogue. `supported` targets feed the existing export
   // handlers with the chosen section ids; unsupported ones are shown but
   // disabled-with-tooltip (honest over fake).
@@ -7226,20 +7376,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         id: 'report',
         label: { en: 'Report', pl: 'Raport' },
         icon: FileText,
-        supported: false,
+        supported: true,
         hint: {
-          en: 'Section-aware Report export is not wired yet.',
-          pl: 'Eksport raportu z wyborem sekcji nie jest jeszcze podłączony.',
+          en: 'Download the selected sections as a PDF report.',
+          pl: 'Pobierz wybrane sekcje jako raport PDF.',
         },
       },
       {
         id: 'deck',
         label: { en: 'Deck', pl: 'Prezentacja' },
         icon: LayoutGrid,
-        supported: false,
+        supported: true,
         hint: {
-          en: 'Deck export is not wired yet.',
-          pl: 'Eksport prezentacji nie jest jeszcze podłączony.',
+          en: 'Export the canonical sections as a presentation deck.',
+          pl: 'Eksportuj sekcje kanoniczne jako prezentację.',
         },
       },
       {
@@ -7304,6 +7454,35 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'markdown':
           handleExportMarkdown(ids);
           break;
+        case 'report': {
+          // Phase E — render-to-PDF over the hidden printable container that
+          // holds the canonical insight sections (always complete, regardless of
+          // which C-board section is active).
+          const fileName = `${(insight?.title || 'insight').replace(/[^a-z0-9]/gi, '_')}.pdf`;
+          const ok = await exportReportToPDF(REPORT_PRINT_ELEMENT_ID, fileName);
+          if (ok) {
+            toast.success(isPolish ? 'Pobrano raport PDF' : 'Downloaded PDF report');
+          } else {
+            toast.error(
+              isPolish ? 'Nie udało się wyeksportować raportu' : 'Failed to export report'
+            );
+          }
+          break;
+        }
+        case 'deck': {
+          // Phase E — present the insight as a live deck. The canonical
+          // section→card mapping (buildDeckCards) drives PresentMode fullscreen.
+          // (exportPresentationDeck is deckId/server-backed and an insight is not
+          // a stored deck, so we open the in-app presenter instead — mirrors the
+          // initiative Smart Export "Deck" target.)
+          if (!insight?.id) {
+            toast.error(isPolish ? 'Brak insightu do prezentacji' : 'No insight to present');
+            break;
+          }
+          setExportDialogOpen(false);
+          setPresentOpen(true);
+          break;
+        }
         default:
           // unsupported targets are disabled in the UI; guard anyway
           toast.error(
@@ -7319,6 +7498,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     exportSelectedIds,
     exportTarget,
     isPolish,
+    insight?.id,
+    insight?.title,
     handleExportToNotebook,
     handleExportToTools,
     handleExportToAssessment,
@@ -7344,663 +7525,704 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   }
 
   return (
-    <NModeShell
-      header={{
-        title,
-        onTitleChange: setTitle,
-        titlePlaceholder: { en: 'Insight title...', pl: 'Tytuł wniosku...' },
-        artifactId: insight?.id,
-        artifactType: 'insight',
-        onSave: handleSave,
-        saving,
-        isDirty,
-        onChat: handleOpenChat,
-        onClose,
-        statusDotColor: statusConfig.color,
-      }}
-      properties={propertyFields}
-      propertiesMaxColumns={5}
-      sections={orderedNModeSectionsWithContent}
-      activeSection={activeNSection}
-      onSectionChange={setActiveNSection}
-      onSectionReorder={handleNModeSectionReorder}
-      presentationMode={presentationMode}
-      onPresentationModeChange={setPresentationMode}
-      buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
-      renderActionBar={() => (
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* #26 — Primary action: Submit for Information (no review/approval gate)
+    <>
+      <NModeShell
+        header={{
+          title,
+          onTitleChange: setTitle,
+          titlePlaceholder: { en: 'Insight title...', pl: 'Tytuł wniosku...' },
+          artifactId: insight?.id,
+          artifactType: 'insight',
+          onSave: handleSave,
+          saving,
+          isDirty,
+          onChat: handleOpenChat,
+          onClose,
+          statusDotColor: statusConfig.color,
+        }}
+        properties={propertyFields}
+        propertiesMaxColumns={5}
+        sections={orderedNModeSectionsWithContent}
+        activeSection={activeNSection}
+        onSectionChange={setActiveNSection}
+        onSectionReorder={handleNModeSectionReorder}
+        presentationMode={presentationMode}
+        onPresentationModeChange={setPresentationMode}
+        buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
+        renderActionBar={() => (
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* #26 — Primary action: Submit for Information (no review/approval gate)
               Canon A3: toolbar carries NO crimson/primary buttons — crimson is
               reserved for modal CTAs. This is a neutral (secondary) toolbar action. */}
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Send />}
-            loading={submittingForInfo}
-            disabled={submittingForInfo || insight?.status !== 'completed'}
-            onClick={handleSubmitForInformation}
-          >
-            {isPolish ? 'Wyślij do wiadomości' : 'Submit for Information'}
-          </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Send />}
+              loading={submittingForInfo}
+              disabled={submittingForInfo || insight?.status !== 'completed'}
+              onClick={handleSubmitForInformation}
+            >
+              {isPolish ? 'Wyślij do wiadomości' : 'Submit for Information'}
+            </Button>
 
-          {/* Insight → initiative generator (propose & reconcile against the grid) */}
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<Sparkles />}
-            disabled={!insight?.id}
-            onClick={() => setGenOpen(true)}
-          >
-            {isPolish ? 'Zaproponuj inicjatywy' : 'Propose initiatives'}
-          </Button>
-
-          <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
-
-          {/* #26 — Export ▾ : uniform outline dropdown (all secondary exports) */}
-          <div className="relative" ref={exportMenuRef}>
+            {/* Insight → initiative generator (propose & reconcile against the grid) */}
             <Button
               variant="outline"
               size="sm"
-              icon={<ExternalLink />}
-              onClick={() => {
-                setExportMenuOpen((v) => !v);
-                setAiMenuOpen(false);
-              }}
+              icon={<Sparkles />}
+              disabled={!insight?.id}
+              onClick={() => setGenOpen(true)}
             >
-              {isPolish ? 'Eksport' : 'Export'}
-              <ChevronDown
-                size={13}
-                className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
-              />
+              {isPolish ? 'Zaproponuj inicjatywy' : 'Propose initiatives'}
             </Button>
-            {exportMenuOpen && (
-              <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
-                <button
-                  onClick={() => {
-                    setExportMenuOpen(false);
-                    openExportDialog();
-                  }}
-                  disabled={insight?.status !== 'completed'}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                >
-                  <Sparkles size={14} />
-                  {isPolish ? 'Inteligentny eksport…' : 'Smart export…'}
-                </button>
-                <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
-                <button
-                  onClick={() => {
-                    setExportMenuOpen(false);
-                    handleExportToTools();
-                  }}
-                  disabled={isExportingTools || insight?.status !== 'completed'}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                >
-                  {isExportingTools ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Target size={14} />
-                  )}
-                  {isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
-                </button>
-                <button
-                  onClick={() => {
-                    setExportMenuOpen(false);
-                    handleExportToAssessment();
-                  }}
-                  disabled={isExportingAssessment || insight?.status !== 'completed'}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                >
-                  {isExportingAssessment ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <BarChart3 size={14} />
-                  )}
-                  {isPolish ? 'Eksportuj do Assessment' : 'Export to Assessment'}
-                </button>
-                <button
-                  onClick={() => {
-                    setExportMenuOpen(false);
-                    handleExportToNotebook();
-                  }}
-                  disabled={isExportingNotebook || insight?.status !== 'completed'}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                >
-                  {isExportingNotebook ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <BookOpen size={14} />
-                  )}
-                  {isPolish ? 'Do Notatnika' : 'To Notebook'}
-                </button>
-                <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
-                <button
-                  onClick={() => {
-                    setExportMenuOpen(false);
-                    handleExportMarkdown();
-                  }}
-                  disabled={insight?.status !== 'completed'}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                >
-                  <Download size={14} />
-                  {isPolish ? 'Pobierz Markdown' : 'Download MD'}
-                </button>
-                <button
-                  onClick={() => {
-                    setExportMenuOpen(false);
-                    handleCopy();
-                  }}
-                  disabled={insight?.status !== 'completed'}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                >
-                  <Copy size={14} />
-                  {isPolish ? 'Kopiuj markdown' : 'Copy markdown'}
-                </button>
-              </div>
-            )}
-          </div>
 
-          {/* Legacy lifecycle controls — only surface for insights already in a
-              review/published state (older data). New insights use the
-              informational "Submit for Information" flow above (#26b). */}
-          {insight?.reviewStatus === 'in_review' && (
-            <>
-              <button
-                onClick={() => handleLifecycleTransition('approve')}
-                disabled={lifecycleTransitioning}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all disabled:opacity-50"
-              >
-                {lifecycleTransitioning ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <CheckCircle2 size={14} />
-                )}
-                {isPolish ? 'Zatwierdź i opublikuj' : 'Approve & Publish'}
-              </button>
-              <button
-                onClick={() => handleLifecycleTransition('reject')}
-                disabled={lifecycleTransitioning}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition-all disabled:opacity-50"
-              >
-                <X size={14} />
-                {isPolish ? 'Odrzuć' : 'Reject'}
-              </button>
-            </>
-          )}
+            <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
 
-          {insight?.reviewStatus === 'published' && (
-            <>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-                <CheckCircle2 size={14} />
-                {isPolish ? 'Opublikowano' : 'Published'}
-              </span>
-              <button
-                onClick={() => handleLifecycleTransition('revert_draft')}
-                disabled={lifecycleTransitioning}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-              >
-                <RefreshCw size={14} />
-                {isPolish ? 'Przywróć do szkicu' : 'Revert to Draft'}
-              </button>
-            </>
-          )}
-          {/* ── Mark Complete (contextual to active section) ─────────── */}
-          <button
-            type="button"
-            onClick={() => handleToggleSectionComplete(activeNSection)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              sectionCompletions[activeNSection]
-                ? 'border-success-400/50 text-success-600 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20'
-                : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60'
-            }`}
-            title={
-              isPolish
-                ? 'Oznacz sekcję jako gotową (sygnał AI)'
-                : 'Mark section complete (AI signal)'
-            }
-          >
-            <CheckCircle2 size={14} />
-            {sectionCompletions[activeNSection]
-              ? isPolish
-                ? 'Gotowe'
-                : 'Complete'
-              : isPolish
-                ? 'Oznacz gotowe'
-                : 'Mark complete'}
-          </button>
-
-          {/* ── Fork + Present ─────────────────────────────── */}
-          <div className="flex-1 min-w-0" />
-          <ToolbarIconButton
-            icon={<GitFork size={14} />}
-            tooltip={isPolish ? 'Forkuj' : 'Fork'}
-            onClick={() => {}}
-          />
-          <ToolbarIconButton
-            icon={<Monitor size={14} />}
-            tooltip={isPolish ? 'Prezentuj' : 'Present'}
-            onClick={() => {}}
-          />
-
-          {/* ── Slot 9: artifact-level AI (solid teal) ─────────────────
-              Canon C/Level-3: the rightmost AI affordance is a SOLID teal
-              button (bg-teal-600 text-white). Opens the AI menu (Regenerate;
-              AI Consultant panel to follow). */}
-          <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
-          <div className="relative" ref={aiMenuRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setAiMenuOpen((v) => !v);
-                setExportMenuOpen(false);
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
-            >
-              <Sparkles size={14} />
-              {isPolish ? 'AI' : 'AI'}
-              <ChevronDown
-                size={13}
-                className={`transition-transform ${aiMenuOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-            {aiMenuOpen && (
-              <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
-                <button
-                  onClick={() => {
-                    setAiMenuOpen(false);
-                    handleRegenerate();
-                  }}
-                  disabled={isRegenerating}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                >
-                  <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-                  {isPolish ? 'Regeneruj' : 'Regenerate'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    >
-      {insight && (
-        <InitiativeGeneratorModal
-          isOpen={genOpen}
-          onClose={() => setGenOpen(false)}
-          source={{
-            label: insight.title,
-            content: insight.content,
-            sourceType: 'interview_insight',
-            sourceId: insight.id,
-          }}
-          isPolish={isPolish}
-          onCreated={() => setGenOpen(false)}
-        />
-      )}
-
-      {handoffModalOpen && handoffFinding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => {
-              setHandoffModalOpen(false);
-              setHandoffFinding(null);
-            }}
-          />
-          <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Utwórz inicjatywę z finding' : 'Create initiative from finding'}
-              </h3>
-              <button
+            {/* #26 — Export ▾ : uniform outline dropdown (all secondary exports) */}
+            <div className="relative" ref={exportMenuRef}>
+              <Button
+                variant="outline"
+                size="sm"
+                icon={<ExternalLink />}
                 onClick={() => {
-                  setHandoffModalOpen(false);
-                  setHandoffFinding(null);
+                  setExportMenuOpen((v) => !v);
+                  setAiMenuOpen(false);
                 }}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
               >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="px-6 py-5 space-y-4">
-              <div>
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  {isPolish ? 'Stwierdzenie finding' : 'Finding statement'}
-                </label>
-                <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-navy-700">
-                  {handoffFinding.title}
+                {isPolish ? 'Eksport' : 'Export'}
+                <ChevronDown
+                  size={13}
+                  className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
+                />
+              </Button>
+              {exportMenuOpen && (
+                <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                  <button
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      openExportDialog();
+                    }}
+                    disabled={insight?.status !== 'completed'}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    <Sparkles size={14} />
+                    {isPolish ? 'Inteligentny eksport…' : 'Smart export…'}
+                  </button>
+                  <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                  <button
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      handleExportToTools();
+                    }}
+                    disabled={isExportingTools || insight?.status !== 'completed'}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    {isExportingTools ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Target size={14} />
+                    )}
+                    {isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      handleExportToAssessment();
+                    }}
+                    disabled={isExportingAssessment || insight?.status !== 'completed'}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    {isExportingAssessment ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <BarChart3 size={14} />
+                    )}
+                    {isPolish ? 'Eksportuj do Assessment' : 'Export to Assessment'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      handleExportToNotebook();
+                    }}
+                    disabled={isExportingNotebook || insight?.status !== 'completed'}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    {isExportingNotebook ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <BookOpen size={14} />
+                    )}
+                    {isPolish ? 'Do Notatnika' : 'To Notebook'}
+                  </button>
+                  <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                  <button
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      handleExportMarkdown();
+                    }}
+                    disabled={insight?.status !== 'completed'}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    <Download size={14} />
+                    {isPolish ? 'Pobierz Markdown' : 'Download MD'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setExportMenuOpen(false);
+                      handleCopy();
+                    }}
+                    disabled={insight?.status !== 'completed'}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    <Copy size={14} />
+                    {isPolish ? 'Kopiuj markdown' : 'Copy markdown'}
+                  </button>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Poziom pewności' : 'Confidence level'}
-                  </label>
-                  <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
-                    {handoffFinding.confidence || 'medium'}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    {isPolish ? 'Typ' : 'Type'}
-                  </label>
-                  <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
-                    {handoffFinding.sectionType}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
-                </label>
-                <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 min-h-[40px]">
-                  {handoffFinding.limits && handoffFinding.limits.length > 0 ? (
-                    <ul className="list-disc list-inside space-y-0.5">
-                      {handoffFinding.limits.map((l, i) => (
-                        <li key={i} className="text-xs italic">
-                          {l}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-xs italic text-slate-600">
-                      {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  {isPolish ? 'Powiąż z istniejącą inicjatywą' : 'Link to existing initiative'}
-                </label>
-                <div className="mt-1">
-                  <Select
-                    value={handoffTargetInitiativeId}
-                    onChange={setHandoffTargetInitiativeId}
-                    disabled={handoffSubmitting || handoffInitiativesLoading}
-                    options={handoffInitiatives.map((i) => ({
-                      value: i.id,
-                      label: i.status ? `${i.title} · ${i.status}` : i.title,
-                    }))}
-                    placeholder={
-                      handoffInitiativesLoading
-                        ? isPolish
-                          ? 'Ładowanie inicjatyw…'
-                          : 'Loading initiatives…'
-                        : handoffInitiatives.length === 0
-                          ? isPolish
-                            ? 'Brak istniejących inicjatyw'
-                            : 'No existing initiatives'
-                          : isPolish
-                            ? 'Wybierz inicjatywę…'
-                            : 'Select an initiative…'
-                    }
-                    aria-label={
-                      isPolish ? 'Wybierz inicjatywę docelową' : 'Select target initiative'
-                    }
-                  />
-                </div>
-                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Wybierz inicjatywę powyżej, aby ją powiązać, lub utwórz nową poniżej.'
-                    : 'Pick an initiative above to link, or create a new one below.'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/50">
-              <button
-                onClick={() => handleHandoffSubmit('link')}
-                disabled={handoffSubmitting || !handoffTargetInitiativeId}
-                title={
-                  !handoffTargetInitiativeId
-                    ? isPolish
-                      ? 'Najpierw wybierz inicjatywę docelową powyżej'
-                      : 'Pick a target initiative above first'
-                    : undefined
-                }
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-600 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {handoffSubmitting ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Link2 size={14} />
-                )}
-                {isPolish ? 'Połącz z istniejącą' : 'Link to existing'}
-              </button>
-              <button
-                onClick={() => handleHandoffSubmit('create')}
-                disabled={handoffSubmitting}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
-              >
-                {handoffSubmitting ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Plus size={14} />
-                )}
-                {isPolish ? 'Utwórz nową inicjatywę' : 'Create new initiative'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* #25 — Smart export generator: preview-pane dialog. Left = section
-          checkbox table; right = target picker + live preview of selection. */}
-      {exportDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => !exportRunning && setExportDialogOpen(false)}
-          />
-          <div className="relative w-full max-w-3xl mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
-              <div className="flex items-center gap-2">
-                <Sparkles size={18} className="text-blue-500" />
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  {isPolish ? 'Inteligentny eksport' : 'Smart export'}
-                </h3>
-              </div>
-              <button
-                onClick={() => !exportRunning && setExportDialogOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Target picker */}
-            <div className="px-6 pt-4">
-              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                {isPolish ? 'Cel eksportu' : 'Export target'}
-              </label>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {exportTargets.map((t) => {
-                  const Icon = t.icon;
-                  const active = exportTarget === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => t.supported && setExportTarget(t.id)}
-                      disabled={!t.supported}
-                      title={(isPolish ? t.hint.pl : t.hint.en) || undefined}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                        active
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
-                          : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
-                      } ${!t.supported ? 'opacity-40 cursor-not-allowed' : ''}`}
-                    >
-                      <Icon size={14} />
-                      {isPolish ? t.label.pl : t.label.en}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
-                {isPolish
-                  ? exportTargets.find((t) => t.id === exportTarget)?.hint.pl
-                  : exportTargets.find((t) => t.id === exportTarget)?.hint.en}
-              </p>
-              {(exportTarget === 'tools' || exportTarget === 'assessment') && (
-                <p className="mt-1 flex items-start gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
-                  <span>
-                    {isPolish
-                      ? 'Wybór sekcji dotyczy również tego celu — wyeksportowane zostaną tylko zaznaczone sekcje.'
-                      : 'Section selection applies to this target too — only the selected sections are exported.'}
-                  </span>
-                </p>
               )}
             </div>
 
-            {/* Body: left = section table, right = preview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0 mt-3 border-t border-slate-200 dark:border-navy-700">
-              {/* Left: section checkbox table */}
-              <div className="flex flex-col min-h-0 border-r border-slate-200 dark:border-navy-700">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-navy-800">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Sekcje' : 'Sections'} ({exportSelectedIds.size}/
-                    {exportableSections.length})
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={selectAllExportSections}
-                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      {isPolish ? 'Wszystkie' : 'All'}
-                    </button>
-                    <span className="text-slate-300 dark:text-navy-600">·</span>
-                    <button
-                      onClick={clearExportSections}
-                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      {isPolish ? 'Żadne' : 'None'}
-                    </button>
-                  </div>
-                </div>
-                <div className="overflow-y-auto px-2 py-2 max-h-[42vh]">
-                  {exportableSections.map((s) => {
-                    const checked = exportSelectedIds.has(s.id);
-                    const empty = s.hasData === false;
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => toggleExportSection(s.id)}
-                        className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-navy-800"
-                      >
-                        {checked ? (
-                          <CheckSquare size={15} className="shrink-0 text-blue-500" />
-                        ) : (
-                          <Square
-                            size={15}
-                            className="shrink-0 text-slate-300 dark:text-navy-600"
-                          />
-                        )}
-                        <span
-                          className={`flex-1 text-xs ${
-                            empty
-                              ? 'text-slate-400 dark:text-slate-500'
-                              : 'text-slate-700 dark:text-slate-200'
-                          }`}
-                        >
-                          {isPolish ? s.label.pl : s.label.en}
-                        </span>
-                        {typeof s.badge === 'number' && s.badge > 0 && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
-                            {s.badge}
-                          </span>
-                        )}
-                        {empty && (
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">
-                            {isPolish ? 'pusta' : 'empty'}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                  {exportableSections.length === 0 && (
-                    <p className="px-2 py-4 text-xs text-slate-400">
-                      {isPolish ? 'Brak sekcji do eksportu.' : 'No exportable sections.'}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: live preview */}
-              <div className="flex flex-col min-h-0">
-                <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-800">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                    {isPolish ? 'Podgląd' : 'Preview'}
-                  </span>
-                </div>
-                <div className="overflow-y-auto px-4 py-3 max-h-[42vh] text-xs text-slate-600 dark:text-slate-300 space-y-2">
-                  {exportSelectedIds.size === 0 ? (
-                    <p className="text-slate-400 dark:text-slate-500 italic">
-                      {isPolish
-                        ? 'Wybierz sekcje, aby zobaczyć podgląd.'
-                        : 'Select sections to preview.'}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                        {isPolish
-                          ? `${exportSelectedIds.size} sekcji zostanie wyeksportowanych do: ${
-                              exportTargets.find((t) => t.id === exportTarget)?.label.pl
-                            }`
-                          : `${exportSelectedIds.size} section(s) will be exported to: ${
-                              exportTargets.find((t) => t.id === exportTarget)?.label.en
-                            }`}
-                      </p>
-                      <ul className="space-y-1">
-                        {exportableSections
-                          .filter((s) => exportSelectedIds.has(s.id))
-                          .map((s) => (
-                            <li key={s.id} className="flex items-center gap-2">
-                              <CheckCircle2 size={13} className="shrink-0 text-emerald-500" />
-                              <span className="flex-1">{isPolish ? s.label.pl : s.label.en}</span>
-                              <span className="text-[10px] text-slate-400">{s.group}</span>
-                            </li>
-                          ))}
-                      </ul>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700">
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                {isPolish
-                  ? 'Filtrowanie sekcji odbywa się po stronie klienta (serwerowy filtr — TODO).'
-                  : 'Section filtering is applied client-side (server-side filter — TODO).'}
-              </p>
-              <div className="flex items-center gap-2">
+            {/* Legacy lifecycle controls — only surface for insights already in a
+              review/published state (older data). New insights use the
+              informational "Submit for Information" flow above (#26b). */}
+            {insight?.reviewStatus === 'in_review' && (
+              <>
                 <button
-                  onClick={() => !exportRunning && setExportDialogOpen(false)}
-                  className="px-4 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  onClick={() => handleLifecycleTransition('approve')}
+                  disabled={lifecycleTransitioning}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all disabled:opacity-50"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
-                </button>
-                <button
-                  onClick={runSmartExport}
-                  disabled={exportRunning || exportSelectedIds.size === 0}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
-                >
-                  {exportRunning ? (
+                  {lifecycleTransitioning ? (
                     <Loader2 size={14} className="animate-spin" />
                   ) : (
-                    <ExternalLink size={14} />
+                    <CheckCircle2 size={14} />
                   )}
-                  {isPolish ? 'Eksportuj' : 'Export'}
+                  {isPolish ? 'Zatwierdź i opublikuj' : 'Approve & Publish'}
+                </button>
+                <button
+                  onClick={() => handleLifecycleTransition('reject')}
+                  disabled={lifecycleTransitioning}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition-all disabled:opacity-50"
+                >
+                  <X size={14} />
+                  {isPolish ? 'Odrzuć' : 'Reject'}
+                </button>
+              </>
+            )}
+
+            {insight?.reviewStatus === 'published' && (
+              <>
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
+                  <CheckCircle2 size={14} />
+                  {isPolish ? 'Opublikowano' : 'Published'}
+                </span>
+                <button
+                  onClick={() => handleLifecycleTransition('revert_draft')}
+                  disabled={lifecycleTransitioning}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
+                >
+                  <RefreshCw size={14} />
+                  {isPolish ? 'Przywróć do szkicu' : 'Revert to Draft'}
+                </button>
+              </>
+            )}
+            {/* ── Mark Complete (contextual to active section) ─────────── */}
+            <button
+              type="button"
+              onClick={() => handleToggleSectionComplete(activeNSection)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                sectionCompletions[activeNSection]
+                  ? 'border-success-400/50 text-success-600 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20'
+                  : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60'
+              }`}
+              title={
+                isPolish
+                  ? 'Oznacz sekcję jako gotową (sygnał AI)'
+                  : 'Mark section complete (AI signal)'
+              }
+            >
+              <CheckCircle2 size={14} />
+              {sectionCompletions[activeNSection]
+                ? isPolish
+                  ? 'Gotowe'
+                  : 'Complete'
+                : isPolish
+                  ? 'Oznacz gotowe'
+                  : 'Mark complete'}
+            </button>
+
+            {/* ── Fork + Present ─────────────────────────────── */}
+            <div className="flex-1 min-w-0" />
+            <ToolbarIconButton
+              icon={<GitFork size={14} />}
+              tooltip={isPolish ? 'Forkuj' : 'Fork'}
+              disabled={isForking}
+              onClick={handleFork}
+            />
+            <ToolbarIconButton
+              icon={<Monitor size={14} />}
+              tooltip={isPolish ? 'Prezentuj' : 'Present'}
+              onClick={() => setPresentOpen(true)}
+            />
+
+            {/* ── Slot 9: artifact-level AI (solid teal) ─────────────────
+              Canon C/Level-3: the rightmost AI affordance is a SOLID teal
+              button (bg-teal-600 text-white). Opens the AI menu (Regenerate;
+              AI Consultant panel to follow). */}
+            <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
+            <div className="relative" ref={aiMenuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setAiMenuOpen((v) => !v);
+                  setExportMenuOpen(false);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'AI' : 'AI'}
+                <ChevronDown
+                  size={13}
+                  className={`transition-transform ${aiMenuOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {aiMenuOpen && (
+                <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                  <button
+                    onClick={() => {
+                      setAiMenuOpen(false);
+                      handleRegenerate();
+                    }}
+                    disabled={isRegenerating}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                  >
+                    <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
+                    {isPolish ? 'Regeneruj' : 'Regenerate'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      >
+        {insight && (
+          <InitiativeGeneratorModal
+            isOpen={genOpen}
+            onClose={() => setGenOpen(false)}
+            source={{
+              label: insight.title,
+              content: insight.content,
+              sourceType: 'interview_insight',
+              sourceId: insight.id,
+            }}
+            isPolish={isPolish}
+            onCreated={() => setGenOpen(false)}
+          />
+        )}
+
+        {handoffModalOpen && handoffFinding && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => {
+                setHandoffModalOpen(false);
+                setHandoffFinding(null);
+              }}
+            />
+            <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  {isPolish ? 'Utwórz inicjatywę z finding' : 'Create initiative from finding'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setHandoffModalOpen(false);
+                    setHandoffFinding(null);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Stwierdzenie finding' : 'Finding statement'}
+                  </label>
+                  <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-navy-700">
+                    {handoffFinding.title}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Poziom pewności' : 'Confidence level'}
+                    </label>
+                    <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                      {handoffFinding.confidence || 'medium'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {isPolish ? 'Typ' : 'Type'}
+                    </label>
+                    <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700">
+                      {handoffFinding.sectionType}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
+                  </label>
+                  <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 min-h-[40px]">
+                    {handoffFinding.limits && handoffFinding.limits.length > 0 ? (
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {handoffFinding.limits.map((l, i) => (
+                          <li key={i} className="text-xs italic">
+                            {l}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-xs italic text-slate-600">
+                        {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    {isPolish ? 'Powiąż z istniejącą inicjatywą' : 'Link to existing initiative'}
+                  </label>
+                  <div className="mt-1">
+                    <Select
+                      value={handoffTargetInitiativeId}
+                      onChange={setHandoffTargetInitiativeId}
+                      disabled={handoffSubmitting || handoffInitiativesLoading}
+                      options={handoffInitiatives.map((i) => ({
+                        value: i.id,
+                        label: i.status ? `${i.title} · ${i.status}` : i.title,
+                      }))}
+                      placeholder={
+                        handoffInitiativesLoading
+                          ? isPolish
+                            ? 'Ładowanie inicjatyw…'
+                            : 'Loading initiatives…'
+                          : handoffInitiatives.length === 0
+                            ? isPolish
+                              ? 'Brak istniejących inicjatyw'
+                              : 'No existing initiatives'
+                            : isPolish
+                              ? 'Wybierz inicjatywę…'
+                              : 'Select an initiative…'
+                      }
+                      aria-label={
+                        isPolish ? 'Wybierz inicjatywę docelową' : 'Select target initiative'
+                      }
+                    />
+                  </div>
+                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    {isPolish
+                      ? 'Wybierz inicjatywę powyżej, aby ją powiązać, lub utwórz nową poniżej.'
+                      : 'Pick an initiative above to link, or create a new one below.'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/50">
+                <button
+                  onClick={() => handleHandoffSubmit('link')}
+                  disabled={handoffSubmitting || !handoffTargetInitiativeId}
+                  title={
+                    !handoffTargetInitiativeId
+                      ? isPolish
+                        ? 'Najpierw wybierz inicjatywę docelową powyżej'
+                        : 'Pick a target initiative above first'
+                      : undefined
+                  }
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-600 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {handoffSubmitting ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Link2 size={14} />
+                  )}
+                  {isPolish ? 'Połącz z istniejącą' : 'Link to existing'}
+                </button>
+                <button
+                  onClick={() => handleHandoffSubmit('create')}
+                  disabled={handoffSubmitting}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+                >
+                  {handoffSubmitting ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Plus size={14} />
+                  )}
+                  {isPolish ? 'Utwórz nową inicjatywę' : 'Create new initiative'}
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* C-mode (Standard C / ClickUp) is now rendered by NModeShell itself via
+        {/* #25 — Smart export generator: preview-pane dialog. Left = section
+          checkbox table; right = target picker + live preview of selection. */}
+        {exportDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => !exportRunning && setExportDialogOpen(false)}
+            />
+            <div className="relative w-full max-w-3xl mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col max-h-[85vh]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={18} className="text-blue-500" />
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {isPolish ? 'Inteligentny eksport' : 'Smart export'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => !exportRunning && setExportDialogOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Target picker */}
+              <div className="px-6 pt-4">
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  {isPolish ? 'Cel eksportu' : 'Export target'}
+                </label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {exportTargets.map((t) => {
+                    const Icon = t.icon;
+                    const active = exportTarget === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => t.supported && setExportTarget(t.id)}
+                        disabled={!t.supported}
+                        title={(isPolish ? t.hint.pl : t.hint.en) || undefined}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                          active
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                            : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                        } ${!t.supported ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      >
+                        <Icon size={14} />
+                        {isPolish ? t.label.pl : t.label.en}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+                  {isPolish
+                    ? exportTargets.find((t) => t.id === exportTarget)?.hint.pl
+                    : exportTargets.find((t) => t.id === exportTarget)?.hint.en}
+                </p>
+                {(exportTarget === 'tools' || exportTarget === 'assessment') && (
+                  <p className="mt-1 flex items-start gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
+                    <span>
+                      {isPolish
+                        ? 'Wybór sekcji dotyczy również tego celu — wyeksportowane zostaną tylko zaznaczone sekcje.'
+                        : 'Section selection applies to this target too — only the selected sections are exported.'}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              {/* Body: left = section table, right = preview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0 mt-3 border-t border-slate-200 dark:border-navy-700">
+                {/* Left: section checkbox table */}
+                <div className="flex flex-col min-h-0 border-r border-slate-200 dark:border-navy-700">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      {isPolish ? 'Sekcje' : 'Sections'} ({exportSelectedIds.size}/
+                      {exportableSections.length})
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={selectAllExportSections}
+                        className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {isPolish ? 'Wszystkie' : 'All'}
+                      </button>
+                      <span className="text-slate-300 dark:text-navy-600">·</span>
+                      <button
+                        onClick={clearExportSections}
+                        className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {isPolish ? 'Żadne' : 'None'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="overflow-y-auto px-2 py-2 max-h-[42vh]">
+                    {exportableSections.map((s) => {
+                      const checked = exportSelectedIds.has(s.id);
+                      const empty = s.hasData === false;
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => toggleExportSection(s.id)}
+                          className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-left hover:bg-slate-50 dark:hover:bg-navy-800"
+                        >
+                          {checked ? (
+                            <CheckSquare size={15} className="shrink-0 text-blue-500" />
+                          ) : (
+                            <Square
+                              size={15}
+                              className="shrink-0 text-slate-300 dark:text-navy-600"
+                            />
+                          )}
+                          <span
+                            className={`flex-1 text-xs ${
+                              empty
+                                ? 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            {isPolish ? s.label.pl : s.label.en}
+                          </span>
+                          {typeof s.badge === 'number' && s.badge > 0 && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                              {s.badge}
+                            </span>
+                          )}
+                          {empty && (
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                              {isPolish ? 'pusta' : 'empty'}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                    {exportableSections.length === 0 && (
+                      <p className="px-2 py-4 text-xs text-slate-400">
+                        {isPolish ? 'Brak sekcji do eksportu.' : 'No exportable sections.'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: live preview */}
+                <div className="flex flex-col min-h-0">
+                  <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      {isPolish ? 'Podgląd' : 'Preview'}
+                    </span>
+                  </div>
+                  <div className="overflow-y-auto px-4 py-3 max-h-[42vh] text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                    {exportSelectedIds.size === 0 ? (
+                      <p className="text-slate-400 dark:text-slate-500 italic">
+                        {isPolish
+                          ? 'Wybierz sekcje, aby zobaczyć podgląd.'
+                          : 'Select sections to preview.'}
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                          {isPolish
+                            ? `${exportSelectedIds.size} sekcji zostanie wyeksportowanych do: ${
+                                exportTargets.find((t) => t.id === exportTarget)?.label.pl
+                              }`
+                            : `${exportSelectedIds.size} section(s) will be exported to: ${
+                                exportTargets.find((t) => t.id === exportTarget)?.label.en
+                              }`}
+                        </p>
+                        <ul className="space-y-1">
+                          {exportableSections
+                            .filter((s) => exportSelectedIds.has(s.id))
+                            .map((s) => (
+                              <li key={s.id} className="flex items-center gap-2">
+                                <CheckCircle2 size={13} className="shrink-0 text-emerald-500" />
+                                <span className="flex-1">{isPolish ? s.label.pl : s.label.en}</span>
+                                <span className="text-[10px] text-slate-400">{s.group}</span>
+                              </li>
+                            ))}
+                        </ul>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700">
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  {isPolish
+                    ? 'Filtrowanie sekcji odbywa się po stronie klienta (serwerowy filtr — TODO).'
+                    : 'Section filtering is applied client-side (server-side filter — TODO).'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => !exportRunning && setExportDialogOpen(false)}
+                    className="px-4 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    {isPolish ? 'Anuluj' : 'Cancel'}
+                  </button>
+                  <button
+                    onClick={runSmartExport}
+                    disabled={exportRunning || exportSelectedIds.size === 0}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
+                  >
+                    {exportRunning ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <ExternalLink size={14} />
+                    )}
+                    {isPolish ? 'Eksportuj' : 'Export'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* C-mode (Standard C / ClickUp) is now rendered by NModeShell itself via
           the canonical NModeCBoard (top group-tabs + dense 3-col grid), driven
           by the same `sections`. No custom children needed. (#21) */}
-    </NModeShell>
+      </NModeShell>
+      {/* Phase A3 — fullscreen Present mode over the canonical insight sections */}
+      {presentOpen && presentCards.length > 0 && (
+        <PresentMode
+          cards={presentCards}
+          title={insight?.title || title}
+          onExit={() => setPresentOpen(false)}
+        />
+      )}
+
+      {/* Phase E — hidden, print-only Report root captured by exportReportToPDF.
+          Off-screen (not display:none, so html2canvas can still measure it). */}
+      <div
+        aria-hidden
+        style={{
+          position: 'fixed',
+          left: '-10000px',
+          top: 0,
+          width: '794px',
+          background: '#ffffff',
+          color: '#111827',
+          padding: '32px',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+        }}
+      >
+        <div id={REPORT_PRINT_ELEMENT_ID}>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px' }}>
+            {insight?.title || title}
+          </h1>
+          {reportPrintSections.map((s) => (
+            <section key={s.title} style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>{s.title}</h2>
+              <p style={{ fontSize: '12px', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0 }}>
+                {s.body}
+              </p>
+            </section>
+          ))}
+        </div>
+      </div>
+    </>
   );
 };
 

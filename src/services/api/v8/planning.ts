@@ -1,6 +1,6 @@
 import type { PortfolioInitiative } from '@/types';
 
-import { v8Get } from './client';
+import { v8Get, v8Post } from './client';
 
 export interface V8PlanningDecisionEntry {
   decisionId: string;
@@ -354,6 +354,11 @@ export const V8PlanningApi = {
   getInitiative: (initiativeId: string) =>
     v8Get<{ initiative: Record<string, unknown> }>(
       `/planning/initiatives/${encodeURIComponent(initiativeId)}`
+    ).then((data) => data.initiative),
+  /** Fork an initiative; returns the freshly-created copy (with a new id). */
+  forkInitiative: (initiativeId: string) =>
+    v8Post<{ initiative: Record<string, unknown> }>(
+      `/planning/initiatives/${encodeURIComponent(initiativeId)}/fork`
     ).then((data) => data.initiative),
   getTaskDependencies: (initiativeId: string) =>
     v8Get<{ dependencies: V8PlanningTaskDependency[] }>(
