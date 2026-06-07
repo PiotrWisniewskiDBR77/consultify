@@ -211,21 +211,32 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 **MUST:** szerokość `clamp(340px, 28%, 480px)`. Separacja od tabeli = `gap-1.5`, **bez `border-l`**. Wrapper: `bg-slate-50 dark:bg-navy-950 p-3`. Karta wewnątrz: `rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] backdrop-blur`. Jeśli tabela `rounded-xl` → preview też `rounded-xl` (spójność „composite container").
 
 ### 7.3 Anatomia — ŻELAZNY UKŁAD (góra→dół, MUST; SSOT: `PreviewPaneShell`)
-> Kolejność jest sztywna i identyczna we wszystkich tabelach. Strefa bez treści = ukryta (nie pusty box),
+> **WZORZEC ZATWIERDZONY przez ownera 2026-06-07** na podglądzie Insight — referencja dla wszystkich
+> tabel. Kolejność jest sztywna i identyczna wszędzie. Strefa bez treści = ukryta (nie pusty box),
 > ale **kolejność obecnych stref się nie zmienia**.
 
-1. **Header (sticky `top-0 z-10`)**: opcjonalny kicker „Preview" (11px uppercase) + tytuł encji (1 linia, truncate+tooltip, semibold) + akcje right: „Open in Full View" (ghost/outline pill) + „Close (X)".
-2. **Entity Meta Bar**: statusy/typ/sesje/priorytet/SLA/data (poziom +2, `p-4`, `rounded-lg`) — to stan, nie treść.
-3. **Details (treść — wypełnia centrum)**: nagłówek „Details" (overline) + ⋮; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state, nie blank. **Details NIGDY nie ustępuje miejsca przyciskom** — opis zostaje w środku, akcje schodzą na dół.
-4. **Stopka — KOLEJNOŚĆ SZTYWNA (MUST), góra→dół:**
-   1. **AI**: label „AI" + ikona; chipy outline (`Podsumuj`, `Zasugeruj działania`); rozwijane bullety. AI asystuje treści, więc jest **najwyżej** w stopce.
-   2. divider (`border-t`)
-   3. **Relations** (jeśli są): **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
-   4. divider (`border-t`)
-   5. **„Co dalej" / create-strip (opcjonalny, gdy encja jest źródłem cross-module)**: ZWARTY pasek małych przycisków (`h-8 rounded-full`, ikona+label), pogrupowany **„Dokumenty / W aplikacji"**. **NIGDY wielkie karty w body.** (Insight: `ArtifactActionPanel variant="compact"`; `variant="full"` tylko w pełnej karcie.) Ikony+kolory wg §7.3a.
-   6. **Actions (sticky dół) — OPCJONALNE, anty-duplikacja (MUST):** pasek pokazujemy **tylko dla akcji, których nie ma już gdzie indziej**. **NIE dubluj „Open"** — jest w nagłówku. **NIE dubluj eksportu/pobierania** — te należą do menu ⋮ przy „Details". Jeśli po odjęciu duplikatów nie zostaje żadna sensowna akcja → **pomiń cały pasek** (stopka kończy się na „Co dalej"). Gdy zostaje: pille `h-9 rounded-full`, primary→secondary→ghost, parytet z full view, destrukcyjne = confirm, **+ dolny padding, by globalny FAB („Zgłoś błąd") nie zasłaniał**.
+```
+┌─ 1 HEADER (sticky)  tytuł · [Open] · [X]           ┐
+│  2 META BAR         status·typ·sesje·data           │
+│  3 DETAILS (⋮)      OPIS — wypełnia centrum, scroll  │  ⋮ = Copy · Copy prompt · Export · Download
+│     · · · · · · · · · · · · · · · · · · · · · · · ·  │
+│  4 AI               Podsumuj · Zasugeruj            │  stopka, space-y-2.5, bez dividerów
+│  5 RELATIONS        (jeśli są)                       │
+│  6 CO DALEJ         Dokumenty: … / W aplikacji: …    │  (create-strip, §7.3a)
+│  7 ACTIONS          OPCJONALNE — patrz niżej         │
+└─────────────────────────────────────────────────────┘
+```
 
-**Odstępy w stopce (MUST):** sekcje to samodzielne karty z ramką → **bez ciężkich linii-dividerów między nimi**; jeden spójny, minimalny rytm (`space-y-2.5`). Dzielnik tylko tam, gdzie realnie rozdziela dwie różne logiki, nie między każdą kartą.
+1. **Header (sticky `top-0 z-10`)**: opcjonalny kicker „Preview" (11px uppercase) + tytuł encji (1 linia, truncate+tooltip, semibold) + akcje right: **„Open" (ghost/outline pill — JEDYNE „Open" w całym preview)** + „Close (X)".
+2. **Entity Meta Bar**: statusy/typ/sesje/priorytet/SLA/data (poziom +2, `p-4`, `rounded-lg`) — to stan, nie treść.
+3. **Details (treść — wypełnia centrum)**: nagłówek „Details" (overline) + **⋮ (tu żyją: Rozwiń/Zwiń · Kopiuj · Kopiuj prompt · Export do Tools · Pobierz)**; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state, nie blank. **Details NIGDY nie ustępuje miejsca przyciskom** — opis zostaje w środku, akcje schodzą na dół.
+4. **Stopka — KOLEJNOŚĆ SZTYWNA (MUST), góra→dół; karty z ramką, `space-y-2.5`, BEZ dividerów między nimi:**
+   1. **AI**: label „AI" + ikona; chipy outline (`Podsumuj`, `Zasugeruj działania`); rozwijane bullety. AI asystuje treści → jest **najwyżej** w stopce, **nad** akcjami tworzenia.
+   2. **Relations** (jeśli są): **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
+   3. **„Co dalej" / create-strip (opcjonalny, gdy encja jest źródłem cross-module)**: ZWARTY pasek małych przycisków (`h-8 rounded-full`, ikona+label), pogrupowany **„Dokumenty / W aplikacji"**. **NIGDY wielkie karty w body.** (Insight: `ArtifactActionPanel variant="compact"`; `variant="full"` tylko w pełnej karcie.) Ikony+kolory wg §7.3a.
+   4. **Actions (sticky dół) — OPCJONALNE, anty-duplikacja (MUST):** pasek pokazujemy **tylko dla akcji, których nie ma już gdzie indziej**. **NIE dubluj „Open"** — jest w nagłówku. **NIE dubluj eksportu/pobierania** — te należą do menu ⋮ przy „Details". Jeśli po odjęciu duplikatów nie zostaje żadna sensowna akcja → **pomiń cały pasek** (stopka kończy się na „Co dalej"). Gdy zostaje: pille `h-9 rounded-full`, primary→secondary→ghost, parytet z full view, destrukcyjne = confirm, **+ dolny padding, by globalny FAB („Zgłoś błąd") nie zasłaniał**.
+
+**Odstępy w stopce (MUST):** sekcje to samodzielne karty z ramką → **bez ciężkich linii-dividerów między nimi**; jeden spójny, minimalny rytm (`space-y-2.5` ≈ 10px). Dzielnik tylko tam, gdzie realnie rozdziela dwie różne logiki, nie między każdą kartą.
 
 ### 7.3a Tożsamość akcji tworzenia (create-targets) — kolor = moduł docelowy (MUST)
 > Jeden spójny wątek dla całej aplikacji: ikona + hue przycisku = **moduł, do którego trafia artefakt**.
@@ -666,13 +677,17 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] 🔴 **Sprawdzone w KAŻDEJ zakładce** (Inbox/Assigned/Sessions/…) i KAŻDYM statusie wiersza. Komponent SSOT: `RowActionsMenu` (`sections` + `submenu`).
 - [ ] 🔴 **Archiwizuj = miękkie/odwracalne** (`archived_at` via guarded lazy ALTER, nie migracja), Przywróć w scope `archived`, Usuń = twarde/danger/confirm. Uprawnienia = jak edycja. §14 → `jak:` archiwizuj wiersz → znika z `active`, jest w `archived`, „Przywróć" go wraca. (Wymaga realnych danych + prawa edycji — nie demo-fixtures.)
 
-### I. Preview pane
+### I. Preview pane (wzorzec zatwierdzony 2026-06-07 — §7.3)
 - [ ] 🔴 Domyślnie zamknięty; single‑click=preview, dbl/Enter=full, Esc=zamknij. §7.1
 - [ ] Szerokość `clamp(340px,28%,480px)`; separacja `gap-1.5` bez `border-l`. §7.2
-- [ ] Header sticky: kicker+tytuł(1 linia,truncate)+„Open in Full View"+„X". §7.3
-- [ ] 🔴 Details — **bogaty domyślny szablon** (cel/zakres/kontekst/właściciel/daty/powiązania), nie jednolinijkowy; pusto=empty state. §7.3
-- [ ] 🔴 Stopka — sztywna kolejność: AI hints(3 chipy+⋮)→divider→Relations(2 wiersze)→divider→Actions(pille `h-9`). §7.3
-- [ ] Akcje stopki = parytet z full view; destrukcyjne=confirm. §7.3
+- [ ] Header sticky: kicker+tytuł(1 linia,truncate)+**„Open" (jedyne w preview)**+„X". §7.3
+- [ ] 🔴 Details — **bogaty domyślny szablon** (cel/zakres/kontekst/właściciel/daty/powiązania), nie jednolinijkowy; pusto=empty state; **opis wypełnia centrum, nie ustępuje przyciskom**. §7.3
+- [ ] 🔴 **⋮ przy Details** = Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·**Export do Tools·Pobierz** (eksport/pobieranie żyją TU, nie w dolnym pasku). §7.3
+- [ ] 🔴 **Żelazna kolejność stopki góra→dół: AI → Relations(jeśli są) → „Co dalej"/create-strip → Actions(opcjonalne).** AI **nad** create-strip. §7.3 → `jak:` computed-style — `top` AI < `top` create-strip.
+- [ ] 🔴 **Odstępy stopki = `space-y-2.5` (~10px), BEZ dividerów między kartami z ramką.** §7.3 → `jak:` zmierz gap między kartą AI a „Co dalej".
+- [ ] 🔴 **Anty-duplikacja Actions:** brak drugiego „Open" (jest w nagłówku), brak Export/Copy dублującego ⋮; jeśli nic nieredundantnego → pasek pominięty; gdy jest → padding pod FAB. §7.3
+- [ ] 🔴 **Create-strip** (gdy encja jest źródłem cross-module): zwarty, 2 grupy „Dokumenty/W aplikacji", ikony+hue = moduł docelowy (§7.3a), **nigdy wielkie karty**. §7.3 / §7.3a
+- [ ] Akcje (gdziekolwiek) = parytet z full view; destrukcyjne=confirm. §7.3
 
 ### J. Pełna karta + cross‑module
 - [ ] „Open" otwiera pełną kartę (N‑mode), nie tylko preview; lista wraca przez „≡ List". §24
