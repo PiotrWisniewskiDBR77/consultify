@@ -720,16 +720,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (!deepLinkHandled) return;
     const next = new URLSearchParams(searchParams);
     let changed = false;
+    // Only strip the *transient* deep-link triggers here. `view` is persistent UI
+    // state owned by the tab/view-sync effect below — deleting it here made the two
+    // effects ping-pong (this one removes `view`, the other re-adds it), which is an
+    // infinite setSearchParams loop ("Maximum update depth exceeded").
     if (next.has('open')) {
       next.delete('open');
       changed = true;
     }
     if (next.has('mode')) {
       next.delete('mode');
-      changed = true;
-    }
-    if (next.has('view')) {
-      next.delete('view');
       changed = true;
     }
     if (changed) {
