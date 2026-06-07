@@ -93,6 +93,7 @@ import {
 } from './InitiativePreviewV3';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { InitiativeCharterWizard } from './Wizard/InitiativeCharterWizard';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -226,6 +227,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
+  const [showCharter, setShowCharter] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -641,6 +643,34 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       setActiveTab('list');
       setActiveDocumentId(initiative.id);
       handlePreviewSelection(initiative.id);
+    },
+    [handlePreviewSelection, openDocuments, setActiveDocumentId, setOpenDocuments, t]
+  );
+
+  // Generic document opener (used by canon §9 kebab "Open full" on list/grid cards).
+  // Restores a referenced-but-undefined handler so the module typechecks.
+  const handleOpenDocument = useCallback(
+    (doc: {
+      id: string;
+      type: OpenDocument['type'];
+      name: string;
+      status?: string;
+      subType?: string;
+    }) => {
+      const existingDoc = openDocuments.find((d) => d.id === doc.id && d.type === doc.type);
+      if (!existingDoc) {
+        const newDoc: OpenDocument = {
+          id: doc.id,
+          name: doc.name || t('initiatives.document.untitled', 'Untitled initiative'),
+          type: doc.type,
+          subType: doc.subType ?? doc.type,
+          status: (doc.status || InitiativeStatus.DRAFT) as any,
+        };
+        setOpenDocuments((prev) => [...prev, newDoc]);
+      }
+      setActiveTab('list');
+      setActiveDocumentId(doc.id);
+      handlePreviewSelection(doc.id);
     },
     [handlePreviewSelection, openDocuments, setActiveDocumentId, setOpenDocuments, t]
   );
@@ -1363,7 +1393,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               <PortfolioListView
                 initiatives={searchedInitiatives}
                 onInitiativeClick={handleInitiativeClick}
-                onOpenFull={(initiative) => handleOpenDocument({ id: initiative.id, type: 'initiative', name: String(initiative.name || ''), status: String(initiative.status || '').toUpperCase() as any })}
+                onOpenFull={(initiative) =>
+                  handleOpenDocument({
+                    id: initiative.id,
+                    type: 'initiative',
+                    name: String(initiative.name || ''),
+                    status: String(initiative.status || '').toUpperCase() as any,
+                  })
+                }
                 onStatusChange={handleStatusChange}
                 onQuickUpdate={handleQuickUpdate}
                 onSelectionChange={setSelectedIds}
@@ -1393,7 +1430,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       initiative={initiative}
                       onClick={() => handleInitiativeClick(initiative)}
                       onArchive={handleArchiveInitiative}
-                      onOpenFull={(initiative) => handleOpenDocument({ id: initiative.id, type: 'initiative', name: String(initiative.name || ''), status: String(initiative.status || '').toUpperCase() as any })}
+                      onOpenFull={(initiative) =>
+                        handleOpenDocument({
+                          id: initiative.id,
+                          type: 'initiative',
+                          name: String(initiative.name || ''),
+                          status: String(initiative.status || '').toUpperCase() as any,
+                        })
+                      }
                     />
                   ))}
                 </div>
@@ -1765,6 +1809,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             AI Initiative Wizard
           </button>
         )}
+        {!isPilotParticipant && (
+          <button
+            type="button"
+            onClick={() => setShowCharter(true)}
+            className={MENU_3_ACTION_NEUTRAL}
+            title={t(
+              'initiatives.charter.cta',
+              'Nowa inicjatywa (Charter — szybki, dyscyplina MECE)'
+            )}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {t('initiatives.charter.short', 'Charter')}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1833,6 +1891,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setActiveStatusFilter(revealState.activeStatusFilter);
             setPreviewInitiativeId(first.id);
           }
+        }}
+      />
+
+      <InitiativeCharterWizard
+        isOpen={showCharter}
+        onClose={() => setShowCharter(false)}
+        projectId={currentProjectId || undefined}
+        onCreated={() => {
+          setShowCharter(false);
+          void fetchData(true);
         }}
       />
 
