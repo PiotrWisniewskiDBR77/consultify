@@ -9,6 +9,7 @@ import {
   Brain,
   Check,
   CheckCircle2,
+  ChevronDown,
   Compass,
   ExternalLink,
   FileText,
@@ -18,6 +19,7 @@ import {
   MessageSquare,
   Package,
   Save,
+  SlidersHorizontal,
   Sparkles,
   Target,
   Trash2,
@@ -69,7 +71,7 @@ type InsightAnalysisMode =
 type InsightContextMode =
   | 'selected_interview_material_only'
   | 'selected_material_plus_approved_org_knowledge';
-type CreatorStepId = 'goal' | 'people' | 'source' | 'analysis' | 'context';
+type CreatorStepId = 'define' | 'material' | 'refine';
 
 interface CompletedSession {
   id: string;
@@ -157,6 +159,46 @@ const InfoHint: React.FC<{ text: string }> = ({ text }) => (
   >
     <Info size={13} />
   </span>
+);
+
+// Collapsible disclosure section — used for the optional "Filter" and "Advanced"
+// groups so the long tail of refinement controls stays hidden until requested.
+// An active-count badge keeps hidden choices honest (never a silent surprise).
+const Disclosure: React.FC<{
+  icon: React.ElementType;
+  title: string;
+  hint?: string;
+  count?: number;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}> = ({ icon: Icon, title, hint, count, open, onToggle, children }) => (
+  <div className="rounded-xl border border-slate-200 bg-slate-50/70 dark:border-navy-700/60 dark:bg-navy-950/30">
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
+    >
+      <Icon size={16} className="shrink-0 text-slate-500 dark:text-slate-400" />
+      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</span>
+      {typeof count === 'number' && count > 0 && (
+        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[11px] font-semibold text-white">
+          {count}
+        </span>
+      )}
+      {hint && <span className="hidden truncate text-xs text-slate-400 sm:inline">{hint}</span>}
+      <ChevronDown
+        size={16}
+        className={`ml-auto shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+      />
+    </button>
+    {open && (
+      <div className="space-y-4 border-t border-slate-200/70 px-3.5 py-3.5 dark:border-navy-700/50">
+        {children}
+      </div>
+    )}
+  </div>
 );
 
 // #28e — Normalize a title into significant tokens for the client-side check.
@@ -459,41 +501,29 @@ const CREATOR_STEPS: Array<{
   labelEn: string;
   hintPl: string;
   hintEn: string;
+  optional?: boolean;
 }> = [
   {
-    id: 'goal',
-    labelPl: 'Cel',
-    labelEn: 'Goal',
+    id: 'define',
+    labelPl: 'Definicja',
+    labelEn: 'Define',
     hintPl: 'Co chcesz uzyskać?',
     hintEn: 'What should AI produce?',
   },
   {
-    id: 'people',
-    labelPl: 'Osoby',
-    labelEn: 'People',
-    hintPl: 'Kto ma wejść do analizy?',
-    hintEn: 'Whose answers are in scope?',
-  },
-  {
-    id: 'source',
+    id: 'material',
     labelPl: 'Materiał',
     labelEn: 'Source',
     hintPl: 'Z jakich wywiadów korzystamy?',
     hintEn: 'Which interviews should be used?',
   },
   {
-    id: 'analysis',
-    labelPl: 'Analiza',
-    labelEn: 'Analysis',
-    hintPl: 'Jak AI ma czytać materiał?',
-    hintEn: 'How should AI interpret it?',
-  },
-  {
-    id: 'context',
-    labelPl: 'Uwagi',
-    labelEn: 'Context',
-    hintPl: 'Dodatkowy kontekst i read-back',
-    hintEn: 'Extra context and read-back',
+    id: 'refine',
+    labelPl: 'Dostrojenie',
+    labelEn: 'Refine',
+    hintPl: 'Opcjonalne nastrojenie analizy',
+    hintEn: 'Optional analysis fine-tuning',
+    optional: true,
   },
 ];
 
@@ -529,6 +559,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const [customPrompt, setCustomPrompt] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
   const [internalArtifactLinks, setInternalArtifactLinks] = useState('');
+  // Collapsible groups for the consolidated 3-step layout.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // E7.3 / E7.4: Auto-fill custom prompt for special analysis types
   const applyPromptPreset = (type: InsightPromptType) => {
@@ -745,9 +778,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     setSelectedAnalysisModes(['general_consulting_synthesis']);
     setSelectedTopicFocus([]);
     setLeadingQuestion('');
-    // Jump straight to the Analysis step (skip People/Source — sources reused).
-    const analysisIndex = CREATOR_STEPS.findIndex((step) => step.id === 'analysis');
-    setCurrentStep(analysisIndex >= 0 ? analysisIndex : currentStep);
+    // Jump straight to the Refine step (sources reused) and open Advanced so the
+    // analysis lens is immediately visible.
+    const refineIndex = CREATOR_STEPS.findIndex((step) => step.id === 'refine');
+    setCurrentStep(refineIndex >= 0 ? refineIndex : currentStep);
+    setAdvancedOpen(true);
     toast.success(
       isPolish
         ? 'Nowy kąt — wybierz soczewkę i wygeneruj.'
@@ -1506,22 +1541,22 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const canCompleteStep = (stepIndex: number): boolean => {
     const stepId = CREATOR_STEPS[stepIndex]?.id;
-    if (stepId === 'goal') return Boolean(title.trim() && selectedTypes.length > 0);
-    if (stepId === 'source') return selectedSessions.length > 0;
+    if (stepId === 'define') return Boolean(title.trim() && selectedTypes.length > 0);
+    if (stepId === 'material') return selectedSessions.length > 0;
     return true;
   };
 
   const getStepBlockerMessage = (stepIndex: number): string | null => {
     const stepId = CREATOR_STEPS[stepIndex]?.id;
-    if (stepId === 'goal' && !title.trim()) {
+    if (stepId === 'define' && !title.trim()) {
       return isPolish ? 'Podaj tytuł wniosków.' : 'Enter an insight title.';
     }
-    if (stepId === 'goal' && selectedTypes.length === 0) {
+    if (stepId === 'define' && selectedTypes.length === 0) {
       return isPolish
         ? 'Wybierz przynajmniej jeden typ wyniku.'
         : 'Select at least one output type.';
     }
-    if (stepId === 'source' && selectedSessions.length === 0) {
+    if (stepId === 'material' && selectedSessions.length === 0) {
       return isPolish
         ? 'Wybierz przynajmniej jedną sesję źródłową.'
         : 'Select at least one source session.';
@@ -1637,6 +1672,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       label: { en: step.labelEn, pl: step.labelPl },
       hint: { en: step.hintEn, pl: step.hintPl },
       status,
+      optional: step.optional,
     };
   });
 
@@ -1653,7 +1689,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   })();
 
   const renderGlobalLoadError = () => {
-    if (!loadError || CREATOR_STEPS[currentStep]?.id === 'source') return null;
+    if (!loadError || CREATOR_STEPS[currentStep]?.id === 'material') return null;
     return (
       <EmptyStateInline
         icon={AlertTriangle}
@@ -1724,99 +1760,119 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     );
   };
 
-  const renderGoalStep = () => (
-    <div className="space-y-5">
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-          {isPolish ? 'Tytuł wniosków' : 'Insight Title'} *
-        </label>
+  const renderTypeRow = (type: AnalysisType) => {
+    const isSelected = selectedTypes.includes(type.id);
+    return (
+      <label
+        key={type.id}
+        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
+          isSelected
+            ? 'border-primary-500/60 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/15'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700/60 dark:bg-navy-800/40 dark:hover:border-white/[0.16]'
+        }`}
+      >
         <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={
-            isPolish
-              ? 'np. Analiza transformacji cyfrowej Q1 2024'
-              : 'e.g. Digital Transformation Analysis Q1 2024'
-          }
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => toggleAnalysisType(type.id)}
+          className="sr-only"
         />
-        {renderSimilarWarning()}
-        {title.trim().length >= 4 &&
-          existingInsights.length > 0 &&
-          similarHits.length === 0 &&
-          !similarDismissed && (
-            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 size={12} />
-              {isPolish
-                ? 'Brak podobnych wniosków o tej nazwie.'
-                : 'No similar insights with this name.'}
-            </p>
-          )}
-      </div>
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getColorClasses(
+            type.color,
+            'bg'
+          )} ${getColorClasses(type.color, 'text')}`}
+        >
+          {type.icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {isPolish ? type.namePl : type.name}
+          </div>
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+            {isPolish ? type.descriptionPl : type.description}
+          </p>
+        </div>
+        <StyledCheck checked={isSelected} />
+      </label>
+    );
+  };
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          {isPolish ? 'Typ wyniku' : 'Output type'} *
-        </label>
-        <div className="space-y-2">
-          <div className="max-h-52 space-y-1.5 overflow-auto pr-1">
-            {ANALYSIS_TYPES.map((type) => {
-              const isSelected = selectedTypes.includes(type.id);
+  const renderDefineStep = () => {
+    const categories: Array<{ key: AnalysisType['category']; labelPl: string; labelEn: string }> = [
+      { key: 'basic', labelPl: 'Podstawowe', labelEn: 'Basic' },
+      { key: 'advanced', labelPl: 'Zaawansowane', labelEn: 'Advanced' },
+      { key: 'bcg', labelPl: 'Frameworki BCG', labelEn: 'BCG frameworks' },
+    ];
+    return (
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            {isPolish ? 'Tytuł wniosków' : 'Insight Title'} *
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={
+              isPolish
+                ? 'np. Analiza transformacji cyfrowej Q1 2024'
+                : 'e.g. Digital Transformation Analysis Q1 2024'
+            }
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+          />
+          {renderSimilarWarning()}
+          {title.trim().length >= 4 &&
+            existingInsights.length > 0 &&
+            similarHits.length === 0 &&
+            !similarDismissed && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 size={12} />
+                {isPolish
+                  ? 'Brak podobnych wniosków o tej nazwie.'
+                  : 'No similar insights with this name.'}
+              </p>
+            )}
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {isPolish ? 'Typ wyniku' : 'Output type'} *
+            </label>
+            <span className="text-xs text-primary-500">
+              {isPolish ? `Wybrano: ${selectedTypes.length}` : `Selected: ${selectedTypes.length}`}
+            </span>
+          </div>
+          <div className="max-h-[280px] space-y-3 overflow-auto pr-1">
+            {categories.map((cat) => {
+              const items = ANALYSIS_TYPES.filter((t) => t.category === cat.key);
+              if (items.length === 0) return null;
               return (
-                <label
-                  key={type.id}
-                  className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
-                    isSelected
-                      ? 'border-primary-500/60 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/15'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700/60 dark:bg-navy-800/40 dark:hover:border-white/[0.16]'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleAnalysisType(type.id)}
-                    className="sr-only"
-                  />
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getColorClasses(
-                      type.color,
-                      'bg'
-                    )} ${getColorClasses(type.color, 'text')}`}
-                  >
-                    {type.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {isPolish ? type.namePl : type.name}
-                    </div>
-                    <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? type.descriptionPl : type.description}
-                    </p>
-                  </div>
-                  <StyledCheck checked={isSelected} />
-                </label>
+                <div key={cat.key} className="space-y-1.5">
+                  <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {isPolish ? cat.labelPl : cat.labelEn}
+                  </p>
+                  {items.map(renderTypeRow)}
+                </div>
               );
             })}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {isPolish
               ? 'Typ wyniku kształtuje zawartość tego insightu. Nie tworzy automatycznie raportu, prezentacji ani obiektu w aplikacji.'
               : 'Output type shapes this insight only. It does not automatically create a report, presentation, or app object.'}
           </p>
-          <p className="text-xs text-primary-400">
-            {isPolish ? `Wybrano: ${selectedTypes.length}` : `Selected: ${selectedTypes.length}`}
-          </p>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
-  const renderPeopleStep = () => (
-    <div className="space-y-5">
+  const renderPeopleBlock = () => (
+    <div>
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
             {isPolish ? 'Wybierz osoby' : 'Select people'}
             <InfoHint
               text={
@@ -1868,7 +1924,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               </div>
             </button>
 
-            <div className="max-h-72 space-y-1.5 overflow-auto pr-1">
+            <div className="max-h-44 space-y-1.5 overflow-auto pr-1">
               {respondentOptions.map((respondent) => {
                 const isSelected = selectedRespondents.includes(respondent.id);
                 return (
@@ -2023,12 +2079,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     );
   };
 
-  const renderSourceStep = () => (
-    <div className="space-y-5">
-      {renderSourceBasketControl()}
+  // Date / role / department filters — live inside the "Filter" disclosure on the
+  // Material step (merged from the old standalone Source step).
+  const renderSourceFiltersBlock = () => (
+    <div className="space-y-4">
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
             {isPolish ? 'Zakres dat materiału' : 'Material date range'}
           </label>
           {(filterDateFrom || filterDateTo) && (
@@ -2072,7 +2129,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Rola respondenta' : 'Respondent role'}
             </label>
             {filterRole && (
@@ -2104,7 +2161,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Dział respondenta' : 'Respondent department'}
             </label>
             {filterDepartment && (
@@ -2137,116 +2194,145 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           />
         </div>
       </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {isPolish ? 'Wybierz sesje źródłowe' : 'Select source sessions'} *
-          </label>
-          {filteredSessions.length > 0 && (
-            <button
-              type="button"
-              onClick={toggleAllSessions}
-              className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
-            >
-              {filteredSessions.every((session) => selectedSessions.includes(session.id))
-                ? isPolish
-                  ? 'Odznacz wszystkie'
-                  : 'Deselect all'
-                : isPolish
-                  ? 'Zaznacz wszystkie'
-                  : 'Select all'}
-            </button>
-          )}
-        </div>
-
-        {isLoading ? (
-          <LoadingState variant="spinner" className="py-8" />
-        ) : loadError ? (
-          <EmptyStateInline
-            icon={AlertTriangle}
-            dashed={false}
-            message={loadError}
-            hint={isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en}
-            action={{
-              label: isPolish ? 'Ponów' : 'Retry',
-              onClick: retryLoadData,
-            }}
-            className="rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
-          />
-        ) : filteredSessions.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
-            <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">
-              {isPolish
-                ? 'Brak zatwierdzonych i zakończonych sesji'
-                : 'No approved completed sessions'}
-            </p>
-            {(filterTemplate ||
-              filterRespondent ||
-              filterRole ||
-              filterDepartment ||
-              filterDateFrom ||
-              filterDateTo) && (
-              <p className="text-xs mt-1">
-                {isPolish ? 'Spróbuj zmienić filtry' : 'Try changing filters'}
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="max-h-80 space-y-1.5 overflow-auto pr-1">
-            {filteredSessions.map((session) => {
-              const isSelected = selectedSessions.includes(session.id);
-              return (
-                <label
-                  key={session.id}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
-                    isSelected
-                      ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleSession(session.id)}
-                    className="sr-only"
-                  />
-                  <StyledCheck checked={isSelected} />
-                  <div className="flex-1 min-w-0">
-                    <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {session.name || 'Interview Session'}
-                      <span className="ml-2 font-normal text-slate-500">
-                        {session.answeredQuestions}/{session.totalQuestions}{' '}
-                        {isPolish ? 'pytań' : 'questions'}
-                      </span>
-                      {session.templateName && (
-                        <span className="ml-2 font-normal text-slate-500">
-                          • {session.templateName}
-                        </span>
-                      )}
-                      {session.completedAt && (
-                        <span className="ml-2 font-normal text-slate-500">
-                          • {new Date(session.completedAt).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </label>
-              );
-            })}
-          </div>
-        )}
-
-        <p className="text-xs text-primary-400 mt-2">{selectedSourceSummary}</p>
-      </div>
     </div>
   );
 
-  const renderAnalysisStep = () => (
+  const renderSessionsBlock = () => (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {isPolish ? 'Wybierz sesje źródłowe' : 'Select source sessions'} *
+        </label>
+        {filteredSessions.length > 0 && (
+          <button
+            type="button"
+            onClick={toggleAllSessions}
+            className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
+          >
+            {filteredSessions.every((session) => selectedSessions.includes(session.id))
+              ? isPolish
+                ? 'Odznacz wszystkie'
+                : 'Deselect all'
+              : isPolish
+                ? 'Zaznacz wszystkie'
+                : 'Select all'}
+          </button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <LoadingState variant="spinner" className="py-8" />
+      ) : loadError ? (
+        <EmptyStateInline
+          icon={AlertTriangle}
+          dashed={false}
+          message={loadError}
+          hint={isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en}
+          action={{
+            label: isPolish ? 'Ponów' : 'Retry',
+            onClick: retryLoadData,
+          }}
+          className="rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
+        />
+      ) : filteredSessions.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
+          <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
+          <p className="text-sm">
+            {isPolish
+              ? 'Brak zatwierdzonych i zakończonych sesji'
+              : 'No approved completed sessions'}
+          </p>
+          {(filterTemplate ||
+            filterRespondent ||
+            filterRole ||
+            filterDepartment ||
+            filterDateFrom ||
+            filterDateTo) && (
+            <p className="text-xs mt-1">
+              {isPolish ? 'Spróbuj zmienić filtry' : 'Try changing filters'}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="max-h-[220px] space-y-1.5 overflow-auto pr-1">
+          {filteredSessions.map((session) => {
+            const isSelected = selectedSessions.includes(session.id);
+            return (
+              <label
+                key={session.id}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
+                  isSelected
+                    ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                    : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleSession(session.id)}
+                  className="sr-only"
+                />
+                <StyledCheck checked={isSelected} />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {session.name || 'Interview Session'}
+                    <span className="ml-2 font-normal text-slate-500">
+                      {session.answeredQuestions}/{session.totalQuestions}{' '}
+                      {isPolish ? 'pytań' : 'questions'}
+                    </span>
+                    {session.templateName && (
+                      <span className="ml-2 font-normal text-slate-500">
+                        • {session.templateName}
+                      </span>
+                    )}
+                    {session.completedAt && (
+                      <span className="ml-2 font-normal text-slate-500">
+                        • {new Date(session.completedAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      )}
+
+      <p className="text-xs text-primary-400 mt-2">{selectedSourceSummary}</p>
+    </div>
+  );
+
+  // Active-filter count for the "Filter" disclosure badge — keeps hidden scoping
+  // choices visible so nothing silently narrows the analysis.
+  const activeFilterCount =
+    selectedRespondents.length +
+    (filterDateFrom ? 1 : 0) +
+    (filterDateTo ? 1 : 0) +
+    (filterRole ? 1 : 0) +
+    (filterDepartment ? 1 : 0);
+
+  const renderMaterialStep = () => (
     <div className="space-y-5">
+      {renderSourceBasketControl()}
+      {renderSessionsBlock()}
+      <Disclosure
+        icon={SlidersHorizontal}
+        title={isPolish ? 'Filtruj' : 'Filter'}
+        hint={isPolish ? 'osoby, daty, rola, dział' : 'people, dates, role, department'}
+        count={activeFilterCount}
+        open={filtersOpen}
+        onToggle={() => setFiltersOpen((v) => !v)}
+      >
+        {renderPeopleBlock()}
+        {renderSourceFiltersBlock()}
+      </Disclosure>
+    </div>
+  );
+
+  const renderAnalysisBlock = () => (
+    <div className="space-y-4">
       <div>
-        <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {isPolish ? 'Tryb analizy' : 'Analysis mode'}
           <InfoHint
             text={
@@ -2301,7 +2387,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
             {isPolish ? 'Zakres tematyczny' : 'Topic focus'}
           </label>
           {selectedTopicFocus.length > 0 && (
@@ -2345,7 +2431,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {isPolish ? 'Zakres kontekstu AI' : 'AI context boundary'}
           <InfoHint
             text={
@@ -2398,28 +2484,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     </div>
   );
 
-  const renderContextStep = () => (
-    <div className="space-y-5">
-      {renderSimilarWarning()}
+  const renderContextDetailsBlock = () => (
+    <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-          {isPolish ? 'Pytanie prowadzące' : 'Leading question'}
-        </label>
-        <input
-          type="text"
-          value={leadingQuestion}
-          onChange={(event) => setLeadingQuestion(event.target.value)}
-          placeholder={
-            isPolish
-              ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
-              : 'e.g. Where do ownership handoffs most often break?'
-          }
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
           {isPolish ? 'Uwagi' : 'Notes'}
         </label>
         <textarea
@@ -2436,7 +2504,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
-        <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {isPolish ? 'Dokumenty kontekstowe' : 'Context documents'}
           <InfoHint
             text={
@@ -2570,7 +2638,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
           {isPolish ? 'Linki do artefaktów wewnętrznych' : 'Internal artifact links'}
         </label>
         <textarea
@@ -2588,13 +2656,69 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     </div>
   );
 
+  // Active-choice count for the "Advanced" disclosure badge.
+  const advancedCount =
+    selectedTopicFocus.length +
+    selectedContextDocumentIds.length +
+    (customPrompt.trim() ? 1 : 0) +
+    (internalArtifactLinks.trim() ? 1 : 0) +
+    (selectedAnalysisModes.length > 1 ? selectedAnalysisModes.length - 1 : 0);
+
+  const renderRefineStep = () => (
+    <div className="space-y-5">
+      {renderSimilarWarning()}
+      <div className="rounded-xl border border-primary-200/60 bg-primary-50/50 p-3.5 dark:border-primary-500/20 dark:bg-primary-500/[0.07]">
+        <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          {isPolish ? 'Pytanie przewodnie / hipoteza' : 'Leading question / hypothesis'}
+          <InfoHint
+            text={
+              isPolish
+                ? 'Opcjonalne. Skieruj analizę na konkretne pytanie lub hipotezę, którą AI ma sprawdzić.'
+                : 'Optional. Point the analysis at a specific question or hypothesis for the AI to test.'
+            }
+          />
+        </label>
+        <input
+          type="text"
+          value={leadingQuestion}
+          onChange={(event) => setLeadingQuestion(event.target.value)}
+          placeholder={
+            isPolish
+              ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
+              : 'e.g. Where do ownership handoffs most often break?'
+          }
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-100 dark:placeholder-slate-500"
+        />
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'To jedyne pole, którego zwykle potrzebujesz. Reszta poniżej jest opcjonalna.'
+            : 'This is usually the only field you need. Everything below is optional.'}
+        </p>
+      </div>
+
+      <Disclosure
+        icon={SlidersHorizontal}
+        title={isPolish ? 'Zaawansowane' : 'Advanced'}
+        hint={
+          isPolish
+            ? 'soczewka, tematy, kontekst AI, dokumenty'
+            : 'lens, topics, AI context, documents'
+        }
+        count={advancedCount}
+        open={advancedOpen}
+        onToggle={() => setAdvancedOpen((v) => !v)}
+      >
+        {renderAnalysisBlock()}
+        {renderContextDetailsBlock()}
+      </Disclosure>
+    </div>
+  );
+
   const renderCurrentStep = () => {
     const stepId = CREATOR_STEPS[currentStep]?.id;
-    if (stepId === 'goal') return renderGoalStep();
-    if (stepId === 'people') return renderPeopleStep();
-    if (stepId === 'source') return renderSourceStep();
-    if (stepId === 'analysis') return renderAnalysisStep();
-    return renderContextStep();
+    if (stepId === 'define') return renderDefineStep();
+    if (stepId === 'material') return renderMaterialStep();
+    return renderRefineStep();
   };
 
   if (!isOpen) return null;
