@@ -48,6 +48,8 @@ type QuadrantSpec = {
   subtitle: string;
   fill: string;
   chip: string;
+  accent: string;
+  corner: 'tl' | 'tr' | 'br' | 'bl';
   Icon: React.ComponentType<{ className?: string }>;
   x: number;
   y: number;
@@ -68,6 +70,8 @@ const QUADRANTS: QuadrantSpec[] = [
     subtitle: 'what I should learn',
     fill: 'rgba(56,189,248,0.12)',
     chip: 'text-cyan-200',
+    accent: '#38BDF8',
+    corner: 'tl',
     Icon: UserRound,
     x: 6,
     y: 6,
@@ -78,6 +82,8 @@ const QUADRANTS: QuadrantSpec[] = [
     subtitle: 'what helps current work',
     fill: 'rgba(45,212,191,0.11)',
     chip: 'text-teal-200',
+    accent: '#2DD4BF',
+    corner: 'tr',
     Icon: Target,
     x: 50,
     y: 6,
@@ -88,6 +94,8 @@ const QUADRANTS: QuadrantSpec[] = [
     subtitle: 'what matters around company',
     fill: 'rgba(217,70,239,0.11)',
     chip: 'text-fuchsia-200',
+    accent: '#D946EF',
+    corner: 'br',
     Icon: Briefcase,
     x: 50,
     y: 50,
@@ -98,6 +106,8 @@ const QUADRANTS: QuadrantSpec[] = [
     subtitle: 'what affects responsibility',
     fill: 'rgba(251,191,36,0.10)',
     chip: 'text-amber-200',
+    accent: '#FBBF24',
+    corner: 'bl',
     Icon: Workflow,
     x: 6,
     y: 50,
@@ -169,6 +179,17 @@ const TYPE_META: Record<
     tone: 'border-emerald-300/45 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
     dot: 'bg-emerald-400',
   },
+};
+
+const TYPE_ACCENT: Record<RadarSignalType, string> = {
+  TECHNOLOGY: '#22D3EE',
+  SKILL: '#38BDF8',
+  BUSINESS: '#2DD4BF',
+  RISK: '#E879F9',
+  PROCESS: '#FBBF24',
+  TOOL: '#818CF8',
+  TREND: '#A78BFA',
+  IDEA: '#34D399',
 };
 
 const STATUS_META: Record<RadarSignalStatus, { label: string; tone: string }> = {
@@ -288,7 +309,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-[#0B1220]">
+    <div className="relative flex h-full flex-col overflow-hidden bg-[#070B14]">
       <BgCanvas timeMode={screen.timeMode} ambientMotion={layout.ambientMotion} />
 
       <div className="relative z-10 flex items-center justify-between gap-4 px-4 md:px-5 pt-2.5 pb-1.5">
@@ -308,7 +329,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
         <div className="mb-2.5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">Your Radar</h2>
-            <p className="mt-0.5 max-w-3xl text-[12px] text-slate-600">
+            <p className="mt-0.5 max-w-3xl text-[12px] text-slate-400">
               A personal map of signals worth your attention — across your development, projects,
               industry and role.
             </p>
@@ -326,14 +347,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                     'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition',
                     active
                       ? 'border-primary-300/60 bg-primary-500/20 text-primary-100'
-                      : 'border-white/10 bg-white/[0.04] text-slate-600 hover:border-white/20 hover:bg-white/[0.08]'
+                      : 'border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/20 hover:bg-white/[0.08]'
                   )}
                 >
                   {filter.label}
                   <span
                     className={cn(
                       'rounded-full px-1.5 text-[10px] tabular-nums',
-                      active ? 'bg-primary-400/30 text-white' : 'bg-white/10 text-slate-600'
+                      active ? 'bg-primary-400/30 text-white' : 'bg-white/10 text-slate-300'
                     )}
                   >
                     {statusCounts[filter.id] ?? 0}
@@ -349,7 +370,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
             <div className="max-w-md rounded-2xl border border-white/[0.08] bg-white/[0.03] px-8 py-10 text-center">
               <Radar className="mx-auto mb-3 h-9 w-9 text-primary-300/70" />
               <p className="text-sm font-medium text-white">{t('myWork.radar.empty')}</p>
-              <p className="mt-1.5 text-[12px] text-slate-600">{t('myWork.radar.emptyHint')}</p>
+              <p className="mt-1.5 text-[12px] text-slate-400">{t('myWork.radar.emptyHint')}</p>
               <button
                 type="button"
                 onClick={() => void refresh()}
@@ -474,19 +495,42 @@ function clampText(value: string, max: number): string {
   return `${text.slice(0, max - 1).trimEnd()}…`;
 }
 
-function getSignalPosition(signal: RadarMapSignal, index: number, total: number) {
-  const baseRadius = RING_WEIGHT[signal.ring];
-  const quadAngle = QUADRANT_START[signal.quadrant];
-  const spread = Math.PI / 2;
-  const slot = (index % Math.max(1, total)) / Math.max(1, total);
-  const angle = quadAngle + spread * (0.1 + slot * 0.8);
-  const jitter = ((index % 3) - 1) * 0.015;
-  const radius = Math.max(0.12, Math.min(0.9, baseRadius + jitter));
+type SignalPosition = { x: number; y: number; angle: number; radius: number };
 
-  return {
-    x: 50 + Math.cos(angle) * radius * 44,
-    y: 50 + Math.sin(angle) * radius * 44,
-  };
+// Distribute signals so they fan out evenly inside each quadrant's 90° arc
+// (grouped per-quadrant, not by global index) — this avoids the old behaviour
+// where everything collapsed into one diagonal streak in a single corner.
+function computeSignalLayout(signals: RadarMapSignal[]): Map<string, SignalPosition> {
+  const byQuadrant = new Map<RadarMapSignal['quadrant'], RadarMapSignal[]>();
+  for (const signal of signals) {
+    const bucket = byQuadrant.get(signal.quadrant) ?? [];
+    bucket.push(signal);
+    byQuadrant.set(signal.quadrant, bucket);
+  }
+
+  const layout = new Map<string, SignalPosition>();
+  const spread = Math.PI / 2;
+
+  byQuadrant.forEach((bucket, quadrant) => {
+    const quadAngle = QUADRANT_START[quadrant];
+    const count = bucket.length;
+    bucket.forEach((signal, i) => {
+      // Even angular slots with padding from both quadrant edges.
+      const slot = count === 1 ? 0.5 : i / (count - 1);
+      const angle = quadAngle + spread * (0.14 + slot * 0.72);
+      // Nudge same-ring neighbours apart radially so pucks never fully overlap.
+      const jitter = ((i % 3) - 1) * 0.02;
+      const radius = Math.max(0.14, Math.min(0.92, RING_WEIGHT[signal.ring] + jitter));
+      layout.set(signal.id, {
+        x: 50 + Math.cos(angle) * radius * 45,
+        y: 50 + Math.sin(angle) * radius * 45,
+        angle,
+        radius,
+      });
+    });
+  });
+
+  return layout;
 }
 
 function RadarCanvas({
@@ -500,15 +544,28 @@ function RadarCanvas({
   onSelectSignal: (id: string) => void;
   ambientMotion: 'soft' | 'full';
 }) {
+  const layout = useMemo(() => computeSignalLayout(signals), [signals]);
   const selectedSignal =
     signals.find((signal) => signal.id === selectedSignalId) ?? signals[0] ?? null;
-  const selectedIndex = selectedSignal
-    ? signals.findIndex((signal) => signal.id === selectedSignal.id)
-    : -1;
-  const selectedPosition =
-    selectedSignal && selectedIndex >= 0
-      ? getSignalPosition(selectedSignal, selectedIndex, signals.length)
-      : null;
+  const selectedPosition = selectedSignal ? layout.get(selectedSignal.id) ?? null : null;
+  const sectors = useMemo(
+    () =>
+      QUADRANTS.map((q) => {
+        const a0 = QUADRANT_START[q.key];
+        const a1 = a0 + Math.PI / 2;
+        const R = 46;
+        const p0x = 50 + R * Math.cos(a0);
+        const p0y = 50 + R * Math.sin(a0);
+        const p1x = 50 + R * Math.cos(a1);
+        const p1y = 50 + R * Math.sin(a1);
+        return {
+          key: q.key,
+          fill: q.fill,
+          d: `M50,50 L${p0x.toFixed(2)},${p0y.toFixed(2)} A${R},${R} 0 0 1 ${p1x.toFixed(2)},${p1y.toFixed(2)} Z`,
+        };
+      }),
+    []
+  );
 
   const handleCanvasKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!signals.length) return;
@@ -523,220 +580,225 @@ function RadarCanvas({
     onSelectSignal(signals[next].id);
   };
 
+  const cornerClass: Record<QuadrantSpec['corner'], string> = {
+    tl: 'left-2.5 top-2.5 items-start text-left',
+    tr: 'right-2.5 top-2.5 items-end text-right',
+    br: 'right-2.5 bottom-2.5 items-end text-right',
+    bl: 'left-2.5 bottom-2.5 items-start text-left',
+  };
+
   return (
-    <div className="flex h-full min-h-[620px] flex-col gap-2 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/45 via-slate-900/25 to-slate-900/45 p-3 shadow-[inset_0_0_60px_rgba(15,23,42,0.5)]">
+    <div className="relative flex h-full min-h-[620px] flex-col gap-2 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#0A1122] to-[#06080F] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_24px_60px_-24px_rgba(0,0,0,0.8)]">
       <div
-        className="relative flex-1 overflow-hidden rounded-xl border border-white/[0.06] bg-[radial-gradient(circle_at_50%_50%,rgba(96,165,250,0.08),transparent_58%)]"
+        className="relative flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-[radial-gradient(circle_at_50%_46%,rgba(56,130,246,0.14),transparent_62%)]"
         tabIndex={0}
         onKeyDown={handleCanvasKeyDown}
         aria-label="Radar canvas"
       >
-        <svg viewBox="0 0 100 100" className="h-full w-full">
+        {/* Ambient depth: vignette + soft core bloom */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,transparent_40%,rgba(3,5,12,0.75))]" />
+
+        <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
           <defs>
             <linearGradient id="radarSweep" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="rgba(96,165,250,0)" />
-              <stop offset="70%" stopColor="rgba(96,165,250,0.16)" />
-              <stop offset="100%" stopColor="rgba(96,165,250,0.38)" />
+              <stop offset="62%" stopColor="rgba(96,165,250,0.10)" />
+              <stop offset="100%" stopColor="rgba(125,211,252,0.42)" />
             </linearGradient>
+            <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(186,230,253,0.95)" />
+              <stop offset="45%" stopColor="rgba(56,189,248,0.55)" />
+              <stop offset="100%" stopColor="rgba(56,189,248,0)" />
+            </radialGradient>
           </defs>
 
-          {QUADRANTS.map((q) => (
-            <rect key={q.key} x={q.x} y={q.y} width="44" height="44" fill={q.fill} rx="1.8" />
+          {/* Quadrant sectors */}
+          {sectors.map((s) => (
+            <path key={s.key} d={s.d} fill={s.fill} />
           ))}
 
-          <circle
-            cx="50"
-            cy="50"
-            r="44"
-            fill="none"
-            stroke="rgba(148,163,184,0.28)"
-            strokeWidth="0.45"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r="33"
-            fill="none"
-            stroke="rgba(148,163,184,0.22)"
-            strokeWidth="0.35"
-            strokeDasharray="0.5 0.8"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r="22"
-            fill="none"
-            stroke="rgba(148,163,184,0.18)"
-            strokeWidth="0.35"
-            strokeDasharray="0.5 0.8"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r="11"
-            fill="none"
-            stroke="rgba(148,163,184,0.2)"
-            strokeWidth="0.35"
-          />
+          {/* Concentric horizon rings */}
+          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(148,163,184,0.30)" strokeWidth="0.4" />
+          <circle cx="50" cy="50" r="34.5" fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth="0.3" strokeDasharray="0.6 0.9" />
+          <circle cx="50" cy="50" r="23" fill="none" stroke="rgba(148,163,184,0.16)" strokeWidth="0.3" strokeDasharray="0.6 0.9" />
+          <circle cx="50" cy="50" r="11.5" fill="none" stroke="rgba(125,211,252,0.28)" strokeWidth="0.35" />
 
-          <line x1="50" y1="6" x2="50" y2="94" stroke="rgba(148,163,184,0.2)" strokeWidth="0.32" />
-          <line x1="6" y1="50" x2="94" y2="50" stroke="rgba(148,163,184,0.2)" strokeWidth="0.32" />
+          {/* Axis cross */}
+          <line x1="50" y1="4" x2="50" y2="96" stroke="rgba(148,163,184,0.16)" strokeWidth="0.28" />
+          <line x1="4" y1="50" x2="96" y2="50" stroke="rgba(148,163,184,0.16)" strokeWidth="0.28" />
 
+          {/* Sonar pulses from the core */}
+          {[0, 2, 4].map((delay) => (
+            <circle key={delay} cx="50" cy="50" r="11.5" fill="none" stroke="rgba(125,211,252,0.5)" strokeWidth="0.4">
+              <animate attributeName="r" values="6;46" dur="6s" begin={`${delay}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.5;0" dur="6s" begin={`${delay}s`} repeatCount="indefinite" />
+              <animate attributeName="stroke-width" values="0.5;0.1" dur="6s" begin={`${delay}s`} repeatCount="indefinite" />
+            </circle>
+          ))}
+
+          {/* Rotating sweep */}
           <g>
             <animateTransform
               attributeName="transform"
               type="rotate"
               from="0 50 50"
               to="360 50 50"
-              dur={`${ambientMotion === 'soft' ? 26 : 18}s`}
+              dur={`${ambientMotion === 'soft' ? 22 : 15}s`}
               repeatCount="indefinite"
             />
-            <path
-              d="M50,50 L50,6 A44,44 0 0,1 87.8,27.8 Z"
-              fill="url(#radarSweep)"
-              opacity="0.55"
-            />
+            <path d="M50,50 L96,50 A46,46 0 0,0 76.5,11.4 Z" fill="url(#radarSweep)" opacity="0.7" />
+            <line x1="50" y1="50" x2="96" y2="50" stroke="rgba(125,211,252,0.55)" strokeWidth="0.3" />
           </g>
 
+          {/* Glowing core */}
+          <circle cx="50" cy="50" r="9" fill="url(#coreGlow)" opacity="0.9" />
+          <circle cx="50" cy="50" r="1.7" fill="#E0F2FE" />
+
+          {/* Beam from core to the selected signal */}
+          {selectedPosition && (
+            <g>
+              <line
+                x1="50"
+                y1="50"
+                x2={selectedPosition.x}
+                y2={selectedPosition.y}
+                stroke="rgba(186,230,253,0.55)"
+                strokeWidth="0.45"
+                strokeDasharray="1.4 1"
+              >
+                <animate attributeName="stroke-dashoffset" values="0;-4.8" dur="0.9s" repeatCount="indefinite" />
+              </line>
+            </g>
+          )}
+
+          {/* Ring labels along the upper axis */}
           {RING_INFO.map((ring) => (
             <text
               key={ring.ring}
-              x="50.6"
+              x="51"
               y={ring.y}
               textAnchor="start"
-              className="fill-slate-300 text-[2.2px] tracking-wider"
+              className="fill-slate-300 text-[2.1px] font-medium tracking-[0.18em]"
             >
               {ring.label}
             </text>
           ))}
         </svg>
 
+        {/* Quadrant corner labels */}
         {QUADRANTS.map((q) => {
           const Icon = q.Icon;
           return (
             <div
               key={`${q.key}-label`}
-              className="group absolute rounded-md bg-black/20 px-1.5 py-1 text-[10px] leading-tight"
-              style={{ left: `${q.x + 1.2}%`, top: `${q.y + 1.2}%` }}
+              className={cn(
+                'pointer-events-none absolute flex flex-col gap-0.5 rounded-lg border border-white/[0.08] bg-slate-950/45 px-2 py-1.5 backdrop-blur-sm',
+                cornerClass[q.corner]
+              )}
             >
               <div
                 className={cn(
-                  'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide',
+                  'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider',
                   q.chip
                 )}
               >
                 <Icon className="h-3 w-3" />
                 {q.title}
               </div>
-              <div className="text-[9px] text-slate-600/85">{q.subtitle}</div>
-              <div className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden whitespace-nowrap rounded-md border border-white/10 bg-slate-950/90 px-2 py-1 text-[10px] text-slate-200 shadow-lg group-hover:block">
-                {q.subtitle}
-              </div>
+              <div className="text-[9px] text-slate-400">{q.subtitle}</div>
             </div>
           );
         })}
 
+        {/* Signal pucks */}
         {signals.map((signal, index) => {
-          const position = getSignalPosition(signal, index, signals.length);
+          const position = layout.get(signal.id);
+          if (!position) return null;
           const selected = signal.id === selectedSignalId;
           const typeMeta = TYPE_META[signal.signalType] ?? TYPE_META.TREND;
+          const accent = TYPE_ACCENT[signal.signalType] ?? '#A78BFA';
           const Icon = typeMeta.Icon;
-          const showPinnedLabel = selected || signal.importanceLevel === 'large';
+          const base = signal.importanceLevel === 'large' ? 34 : signal.importanceLevel === 'small' ? 26 : 30;
+          const size = selected ? base + 8 : base;
 
           return (
             <motion.button
               key={signal.id}
               type="button"
               onClick={() => onSelectSignal(signal.id)}
-              initial={{ opacity: 0, scale: 0.72 }}
+              initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: Math.min(index * 0.02, 0.35) }}
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.12, zIndex: 30 }}
               className="group absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${position.x}%`, top: `${position.y}%` }}
+              style={{ left: `${position.x}%`, top: `${position.y}%`, zIndex: selected ? 20 : 10 }}
               data-testid={`radar-signal-${signal.id}`}
             >
               <span
-                className={cn(
-                  'relative flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition',
-                  typeMeta.tone,
-                  selected &&
-                    'h-10 w-10 border-white bg-white text-slate-900 ring-2 ring-primary-300/70'
-                )}
+                className="relative flex items-center justify-center rounded-full border transition"
+                style={{
+                  width: size,
+                  height: size,
+                  borderColor: selected ? '#FFFFFF' : accent,
+                  backgroundColor: selected ? '#F8FBFF' : 'rgba(8,12,22,0.82)',
+                  color: selected ? '#0B1220' : accent,
+                  boxShadow: selected
+                    ? `0 0 0 3px rgba(255,255,255,0.18), 0 0 24px ${accent}, 0 6px 16px rgba(0,0,0,0.5)`
+                    : `0 0 12px ${accent}66, inset 0 0 6px ${accent}33`,
+                }}
                 title={`${signal.name} · ${signal.ring} · ${signal.quadrant.replaceAll('_', ' ')}`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5" />
                 {selected && (
                   <motion.span
                     className="absolute inset-0 rounded-full"
                     animate={{
-                      boxShadow: ['0 0 0 0 rgba(96,165,250,0.45)', '0 0 0 12px rgba(96,165,250,0)'],
+                      boxShadow: ['0 0 0 0 rgba(186,230,253,0.5)', '0 0 0 12px rgba(186,230,253,0)'],
                     }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }}
                   />
                 )}
               </span>
 
-              {showPinnedLabel ? (
-                <span className="pointer-events-none absolute left-[120%] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/12 bg-slate-900/85 px-2 py-0.5 text-[10px] font-medium text-slate-100">
-                  {signal.name}
-                </span>
-              ) : (
-                <span className="pointer-events-none absolute left-[120%] top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-white/12 bg-slate-900/85 px-2 py-0.5 text-[10px] font-medium text-slate-100 group-hover:inline-flex">
-                  {signal.name}
-                </span>
-              )}
+              <span
+                className={cn(
+                  'pointer-events-none absolute bottom-[128%] left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-slate-950/90 px-1.5 py-0.5 text-[10px] font-medium text-slate-100 shadow-lg transition-opacity',
+                  selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                )}
+              >
+                {signal.name}
+              </span>
             </motion.button>
           );
         })}
 
+        {/* Selected signal info card */}
         {selectedSignal && (
-          <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-white/12 bg-slate-900/80 px-2.5 py-1.5 text-[11px] text-slate-100 shadow">
+          <div className="pointer-events-none absolute bottom-2.5 left-1/2 -translate-x-1/2 rounded-lg border border-white/12 bg-slate-950/70 px-3 py-1.5 text-center text-[11px] text-slate-100 shadow-lg backdrop-blur-sm">
             <div className="font-semibold">{selectedSignal.name}</div>
-            <div className="text-[10px] text-slate-600">
+            <div className="text-[10px] text-slate-400">
               {selectedSignal.ring} · {quadrantTitle(selectedSignal.quadrant)}
             </div>
           </div>
         )}
 
-        {selectedPosition && (
-          <svg className="pointer-events-none absolute inset-0 h-full w-full">
-            <defs>
-              <linearGradient id="selectedBeam" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="rgba(96,165,250,0.0)" />
-                <stop offset="70%" stopColor="rgba(96,165,250,0.35)" />
-                <stop offset="100%" stopColor="rgba(96,165,250,0.0)" />
-              </linearGradient>
-            </defs>
-            <line
-              x1={selectedPosition.x}
-              y1={selectedPosition.y}
-              x2="98"
-              y2="50"
-              stroke="url(#selectedBeam)"
-              strokeWidth="0.45"
-              strokeDasharray="1.2 1"
-            />
-          </svg>
-        )}
-
         {!signals.length && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-600">
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">
             No signals match the current filter.
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-[10px] text-slate-600">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-2.5 py-2 text-[10px] text-slate-400">
         <div className="truncate">
-          <span className="text-slate-600">Areas:</span> My Development · My Projects · My Industry
-          · My Role
+          <span className="text-slate-500">Areas:</span> My Development · My Projects · My Industry ·
+          My Role
         </div>
         <div className="truncate">
-          <span className="text-slate-600">Horizon:</span> Now · Prepare · Learn · Observe
+          <span className="text-slate-500">Horizon:</span> Now · Prepare · Learn · Observe
         </div>
         <div className="truncate">
-          <span className="text-slate-600">Types:</span> Technology · Skill · Business · Risk · Tool
+          <span className="text-slate-500">Types:</span> Technology · Skill · Business · Risk · Tool
         </div>
       </div>
     </div>
@@ -757,7 +819,7 @@ function RadarPreviewPanel({
 }) {
   if (!signal) {
     return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center text-slate-600">
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-6 text-center text-slate-400">
         Pick a signal on the radar to see why it may matter to you right now.
       </div>
     );
@@ -783,7 +845,7 @@ function RadarPreviewPanel({
       initial={{ opacity: 0, x: 14 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="flex h-full flex-col rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.07] to-white/[0.03] p-4"
+      className="flex h-full flex-col rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0E1626] to-[#090F1A] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_60px_-24px_rgba(0,0,0,0.8)]"
     >
       <div className="flex items-start gap-3">
         <div
@@ -801,7 +863,7 @@ function RadarPreviewPanel({
             <Badge>{quadrantTitle(signal.quadrant)}</Badge>
             <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
           </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-slate-600">{shortDescription}</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-300">{shortDescription}</p>
         </div>
       </div>
 
@@ -912,7 +974,7 @@ function Badge({ children, tone }: { children: React.ReactNode; tone?: string })
   return (
     <span
       className={cn(
-        'rounded-full border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-600',
+        'rounded-full border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-300',
         tone
       )}
     >
@@ -928,7 +990,7 @@ function Section({ title, body }: { title: string; body: string }) {
   if (!text) return null;
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
         {title}
       </div>
       <p className="text-[12px] leading-relaxed text-slate-200">{text}</p>
@@ -954,7 +1016,7 @@ function ActionChip({
       className={cn(
         'inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[11px] font-medium transition',
         tone === 'normal' && 'border-white/12 bg-white/[0.04] text-slate-200 hover:bg-white/[0.1]',
-        tone === 'subtle' && 'border-white/10 bg-white/[0.02] text-slate-600 hover:bg-white/[0.08]'
+        tone === 'subtle' && 'border-white/10 bg-white/[0.02] text-slate-400 hover:bg-white/[0.08]'
       )}
     >
       {icon}
