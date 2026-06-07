@@ -82,6 +82,11 @@ import {
   willChangeModule,
 } from '@/services/initiativeLifecycle';
 import {
+  listSuggestedChanges,
+  resolveSuggestedChange,
+  type SuggestedChange,
+} from '@/services/initiatives/suggestedChanges';
+import {
   getInitiativeStatusPreflightTruth,
   saveInitiativeWriteTruth,
   updateInitiativeStatusWriteTruth,
@@ -175,6 +180,7 @@ import type {
   UserInfo,
   Watcher,
 } from './sections/types';
+import { SuggestedChangesPanel } from './Wizard/SuggestedChangesPanel';
 
 const unwrapApiList = (response: unknown, listKey?: string): any[] => {
   if (Array.isArray(response)) return response;
@@ -535,6 +541,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
+
+  // Suggested changes (Formula §5 / Faza 4) — owner-side mini-gate. The Generator
+  // proposes CHANGES to an existing initiative as pending suggested changes; the
+  // owner accepts/rejects them here. Service degrades gracefully (never throws).
+  const [suggestedChanges, setSuggestedChanges] = useState<SuggestedChange[]>([]);
+  const [suggestedChangesLoading, setSuggestedChangesLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
 
@@ -1881,6 +1893,36 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     return { leftSections: left, rightSections: right };
   }, [sectionTypes, visibleSections, sectionOrder]);
+
+  // ── Suggested changes (Faza 4) — load + accept/reject (mini-gate) ──────────
+  const loadSuggestedChanges = useCallback(async () => {
+    if (!initiativeId) return;
+    setSuggestedChangesLoading(true);
+    try {
+      const items = await listSuggestedChanges(initiativeId);
+      setSuggestedChanges(items);
+    } finally {
+      setSuggestedChangesLoading(false);
+    }
+  }, [initiativeId]);
+
+  useEffect(() => {
+    void loadSuggestedChanges();
+  }, [loadSuggestedChanges]);
+
+  const handleResolveSuggestedChange = useCallback(
+    async (change: SuggestedChange, accept: boolean) => {
+      if (!change.id) return;
+      await resolveSuggestedChange(change.id, accept);
+      await loadSuggestedChanges();
+    },
+    [loadSuggestedChanges]
+  );
+
+  const pendingSuggestedChangesCount = useMemo(
+    () => suggestedChanges.filter((c) => (c.status ?? 'pending') === 'pending').length,
+    [suggestedChanges]
+  );
 
   // ==========================================
   // DATA FETCHING
@@ -4606,7 +4648,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       financialImpact: ['financial-impact'],
       raid: ['risk-raid'],
       decisions: ['decisions'],
-      gates: ['gates'],
+      gates: ['gates', 'suggested-changes'],
       comments: ['comments'],
       history: ['activity-log'],
       attachments: ['attachments-links'],
@@ -4739,6 +4781,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         component: null,
       },
       {
+        id: 'suggested-changes',
+        icon: GitBranch,
+        label: { en: 'Suggested changes', pl: 'Sugerowane zmiany' },
+        badge: pendingSuggestedChangesCount > 0 ? pendingSuggestedChangesCount : undefined,
+        cSpan: 2,
+        component: null,
+      },
+      {
         id: 'resources',
         icon: FolderOpen,
         label: { en: 'Resources', pl: 'Zasoby' },
@@ -4840,6 +4890,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       'risk-raid': 1,
       'change-log': 1,
       gates: 1,
+      'suggested-changes': 1,
       // 2 — Rezultaty / Outcomes
       'target-state-scope': 2,
       kpi: 2,
@@ -4885,6 +4936,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     attachments.length,
     linkedItems.length,
     enabledNModeSectionIds,
+    pendingSuggestedChangesCount,
   ]);
 
   // ==========================================
@@ -7161,6 +7213,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
+        case 'suggested-changes': {
+          component = (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Sugerowane zmiany' : 'Suggested changes'}
+              </h2>
+              {suggestedChangesLoading ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                </p>
+              ) : (
+                <div className="min-h-[200px]">
+                  <SuggestedChangesPanel
+                    items={suggestedChanges}
+                    isPolish={isPolish}
+                    onAccept={(c) => void handleResolveSuggestedChange(c, true)}
+                    onReject={(c) => void handleResolveSuggestedChange(c, false)}
+                  />
+                </div>
+              )}
+            </div>
+          );
+          break;
+        }
+
         case 'comments': {
           const selectedAddCount = commentsAiProposal
             ? commentsAiProposal.add.reduce(
@@ -8547,6 +8624,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     canUseAi,
     handleGenerateAI,
     setActiveNSection,
+    // Suggested changes (Faza 4)
+    suggestedChanges,
+    suggestedChangesLoading,
+    handleResolveSuggestedChange,
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
