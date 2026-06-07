@@ -552,6 +552,52 @@ SectionCard
 
 ---
 
+## Toolbar artefaktu — Standard (Warstwa 3)
+
+> Obowiązuje identycznie dla InitiativeDocumentView i InsightViewer.
+
+### Układ
+
+```
+[≡ Sections ▾]  [New]  [Export ▾]    · aktywna sekcja ·    │    [⚡ AI ▾]    [⎊]  [▶]    [⚡ AI Consultant]
+```
+
+Toolbar jest `sticky` — klei się pod Properties Strip, zawsze widoczny. Dwie strefy oddzielone separatorem: **lewa** (praca z treścią) i **prawa** (AI + tryby).
+
+### Elementy
+
+| Element | Typ | Zachowanie |
+|---------|-----|-----------|
+| `≡ Sections ▾` | Ghost | Dropdown: lista sekcji z checkboxami pogrupowana jak sidebar. Sekcje bez danych wyszarzone + tag "brak". Footer: "Przywróć domyślne." |
+| `New` | Subtle fill | Kontekstowy — tworzy element w aktywnej sekcji inline (nie modal). Na sekcjach systemowych: disabled + tooltip. |
+| `Export ▾` | Ghost | Selektor miejsca docelowego: → Notatki · → Idee (Mind Map/Whiteboard) · → Prezentacja · → PDF. "Tabela" disabled (wkrótce). |
+| `· aktywna sekcja ·` | Label (nie przycisk) | Nazwa aktywnej sekcji. `text-[12px] text-slate-400` centered. Orientacja bez hałasu. |
+| `│` | Separator | `w-px h-5 bg-slate-200 dark:bg-navy-700 self-center` |
+| `⚡ AI Consultant ▾` | Split · teal-subtle | Lewa: embedded chat aktywnej sekcji. `▾`: Uzupełnij · Proponuj · Odśwież · Kontynuuj sesję. |
+| `⎊` | Icon-only · ghost | Fork — otwiera nowy artefakt z tą samą strukturą, pustymi danymi. Tooltip: "Duplikuj jako nowy artefakt." |
+| `▶` | Icon-only · ghost | Present — fullscreen bez chrome, jedna karta na raz, strzałki, Esc wychodzi. |
+| `⚡ AI Consultant` | Solid · teal | Prawy panel ~360px z chatem i menu całego artefaktu. Najważniejszy przycisk toolbara. |
+
+### Kolorystyka (Harvard palette)
+
+| Element | Light | Dark |
+|---------|-------|------|
+| Ghost (Sections, Export) | `border-slate-200 text-slate-600 hover:bg-slate-50` | `border-navy-700 text-navy-300 hover:bg-navy-800/60` |
+| Subtle fill (New) | `bg-slate-100 text-slate-700 hover:bg-slate-200/70` | `bg-navy-800 text-navy-200 hover:bg-navy-700` |
+| AI split (sekcja) | `bg-teal-50 border-teal-200 text-teal-700` | `bg-teal-900/20 border-teal-700/40 text-teal-300` |
+| AI solid (artefakt) | `bg-teal-600 text-white hover:bg-teal-700` | `bg-teal-700 text-white hover:bg-teal-600` |
+| Icon-only (Fork, Present) | `text-slate-500 hover:text-slate-700 hover:bg-slate-100` | `text-navy-400 hover:text-navy-200 hover:bg-navy-800` |
+
+### Standard przycisków
+
+```
+h-8 (32px) · text-[13px] font-medium · rounded-lg · gap-2
+```
+
+Zero czerwonych przycisków. Zero gradientów. Jeden kolor AI — teal. Destruktywne akcje (usuń, archiwizuj, share, rename) wyłącznie w kebab `⋯` na poziomie tabeli/listy.
+
+---
+
 ## Odniesienia
 
 - [Canon inicjatyw](./INITIATIVE_CANON.md) — mapowanie bloków do kart inicjatyw
