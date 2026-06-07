@@ -207,6 +207,8 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 ### 7.1 Zachowanie
 **MUST:** domyślnie **zamknięty**. Single‑click = select + open preview. Double‑click/Enter = full detail (N‑mode/workspace). Esc = zamknij (tabela wraca do `flex-1`). J/K (opcjonalnie) = nawigacja wierszy z auto‑update preview. Bulk‑select nie zamyka preview.
 
+**Encje cross‑module „source→destination" (MUST):** gdy rekord powstaje w jednym module, a docelowo „żyje" w innym (np. **inicjatywa**: tworzona w Wywiadzie → promowana do modułu Initiatives), to **single‑click NIGDY nie wyrzuca od razu do modułu docelowego**. Wersje robocze (draft/pending) **zostają w tabeli źródłowej** i otwierają się w bocznym preview; nawigacja do modułu docelowego (double‑click / „Open in <Module>") włącza się **dopiero po przekazaniu dalej** (promoted/approved). Preview drafta pokazuje notkę „pozostaje w <module źródłowy> do czasu przekazania". (Wpadka naprawiona na Initiatives 2026‑06‑07.)
+
 ### 7.2 Wymiary i separacja
 **MUST:** szerokość `clamp(340px, 28%, 480px)`. Separacja od tabeli = `gap-1.5`, **bez `border-l`**. Wrapper: `bg-slate-50 dark:bg-navy-950 p-3`. Karta wewnątrz: `rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] backdrop-blur`. Jeśli tabela `rounded-xl` → preview też `rounded-xl` (spójność „composite container").
 
