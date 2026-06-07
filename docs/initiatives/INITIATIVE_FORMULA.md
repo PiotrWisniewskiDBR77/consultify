@@ -130,12 +130,18 @@ Lineage obowiązkowy · jeden owner · falsyfikowalna teza · minimum viable cha
 similarity przed utworzeniem · WIP-limit/pojemność · kill criteria · MECE (nakładanie + luki) ·
 0 nowych ≠ porażka · pamięć odrzuceń.
 
-## 11. Otwarte decyzje (do domknięcia z właścicielem)
-1. Owner i KPI wymagane już w DRAFT, czy dopiero przy promocji do REVIEW?
-2. Quick-create: zabić w module inicjatyw (łapanie pomysłów → stub w MyWork) czy zostawić?
-3. Tryb Charter/Portfolio: auto wg kontekstu czy świadomy wybór?
-4. Impact/effort: w tagach (zero migracji) czy dedykowane kolumny przez guarded ALTER (sortowanie portfela)?
-5. Czy generator *proponuje zmiany* na biegnących (extend / re-priorytet) czy tylko tworzy nowe + flaguje?
+## 11. Decyzje produktowe — ROZSTRZYGNIĘTE (CTO, 2026-06-07)
+1. **Owner + KPI wymagane już w DRAFT.** Dyscyplina „brak inicjatyw-sierot i życzeń bez miary".
+   *Stan: wdrożone — charter-lite wymaga ownera + ≥1 KPI baseline→target.*
+2. **Quick-create ZOSTAJE; Charter dodany jako ścieżka dyscyplinowana (nie usuwam istniejących).**
+   Niedestrukcyjnie; użycie zdecyduje. *Stan: wdrożone — przycisk „Charter" obok quick-create i AI-wizard.*
+3. **Tryb wg kontekstu (auto):** 1 źródło/ręcznie → Charter; insight/koszyk → Generator (Portfolio).
+   Mniej tarcia. *Stan: wdrożone — Hub→Charter, Insight→Generator.*
+4. **Impact/effort w tagach na teraz** (zero migracji, `DB_MANAGED_SCHEMA=off`); dedykowane kolumny
+   przez guarded ALTER jako follow-up, gdy potrzebne sortowanie/filtrowanie portfela. *Stan: tagi.*
+5. **Generator PROPONUJE zmiany na biegnących** (extend / evidence / konflikt / re-priorytet) jako
+   suggested-change z mini-bramką u właściciela — nigdy nie mutuje wprost. *Stan: wdrożone front+back
+   (commit 687eee9c63); brak tylko montażu panelu w detalu — czeka na rebuild `InitiativeDocumentView`.*
 
 ## 12. Mapowanie na kod (reuse — bez wymyślania od nowa)
 - Shell: `src/components/shared/WizardModal/*`
