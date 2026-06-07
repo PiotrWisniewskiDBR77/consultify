@@ -29,6 +29,7 @@ import {
   ClipboardList,
   Clock,
   Columns3,
+  Compass,
   Copy,
   Download,
   Edit3,
@@ -52,16 +53,20 @@ import {
   RotateCcw,
   Send,
   Settings2,
+  ShieldAlert,
   Sparkles,
   Star,
   StarOff,
   Target,
   Trash2,
+  TrendingUp,
   UserPlus,
   Users,
   X,
+  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -86,6 +91,8 @@ import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { StatusPill } from '@/components/shared/StatusPill';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import { LoadingState } from '@/components/ui/primitives';
+import { AssigneeCell, ProgressCell } from '@/components/ui/primitives/cells';
+import { categoryTone, DueChip, EntityStatusChip } from '@/components/ui/primitives/chips';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -773,6 +780,12 @@ export const InterviewHub: React.FC = () => {
   );
   const [isSessionsViewSettingsOpen, setIsSessionsViewSettingsOpen] = useState(false);
   const sessionsViewSettingsRef = useRef<HTMLDivElement | null>(null);
+  const sessionsViewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
+  const [sessionsViewSettingsPos, setSessionsViewSettingsPos] = useState<{
+    top: number;
+    left: number;
+    maxH: number;
+  } | null>(null);
   const [templateSourceFilter, setTemplateSourceFilter] = useState<TemplateSourceFilter>('all');
   const [templateAreaTagFilter, setTemplateAreaTagFilter] = useState<string[]>([]);
   const [isTemplateAreaFilterOpen, setIsTemplateAreaFilterOpen] = useState(false);
@@ -801,6 +814,12 @@ export const InterviewHub: React.FC = () => {
   const [templatePreviewAiMenuOpen, setTemplatePreviewAiMenuOpen] = useState(false);
   const [isTemplatesViewSettingsOpen, setIsTemplatesViewSettingsOpen] = useState(false);
   const templatesViewSettingsRef = useRef<HTMLDivElement | null>(null);
+  const templatesViewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
+  const [templatesViewSettingsPos, setTemplatesViewSettingsPos] = useState<{
+    top: number;
+    left: number;
+    maxH: number;
+  } | null>(null);
   const [templatesViewMode, setTemplatesViewMode] = useState<'cards' | 'table'>('table');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedTemplateForAssign, setSelectedTemplateForAssign] =
@@ -913,6 +932,7 @@ export const InterviewHub: React.FC = () => {
 
     const handlePointerDown = (event: PointerEvent) => {
       if (sessionsViewSettingsRef.current?.contains(event.target as Node)) return;
+      if (sessionsViewSettingsPanelRef.current?.contains(event.target as Node)) return;
       setIsSessionsViewSettingsOpen(false);
     };
 
@@ -933,6 +953,7 @@ export const InterviewHub: React.FC = () => {
 
     const handlePointerDown = (event: PointerEvent) => {
       if (templatesViewSettingsRef.current?.contains(event.target as Node)) return;
+      if (templatesViewSettingsPanelRef.current?.contains(event.target as Node)) return;
       setIsTemplatesViewSettingsOpen(false);
     };
 
@@ -3095,6 +3116,101 @@ export const InterviewHub: React.FC = () => {
     selectedAssignment,
   ]);
 
+  // Bulk Delay: push each selected assignment's due date by 7 days (from its
+  // current due, or from today if none). Reuses manageAssignment (mode:update),
+  // same endpoint as single Change-due-date. No bulk route → fan out per id.
+  const handleBulkDelay = useCallback(
+    async (days: number) => {
+      const ids = Array.from(selectedAssignmentIds);
+      if (ids.length === 0 || bulkActionBusy) return;
+      const pool = [...myAssignments, ...managedAssignments];
+      const rows = ids
+        .map((id) => pool.find((a) => a.id === id))
+        .filter((a): a is InterviewAssignment => Boolean(a));
+      if (rows.length === 0) return;
+      setBulkActionBusy(true);
+      let done = 0;
+      for (const a of rows) {
+        try {
+          const base = a.dueAt ? new Date(a.dueAt) : new Date();
+          base.setDate(base.getDate() + days);
+          await V8InterviewApi.manageAssignment(a.id, {
+            assigneeUserId: a.assigneeUserId,
+            templateId: a.templateId,
+            dueAt: base.toISOString(),
+            priority: a.priority,
+            notes: a.notes ?? null,
+            mode: 'update',
+          });
+          done += 1;
+        } catch {
+          // per-item failure tolerated; reflected in the final count
+        }
+      }
+      try {
+        const [myRes, managedRes, overdueRes] = await Promise.all([
+          loadMyAssignments(),
+          loadManagedAssignments(),
+          loadOverdueAssignments(),
+        ]);
+        setMyAssignments(myRes);
+        setManagedAssignments(managedRes);
+        setOverdueAssignments(overdueRes);
+      } catch {
+        /* best-effort refresh */
+      }
+      setSelectedAssignmentIds(new Set());
+      setBulkActionBusy(false);
+      toast.success(
+        isPolish ? `Odłożono o ${days} dni: ${done}` : `Delayed by ${days} days: ${done}`
+      );
+    },
+    [
+      selectedAssignmentIds,
+      bulkActionBusy,
+      myAssignments,
+      managedAssignments,
+      isPolish,
+      loadMyAssignments,
+      loadManagedAssignments,
+      loadOverdueAssignments,
+    ]
+  );
+
+  // Single-row Delay (kebab submenu): push one assignment's due date by N days.
+  const handleDelayAssignment = useCallback(
+    async (assignment: InterviewAssignment, days: number) => {
+      try {
+        const base = assignment.dueAt ? new Date(assignment.dueAt) : new Date();
+        base.setDate(base.getDate() + days);
+        await V8InterviewApi.manageAssignment(assignment.id, {
+          assigneeUserId: assignment.assigneeUserId,
+          templateId: assignment.templateId,
+          dueAt: base.toISOString(),
+          priority: assignment.priority,
+          notes: assignment.notes ?? null,
+          mode: 'update',
+        });
+        toast.success(isPolish ? `Odłożono o ${days} dni` : `Delayed by ${days} days`);
+        const [myRes, managedRes, overdueRes] = await Promise.all([
+          loadMyAssignments(),
+          loadManagedAssignments(),
+          loadOverdueAssignments(),
+        ]);
+        setMyAssignments(myRes);
+        setManagedAssignments(managedRes);
+        setOverdueAssignments(overdueRes);
+      } catch (error) {
+        safeToastError(
+          error,
+          isPolish ? 'Nie udało się odłożyć terminu' : 'Failed to delay',
+          isPolish
+        );
+      }
+    },
+    [isPolish, loadMyAssignments, loadManagedAssignments, loadOverdueAssignments]
+  );
+
   // #7b — Reassign: reuse the existing, fully-wired AssignInterviewModal
   // preselected to this assignment's template. The manager picks a new
   // assignee there. (No dedicated reassign endpoint is exposed to the client,
@@ -3420,7 +3536,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'answered' | 'approved' | 'sent_back';
@@ -3463,17 +3579,46 @@ export const InterviewHub: React.FC = () => {
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_RIGHT_CLASS}>
+              <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
+                {/* Fixed/universal buttons — same look as the rest (MENU_3_ACTION_NEUTRAL) */}
                 <button
                   type="button"
                   onClick={() => setSelectedAssignmentIds(new Set())}
-                  className={bulkGhostPill}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
+                  <X size={14} />
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkAssignmentLifecycle('archive')}
+                  disabled={managedLifecycleBusy}
+                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {managedLifecycleBusy ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Archive size={14} />
+                  )}
+                  {isPolish ? 'Archiwizuj' : 'Archive'}
+                </button>
+                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
+                {/* Context (Inbox): Delay +1 / +3 / +7 days — same look */}
+                {[1, 3, 7].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => handleBulkDelay(d)}
+                    disabled={bulkActionBusy}
+                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <Clock size={14} />
+                    {isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`}
+                  </button>
+                ))}
               </div>
               <div className="shrink-0" />
             </div>
@@ -3525,7 +3670,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'to-approve' | 'overdue' | 'sent_back';
@@ -3579,19 +3724,19 @@ export const InterviewHub: React.FC = () => {
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_RIGHT_CLASS}>
+              <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedAssignmentIds(new Set())}
-                  className={bulkGhostPill}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
+                  <X size={14} />
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
-              </div>
-              <div className="flex items-center gap-2">
+                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
                 <button
                   type="button"
                   onClick={handleBulkApproveAssignments}
@@ -3655,6 +3800,7 @@ export const InterviewHub: React.FC = () => {
                   </button>
                 )}
               </div>
+              <div className="shrink-0" />
             </div>
           </div>
         );
@@ -3731,7 +3877,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const allCount = sessions.length;
       const inProgressCount = sessions.filter(
@@ -3794,19 +3940,19 @@ export const InterviewHub: React.FC = () => {
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_RIGHT_CLASS}>
+              <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedSessionIds(new Set())}
-                  className={bulkGhostPill}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
+                  <X size={14} />
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
-              </div>
-              <div className="flex items-center gap-2">
+                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
                 {/* #8 — Bulk Approve / Send back, mapping selected sessions to
                     their managed assignments and reusing the per-id approve /
                     send-back handlers (manager scope). */}
@@ -3913,6 +4059,7 @@ export const InterviewHub: React.FC = () => {
                   </button>
                 ) : null}
               </div>
+              <div className="shrink-0" />
             </div>
           </div>
         );
@@ -3986,7 +4133,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'draft' | 'in_review' | 'approved' | 'archived';
@@ -4036,19 +4183,19 @@ export const InterviewHub: React.FC = () => {
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
-              <div className="flex items-center gap-2">
+              <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedTemplateIds(new Set())}
-                  className={bulkGhostPill}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
+                  <X size={14} />
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
-              </div>
-              <div className={MENU_3_RIGHT_CLASS}>
+                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
                 <button
                   type="button"
                   onClick={handleBulkCloneTemplates}
@@ -4063,6 +4210,7 @@ export const InterviewHub: React.FC = () => {
                   {isPolish ? 'Klonuj' : 'Clone'}
                 </button>
               </div>
+              <div className="shrink-0" />
             </div>
           </div>
         );
@@ -4105,7 +4253,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'completed' | 'failed' | 'published';
@@ -4224,7 +4372,7 @@ export const InterviewHub: React.FC = () => {
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
-        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
+        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'draft' | 'pending_review' | 'promoted';
@@ -4572,7 +4720,7 @@ export const InterviewHub: React.FC = () => {
       : rows;
 
     return (
-      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
+      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
         {activeSessionFilterChips.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.06]">
             <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -4606,7 +4754,7 @@ export const InterviewHub: React.FC = () => {
           </div>
         ) : null}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead>
+          <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
               <th className="px-3 py-2 text-left" style={{ width: sessionsColumnWidths.select }}>
                 <button
@@ -4777,22 +4925,7 @@ export const InterviewHub: React.FC = () => {
                   {renderSessionResizer('submitted')}
                 </th>
               )}
-              {!hiddenSet.has('overdue') && (
-                <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                  style={{ width: sessionsColumnWidths.overdue }}
-                  onClick={() => toggleSessionSort('overdue')}
-                >
-                  {isPolish ? 'Po terminie' : 'Overdue'}
-                  {sessionSortField === 'overdue' && (
-                    <ChevronDown
-                      size={12}
-                      className={`inline-block ml-0.5 transition-transform ${sessionSortAsc ? '' : 'rotate-180'}`}
-                    />
-                  )}
-                  {renderSessionResizer('overdue')}
-                </th>
-              )}
+              {/* Overdue column merged into Due (DueChip) per canon §4.4 */}
               <th
                 className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: sessionsColumnWidths.actions }}
@@ -4802,6 +4935,17 @@ export const InterviewHub: React.FC = () => {
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
+                      const r = event.currentTarget.getBoundingClientRect();
+                      const PANEL_W = 288;
+                      const left = Math.min(
+                        Math.max(8, Math.round(r.right - PANEL_W)),
+                        Math.round(window.innerWidth - PANEL_W - 8)
+                      );
+                      setSessionsViewSettingsPos({
+                        top: Math.round(r.bottom + 8),
+                        left,
+                        maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
+                      });
                       setIsSessionsViewSettingsOpen((open) => !open);
                     }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
@@ -4811,72 +4955,81 @@ export const InterviewHub: React.FC = () => {
                   >
                     <Settings2 size={15} />
                   </button>
-                  {isSessionsViewSettingsOpen ? (
-                    <div
-                      className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
-                      </div>
-                      {(
-                        [
-                          { id: 'assignee', label: isPolish ? 'Przydzielony' : 'Assignee' },
-                          { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                          { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
-                          { id: 'due', label: isPolish ? 'Termin' : 'Due' },
-                          { id: 'submitted', label: isPolish ? 'Wysłano' : 'Submitted' },
-                          { id: 'overdue', label: isPolish ? 'Po terminie' : 'Overdue' },
-                        ] as const
-                      ).map((col) => {
-                        const checked = !hiddenSet.has(col.id);
-                        return (
-                          <label
-                            key={col.id}
-                            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]"
-                          >
+                  {isSessionsViewSettingsOpen && sessionsViewSettingsPos
+                    ? createPortal(
+                        <div
+                          ref={sessionsViewSettingsPanelRef}
+                          style={{
+                            position: 'fixed',
+                            top: sessionsViewSettingsPos.top,
+                            left: sessionsViewSettingsPos.left,
+                            maxHeight: sessionsViewSettingsPos.maxH,
+                          }}
+                          className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                            {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+                          </div>
+                          {(
+                            [
+                              { id: 'assignee', label: isPolish ? 'Przydzielony' : 'Assignee' },
+                              { id: 'status', label: isPolish ? 'Status' : 'Status' },
+                              { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
+                              { id: 'due', label: isPolish ? 'Termin' : 'Due' },
+                              { id: 'submitted', label: isPolish ? 'Wysłano' : 'Submitted' },
+                            ] as const
+                          ).map((col) => {
+                            const checked = !hiddenSet.has(col.id);
+                            return (
+                              <label
+                                key={col.id}
+                                className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setSessionsHiddenColumns((prev) => {
+                                      const set = new Set(prev);
+                                      if (set.has(col.id)) set.delete(col.id);
+                                      else set.add(col.id);
+                                      const next = Array.from(set);
+                                      saveHiddenColumns(
+                                        INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY,
+                                        next
+                                      );
+                                      return next;
+                                    });
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                />
+                                <span>{col.label}</span>
+                              </label>
+                            );
+                          })}
+                          <div className="my-2 border-t border-slate-200/70 dark:border-white/[0.08]" />
+                          <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]">
                             <input
                               type="checkbox"
-                              checked={checked}
-                              onChange={() => {
-                                setSessionsHiddenColumns((prev) => {
-                                  const set = new Set(prev);
-                                  if (set.has(col.id)) set.delete(col.id);
-                                  else set.add(col.id);
-                                  const next = Array.from(set);
-                                  saveHiddenColumns(
-                                    INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY,
-                                    next
-                                  );
-                                  return next;
-                                });
+                              checked={showSessionRowDescription}
+                              onChange={(event) => {
+                                setShowSessionRowDescription(event.target.checked);
+                                saveBooleanSetting(
+                                  INTERVIEW_SESSIONS_ROW_DESCRIPTION_STORAGE_KEY,
+                                  event.target.checked
+                                );
                               }}
                               className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
-                            <span>{col.label}</span>
+                            <span>
+                              {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+                            </span>
                           </label>
-                        );
-                      })}
-                      <div className="my-2 border-t border-slate-200/70 dark:border-white/[0.08]" />
-                      <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]">
-                        <input
-                          type="checkbox"
-                          checked={showSessionRowDescription}
-                          onChange={(event) => {
-                            setShowSessionRowDescription(event.target.checked);
-                            saveBooleanSetting(
-                              INTERVIEW_SESSIONS_ROW_DESCRIPTION_STORAGE_KEY,
-                              event.target.checked
-                            );
-                          }}
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
-                        />
-                        <span>
-                          {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                        </span>
-                      </label>
-                    </div>
-                  ) : null}
+                        </div>,
+                        document.body
+                      )
+                    : null}
                 </div>
               </th>
             </tr>
@@ -4966,9 +5119,10 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 align-middle"
                       style={{ width: sessionsColumnWidths.assignee }}
                     >
-                      <span className="block truncate text-sm text-slate-700 dark:text-slate-200">
-                        {primaryMeta}
-                      </span>
+                      <AssigneeCell
+                        name={session.assigneeName || session.respondentName || null}
+                        unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
+                      />
                     </td>
                   )}
 
@@ -4980,7 +5134,7 @@ export const InterviewHub: React.FC = () => {
                       {/* Shared StatusPill (SSOT) for tone, with the
                           session-specific bilingual label from
                           getSessionStatusConfig. */}
-                      <StatusPill
+                      <EntityStatusChip
                         status={workflowStatus}
                         label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
                       />
@@ -4992,17 +5146,7 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center align-middle"
                       style={{ width: sessionsColumnWidths.progress }}
                     >
-                      <div className="flex items-center justify-center gap-2">
-                        <div className={INTERVIEW_PROGRESS_TRACK_CLASS}>
-                          <div
-                            className={INTERVIEW_PROGRESS_FILL_CLASS}
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-slate-600 dark:text-slate-400">
-                          {progress}%
-                        </span>
-                      </div>
+                      <ProgressCell value={progress} />
                     </td>
                   )}
 
@@ -5011,14 +5155,34 @@ export const InterviewHub: React.FC = () => {
                       className="px-3 py-3 text-center align-middle"
                       style={{ width: sessionsColumnWidths.due }}
                     >
-                      {session.dueAt ? (
-                        <div className="flex items-center justify-center gap-1 text-xs text-slate-600 dark:text-slate-400">
-                          <Calendar size={12} />
-                          {new Date(session.dueAt).toLocaleDateString()}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
-                      )}
+                      {(() => {
+                        // Canon §4.4 — ONE Due column: neutral date, danger when
+                        // overdue (and not yet submitted/approved). Overdue column
+                        // merged here as a DueChip signal.
+                        if (!session.dueAt)
+                          return <span className="text-xs text-c-text-muted">—</span>;
+                        const daysToDue = getSessionDaysOverdue(session);
+                        const resolved = isSubmitted || isApproved;
+                        const overdue = daysToDue != null && daysToDue < 0 && !resolved;
+                        const absDays = daysToDue != null ? Math.abs(daysToDue) : 0;
+                        const dateLabel = new Date(session.dueAt).toLocaleDateString();
+                        return (
+                          <div className="flex items-center justify-center">
+                            <DueChip
+                              label={
+                                overdue
+                                  ? isPolish
+                                    ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
+                                    : `${absDays}d overdue`
+                                  : dateLabel
+                              }
+                              risk={overdue ? 'overdue' : 'none'}
+                              showIcon
+                              title={dateLabel}
+                            />
+                          </div>
+                        );
+                      })()}
                     </td>
                   )}
 
@@ -5037,42 +5201,7 @@ export const InterviewHub: React.FC = () => {
                     </td>
                   )}
 
-                  {!hiddenSet.has('overdue') && (
-                    <td
-                      className="px-3 py-3 text-center align-middle"
-                      style={{ width: sessionsColumnWidths.overdue }}
-                    >
-                      {(() => {
-                        // #9 — Overdue chip: red "Xd overdue" only when the due
-                        // date is in the past AND the session is not yet
-                        // submitted/approved. Otherwise show a check (on time)
-                        // or an em-dash (no due date).
-                        const daysToDue = getSessionDaysOverdue(session);
-                        const isResolved = isSubmitted || isApproved;
-                        if (daysToDue != null && daysToDue < 0 && !isResolved) {
-                          const absDays = Math.abs(daysToDue);
-                          return (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-300/80 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100">
-                              <AlertTriangle size={11} />
-                              {isPolish
-                                ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
-                                : `${absDays}d overdue`}
-                            </span>
-                          );
-                        }
-                        if (daysToDue == null) {
-                          return (
-                            <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
-                          );
-                        }
-                        return (
-                          <span className="inline-flex items-center justify-center text-emerald-500 dark:text-emerald-400">
-                            <Check size={14} strokeWidth={2.5} />
-                          </span>
-                        );
-                      })()}
-                    </td>
-                  )}
+                  {/* Overdue column merged into Due (DueChip) per canon §4.4 */}
 
                   <td
                     className="px-3 py-3 text-right"
@@ -5083,105 +5212,159 @@ export const InterviewHub: React.FC = () => {
                       <RowActionsMenu
                         iconVariant="vertical"
                         className="opacity-40 transition-opacity group-hover:opacity-100"
-                        actions={[
+                        sections={[
+                          // GÓRA — kontekstowe (wg statusu sesji)
                           {
-                            id: 'open',
-                            label: isPolish ? 'Otwórz' : 'Open',
-                            icon: ChevronRight,
-                            onClick: () => handleViewSession(session),
+                            id: 'context',
+                            kind: 'context' as const,
+                            actions: [
+                              ...(isSubmitted && linkedAssignment
+                                ? [
+                                    {
+                                      id: 'approve',
+                                      label: isPolish ? 'Zatwierdź' : 'Approve',
+                                      icon: Check,
+                                      onClick: () => handleApproveAssignment(linkedAssignment),
+                                    },
+                                    {
+                                      id: 'send-back',
+                                      label: isPolish ? 'Odeślij' : 'Send back',
+                                      icon: ArrowRight,
+                                      onClick: () => handleOpenSendBackModal(linkedAssignment),
+                                      variant: 'danger' as const,
+                                    },
+                                  ]
+                                : []),
+                              ...(canRemind && linkedAssignment
+                                ? [
+                                    {
+                                      id: 'remind',
+                                      label: isPolish ? 'Przypomnij' : 'Remind',
+                                      icon: Clock,
+                                      onClick: () => handleOpenReminderModal(linkedAssignment),
+                                    },
+                                  ]
+                                : []),
+                              ...(isApproved
+                                ? [
+                                    {
+                                      id: 'generate-insight',
+                                      label: isPolish
+                                        ? 'Generuj wnioski AI'
+                                        : 'Generate AI insights',
+                                      icon: Lightbulb,
+                                      onClick: () => handleGenerateInsight(session, 'summary'),
+                                    },
+                                  ]
+                                : []),
+                            ],
                           },
-                          ...(isSubmitted && linkedAssignment
-                            ? [
-                                {
-                                  id: 'approve',
-                                  label: isPolish ? 'Zatwierdź' : 'Approve',
-                                  icon: Check,
-                                  onClick: () => handleApproveAssignment(linkedAssignment),
-                                },
-                                {
-                                  id: 'send-back',
-                                  label: isPolish ? 'Odeślij' : 'Send back',
-                                  icon: ArrowRight,
-                                  onClick: () => handleOpenSendBackModal(linkedAssignment),
-                                },
-                              ]
-                            : []),
-                          ...(canRemind && linkedAssignment
-                            ? [
-                                {
-                                  id: 'remind',
-                                  label: isPolish ? 'Przypomnij' : 'Remind',
-                                  icon: Clock,
-                                  onClick: () => handleOpenReminderModal(linkedAssignment),
-                                },
-                              ]
-                            : []),
-                          ...(isApproved
-                            ? [
-                                {
-                                  id: 'generate-insight',
-                                  label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
-                                  icon: Lightbulb,
-                                  onClick: () => handleGenerateInsight(session, 'summary'),
-                                },
-                              ]
-                            : []),
-                          // #8b — Lifecycle actions, scoped to the active filter.
-                          ...(sessionLifecycle === 'active'
-                            ? [
-                                {
-                                  id: 'archive',
-                                  label: isPolish ? 'Archiwizuj' : 'Archive',
-                                  icon: Archive,
-                                  divider: true,
-                                  disabled: sessionLifecycleBusy,
-                                  onClick: () => handleSessionLifecycleAction(session, 'archive'),
-                                },
-                              ]
-                            : []),
-                          ...(sessionLifecycle === 'archived'
-                            ? [
-                                {
-                                  id: 'restore',
-                                  label: isPolish ? 'Przywróć' : 'Restore',
-                                  icon: RotateCcw,
-                                  divider: true,
-                                  disabled: sessionLifecycleBusy,
-                                  onClick: () => handleSessionLifecycleAction(session, 'restore'),
-                                },
-                                {
-                                  id: 'trash',
-                                  label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
-                                  icon: Trash2,
-                                  variant: 'danger' as const,
-                                  disabled: sessionLifecycleBusy,
-                                  onClick: () => handleSessionLifecycleAction(session, 'trash'),
-                                },
-                              ]
-                            : []),
-                          ...(sessionLifecycle === 'trash'
-                            ? [
-                                {
-                                  id: 'untrash',
-                                  label: isPolish ? 'Przywróć' : 'Restore',
-                                  icon: RotateCcw,
-                                  divider: true,
-                                  disabled: sessionLifecycleBusy,
-                                  onClick: () => handleSessionLifecycleAction(session, 'untrash'),
-                                },
-                                {
-                                  id: 'delete-forever',
-                                  label: isPolish ? 'Usuń na stałe' : 'Delete forever',
-                                  icon: Trash2,
-                                  variant: 'danger' as const,
-                                  disabled: sessionLifecycleBusy,
-                                  onClick: () => {
-                                    setSessionDeleteConfirmText('');
-                                    setSessionDeleteTarget(session);
-                                  },
-                                },
-                              ]
-                            : []),
+                          // DÓŁ — stały: Open · Archiwizuj/Przywróć (lifecycle).
+                          // (Sessions: Edytuj≡Open; brak endpointu Delay — świadome N/A.)
+                          {
+                            id: 'fixed',
+                            kind: 'manage' as const,
+                            actions: [
+                              {
+                                id: 'open',
+                                label: isPolish ? 'Otwórz' : 'Open',
+                                icon: ChevronRight,
+                                onClick: () => handleViewSession(session),
+                              },
+                              ...(sessionLifecycle === 'active'
+                                ? [
+                                    {
+                                      id: 'archive',
+                                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                                      icon: Archive,
+                                      disabled: sessionLifecycleBusy,
+                                      onClick: () =>
+                                        handleSessionLifecycleAction(session, 'archive'),
+                                    },
+                                  ]
+                                : []),
+                              ...(sessionLifecycle === 'archived'
+                                ? [
+                                    {
+                                      id: 'restore',
+                                      label: isPolish ? 'Przywróć' : 'Restore',
+                                      icon: RotateCcw,
+                                      disabled: sessionLifecycleBusy,
+                                      onClick: () =>
+                                        handleSessionLifecycleAction(session, 'restore'),
+                                    },
+                                  ]
+                                : []),
+                              ...(sessionLifecycle === 'trash'
+                                ? [
+                                    {
+                                      id: 'untrash',
+                                      label: isPolish ? 'Przywróć' : 'Restore',
+                                      icon: RotateCcw,
+                                      disabled: sessionLifecycleBusy,
+                                      onClick: () =>
+                                        handleSessionLifecycleAction(session, 'untrash'),
+                                    },
+                                  ]
+                                : []),
+                              // Delay — przesuwa termin powiązanego assignmentu
+                              // (sesja nie ma własnego due; due = assignment).
+                              // Realny endpoint manageAssignment; tylko gdy jest assignment.
+                              ...(linkedAssignment
+                                ? [
+                                    {
+                                      id: 'delay',
+                                      label: isPolish ? 'Odłóż termin' : 'Delay',
+                                      icon: Clock,
+                                      onClick: () => {},
+                                      submenu: [1, 3, 7].map((d) => ({
+                                        id: `delay-${d}`,
+                                        label: isPolish
+                                          ? `+${d} ${d === 1 ? 'dzień' : 'dni'}`
+                                          : `+${d}d`,
+                                        icon: Clock,
+                                        onClick: () =>
+                                          void handleDelayAssignment(linkedAssignment, d),
+                                      })),
+                                    },
+                                  ]
+                                : []),
+                            ],
+                          },
+                          // DANGER — Trash / Delete forever (realny lifecycle)
+                          {
+                            id: 'danger',
+                            kind: 'danger' as const,
+                            actions: [
+                              ...(sessionLifecycle === 'archived'
+                                ? [
+                                    {
+                                      id: 'trash',
+                                      label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                                      icon: Trash2,
+                                      variant: 'danger' as const,
+                                      disabled: sessionLifecycleBusy,
+                                      onClick: () => handleSessionLifecycleAction(session, 'trash'),
+                                    },
+                                  ]
+                                : []),
+                              ...(sessionLifecycle === 'trash'
+                                ? [
+                                    {
+                                      id: 'delete-forever',
+                                      label: isPolish ? 'Usuń na stałe' : 'Delete forever',
+                                      icon: Trash2,
+                                      variant: 'danger' as const,
+                                      disabled: sessionLifecycleBusy,
+                                      onClick: () => {
+                                        setSessionDeleteConfirmText('');
+                                        setSessionDeleteTarget(session);
+                                      },
+                                    },
+                                  ]
+                                : []),
+                            ],
+                          },
                         ]}
                       />
                     </div>
@@ -5420,6 +5603,21 @@ export const InterviewHub: React.FC = () => {
       })}
     </div>
   );
+
+  const INSIGHT_TYPE_ICON_MAP: Record<string, React.ElementType> = {
+    summary: FileText,
+    general_analysis: Compass,
+    trends: TrendingUp,
+    problems: AlertTriangle,
+    recommendations: Lightbulb,
+    comparison: BarChart3,
+    gaps: Target,
+    risk_assessment: ShieldAlert,
+    opportunity_scan: Zap,
+    maturity: Brain,
+    stakeholder_map: Users,
+    between_the_lines: Brain,
+  };
 
   // Insight promptType config (backend uses promptType)
   const getInsightTypeConfig = (type?: string) => {
@@ -5743,9 +5941,9 @@ export const InterviewHub: React.FC = () => {
       : rows;
 
     return (
-      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
+      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead>
+          <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40">
               <th className="px-3 py-2 text-left" style={{ width: insightColumnWidths.select }}>
                 <button
@@ -6147,7 +6345,10 @@ export const InterviewHub: React.FC = () => {
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${typeConfig.bgColor}`}
                       >
-                        <Lightbulb size={15} className={typeConfig.textColor} />
+                        {React.createElement(INSIGHT_TYPE_ICON_MAP[promptType] || Lightbulb, {
+                          size: 15,
+                          className: typeConfig.textColor,
+                        })}
                       </div>
                       <div className="min-w-0">
                         <span
@@ -6554,9 +6755,9 @@ export const InterviewHub: React.FC = () => {
       : templatesForTable;
 
     return (
-      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
+      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead>
+          <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40 sticky top-0 z-10">
               <th className="px-3 py-2 text-left" style={{ width: templatesColumnWidths.select }}>
                 <button
@@ -6603,10 +6804,10 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('category') && (
                 <th
-                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.category }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
                         'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
@@ -6774,6 +6975,17 @@ export const InterviewHub: React.FC = () => {
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
+                      const r = event.currentTarget.getBoundingClientRect();
+                      const PANEL_W = 288;
+                      const left = Math.min(
+                        Math.max(8, Math.round(r.right - PANEL_W)),
+                        Math.round(window.innerWidth - PANEL_W - 8)
+                      );
+                      setTemplatesViewSettingsPos({
+                        top: Math.round(r.bottom + 8),
+                        left,
+                        maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
+                      });
                       setIsTemplatesViewSettingsOpen((open) => !open);
                     }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
@@ -6783,95 +6995,113 @@ export const InterviewHub: React.FC = () => {
                   >
                     <Settings2 size={15} />
                   </button>
-                  {isTemplatesViewSettingsOpen ? (
-                    <div
-                      className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                      role="menu"
-                    >
-                      <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Kolumny' : 'Columns'}
-                      </div>
-                      <div className="space-y-1">
-                        {(
-                          [
-                            { id: 'name', label: isPolish ? 'Nazwa' : 'Name', alwaysVisible: true },
-                            { id: 'category', label: isPolish ? 'Kategoria' : 'Category' },
-                            { id: 'questions', label: isPolish ? 'Pytania' : 'Questions' },
-                            // #16 — Usage count / AI quality score / Last used
-                            { id: 'usage', label: isPolish ? 'Użycia' : 'Usage' },
-                            { id: 'quality', label: isPolish ? 'Jakość AI' : 'AI quality' },
-                            { id: 'lastUsed', label: isPolish ? 'Ostatnio użyty' : 'Last used' },
-                            { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                            {
-                              id: 'actions',
-                              label: isPolish ? 'Akcje' : 'Actions',
-                              alwaysVisible: true,
-                            },
-                          ] as Array<{ id: string; label: string; alwaysVisible?: boolean }>
-                        ).map((col) => {
-                          const alwaysVisible = !!col.alwaysVisible;
-                          const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                          return (
-                            <label
-                              key={col.id}
-                              className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06] ${
-                                alwaysVisible ? 'opacity-60' : 'cursor-pointer'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                disabled={alwaysVisible}
-                                onChange={() => {
-                                  if (alwaysVisible) return;
-                                  setTemplatesHiddenColumns((prev) => {
-                                    const set = new Set(prev);
-                                    if (set.has(col.id)) set.delete(col.id);
-                                    else set.add(col.id);
-                                    set.delete('name');
-                                    set.delete('actions');
-                                    const next = Array.from(set);
-                                    saveHiddenColumns(
-                                      INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY,
-                                      next
-                                    );
-                                    return next;
-                                  });
-                                }}
-                                className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
-                              />
-                              <span className="flex-1 text-slate-700 dark:text-slate-200">
-                                {col.label}
-                              </span>
-                              {alwaysVisible ? (
-                                <span className="text-[10px] text-slate-600 dark:text-slate-500">
-                                  {isPolish ? 'Wymagane' : 'Required'}
-                                </span>
-                              ) : null}
-                            </label>
-                          );
-                        })}
-                      </div>
-                      <div className="my-2 h-px bg-slate-200/70 dark:bg-white/[0.08]" />
-                      <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06]">
-                        <input
-                          type="checkbox"
-                          checked={showTemplateRowDescription}
-                          onChange={(event) => {
-                            setShowTemplateRowDescription(event.target.checked);
-                            saveBooleanSetting(
-                              INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY,
-                              event.target.checked
-                            );
+                  {isTemplatesViewSettingsOpen && templatesViewSettingsPos
+                    ? createPortal(
+                        <div
+                          ref={templatesViewSettingsPanelRef}
+                          style={{
+                            position: 'fixed',
+                            top: templatesViewSettingsPos.top,
+                            left: templatesViewSettingsPos.left,
+                            maxHeight: templatesViewSettingsPos.maxH,
                           }}
-                          className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
-                        />
-                        <span className="text-slate-700 dark:text-slate-200">
-                          {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                        </span>
-                      </label>
-                    </div>
-                  ) : null}
+                          className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                          role="menu"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            {isPolish ? 'Kolumny' : 'Columns'}
+                          </div>
+                          <div className="space-y-1">
+                            {(
+                              [
+                                {
+                                  id: 'name',
+                                  label: isPolish ? 'Nazwa' : 'Name',
+                                  alwaysVisible: true,
+                                },
+                                { id: 'category', label: isPolish ? 'Kategoria' : 'Category' },
+                                { id: 'questions', label: isPolish ? 'Pytania' : 'Questions' },
+                                // #16 — Usage count / AI quality score / Last used
+                                { id: 'usage', label: isPolish ? 'Użycia' : 'Usage' },
+                                { id: 'quality', label: isPolish ? 'Jakość AI' : 'AI quality' },
+                                {
+                                  id: 'lastUsed',
+                                  label: isPolish ? 'Ostatnio użyty' : 'Last used',
+                                },
+                                { id: 'status', label: isPolish ? 'Status' : 'Status' },
+                                {
+                                  id: 'actions',
+                                  label: isPolish ? 'Akcje' : 'Actions',
+                                  alwaysVisible: true,
+                                },
+                              ] as Array<{ id: string; label: string; alwaysVisible?: boolean }>
+                            ).map((col) => {
+                              const alwaysVisible = !!col.alwaysVisible;
+                              const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
+                              return (
+                                <label
+                                  key={col.id}
+                                  className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06] ${
+                                    alwaysVisible ? 'opacity-60' : 'cursor-pointer'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    disabled={alwaysVisible}
+                                    onChange={() => {
+                                      if (alwaysVisible) return;
+                                      setTemplatesHiddenColumns((prev) => {
+                                        const set = new Set(prev);
+                                        if (set.has(col.id)) set.delete(col.id);
+                                        else set.add(col.id);
+                                        set.delete('name');
+                                        set.delete('actions');
+                                        const next = Array.from(set);
+                                        saveHiddenColumns(
+                                          INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY,
+                                          next
+                                        );
+                                        return next;
+                                      });
+                                    }}
+                                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                                  />
+                                  <span className="flex-1 text-slate-700 dark:text-slate-200">
+                                    {col.label}
+                                  </span>
+                                  {alwaysVisible ? (
+                                    <span className="text-[10px] text-slate-600 dark:text-slate-500">
+                                      {isPolish ? 'Wymagane' : 'Required'}
+                                    </span>
+                                  ) : null}
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <div className="my-2 h-px bg-slate-200/70 dark:bg-white/[0.08]" />
+                          <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06]">
+                            <input
+                              type="checkbox"
+                              checked={showTemplateRowDescription}
+                              onChange={(event) => {
+                                setShowTemplateRowDescription(event.target.checked);
+                                saveBooleanSetting(
+                                  INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY,
+                                  event.target.checked
+                                );
+                              }}
+                              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                            />
+                            <span className="text-slate-700 dark:text-slate-200">
+                              {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+                            </span>
+                          </label>
+                        </div>,
+                        document.body
+                      )
+                    : null}
                 </div>
               </th>
             </tr>
@@ -6986,11 +7216,22 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('category') && (
                     <td
-                      className="px-3 py-3 text-center"
+                      className="px-3 py-3 text-left"
                       style={{ width: templatesColumnWidths.category }}
                     >
                       {(template.category ?? '').trim() ? (
-                        <span className={INTERVIEW_META_CHIP_CLASS}>{template.category}</span>
+                        // Pilot — delicate 2px left accent per category (tag tone,
+                        // NOT a status signal). Canon §4.0a.
+                        <span className={`${INTERVIEW_META_CHIP_CLASS} gap-1.5`}>
+                          {categoryTone(template.category) ? (
+                            <span
+                              aria-hidden="true"
+                              className="h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: categoryTone(template.category)! }}
+                            />
+                          ) : null}
+                          {template.category}
+                        </span>
                       ) : (
                         <span className="text-slate-400 dark:text-slate-500">—</span>
                       )}
@@ -7058,13 +7299,13 @@ export const InterviewHub: React.FC = () => {
                           Uses the shared StatusPill (SSOT) for tone, with the
                           template-specific label from getTemplateStatusChip. */}
                       <div className="inline-flex items-center gap-1.5">
-                        <StatusPill
+                        <EntityStatusChip
                           status={String(template.status || 'draft')}
                           label={getTemplateStatusChip(template.status, isPolish).label}
                         />
                         {template.isDefault && (
                           <span
-                            className="inline-flex items-center rounded-full border border-blue-300/70 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:border-blue-300/[0.22] dark:bg-blue-300/[0.10] dark:text-blue-100"
+                            className={INTERVIEW_META_CHIP_CLASS}
                             title={isPolish ? 'Domyślny szablon' : 'Default template'}
                           >
                             {isPolish ? 'Domyślny' : 'Default'}
@@ -7083,146 +7324,160 @@ export const InterviewHub: React.FC = () => {
                     <div className="flex items-center justify-end">
                       <RowActionsMenu
                         iconVariant="vertical"
-                        actions={[
+                        sections={[
+                          // GÓRA — kontekstowe (typowe dla szablonu)
                           {
-                            id: 'open',
-                            label: isPolish ? 'Otwórz' : 'Open',
-                            icon: ChevronRight,
-                            onClick: () => handleViewTemplate(template),
+                            id: 'context',
+                            kind: 'context' as const,
+                            actions: [
+                              {
+                                id: 'use',
+                                label: isPolish ? 'Użyj szablonu' : 'Use template',
+                                icon: Sparkles,
+                                onClick: async () => {
+                                  const projectId = await ensureProjectId();
+                                  if (!projectId) {
+                                    toast.error(
+                                      isPolish
+                                        ? 'Wybierz projekt przed utworzeniem sesji'
+                                        : 'Select a project before creating a session'
+                                    );
+                                    return;
+                                  }
+                                  Api.post(`/interview/templates/${template.id}/use`, {
+                                    projectId,
+                                    name: `${template.name} ${new Date().toLocaleDateString()}`,
+                                  })
+                                    .then((created) => {
+                                      const newSession = created as InterviewSession;
+                                      setSessions((prev) => [newSession, ...prev]);
+                                      handleOpenDocument({
+                                        id: newSession.id,
+                                        type: 'interview_session',
+                                        subType: 'interview',
+                                        name: newSession.name || 'Interview Session',
+                                        status: (
+                                          (newSession as any)?.status || 'in_progress'
+                                        ).toUpperCase() as any,
+                                      });
+                                      toast.success(
+                                        isPolish ? 'Sesja utworzona' : 'Session created'
+                                      );
+                                    })
+                                    .catch(() => {
+                                      toast.error(
+                                        isPolish
+                                          ? 'Nie udało się utworzyć sesji'
+                                          : 'Failed to create session'
+                                      );
+                                    });
+                                },
+                              },
+                              ...(canAssign
+                                ? [
+                                    {
+                                      id: 'assign',
+                                      label: isPolish ? 'Przydziel' : 'Assign',
+                                      icon: UserPlus,
+                                      onClick: () => {
+                                        setSelectedTemplateForAssign(template);
+                                        setShowAssignModal(true);
+                                      },
+                                    },
+                                  ]
+                                : []),
+                              {
+                                id: 'clone',
+                                label: isPolish ? 'Klonuj szablon' : 'Clone template',
+                                icon: Copy,
+                                onClick: () => handleCloneTemplate(template),
+                              },
+                              {
+                                id: 'view-usage',
+                                label: isPolish ? 'Zobacz użycie' : 'View usage',
+                                icon: BarChart3,
+                                rightLabel: String(getTemplateUsageCount(template)),
+                                onClick: () => handleViewTemplate(template),
+                              },
+                              ...(canAssign
+                                ? [
+                                    {
+                                      id: 'toggle-default',
+                                      label: template.isDefault
+                                        ? isPolish
+                                          ? 'Usuń jako domyślny'
+                                          : 'Unset default'
+                                        : isPolish
+                                          ? 'Ustaw jako domyślny'
+                                          : 'Set as default',
+                                      icon: template.isDefault ? StarOff : Star,
+                                      onClick: () => handleToggleTemplateDefault(template),
+                                    },
+                                  ]
+                                : []),
+                            ],
                           },
-                          // #15 — View usage. Opens the template preview, whose
-                          // footer surfaces the real usage count + actions.
+                          // DÓŁ — stały: Open · Edytuj · Archiwizuj/Przywróć.
+                          // (Templates: brak terminu → Delay N/A.)
                           {
-                            id: 'view-usage',
-                            label: isPolish ? 'Zobacz użycie' : 'View usage',
-                            icon: BarChart3,
-                            rightLabel: String(getTemplateUsageCount(template)),
-                            onClick: () => handleViewTemplate(template),
+                            id: 'fixed',
+                            kind: 'manage' as const,
+                            actions: [
+                              {
+                                id: 'open',
+                                label: isPolish ? 'Otwórz' : 'Open',
+                                icon: ChevronRight,
+                                onClick: () => handleViewTemplate(template),
+                              },
+                              ...(canAssign
+                                ? [
+                                    {
+                                      id: 'edit',
+                                      label: isPolish ? 'Edytuj szablon' : 'Edit template',
+                                      icon: Edit3,
+                                      onClick: () => handleEditTemplate(template.id),
+                                    },
+                                  ]
+                                : []),
+                              ...(canAssign && !template.isDefault
+                                ? String(template.status || '').toLowerCase() === 'archived'
+                                  ? [
+                                      {
+                                        id: 'restore',
+                                        label: isPolish ? 'Przywróć szablon' : 'Restore template',
+                                        icon: RotateCcw,
+                                        onClick: () => handleRestoreTemplate(template),
+                                      },
+                                    ]
+                                  : [
+                                      {
+                                        id: 'archive',
+                                        label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
+                                        icon: Archive,
+                                        onClick: () => handleArchiveTemplate(template),
+                                      },
+                                    ]
+                                : []),
+                            ],
                           },
-                          ...(canAssign
-                            ? [
-                                {
-                                  id: 'assign',
-                                  label: isPolish ? 'Przydziel' : 'Assign',
-                                  icon: UserPlus,
-                                  onClick: () => {
-                                    setSelectedTemplateForAssign(template);
-                                    setShowAssignModal(true);
-                                  },
-                                },
-                              ]
-                            : []),
+                          // DANGER — Usuń (realny, tylko nie‑domyślne)
                           {
-                            id: 'use',
-                            label: isPolish ? 'Użyj szablonu' : 'Use template',
-                            icon: Sparkles,
-                            onClick: async () => {
-                              const projectId = await ensureProjectId();
-                              if (!projectId) {
-                                toast.error(
-                                  isPolish
-                                    ? 'Wybierz projekt przed utworzeniem sesji'
-                                    : 'Select a project before creating a session'
-                                );
-                                return;
-                              }
-                              Api.post(`/interview/templates/${template.id}/use`, {
-                                projectId,
-                                name: `${template.name} ${new Date().toLocaleDateString()}`,
-                              })
-                                .then((created) => {
-                                  const newSession = created as InterviewSession;
-                                  setSessions((prev) => [newSession, ...prev]);
-                                  handleOpenDocument({
-                                    id: newSession.id,
-                                    type: 'interview_session',
-                                    subType: 'interview',
-                                    name: newSession.name || 'Interview Session',
-                                    status: (
-                                      (newSession as any)?.status || 'in_progress'
-                                    ).toUpperCase() as any,
-                                  });
-                                  toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
-                                })
-                                .catch(() => {
-                                  toast.error(
-                                    isPolish
-                                      ? 'Nie udało się utworzyć sesji'
-                                      : 'Failed to create session'
-                                  );
-                                });
-                            },
+                            id: 'danger',
+                            kind: 'danger' as const,
+                            actions: [
+                              ...(canAssign && !template.isDefault
+                                ? [
+                                    {
+                                      id: 'delete',
+                                      label: isPolish ? 'Usuń szablon' : 'Delete template',
+                                      icon: Trash2,
+                                      onClick: () => handleDeleteTemplate(template),
+                                      variant: 'danger' as const,
+                                    },
+                                  ]
+                                : []),
+                            ],
                           },
-                          {
-                            id: 'clone',
-                            label: isPolish ? 'Klonuj szablon' : 'Clone template',
-                            icon: Copy,
-                            onClick: () => handleCloneTemplate(template),
-                          },
-                          ...(canAssign
-                            ? [
-                                {
-                                  id: 'edit',
-                                  label: isPolish ? 'Edytuj szablon' : 'Edit template',
-                                  icon: Edit3,
-                                  onClick: () => handleEditTemplate(template.id),
-                                },
-                              ]
-                            : []),
-                          // #15 — Set / Unset default. Wired to POST
-                          // /interview/templates/:id/default via
-                          // handleToggleTemplateDefault (single default per org).
-                          ...(canAssign
-                            ? [
-                                {
-                                  id: 'toggle-default',
-                                  label: template.isDefault
-                                    ? isPolish
-                                      ? 'Usuń jako domyślny'
-                                      : 'Unset default'
-                                    : isPolish
-                                      ? 'Ustaw jako domyślny'
-                                      : 'Set as default',
-                                  icon: template.isDefault ? StarOff : Star,
-                                  onClick: () => handleToggleTemplateDefault(template),
-                                  divider: true,
-                                },
-                              ]
-                            : []),
-                          // V-A S5 — Archive (active templates) / Restore
-                          // (archived templates) — backend was wired, UI wasn't.
-                          ...(canAssign && !template.isDefault
-                            ? String(template.status || '').toLowerCase() === 'archived'
-                              ? [
-                                  {
-                                    id: 'restore',
-                                    label: isPolish ? 'Przywróć szablon' : 'Restore template',
-                                    icon: RotateCcw,
-                                    onClick: () => handleRestoreTemplate(template),
-                                    divider: true,
-                                  },
-                                ]
-                              : [
-                                  {
-                                    id: 'archive',
-                                    label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
-                                    icon: Archive,
-                                    onClick: () => handleArchiveTemplate(template),
-                                    divider: true,
-                                  },
-                                ]
-                            : []),
-                          ...(canAssign && !template.isDefault
-                            ? [
-                                {
-                                  id: 'delete',
-                                  label: isPolish ? 'Usuń szablon' : 'Delete template',
-                                  icon: Trash2,
-                                  onClick: () => handleDeleteTemplate(template),
-                                  variant: 'danger' as const,
-                                },
-                              ]
-                            : []),
                         ]}
                       />
                     </div>
@@ -7599,6 +7854,14 @@ export const InterviewHub: React.FC = () => {
   const [assignmentsViewSettingsShowAssignee, setAssignmentsViewSettingsShowAssignee] =
     useState(false);
   const assignmentsViewSettingsRef = useRef<HTMLDivElement | null>(null);
+  // Canon §16 — popover position for FIXED rendering (escapes overflow-clipping
+  // ancestors; `absolute` + max-height was insufficient — parent overflow clips).
+  const [assignmentsViewSettingsPos, setAssignmentsViewSettingsPos] = useState<{
+    top: number;
+    left: number;
+    maxH: number;
+  } | null>(null);
+  const assignmentsViewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
 
   const assignmentsViewStorageKey = assignmentsViewSettingsShowAssignee
     ? INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY
@@ -7641,6 +7904,7 @@ export const InterviewHub: React.FC = () => {
 
     const handlePointerDown = (event: PointerEvent) => {
       if (assignmentsViewSettingsRef.current?.contains(event.target as Node)) return;
+      if (assignmentsViewSettingsPanelRef.current?.contains(event.target as Node)) return;
       setIsAssignmentsViewSettingsOpen(false);
     };
 
@@ -8403,7 +8667,7 @@ Return ONLY the answer text (no markdown fences).`;
     });
 
     return (
-      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.08] rounded-xl backdrop-blur overflow-hidden">
+      <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.08] rounded-xl backdrop-blur">
         {activeAssignmentFilterChips.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.08]">
             <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -8437,7 +8701,7 @@ Return ONLY the answer text (no markdown fences).`;
           </div>
         ) : null}
         <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
-          <thead>
+          <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
             <tr className="border-b border-slate-200/70 dark:border-white/[0.08] bg-slate-50/70 dark:bg-navy-900/40">
               <th className="px-3 py-2 text-left" style={{ width: columnWidths.select }}>
                 <button
@@ -8492,10 +8756,10 @@ Return ONLY the answer text (no markdown fences).`;
               </th>
               {hasAssigneeColumn && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.assignee }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span
                       className={
                         (tableFilters.assignee as string[] | undefined)?.length
@@ -8630,6 +8894,22 @@ Return ONLY the answer text (no markdown fences).`;
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
+                      // Measure the CLICKED button (robust vs a shared ref that may
+                      // point at a different/hidden table instance).
+                      const r = event.currentTarget.getBoundingClientRect();
+                      const PANEL_W = 288; // w-72
+                      // Align panel's right edge to the button, but CLAMP to the
+                      // viewport so it never goes off-screen (button may be
+                      // off-screen-right in a horizontally-scrolled wide table).
+                      const left = Math.min(
+                        Math.max(8, Math.round(r.right - PANEL_W)),
+                        Math.round(window.innerWidth - PANEL_W - 8)
+                      );
+                      setAssignmentsViewSettingsPos({
+                        top: Math.round(r.bottom + 8),
+                        left,
+                        maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
+                      });
                       setAssignmentsViewSettingsShowAssignee(showAssignee);
                       setIsAssignmentsViewSettingsOpen((open) => !open);
                     }}
@@ -8640,124 +8920,134 @@ Return ONLY the answer text (no markdown fences).`;
                   >
                     <Settings2 size={15} />
                   </button>
-                  {isAssignmentsViewSettingsOpen ? (
-                    <div
-                      className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
-                      </div>
-                      {(
-                        [
-                          {
-                            id: 'template',
-                            label: isPolish ? 'Szablon' : 'Template',
-                            alwaysVisible: true,
-                          },
-                          {
-                            id: 'assignee',
-                            label: isPolish ? 'Przydzielony do' : 'Assignee',
-                            disabled: !assignmentsViewSettingsShowAssignee,
-                          },
-                          { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                          { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
-                          { id: 'due', label: isPolish ? 'Do terminu' : 'Days to Due' },
-                          // #9/#9b — opt-in columns, only meaningful on the
-                          // manager Assigned view.
-                          {
-                            id: 'submitted',
-                            label: isPolish ? 'Przesłano' : 'Submitted',
-                            disabled: !assignmentsViewSettingsShowAssignee,
-                          },
-                          {
-                            id: 'aiScore',
-                            label: isPolish ? 'Ocena AI' : 'AI Score',
-                            disabled: !assignmentsViewSettingsShowAssignee,
-                          },
-                          {
-                            id: 'escalation',
-                            label: isPolish ? 'Eskalacja' : 'Escalation',
-                            disabled: !assignmentsViewSettingsShowAssignee,
-                          },
-                          {
-                            id: 'actions',
-                            label: isPolish ? 'Akcje' : 'Actions',
-                            alwaysVisible: true,
-                          },
-                        ] as Array<{
-                          id: string;
-                          label: string;
-                          alwaysVisible?: boolean;
-                          disabled?: boolean;
-                        }>
-                      ).map((col) => {
-                        const alwaysVisible = !!col.alwaysVisible;
-                        const checked = alwaysVisible
-                          ? true
-                          : !assignmentsViewHiddenSet.has(col.id);
-                        return (
-                          <label
-                            key={col.id}
-                            className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
-                              alwaysVisible || col.disabled
-                                ? 'cursor-default text-slate-600 dark:text-slate-500'
-                                : 'cursor-pointer text-slate-700 dark:text-slate-200'
-                            }`}
-                          >
+                  {isAssignmentsViewSettingsOpen && assignmentsViewSettingsPos
+                    ? createPortal(
+                        <div
+                          ref={assignmentsViewSettingsPanelRef}
+                          style={{
+                            position: 'fixed',
+                            top: assignmentsViewSettingsPos.top,
+                            left: assignmentsViewSettingsPos.left,
+                            maxHeight: assignmentsViewSettingsPos.maxH,
+                          }}
+                          className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                            {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+                          </div>
+                          {(
+                            [
+                              {
+                                id: 'template',
+                                label: isPolish ? 'Szablon' : 'Template',
+                                alwaysVisible: true,
+                              },
+                              {
+                                id: 'assignee',
+                                label: isPolish ? 'Przydzielony do' : 'Assignee',
+                                disabled: !assignmentsViewSettingsShowAssignee,
+                              },
+                              { id: 'status', label: isPolish ? 'Status' : 'Status' },
+                              { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
+                              { id: 'due', label: isPolish ? 'Do terminu' : 'Days to Due' },
+                              // #9/#9b — opt-in columns, only meaningful on the
+                              // manager Assigned view.
+                              {
+                                id: 'submitted',
+                                label: isPolish ? 'Przesłano' : 'Submitted',
+                                disabled: !assignmentsViewSettingsShowAssignee,
+                              },
+                              {
+                                id: 'aiScore',
+                                label: isPolish ? 'Ocena AI' : 'AI Score',
+                                disabled: !assignmentsViewSettingsShowAssignee,
+                              },
+                              {
+                                id: 'escalation',
+                                label: isPolish ? 'Eskalacja' : 'Escalation',
+                                disabled: !assignmentsViewSettingsShowAssignee,
+                              },
+                              {
+                                id: 'actions',
+                                label: isPolish ? 'Akcje' : 'Actions',
+                                alwaysVisible: true,
+                              },
+                            ] as Array<{
+                              id: string;
+                              label: string;
+                              alwaysVisible?: boolean;
+                              disabled?: boolean;
+                            }>
+                          ).map((col) => {
+                            const alwaysVisible = !!col.alwaysVisible;
+                            const checked = alwaysVisible
+                              ? true
+                              : !assignmentsViewHiddenSet.has(col.id);
+                            return (
+                              <label
+                                key={col.id}
+                                className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
+                                  alwaysVisible || col.disabled
+                                    ? 'cursor-default text-slate-600 dark:text-slate-500'
+                                    : 'cursor-pointer text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  disabled={alwaysVisible || col.disabled}
+                                  onChange={() => {
+                                    if (alwaysVisible || col.disabled) return;
+                                    updateAssignmentsViewHiddenColumns((prev) => {
+                                      const set = new Set(prev);
+                                      if (set.has(col.id)) set.delete(col.id);
+                                      else set.add(col.id);
+
+                                      set.delete('template');
+                                      set.delete('actions');
+
+                                      const next = Array.from(set);
+                                      try {
+                                        localStorage.setItem(
+                                          assignmentsViewStorageKey,
+                                          JSON.stringify(next)
+                                        );
+                                      } catch {
+                                        /* ignore */
+                                      }
+                                      return next;
+                                    });
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                                />
+                                <span className="flex-1">{col.label}</span>
+                                {alwaysVisible ? (
+                                  <span className="text-[10px]">
+                                    {isPolish ? 'Wymagane' : 'Required'}
+                                  </span>
+                                ) : null}
+                              </label>
+                            );
+                          })}
+                          <div className="my-2 border-t border-slate-200/70 dark:border-white/[0.08]" />
+                          <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]">
                             <input
                               type="checkbox"
-                              checked={checked}
-                              disabled={alwaysVisible || col.disabled}
-                              onChange={() => {
-                                if (alwaysVisible || col.disabled) return;
-                                updateAssignmentsViewHiddenColumns((prev) => {
-                                  const set = new Set(prev);
-                                  if (set.has(col.id)) set.delete(col.id);
-                                  else set.add(col.id);
-
-                                  set.delete('template');
-                                  set.delete('actions');
-
-                                  const next = Array.from(set);
-                                  try {
-                                    localStorage.setItem(
-                                      assignmentsViewStorageKey,
-                                      JSON.stringify(next)
-                                    );
-                                  } catch {
-                                    /* ignore */
-                                  }
-                                  return next;
-                                });
-                              }}
+                              checked={assignmentsViewShowRowDescription}
+                              onChange={(event) =>
+                                updateAssignmentsViewShowRowDescription(event.target.checked)
+                              }
                               className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
                             />
-                            <span className="flex-1">{col.label}</span>
-                            {alwaysVisible ? (
-                              <span className="text-[10px]">
-                                {isPolish ? 'Wymagane' : 'Required'}
-                              </span>
-                            ) : null}
+                            <span>
+                              {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+                            </span>
                           </label>
-                        );
-                      })}
-                      <div className="my-2 border-t border-slate-200/70 dark:border-white/[0.08]" />
-                      <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]">
-                        <input
-                          type="checkbox"
-                          checked={assignmentsViewShowRowDescription}
-                          onChange={(event) =>
-                            updateAssignmentsViewShowRowDescription(event.target.checked)
-                          }
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
-                        />
-                        <span>
-                          {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                        </span>
-                      </label>
-                    </div>
-                  ) : null}
+                        </div>,
+                        document.body
+                      )
+                    : null}
                 </div>
               </th>
             </tr>
@@ -8867,22 +9157,13 @@ Return ONLY the answer text (no markdown fences).`;
                   </td>
                   {hasAssigneeColumn && (
                     <td
-                      className="px-4 py-3 text-center align-middle"
+                      className="px-4 py-3 text-left align-middle"
                       style={{ width: columnWidths.assignee }}
                     >
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-700 dark:text-slate-300">
-                          {assignment.assignee?.name?.charAt(0) || '?'}
-                        </div>
-                        <span
-                          className="text-sm text-slate-700 dark:text-slate-200 truncate max-w-[220px]"
-                          title={
-                            assignment.assignee?.name || assignment.assignee?.email || 'Unknown'
-                          }
-                        >
-                          {assignment.assignee?.name || assignment.assignee?.email || 'Unknown'}
-                        </span>
-                      </div>
+                      <AssigneeCell
+                        name={assignment.assignee?.name || assignment.assignee?.email || null}
+                        unassignedLabel={isPolish ? 'Nieprzypisane' : 'Unassigned'}
+                      />
                     </td>
                   )}
                   {!hiddenSet.has('status') && (
@@ -8892,7 +9173,7 @@ Return ONLY the answer text (no markdown fences).`;
                     >
                       {/* Shared StatusPill (SSOT) for tone, with the
                           assignment-specific bilingual label. */}
-                      <StatusPill
+                      <EntityStatusChip
                         status={String(assignment.status || 'assigned')}
                         label={getAssignmentStatusLabel(assignment.status)}
                       />
@@ -8903,17 +9184,7 @@ Return ONLY the answer text (no markdown fences).`;
                       className="px-4 py-3 text-center align-middle"
                       style={{ width: columnWidths.progress }}
                     >
-                      <div className="flex items-center justify-center gap-2">
-                        <div className={INTERVIEW_PROGRESS_TRACK_CLASS}>
-                          <div
-                            className={INTERVIEW_PROGRESS_FILL_CLASS}
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {progress}%
-                        </span>
-                      </div>
+                      <ProgressCell value={progress} />
                     </td>
                   )}
                   {!hiddenSet.has('due') && (
@@ -8923,24 +9194,20 @@ Return ONLY the answer text (no markdown fences).`;
                     >
                       {(() => {
                         const dtd = getAssignmentDaysToDue(assignment.dueAt);
-                        if (!dtd) return <span className="text-xs text-slate-500">—</span>;
+                        if (!dtd) return <span className="text-xs text-c-text-muted">—</span>;
 
                         return (
-                          <div className="flex items-center justify-center gap-1.5">
-                            <span
-                              className={`${INTERVIEW_DUE_CHIP_BASE_CLASS} ${dtd.colorClass}`}
+                          <div className="flex items-center justify-center">
+                            <DueChip
+                              label={dtd.label}
+                              risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
+                              showIcon
                               title={
                                 assignment.dueAt
                                   ? new Date(assignment.dueAt).toLocaleDateString()
-                                  : ''
+                                  : undefined
                               }
-                            >
-                              {dtd.days < 0 && <AlertTriangle size={11} />}
-                              {dtd.days === 0 && <AlertTriangle size={11} />}
-                              {dtd.days > 0 && dtd.days <= 3 && <Clock size={11} />}
-                              {dtd.days > 3 && <Calendar size={11} />}
-                              {dtd.label}
-                            </span>
+                            />
                           </div>
                         );
                       })()}
@@ -9026,158 +9293,201 @@ Return ONLY the answer text (no markdown fences).`;
                       <RowActionsMenu
                         iconVariant="vertical"
                         className="opacity-40 transition-opacity group-hover:opacity-100"
-                        actions={[
+                        sections={[
+                          // GÓRA — kontekstowe (typowe dla obszaru/statusu)
                           {
-                            id: 'open',
-                            label: isPolish ? 'Otwórz' : 'Open',
-                            icon: ChevronRight,
-                            onClick: () =>
-                              void openInterviewAssignmentFull(assignment, showAssignee),
-                          },
-                          ...(!showAssignee && assignment.status === 'assigned'
-                            ? [
-                                {
-                                  id: 'start',
-                                  label: isPolish ? 'Rozpocznij' : 'Start',
-                                  icon: Sparkles,
-                                  onClick: () => startInterviewAssignment(assignment),
-                                },
-                              ]
-                            : []),
-                          ...(!showAssignee &&
-                          assignment.status === 'in_progress' &&
-                          assignment.sessionId
-                            ? [
-                                {
-                                  id: 'continue',
-                                  label: isPolish ? 'Kontynuuj' : 'Continue',
-                                  icon: ChevronRight,
-                                  onClick: async () => {
-                                    const session = await Api.get(
-                                      `/interview/sessions/${assignment.sessionId}`
-                                    );
-                                    handleOpenDocument({
-                                      id: (session as InterviewSession).id,
-                                      type: 'interview_session',
-                                      subType: 'interview',
-                                      name:
-                                        (session as InterviewSession).name || 'Interview Session',
-                                      status: (
-                                        (session as any)?.status || 'in_progress'
-                                      ).toUpperCase() as any,
-                                    });
-                                  },
-                                },
-                              ]
-                            : []),
-                          ...(!showAssignee &&
-                          assignment.status === 'sent_back' &&
-                          assignment.sessionId
-                            ? [
-                                {
-                                  id: 'fix',
-                                  label: isPolish ? 'Popraw' : 'Fix & Resubmit',
-                                  icon: RotateCcw,
-                                  onClick: async () => {
-                                    const session = await Api.get(
-                                      `/interview/sessions/${assignment.sessionId}`
-                                    );
-                                    handleOpenDocument({
-                                      id: (session as InterviewSession).id,
-                                      type: 'interview_session',
-                                      subType: 'interview',
-                                      name:
-                                        (session as InterviewSession).name || 'Interview Session',
-                                      status: (
-                                        (session as any)?.status || 'in_progress'
-                                      ).toUpperCase() as any,
-                                    });
-                                  },
-                                },
-                              ]
-                            : []),
-                          // #7b — Manager row actions (Assigned tab kebab):
-                          // Approve, Send back, Reassign, Change due date,
-                          // Remind, Escalate now, Archive/Restore. All wired to
-                          // real endpoints.
-                          ...(showAssignee && canAssign
-                            ? [
-                                ...(assignment.status === 'submitted'
-                                  ? [
-                                      {
-                                        id: 'approve',
-                                        label: isPolish ? 'Zatwierdź' : 'Approve',
-                                        icon: Check,
-                                        onClick: () => handleOpenApproveModal(assignment),
-                                      },
-                                      {
-                                        id: 'sendback',
-                                        label: isPolish ? 'Zwróć do poprawy' : 'Send back',
-                                        icon: RotateCcw,
-                                        onClick: () => handleOpenSendBackModal(assignment),
-                                        variant: 'danger' as const,
-                                      },
-                                    ]
-                                  : []),
-                                // Reassign — only for active assignments
-                                // (assigned / in_progress), per audit #13.
-                                ...(assignment.status === 'assigned' ||
-                                assignment.status === 'in_progress'
-                                  ? [
-                                      {
-                                        id: 'reassign',
-                                        label: isPolish ? 'Przypisz ponownie' : 'Reassign',
-                                        icon: UserPlus,
-                                        onClick: () => handleReassignAssignment(assignment),
-                                      },
-                                    ]
-                                  : []),
-                                ...(assignment.status !== 'completed' &&
-                                assignment.status !== 'approved'
-                                  ? [
-                                      {
-                                        id: 'due-date',
-                                        label: isPolish ? 'Zmień termin' : 'Change due date',
-                                        icon: CalendarClock,
-                                        onClick: () => handleOpenDueDateModal(assignment),
-                                      },
-                                      {
-                                        id: 'remind',
-                                        label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
-                                        icon: Bell,
-                                        onClick: () => handleOpenReminderModal(assignment),
-                                      },
-                                      {
-                                        id: 'escalate',
-                                        label: isPolish ? 'Eskaluj teraz' : 'Escalate now',
-                                        icon: ArrowUpRight,
-                                        disabled:
-                                          Boolean(assignment.escalatedAt) ||
-                                          Boolean(assignment.escalationTarget),
-                                        onClick: () => handleEscalateNow(assignment),
-                                      },
-                                    ]
-                                  : []),
-                                // #8 — Per-row Archive / Restore.
-                                managedLifecycle === 'archived'
-                                  ? {
-                                      id: 'restore',
-                                      label: isPolish ? 'Przywróć' : 'Restore',
-                                      icon: RotateCcw,
-                                      disabled: managedLifecycleBusy,
-                                      onClick: () =>
-                                        handleAssignmentLifecycleAction(assignment, 'restore'),
-                                    }
-                                  : {
-                                      id: 'archive',
-                                      label: isPolish ? 'Archiwizuj' : 'Archive',
-                                      icon: Archive,
-                                      disabled: managedLifecycleBusy,
-                                      onClick: () =>
-                                        handleAssignmentLifecycleAction(assignment, 'archive'),
+                            id: 'context',
+                            kind: 'context' as const,
+                            actions: [
+                              ...(!showAssignee && assignment.status === 'assigned'
+                                ? [
+                                    {
+                                      id: 'start',
+                                      label: isPolish ? 'Rozpocznij' : 'Start',
+                                      icon: Sparkles,
+                                      onClick: () => startInterviewAssignment(assignment),
                                     },
-                              ]
-                            : []),
+                                  ]
+                                : []),
+                              ...(!showAssignee &&
+                              assignment.status === 'in_progress' &&
+                              assignment.sessionId
+                                ? [
+                                    {
+                                      id: 'continue',
+                                      label: isPolish ? 'Kontynuuj' : 'Continue',
+                                      icon: ChevronRight,
+                                      onClick: async () => {
+                                        const session = await Api.get(
+                                          `/interview/sessions/${assignment.sessionId}`
+                                        );
+                                        handleOpenDocument({
+                                          id: (session as InterviewSession).id,
+                                          type: 'interview_session',
+                                          subType: 'interview',
+                                          name:
+                                            (session as InterviewSession).name ||
+                                            'Interview Session',
+                                          status: (
+                                            (session as any)?.status || 'in_progress'
+                                          ).toUpperCase() as any,
+                                        });
+                                      },
+                                    },
+                                  ]
+                                : []),
+                              ...(!showAssignee &&
+                              assignment.status === 'sent_back' &&
+                              assignment.sessionId
+                                ? [
+                                    {
+                                      id: 'fix',
+                                      label: isPolish ? 'Popraw' : 'Fix & Resubmit',
+                                      icon: RotateCcw,
+                                      onClick: async () => {
+                                        const session = await Api.get(
+                                          `/interview/sessions/${assignment.sessionId}`
+                                        );
+                                        handleOpenDocument({
+                                          id: (session as InterviewSession).id,
+                                          type: 'interview_session',
+                                          subType: 'interview',
+                                          name:
+                                            (session as InterviewSession).name ||
+                                            'Interview Session',
+                                          status: (
+                                            (session as any)?.status || 'in_progress'
+                                          ).toUpperCase() as any,
+                                        });
+                                      },
+                                    },
+                                  ]
+                                : []),
+                              ...(showAssignee && canAssign && assignment.status === 'submitted'
+                                ? [
+                                    {
+                                      id: 'approve',
+                                      label: isPolish ? 'Zatwierdź' : 'Approve',
+                                      icon: Check,
+                                      onClick: () => handleOpenApproveModal(assignment),
+                                    },
+                                    {
+                                      id: 'sendback',
+                                      label: isPolish ? 'Zwróć do poprawy' : 'Send back',
+                                      icon: RotateCcw,
+                                      onClick: () => handleOpenSendBackModal(assignment),
+                                      variant: 'danger' as const,
+                                    },
+                                  ]
+                                : []),
+                              ...(showAssignee &&
+                              canAssign &&
+                              (assignment.status === 'assigned' ||
+                                assignment.status === 'in_progress')
+                                ? [
+                                    {
+                                      id: 'reassign',
+                                      label: isPolish ? 'Przypisz ponownie' : 'Reassign',
+                                      icon: UserPlus,
+                                      onClick: () => handleReassignAssignment(assignment),
+                                    },
+                                  ]
+                                : []),
+                              ...(showAssignee &&
+                              canAssign &&
+                              assignment.status !== 'completed' &&
+                              assignment.status !== 'approved'
+                                ? [
+                                    {
+                                      id: 'remind',
+                                      label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
+                                      icon: Bell,
+                                      onClick: () => handleOpenReminderModal(assignment),
+                                    },
+                                    {
+                                      id: 'escalate',
+                                      label: isPolish ? 'Eskaluj teraz' : 'Escalate now',
+                                      icon: ArrowUpRight,
+                                      disabled:
+                                        Boolean(assignment.escalatedAt) ||
+                                        Boolean(assignment.escalationTarget),
+                                      onClick: () => handleEscalateNow(assignment),
+                                    },
+                                  ]
+                                : []),
+                            ],
+                          },
+                          // DÓŁ — ZAWSZE TEN SAM: Open · Edytuj · Archiwizuj/Przywróć · Delay▸
+                          {
+                            id: 'fixed',
+                            kind: 'manage' as const,
+                            actions: [
+                              {
+                                id: 'open',
+                                label: isPolish ? 'Otwórz' : 'Open',
+                                icon: ChevronRight,
+                                onClick: () =>
+                                  void openInterviewAssignmentFull(assignment, showAssignee),
+                              },
+                              {
+                                id: 'edit',
+                                label: isPolish ? 'Edytuj' : 'Edit',
+                                icon: Edit3,
+                                // Contextual: manager edits via manage modal; assignee edits answers.
+                                onClick: () =>
+                                  showAssignee
+                                    ? handleOpenDueDateModal(assignment)
+                                    : startInterviewAssignment(assignment),
+                              },
+                              managedLifecycle === 'archived' && showAssignee
+                                ? {
+                                    id: 'restore',
+                                    label: isPolish ? 'Przywróć' : 'Restore',
+                                    icon: RotateCcw,
+                                    disabled: managedLifecycleBusy,
+                                    onClick: () =>
+                                      handleAssignmentLifecycleAction(assignment, 'restore'),
+                                  }
+                                : {
+                                    id: 'archive',
+                                    label: isPolish ? 'Archiwizuj' : 'Archive',
+                                    icon: Archive,
+                                    disabled: managedLifecycleBusy,
+                                    onClick: () =>
+                                      handleAssignmentLifecycleAction(assignment, 'archive'),
+                                  },
+                              {
+                                id: 'delay',
+                                label: isPolish ? 'Odłóż termin' : 'Delay',
+                                icon: Clock,
+                                onClick: () => {},
+                                submenu: [1, 3, 7].map((d) => ({
+                                  id: `delay-${d}`,
+                                  label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                                  icon: Clock,
+                                  onClick: () => void handleDelayAssignment(assignment, d),
+                                })),
+                              },
+                            ],
+                          },
+                          // DANGER — Usuń (brak endpointu delete → disabled, do backendu)
+                          {
+                            id: 'danger',
+                            kind: 'danger' as const,
+                            actions: [
+                              {
+                                id: 'delete',
+                                label: isPolish ? 'Usuń' : 'Delete',
+                                icon: Trash2,
+                                variant: 'danger' as const,
+                                disabled: true,
+                                description: isPolish
+                                  ? 'Wkrótce (backend)'
+                                  : 'Coming soon (backend)',
+                                onClick: () => {},
+                              },
+                            ],
+                          },
                         ]}
                       />
                     </div>
@@ -9856,7 +10166,7 @@ Return ONLY the answer text (no markdown fences).`;
           ) : null}
           <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
             <table className="w-full table-fixed rounded-xl" style={{ minWidth: tableMinWidth }}>
-              <thead>
+              <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
                 <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
                   <th
                     className="px-3 py-2 text-left"

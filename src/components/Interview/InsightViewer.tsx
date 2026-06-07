@@ -78,7 +78,7 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
-import { LoadingState } from '@/components/ui/primitives';
+import { Button, LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
@@ -6935,34 +6935,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       renderActionBar={() => (
         <div className="flex items-center gap-2 flex-wrap">
           {/* #26 — Primary action: Submit for Information (no review/approval gate) */}
-          <button
-            onClick={handleSubmitForInformation}
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Send />}
+            loading={submittingForInfo}
             disabled={submittingForInfo || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-semibold shadow-sm hover:bg-primary-500 transition-all disabled:opacity-50"
+            onClick={handleSubmitForInformation}
           >
-            {submittingForInfo ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Send size={14} />
-            )}
             {isPolish ? 'Wyślij do wiadomości' : 'Submit for Information'}
-          </button>
+          </Button>
 
           <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
 
           {/* #26 — Export ▾ : uniform outline dropdown (all secondary exports) */}
           <div className="relative" ref={exportMenuRef}>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<ExternalLink />}
               onClick={() => {
                 setExportMenuOpen((v) => !v);
                 setAiMenuOpen(false);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 text-xs font-medium transition-all"
             >
-              <ExternalLink size={14} />
               {isPolish ? 'Eksport' : 'Export'}
-              <ChevronDown size={13} className={exportMenuOpen ? 'rotate-180' : ''} />
-            </button>
+              <ChevronDown size={13} className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`} />
+            </Button>
             {exportMenuOpen && (
               <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
                 <button
@@ -7051,17 +7050,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
           {/* #26 — ✨ AI ▾ : uniform outline dropdown (Regenerate) */}
           <div className="relative" ref={aiMenuRef}>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Sparkles />}
+              className="text-c-accent border-c-accent/30 hover:bg-c-accent/5 dark:hover:bg-c-accent/10"
               onClick={() => {
                 setAiMenuOpen((v) => !v);
                 setExportMenuOpen(false);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 text-xs font-medium transition-all"
             >
-              <Sparkles size={14} />
               {isPolish ? 'AI' : 'AI'}
-              <ChevronDown size={13} className={aiMenuOpen ? 'rotate-180' : ''} />
-            </button>
+              <ChevronDown size={13} className={`ml-0.5 transition-transform ${aiMenuOpen ? 'rotate-180' : ''}`} />
+            </Button>
             {aiMenuOpen && (
               <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
                 <button
