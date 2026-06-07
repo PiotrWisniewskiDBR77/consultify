@@ -10212,6 +10212,85 @@ Return ONLY the answer text (no markdown fences).`;
         }
       };
 
+      // An initiative "lives" in the Initiatives module only once moved forward.
+      // Drafts / pending-review stay in the Interview table (preview), per owner.
+      const isInitiativePromoted = (raw?: string) => {
+        const s = String(raw || 'DRAFT').toUpperCase();
+        return [
+          'PROMOTED',
+          'PLANNING',
+          'APPROVED',
+          'IN_EXECUTION',
+          'IN_PROGRESS',
+          'REVIEW',
+        ].includes(s);
+      };
+
+      // PreviewableItem requires title:string — coalesce from title/name.
+      const withInitiativeTitle = (it: InterviewInitiativeDraft) => ({
+        ...it,
+        title: it.title || it.name || (isPolish ? 'Inicjatywa' : 'Initiative'),
+      });
+
+      // Side-preview body for an initiative (canon §7.3: meta → details).
+      const renderInitiativePreview = (item: InterviewInitiativeDraft) => {
+        const m = statusMeta(item.status);
+        const desc = String(item.description || '')
+          .replace(/^#\s.+$/m, '')
+          .trim();
+        const src = item.sourceId ? insights.find((i) => i.id === item.sourceId) : null;
+        const dateStr =
+          item.updatedAt || item.createdAt
+            ? new Date(item.updatedAt || item.createdAt || '').toLocaleDateString(
+                isPolish ? 'pl-PL' : 'en-US'
+              )
+            : '—';
+        const promoted = isInitiativePromoted(item.status);
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-slate-200/70 bg-slate-50/60 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
+              <EntityStatusChip status={item.status} label={m.label} />
+              {item.priority ? (
+                <PriorityChip
+                  level={priorityLevel(item.priority)}
+                  label={String(item.priority).toLowerCase()}
+                />
+              ) : null}
+              {src ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary">
+                  <Lightbulb size={11} />
+                  Insight
+                </span>
+              ) : null}
+              <span className="inline-flex items-center rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary">
+                {dateStr}
+              </span>
+            </div>
+            <div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Szczegóły' : 'Details'}
+              </div>
+              {desc ? (
+                <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                  {desc}
+                </div>
+              ) : (
+                <div className="text-sm text-slate-400 dark:text-slate-500">
+                  {isPolish ? 'Brak opisu.' : 'No description.'}
+                </div>
+              )}
+            </div>
+            {!promoted ? (
+              <div className="rounded-lg border border-amber-300/40 bg-amber-50/70 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
+                {isPolish
+                  ? 'Wersja robocza — pozostaje w Wywiadzie do czasu przekazania dalej.'
+                  : 'Draft — stays in Interview until it is moved forward.'}
+              </div>
+            ) : null}
+          </div>
+        );
+      };
+
       // Per-column header filter descriptors (status group / priority / source).
       const initiativeStatusCol: ColumnDef = {
         id: 'status',
@@ -10405,10 +10484,10 @@ Return ONLY the answer text (no markdown fences).`;
       };
 
       return (
-        <div className="h-full overflow-auto p-4">
+        <div className="flex h-full flex-col overflow-hidden">
           {renderDegradedBanner()}
           {lineageDecisionCount > 0 || lineageTaskCount > 0 ? (
-            <div className="mb-4 rounded-xl border border-slate-200/70 bg-white/50 p-3 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/50">
+            <div className="mx-4 mb-3 mt-4 shrink-0 rounded-xl border border-slate-200/70 bg-white/50 p-3 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/50">
               <div className="mb-2 flex items-center gap-2">
                 <Send size={13} className="text-crimson-500" />
                 <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">
@@ -10426,543 +10505,621 @@ Return ONLY the answer text (no markdown fences).`;
               </div>
             </div>
           ) : null}
-          <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
-            <table className="w-full table-fixed rounded-xl" style={{ minWidth: tableMinWidth }}>
-              <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
-                <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
-                  <th
-                    className="px-3 py-2 text-left"
-                    style={{ width: initiativesColumnWidths.select }}
+          <div className="min-h-0 flex-1">
+            <TableWithPreviewLayout<InterviewInitiativeDraft & { title: string }>
+              selectedId={selectedInterviewInitiativeId}
+              selectedItem={(() => {
+                const it = rows.find((r) => r.id === selectedInterviewInitiativeId);
+                return it ? withInitiativeTitle(it) : null;
+              })()}
+              onSelect={setSelectedInterviewInitiativeId}
+              onOpenFull={(id) => {
+                const it = rows.find((r) => r.id === id);
+                if (it && isInitiativePromoted(it.status))
+                  navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
+              }}
+              renderPreview={(item) => renderInitiativePreview(item)}
+              itemIds={rows.map((r) => r.id)}
+              getItemById={(id) => {
+                const it = rows.find((r) => r.id === id);
+                return it ? withInitiativeTitle(it) : null;
+              }}
+            >
+              <div className="pl-4 pr-1.5 pt-3 pb-4">
+                <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
+                  <table
+                    className="w-full table-fixed rounded-xl"
+                    style={{ minWidth: tableMinWidth }}
                   >
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleAllVisibleInitiatives();
-                      }}
-                      className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
-                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                        allVisibleSelected || someVisibleSelected
-                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
-                          : 'opacity-70',
-                      ].join(' ')}
-                      aria-label={
-                        isPolish ? 'Zaznacz widoczne inicjatywy' : 'Select visible initiatives'
-                      }
-                      aria-pressed={allVisibleSelected}
-                    >
-                      {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
-                      {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
-                    </button>
-                  </th>
-                  <th
-                    className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                    style={{ width: initiativesColumnWidths.title }}
-                  >
-                    {isPolish ? 'Inicjatywa' : 'Initiative'}
-                    {renderInitiativeResizer('title')}
-                  </th>
-                  {!hiddenSet.has('status') ? (
-                    <th
-                      className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                      style={{ width: initiativesColumnWidths.status }}
-                    >
-                      <div className="flex items-center justify-start gap-1">
-                        <span
-                          className={
-                            (initiativeTableFilters.status as string[] | undefined)?.length
-                              ? 'text-primary-500'
-                              : ''
-                          }
+                    <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
+                      <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
+                        <th
+                          className="px-3 py-2 text-left"
+                          style={{ width: initiativesColumnWidths.select }}
                         >
-                          {isPolish ? 'Status' : 'Status'}
-                        </span>
-                        <FilterDropdown
-                          column={initiativeStatusCol}
-                          value={initiativeTableFilters.status as string[] | undefined}
-                          onChange={(v) =>
-                            setInitiativeTableFilters((f) => ({ ...f, status: v as string[] }))
-                          }
-                          isOpen={openInitiativeFilterId === 'status'}
-                          onToggle={() =>
-                            setOpenInitiativeFilterId((id) => (id === 'status' ? null : 'status'))
-                          }
-                          onClose={() => setOpenInitiativeFilterId(null)}
-                        />
-                      </div>
-                      {renderInitiativeResizer('status')}
-                    </th>
-                  ) : null}
-                  {!hiddenSet.has('priority') ? (
-                    <th
-                      className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                      style={{ width: initiativesColumnWidths.priority }}
-                    >
-                      <div className="flex items-center justify-start gap-1">
-                        <span
-                          className={
-                            (initiativeTableFilters.priority as string[] | undefined)?.length
-                              ? 'text-primary-500'
-                              : ''
-                          }
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleAllVisibleInitiatives();
+                            }}
+                            className={[
+                              'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                              'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
+                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                              allVisibleSelected || someVisibleSelected
+                                ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                                : 'opacity-70',
+                            ].join(' ')}
+                            aria-label={
+                              isPolish
+                                ? 'Zaznacz widoczne inicjatywy'
+                                : 'Select visible initiatives'
+                            }
+                            aria-pressed={allVisibleSelected}
+                          >
+                            {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
+                            {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
+                          </button>
+                        </th>
+                        <th
+                          className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                          style={{ width: initiativesColumnWidths.title }}
                         >
-                          {isPolish ? 'Priorytet' : 'Priority'}
-                        </span>
-                        <FilterDropdown
-                          column={initiativePriorityCol}
-                          value={initiativeTableFilters.priority as string[] | undefined}
-                          onChange={(v) =>
-                            setInitiativeTableFilters((f) => ({ ...f, priority: v as string[] }))
-                          }
-                          isOpen={openInitiativeFilterId === 'priority'}
-                          onToggle={() =>
-                            setOpenInitiativeFilterId((id) =>
-                              id === 'priority' ? null : 'priority'
-                            )
-                          }
-                          onClose={() => setOpenInitiativeFilterId(null)}
-                        />
-                      </div>
-                      {renderInitiativeResizer('priority')}
-                    </th>
-                  ) : null}
-                  {!hiddenSet.has('source') ? (
-                    <th
-                      className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                      style={{ width: initiativesColumnWidths.source }}
-                    >
-                      <div className="flex items-center justify-start gap-1">
-                        <span
-                          className={
-                            (initiativeTableFilters.source as string[] | undefined)?.length
-                              ? 'text-primary-500'
-                              : ''
-                          }
-                        >
-                          {isPolish ? 'Źródło' : 'Source'}
-                        </span>
-                        <FilterDropdown
-                          column={initiativeSourceCol}
-                          value={initiativeTableFilters.source as string[] | undefined}
-                          onChange={(v) =>
-                            setInitiativeTableFilters((f) => ({ ...f, source: v as string[] }))
-                          }
-                          isOpen={openInitiativeFilterId === 'source'}
-                          onToggle={() =>
-                            setOpenInitiativeFilterId((id) => (id === 'source' ? null : 'source'))
-                          }
-                          onClose={() => setOpenInitiativeFilterId(null)}
-                        />
-                      </div>
-                      {renderInitiativeResizer('source')}
-                    </th>
-                  ) : null}
-                  {!hiddenSet.has('date') ? (
-                    <th
-                      className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                      style={{ width: initiativesColumnWidths.date }}
-                    >
-                      {isPolish ? 'Data' : 'Date'}
-                      {renderInitiativeResizer('date')}
-                    </th>
-                  ) : null}
-                  <th
-                    className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                    style={{ width: initiativesColumnWidths.actions }}
-                  >
-                    <div ref={initiativesViewSettingsRef} className="flex items-center justify-end">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          const r = event.currentTarget.getBoundingClientRect();
-                          const PANEL_W = 288;
-                          const left = Math.min(
-                            Math.max(8, Math.round(r.right - PANEL_W)),
-                            Math.round(window.innerWidth - PANEL_W - 8)
-                          );
-                          setInitiativesViewSettingsPos({
-                            top: Math.round(r.bottom + 8),
-                            left,
-                            maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
-                          });
-                          setIsInitiativesViewSettingsOpen((open) => !open);
-                        }}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
-                        aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                        aria-expanded={isInitiativesViewSettingsOpen}
-                        title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                      >
-                        <Settings2 size={15} />
-                      </button>
-                      {isInitiativesViewSettingsOpen && initiativesViewSettingsPos
-                        ? createPortal(
-                            <div
-                              ref={initiativesViewSettingsPanelRef}
-                              style={{
-                                position: 'fixed',
-                                top: initiativesViewSettingsPos.top,
-                                left: initiativesViewSettingsPos.left,
-                                maxHeight: initiativesViewSettingsPos.maxH,
-                              }}
-                              className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                              role="menu"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <div className="px-2 pb-2 pt-1">
-                                <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                                  {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                                </div>
-                                <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                                  {isPolish
-                                    ? 'Wybierz widoczne kolumny.'
-                                    : 'Choose visible columns.'}
-                                </div>
-                              </div>
-                              <div className="space-y-0.5">
-                                {[
-                                  { id: 'title', label: isPolish ? 'Inicjatywa' : 'Initiative' },
-                                  { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                                  { id: 'priority', label: isPolish ? 'Priorytet' : 'Priority' },
-                                  { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
-                                  { id: 'date', label: isPolish ? 'Data' : 'Date' },
-                                  { id: 'actions', label: isPolish ? 'Akcje' : 'Actions' },
-                                ].map((column) => {
-                                  const alwaysVisible =
-                                    column.id === 'title' || column.id === 'actions';
-                                  const checked = alwaysVisible ? true : !hiddenSet.has(column.id);
-                                  return (
-                                    <label
-                                      key={column.id}
-                                      className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                                        alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                                      }`}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        disabled={alwaysVisible}
-                                        onChange={() => {
-                                          if (alwaysVisible) return;
-                                          setInitiativesHiddenColumns((prev) => {
-                                            const set = new Set(prev);
-                                            if (set.has(column.id)) set.delete(column.id);
-                                            else set.add(column.id);
-                                            const next = Array.from(set);
-                                            saveHiddenColumns(
-                                              INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY,
-                                              next
-                                            );
-                                            return next;
-                                          });
-                                        }}
-                                        className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                      />
-                                      <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                        {column.label}
-                                      </span>
-                                      {alwaysVisible ? (
-                                        <span className="text-[10px] font-medium text-slate-600">
-                                          {isPolish ? 'Wymagane' : 'Required'}
-                                        </span>
-                                      ) : null}
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                              <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                                  <input
-                                    type="checkbox"
-                                    checked={showInitiativeRowDescription}
-                                    onChange={(event) => {
-                                      setShowInitiativeRowDescription(event.target.checked);
-                                      saveBooleanSetting(
-                                        INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY,
-                                        event.target.checked
-                                      );
-                                    }}
-                                    className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                  />
-                                  <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                    {isPolish
-                                      ? 'Pokaż opis / uzasadnienie'
-                                      : 'Show row description'}
-                                  </span>
-                                </label>
-                              </div>
-                            </div>,
-                            document.body
-                          )
-                        : null}
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((initiative) => {
-                  const title =
-                    initiative.title || initiative.name || (isPolish ? 'Inicjatywa' : 'Initiative');
-                  const meta = statusMeta(initiative.status);
-                  const sourceInsight = initiative.sourceId
-                    ? insights.find((insight) => insight.id === initiative.sourceId)
-                    : null;
-                  const sourceStyle = getTypeStyle('source');
-                  const isSelected = selectedInterviewInitiativeId === initiative.id;
-                  const isInitiativeSelected = selectedInitiativeIds.has(initiative.id);
-                  const status = String(initiative.status || 'DRAFT').toUpperCase();
-                  const cleanedDescription = (initiative.description || '')
-                    .replace(/^#\s.+$/m, '')
-                    .trim();
-
-                  return (
-                    <tr
-                      key={initiative.id}
-                      className={`group cursor-pointer border-b border-slate-200/70 transition-colors last:border-0 dark:border-white/[0.06] ${
-                        isSelected || isInitiativeSelected
-                          ? `${INTERVIEW_TABLE_SELECTED_ROW_CLASS} shadow-[inset_4px_0_0_theme(colors.primary.500)]`
-                          : `${INTERVIEW_TABLE_HOVER_ROW_CLASS} ${meta.accentClass}`
-                      }`}
-                      onClick={() => {
-                        setSelectedInterviewInitiativeId(initiative.id);
-                        navigate(`/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`);
-                      }}
-                      title={isPolish ? 'Otwórz inicjatywę' : 'Open initiative'}
-                    >
-                      <td className="px-3 py-3" style={{ width: initiativesColumnWidths.select }}>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            toggleInitiativeSelection(initiative.id);
-                          }}
-                          className={[
-                            'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
-                            'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                            'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                            'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                            'group-focus-within:opacity-100 group-focus-within:border-primary-400',
-                            isInitiativeSelected
-                              ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
-                              : 'opacity-0',
-                          ].join(' ')}
-                          aria-label={isPolish ? 'Zaznacz inicjatywę' : 'Select initiative'}
-                          aria-pressed={isInitiativeSelected}
-                        >
-                          {isInitiativeSelected ? <Check size={10} strokeWidth={3} /> : null}
-                        </button>
-                      </td>
-                      <td
-                        className="px-3 py-3 align-middle"
-                        style={{ width: initiativesColumnWidths.title }}
-                      >
-                        <div className="flex min-w-0 items-center">
-                          <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
-                            {title}
-                          </div>
-                        </div>
-                        {showInitiativeRowDescription && cleanedDescription ? (
-                          <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
-                            {cleanedDescription}
-                          </div>
+                          {isPolish ? 'Inicjatywa' : 'Initiative'}
+                          {renderInitiativeResizer('title')}
+                        </th>
+                        {!hiddenSet.has('status') ? (
+                          <th
+                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            style={{ width: initiativesColumnWidths.status }}
+                          >
+                            <div className="flex items-center justify-start gap-1">
+                              <span
+                                className={
+                                  (initiativeTableFilters.status as string[] | undefined)?.length
+                                    ? 'text-primary-500'
+                                    : ''
+                                }
+                              >
+                                {isPolish ? 'Status' : 'Status'}
+                              </span>
+                              <FilterDropdown
+                                column={initiativeStatusCol}
+                                value={initiativeTableFilters.status as string[] | undefined}
+                                onChange={(v) =>
+                                  setInitiativeTableFilters((f) => ({
+                                    ...f,
+                                    status: v as string[],
+                                  }))
+                                }
+                                isOpen={openInitiativeFilterId === 'status'}
+                                onToggle={() =>
+                                  setOpenInitiativeFilterId((id) =>
+                                    id === 'status' ? null : 'status'
+                                  )
+                                }
+                                onClose={() => setOpenInitiativeFilterId(null)}
+                              />
+                            </div>
+                            {renderInitiativeResizer('status')}
+                          </th>
                         ) : null}
-                      </td>
-                      {!hiddenSet.has('status') ? (
-                        <td
-                          className="px-3 py-3 text-left align-middle"
-                          style={{ width: initiativesColumnWidths.status }}
+                        {!hiddenSet.has('priority') ? (
+                          <th
+                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            style={{ width: initiativesColumnWidths.priority }}
+                          >
+                            <div className="flex items-center justify-start gap-1">
+                              <span
+                                className={
+                                  (initiativeTableFilters.priority as string[] | undefined)?.length
+                                    ? 'text-primary-500'
+                                    : ''
+                                }
+                              >
+                                {isPolish ? 'Priorytet' : 'Priority'}
+                              </span>
+                              <FilterDropdown
+                                column={initiativePriorityCol}
+                                value={initiativeTableFilters.priority as string[] | undefined}
+                                onChange={(v) =>
+                                  setInitiativeTableFilters((f) => ({
+                                    ...f,
+                                    priority: v as string[],
+                                  }))
+                                }
+                                isOpen={openInitiativeFilterId === 'priority'}
+                                onToggle={() =>
+                                  setOpenInitiativeFilterId((id) =>
+                                    id === 'priority' ? null : 'priority'
+                                  )
+                                }
+                                onClose={() => setOpenInitiativeFilterId(null)}
+                              />
+                            </div>
+                            {renderInitiativeResizer('priority')}
+                          </th>
+                        ) : null}
+                        {!hiddenSet.has('source') ? (
+                          <th
+                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            style={{ width: initiativesColumnWidths.source }}
+                          >
+                            <div className="flex items-center justify-start gap-1">
+                              <span
+                                className={
+                                  (initiativeTableFilters.source as string[] | undefined)?.length
+                                    ? 'text-primary-500'
+                                    : ''
+                                }
+                              >
+                                {isPolish ? 'Źródło' : 'Source'}
+                              </span>
+                              <FilterDropdown
+                                column={initiativeSourceCol}
+                                value={initiativeTableFilters.source as string[] | undefined}
+                                onChange={(v) =>
+                                  setInitiativeTableFilters((f) => ({
+                                    ...f,
+                                    source: v as string[],
+                                  }))
+                                }
+                                isOpen={openInitiativeFilterId === 'source'}
+                                onToggle={() =>
+                                  setOpenInitiativeFilterId((id) =>
+                                    id === 'source' ? null : 'source'
+                                  )
+                                }
+                                onClose={() => setOpenInitiativeFilterId(null)}
+                              />
+                            </div>
+                            {renderInitiativeResizer('source')}
+                          </th>
+                        ) : null}
+                        {!hiddenSet.has('date') ? (
+                          <th
+                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            style={{ width: initiativesColumnWidths.date }}
+                          >
+                            {isPolish ? 'Data' : 'Date'}
+                            {renderInitiativeResizer('date')}
+                          </th>
+                        ) : null}
+                        <th
+                          className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                          style={{ width: initiativesColumnWidths.actions }}
                         >
-                          <EntityStatusChip status={status} label={meta.label} />
-                        </td>
-                      ) : null}
-                      {!hiddenSet.has('priority') ? (
-                        <td
-                          className="px-3 py-3 text-left align-middle"
-                          style={{ width: initiativesColumnWidths.priority }}
-                        >
-                          {initiative.priority ? (
-                            <PriorityChip
-                              level={priorityLevel(initiative.priority)}
-                              label={String(initiative.priority).toLowerCase()}
-                            />
-                          ) : (
-                            <span className="text-[11px] text-slate-600">—</span>
-                          )}
-                        </td>
-                      ) : null}
-                      {!hiddenSet.has('source') ? (
-                        <td
-                          className="px-3 py-3 text-left align-middle"
-                          style={{ width: initiativesColumnWidths.source }}
-                        >
-                          {sourceInsight ? (
+                          <div
+                            ref={initiativesViewSettingsRef}
+                            className="flex items-center justify-end"
+                          >
                             <button
                               type="button"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                handleViewInsight(sourceInsight);
+                                const r = event.currentTarget.getBoundingClientRect();
+                                const PANEL_W = 288;
+                                const left = Math.min(
+                                  Math.max(8, Math.round(r.right - PANEL_W)),
+                                  Math.round(window.innerWidth - PANEL_W - 8)
+                                );
+                                setInitiativesViewSettingsPos({
+                                  top: Math.round(r.bottom + 8),
+                                  left,
+                                  maxH: Math.max(
+                                    180,
+                                    Math.round(window.innerHeight - r.bottom - 24)
+                                  ),
+                                });
+                                setIsInitiativesViewSettingsOpen((open) => !open);
                               }}
-                              className={`inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-medium leading-none transition-colors ${sourceStyle.bg} ${sourceStyle.text}`}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                              aria-label={
+                                isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
+                              }
+                              aria-expanded={isInitiativesViewSettingsOpen}
+                              title={isPolish ? 'Ustawienia widoku' : 'View settings'}
                             >
-                              <Lightbulb size={12} />
-                              {isPolish ? 'Insight' : 'Insight'}
+                              <Settings2 size={15} />
                             </button>
-                          ) : (
-                            <span className="text-[11px] text-slate-600">—</span>
-                          )}
-                        </td>
-                      ) : null}
-                      {!hiddenSet.has('date') ? (
-                        <td
-                          className="px-3 py-3 text-left align-middle text-[11px] font-medium text-slate-500 dark:text-slate-500"
-                          style={{ width: initiativesColumnWidths.date }}
-                        >
-                          {initiative.updatedAt || initiative.createdAt
-                            ? new Date(
-                                initiative.updatedAt || initiative.createdAt || ''
-                              ).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
-                            : '—'}
-                        </td>
-                      ) : null}
-                      <td
-                        className="px-3 py-3 text-right align-middle"
-                        style={{ width: initiativesColumnWidths.actions }}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <RowActionsMenu
-                          iconVariant="vertical"
-                          className="opacity-40 transition-opacity group-hover:opacity-100"
-                          sections={[
-                            // GÓRA — kontekstowe (przejścia statusu wg etapu)
-                            {
-                              id: 'context',
-                              kind: 'context' as const,
-                              actions: [
-                                ...(status === 'DRAFT'
-                                  ? [
-                                      {
-                                        id: 'send-to-review',
-                                        label: isPolish ? 'Wyślij do przeglądu' : 'Send to review',
-                                        icon: ArrowRight,
-                                        onClick: () =>
-                                          void handleUpdateInterviewInitiativeStatus(
-                                            initiative.id,
-                                            'PENDING_REVIEW'
-                                          ),
-                                      },
-                                    ]
-                                  : []),
-                                ...(status === 'PENDING_REVIEW'
-                                  ? [
-                                      ...(canReviewInsights
+                            {isInitiativesViewSettingsOpen && initiativesViewSettingsPos
+                              ? createPortal(
+                                  <div
+                                    ref={initiativesViewSettingsPanelRef}
+                                    style={{
+                                      position: 'fixed',
+                                      top: initiativesViewSettingsPos.top,
+                                      left: initiativesViewSettingsPos.left,
+                                      maxHeight: initiativesViewSettingsPos.maxH,
+                                    }}
+                                    className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                                    role="menu"
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    <div className="px-2 pb-2 pt-1">
+                                      <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                                        {isPolish ? 'Ustawienia widoku' : 'View settings'}
+                                      </div>
+                                      <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                        {isPolish
+                                          ? 'Wybierz widoczne kolumny.'
+                                          : 'Choose visible columns.'}
+                                      </div>
+                                    </div>
+                                    <div className="space-y-0.5">
+                                      {[
+                                        {
+                                          id: 'title',
+                                          label: isPolish ? 'Inicjatywa' : 'Initiative',
+                                        },
+                                        { id: 'status', label: isPolish ? 'Status' : 'Status' },
+                                        {
+                                          id: 'priority',
+                                          label: isPolish ? 'Priorytet' : 'Priority',
+                                        },
+                                        { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
+                                        { id: 'date', label: isPolish ? 'Data' : 'Date' },
+                                        { id: 'actions', label: isPolish ? 'Akcje' : 'Actions' },
+                                      ].map((column) => {
+                                        const alwaysVisible =
+                                          column.id === 'title' || column.id === 'actions';
+                                        const checked = alwaysVisible
+                                          ? true
+                                          : !hiddenSet.has(column.id);
+                                        return (
+                                          <label
+                                            key={column.id}
+                                            className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
+                                              alwaysVisible ? 'opacity-55' : 'cursor-pointer'
+                                            }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={checked}
+                                              disabled={alwaysVisible}
+                                              onChange={() => {
+                                                if (alwaysVisible) return;
+                                                setInitiativesHiddenColumns((prev) => {
+                                                  const set = new Set(prev);
+                                                  if (set.has(column.id)) set.delete(column.id);
+                                                  else set.add(column.id);
+                                                  const next = Array.from(set);
+                                                  saveHiddenColumns(
+                                                    INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY,
+                                                    next
+                                                  );
+                                                  return next;
+                                                });
+                                              }}
+                                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                            />
+                                            <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                              {column.label}
+                                            </span>
+                                            {alwaysVisible ? (
+                                              <span className="text-[10px] font-medium text-slate-600">
+                                                {isPolish ? 'Wymagane' : 'Required'}
+                                              </span>
+                                            ) : null}
+                                          </label>
+                                        );
+                                      })}
+                                    </div>
+                                    <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
+                                      <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
+                                        <input
+                                          type="checkbox"
+                                          checked={showInitiativeRowDescription}
+                                          onChange={(event) => {
+                                            setShowInitiativeRowDescription(event.target.checked);
+                                            saveBooleanSetting(
+                                              INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY,
+                                              event.target.checked
+                                            );
+                                          }}
+                                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                        />
+                                        <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                          {isPolish
+                                            ? 'Pokaż opis / uzasadnienie'
+                                            : 'Show row description'}
+                                        </span>
+                                      </label>
+                                    </div>
+                                  </div>,
+                                  document.body
+                                )
+                              : null}
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((initiative) => {
+                        const title =
+                          initiative.title ||
+                          initiative.name ||
+                          (isPolish ? 'Inicjatywa' : 'Initiative');
+                        const meta = statusMeta(initiative.status);
+                        const sourceInsight = initiative.sourceId
+                          ? insights.find((insight) => insight.id === initiative.sourceId)
+                          : null;
+                        const sourceStyle = getTypeStyle('source');
+                        const isSelected = selectedInterviewInitiativeId === initiative.id;
+                        const isInitiativeSelected = selectedInitiativeIds.has(initiative.id);
+                        const status = String(initiative.status || 'DRAFT').toUpperCase();
+                        const cleanedDescription = (initiative.description || '')
+                          .replace(/^#\s.+$/m, '')
+                          .trim();
+
+                        return (
+                          <tr
+                            key={initiative.id}
+                            className={`group cursor-pointer border-b border-slate-200/70 transition-colors last:border-0 dark:border-white/[0.06] ${
+                              isSelected || isInitiativeSelected
+                                ? `${INTERVIEW_TABLE_SELECTED_ROW_CLASS} shadow-[inset_4px_0_0_theme(colors.primary.500)]`
+                                : `${INTERVIEW_TABLE_HOVER_ROW_CLASS} ${meta.accentClass}`
+                            }`}
+                            onClick={() => setSelectedInterviewInitiativeId(initiative.id)}
+                            onDoubleClick={() => {
+                              if (isInitiativePromoted(initiative.status))
+                                navigate(
+                                  `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                );
+                            }}
+                            title={isPolish ? 'Otwórz podgląd' : 'Open preview'}
+                          >
+                            <td
+                              className="px-3 py-3"
+                              style={{ width: initiativesColumnWidths.select }}
+                            >
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  toggleInitiativeSelection(initiative.id);
+                                }}
+                                className={[
+                                  'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                                  'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
+                                  'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
+                                  'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                                  'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                                  isInitiativeSelected
+                                    ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                                    : 'opacity-0',
+                                ].join(' ')}
+                                aria-label={isPolish ? 'Zaznacz inicjatywę' : 'Select initiative'}
+                                aria-pressed={isInitiativeSelected}
+                              >
+                                {isInitiativeSelected ? <Check size={10} strokeWidth={3} /> : null}
+                              </button>
+                            </td>
+                            <td
+                              className="px-3 py-3 align-middle"
+                              style={{ width: initiativesColumnWidths.title }}
+                            >
+                              <div className="flex min-w-0 items-center">
+                                <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
+                                  {title}
+                                </div>
+                              </div>
+                              {showInitiativeRowDescription && cleanedDescription ? (
+                                <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+                                  {cleanedDescription}
+                                </div>
+                              ) : null}
+                            </td>
+                            {!hiddenSet.has('status') ? (
+                              <td
+                                className="px-3 py-3 text-left align-middle"
+                                style={{ width: initiativesColumnWidths.status }}
+                              >
+                                <EntityStatusChip status={status} label={meta.label} />
+                              </td>
+                            ) : null}
+                            {!hiddenSet.has('priority') ? (
+                              <td
+                                className="px-3 py-3 text-left align-middle"
+                                style={{ width: initiativesColumnWidths.priority }}
+                              >
+                                {initiative.priority ? (
+                                  <PriorityChip
+                                    level={priorityLevel(initiative.priority)}
+                                    label={String(initiative.priority).toLowerCase()}
+                                  />
+                                ) : (
+                                  <span className="text-[11px] text-slate-600">—</span>
+                                )}
+                              </td>
+                            ) : null}
+                            {!hiddenSet.has('source') ? (
+                              <td
+                                className="px-3 py-3 text-left align-middle"
+                                style={{ width: initiativesColumnWidths.source }}
+                              >
+                                {sourceInsight ? (
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleViewInsight(sourceInsight);
+                                    }}
+                                    className={`inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-medium leading-none transition-colors ${sourceStyle.bg} ${sourceStyle.text}`}
+                                  >
+                                    <Lightbulb size={12} />
+                                    {isPolish ? 'Insight' : 'Insight'}
+                                  </button>
+                                ) : (
+                                  <span className="text-[11px] text-slate-600">—</span>
+                                )}
+                              </td>
+                            ) : null}
+                            {!hiddenSet.has('date') ? (
+                              <td
+                                className="px-3 py-3 text-left align-middle text-[11px] font-medium text-slate-500 dark:text-slate-500"
+                                style={{ width: initiativesColumnWidths.date }}
+                              >
+                                {initiative.updatedAt || initiative.createdAt
+                                  ? new Date(
+                                      initiative.updatedAt || initiative.createdAt || ''
+                                    ).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
+                                  : '—'}
+                              </td>
+                            ) : null}
+                            <td
+                              className="px-3 py-3 text-right align-middle"
+                              style={{ width: initiativesColumnWidths.actions }}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <RowActionsMenu
+                                iconVariant="vertical"
+                                className="opacity-40 transition-opacity group-hover:opacity-100"
+                                sections={[
+                                  // GÓRA — kontekstowe (przejścia statusu wg etapu)
+                                  {
+                                    id: 'context',
+                                    kind: 'context' as const,
+                                    actions: [
+                                      ...(status === 'DRAFT'
                                         ? [
                                             {
-                                              id: 'approve-to-initiatives',
+                                              id: 'send-to-review',
                                               label: isPolish
-                                                ? 'Zatwierdź i przekaż dalej'
-                                                : 'Approve and move forward',
-                                              icon: Rocket,
+                                                ? 'Wyślij do przeglądu'
+                                                : 'Send to review',
+                                              icon: ArrowRight,
                                               onClick: () =>
                                                 void handleUpdateInterviewInitiativeStatus(
                                                   initiative.id,
-                                                  'REVIEW',
-                                                  { openInInitiatives: true }
+                                                  'PENDING_REVIEW'
                                                 ),
                                             },
                                           ]
                                         : []),
-                                      {
-                                        id: 'back-to-draft',
-                                        label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
-                                        icon: RotateCcw,
-                                        onClick: () =>
-                                          void handleUpdateInterviewInitiativeStatus(
-                                            initiative.id,
-                                            'DRAFT'
-                                          ),
-                                      },
-                                    ]
-                                  : []),
-                              ],
-                            },
-                            // DÓŁ — stały: Open. (Inicjatywy nie mają tu Edytuj/Archiwizuj/Delay
-                            // ani Usuń — brak endpointu; lifecycle = backlog B-1.)
-                            {
-                              id: 'fixed',
-                              kind: 'manage' as const,
-                              actions: [
-                                {
-                                  id: 'open',
-                                  label: isPolish ? 'Otwórz kartę' : 'Open record',
-                                  icon: ChevronRight,
-                                  onClick: () =>
-                                    navigate(
-                                      `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                                    ),
-                                },
-                              ],
-                            },
-                          ]}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-                {rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
-                      <div className="mx-auto flex max-w-md flex-col items-center">
-                        <Rocket className="mb-3 h-10 w-10 text-slate-500" />
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                          {interviewInitiatives.length === 0
-                            ? isPolish
-                              ? 'Brak inicjatyw stworzonych z wywiadu'
-                              : 'No initiatives created from interview yet'
-                            : isPolish
-                              ? 'Brak inicjatyw dla tego filtra'
-                              : 'No initiatives here'}
-                        </p>
-                        {interviewInitiatives.length === 0 ? (
-                          <>
-                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                              {isPolish
-                                ? 'Brak inicjatyw — przekaż wnioski z zakładki Wnioski lub uruchom kreator inicjatyw.'
-                                : 'No initiatives yet — promote insights from the Insights tab or run the initiative wizard.'}
-                            </p>
-                            <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveTab('insights');
-                                  setActiveDocumentId(null);
-                                }}
-                                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-crimson-600 px-3 text-[11px] font-semibold text-white transition hover:bg-crimson-700"
-                              >
-                                <Lightbulb size={14} />
-                                {isPolish ? 'Przejdź do Wniosków' : 'Go to Insights'}
-                              </button>
-                              {canCreateInsights ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setShowInitiativeWizard(true)}
-                                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
-                                >
-                                  <Sparkles size={14} />
-                                  {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
-                                </button>
+                                      ...(status === 'PENDING_REVIEW'
+                                        ? [
+                                            ...(canReviewInsights
+                                              ? [
+                                                  {
+                                                    id: 'approve-to-initiatives',
+                                                    label: isPolish
+                                                      ? 'Zatwierdź i przekaż dalej'
+                                                      : 'Approve and move forward',
+                                                    icon: Rocket,
+                                                    onClick: () =>
+                                                      void handleUpdateInterviewInitiativeStatus(
+                                                        initiative.id,
+                                                        'REVIEW',
+                                                        { openInInitiatives: true }
+                                                      ),
+                                                  },
+                                                ]
+                                              : []),
+                                            {
+                                              id: 'back-to-draft',
+                                              label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
+                                              icon: RotateCcw,
+                                              onClick: () =>
+                                                void handleUpdateInterviewInitiativeStatus(
+                                                  initiative.id,
+                                                  'DRAFT'
+                                                ),
+                                            },
+                                          ]
+                                        : []),
+                                    ],
+                                  },
+                                  // DÓŁ — stały: Open. (Inicjatywy nie mają tu Edytuj/Archiwizuj/Delay
+                                  // ani Usuń — brak endpointu; lifecycle = backlog B-1.)
+                                  {
+                                    id: 'fixed',
+                                    kind: 'manage' as const,
+                                    actions: [
+                                      isInitiativePromoted(initiative.status)
+                                        ? {
+                                            id: 'open-module',
+                                            label: isPolish
+                                              ? 'Otwórz w module Initiatives'
+                                              : 'Open in Initiatives',
+                                            icon: ExternalLink,
+                                            onClick: () =>
+                                              navigate(
+                                                `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                              ),
+                                          }
+                                        : {
+                                            id: 'open-preview',
+                                            label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                                            icon: ChevronRight,
+                                            onClick: () =>
+                                              setSelectedInterviewInitiativeId(initiative.id),
+                                          },
+                                    ],
+                                  },
+                                ]}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {rows.length === 0 ? (
+                        <tr>
+                          <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
+                            <div className="mx-auto flex max-w-md flex-col items-center">
+                              <Rocket className="mb-3 h-10 w-10 text-slate-500" />
+                              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                {interviewInitiatives.length === 0
+                                  ? isPolish
+                                    ? 'Brak inicjatyw stworzonych z wywiadu'
+                                    : 'No initiatives created from interview yet'
+                                  : isPolish
+                                    ? 'Brak inicjatyw dla tego filtra'
+                                    : 'No initiatives here'}
+                              </p>
+                              {interviewInitiatives.length === 0 ? (
+                                <>
+                                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                    {isPolish
+                                      ? 'Brak inicjatyw — przekaż wnioski z zakładki Wnioski lub uruchom kreator inicjatyw.'
+                                      : 'No initiatives yet — promote insights from the Insights tab or run the initiative wizard.'}
+                                  </p>
+                                  <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveTab('insights');
+                                        setActiveDocumentId(null);
+                                      }}
+                                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-crimson-600 px-3 text-[11px] font-semibold text-white transition hover:bg-crimson-700"
+                                    >
+                                      <Lightbulb size={14} />
+                                      {isPolish ? 'Przejdź do Wniosków' : 'Go to Insights'}
+                                    </button>
+                                    {canCreateInsights ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setShowInitiativeWizard(true)}
+                                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                                      >
+                                        <Sparkles size={14} />
+                                        {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                                      </button>
+                                    ) : null}
+                                  </div>
+                                </>
                               ) : null}
                             </div>
-                          </>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </TableWithPreviewLayout>
           </div>
         </div>
       );
