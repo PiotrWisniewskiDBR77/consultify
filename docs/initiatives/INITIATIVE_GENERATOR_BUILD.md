@@ -85,3 +85,9 @@ lineage i podgląd bramki. Zero błędów w konsoli; screenshot każdego kroku.
   evidence drawer, coverage strip (luki + nakładania), „0 nowych ≠ porażka". Zweryfikowane
   wizualnie (hash/localStorage temp-mount, cofnięty); tsc+eslint czyste. Kryteria akceptacji Fazy 3 ✓.
   Następne: Faza 4 (suggested-changes) / Faza 0 (wpięcie) — czekają na styk z przebudową agenta.
+- 2026-06-07: **Faza 2/3 złożone w całość** — `src/components/Initiatives/Wizard/InitiativeGeneratorModal.tsx`
+  (nowy, samodzielny) spina rdzeń + Tablicę + Charter w jeden przepływ „Zaproponuj": fetch siatki
+  (`/initiatives`) → reconcile → board → akcept New → Charter z prefillem + lineage; akcept Change →
+  toast (placeholder Faza 4). Zweryfikowane live end-to-end (board→charter, lineage przeniesiony);
+  tsc+eslint czyste. Gotowe do wpięcia jedną linią (Faza 0) po wylądowaniu przebudowy agenta.
+  Decyzja CTO: cudzy WIP (1513 l. niezacommitowanych) NIETKNIĘTY — praca tylko w nowych plikach.
