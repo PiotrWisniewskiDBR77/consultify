@@ -1,6 +1,7 @@
 import {
   Bell,
   BellOff,
+  ChevronRight,
   Copy,
   ExternalLink,
   Link2,
@@ -25,6 +26,7 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
+import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips';
 import { useOrganizationContext } from '@/hooks/discovery/useOrganizationContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -68,15 +70,17 @@ const formatDefinitionSource = (
     ? t?.('results.kpi.source.linked', 'Linked KPI') || 'Linked KPI'
     : t?.('results.kpi.source.manual', 'Manual KPI') || 'Manual KPI';
 
-const StatusPill: React.FC<{ status: KPIStatus; label: string }> = ({ status, label }) => {
-  const s = STATUS_STYLES[status] || STATUS_STYLES['no-data'];
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full ${s.bg}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      <span className={`text-xs font-medium ${s.text}`}>{label}</span>
-    </span>
-  );
+// Canon §4.1/§4.0: KPI domain status → semantic chip tone.
+// `below` is an at-risk signal → warning (red/danger is reserved for true alarm).
+const KPI_STATUS_TONE: Record<KPIStatus, StatusTone> = {
+  'on-target': 'success',
+  below: 'warning',
+  'no-data': 'neutral',
 };
+
+const StatusPill: React.FC<{ status: KPIStatus; label: string }> = ({ status, label }) => (
+  <StatusChip tone={KPI_STATUS_TONE[status] ?? 'neutral'} label={label} size="sm" />
+);
 
 const DeviationPill: React.FC<{ severity: 'AMBER' | 'RED'; label: string }> = ({
   severity,
@@ -723,6 +727,12 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         onRowClick={(row) => setSelectedId(row.id)}
         onRowDoubleClick={(row) => onOpenKpi(row.id, 'summary')}
         getRowActions={(row) => [
+          {
+            id: 'preview',
+            label: t('common.preview', 'Open preview'),
+            icon: ChevronRight,
+            onClick: () => setSelectedId(row.id),
+          },
           {
             id: 'open',
             label: t('common.open', 'Open'),

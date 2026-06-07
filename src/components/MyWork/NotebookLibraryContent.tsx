@@ -8,12 +8,21 @@
  * See docs/product/NOTEBOOK_STRUCTURE_SSOT.md.
  */
 
-import { BookOpen, Globe, Lock, Pencil, Trash2, Users } from 'lucide-react';
+import {
+  Archive,
+  BookOpen,
+  ChevronRight,
+  Globe,
+  Lock,
+  Pencil,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import {
   type ColumnDef,
   type ColumnWidths,
@@ -231,33 +240,70 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
     [pl]
   );
 
+  // canon §9.2 — Fixed Bottom Manifest. Notebooks have no `due_date`, so the
+  // Delay slot (pos. 4) is N/A and omitted. Archive has no backend endpoint yet
+  // → disabled slot (never silently dropped). Delete is the hard/danger verb.
   const rowActions = useCallback(
-    (nb: Notebook): RowAction[] => {
+    (nb: Notebook): RowActionSection[] => {
       const isOwner = !!currentUserId && nb.ownerUserId === currentUserId;
-      return [
+      const sections: RowActionSection[] = [
         {
-          id: 'open',
-          label: pl ? 'Otwórz' : 'Open',
-          icon: BookOpen,
-          onClick: () => onOpenNotebook(nb),
+          id: 'context',
+          kind: 'context',
+          actions: [
+            {
+              id: 'open',
+              label: pl ? 'Otwórz' : 'Open',
+              icon: BookOpen,
+              variant: 'primary',
+              onClick: () => onOpenNotebook(nb),
+            },
+          ],
         },
         {
-          id: 'edit',
-          label: pl ? 'Edytuj' : 'Edit',
-          icon: Pencil,
-          hidden: !isOwner,
-          onClick: () => setModal({ mode: 'edit', notebook: nb }),
-        },
-        {
-          id: 'delete',
-          label: pl ? 'Usuń' : 'Delete',
-          icon: Trash2,
-          variant: 'danger',
-          divider: true,
-          hidden: !isOwner,
-          onClick: () => void handleDelete(nb),
+          id: 'fixed',
+          kind: 'manage',
+          actions: [
+            {
+              id: 'open-preview',
+              label: pl ? 'Otwórz podgląd' : 'Open preview',
+              icon: ChevronRight,
+              onClick: () => onOpenNotebook(nb),
+            },
+            {
+              id: 'edit',
+              label: pl ? 'Edytuj' : 'Edit',
+              icon: Pencil,
+              disabled: !isOwner,
+              onClick: () => setModal({ mode: 'edit', notebook: nb }),
+            },
+            {
+              id: 'archive',
+              label: pl ? 'Archiwizuj' : 'Archive',
+              icon: Archive,
+              disabled: true,
+              description: pl ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+              onClick: () => {},
+            },
+          ],
         },
       ];
+      if (isOwner) {
+        sections.push({
+          id: 'danger',
+          kind: 'danger',
+          actions: [
+            {
+              id: 'delete',
+              label: pl ? 'Usuń' : 'Delete',
+              icon: Trash2,
+              variant: 'danger',
+              onClick: () => void handleDelete(nb),
+            },
+          ],
+        });
+      }
+      return sections;
     },
     [currentUserId, pl, onOpenNotebook, handleDelete]
   );
@@ -361,7 +407,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                   className="px-2 py-2.5 text-right"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <RowActionsMenu actions={rowActions(nb)} />
+                  <RowActionsMenu sections={rowActions(nb)} />
                 </td>
               </tr>
             ))}

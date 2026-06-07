@@ -1776,13 +1776,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           { value: 'inactive', label: isPolish ? 'Nieaktywny' : 'Inactive' },
         ],
         render: (row) => (
-          <span
-            className={`inline-flex items-center h-6 px-2 rounded-full text-[11px] font-medium border ${
-              row.isActive
-                ? 'border-emerald-200/70 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300'
-                : 'border-rose-200/70 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300'
-            }`}
-          >
+          // canon §3.5/§4.0: status carried by signal dot only; chip shell stays neutral
+          // (no status-colored background fill).
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 bg-white/60 text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-300">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                row.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+              }`}
+            />
             {row.isActive
               ? isPolish
                 ? 'Aktywny'

@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
   AlertTriangle,
+  Archive,
   ArrowRight,
   Bell,
   BellOff,
@@ -15,6 +16,7 @@ import {
   Bot,
   Check,
   CheckSquare,
+  ChevronRight,
   Clock,
   CreditCard,
   Eye,
@@ -23,7 +25,6 @@ import {
   Megaphone,
   MessageSquare,
   Minus,
-  MoreVertical,
   Sparkles,
   Square,
   Target,
@@ -35,6 +36,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  type RowActionSection,
+  RowActionsMenu,
+} from '@/components/shared/RowActionsMenu';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
 import {
@@ -343,7 +348,6 @@ const NotificationTableRow: React.FC<{
   columnWidths,
   isPolish = false,
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
   const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
 
   const isRead = notification.read || notification.isRead;
@@ -572,86 +576,99 @@ const NotificationTableRow: React.FC<{
             <Eye size={14} />
           </button>
 
-          {/* 3-dot menu */}
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowMenu(!showMenu);
-              }}
-              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <MoreVertical size={14} />
-            </button>
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 w-44 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClick(notification);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Eye size={14} />
-                    {isPolish ? 'Zobacz szczegóły' : 'View Details'}
-                  </button>
-                  {onOpenChat && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenChat(notification);
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-primary-700 dark:text-primary-400 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <MessageSquare size={14} />
-                      {isPolish ? 'Otwórz czat' : 'Open Chat'}
-                    </button>
-                  )}
-                  {!isRead && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onMarkRead(notification.id);
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <Check size={14} />
-                      {isPolish ? 'Oznacz jako przeczytane' : 'Mark as Read'}
-                    </button>
-                  )}
-                  {notification.relatedObjectId && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onClick(notification);
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <ArrowRight size={14} />
-                      {isPolish ? 'Idź do źródła' : 'Go to Source'}
-                    </button>
-                  )}
-                  <div className="border-t border-slate-200 dark:border-navy-600" />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(notification.id);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-700 dark:text-rose-400 hover:bg-slate-50 dark:hover:bg-navy-700"
-                  >
-                    <Trash2 size={14} />
-                    {isPolish ? 'Usuń' : 'Delete'}
-                  </button>
-                </div>
-              </>
-            )}
+          {/* 3-dot menu — canonical RowActionsMenu (§9) */}
+          <div onClick={(e) => e.stopPropagation()}>
+            {(() => {
+              const sections: RowActionSection[] = [
+                {
+                  id: 'context',
+                  kind: 'context',
+                  actions: [
+                    {
+                      id: 'view',
+                      label: isPolish ? 'Zobacz szczegóły' : 'View Details',
+                      icon: Eye,
+                      variant: 'primary',
+                      onClick: () => onClick(notification),
+                    },
+                    ...(onOpenChat
+                      ? [
+                          {
+                            id: 'chat',
+                            label: isPolish ? 'Otwórz czat' : 'Open Chat',
+                            icon: MessageSquare,
+                            onClick: () => onOpenChat(notification),
+                          },
+                        ]
+                      : []),
+                    ...(!isRead
+                      ? [
+                          {
+                            id: 'mark-read',
+                            label: isPolish ? 'Oznacz jako przeczytane' : 'Mark as Read',
+                            icon: Check,
+                            onClick: () => onMarkRead(notification.id),
+                          },
+                        ]
+                      : []),
+                    ...(notification.relatedObjectId
+                      ? [
+                          {
+                            id: 'go-source',
+                            label: isPolish ? 'Idź do źródła' : 'Go to Source',
+                            icon: ArrowRight,
+                            onClick: () => onClick(notification),
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+                // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2).
+                // Notifications carry no `due_date`, so the Delay slot (pos. 4) is N/A.
+                {
+                  id: 'fixed',
+                  kind: 'manage',
+                  actions: [
+                    {
+                      id: 'open-preview',
+                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                      icon: ChevronRight,
+                      onClick: () => onClick(notification),
+                    },
+                    {
+                      id: 'edit',
+                      label: isPolish ? 'Edytuj' : 'Edit',
+                      icon: Eye,
+                      disabled: true,
+                      description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                      onClick: () => {},
+                    },
+                    {
+                      id: 'archive',
+                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                      icon: Archive,
+                      disabled: true,
+                      description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                      onClick: () => {},
+                    },
+                  ],
+                },
+                {
+                  id: 'danger',
+                  kind: 'danger',
+                  actions: [
+                    {
+                      id: 'delete',
+                      label: isPolish ? 'Usuń' : 'Delete',
+                      icon: Trash2,
+                      variant: 'danger',
+                      onClick: () => onDelete(notification.id),
+                    },
+                  ],
+                },
+              ];
+              return <RowActionsMenu sections={sections} iconVariant="vertical" />;
+            })()}
           </div>
         </div>
       </td>

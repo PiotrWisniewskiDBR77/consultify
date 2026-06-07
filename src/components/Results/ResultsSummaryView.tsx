@@ -1,6 +1,7 @@
 import {
   BarChart3,
   CheckCircle2,
+  ChevronRight,
   Copy,
   DollarSign,
   ExternalLink,
@@ -711,6 +712,12 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
             getRowActions={(row) => {
               const i = row._raw as SummaryInitiativeItem;
               return [
+                {
+                  id: 'preview',
+                  label: t('common.preview', 'Open preview'),
+                  icon: ChevronRight,
+                  onClick: () => setSelectedId(row.id),
+                },
                 {
                   id: 'open',
                   label: t('common.open', 'Open'),

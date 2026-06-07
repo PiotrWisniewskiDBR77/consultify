@@ -1,7 +1,10 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  Archive,
   Bot,
   CheckCircle2,
+  ChevronRight,
+  Edit2,
   ExternalLink,
   FileText,
   Folder,
@@ -1098,6 +1101,37 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       },
                     ]
                   : []),
+                // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2).
+                // Ideas have no `due_date`, so the Delay slot (pos. 4) is N/A.
+                {
+                  id: 'fixed',
+                  kind: 'manage',
+                  actions: [
+                    {
+                      id: 'open-preview',
+                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                      icon: ChevronRight,
+                      onClick: () => {
+                        setPreviewIdeaId(idea.id);
+                        onFocusIndexChange(index);
+                      },
+                    },
+                    {
+                      id: 'edit',
+                      label: isPolish ? 'Edytuj' : 'Edit',
+                      icon: Edit2,
+                      onClick: () => onOpenIdea(idea),
+                    },
+                    {
+                      id: 'archive',
+                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                      icon: Archive,
+                      disabled: true,
+                      description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                      onClick: () => {},
+                    },
+                  ],
+                },
                 {
                   id: 'output',
                   kind: 'output',

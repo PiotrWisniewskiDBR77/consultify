@@ -1,7 +1,7 @@
 /**
  * Economics View (Enterprise Edition)
  *
- * Legacy wrapper - redirects to new EconomicsHub
+ * Legacy wrapper - renders FinanceHub
  * This ensures consistent UI regardless of which route/component is used
  *
  * Features:

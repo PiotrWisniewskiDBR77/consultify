@@ -23,6 +23,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import {
   AlertTriangle,
+  Archive,
   BarChart3,
   Calendar,
   CalendarDays,
@@ -35,6 +36,7 @@ import {
   LayoutDashboard,
   Loader2,
   MessageSquare,
+  Pencil,
   RefreshCw,
   Rocket,
   Scale,
@@ -52,6 +54,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { LoadingState } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -96,6 +99,7 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import type { RowAction } from '../shared/RowActionsMenu';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -1778,14 +1782,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const canMutateStatus = !isPilotParticipant && actions.length > 0;
           return (
             <div className="relative group">
-              <div
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${meta?.bgColor || ''} ${meta?.color || ''}`}
-              >
-                <div
-                  className={`w-2 h-2 rounded-full flex-shrink-0 ${meta?.dotColor || 'bg-slate-400'}`}
-                />
-                {meta?.label || row.status}
-              </div>
+              <EntityStatusChip
+                status={String(row.status)}
+                label={meta?.label || String(row.status)}
+              />
               {canMutateStatus && (
                 <select
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -2341,6 +2341,51 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     },
     [handleOpenSidePanel, handleOpenDocument]
+  );
+
+  // Canon §9.2 — Fixed Bottom Manifest kebab for initiative rows.
+  // Order: Otwórz podgląd · Edytuj · Archiwizuj · (Delay ▸ only if due date).
+  // Archive has no execution-side endpoint yet → disabled slot ("Wkrótce (backend)"),
+  // never silently omitted.
+  const buildInitiativeRowActions = useCallback(
+    (init: FullInitiative): RowAction[] => {
+      const hasDue = Boolean(init.plannedEndDate || init.slaDeadline);
+      const actions: RowAction[] = [
+        {
+          id: 'open_preview',
+          label: t('common.openPreview', 'Otwórz podgląd'),
+          icon: ChevronRight,
+          onClick: () => setSummaryPreviewInitiativeId(init.id),
+        },
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edytuj'),
+          icon: Pencil,
+          disabled: isPilotParticipant,
+          onClick: () => handleOpenDocument(init),
+        },
+        {
+          id: 'archive',
+          label: t('common.archive', 'Archiwizuj'),
+          icon: Archive,
+          disabled: true,
+          description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+          onClick: () => undefined,
+        },
+      ];
+      if (hasDue) {
+        actions.push({
+          id: 'delay',
+          label: t('common.delay', 'Opóźnij'),
+          icon: Clock,
+          disabled: true,
+          description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+          onClick: () => undefined,
+        });
+      }
+      return actions;
+    },
+    [handleOpenDocument, isPilotParticipant, t]
   );
 
   const portfolioInitiatives = useMemo(
@@ -4020,6 +4065,13 @@ Please return:
         id: 'cadence',
         label: t('execution.reportCatalog.col.cadence', 'Cadence'),
         width: '100px',
+        filterable: true,
+        filterOptions: [
+          { value: 'Weekly', label: t('execution.reportCatalog.cadence.weekly', 'Weekly') },
+          { value: 'Bi-weekly', label: t('execution.reportCatalog.cadence.biweekly', 'Bi-weekly') },
+          { value: 'Monthly', label: t('execution.reportCatalog.cadence.monthly', 'Monthly') },
+          { value: 'On demand', label: t('execution.reportCatalog.cadence.onDemand', 'On demand') },
+        ],
         render: (row: any) => (
           <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {(row as ReportDef).cadence}
@@ -4329,10 +4381,29 @@ Please return:
               columns={reportColumns}
               data={filteredReportCatalog as any[]}
               selectedRowId={selectedReportPreviewId}
+              persistKey="execution-reports"
               onRowClick={(row) => setReportPreviewId(String(row.id))}
               onRowDoubleClick={(row) => {
                 const r = filteredReportCatalog.find((x) => x.id === row.id);
                 if (r) handleOpenReport(r);
+              }}
+              getRowActions={(row) => {
+                const r = filteredReportCatalog.find((x) => x.id === row.id);
+                if (!r) return [];
+                return [
+                  {
+                    id: 'open_preview',
+                    label: t('common.openPreview', 'Otwórz podgląd'),
+                    icon: ChevronRight,
+                    onClick: () => setReportPreviewId(String(r.id)),
+                  },
+                  {
+                    id: 'open_full',
+                    label: t('common.openFull', 'Otwórz pełny widok'),
+                    icon: FileText,
+                    onClick: () => handleOpenReport(r),
+                  },
+                ];
               }}
               activeFilters={reportFilters}
               onFilterChange={setReportFilters}
@@ -4654,21 +4725,15 @@ Please return:
               columns={columns}
               data={summaryInitiatives as any[]}
               selectedRowId={summaryPreviewInitiativeId}
+              persistKey="execution-summary"
               onRowClick={(row) => setSummaryPreviewInitiativeId(String(row.id))}
               onRowDoubleClick={(row) => {
                 const init = summaryInitiatives.find((x) => x.id === row.id);
                 if (init) handleOpenDocument(init);
               }}
-              onRowAction={(action, row) => {
+              getRowActions={(row) => {
                 const init = summaryInitiatives.find((x) => x.id === row.id);
-                if (!init) return;
-                if (action === 'preview') {
-                  setSummaryPreviewInitiativeId(init.id);
-                  return;
-                }
-                if (action === 'edit') {
-                  handleOpenDocument(init);
-                }
+                return init ? buildInitiativeRowActions(init) : [];
               }}
               activeFilters={summaryFilters}
               onFilterChange={setSummaryFilters}

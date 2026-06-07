@@ -67,18 +67,16 @@ const isEmptyCell = (value: unknown): boolean =>
   value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
 
 // Progress bar component
+// Per Table+Preview canon §4.0/§4.3: progress is NEVER red/crimson. Generic
+// progress uses an info/neutral fill while in-progress and transitions to
+// success (HBS green) at 100%. `warning` (amber) is reserved for modules that
+// explicitly compute an at-risk state — this shared component does not.
 const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
   <div className="flex items-center gap-2">
-    <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+    <div className="flex-1 h-1.5 bg-c-border-subtle rounded-full overflow-hidden">
       <div
         className={`h-full rounded-full transition-all ${
-          progress === 100
-            ? 'bg-emerald-500'
-            : progress >= 75
-              ? 'bg-blue-500'
-              : progress >= 50
-                ? 'bg-amber-500'
-                : 'bg-slate-500'
+          progress === 100 ? 'bg-c-success' : 'bg-c-info'
         }`}
         style={{ width: `${progress}%` }}
       />

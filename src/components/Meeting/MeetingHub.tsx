@@ -1,12 +1,16 @@
 import {
+  Archive,
   CalendarDays,
   CheckSquare2,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  ExternalLink,
   FileText,
   Loader2,
+  Pencil,
   Sparkles,
+  Trash2,
   Users,
   X,
 } from 'lucide-react';
@@ -34,6 +38,7 @@ import {
 } from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { ErrorState, LoadingState, StatusChip } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
@@ -276,9 +281,10 @@ export const MeetingHub: React.FC = () => {
             color: 'bg-emerald-400',
           },
         ],
+        // canon §4.1 — EntityStatusChip maps scheduled→info, completed→success via statusChipTone()
         render: (row: MeetingItem) => (
-          <StatusChip
-            tone={row.status === 'completed' ? 'success' : 'info'}
+          <EntityStatusChip
+            status={row.status}
             label={
               row.status === 'completed'
                 ? t('meeting.status.completed', 'Completed')
@@ -684,24 +690,44 @@ export const MeetingHub: React.FC = () => {
                 onRowClick={(row) => setSelectedId(row.id)}
                 onRowDoubleClick={(row) => openMeetingDocument(row as MeetingItem)}
                 getRowActions={(row) => [
+                  // canon §9.2 FIXED BOTTOM MANIFEST position 1 — side preview, not navigation
                   {
-                    id: 'preview',
-                    label: t('common.preview', 'Preview'),
+                    id: 'open_preview',
+                    label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                    icon: ChevronRight,
                     onClick: () => setSelectedId(String(row.id)),
                   },
                   {
                     id: 'open',
                     label: t('common.open', 'Open'),
+                    icon: ExternalLink,
+                    variant: 'primary',
                     onClick: () => openMeetingDocument(row as MeetingItem),
                   },
+                  // canon §9.2 position 2 — Edit (start of fixed "manage" block)
                   {
                     id: 'edit',
                     label: t('common.edit', 'Edit'),
+                    icon: Pencil,
+                    divider: true,
                     onClick: () => openEditModal(row as MeetingItem),
                   },
+                  // canon §9.2 position 3 — Archive slot always present; no backend yet → disabled
+                  {
+                    id: 'archive',
+                    label: isPolish ? 'Archiwizuj' : 'Archive',
+                    icon: Archive,
+                    disabled: true,
+                    description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                    onClick: () => undefined,
+                  },
+                  // canon §9 DANGER zone — hard delete, separated, confirm dialog
                   {
                     id: 'delete',
-                    label: t('common.delete', 'Delete'),
+                    label: isPolish ? 'Usuń' : 'Delete',
+                    icon: Trash2,
+                    divider: true,
+                    variant: 'danger',
                     onClick: () => setDeleteTarget(row as MeetingItem),
                   },
                 ]}
@@ -1289,18 +1315,9 @@ const MeetingPreview: React.FC<{
   operatorBrief?: any;
   operatorBriefLoading?: boolean;
 }> = ({ meeting, isPolish, operatorBrief, operatorBriefLoading }) => {
+  // canon §4.1 — status uses the c.* chip family (statusChipTone via EntityStatusChip),
+  // never a hardcoded status-colored pill. Only the neutral date stays in PreviewMetaCard.
   const pills: MetaPill[] = [
-    {
-      label:
-        meeting.status === 'completed'
-          ? isPolish
-            ? 'Zamknięte'
-            : 'Completed'
-          : isPolish
-            ? 'Zaplanowane'
-            : 'Scheduled',
-      className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    },
     {
       label: formatDateTime(meeting.startAt, isPolish),
       className: 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300',
@@ -1309,6 +1326,20 @@ const MeetingPreview: React.FC<{
 
   return (
     <div className="space-y-4 text-sm">
+      <div className="flex items-center gap-2">
+        <EntityStatusChip
+          status={meeting.status}
+          label={
+            meeting.status === 'completed'
+              ? isPolish
+                ? 'Zamknięte'
+                : 'Completed'
+              : isPolish
+                ? 'Zaplanowane'
+                : 'Scheduled'
+          }
+        />
+      </div>
       <PreviewMetaCard pills={pills} />
 
       <MeetingOperatorBriefCard

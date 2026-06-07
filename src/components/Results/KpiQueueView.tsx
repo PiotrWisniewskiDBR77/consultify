@@ -1,4 +1,4 @@
-import { ClipboardList, ExternalLink, Plus, Sparkles, X } from 'lucide-react';
+import { ChevronRight, ClipboardList, ExternalLink, Plus, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -316,8 +316,15 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
       if (!sheet) return [];
       return [
         {
+          id: 'preview',
+          label: t('common.preview', 'Open preview'),
+          icon: ChevronRight,
+          onClick: () => setSelectedId(sheet.id),
+        },
+        {
           id: 'open-sheet',
           label: t('results.kpi.signals.openSheet', 'Open sheet'),
+          icon: ExternalLink,
           onClick: () => onOpenSheet(sheet),
         },
         {

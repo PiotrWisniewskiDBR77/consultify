@@ -38,6 +38,7 @@ import {
   ChevronRight,
   Clock,
   Copy,
+  Edit2,
   Eye,
   FileText,
   Inbox,
@@ -72,8 +73,13 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  type RowAction,
+  type RowActionSection,
+  RowActionsMenu,
+} from '@/components/shared/RowActionsMenu';
 import { ErrorState } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -2086,6 +2092,37 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     [onOpenDecision, onOpenNotification, onOpenTask]
   );
 
+  // ── Fixed Bottom Manifest (canon §9.2): Otwórz podgląd · Edytuj · Archiwizuj ──
+  // Inbox items carry no `due_date`, so the Delay slot (pos. 4) is N/A and omitted.
+  const buildBottomManifest = useCallback(
+    (item: InboxItem): RowAction[] => [
+      {
+        id: 'open-preview',
+        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+        icon: ChevronRight,
+        divider: true,
+        onClick: () => setPreviewItem(item),
+      },
+      {
+        id: 'edit',
+        label: isPolish ? 'Edytuj' : 'Edit',
+        icon: Edit2,
+        disabled: true,
+        description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+        onClick: () => {},
+      },
+      {
+        // Archive = soft-delete (reversible). For Inbox this maps to the
+        // existing "dismiss" triage (item leaves the active queue, not destroyed).
+        id: 'archive',
+        label: isPolish ? 'Archiwizuj' : 'Archive',
+        icon: Archive,
+        onClick: () => triage(item, 'dismiss'),
+      },
+    ],
+    [isPolish, triage]
+  );
+
   // ── Selection ──
   const allVisibleIds = useMemo(() => new Set(filteredItems.map((i) => i.id)), [filteredItems]);
   const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleIds.size;
@@ -2551,7 +2588,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           {(() => {
-            const actions: RowAction[] = [
+            const contextActions: RowAction[] = [
               {
                 id: 'open',
                 label: isPolish ? 'Otwórz' : 'Open',
@@ -2612,19 +2649,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 icon: FileText,
                 onClick: () => handleSaveAsNote(item),
               },
-              {
-                id: 'dismiss',
-                label: isPolish ? 'Odłóż' : 'Dismiss',
-                icon: Archive,
-                onClick: () => triage(item, 'dismiss'),
-              },
-              {
-                id: 'reject',
-                label: isPolish ? 'Odrzuć' : 'Reject',
-                icon: X,
-                variant: 'danger',
-                onClick: () => triage(item, 'reject'),
-              },
               ...SNOOZE_PRESETS.map((p, idx) => ({
                 id: `snooze-${p.id}`,
                 label: `${isPolish ? 'Odłóż' : 'Snooze'}: ${isPolish ? p.labelPl : p.labelEn}`,
@@ -2633,9 +2657,26 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 onClick: () => handleSnooze(item, p.id),
               })),
             ];
+            const sections: RowActionSection[] = [
+              { id: 'context', kind: 'context', actions: contextActions },
+              { id: 'fixed', kind: 'manage', actions: buildBottomManifest(item) },
+              {
+                id: 'danger',
+                kind: 'danger',
+                actions: [
+                  {
+                    id: 'reject',
+                    label: isPolish ? 'Odrzuć' : 'Reject',
+                    icon: X,
+                    variant: 'danger',
+                    onClick: () => triage(item, 'reject'),
+                  },
+                ],
+              },
+            ];
             return (
               <RowActionsMenu
-                actions={actions}
+                sections={sections}
                 iconVariant="vertical"
                 className="opacity-40 transition-opacity group-hover:opacity-100"
               />
@@ -2824,40 +2865,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     if (!sectionGroups) return null;
     const renderStatusPill = (item: InboxItem) => {
       const st = item.itemStatus || (item.triaged ? 'done' : 'open');
-      const cfg: Record<string, { color: string; dot: string; label: string }> = {
-        open: {
-          color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-          dot: 'bg-amber-500',
-          label: isPolish ? 'Otwarte' : 'Open',
-        },
-        done: {
-          color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
-          dot: 'bg-emerald-500',
-          label: isPolish ? 'Gotowe' : 'Done',
-        },
-        saved: {
-          color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
-          dot: 'bg-blue-500',
-          label: isPolish ? 'Zapisane' : 'Saved',
-        },
-        snoozed: {
-          color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-          dot: 'bg-amber-500',
-          label: isPolish ? 'Odłożone' : 'Snoozed',
-        },
-        dismissed: {
-          color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
-          dot: 'bg-slate-400',
-          label: isPolish ? 'Odłożone' : 'Dismissed',
-        },
+      const labels: Record<string, string> = {
+        open: isPolish ? 'Otwarte' : 'Open',
+        done: isPolish ? 'Gotowe' : 'Done',
+        saved: isPolish ? 'Zapisane' : 'Saved',
+        snoozed: isPolish ? 'Odłożone' : 'Snoozed',
+        dismissed: isPolish ? 'Odłożone' : 'Dismissed',
       };
-      const c = cfg[st] || cfg.open;
       return (
-        <span
-          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${c.color}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-          {c.label}
+        <span className="inline-flex items-center gap-1.5">
+          <EntityStatusChip status={st} label={labels[st] || labels.open} />
           {item.isActionable && <Zap size={10} className="text-amber-500" />}
         </span>
       );
@@ -2929,7 +2946,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   </h3>
                   <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                     {(() => {
-                      const actions: RowAction[] = [
+                      const contextActions: RowAction[] = [
                         {
                           id: 'open',
                           label: isPolish ? 'Otwórz' : 'Open',
@@ -2968,12 +2985,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           icon: Bookmark,
                           onClick: () => triage(item, 'save'),
                         },
-                        {
-                          id: 'dismiss',
-                          label: isPolish ? 'Odłóż' : 'Dismiss',
-                          icon: Archive,
-                          onClick: () => triage(item, 'dismiss'),
-                        },
                         ...(handleSaveAsNote
                           ? [
                               {
@@ -2993,7 +3004,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           onClick: () => handleSnooze(item, p.id),
                         })),
                       ];
-                      return <RowActionsMenu actions={actions} iconVariant="vertical" />;
+                      const sections: RowActionSection[] = [
+                        { id: 'context', kind: 'context', actions: contextActions },
+                        { id: 'fixed', kind: 'manage', actions: buildBottomManifest(item) },
+                      ];
+                      return <RowActionsMenu sections={sections} iconVariant="vertical" />;
                     })()}
                   </div>
                 </div>

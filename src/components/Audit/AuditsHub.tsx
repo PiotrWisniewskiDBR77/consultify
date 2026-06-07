@@ -39,7 +39,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { StatusPill } from '@/components/shared/StatusPill';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 
 import {
   type AuditProgram,
@@ -63,13 +63,13 @@ const STATUS_FILTERS: Array<AuditProgramStatus | 'all'> = [
   'archived',
 ];
 
-// Map our domain status to a status string the canonical StatusPill recognizes
-// for tone purposes (it owns the color SSOT). 'active' isn't a StatusPill token,
-// so we alias it to 'executing' (emerald) to preserve the "ongoing" semantics;
-// the visible text still comes from our bilingual statusLabel().
+// Map our domain status to a status string the canonical EntityStatusChip
+// recognizes for tone purposes (it owns the color SSOT). All four tokens are
+// recognized natively (active → success/emerald, preserving "ongoing"
+// semantics); the visible text still comes from our bilingual statusLabel().
 const STATUS_PILL_ALIAS: Record<AuditProgramStatus, string> = {
   draft: 'draft',
-  active: 'executing',
+  active: 'active',
   completed: 'completed',
   archived: 'archived',
 };
@@ -365,10 +365,10 @@ export const AuditsHub: React.FC = () => {
                               <span className="truncate font-medium text-slate-900 dark:text-white">
                                 {p.name}
                               </span>
-                              <StatusPill
+                              <EntityStatusChip
                                 status={STATUS_PILL_ALIAS[p.status]}
                                 label={statusLabel(p.status)}
-                                withDot={false}
+                                hideDot
                               />
                             </div>
                             {p.objective && (

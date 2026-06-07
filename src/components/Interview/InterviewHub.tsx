@@ -88,7 +88,6 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
-import { StatusPill } from '@/components/shared/StatusPill';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import { LoadingState } from '@/components/ui/primitives';
 import { AssigneeCell, ProgressCell } from '@/components/ui/primitives/cells';
@@ -7860,7 +7859,8 @@ export const InterviewHub: React.FC = () => {
                                 id: 'open',
                                 label: isPolish ? 'Otwórz podgląd' : 'Open preview',
                                 icon: ChevronRight,
-                                onClick: () => handleViewTemplate(template),
+                                // canon §9: "Open preview" → side pane, NOT full view
+                                onClick: () => setSelectedTemplateId(template.id),
                               },
                               {
                                 id: 'edit',

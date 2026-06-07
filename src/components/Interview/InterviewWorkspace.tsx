@@ -58,7 +58,7 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
-import { StatusPill } from '@/components/shared/StatusPill';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -1894,12 +1894,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     const overview = (
       <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
         {/* #3 — Lifecycle status read-back (assigned / in_progress / submitted /
-            sent_back / approved / completed) via the canonical StatusPill. */}
+            sent_back / approved / completed) via the canonical EntityStatusChip. */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
             {isPolish ? 'Status:' : 'Status:'}
           </span>
-          <StatusPill
+          <EntityStatusChip
             status={lifecycleStatus}
             label={isPolish ? lifecycleConfig.label.pl : lifecycleConfig.label.en}
           />
@@ -2738,7 +2738,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[300px]">
               {sessionName || (isPolish ? 'Sesja wywiadu' : 'Interview session')}
             </span>
-            <StatusPill
+            <EntityStatusChip
               status={lifecycleStatus}
               label={isPolish ? lifecycleConfig.label.pl : lifecycleConfig.label.en}
             />

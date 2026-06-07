@@ -12,14 +12,30 @@
  * - monochromatic chrome, color only for semantic data
  */
 
-import { Archive, ChevronDown, ChevronRight, ChevronUp, Edit2, RotateCcw, Trash2 } from 'lucide-react';
+import {
+  Archive,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Clock,
+  Edit2,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  DueChip,
+  PriorityChip,
+  type PriorityLevel,
+  statusChipTone,
+} from '@/components/ui/primitives/chips';
+import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import type { ColumnDef, TableFilters } from '@/components/ui/ResizableTable/types';
 
-import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
 import { InitiativeStatus, PortfolioInitiative } from '../../types';
 import {
@@ -29,6 +45,23 @@ import {
   getNextStep,
 } from '../../utils/initiativeHelpers';
 import { PortfolioAiPanel } from './PortfolioAiPanel';
+
+/** Map raw initiative priority → PriorityChip level (canon §4.2 — dot carries the signal). */
+const PRIORITY_LEVEL: Record<string, PriorityLevel> = {
+  CRITICAL: 'urgent',
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+};
+
+/** Signal-tone dot class for the inline status editor (canon c.* family, §4.1). */
+const STATUS_DOT_CLASS: Record<string, string> = {
+  info: 'bg-c-info',
+  warning: 'bg-c-warning',
+  success: 'bg-c-success',
+  danger: 'bg-c-danger',
+  neutral: 'bg-slate-400 dark:bg-slate-500',
+};
 
 interface PortfolioListViewProps {
   initiatives: PortfolioInitiative[];
@@ -108,6 +141,8 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [_activeMenu, _setActiveMenu] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
+  const [tableFilters, setTableFilters] = useState<TableFilters>({});
+  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
 
   const isDowngrade = (currentStatus: string, newStatus: string): boolean => {
     const currentLevel = LEVEL_ORDER[currentStatus] || 0;
@@ -139,8 +174,74 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     }
   }, [initiatives, onSelectionChange, selectedIds]);
 
+  // Column filter options (canon §5) — derived from the current rows.
+  const statusFilterCol: ColumnDef = useMemo(
+    () => ({
+      id: 'status',
+      label: t('initiatives.table.status', 'Status'),
+      width: 128,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(new Set(initiatives.map((i) => i.status)))
+        .sort((a, b) => (STATUS_ORDER[a] || 99) - (STATUS_ORDER[b] || 99))
+        .map((s) => ({ value: s, label: STATUS_METADATA[s as InitiativeStatus]?.label || s })),
+    }),
+    [initiatives, t]
+  );
+
+  const priorityFilterCol: ColumnDef = useMemo(
+    () => ({
+      id: 'priority',
+      label: t('initiatives.table.priority', 'Priority'),
+      width: 96,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(new Set(initiatives.map((i) => i.priority).filter(Boolean)))
+        .sort((a, b) => (PRIORITY_ORDER[a] || 99) - (PRIORITY_ORDER[b] || 99))
+        .map((p) => ({ value: p, label: p })),
+    }),
+    [initiatives, t]
+  );
+
+  const ownerFilterCol: ColumnDef = useMemo(() => {
+    const owners = new Map<string, string>();
+    initiatives.forEach((i) => {
+      const o = i.ownerBusiness || i.ownerExecution;
+      if (o) owners.set(o.id, `${o.firstName || ''} ${o.lastName || ''}`.trim() || o.id);
+    });
+    return {
+      id: 'owner',
+      label: t('initiatives.table.owner', 'Owner'),
+      width: 144,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(owners.entries()).map(([value, label]) => ({ value, label })),
+    };
+  }, [initiatives, t]);
+
+  const filteredInitiatives = useMemo(() => {
+    const statusF = tableFilters.status as string[] | undefined;
+    const priorityF = tableFilters.priority as string[] | undefined;
+    const ownerF = tableFilters.owner as string[] | undefined;
+    return initiatives.filter((i) => {
+      if (statusF?.length && !statusF.includes(i.status)) return false;
+      if (priorityF?.length && !priorityF.includes(i.priority)) return false;
+      if (ownerF?.length) {
+        const o = i.ownerBusiness || i.ownerExecution;
+        if (!o || !ownerF.includes(o.id)) return false;
+      }
+      return true;
+    });
+  }, [initiatives, tableFilters]);
+
   const sortedInitiatives = useMemo(() => {
-    return [...initiatives].sort((a, b) => {
+    return [...filteredInitiatives].sort((a, b) => {
       let comparison = 0;
       switch (sortConfig.field) {
         case 'name':
@@ -161,7 +262,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
       }
       return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
-  }, [initiatives, sortConfig]);
+  }, [filteredInitiatives, sortConfig]);
 
   const handleSort = (field: SortField) => {
     setSortConfig((prev) => ({
@@ -218,14 +319,33 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     field?: SortField;
     children: React.ReactNode;
     className?: string;
-  }> = ({ field, children, className = '' }) => (
-    <th
-      className={`text-left px-4 py-2 ${field ? 'cursor-pointer transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.03]' : ''} ${className}`}
-      onClick={field ? () => handleSort(field) : undefined}
-    >
-      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-        {children}
-        {field && <SortIcon field={field} />}
+    filter?: { col: ColumnDef; key: keyof TableFilters };
+  }> = ({ field, children, className = '', filter }) => (
+    <th className={`text-left px-4 py-2 ${className}`}>
+      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        <span
+          className={
+            field
+              ? 'inline-flex items-center gap-1 cursor-pointer transition-colors hover:text-slate-700 dark:hover:text-slate-200'
+              : 'inline-flex items-center gap-1'
+          }
+          onClick={field ? () => handleSort(field) : undefined}
+        >
+          {children}
+          {field && <SortIcon field={field} />}
+        </span>
+        {filter && (
+          <FilterDropdown
+            column={filter.col}
+            value={tableFilters[filter.key] as string[] | undefined}
+            onChange={(v) => setTableFilters((f) => ({ ...f, [filter.key]: v }))}
+            isOpen={openFilterId === String(filter.key)}
+            onToggle={() =>
+              setOpenFilterId((id) => (id === String(filter.key) ? null : String(filter.key)))
+            }
+            onClose={() => setOpenFilterId(null)}
+          />
+        )}
       </div>
     </th>
   );
@@ -234,7 +354,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     <div className={canvasClassName}>
       <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-x-auto">
         <table className="w-full table-fixed" style={{ minWidth: 1080 }}>
-          <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
+          <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur border-b border-slate-200/60 dark:border-white/[0.03]">
             <tr>
               <th className="w-10 px-4 py-2">
                 <input
@@ -245,13 +365,19 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                 />
               </th>
               <TH field="name">{t('initiatives.table.initiative', 'Initiative')}</TH>
-              <TH field="status" className="w-32">
+              <TH field="status" className="w-32" filter={{ col: statusFilterCol, key: 'status' }}>
                 {t('initiatives.table.status', 'Status')}
               </TH>
-              <TH field="priority" className="w-24">
+              <TH
+                field="priority"
+                className="w-24"
+                filter={{ col: priorityFilterCol, key: 'priority' }}
+              >
                 {t('initiatives.table.priority', 'Priority')}
               </TH>
-              <TH className="w-36">{t('initiatives.table.owner', 'Owner')}</TH>
+              <TH className="w-36" filter={{ col: ownerFilterCol, key: 'owner' }}>
+                {t('initiatives.table.owner', 'Owner')}
+              </TH>
               <TH field="plannedEndDate" className="w-28">
                 {t('initiatives.table.targetDate', 'Target date')}
               </TH>
@@ -269,15 +395,21 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
             {sortedInitiatives.map((initiative) => {
               const terminal = isTerminal(initiative.status);
               const owner = initiative.ownerBusiness || initiative.ownerExecution;
-              const statusStyle = getStatusStyle(initiative.status);
-              const priorityStyle = getPriorityStyle(initiative.priority);
+              const statusDotClass =
+                STATUS_DOT_CLASS[statusChipTone(initiative.status)] ?? STATUS_DOT_CLASS.neutral;
+              const priorityLevel = PRIORITY_LEVEL[initiative.priority];
               const health = getHealthInfo(initiative);
               const nextStep = getNextStep(initiative.status);
+              const selected = selectedIds.has(initiative.id);
 
               return (
                 <tr
                   key={initiative.id}
-                  className={`group cursor-pointer transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.03] ${terminal ? 'opacity-50' : ''}`}
+                  className={`group cursor-pointer transition-colors ${
+                    selected
+                      ? 'bg-primary-500/8 dark:bg-primary-500/10 shadow-[inset_4px_0_0_0_var(--c-accent,theme(colors.primary.500))]'
+                      : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]'
+                  } ${terminal ? 'opacity-50' : ''}`}
                   onClick={() => onInitiativeClick(initiative)}
                   onDoubleClick={() => onOpenFull?.(initiative)}
                 >
@@ -301,7 +433,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   {/* Status */}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     <div className="relative inline-flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusStyle.dot}`} />
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDotClass}`}
+                      />
                       <select
                         value={initiative.status}
                         onChange={(e) =>
@@ -328,12 +462,11 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 
                   {/* Priority */}
                   <td className="px-4 py-2">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
-                      {initiative.priority || '—'}
-                    </span>
+                    {priorityLevel ? (
+                      <PriorityChip level={priorityLevel} label={initiative.priority} />
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                    )}
                   </td>
 
                   {/* Owner */}
@@ -356,15 +489,21 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                         </span>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-600">—</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                     )}
                   </td>
 
-                  {/* Target date */}
+                  {/* Target date — single DueChip (canon §4.4) */}
                   <td className="px-4 py-2">
-                    <span className="text-xs text-slate-600 dark:text-slate-400">
-                      {formatShortDate(initiative.plannedEndDate)}
-                    </span>
+                    {initiative.plannedEndDate ? (
+                      <DueChip
+                        label={formatShortDate(initiative.plannedEndDate)}
+                        due={terminal ? null : initiative.plannedEndDate}
+                        showIcon
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                    )}
                   </td>
 
                   {/* Health (RAG) */}
@@ -396,13 +535,13 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-600">—</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                     )}
                   </td>
 
                   {/* Missing (blocking) — placeholder, filled when gate readiness is fetched per-row */}
                   <td className="px-4 py-2">
-                    <span className="text-xs text-slate-600">—</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                   </td>
 
                   {/* Updated */}
@@ -432,7 +571,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                             actions: [
                               {
                                 id: 'open-preview',
-                                label: t('common.openPreview', 'Open preview'),
+                                label: t('common.openPreview', 'Otwórz podgląd'),
                                 icon: ChevronRight,
                                 onClick: () => onInitiativeClick(initiative),
                               },
@@ -440,7 +579,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 ? [
                                     {
                                       id: 'open-full',
-                                      label: t('common.openFull', 'Open full'),
+                                      label: t('common.openFull', 'Otwórz pełny widok'),
                                       icon: ChevronRight,
                                       onClick: () => onOpenFull(initiative),
                                     },
@@ -448,22 +587,22 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 : []),
                               {
                                 id: 'edit',
-                                label: t('common.edit', 'Edit'),
+                                label: t('common.edit', 'Edytuj'),
                                 icon: Edit2,
                                 onClick: () => onInitiativeClick(initiative),
                               },
                               initiative.status === InitiativeStatus.ARCHIVED
                                 ? {
                                     id: 'restore',
-                                    label: t('common.restore', 'Restore'),
+                                    label: t('common.restore', 'Przywróć'),
                                     icon: RotateCcw,
                                     disabled: true,
-                                    description: t('common.comingSoon', 'Coming soon'),
+                                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
                                     onClick: () => {},
                                   }
                                 : {
                                     id: 'archive',
-                                    label: t('common.archive', 'Archive'),
+                                    label: t('common.archive', 'Archiwizuj'),
                                     icon: Archive,
                                     disabled:
                                       !onArchive ||
@@ -477,11 +616,27 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                       )
                                         ? t(
                                             'initiatives.archive.hint',
-                                            'Finish or cancel first'
+                                            'Zakończ lub anuluj najpierw'
                                           )
                                         : undefined,
                                     onClick: () => onArchive?.(initiative),
                                   },
+                              // 4 — Delay (slot present because initiative has a due date; §9.2)
+                              ...(initiative.plannedEndDate
+                                ? [
+                                    {
+                                      id: 'delay',
+                                      label: t('common.delay', 'Przesuń termin'),
+                                      icon: Clock,
+                                      disabled: true,
+                                      description: t(
+                                        'common.comingSoonBackend',
+                                        'Wkrótce (backend)'
+                                      ),
+                                      onClick: () => {},
+                                    },
+                                  ]
+                                : []),
                             ],
                           },
                           // DANGER
@@ -491,11 +646,11 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                             actions: [
                               {
                                 id: 'delete',
-                                label: t('common.delete', 'Delete'),
+                                label: t('common.delete', 'Usuń'),
                                 icon: Trash2,
                                 variant: 'danger' as const,
                                 disabled: true,
-                                description: t('common.comingSoon', 'Coming soon'),
+                                description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
                                 onClick: () => {},
                               },
                             ],
@@ -513,7 +668,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 
       {sortedInitiatives.length === 0 && (
         <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-          No initiatives found
+          {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
         </div>
       )}
 

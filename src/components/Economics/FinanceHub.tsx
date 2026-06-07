@@ -67,6 +67,7 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
+import { MetaChip } from '@/components/ui/primitives/chips';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
@@ -659,6 +660,7 @@ export const FinanceHub: React.FC = () => {
   // ---- Row actions ----
   const { getRowActions } = useFinanceRowActions({
     handleOpenFull,
+    handleOpenPreview: (row) => onSelectRow(row),
     handleExport,
     handleOpenEntityChat,
     handleCreateModelFromStatement,
@@ -1025,17 +1027,18 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.subtype', 'Subtype'),
           width: '130px',
           render: (row: FinanceRow) => {
-            if (row.kind !== 'prediction') return <span className="text-sm text-slate-500">—</span>;
+            if (row.kind !== 'prediction')
+              return <span className="text-sm text-slate-400">—</span>;
             const pRow = row as FinanceModelRow;
             const isBudget = pRow.predictionType === 'budget';
             return (
-              <span
-                className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${isBudget ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}
-              >
-                {isBudget
-                  ? t('finance.prediction.budget', 'Budżet')
-                  : t('finance.prediction.model', 'Model')}
-              </span>
+              <MetaChip
+                label={
+                  isBudget
+                    ? t('finance.prediction.budget', 'Budżet')
+                    : t('finance.prediction.model', 'Model')
+                }
+              />
             );
           },
         },

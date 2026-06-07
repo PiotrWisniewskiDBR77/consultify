@@ -11,6 +11,7 @@ import {
   Calendar,
   CheckCircle2,
   CheckSquare,
+  ChevronRight,
   Clock,
   Edit,
   Eye,
@@ -40,9 +41,14 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  type RowAction,
+  type RowActionSection,
+  RowActionsMenu,
+} from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { ErrorState } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -604,12 +610,11 @@ const TaskTableRow: React.FC<{
           }}
         >
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all ${statusConfig.bg} ${statusConfig.color}`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`} />
-              {statusConfig.label}
-            </span>
+            <EntityStatusChip
+              status={task.status}
+              label={statusConfig.label}
+              className="cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
+            />
             {(task as any).triageAction && (
               <span
                 className="px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200"
@@ -756,81 +761,141 @@ const TaskTableRow: React.FC<{
           <RowActionsMenu
             size="sm"
             className="opacity-40 transition-opacity group-hover:opacity-100"
-            actions={
+            sections={
               [
+                // GÓRA — kontekst (status/triage)
                 {
-                  id: 'view',
-                  label: t('common.view', 'View'),
-                  icon: Eye,
-                  onClick: () => onOpenFull(task.id, task),
-                  variant: 'primary',
+                  id: 'context',
+                  kind: 'context',
+                  actions: [
+                    {
+                      id: 'view',
+                      label: t('common.view', 'View'),
+                      icon: Eye,
+                      onClick: () => onOpenFull(task.id, task),
+                      variant: 'primary',
+                    },
+                    {
+                      id: 'complete',
+                      label: isCompleted
+                        ? t('myWork.personalTasks.reopen', 'Reopen')
+                        : t('myWork.personalTasks.complete', 'Complete'),
+                      icon: CheckCircle2,
+                      onClick: () => onToggleComplete(task.id, !isCompleted),
+                    },
+                    {
+                      id: 'status_todo',
+                      label: t('myWork.personalTasks.status.todo', 'To do'),
+                      icon: CheckSquare,
+                      onClick: () => onSetStatus(task.id, 'todo'),
+                      divider: true,
+                    },
+                    {
+                      id: 'status_in_progress',
+                      label: t('myWork.personalTasks.status.inProgress', 'In progress'),
+                      icon: Clock,
+                      onClick: () => onSetStatus(task.id, 'in_progress'),
+                    },
+                    {
+                      id: 'status_blocked',
+                      label: t('myWork.personalTasks.status.blocked', 'Blocked'),
+                      icon: AlertCircle,
+                      onClick: () => onSetStatus(task.id, 'blocked'),
+                    },
+                    ...(isNew && onTriageAccept
+                      ? [
+                          {
+                            id: 'triage_accept',
+                            label: t('myWork.triage.acceptToday', 'Accept (Today)'),
+                            icon: Zap,
+                            onClick: () => onTriageAccept(task.id),
+                            variant: 'primary' as const,
+                            divider: true,
+                          },
+                          {
+                            id: 'triage_snooze',
+                            label: t('myWork.triage.snooze', 'Snooze 2 days'),
+                            icon: Pause,
+                            onClick: () => onTriageSnooze?.(task.id),
+                          },
+                        ]
+                      : []),
+                  ],
                 },
+                // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2)
                 {
-                  id: 'edit',
-                  label: t('common.edit', 'Edit'),
-                  icon: Edit,
-                  onClick: () => onOpenFull(task.id, task),
+                  id: 'fixed',
+                  kind: 'manage',
+                  actions: [
+                    {
+                      id: 'open-preview',
+                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                      icon: ChevronRight,
+                      onClick: () => onPreview(task.id, task),
+                    },
+                    {
+                      id: 'edit',
+                      label: t('common.edit', 'Edit'),
+                      icon: Edit,
+                      onClick: () => onOpenFull(task.id, task),
+                    },
+                    {
+                      id: 'archive',
+                      label: t('myWork.triage.archive', 'Archive'),
+                      icon: Archive,
+                      disabled: !onTriageArchive,
+                      description: onTriageArchive
+                        ? undefined
+                        : isPolish
+                          ? 'Wkrótce (backend)'
+                          : 'Coming soon (backend)',
+                      onClick: () => onTriageArchive?.(task.id),
+                    },
+                    // Delay ▸ — tasks have a due date, so the slot is present.
+                    ...(onInlineEdit
+                      ? [
+                          {
+                            id: 'delay',
+                            label: isPolish ? 'Odłóż termin' : 'Delay',
+                            icon: Clock,
+                            onClick: () => {},
+                            submenu: [1, 3, 7].map((d) => ({
+                              id: `delay-${d}`,
+                              label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                              icon: Clock,
+                              onClick: () => {
+                                const base =
+                                  task.dueDate && !Number.isNaN(new Date(task.dueDate).getTime())
+                                    ? new Date(task.dueDate)
+                                    : new Date();
+                                base.setDate(base.getDate() + d);
+                                onInlineEdit(
+                                  task.id,
+                                  'dueDate',
+                                  base.toISOString().split('T')[0]
+                                );
+                              },
+                            })),
+                          } satisfies RowAction,
+                        ]
+                      : []),
+                  ],
                 },
+                // DANGER
                 {
-                  id: 'complete',
-                  label: isCompleted
-                    ? t('myWork.personalTasks.reopen', 'Reopen')
-                    : t('myWork.personalTasks.complete', 'Complete'),
-                  icon: CheckCircle2,
-                  onClick: () => onToggleComplete(task.id, !isCompleted),
+                  id: 'danger',
+                  kind: 'danger',
+                  actions: [
+                    {
+                      id: 'delete',
+                      label: t('common.delete', 'Delete'),
+                      icon: Trash2,
+                      onClick: () => onDelete(task.id),
+                      variant: 'danger',
+                    },
+                  ],
                 },
-                {
-                  id: 'status_todo',
-                  label: t('myWork.personalTasks.status.todo', 'To do'),
-                  icon: CheckSquare,
-                  onClick: () => onSetStatus(task.id, 'todo'),
-                  divider: true,
-                },
-                {
-                  id: 'status_in_progress',
-                  label: t('myWork.personalTasks.status.inProgress', 'In progress'),
-                  icon: Clock,
-                  onClick: () => onSetStatus(task.id, 'in_progress'),
-                },
-                {
-                  id: 'status_blocked',
-                  label: t('myWork.personalTasks.status.blocked', 'Blocked'),
-                  icon: AlertCircle,
-                  onClick: () => onSetStatus(task.id, 'blocked'),
-                },
-                ...(isNew && onTriageAccept
-                  ? [
-                      {
-                        id: 'triage_accept',
-                        label: t('myWork.triage.acceptToday', 'Accept (Today)'),
-                        icon: Zap,
-                        onClick: () => onTriageAccept(task.id),
-                        variant: 'primary' as const,
-                        divider: true,
-                      },
-                      {
-                        id: 'triage_snooze',
-                        label: t('myWork.triage.snooze', 'Snooze 2 days'),
-                        icon: Pause,
-                        onClick: () => onTriageSnooze?.(task.id),
-                      },
-                      {
-                        id: 'triage_archive',
-                        label: t('myWork.triage.archive', 'Archive'),
-                        icon: Archive,
-                        onClick: () => onTriageArchive?.(task.id),
-                      },
-                    ]
-                  : []),
-                {
-                  id: 'delete',
-                  label: t('common.delete', 'Delete'),
-                  icon: Trash2,
-                  onClick: () => onDelete(task.id),
-                  variant: 'danger',
-                  divider: true,
-                },
-              ] satisfies RowAction[]
+              ] satisfies RowActionSection[]
             }
           />
         </td>

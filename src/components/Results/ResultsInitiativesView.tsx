@@ -2,7 +2,7 @@ import {
   AlertTriangle,
   BarChart3,
   ChevronDown,
-  Eye,
+  ChevronRight,
   FileText,
   ListChecks,
   Maximize2,
@@ -25,6 +25,9 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { CHIP_TONE_VAR, ChipDot } from '@/components/ui/primitives/chips/chipBase';
+import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
+// Neutral preview meta-pill keeps a status-colored signal dot (canon-allowed); chip bg stays neutral.
 import { getStatusStyle } from '@/constants/statusColors';
 import { formatRelativeTime } from '@/utils/initiativeHelpers';
 
@@ -185,8 +188,8 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
     [
       {
         id: 'preview',
-        label: t('common.preview', 'Preview'),
-        icon: Eye,
+        label: t('common.preview', 'Open preview'),
+        icon: ChevronRight,
         onClick: () => setSelectedId(initiative.id),
       },
       {
@@ -515,42 +518,42 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                     />
                   </th>
                   <th className="text-left px-4 py-2">
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('results.initiatives.name', 'Initiative')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-32">
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('common.status', 'Status')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-28">
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('results.initiatives.lifecycle', 'Lifecycle')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-28">
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('results.initiatives.kpis', 'Tracked KPI')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-28">
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('results.initiatives.health', 'Health')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-44">
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('results.initiatives.nextStep', 'Next step')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-28">
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('results.initiatives.alerts', 'Needs attention')}
                     </div>
                   </th>
                   <th className="text-left px-4 py-2 w-24">
-                    <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {t('common.updated', 'Updated')}
                     </div>
                   </th>
@@ -560,7 +563,9 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
 
               <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
                 {sortedItems.map((initiative) => {
-                  const statusStyle = getStatusStyle(initiative.initiativeStatus);
+                  const statusTone = statusChipTone(initiative.initiativeStatus);
+                  const statusDotVar =
+                    statusTone === 'neutral' ? undefined : CHIP_TONE_VAR[statusTone];
                   return (
                     <tr
                       key={initiative.id}
@@ -585,9 +590,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
 
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                         <div className="relative inline-flex items-center gap-1.5">
-                          <span
-                            className={`w-2 h-2 rounded-full flex-shrink-0 ${statusStyle.dot}`}
-                          />
+                          <ChipDot colorVar={statusDotVar} />
                           <select
                             value={initiative.initiativeStatus}
                             onChange={(e) =>
