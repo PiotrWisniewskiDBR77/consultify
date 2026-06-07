@@ -111,3 +111,6 @@ lineage i podgląd bramki. Zero błędów w konsoli; screenshot każdego kroku.
   **Pozostaje:** wpięcie handoffu „Zaproponuj" w `InsightViewer` (plik w WIP agenta) + silnik AI
   (Faza 2b) + suggested-changes (Faza 4). Live-klik w hubie do potwierdzenia po re-loginie
   (sesja dev wygasła; nie wprowadzam credentiali).
+- 2026-06-07: **Faza 0 LIVE-VERIFIED** jako OWNER (Chrome) — przycisk „Charter" w /initiatives
+  otwiera Charter wizard; krok 1→2 działa; żywy 2×2 „Quick win · CRITICAL"; Owner zaciąga realnych
+  userów DBR77. Nie utworzono inicjatywy (brak zaśmiecania realnego portfela).
