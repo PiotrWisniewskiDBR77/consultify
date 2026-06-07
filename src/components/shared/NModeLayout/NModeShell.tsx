@@ -64,6 +64,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   renderActionBar,
   activeSection,
   onSectionChange,
+  onSectionReorder,
   reducedMotion = false,
   motionDuration = 0.22,
   presentationMode,
@@ -125,6 +126,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
                   sections={sections}
                   activeSection={activeSection}
                   onSectionChange={onSectionChange}
+                  onSectionReorder={onSectionReorder}
                 />
                 <NModeCanvas
                   sections={sections}

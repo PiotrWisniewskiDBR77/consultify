@@ -152,6 +152,12 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
   }, [visibleSections]);
   const hasGroups = useMemo(() => visibleSections.some((s) => s.group), [visibleSections]);
 
+  const sectionById = useMemo(() => {
+    const map = new Map<string, NModeSection>();
+    for (const s of sections) map.set(s.id, s);
+    return map;
+  }, [sections]);
+
   const renderItem = (section: NModeSection) => {
     const isActive = activeSection === section.id;
     const Icon = section.icon;
@@ -196,58 +202,84 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
     })
   );
 
+  // Within-group reorder: groups are fixed semantic buckets, so a section can be
+  // dragged only among its own group's siblings. Rebuilds the FULL id order
+  // (substituting the dragged group's members in their new relative order at the
+  // slots they occupy) so the handler stays robust to non-contiguous groups and
+  // never moves a section into a different group.
   const handleDragEnd = (event: DragEndEvent) => {
     if (!onSectionReorder) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const ids = sections.map((s) => s.id);
-    const oldIndex = ids.indexOf(String(active.id));
-    const newIndex = ids.indexOf(String(over.id));
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const activeGroup = sectionById.get(activeId)?.group ?? null;
+    const overGroup = sectionById.get(overId)?.group ?? null;
+    if (activeGroup !== overGroup) return;
+
+    const allIds = sections.map((s) => s.id);
+    const groupIds = sections.filter((s) => (s.group ?? null) === activeGroup).map((s) => s.id);
+    const oldIndex = groupIds.indexOf(activeId);
+    const newIndex = groupIds.indexOf(overId);
     if (oldIndex < 0 || newIndex < 0) return;
 
-    onSectionReorder(arrayMove(ids, oldIndex, newIndex));
+    const reorderedGroup = arrayMove(groupIds, oldIndex, newIndex);
+    let gi = 0;
+    const rebuilt = allIds.map((id) =>
+      (sectionById.get(id)?.group ?? null) === activeGroup ? reorderedGroup[gi++] : id
+    );
+    onSectionReorder(rebuilt);
   };
+
+  // Render one group's items — sortable when a reorder handler is provided,
+  // static otherwise. Same markup either way so grouped/flat × drag/static all
+  // share one code path (and one look).
+  const renderGroupItems = (items: NModeSection[]) =>
+    onSectionReorder ? (
+      <SortableContext items={items.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-1">
+          {items.map((section) => (
+            <SortableNavItem
+              key={section.id}
+              section={section}
+              isActive={activeSection === section.id}
+              isPolish={isPolish}
+              onSectionChange={onSectionChange}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    ) : (
+      <div className="space-y-1">{items.map(renderItem)}</div>
+    );
+
+  const navBody = hasGroups
+    ? groups.map((g, gi) => (
+        <div key={g.label ?? `__ungrouped_${gi}`} className={gi > 0 ? 'pt-3' : ''}>
+          {g.label && (
+            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-600">
+              {g.label}
+            </div>
+          )}
+          {renderGroupItems(g.items)}
+        </div>
+      ))
+    : renderGroupItems(visibleSections);
 
   return (
     <nav className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-4`}>
       <div className="sticky top-28 pt-1 space-y-1">
-        {!onSectionReorder ? (
-          hasGroups ? (
-            groups.map((g, gi) => (
-              <div key={g.label ?? `__ungrouped_${gi}`} className={gi > 0 ? 'pt-3' : ''}>
-                {g.label && (
-                  <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-600">
-                    {g.label}
-                  </div>
-                )}
-                <div className="space-y-1">{g.items.map(renderItem)}</div>
-              </div>
-            ))
-          ) : (
-            visibleSections.map(renderItem)
-          )
-        ) : (
+        {onSectionReorder ? (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={visibleSections.map((s) => s.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {visibleSections.map((section) => (
-                <SortableNavItem
-                  key={section.id}
-                  section={section}
-                  isActive={activeSection === section.id}
-                  isPolish={isPolish}
-                  onSectionChange={onSectionChange}
-                />
-              ))}
-            </SortableContext>
+            {navBody}
           </DndContext>
+        ) : (
+          navBody
         )}
 
         {(hiddenCount > 0 || showAll) && (

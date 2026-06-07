@@ -195,6 +195,13 @@ export interface NModeShellProps {
   activeSection: string;
   /** Section change handler */
   onSectionChange: (sectionId: string) => void;
+  /**
+   * Optional reorder handler. When provided, the left-nav becomes drag-reorderable
+   * (within each group when sections are grouped). Receives the full new section-id
+   * order. Omit to keep the nav static. Ignored in C-mode (the dense board has its
+   * own fixed group order).
+   */
+  onSectionReorder?: (sectionIds: string[]) => void;
   /** Whether to use reduced motion */
   reducedMotion?: boolean;
   /** Custom motion duration (default: 0.22) */
