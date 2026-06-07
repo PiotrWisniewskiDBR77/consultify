@@ -104,6 +104,9 @@ const ImplementationView = lazyWithRetry(() =>
 const ReportBuilderView = lazyWithRetry(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
 );
+const ManagementReportsHub = lazyWithRetry(() =>
+  import('@/components/Reports/Management/ReportsHub').then((m) => ({ default: m.ReportsHub }))
+);
 const AssessmentReportBuilderView = lazyWithRetry(() =>
   import('@/views/AssessmentReportBuilderView').then((m) => ({
     default: m.AssessmentReportBuilderView,
@@ -1935,15 +1938,32 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        {/* Management Reports — legacy (deprecated) */}
+        {/* Management Reports — PMO reports (Team Meeting / Steering Committee / Portfolio Health / RAID) */}
         <Route
           path={ROUTES.REPORTS.MANAGEMENT}
           element={
-            <RedirectWithTracking
-              from={ROUTES.REPORTS.MANAGEMENT}
-              to={`${ROUTES.PRESENTATIONS}?tab=all`}
-              reason="reports_management_deprecated"
-            />
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.reports', 'Reports'),
+                  t('sidebar.reportsManagement', 'Management Reports'),
+                ]
+              }
+              noPadding
+            >
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Management Reports"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading reports..." />}>
+                      <ManagementReportsHub />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
           }
         />
         {/*
