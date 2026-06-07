@@ -895,6 +895,9 @@ export const InterviewHub: React.FC = () => {
     loadColumnWidths(INTERVIEW_INSIGHTS_COL_WIDTHS_KEY, INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS)
   );
   const [openInsightFilterId, setOpenInsightFilterId] = useState<string | null>(null);
+  // Per-column header filters for the Initiatives table (status / priority / source).
+  const [initiativeTableFilters, setInitiativeTableFilters] = useState<TableFilters>({});
+  const [openInitiativeFilterId, setOpenInitiativeFilterId] = useState<string | null>(null);
 
   // #10 — per-column header filters for the Sessions table (status / assignee /
   // template). Non-destructive: layered on top of the existing custom table
@@ -2298,8 +2301,29 @@ export const InterviewHub: React.FC = () => {
           (initiative.category || '').toLowerCase().includes(query)
       );
     }
+    // Per-column header filters (status group / priority / source).
+    const statusGroup = (raw?: string) => {
+      const s = String(raw || 'DRAFT').toUpperCase();
+      if (s === 'PENDING_REVIEW' || s === 'IN_REVIEW' || s === 'REVIEW' || s === 'SUBMITTED')
+        return 'pending_review';
+      if (['PROMOTED', 'PLANNING', 'APPROVED', 'IN_EXECUTION', 'IN_PROGRESS'].includes(s))
+        return 'moved_forward';
+      return 'draft';
+    };
+    const statusF = initiativeTableFilters.status as string[] | undefined;
+    if (statusF?.length) {
+      result = result.filter((i) => statusF.includes(statusGroup(i.status)));
+    }
+    const prioF = initiativeTableFilters.priority as string[] | undefined;
+    if (prioF?.length) {
+      result = result.filter((i) => prioF.includes(String(i.priority || '').toLowerCase()));
+    }
+    const srcF = initiativeTableFilters.source as string[] | undefined;
+    if (srcF?.length) {
+      result = result.filter((i) => srcF.includes(i.sourceId ? 'insight' : 'none'));
+    }
     return result;
-  }, [interviewInitiatives, initiativeStatusFilter, searchQuery]);
+  }, [interviewInitiatives, initiativeStatusFilter, searchQuery, initiativeTableFilters]);
 
   const interviewInitiativeStats = useMemo(
     () => ({
@@ -10188,6 +10212,50 @@ Return ONLY the answer text (no markdown fences).`;
         }
       };
 
+      // Per-column header filter descriptors (status group / priority / source).
+      const initiativeStatusCol: ColumnDef = {
+        id: 'status',
+        label: isPolish ? 'Status' : 'Status',
+        width: initiativesColumnWidths.status,
+        minWidth: 120,
+        resizable: false,
+        filterable: true,
+        filterType: 'multiselect',
+        filterOptions: [
+          { value: 'draft', label: isPolish ? 'Szkic' : 'Draft' },
+          { value: 'pending_review', label: isPolish ? 'Do przeglądu' : 'Pending review' },
+          { value: 'moved_forward', label: isPolish ? 'Przekazane dalej' : 'Moved forward' },
+        ],
+      };
+      const initiativePriorityCol: ColumnDef = {
+        id: 'priority',
+        label: isPolish ? 'Priorytet' : 'Priority',
+        width: initiativesColumnWidths.priority,
+        minWidth: 110,
+        resizable: false,
+        filterable: true,
+        filterType: 'multiselect',
+        filterOptions: [
+          { value: 'critical', label: isPolish ? 'Krytyczny' : 'Critical' },
+          { value: 'high', label: isPolish ? 'Wysoki' : 'High' },
+          { value: 'medium', label: isPolish ? 'Średni' : 'Medium' },
+          { value: 'low', label: isPolish ? 'Niski' : 'Low' },
+        ],
+      };
+      const initiativeSourceCol: ColumnDef = {
+        id: 'source',
+        label: isPolish ? 'Źródło' : 'Source',
+        width: initiativesColumnWidths.source,
+        minWidth: 110,
+        resizable: false,
+        filterable: true,
+        filterType: 'multiselect',
+        filterOptions: [
+          { value: 'insight', label: 'Insight' },
+          { value: 'none', label: isPolish ? 'Brak' : 'None' },
+        ],
+      };
+
       const hiddenSet = new Set(initiativesHiddenColumns);
       const visibleInitiativeIds = rows.map((initiative) => initiative.id);
       const selectedVisibleCount = visibleInitiativeIds.filter((id) =>
@@ -10401,7 +10469,29 @@ Return ONLY the answer text (no markdown fences).`;
                       className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                       style={{ width: initiativesColumnWidths.status }}
                     >
-                      {isPolish ? 'Status' : 'Status'}
+                      <div className="flex items-center justify-start gap-1">
+                        <span
+                          className={
+                            (initiativeTableFilters.status as string[] | undefined)?.length
+                              ? 'text-primary-500'
+                              : ''
+                          }
+                        >
+                          {isPolish ? 'Status' : 'Status'}
+                        </span>
+                        <FilterDropdown
+                          column={initiativeStatusCol}
+                          value={initiativeTableFilters.status as string[] | undefined}
+                          onChange={(v) =>
+                            setInitiativeTableFilters((f) => ({ ...f, status: v as string[] }))
+                          }
+                          isOpen={openInitiativeFilterId === 'status'}
+                          onToggle={() =>
+                            setOpenInitiativeFilterId((id) => (id === 'status' ? null : 'status'))
+                          }
+                          onClose={() => setOpenInitiativeFilterId(null)}
+                        />
+                      </div>
                       {renderInitiativeResizer('status')}
                     </th>
                   ) : null}
@@ -10410,7 +10500,31 @@ Return ONLY the answer text (no markdown fences).`;
                       className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                       style={{ width: initiativesColumnWidths.priority }}
                     >
-                      {isPolish ? 'Priorytet' : 'Priority'}
+                      <div className="flex items-center justify-start gap-1">
+                        <span
+                          className={
+                            (initiativeTableFilters.priority as string[] | undefined)?.length
+                              ? 'text-primary-500'
+                              : ''
+                          }
+                        >
+                          {isPolish ? 'Priorytet' : 'Priority'}
+                        </span>
+                        <FilterDropdown
+                          column={initiativePriorityCol}
+                          value={initiativeTableFilters.priority as string[] | undefined}
+                          onChange={(v) =>
+                            setInitiativeTableFilters((f) => ({ ...f, priority: v as string[] }))
+                          }
+                          isOpen={openInitiativeFilterId === 'priority'}
+                          onToggle={() =>
+                            setOpenInitiativeFilterId((id) =>
+                              id === 'priority' ? null : 'priority'
+                            )
+                          }
+                          onClose={() => setOpenInitiativeFilterId(null)}
+                        />
+                      </div>
                       {renderInitiativeResizer('priority')}
                     </th>
                   ) : null}
@@ -10419,7 +10533,29 @@ Return ONLY the answer text (no markdown fences).`;
                       className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                       style={{ width: initiativesColumnWidths.source }}
                     >
-                      {isPolish ? 'Źródło' : 'Source'}
+                      <div className="flex items-center justify-start gap-1">
+                        <span
+                          className={
+                            (initiativeTableFilters.source as string[] | undefined)?.length
+                              ? 'text-primary-500'
+                              : ''
+                          }
+                        >
+                          {isPolish ? 'Źródło' : 'Source'}
+                        </span>
+                        <FilterDropdown
+                          column={initiativeSourceCol}
+                          value={initiativeTableFilters.source as string[] | undefined}
+                          onChange={(v) =>
+                            setInitiativeTableFilters((f) => ({ ...f, source: v as string[] }))
+                          }
+                          isOpen={openInitiativeFilterId === 'source'}
+                          onToggle={() =>
+                            setOpenInitiativeFilterId((id) => (id === 'source' ? null : 'source'))
+                          }
+                          onClose={() => setOpenInitiativeFilterId(null)}
+                        />
+                      </div>
                       {renderInitiativeResizer('source')}
                     </th>
                   ) : null}
