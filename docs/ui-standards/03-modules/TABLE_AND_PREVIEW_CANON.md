@@ -223,8 +223,9 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
    3. **Relations** (jeśli są): **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
    4. divider (`border-t`)
    5. **„Co dalej" / create-strip (opcjonalny, gdy encja jest źródłem cross-module)**: ZWARTY pasek małych przycisków (`h-8 rounded-full`, ikona+label), pogrupowany **„Dokumenty / W aplikacji"**. **NIGDY wielkie karty w body.** (Insight: `ArtifactActionPanel variant="compact"`; `variant="full"` tylko w pełnej karcie.) Ikony+kolory wg §7.3a.
-   6. divider (`border-t`)
-   7. **Actions (sticky dół)**: pille `h-9 rounded-full`, hierarchia primary→secondary→ghost; **te same akcje co full view** (parytet, te same guardraile; destrukcyjne = confirm).
+   6. **Actions (sticky dół) — OPCJONALNE, anty-duplikacja (MUST):** pasek pokazujemy **tylko dla akcji, których nie ma już gdzie indziej**. **NIE dubluj „Open"** — jest w nagłówku. **NIE dubluj eksportu/pobierania** — te należą do menu ⋮ przy „Details". Jeśli po odjęciu duplikatów nie zostaje żadna sensowna akcja → **pomiń cały pasek** (stopka kończy się na „Co dalej"). Gdy zostaje: pille `h-9 rounded-full`, primary→secondary→ghost, parytet z full view, destrukcyjne = confirm, **+ dolny padding, by globalny FAB („Zgłoś błąd") nie zasłaniał**.
+
+**Odstępy w stopce (MUST):** sekcje to samodzielne karty z ramką → **bez ciężkich linii-dividerów między nimi**; jeden spójny, minimalny rytm (`space-y-2.5`). Dzielnik tylko tam, gdzie realnie rozdziela dwie różne logiki, nie między każdą kartą.
 
 ### 7.3a Tożsamość akcji tworzenia (create-targets) — kolor = moduł docelowy (MUST)
 > Jeden spójny wątek dla całej aplikacji: ikona + hue przycisku = **moduł, do którego trafia artefakt**.

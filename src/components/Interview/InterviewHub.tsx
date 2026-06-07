@@ -10052,23 +10052,26 @@ Return ONLY the answer text (no markdown fences).`;
                     copyToClipboard(detailsText || item.title || '');
                   } else if (action === 'copy-summarize-prompt') {
                     copyToClipboard(buildAiPrompt('summarize'));
+                  } else if (action === 'export-tools') {
+                    if (!item.exportedToTools) handleExportInsightToTools(item.id);
+                  } else if (action === 'download') {
+                    const promptType =
+                      (item as any).promptType || (item as any).insightType || 'summary';
+                    const content = `# ${item.title}\n\n**Type:** ${promptType}\n**Status:** ${item.status || 'completed'}\n\n${item.content || ''}\n`;
+                    const blob = new Blob([content], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `insight-${item.id.slice(0, 8)}.md`;
+                    a.click();
+                    URL.revokeObjectURL(url);
                   }
                 }}
               />
             );
           }}
           renderPreviewFooter={(item) => {
-            return (
-              <InterviewInsightPreviewFooter
-                insight={item}
-                isPolish={isPolish}
-                onOpenFull={() => handleViewInsight(item)}
-                onExportToTools={
-                  !item.exportedToTools ? () => handleExportInsightToTools(item.id) : undefined
-                }
-                onCopyLink={() => copyToClipboard(item.title || '')}
-              />
-            );
+            return <InterviewInsightPreviewFooter insight={item} isPolish={isPolish} />;
           }}
           itemIds={insightsForTable.map((i) => i.id)}
           getItemById={(id) => insightsForTable.find((x) => x.id === id) ?? null}
