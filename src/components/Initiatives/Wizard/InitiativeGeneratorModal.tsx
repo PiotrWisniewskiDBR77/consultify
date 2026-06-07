@@ -24,11 +24,27 @@ import {
   type CandidateInput,
   type ClassifiedProposal,
   type ExistingInitiative,
+  type ProposalRelation,
   reconcileProposals,
 } from '@/services/initiatives/proposalReconciliation';
+import { proposeCandidates } from '@/services/initiatives/proposeCandidates';
+import {
+  submitSuggestedChange,
+  type SuggestedChangeKind,
+} from '@/services/initiatives/suggestedChanges';
 
 import { type InitiativeCharterSource, InitiativeCharterWizard } from './InitiativeCharterWizard';
+import { type AcceptedItem, InitiativeCoverageWaveView } from './InitiativeCoverageWaveView';
 import { InitiativeProposalBoard } from './InitiativeProposalBoard';
+
+const RELATION_TO_CHANGE_KIND = (r: ProposalRelation): SuggestedChangeKind =>
+  r === 'conflict'
+    ? 'conflict'
+    : r === 're_prioritize'
+      ? 're_prioritize'
+      : r === 'evidence_only'
+        ? 'evidence'
+        : 'extend';
 
 export interface InitiativeGeneratorSource {
   /** Display label + evidence shown in the board drawer. */
@@ -69,14 +85,17 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
   const tr = (pl: string, en: string) => (isPolish ? pl : en);
 
   const [view, setView] = useState<'board' | 'charter'>('board');
+  const [boardTab, setBoardTab] = useState<'proposals' | 'coverage'>('proposals');
   const [loading, setLoading] = useState(false);
   const [existing, setExisting] = useState<ExistingInitiative[]>([]);
+  const [autoCandidates, setAutoCandidates] = useState<CandidateInput[]>([]);
   const [chosen, setChosen] = useState<ClassifiedProposal | null>(null);
 
   // Fetch the live grid on open (the "siatka" to reconcile against).
   useEffect(() => {
     if (!isOpen) return;
     setView('board');
+    setBoardTab('proposals');
     setChosen(null);
     let cancelled = false;
     setLoading(true);
@@ -111,9 +130,40 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
     };
   }, [isOpen]);
 
+  // Phase 2b — when no candidates were injected, auto-propose from the source text
+  // (AI-first with deterministic fallback; never throws / never blocks).
+  useEffect(() => {
+    if (!isOpen) {
+      setAutoCandidates([]);
+      return;
+    }
+    if (candidates.length > 0 || !source?.content) return;
+    let cancelled = false;
+    (async () => {
+      const c = await proposeCandidates(
+        { text: source.content as string, label: source.label, goalKeys },
+        { projectId }
+      );
+      if (!cancelled) setAutoCandidates(c);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, candidates.length, source?.content, source?.label, goalKeys, projectId]);
+
+  const effectiveCandidates = candidates.length > 0 ? candidates : autoCandidates;
+
   const { proposals, coverage } = useMemo(
-    () => reconcileProposals(candidates, existing, { goalKeys }),
-    [candidates, existing, goalKeys]
+    () => reconcileProposals(effectiveCandidates, existing, { goalKeys }),
+    [effectiveCandidates, existing, goalKeys]
+  );
+
+  const acceptedForWave: AcceptedItem[] = useMemo(
+    () =>
+      proposals
+        .filter((p) => p.relation === 'new' || p.relation === 'contributes_to_goal')
+        .map((p) => ({ title: p.candidate.title, goalKey: p.candidate.goalKey })),
+    [proposals]
   );
 
   if (!isOpen) return null;
@@ -161,20 +211,46 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
             <span aria-hidden className="inline-block h-5 w-1.5 rounded-full bg-primary-600" />
             {tr('Zaproponuj inicjatywę', 'Propose initiative')}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={tr('Zamknij', 'Close')}
-            className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06]"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-white/[0.1]">
+              {(['proposals', 'coverage'] as const).map((tabKey) => (
+                <button
+                  key={tabKey}
+                  type="button"
+                  onClick={() => setBoardTab(tabKey)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    boardTab === tabKey
+                      ? 'bg-primary-600 text-white'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  {tabKey === 'proposals'
+                    ? tr('Propozycje', 'Proposals')
+                    : tr('Pokrycie i fale', 'Coverage & waves')}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={tr('Zamknij', 'Close')}
+              className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06]"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden p-4">
+        <div className="min-h-0 flex-1 overflow-auto p-4">
           {loading ? (
             <div className="flex h-full items-center justify-center text-sm text-slate-500">
               {tr('Wczytuję siatkę inicjatyw…', 'Loading the initiative grid…')}
             </div>
+          ) : boardTab === 'coverage' ? (
+            <InitiativeCoverageWaveView
+              coverage={coverage}
+              accepted={acceptedForWave}
+              isPolish={isPolish}
+            />
           ) : (
             <InitiativeProposalBoard
               proposals={proposals}
@@ -185,14 +261,25 @@ export const InitiativeGeneratorModal: React.FC<InitiativeGeneratorModalProps> =
                 setChosen(p);
                 setView('charter');
               }}
-              onAcceptChange={(p) =>
-                toast(
-                  tr(
-                    `Propozycja zmiany „${p.candidate.title}" → suggested change (Faza 4).`,
-                    `Change proposal "${p.candidate.title}" → suggested change (Phase 4).`
+              onAcceptChange={(p) => {
+                void submitSuggestedChange({
+                  initiativeId: p.matchedInitiativeId ?? '',
+                  kind: RELATION_TO_CHANGE_KIND(p.relation),
+                  title: p.candidate.title,
+                  rationale: p.rationale,
+                  sourceType: source?.sourceType,
+                  sourceId: source?.sourceId ?? undefined,
+                }).then((res) =>
+                  toast(
+                    res.persisted
+                      ? tr('Zapisano propozycję zmiany.', 'Suggested change saved.')
+                      : tr(
+                          'Zarejestrowano lokalnie (backend wkrótce).',
+                          'Recorded locally (backend pending).'
+                        )
                   )
-                )
-              }
+                );
+              }}
             />
           )}
         </div>
