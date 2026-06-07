@@ -126,8 +126,11 @@ OA-1/P0-6, OA-2, OA-3, OA-4 (org profile save), OA-5 (billing settings save). Od
 **FAZA 2 — Decyzja billing + revenue (zależne od D2; 2-4 dni)**
 P0-1 (Stripe lub świadome OFF), SA-1, SA-2 (email delivery). 
 
-**FAZA 3 — Mobile minimum (decyzja zakresu; 1-3 tyg.)**
-Jeśli mobile w GA: MOB-1..5. Jeśli nie: MOB-6 (guardy desktop-only) jako minimum + reszta post-GA.
+**FAZA 3 — Mobile minimum — MOB-6 ✅ ZREALIZOWANE 2026-06-07**
+Decyzja: guardy desktop-only + reszta post-GA. Dodano `DesktopOnlyGuard` (`src/components/shared/DesktopOnlyGuard.tsx`) — na mobile (useIsMobile, <768px) pokazuje uczciwą notkę "najlepiej na większym ekranie" z opcją "Kontynuuj mimo to" (nie blokuje twardo). Opakowano oba żywe wejścia: `AdminView.tsx` + `SuperAdminView.tsx`. tsc czysty (0 błędów w zmienionych plikach). Live visual proof na `/admin` PENDING (wymaga zalogowanej sesji admina w preview). MOB-1..5 = post-GA.
+
+**CLEANUP martwego kodu admin — ODŁOŻONE (lista gotowa)**
+94 osierocone pliki (tracked+clean, usuwalne odwracalnie) + sparowane testy w `tests/` → `docs/audit/2026-06-07/ADMIN_DEADCODE_CLEANUP_LIST.md`. Narzędzie: `scripts/dev/find-admin-orphans.mjs`. WYKONAĆ po zacommitowaniu bieżącego WIP (czyste drzewo → tsc weryfikuje), usuwając każdy orphan RAZEM z jego testem.
 
 **FAZA 4 — Luki produktowe (równolegle, większy strumień)**
 PROD-1 (KPI/OKR), PROD-2 (Benefits). Domykają personę CFO.

@@ -5,6 +5,7 @@
  */
 import React from 'react';
 
+import { DesktopOnlyGuard } from '@/components/shared/DesktopOnlyGuard';
 import type { AppView, User } from '@/types';
 
 import AdminSettingsModule from './AdminSettingsModule';
@@ -15,7 +16,11 @@ interface AdminViewProps {
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({ currentUser }) => {
-  return <AdminSettingsModule currentUser={currentUser} />;
+  return (
+    <DesktopOnlyGuard moduleName="Panel administratora">
+      <AdminSettingsModule currentUser={currentUser} />
+    </DesktopOnlyGuard>
+  );
 };
 
 export default AdminView;

@@ -30,6 +30,7 @@ import {
   SuperAdminSidebar,
 } from '../../components/layout/SuperAdminSidebar';
 import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
+import { DesktopOnlyGuard } from '../../components/shared/DesktopOnlyGuard';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
 import { getRouteFromAppView } from '../../routes/routeConfig';
@@ -248,6 +249,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
   };
 
   return (
+    <DesktopOnlyGuard moduleName="Panel Super Admina">
     <div className="flex h-screen bg-slate-100 dark:bg-navy-950 text-slate-900 dark:text-white overflow-hidden">
       {/* Sidebar (Fixed Position) */}
       <SuperAdminSidebar
@@ -303,5 +305,6 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
       <DocumentSidePanel />
       <FeedbackSidePanel />
     </div>
+    </DesktopOnlyGuard>
   );
 };
