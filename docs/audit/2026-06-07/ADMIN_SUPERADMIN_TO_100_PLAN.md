@@ -129,8 +129,8 @@ P0-1 (Stripe lub świadome OFF), SA-1, SA-2 (email delivery).
 **FAZA 3 — Mobile minimum — MOB-6 ✅ ZREALIZOWANE 2026-06-07**
 Decyzja: guardy desktop-only + reszta post-GA. Dodano `DesktopOnlyGuard` (`src/components/shared/DesktopOnlyGuard.tsx`) — na mobile (useIsMobile, <768px) pokazuje uczciwą notkę "najlepiej na większym ekranie" z opcją "Kontynuuj mimo to" (nie blokuje twardo). Opakowano oba żywe wejścia: `AdminView.tsx` + `SuperAdminView.tsx`. tsc czysty (0 błędów w zmienionych plikach). Live visual proof na `/admin` PENDING (wymaga zalogowanej sesji admina w preview). MOB-1..5 = post-GA.
 
-**CLEANUP martwego kodu admin — ODŁOŻONE (lista gotowa)**
-94 osierocone pliki (tracked+clean, usuwalne odwracalnie) + sparowane testy w `tests/` → `docs/audit/2026-06-07/ADMIN_DEADCODE_CLEANUP_LIST.md`. Narzędzie: `scripts/dev/find-admin-orphans.mjs`. WYKONAĆ po zacommitowaniu bieżącego WIP (czyste drzewo → tsc weryfikuje), usuwając każdy orphan RAZEM z jego testem.
+**CLEANUP martwego kodu admin — ✅ ZREALIZOWANE 2026-06-07**
+Usunięto **94 osierocone pliki** (`src/views/admin/*` + `src/components/Admin/*`, 0 osiągalnych z `src/index.tsx`) + **16 sparowanych testów** (precyzyjnie po ścieżce importu, głównie `*.honesty.test.tsx`). Po usunięciu: orphan-finder = 0 orphanów, 60 live nietkniętych, `tsc --noEmit` = 0 błędów. Narzędzia: `scripts/dev/find-admin-orphans.mjs`, `scripts/dev/find-orphan-tests.mjs`. Odwracalne przez git.
 
 **FAZA 4 — Luki produktowe (równolegle, większy strumień)**
 PROD-1 (KPI/OKR), PROD-2 (Benefits). Domykają personę CFO.
