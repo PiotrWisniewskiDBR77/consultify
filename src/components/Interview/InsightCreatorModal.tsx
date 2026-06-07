@@ -1760,13 +1760,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           {isPolish ? 'Typ wyniku' : 'Output type'} *
         </label>
         <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-auto pr-1">
+          <div className="max-h-52 space-y-1.5 overflow-auto pr-1">
             {ANALYSIS_TYPES.map((type) => {
               const isSelected = selectedTypes.includes(type.id);
               return (
                 <label
                   key={type.id}
-                  className={`relative flex cursor-pointer flex-col gap-2 rounded-xl border p-3 transition-all ${
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
                     isSelected
                       ? 'border-primary-500/60 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/15'
                       : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700/60 dark:bg-navy-800/40 dark:hover:border-white/[0.16]'
@@ -1778,25 +1778,23 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     onChange={() => toggleAnalysisType(type.id)}
                     className="sr-only"
                   />
-                  <div className="flex items-start justify-between gap-2">
-                    <div
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${getColorClasses(
-                        type.color,
-                        'bg'
-                      )} ${getColorClasses(type.color, 'text')}`}
-                    >
-                      {type.icon}
-                    </div>
-                    <StyledCheck checked={isSelected} />
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getColorClasses(
+                      type.color,
+                      'bg'
+                    )} ${getColorClasses(type.color, 'text')}`}
+                  >
+                    {type.icon}
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {isPolish ? type.namePl : type.name}
                     </div>
-                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                       {isPolish ? type.descriptionPl : type.description}
                     </p>
                   </div>
+                  <StyledCheck checked={isSelected} />
                 </label>
               );
             })}
