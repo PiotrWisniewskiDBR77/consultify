@@ -74,14 +74,20 @@ const isHighImpact = (impact?: AcceptedItem['impact']): boolean =>
  * Bucket one item into a wave via impact×effort:
  *  - high-impact + low-effort (S)           → Now   (quick win)
  *  - high-impact + high-effort, or medium   → Next
- *  - everything else                        → Later
+ *  - UNSIZED (no impact yet — sized later in the Charter) → Next (plan it, size it there)
+ *  - explicitly low-impact                  → Later
+ *
+ * NOTE: at the proposal stage candidates are not yet sized (impact/effort are set in
+ * the Charter), so treating "unsized" as Later would dump everything into Later. We
+ * default unsized items to Next so the wave view stays meaningful pre-sizing.
  */
 const bucketOf = (item: AcceptedItem): WaveId => {
   if (isHighImpact(item.impact)) {
     return item.effort === 'S' ? 'now' : 'next';
   }
   if (item.impact === 'medium') return 'next';
-  return 'later';
+  if (item.impact === undefined) return 'next'; // unsized → plan Next, size in Charter
+  return 'later'; // explicitly low impact
 };
 
 export const InitiativeCoverageWaveView: React.FC<InitiativeCoverageWaveViewProps> = ({
