@@ -59,6 +59,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
@@ -630,15 +631,29 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'mental-models', icon: Brain, label: { en: 'Mental Models', pl: 'Modele myślowe' } },
   { id: 'moments', icon: Quote, label: { en: 'Moments', pl: 'Momenty' } },
   { id: 'quote-bank', icon: Quote, label: { en: 'Quote Bank', pl: 'Bank cytatów' }, cSpan: 2 },
-  { id: 'stakeholder-map', icon: Users, label: { en: 'Stakeholder Map', pl: 'Mapa interesariuszy' }, cSpan: 2 },
-  { id: 'source-credibility', icon: Eye, label: { en: 'Source Credibility', pl: 'Wiarygodność źródeł' } },
+  {
+    id: 'stakeholder-map',
+    icon: Users,
+    label: { en: 'Stakeholder Map', pl: 'Mapa interesariuszy' },
+    cSpan: 2,
+  },
+  {
+    id: 'source-credibility',
+    icon: Eye,
+    label: { en: 'Source Credibility', pl: 'Wiarygodność źródeł' },
+  },
   {
     id: 'consulting-narrative',
     icon: FileText,
     label: { en: 'Consulting Narrative', pl: 'Narracja konsultingowa' },
     cSpan: 3,
   },
-  { id: 'executive-memo', icon: Sparkles, label: { en: 'Executive Memo', pl: 'Memo zarządcze' }, cSpan: 2 },
+  {
+    id: 'executive-memo',
+    icon: Sparkles,
+    label: { en: 'Executive Memo', pl: 'Memo zarządcze' },
+    cSpan: 2,
+  },
 ];
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -781,6 +796,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   >([]);
   const [handoffInitiativesLoading, setHandoffInitiativesLoading] = useState(false);
   const [handoffTargetInitiativeId, setHandoffTargetInitiativeId] = useState('');
+  // Insight-level "Propose initiatives" → opens the initiative generator (reconciles
+  // AI/heuristic candidates from this insight against the live initiative grid).
+  const [genOpen, setGenOpen] = useState(false);
 
   // Lifecycle transition state
   const [lifecycleTransitioning, setLifecycleTransitioning] = useState(false);
@@ -1868,7 +1886,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             ? ({ ...prev, sectionCompletions: prevMap, section_completions: prevMap } as any)
             : prev
         );
-        toast.error(isPolish ? 'Nie udało się zapisać statusu sekcji' : 'Failed to save section status');
+        toast.error(
+          isPolish ? 'Nie udało się zapisać statusu sekcji' : 'Failed to save section status'
+        );
       }
     },
     [insight, sectionCompletions, isPolish]
@@ -6580,11 +6600,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     const dCard = 'rounded-lg border border-slate-200/60 dark:border-navy-700/50 px-3 py-2.5';
     const dTitle = 'text-sm font-medium text-slate-800 dark:text-slate-100';
     const dBody = 'text-xs text-slate-600 dark:text-slate-400 mt-0.5';
-    const dRegenCta = { label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' }, onClick: handleRegenerate };
+    const dRegenCta = {
+      label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' },
+      onClick: handleRegenerate,
+    };
 
     const dPatternItems = [
-      ...v6Themes.filter((t) => t.crossSessionPattern).map((t) => ({ t: t.title, d: t.description })),
-      ...v6Issues.filter((t) => t.crossSessionPattern).map((t) => ({ t: t.title, d: t.description })),
+      ...v6Themes
+        .filter((t) => t.crossSessionPattern)
+        .map((t) => ({ t: t.title, d: t.description })),
+      ...v6Issues
+        .filter((t) => t.crossSessionPattern)
+        .map((t) => ({ t: t.title, d: t.description })),
       ...v6Opportunities
         .filter((t) => t.crossSessionPattern)
         .map((t) => ({ t: t.title, d: t.description })),
@@ -7356,6 +7383,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             {isPolish ? 'Wyślij do wiadomości' : 'Submit for Information'}
           </Button>
 
+          {/* Insight → initiative generator (propose & reconcile against the grid) */}
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<Sparkles />}
+            disabled={!insight?.id}
+            onClick={() => setGenOpen(true)}
+          >
+            {isPolish ? 'Zaproponuj inicjatywy' : 'Propose initiatives'}
+          </Button>
+
           <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
 
           {/* #26 — Export ▾ : uniform outline dropdown (all secondary exports) */}
@@ -7514,7 +7552,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 ? 'border-success-400/50 text-success-600 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20'
                 : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60'
             }`}
-            title={isPolish ? 'Oznacz sekcję jako gotową (sygnał AI)' : 'Mark section complete (AI signal)'}
+            title={
+              isPolish
+                ? 'Oznacz sekcję jako gotową (sygnał AI)'
+                : 'Mark section complete (AI signal)'
+            }
           >
             <CheckCircle2 size={14} />
             {sectionCompletions[activeNSection]
@@ -7579,6 +7621,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         </div>
       )}
     >
+      {insight && (
+        <InitiativeGeneratorModal
+          isOpen={genOpen}
+          onClose={() => setGenOpen(false)}
+          source={{
+            label: insight.title,
+            content: insight.content,
+            sourceType: 'interview_insight',
+            sourceId: insight.id,
+          }}
+          isPolish={isPolish}
+          onCreated={() => setGenOpen(false)}
+        />
+      )}
+
       {handoffModalOpen && handoffFinding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
