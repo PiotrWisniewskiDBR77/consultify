@@ -1839,6 +1839,54 @@ export const InterviewHub: React.FC = () => {
     }
   }, [selectedTemplateIds, bulkActionBusy, isPolish, loadTemplates]);
 
+  const handleBulkArchiveTemplates = useCallback(async () => {
+    const ids = Array.from(selectedTemplateIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    setBulkActionBusy(true);
+    let done = 0;
+    for (const id of ids) {
+      try {
+        await Api.post(`/interview/templates/${id}/archive`, {});
+        done += 1;
+      } catch {
+        // tolerate per-item failures
+      }
+    }
+    setBulkActionBusy(false);
+    setSelectedTemplateIds(new Set());
+    if (done > 0) {
+      const templatesRes = await Api.get('/interview/templates').catch(() => []);
+      setTemplates((Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord));
+      toast.success(isPolish ? `Zarchiwizowano ${done} szablonów` : `${done} templates archived`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się zarchiwizować' : 'Failed to archive templates');
+    }
+  }, [selectedTemplateIds, bulkActionBusy, isPolish]);
+
+  const handleBulkRestoreTemplates = useCallback(async () => {
+    const ids = Array.from(selectedTemplateIds);
+    if (ids.length === 0 || bulkActionBusy) return;
+    setBulkActionBusy(true);
+    let done = 0;
+    for (const id of ids) {
+      try {
+        await Api.post(`/interview/templates/${id}/restore`, {});
+        done += 1;
+      } catch {
+        // tolerate per-item failures
+      }
+    }
+    setBulkActionBusy(false);
+    setSelectedTemplateIds(new Set());
+    if (done > 0) {
+      const templatesRes = await Api.get('/interview/templates').catch(() => []);
+      setTemplates((Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord));
+      toast.success(isPolish ? `Przywrócono ${done} szablonów` : `${done} templates restored`);
+    } else {
+      toast.error(isPolish ? 'Nie udało się przywrócić' : 'Failed to restore templates');
+    }
+  }, [selectedTemplateIds, bulkActionBusy, isPolish]);
+
   const handleBulkExportInsights = useCallback(() => {
     const ids = selectedInsightIds;
     if (ids.size === 0) return;
@@ -4241,6 +4289,7 @@ export const InterviewHub: React.FC = () => {
       ];
 
       if (selectedCount > 0) {
+        const isArchived = templateStatusFilter === 'archived';
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
@@ -4270,6 +4319,37 @@ export const InterviewHub: React.FC = () => {
                   )}
                   {isPolish ? 'Klonuj' : 'Clone'}
                 </button>
+                {canAssign && (
+                  isArchived ? (
+                    <button
+                      type="button"
+                      onClick={handleBulkRestoreTemplates}
+                      disabled={bulkActionBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {bulkActionBusy ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <RotateCcw size={14} />
+                      )}
+                      {isPolish ? 'Przywróć' : 'Restore'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleBulkArchiveTemplates}
+                      disabled={bulkActionBusy}
+                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {bulkActionBusy ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Archive size={14} />
+                      )}
+                      {isPolish ? 'Archiwizuj' : 'Archive'}
+                    </button>
+                  )
+                )}
               </div>
               <div className="shrink-0" />
             </div>

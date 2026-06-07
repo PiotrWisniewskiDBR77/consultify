@@ -122,6 +122,11 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   const actions = customActions ?? defaultActions;
   const hasMenu = actions.length > 0;
 
+  // Word count — only shown when there is content (canon §7.3)
+  const wordCount = resolvedText.trim()
+    ? resolvedText.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -129,6 +134,12 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
           {title ?? label ?? (isPolish ? 'Szczegóły' : 'Details')}
         </div>
 
+        <div className="flex items-center gap-2">
+          {wordCount > 0 ? (
+            <span className="text-[10px] text-slate-400 dark:text-slate-500" aria-label={`${wordCount} ${isPolish ? 'słów' : 'words'}`}>
+              ~{wordCount} {isPolish ? 'słów' : 'words'}
+            </span>
+          ) : null}
         {hasMenu ? (
           <div className="relative">
             <button
@@ -182,6 +193,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
             ) : null}
           </div>
         ) : null}
+        </div>
       </div>
 
       {loading ? (
