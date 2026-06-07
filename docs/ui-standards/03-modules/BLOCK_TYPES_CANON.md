@@ -598,6 +598,54 @@ Zero czerwonych przycisków. Zero gradientów. Jeden kolor AI — teal. Destrukt
 
 ---
 
+## Mark Complete — Standard (Warstwa 4 · SectionCard)
+
+> Obowiązuje identycznie dla InitiativeDocumentView i InsightViewer.
+
+### Stany karty
+
+| Stan | Znaczenie |
+|------|-----------|
+| **Open** (default) | AI może modyfikować sekcję podczas genesis i refresh |
+| **Complete** | Zatwierdzone przez człowieka — AI pomija przy każdym refresh/genesis |
+
+### Sygnały wizualne
+
+- **Lewy border karty:** `border-l-2 border-success-500` (HBS Green) — ten sam wzorzec co aktywna sekcja używa crimson
+- **Tło nagłówka karty:** `bg-success-50/40 dark:bg-success-900/10` — ledwo widoczne, nie przytłacza treści
+- **Przycisk:** `[✓ Mark Complete]` → `[↩ Reopen]` w `text-success-700`
+
+### Pola po Complete
+
+Pola pozostają **w pełni edytowalne.** Zero readonly, zero banerów ostrzegawczych.
+
+`Complete` = wyłącznie sygnał dla AI. AI sprawdza status karty przed każdą modyfikacją i pomija sekcje Complete. Użytkownik klika `[↩ Reopen]` gdy chce przywrócić AI-edycję.
+
+### Lewa nawigacja
+
+- `✓` przy nazwie sekcji (11px, `text-success-500`, prawa strona) — ikona sekcji bez zmian
+- **Pasek postępu** na górze panelu nawigacji:
+
+```
+8 / 23 complete
+●●●●●●●●○○○○○○○  ← 4px, success-500
+```
+
+### Persystencja
+
+Baza danych — nie localStorage. Lazy ALTER pattern (`DB_MANAGED_SCHEMA=off`):
+
+```sql
+ALTER TABLE insights    ADD COLUMN IF NOT EXISTS section_completions JSONB DEFAULT '{}';
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS section_completions JSONB DEFAULT '{}';
+```
+
+Format: `{ "themes": true, "issues-risks": true }` — mapa `section_id → boolean`.
+
+Rozszerzenie w przyszłości: osobna tabela `section_completion_log` z `completed_by` i `completed_at` gdy potrzebny audit trail.
+
+---
+
 ## Odniesienia
 
 - [Canon inicjatyw](./INITIATIVE_CANON.md) — mapowanie bloków do kart inicjatyw
