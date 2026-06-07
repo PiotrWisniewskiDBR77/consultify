@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
-import { StatusPill } from '@/components/shared/StatusPill';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { ColumnResizer } from '@/components/ui/ResizableTable';
 
 import { type RowAction, RowActionsMenu } from '../RowActionsMenu';
@@ -481,7 +481,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         {column.render ? (
                           column.render(row)
                         ) : column.id === 'status' ? (
-                          <StatusPill status={row.status} />
+                          <EntityStatusChip status={row.status} />
                         ) : column.id === 'progress' ? (
                           <ProgressBar progress={row.progress} />
                         ) : column.id === 'updatedAt' ? (

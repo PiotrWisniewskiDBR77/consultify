@@ -159,39 +159,32 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
     tone: r.tone ?? 'text-slate-600 dark:text-slate-300',
   }));
 
-  const actionRows: ActionRow[] = [
+  // NOTE: "Open" lives exclusively in PreviewPaneShell header (canon §7.3 anty-duplikacja).
+  const contextButtons = [
+    ...(canRunAi && onGenerateInsight
+      ? [
+          {
+            label: isPolish ? 'Generuj wnioski' : 'Generate insights',
+            icon: Sparkles,
+            onClick: () => onGenerateInsight('summary'),
+            colorScheme: 'neutral' as const,
+            shortcut: 'G',
+          },
+        ]
+      : []),
     {
-      buttons: [
-        {
-          label: isPolish ? 'Otwórz' : 'Open',
-          icon: ChevronRight,
-          onClick: onOpenFull,
-          colorScheme: 'primary',
-          shortcut: 'O',
-        },
-        ...(canRunAi && onGenerateInsight
-          ? [
-              {
-                label: isPolish ? 'Generuj wnioski' : 'Generate insights',
-                icon: Sparkles,
-                onClick: () => onGenerateInsight('summary'),
-                colorScheme: 'neutral' as const,
-                shortcut: 'G',
-              },
-            ]
-          : []),
-        {
-          label: isPolish ? 'Kopiuj ID' : 'Copy ID',
-          icon: Copy,
-          onClick: onCopyId,
-          colorScheme: 'neutral',
-        },
-      ],
+      label: isPolish ? 'Kopiuj ID' : 'Copy ID',
+      icon: Copy,
+      onClick: onCopyId,
+      colorScheme: 'neutral' as const,
     },
   ];
 
+  const actionRows: ActionRow[] = contextButtons.length > 0 ? [{ buttons: contextButtons }] : [];
+
   return (
-    <div className="space-y-0">
+    // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
+    <div className="space-y-2.5">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip
           hints={aiHints}
@@ -203,13 +196,9 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
         />
       </div>
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
       <PreviewRelations items={relationItems} />
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-      <PreviewActionBar rows={actionRows} />
+      {actionRows.length > 0 && <PreviewActionBar rows={actionRows} />}
     </div>
   );
 };

@@ -279,16 +279,13 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
   ];
 
   return (
-    <div className="space-y-0">
+    // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
+    <div className="space-y-2.5">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip hints={aiHints} onRunHint={onRunAiHint} />
       </div>
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
       <PreviewRelations items={relationItems} />
-
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
       <PreviewActionBar rows={actionRows} />
     </div>

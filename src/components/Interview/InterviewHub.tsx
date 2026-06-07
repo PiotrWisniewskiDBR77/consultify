@@ -32,7 +32,7 @@ import {
   Compass,
   Copy,
   Download,
-  Edit3,
+  Edit2,
   ExternalLink,
   Eye,
   FilePlus,
@@ -4559,7 +4559,7 @@ export const InterviewHub: React.FC = () => {
           id: 'draft',
           label: isPolish ? 'Szkice' : 'Drafts',
           count: interviewInitiativeStats.draft,
-          icon: Edit3,
+          icon: Edit2,
         },
         {
           id: 'pending_review',
@@ -5059,7 +5059,7 @@ export const InterviewHub: React.FC = () => {
                 </button>
               </th>
               <th
-                className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: sessionsColumnWidths.name }}
               >
                 {/* #10 — template filter lives on the Name header; assignee now
@@ -5094,7 +5094,7 @@ export const InterviewHub: React.FC = () => {
               </th>
               {!hiddenSet.has('assignee') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.assignee }}
                 >
                   {/* #9 — Assignee promoted from row sub-text to a first-class,
@@ -5127,7 +5127,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('status') && (
                 <th
-                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.status }}
                 >
                   <div className="flex items-center justify-start gap-1">
@@ -5166,7 +5166,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('progress') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.progress }}
                 >
                   {isPolish ? 'Postęp' : 'Progress'}
@@ -5175,7 +5175,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('due') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   style={{ width: sessionsColumnWidths.due }}
                   onClick={() => toggleSessionSort('due')}
                 >
@@ -5191,7 +5191,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('submitted') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   style={{ width: sessionsColumnWidths.submitted }}
                   onClick={() => toggleSessionSort('submitted')}
                 >
@@ -5207,7 +5207,7 @@ export const InterviewHub: React.FC = () => {
               )}
               {/* Overdue column merged into Due (DueChip) per canon §4.4 */}
               <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: sessionsColumnWidths.actions }}
               >
                 <div ref={sessionsViewSettingsRef} className="flex items-center justify-end">
@@ -5423,7 +5423,7 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('progress') && (
                     <td
-                      className="px-3 py-3 text-center align-middle"
+                      className="px-3 py-3 text-right align-middle"
                       style={{ width: sessionsColumnWidths.progress }}
                     >
                       <ProgressCell value={progress} />
@@ -5432,7 +5432,7 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('due') && (
                     <td
-                      className="px-3 py-3 text-center align-middle"
+                      className="px-3 py-3 text-left align-middle"
                       style={{ width: sessionsColumnWidths.due }}
                     >
                       {(() => {
@@ -5447,7 +5447,7 @@ export const InterviewHub: React.FC = () => {
                         const absDays = daysToDue != null ? Math.abs(daysToDue) : 0;
                         const dateLabel = new Date(session.dueAt).toLocaleDateString();
                         return (
-                          <div className="flex items-center justify-center">
+                          <div className="flex items-center">
                             <DueChip
                               label={
                                 overdue
@@ -5468,7 +5468,7 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('submitted') && (
                     <td
-                      className="px-3 py-3 text-center align-middle"
+                      className="px-3 py-3 text-left align-middle"
                       style={{ width: sessionsColumnWidths.submitted }}
                     >
                       {session.submittedAt ? (
@@ -5553,7 +5553,7 @@ export const InterviewHub: React.FC = () => {
                               {
                                 id: 'edit',
                                 label: isPolish ? 'Edytuj' : 'Edit',
-                                icon: Edit3,
+                                icon: Edit2,
                                 disabled: true,
                                 description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
                                 onClick: () => {},
@@ -6936,7 +6936,7 @@ export const InterviewHub: React.FC = () => {
                               {
                                 id: 'edit',
                                 label: isPolish ? 'Edytuj' : 'Edit',
-                                icon: Edit3,
+                                icon: Edit2,
                                 disabled: true,
                                 description: isPolish
                                   ? 'Wnioski AI — tylko do odczytu'
@@ -7200,7 +7200,7 @@ export const InterviewHub: React.FC = () => {
                 </button>
               </th>
               <th
-                className="px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header w-full"
+                className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header w-full"
                 style={{ width: templatesColumnWidths.name }}
               >
                 <div className="flex items-center gap-1">
@@ -7222,7 +7222,7 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('category') && (
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.category }}
                 >
                   <div className="flex items-center justify-start gap-1">
@@ -7262,7 +7262,7 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('questions') && (
                 <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.questions }}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -7286,7 +7286,7 @@ export const InterviewHub: React.FC = () => {
               {/* #16 — Usage count */}
               {!hiddenSet.has('usage') && (
                 <th
-                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.usage }}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -7307,26 +7307,26 @@ export const InterviewHub: React.FC = () => {
                 </th>
               )}
 
-              {/* #16 — AI quality score */}
+              {/* #16 — AI quality score (number → text-right) */}
               {!hiddenSet.has('quality') && (
                 <th
-                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.quality }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-end gap-1">
                     <span>{isPolish ? 'Jakość AI' : 'AI quality'}</span>
                   </div>
                   {renderTemplateResizer('quality')}
                 </th>
               )}
 
-              {/* #16 — Last used */}
+              {/* #16 — Last used (date → text-left) */}
               {!hiddenSet.has('lastUsed') && (
                 <th
-                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.lastUsed }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span
                       className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                       onClick={() => toggleTemplateSort('lastUsed')}
@@ -7346,7 +7346,7 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('status') && (
                 <th
-                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.status }}
                 >
                   <div className="flex items-center justify-start gap-1">
@@ -7385,7 +7385,7 @@ export const InterviewHub: React.FC = () => {
               )}
 
               <th
-                className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: templatesColumnWidths.actions }}
               >
                 <div ref={templatesViewSettingsRef} className="flex items-center justify-end">
@@ -7682,24 +7682,20 @@ export const InterviewHub: React.FC = () => {
                     </td>
                   )}
 
-                  {/* #16 — AI quality score. No backend field exists yet, so render
-                      an honest em-dash placeholder instead of a fabricated score.
-                      TODO(#16): backend field ai_quality_score on the template row. */}
+                  {/* #16 — AI quality score (number → text-right). No backend field yet. */}
                   {!hiddenSet.has('quality') && (
                     <td
-                      className="px-3 py-3 text-center text-sm"
+                      className="px-3 py-3 text-right text-sm"
                       style={{ width: templatesColumnWidths.quality }}
                     >
                       <span className="text-slate-400 dark:text-slate-500">—</span>
                     </td>
                   )}
 
-                  {/* #16 — Last used. No backend field exists yet (updatedAt is
-                      edit time, not last-used), so render an em-dash placeholder.
-                      TODO(#16): backend field last_used_at on the template row. */}
+                  {/* #16 — Last used (date → text-left). No backend field yet. */}
                   {!hiddenSet.has('lastUsed') && (
                     <td
-                      className="px-3 py-3 text-center text-sm"
+                      className="px-3 py-3 text-left text-sm"
                       style={{ width: templatesColumnWidths.lastUsed }}
                     >
                       <span className="text-slate-400 dark:text-slate-500">—</span>
@@ -7850,7 +7846,7 @@ export const InterviewHub: React.FC = () => {
                               {
                                 id: 'edit',
                                 label: isPolish ? 'Edytuj szablon' : 'Edit template',
-                                icon: Edit3,
+                                icon: Edit2,
                                 disabled: !canAssign,
                                 description: !canAssign
                                   ? isPolish
@@ -9269,7 +9265,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {!hiddenSet.has('progress') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   style={{ width: columnWidths.progress }}
                   onClick={() => toggleAssignmentSort('progress')}
                 >
@@ -9285,7 +9281,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {!hiddenSet.has('due') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   style={{ width: columnWidths.due }}
                   onClick={() => toggleAssignmentSort('dueAt')}
                 >
@@ -9301,7 +9297,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {showSubmittedColumn && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.submitted }}
                 >
                   {isPolish ? 'Przesłano' : 'Submitted'}
@@ -9310,7 +9306,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {showAiScoreColumn && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.aiScore }}
                 >
                   {isPolish ? 'Ocena AI' : 'AI Score'}
@@ -9319,7 +9315,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {showEscalationColumn && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.escalation }}
                 >
                   {isPolish ? 'Eskalacja' : 'Escalation'}
@@ -9633,7 +9629,7 @@ Return ONLY the answer text (no markdown fences).`;
                   )}
                   {!hiddenSet.has('progress') && (
                     <td
-                      className="px-4 py-3 text-center align-middle"
+                      className="px-4 py-3 text-right align-middle"
                       style={{ width: columnWidths.progress }}
                     >
                       <ProgressCell value={progress} />
@@ -9641,7 +9637,7 @@ Return ONLY the answer text (no markdown fences).`;
                   )}
                   {!hiddenSet.has('due') && (
                     <td
-                      className="px-4 py-3 text-center align-middle"
+                      className="px-4 py-3 text-left align-middle"
                       style={{ width: columnWidths.due }}
                     >
                       {(() => {
@@ -9649,7 +9645,7 @@ Return ONLY the answer text (no markdown fences).`;
                         if (!dtd) return <span className="text-xs text-c-text-muted">—</span>;
 
                         return (
-                          <div className="flex items-center justify-center">
+                          <div className="flex items-center">
                             <DueChip
                               label={dtd.label}
                               risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
@@ -9667,7 +9663,7 @@ Return ONLY the answer text (no markdown fences).`;
                   )}
                   {showSubmittedColumn && (
                     <td
-                      className="px-4 py-3 text-center align-middle"
+                      className="px-4 py-3 text-left align-middle"
                       style={{ width: columnWidths.submitted }}
                     >
                       {assignment.submittedAt ? (
@@ -9685,7 +9681,7 @@ Return ONLY the answer text (no markdown fences).`;
                   )}
                   {showAiScoreColumn && (
                     <td
-                      className="px-4 py-3 text-center align-middle"
+                      className="px-4 py-3 text-right align-middle"
                       style={{ width: columnWidths.aiScore }}
                     >
                       {(() => {
@@ -9714,7 +9710,7 @@ Return ONLY the answer text (no markdown fences).`;
                   )}
                   {showEscalationColumn && (
                     <td
-                      className="px-4 py-3 text-center align-middle"
+                      className="px-4 py-3 text-left align-middle"
                       style={{ width: columnWidths.escalation }}
                     >
                       {assignment.escalatedAt || assignment.escalationTarget ? (
@@ -9884,7 +9880,7 @@ Return ONLY the answer text (no markdown fences).`;
                               {
                                 id: 'edit',
                                 label: isPolish ? 'Edytuj' : 'Edit',
-                                icon: Edit3,
+                                icon: Edit2,
                                 // Contextual: manager edits via manage modal; assignee edits answers.
                                 onClick: () =>
                                   showAssignee
@@ -10956,7 +10952,7 @@ Return ONLY the answer text (no markdown fences).`;
                                       {
                                         id: 'edit',
                                         label: isPolish ? 'Edytuj' : 'Edit',
-                                        icon: Edit3,
+                                        icon: Edit2,
                                         disabled: true,
                                         description: isPolish
                                           ? 'Wkrótce (backend)'
@@ -11533,7 +11529,7 @@ Return ONLY the answer text (no markdown fences).`;
                                       {
                                         id: 'edit',
                                         label: isPolish ? 'Edytuj' : 'Edit',
-                                        icon: Edit3,
+                                        icon: Edit2,
                                         disabled: true,
                                         description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
                                         onClick: () => {},

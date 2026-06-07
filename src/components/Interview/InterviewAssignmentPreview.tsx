@@ -153,19 +153,14 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
     });
   }
 
-  buttons.push({
-    label: isPolish ? 'Otwórz' : 'Open',
-    icon: ChevronRight,
-    onClick: onOpenFull,
-    colorScheme: 'primary',
-    flex: true,
-    shortcut: 'O',
-  });
+  // NOTE: "Open" button lives exclusively in the PreviewPaneShell header (canon §7.3 anty-duplikacja).
+  // Do NOT add an extra Open button here.
 
-  const rows: ActionRow[] = [{ buttons }];
+  const rows: ActionRow[] = buttons.length > 0 ? [{ buttons }] : [];
 
   return (
-    <div className="space-y-0">
+    // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
+    <div className="space-y-2.5">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip
           hints={aiHints}
@@ -179,16 +174,12 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
         />
       </div>
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
       <PreviewRelations
         items={relationItems}
         emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
       />
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-      <PreviewActionBar rows={rows} />
+      {rows.length > 0 && <PreviewActionBar rows={rows} />}
     </div>
   );
 };
