@@ -861,6 +861,12 @@ export const InterviewHub: React.FC = () => {
   );
   const [isInitiativesViewSettingsOpen, setIsInitiativesViewSettingsOpen] = useState(false);
   const initiativesViewSettingsRef = useRef<HTMLDivElement | null>(null);
+  const initiativesViewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
+  const [initiativesViewSettingsPos, setInitiativesViewSettingsPos] = useState<{
+    top: number;
+    left: number;
+    maxH: number;
+  } | null>(null);
   const [showInterviewInitiativeWizard, setShowInterviewInitiativeWizard] = useState(false);
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
   // #6 — Inbox (my_assignments) own-work filter. Deliberately scoped to the
@@ -921,6 +927,7 @@ export const InterviewHub: React.FC = () => {
 
     const handlePointerDown = (event: PointerEvent) => {
       if (initiativesViewSettingsRef.current?.contains(event.target as Node)) return;
+      if (initiativesViewSettingsPanelRef.current?.contains(event.target as Node)) return;
       setIsInitiativesViewSettingsOpen(false);
     };
 
@@ -4425,8 +4432,6 @@ export const InterviewHub: React.FC = () => {
       const badgeBase = MENU_3_BADGE_BASE;
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
-      const bulkGhostPill =
-        'inline-flex h-8 items-center gap-1 rounded-full border border-slate-200/80 px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100/70 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'draft' | 'pending_review' | 'promoted';
@@ -4463,18 +4468,20 @@ export const InterviewHub: React.FC = () => {
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_RIGHT_CLASS}>
+              <div className={MENU_3_LEFT_CLASS}>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setSelectedInitiativeIds(new Set())}
-                  className={bulkGhostPill}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
+                  <X size={14} />
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
               </div>
+              <div className="shrink-0" />
             </div>
           </div>
         );
@@ -10375,7 +10382,7 @@ Return ONLY the answer text (no markdown fences).`;
                   </th>
                   {!hiddenSet.has('status') ? (
                     <th
-                      className="relative px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                      className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                       style={{ width: initiativesColumnWidths.status }}
                     >
                       {isPolish ? 'Status' : 'Status'}
@@ -10384,7 +10391,7 @@ Return ONLY the answer text (no markdown fences).`;
                   ) : null}
                   {!hiddenSet.has('priority') ? (
                     <th
-                      className="relative px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                      className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                       style={{ width: initiativesColumnWidths.priority }}
                     >
                       {isPolish ? 'Priorytet' : 'Priority'}
@@ -10393,7 +10400,7 @@ Return ONLY the answer text (no markdown fences).`;
                   ) : null}
                   {!hiddenSet.has('source') ? (
                     <th
-                      className="relative px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                      className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                       style={{ width: initiativesColumnWidths.source }}
                     >
                       {isPolish ? 'Źródło' : 'Source'}
@@ -10402,7 +10409,7 @@ Return ONLY the answer text (no markdown fences).`;
                   ) : null}
                   {!hiddenSet.has('date') ? (
                     <th
-                      className="relative px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                      className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                       style={{ width: initiativesColumnWidths.date }}
                     >
                       {isPolish ? 'Data' : 'Date'}
@@ -10418,6 +10425,17 @@ Return ONLY the answer text (no markdown fences).`;
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
+                          const r = event.currentTarget.getBoundingClientRect();
+                          const PANEL_W = 288;
+                          const left = Math.min(
+                            Math.max(8, Math.round(r.right - PANEL_W)),
+                            Math.round(window.innerWidth - PANEL_W - 8)
+                          );
+                          setInitiativesViewSettingsPos({
+                            top: Math.round(r.bottom + 8),
+                            left,
+                            maxH: Math.max(180, Math.round(window.innerHeight - r.bottom - 24)),
+                          });
                           setIsInitiativesViewSettingsOpen((open) => !open);
                         }}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
@@ -10427,91 +10445,106 @@ Return ONLY the answer text (no markdown fences).`;
                       >
                         <Settings2 size={15} />
                       </button>
-                      {isInitiativesViewSettingsOpen ? (
-                        <div
-                          className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className="px-2 pb-2 pt-1">
-                            <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                              {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                            </div>
-                            <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                              {isPolish ? 'Wybierz widoczne kolumny.' : 'Choose visible columns.'}
-                            </div>
-                          </div>
-                          <div className="space-y-0.5">
-                            {[
-                              { id: 'title', label: isPolish ? 'Inicjatywa' : 'Initiative' },
-                              { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                              { id: 'priority', label: isPolish ? 'Priorytet' : 'Priority' },
-                              { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
-                              { id: 'date', label: isPolish ? 'Data' : 'Date' },
-                              { id: 'actions', label: isPolish ? 'Akcje' : 'Actions' },
-                            ].map((column) => {
-                              const alwaysVisible =
-                                column.id === 'title' || column.id === 'actions';
-                              const checked = alwaysVisible ? true : !hiddenSet.has(column.id);
-                              return (
-                                <label
-                                  key={column.id}
-                                  className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                                    alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                                  }`}
-                                >
+                      {isInitiativesViewSettingsOpen && initiativesViewSettingsPos
+                        ? createPortal(
+                            <div
+                              ref={initiativesViewSettingsPanelRef}
+                              style={{
+                                position: 'fixed',
+                                top: initiativesViewSettingsPos.top,
+                                left: initiativesViewSettingsPos.left,
+                                maxHeight: initiativesViewSettingsPos.maxH,
+                              }}
+                              className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                              role="menu"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <div className="px-2 pb-2 pt-1">
+                                <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                                  {isPolish ? 'Ustawienia widoku' : 'View settings'}
+                                </div>
+                                <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                  {isPolish
+                                    ? 'Wybierz widoczne kolumny.'
+                                    : 'Choose visible columns.'}
+                                </div>
+                              </div>
+                              <div className="space-y-0.5">
+                                {[
+                                  { id: 'title', label: isPolish ? 'Inicjatywa' : 'Initiative' },
+                                  { id: 'status', label: isPolish ? 'Status' : 'Status' },
+                                  { id: 'priority', label: isPolish ? 'Priorytet' : 'Priority' },
+                                  { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
+                                  { id: 'date', label: isPolish ? 'Data' : 'Date' },
+                                  { id: 'actions', label: isPolish ? 'Akcje' : 'Actions' },
+                                ].map((column) => {
+                                  const alwaysVisible =
+                                    column.id === 'title' || column.id === 'actions';
+                                  const checked = alwaysVisible ? true : !hiddenSet.has(column.id);
+                                  return (
+                                    <label
+                                      key={column.id}
+                                      className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
+                                        alwaysVisible ? 'opacity-55' : 'cursor-pointer'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        disabled={alwaysVisible}
+                                        onChange={() => {
+                                          if (alwaysVisible) return;
+                                          setInitiativesHiddenColumns((prev) => {
+                                            const set = new Set(prev);
+                                            if (set.has(column.id)) set.delete(column.id);
+                                            else set.add(column.id);
+                                            const next = Array.from(set);
+                                            saveHiddenColumns(
+                                              INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY,
+                                              next
+                                            );
+                                            return next;
+                                          });
+                                        }}
+                                        className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                      />
+                                      <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                        {column.label}
+                                      </span>
+                                      {alwaysVisible ? (
+                                        <span className="text-[10px] font-medium text-slate-600">
+                                          {isPolish ? 'Wymagane' : 'Required'}
+                                        </span>
+                                      ) : null}
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                              <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
+                                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
                                   <input
                                     type="checkbox"
-                                    checked={checked}
-                                    disabled={alwaysVisible}
-                                    onChange={() => {
-                                      if (alwaysVisible) return;
-                                      setInitiativesHiddenColumns((prev) => {
-                                        const set = new Set(prev);
-                                        if (set.has(column.id)) set.delete(column.id);
-                                        else set.add(column.id);
-                                        const next = Array.from(set);
-                                        saveHiddenColumns(
-                                          INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY,
-                                          next
-                                        );
-                                        return next;
-                                      });
+                                    checked={showInitiativeRowDescription}
+                                    onChange={(event) => {
+                                      setShowInitiativeRowDescription(event.target.checked);
+                                      saveBooleanSetting(
+                                        INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY,
+                                        event.target.checked
+                                      );
                                     }}
                                     className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
                                   />
                                   <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                    {column.label}
+                                    {isPolish
+                                      ? 'Pokaż opis / uzasadnienie'
+                                      : 'Show row description'}
                                   </span>
-                                  {alwaysVisible ? (
-                                    <span className="text-[10px] font-medium text-slate-600">
-                                      {isPolish ? 'Wymagane' : 'Required'}
-                                    </span>
-                                  ) : null}
                                 </label>
-                              );
-                            })}
-                          </div>
-                          <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                            <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                              <input
-                                type="checkbox"
-                                checked={showInitiativeRowDescription}
-                                onChange={(event) => {
-                                  setShowInitiativeRowDescription(event.target.checked);
-                                  saveBooleanSetting(
-                                    INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY,
-                                    event.target.checked
-                                  );
-                                }}
-                                className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                              />
-                              <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                              </span>
-                            </label>
-                          </div>
-                        </div>
-                      ) : null}
+                              </div>
+                            </div>,
+                            document.body
+                          )
+                        : null}
                     </div>
                   </th>
                 </tr>
@@ -10574,11 +10607,7 @@ Return ONLY the answer text (no markdown fences).`;
                         className="px-3 py-3 align-middle"
                         style={{ width: initiativesColumnWidths.title }}
                       >
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <span
-                            className={`h-3 w-3 shrink-0 rounded-full shadow-[0_0_16px] ${meta.dotClass}`}
-                            aria-hidden="true"
-                          />
+                        <div className="flex min-w-0 items-center">
                           <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
                             {title}
                           </div>
@@ -10591,7 +10620,7 @@ Return ONLY the answer text (no markdown fences).`;
                       </td>
                       {!hiddenSet.has('status') ? (
                         <td
-                          className="px-3 py-3 text-center align-middle"
+                          className="px-3 py-3 text-left align-middle"
                           style={{ width: initiativesColumnWidths.status }}
                         >
                           <span
@@ -10607,7 +10636,7 @@ Return ONLY the answer text (no markdown fences).`;
                       ) : null}
                       {!hiddenSet.has('priority') ? (
                         <td
-                          className="px-3 py-3 text-center align-middle"
+                          className="px-3 py-3 text-left align-middle"
                           style={{ width: initiativesColumnWidths.priority }}
                         >
                           {initiative.priority ? (
@@ -10625,7 +10654,7 @@ Return ONLY the answer text (no markdown fences).`;
                       ) : null}
                       {!hiddenSet.has('source') ? (
                         <td
-                          className="px-3 py-3 text-center align-middle"
+                          className="px-3 py-3 text-left align-middle"
                           style={{ width: initiativesColumnWidths.source }}
                         >
                           {sourceInsight ? (
@@ -10647,7 +10676,7 @@ Return ONLY the answer text (no markdown fences).`;
                       ) : null}
                       {!hiddenSet.has('date') ? (
                         <td
-                          className="px-3 py-3 text-center align-middle text-[11px] font-medium text-slate-500 dark:text-slate-500"
+                          className="px-3 py-3 text-left align-middle text-[11px] font-medium text-slate-500 dark:text-slate-500"
                           style={{ width: initiativesColumnWidths.date }}
                         >
                           {initiative.updatedAt || initiative.createdAt
@@ -10665,61 +10694,76 @@ Return ONLY the answer text (no markdown fences).`;
                         <RowActionsMenu
                           iconVariant="vertical"
                           className="opacity-40 transition-opacity group-hover:opacity-100"
-                          actions={[
+                          sections={[
+                            // GÓRA — kontekstowe (przejścia statusu wg etapu)
                             {
-                              id: 'open',
-                              label: isPolish ? 'Otwórz kartę' : 'Open record',
-                              icon: ExternalLink,
-                              onClick: () =>
-                                navigate(
-                                  `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                                ),
+                              id: 'context',
+                              kind: 'context' as const,
+                              actions: [
+                                ...(status === 'DRAFT'
+                                  ? [
+                                      {
+                                        id: 'send-to-review',
+                                        label: isPolish ? 'Wyślij do przeglądu' : 'Send to review',
+                                        icon: ArrowRight,
+                                        onClick: () =>
+                                          void handleUpdateInterviewInitiativeStatus(
+                                            initiative.id,
+                                            'PENDING_REVIEW'
+                                          ),
+                                      },
+                                    ]
+                                  : []),
+                                ...(status === 'PENDING_REVIEW'
+                                  ? [
+                                      ...(canReviewInsights
+                                        ? [
+                                            {
+                                              id: 'approve-to-initiatives',
+                                              label: isPolish
+                                                ? 'Zatwierdź i przekaż dalej'
+                                                : 'Approve and move forward',
+                                              icon: Rocket,
+                                              onClick: () =>
+                                                void handleUpdateInterviewInitiativeStatus(
+                                                  initiative.id,
+                                                  'REVIEW',
+                                                  { openInInitiatives: true }
+                                                ),
+                                            },
+                                          ]
+                                        : []),
+                                      {
+                                        id: 'back-to-draft',
+                                        label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
+                                        icon: RotateCcw,
+                                        onClick: () =>
+                                          void handleUpdateInterviewInitiativeStatus(
+                                            initiative.id,
+                                            'DRAFT'
+                                          ),
+                                      },
+                                    ]
+                                  : []),
+                              ],
                             },
-                            ...(status === 'DRAFT'
-                              ? [
-                                  {
-                                    id: 'send-to-review',
-                                    label: isPolish ? 'Wyślij do przeglądu' : 'Send to review',
-                                    icon: ArrowRight,
-                                    onClick: () =>
-                                      void handleUpdateInterviewInitiativeStatus(
-                                        initiative.id,
-                                        'PENDING_REVIEW'
-                                      ),
-                                  },
-                                ]
-                              : []),
-                            ...(status === 'PENDING_REVIEW'
-                              ? [
-                                  ...(canReviewInsights
-                                    ? [
-                                        {
-                                          id: 'approve-to-initiatives',
-                                          label: isPolish
-                                            ? 'Zatwierdź i przekaż dalej'
-                                            : 'Approve and move forward',
-                                          icon: Rocket,
-                                          onClick: () =>
-                                            void handleUpdateInterviewInitiativeStatus(
-                                              initiative.id,
-                                              'REVIEW',
-                                              { openInInitiatives: true }
-                                            ),
-                                        },
-                                      ]
-                                    : []),
-                                  {
-                                    id: 'back-to-draft',
-                                    label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
-                                    icon: RotateCcw,
-                                    onClick: () =>
-                                      void handleUpdateInterviewInitiativeStatus(
-                                        initiative.id,
-                                        'DRAFT'
-                                      ),
-                                  },
-                                ]
-                              : []),
+                            // DÓŁ — stały: Open. (Inicjatywy nie mają tu Edytuj/Archiwizuj/Delay
+                            // ani Usuń — brak endpointu; lifecycle = backlog B-1.)
+                            {
+                              id: 'fixed',
+                              kind: 'manage' as const,
+                              actions: [
+                                {
+                                  id: 'open',
+                                  label: isPolish ? 'Otwórz kartę' : 'Open record',
+                                  icon: ChevronRight,
+                                  onClick: () =>
+                                    navigate(
+                                      `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                    ),
+                                },
+                              ],
+                            },
                           ]}
                         />
                       </td>
