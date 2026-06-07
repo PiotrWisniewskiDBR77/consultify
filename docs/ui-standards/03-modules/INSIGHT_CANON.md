@@ -147,35 +147,57 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 ## Grupy nawigacyjne
 
-| Grupa | Sekcje |
-|-------|--------|
-| *(bez nagłówka — top)* | Next Actions, Executive Summary, Consulting Readout, Themes, Issues & Risks, Opportunities |
-| **Między wierszami** | People, Signals, Analysis Matrix, Consensus & Divergence, Implicit Assumptions, Silences, Quote Comparison, Sentiment & Tone, Power Dynamics, Hypothesis Board |
-| **Dowody** | Evidence Map, Findings & Evidence, Sources |
-| **Dostarczane** | Report Pack |
-| **Audyt** | Quality & Trust, Comments, Activity Log |
+| Grupa | Sekcje (23 karty) |
+|-------|------------------|
+| **Synthesis** | Executive Summary, Consulting Readout, Recommendations |
+| **Findings** | Themes, Issues & Risks, Opportunities, Benchmarks |
+| **Deep Reading** | Perspectives, Consensus & Divergence, Signals, Implicit Assumptions, Silences, Sentiment & Tone, Power Dynamics, Hypothesis Board |
+| **Evidence** | Quote Bank, Evidence Map, Analysis Matrix |
+| **Sources** | Source Pack |
+| **Deliverables** | Report Pack |
+| **Audit** | Quality & Trust, Comments, Activity Log |
 
 ---
 
-## Sekcje — Kontrakty
+## Szablon kontraktu karty (11 pól)
 
-### TOP (bez grupy)
+| # | Pole | Opis |
+|---|------|------|
+| 1 | **Historia / pytanie** | Jedno zdanie: jakie pytanie ta karta odpowiada |
+| 2 | **Bloki treści** | Lista nazwanych sub-bloków z typem UI każdego |
+| 3 | **Źródło danych** | Transkrypty sesji · AI analysis · powiązane encje · ręczne |
+| 4 | **AI Genesis** | Co ★ AI wypełnia + **Trigger**: tworzenie / nowa sesja / na żądanie |
+| 5 | **AI Consultant** | Co robi `⚡ AI Consultant ▾` dla tej karty + menu akcji |
+| 6 | **Wymóg dowodu** | Czy i jakie cytaty są wymagane per blok (specyficzne dla insightów) |
+| 7 | **Pusty stan** | Komunikat + CTA gdy karta nie ma danych |
+| 8 | **Widoczność domyślna** | ✅ domyślnie widoczna / ❌ ukryta w `≡ Sections ▾` |
+| 9 | **Mark Complete** | Kryterium akceptacji — co musi być prawdą |
+| 10 | **Eksport** | Jak karta renderuje się w eksportowanym raporcie |
+| 11 | **Layout** | cSpan · Badge · cHidden |
 
 ---
 
-#### `artifact-actions` — Next Actions / Dalsze akcje ★
+## Sekcje — Kontrakty (23 karty)
+
+### SYNTHESIS
+
+---
+
+#### `recommendations` — Recommendations / Rekomendacje ★
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Co robimy z tym odkryciem — jakie są konkretne, przypisane następne kroki?" |
-| **Typ treści** | Action cards: treść akcji + owner + priorytet (High/Medium/Low) + link do powiązanej inicjatywy + status (Open/Done) |
-| **Źródło (auto-load)** | AI genesis z wniosków executive summary i consulting readout |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Zawsze; AI genesis proponuje 3–5 akcji |
-| **Pusty stan** | "Brak rekomendowanych działań. Dodaj ręcznie lub wygeneruj z AI." |
-| **AI sekcji (✨)** | Wygeneruj listę konkretnych rekomendacji z właścicielami i priorytetem na podstawie wniosków insightu. |
+| **Historia / pytanie** | "Co konkretnie robimy z tym odkryciem — przypisane, priorytetowe działania?" |
+| **Bloki treści** | **Priority Actions** — karty: akcja (czasownik + obiekt) + owner + priorytet High/Med/Low + link do inicjatywy + status Open/Done · **Strategic Implications** — lista: implikacja + horyzont Short/Med/Long term · **Quick Wins** — lista: działanie + effort Low/Med/High + impact + realizowalne w < 30 dni |
+| **Źródło danych** | AI genesis z Consulting Readout + wnioski analizy tematycznej |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja. Generuje Priority Actions i Quick Wins. Strategic Implications wymaga weryfikacji ludzkiej. |
+| **AI Consultant** | "Każda rekomendacja: konkretna akcja (czasownik + obiekt), nie kierunek. Owner: konkretna rola. Quick Wins: realizowalne w < 30 dni." Menu: Wygeneruj rekomendacje · Priorytetyzuj · Utwórz inicjatywy · Kontynuuj |
+| **Wymóg dowodu** | Priority Actions nie wymagają cytatu — są normative. Strategic Implications mogą linkować do Findings per temat. |
+| **Pusty stan** | "Insight bez rekomendacji to obserwacja, nie konsulting. Wygeneruj z AI lub dodaj ręcznie." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Priority Actions mają ownerów i statusy. Quick Wins zidentyfikowane. Strategic Implications zatwierdzone przez PM. |
+| **Eksport** | Sekcja "Recommendations". Priority Actions jako numbered list. Quick Wins jako callout/sidebar. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -183,15 +205,17 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jedno zdanie dla C-suite: co odkryliśmy i co z tym zrobić?" |
-| **Typ treści** | Prose: headline (1 zdanie) + 3 bullet points (kluczowe wnioski) + rekomendacja (1 zdanie) |
-| **Źródło (auto-load)** | AI genesis z transkryptów sesji + tematu insightu |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Zawsze; AI genesis wypełnia w całości |
-| **Pusty stan** | "Brak podsumowania. Wygeneruj z AI lub wpisz ręcznie." |
-| **AI sekcji (✨)** | Przepisz executive summary w formacie: Stwierdzenie → 3 dowody → Implikacja. Max 150 słów. |
+| **Historia / pytanie** | "Jedno zdanie dla C-suite: co odkryliśmy i jakie ma to implikacje?" |
+| **Bloki treści** | **Headline** — 1 zdanie: najważniejsze odkrycie (twierdzenie, nie opis) · **Key Findings** — 3 bullet points (każdy max 20 słów) · **Implication** — 1 zdanie: co to oznacza dla organizacji · **Call to Action** — 1 zdanie: co należy zrobić najpierw |
+| **Źródło danych** | AI genesis z Consulting Readout + pełna analiza sesji |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja (refresh). Syntezuje z Consulting Readout i Themes. |
+| **AI Consultant** | "Headline musi być insightful, nie opisowy. Każde zdanie wnosi nową informację. Styl BCG one-pager." Menu: Przepisz · Skróć · Zaostrz tezę · Kontynuuj |
+| **Wymóg dowodu** | Brak bezpośrednich cytatów — to synteza. Każde twierdzenie musi być poparte w Consulting Readout. |
+| **Pusty stan** | "Wygeneruj Executive Summary z AI po dodaniu sesji źródłowych." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Wszystkie 4 bloki wypełnione. Headline to twierdzenie, nie opis. Zaakceptowane przez senior consultanta. |
+| **Eksport** | Strona 1 raportu. Bold header. Standalone — działa bez reszty dokumentu. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -199,15 +223,21 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Pełna narracja konsultingowa — co odkryliśmy, dlaczego to ważne i jakie są implikacje?" |
-| **Typ treści** | Rich prose sections (McKinsey pyramid): Situation → Complication → Resolution → Recommendation; każda z cytatami dowodowymi |
-| **Źródło (auto-load)** | AI genesis z pełnych transkryptów sesji |
-| **cSpan** | 3 (pełna szerokość) |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Zawsze; AI genesis wypełnia pełny readout |
-| **Pusty stan** | "Brak readoutu. Wygeneruj pełną analizę konsultingową z AI." |
-| **AI sekcji (✨)** | Przepisz readout używając struktury piramidy McKinsey'a (SCQR). Utrzymaj styl CEO-ready: precyzja, implikacje, brak hedgingu. |
+| **Historia / pytanie** | "Pełna narracja konsultingowa — kompletna historia odkryć dla klienta" |
+| **Bloki treści** | **Situation** — prose: kontekst i tło (co wiemy przed badaniem) · **Complication** — prose: co odkryliśmy co zmienia obraz (kluczowe napięcie) · **Resolution** — prose: jak rozumiemy tę komplikację (interpretacja) · **Recommendation** — prose: co zalecamy i dlaczego (z uzasadnieniem) |
+| **Źródło danych** | Transkrypty sesji — pełna analiza AI |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja. Struktura SCQR. Input: pełne transkrypty + tematy + wnioski. |
+| **AI Consultant** | "Complication musi zaskakiwać — to odkrycie, nie lista tematów. Styl: CEO-ready, zero hedgingu." Menu: Przepisz SCQR · Zaostrz Complication · Dodaj dowody · Kontynuuj |
+| **Wymóg dowodu** | Każda sekcja zawiera 1–2 cytaty inline (kursywą, max 30 słów, atrybucja roli bez imienia). |
+| **Pusty stan** | "Dodaj sesje źródłowe — AI wygeneruje pełny readout." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Wszystkie 4 sekcje wypełnione. Complication jest konkretnym odkryciem. Zaakceptowane przez klienta lub PM. |
+| **Eksport** | Główna sekcja raportu. Full width. Każda sekcja SCQR jako akapit z nagłówkiem. |
+| **Layout** | cSpan: 3 · Badge: — · cHidden: nigdy |
+
+---
+
+### FINDINGS
 
 ---
 
@@ -216,14 +246,16 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 | Pole | Wartość |
 |------|---------|
 | **Historia / pytanie** | "Jakie powtarzające się wzorce i tematy wyłoniły się z wywiadów?" |
-| **Typ treści** | Theme cards: nazwa tematu + definicja (1 zdanie) + częstość (ile sesji/respondentów) + reprezentatywny cytat |
-| **Źródło (auto-load)** | AI thematic analysis z transkryptów |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI; genesis proponuje tematy |
-| **Pusty stan** | "Brak tematów. Uruchom analizę AI lub dodaj ręcznie." |
-| **AI sekcji (✨)** | Wyodrębnij tematy z transkryptów. Granularność: 5–10 tematów. Każdy z definicją i dowodem w postaci cytatu. |
+| **Bloki treści** | **Theme cards** — każda: nazwa tematu + definicja (1 zdanie odróżniające od innych tematów) + częstość (ile sesji / ile respondentów) + siła (Strong/Moderate/Emerging) + reprezentatywny cytat (max 40 słów) |
+| **Źródło danych** | Transkrypty sesji — AI thematic analysis |
+| **AI Genesis** | ★ Trigger: tworzenie + każda nowa sesja (merge/update). 5–10 tematów, granularność dopasowana do liczby sesji. |
+| **AI Consultant** | "Granularność: 5–10 tematów. Każdy: unikalny, z definicją która odróżnia go od pozostałych. Sortuj po sile." Menu: Wyodrębnij · Zmień granularność · Scal podobne · Kontynuuj |
+| **Wymóg dowodu** | Każdy temat: reprezentatywny cytat + sesja + rola. Opcjonalnie 2–3 dodatkowe cytaty per temat. |
+| **Pusty stan** | "Dodaj sesje — AI wyodrębni tematy z transkryptów." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | 5–10 tematów. Każdy z definicją i cytatem. Zatwierdzone przez lead researcher. |
+| **Eksport** | Lista tematów z definicjami i cytatami. Opcjonalnie word cloud. |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -232,14 +264,16 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 | Pole | Wartość |
 |------|---------|
 | **Historia / pytanie** | "Jakie problemy, bariery i zagrożenia zidentyfikowali respondenci?" |
-| **Typ treści** | Issue/risk cards: opis + dotkliwość (Critical/High/Medium/Low) + częstość (ile sesji) + reprezentatywny cytat |
-| **Źródło (auto-load)** | AI analysis — poszukuje negatywnych sygnałów, barier, problemów |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
-| **Pusty stan** | "Brak zidentyfikowanych problemów lub ryzyk." |
-| **AI sekcji (✨)** | Zidentyfikuj i zaklasyfikuj problemy i ryzyka według dotkliwości. Każde z cytatem potwierdzającym. |
+| **Bloki treści** | **Issues** — karty: opis + dotkliwość (Critical/High/Med/Low) + częstość (ile sesji) + kategoria + cytat · **Risks** — karty: zagrożenie + prawdopodobieństwo + potencjalny wpływ + cytat |
+| **Źródło danych** | Transkrypty sesji — AI negative signal detection |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja. Poszukuje barier, skarg, ostrzeżeń, negatywnych sygnałów. |
+| **AI Consultant** | "Odróżnij: Issue = problem teraz, Risk = potencjalny. Critical issues: ≥ 2 niezależne cytaty z różnych sesji." Menu: Wyodrębnij · Klasyfikuj dotkliwość · Kontynuuj |
+| **Wymóg dowodu** | Każdy issue/risk: cytat + rola. Critical: min 2 niezależne cytaty z różnych sesji. |
+| **Pusty stan** | "Brak zidentyfikowanych problemów i ryzyk." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Issues i Risks posortowane po dotkliwości. Każdy Critical ma ≥ 2 cytaty. |
+| **Eksport** | Dwie tabele (Issues / Risks) z klasyfikacją. Critical wyróżnione. |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -247,67 +281,57 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Co rozmówcy widzą jako szansę, potencjał lub możliwość poprawy?" |
-| **Typ treści** | Opportunity cards: opis + potencjalny wpływ (High/Medium/Low) + częstość + cytat + link "Create Initiative" |
-| **Źródło (auto-load)** | AI analysis — poszukuje pozytywnych sygnałów, aspiracji, sugestii |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
+| **Historia / pytanie** | "Co respondenci widzą jako szansę, potencjał lub możliwość poprawy?" |
+| **Bloki treści** | **Opportunity cards** — każda: opis + potencjalny wpływ High/Med/Low + częstość + kategoria + cytat + [→ Utwórz inicjatywę] |
+| **Źródło danych** | Transkrypty sesji — AI positive signal detection |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja. Poszukuje aspiracji, sugestii, pozytywnych sygnałów. |
+| **AI Consultant** | "Priorytetyzuj po impact × frequency. Każda szansa actionable — link do możliwej inicjatywy." Menu: Wyodrębnij · Priorytetyzuj · Utwórz inicjatywy · Kontynuuj |
+| **Wymóg dowodu** | Każda szansa: cytat. High impact: min 2 cytaty z różnych sesji lub ról. |
 | **Pusty stan** | "Brak zidentyfikowanych szans." |
-| **AI sekcji (✨)** | Wyodrębnij szanse i oceń potencjalny wpływ. Priorytetyzuj według częstości pojawiania się. |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Opportunities posortowane po impact. High impact mają ≥ 2 cytaty. |
+| **Eksport** | Lista szans z priorytetem i cytatami. Top 3 jako callout. |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
-### MIĘDZY WIERSZAMI
-
----
-
-#### `people` — People / Perspektywy ★
+#### `benchmarks` — Benchmarks / Punkty odniesienia
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jak różne osoby i role widzą ten temat — kto mówi co i z jakim nastawieniem?" |
-| **Typ treści** | Person perspective cards: rola/stanowisko + główna teza (1 zdanie) + kluczowy cytat + sentyment (Positive/Neutral/Negative/Mixed) |
-| **Źródło (auto-load)** | AI per-respondent analysis z transkryptów |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
-| **Pusty stan** | "Brak perspektyw per osoba. Uruchom analizę AI." |
-| **AI sekcji (✨)** | Wyodrębnij perspektywę każdej osoby/roli. Szukaj unikalnych punktów widzenia, nie tylko konsensusu. |
+| **Historia / pytanie** | "Jak wyniki i obserwacje mają się do standardów branżowych i best practices?" |
+| **Bloki treści** | **Benchmark comparisons** — każda: obszar + wynik organizacji + benchmark (wartość + źródło) + gap (Positive/Negative/Neutral) + implikacja · **Industry Context** — prose: krótki opis kontekstu branżowego dla tych danych |
+| **Źródło danych** | Zewnętrzne dane benchmarkowe (ręczne) + AI knowledge base; plan pochodzi z zakresu insightu |
+| **AI Genesis** | Nie wypełnia — wymaga danych zewnętrznych. AI może sugerować relevantne benchmarki do zbadania. |
+| **AI Consultant** | "Zaproponuj benchmarki relevantne dla tej branży i tematu. Każdy z wiarygodnym źródłem. Gap: co konkretnie oznacza dla organizacji?" Menu: Zaproponuj benchmarki · Oceń gap · Kontynuuj |
+| **Wymóg dowodu** | Każdy benchmark wymaga źródła (raport/badanie/standard). Nie może być "wg AI" bez cytowania publikacji. |
+| **Pusty stan** | "Brak benchmarków. Dodaj punkty odniesienia żeby pokazać klientowi gdzie stoi na tle branży." |
+| **Widoczność domyślna** | ❌ Ukryta domyślnie |
+| **Mark Complete** | Każdy benchmark ma wiarygodne źródło. Gap zinterpretowany. Zaakceptowane przez lead. |
+| **Eksport** | Tabela benchmarków z gap analysis. Wywołanie w Executive Summary jeśli istotne. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: nigdy |
 
 ---
 
-#### `signals` — Signals / Sygnały
-
-| Pole | Wartość |
-|------|---------|
-| **Historia / pytanie** | "Jakie słabe sygnały, wczesne ostrzeżenia i wschodzące wzorce wychwycono między wierszami?" |
-| **Typ treści** | Signal cards: opis sygnału + siła (Strong/Moderate/Weak) + kontekst + zdanie o implikacji |
-| **Źródło (auto-load)** | AI deep-reading — poszukuje anomalii, zmian tonu, marginalnych komentarzy |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
-| **Pusty stan** | "Brak słabych sygnałów." |
-| **AI sekcji (✨)** | Przeskanuj transkrypty pod kątem słabych sygnałów i wschodzących wzorców. Uwzględnij zmiany tonu i tematy marginalne. |
+### DEEP READING
 
 ---
 
-#### `analysis-matrix` — Analysis Matrix / Macierz Analizy ★
+#### `perspectives` — Perspectives / Perspektywy ★
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jak tematy rozkładają się między rozmówcami, sesjami i rolami?" |
-| **Typ treści** | Matrix table: wiersze = tematy, kolumny = respondenci/role, komórki = obecność + sentyment (ikona) |
-| **Źródło (auto-load)** | AI matrix build z tematów × respondentów |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po ekstrakcji tematów i analizie per-osoba |
-| **Pusty stan** | "Macierz wymaga najpierw analizy tematów i perspektyw." |
-| **AI sekcji (✨)** | Odbuduj macierz na bieżącym zestawie tematów. Aktualizuj po każdej nowej sesji. |
+| **Historia / pytanie** | "Jak różne osoby i role widzą ten temat — kto mówi co, z jakim nastawieniem i jak spójnie?" |
+| **Bloki treści** | **Perspective cards** — każda: rola/stanowisko + główna teza (1 zdanie) + kluczowy cytat + sentyment (Positive/Neutral/Negative/Mixed) + **spójność wewnętrzna** (Consistent / Minor contradictions / Significant contradictions) + kontrastujące cytaty jeśli contradictions |
+| **Źródło danych** | Transkrypty sesji — AI per-respondent analysis |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja. Per respondent: teza, sentyment, sprawdzenie wewnętrznej spójności wypowiedzi w całej sesji. |
+| **AI Consultant** | "Szukaj unikalnych punktów widzenia. Spójność: zestawiaj wypowiedzi tej samej osoby z różnych części sesji." Menu: Analizuj perspektywy · Sprawdź spójność · Kontynuuj |
+| **Wymóg dowodu** | Każda karta: kluczowy cytat. Jeśli contradictions: dwa kontrastujące cytaty z tej samej sesji i osoby. |
+| **Pusty stan** | "Dodaj sesje — AI wyodrębni perspektywy respondentów." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Karta per unikalną rolę/grupę. Każda z cytatem i oceną spójności. Contradictions opisane. |
+| **Eksport** | Tabela perspektyw z sentimentem i spójnością. Contradictions wyróżnione. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -315,15 +339,35 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "W czym rozmówcy są zgodni, a gdzie ich opinie się rozchodzą — co jest sporne?" |
-| **Typ treści** | Split view: lewa kolumna = lista konsensusów (każdy z cytatami), prawa kolumna = lista rozbieżności (każda z kontrastującymi cytatami) |
-| **Źródło (auto-load)** | AI consensus/divergence analysis |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
-| **Pusty stan** | "Brak analizy zgodności i rozbieżności." |
-| **AI sekcji (✨)** | Zidentyfikuj tematy konsensusu i rozbieżności. Dla każdej rozbieżności: pokaż kontrastujące cytaty. |
+| **Historia / pytanie** | "W czym respondenci są zgodni, a gdzie ich opinie się rozchodzą — co jest sporne?" |
+| **Bloki treści** | **Consensus** — lista: temat + stopień zgody + cytaty z min 2 różnych ról · **Divergence** — lista: temat sporu + dwa kontrastujące stanowiska + cytat z każdego stanowiska + hipoteza dlaczego rozbieżność (rola/interes/doświadczenie) |
+| **Źródło danych** | Transkrypty sesji — AI cross-respondent analysis |
+| **AI Genesis** | ★ Trigger: ≥ 2 sesje. Porównuje stanowiska per temat między respondentami. |
+| **AI Consultant** | "Divergence ważniejsza niż Consensus. Dla każdej rozbieżności: hipoteza dlaczego — co wyjaśnia ten podział?" Menu: Znajdź rozbieżności · Zaktualizuj · Kontynuuj |
+| **Wymóg dowodu** | Consensus: ≥ 2 cytaty z różnych ról. Divergence: po 1 cytacie z każdego stanowiska. |
+| **Pusty stan** | "Potrzebne ≥ 2 sesje żeby znaleźć wzorce zgody i rozbieżności." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Analiza z ≥ 3 sesji. Każda rozbieżność z hipotezą przyczyny. |
+| **Eksport** | Dwie kolumny (Consensus / Divergence) z cytatami. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: gdy < 2 sesje |
+
+---
+
+#### `signals` — Signals / Sygnały
+
+| Pole | Wartość |
+|------|---------|
+| **Historia / pytanie** | "Jakie słabe sygnały i wschodzące wzorce wychwycono między wierszami?" |
+| **Bloki treści** | **Signal cards** — każda: opis sygnału + siła (Strong/Moderate/Weak) + typ (Emerging trend / Early warning / Anomaly) + kontekst + implikacja jeśli sygnał się wzmocni |
+| **Źródło danych** | Transkrypty — AI anomaly detection (marginalne komentarze, zmiany tonu, niespodziewane powiązania) |
+| **AI Genesis** | Trigger: na żądanie. Głęboka analiza, nie rutynowy genesis. |
+| **AI Consultant** | "Szukaj: zmiany tonu, tematy pojawiające się raz ale intensywnie, sprzeczności z główną narracją. Gdyby sygnał był prawdziwy — co by to oznaczało?" Menu: Skanuj sygnały · Oceń siłę · Kontynuuj |
+| **Wymóg dowodu** | Każdy sygnał: cytat lub opis momentu z transkryptu. Weak: opis kontekstu zamiast bezpośredniego cytatu. |
+| **Pusty stan** | "Brak słabych sygnałów. Uruchom AI żeby przeskanować transkrypty." |
+| **Widoczność domyślna** | ❌ Ukryta domyślnie |
+| **Mark Complete** | Sygnały posortowane po sile. Każdy z implikacją. |
+| **Eksport** | Lista sygnałów z oceną siły. Callout dla Strong. |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -331,15 +375,17 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jakie założenia rozmówcy przyjmują za pewnik, nie wypowiadając ich wprost?" |
-| **Typ treści** | Assumption cards: treść założenia + dowód z języka (cytat pośredni) + ryzyko jeśli założenie jest błędne |
-| **Źródło (auto-load)** | AI deep reading — analiza języka, presupozycji, pominięć |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
+| **Historia / pytanie** | "Jakie założenia respondenci przyjmują za pewnik, nie wypowiadając ich wprost?" |
+| **Bloki treści** | **Assumption cards** — każda: treść założenia + dowód pośredni (fragment języka — "oczywiście", "wszyscy wiedzą", "zawsze tak było") + ryzyko jeśli fałszywe + rekomendacja weryfikacji |
+| **Źródło danych** | Transkrypty — AI presupposition analysis |
+| **AI Genesis** | Trigger: na żądanie. |
+| **AI Consultant** | "Szukaj presupozycji i pominięć. Co traktowane jako oczywiste bez uzasadnienia? Dla każdego: co by się stało gdyby było fałszywe?" Menu: Wyodrębnij założenia · Oceń ryzyko · Kontynuuj |
+| **Wymóg dowodu** | Każde założenie: fragment języka jako dowód pośredni (konkretne sformułowanie z transkryptu). |
 | **Pusty stan** | "Brak zidentyfikowanych ukrytych założeń." |
-| **AI sekcji (✨)** | Wyodrębnij ukryte założenia z języka respondentów. Każde: co jest zakładane + co by się stało gdyby było fałszywe. |
+| **Widoczność domyślna** | ❌ Ukryta domyślnie |
+| **Mark Complete** | ≥ 3 założenia z ryzykiem i rekomendacją weryfikacji. |
+| **Eksport** | Lista założeń z dowodem i ryzykiem. |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -347,31 +393,17 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Czego rozmówcy NIE powiedzieli — jakie tematy były omijane, skracane lub przemilczane?" |
-| **Typ treści** | Silence cards: temat przemilczany + kontekst (kiedy temat się nie pojawił, a powinien) + hipoteza dlaczego |
-| **Źródło (auto-load)** | AI gap analysis — porównuje oczekiwane tematy z tym co faktycznie padło |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
+| **Historia / pytanie** | "Czego respondenci NIE powiedzieli — jakie tematy były omijane lub przemilczane?" |
+| **Bloki treści** | **Silence cards** — każda: temat przemilczany + kontekst (kiedy powinien się pojawić a nie pojawił) + hipoteza dlaczego (Taboo / Fear / Ignorance / Not relevant) + rekomendacja (dopytać / zbadać osobno) |
+| **Źródło danych** | Transkrypty — AI gap analysis |
+| **AI Genesis** | Trigger: na żądanie. |
+| **AI Consultant** | "Zdefiniuj jakie tematy powinny się pojawić w tym typie badania. Dla każdej luki: 3 hipotezy dlaczego." Menu: Znajdź przemilczenia · Oceń hipotezy · Kontynuuj |
+| **Wymóg dowodu** | Silence = brak — dowód to opis sytuacji gdy temat powinien paść a nie padł (odniesienie do momentu sesji, nie cytat). |
 | **Pusty stan** | "Brak zidentyfikowanych przemilczeń." |
-| **AI sekcji (✨)** | Zidentyfikuj tematy, które powinny się pojawić w tych wywiadach, ale nie padły. Podaj hipotezę dlaczego. |
-
----
-
-#### `quote-comparison` — Quote Comparison / Porównanie cytatów
-
-| Pole | Wartość |
-|------|---------|
-| **Historia / pytanie** | "Jak te same tematy brzmią w ustach różnych rozmówców — jakie są różnice w narracji?" |
-| **Typ treści** | Quote groups: temat + 2–4 cytaty zestawione obok siebie z atrybucją (rola + data sesji) |
-| **Źródło (auto-load)** | AI quote extraction grouped by theme |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po ekstrakcji cytatów |
-| **Pusty stan** | "Brak zestawionych cytatów." |
-| **AI sekcji (✨)** | Wyciągnij kontrastujące cytaty na kluczowe tematy. Zestawiaj cytaty różniące się tonem lub treścią. |
+| **Widoczność domyślna** | ❌ Ukryta domyślnie |
+| **Mark Complete** | ≥ 2 przemilczenia z hipotezami i rekomendacjami. |
+| **Eksport** | Lista przemilczeń z hipotezami. Często najcenniejsza sekcja dla doświadczonego klienta. |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -379,15 +411,17 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jaki jest ogólny nastrój rozmów — optymizm, frustracja, niepewność, zaangażowanie?" |
-| **Typ treści** | Sentiment dashboard: ogólny score (0–100 / etykieta) + per-temat sentyment (heatmap) + trend sentymentu w czasie sesji |
-| **Źródło (auto-load)** | AI sentiment analysis per sesja i per temat |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
-| **Pusty stan** | "Brak analizy sentymentu." |
-| **AI sekcji (✨)** | Uruchom analizę sentymentu per temat i per sesja. Zidentyfikuj tematy o wysokim ładunku emocjonalnym. |
+| **Historia / pytanie** | "Jaki jest ogólny nastrój rozmów — optymizm, frustracja, zaangażowanie, strach?" |
+| **Bloki treści** | **Overall Sentiment** — score 0–100 + etykieta słowna + 1 zdanie interpretacji · **Per-Theme Sentiment** — heatmapa: tematy × sentyment · **Trend** — per sesja: ewolucja nastroju w czasie badania · **Emotional Peaks** — momenty największego ładunku emocjonalnego (co je wywołało) |
+| **Źródło danych** | Transkrypty — AI sentiment analysis per sesja i per temat |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja. |
+| **AI Consultant** | "Znajdź Emotional Peaks — momenty gdy ton dramatycznie się zmienił. Co je wywołało?" Menu: Uruchom analizę · Zaktualizuj trend · Kontynuuj |
+| **Wymóg dowodu** | Emotional Peaks: cytat lub opis kontekstu zmiany tonu. Overall Sentiment: wynik analityczny, bez cytatu. |
+| **Pusty stan** | "Dodaj sesje — AI przeprowadzi analizę sentymentu." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Wszystkie 4 bloki wypełnione. Trend oparty na ≥ 3 sesjach. |
+| **Eksport** | Dashboard z heatmapą. Overall sentiment w Executive Summary. |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -396,14 +430,16 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 | Pole | Wartość |
 |------|---------|
 | **Historia / pytanie** | "Kto ma władzę w tej organizacji i jak to wpływa na treść i ton wywiadów?" |
-| **Typ treści** | Power map: aktor (rola/imię) + poziom wpływu + postawa wobec tematu + relacje z innymi aktorami |
-| **Źródło (auto-load)** | AI organizational analysis z wzorców językowych i hierarchii |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po analizie AI |
-| **Pusty stan** | "Brak mapy dynamiki władzy." |
-| **AI sekcji (✨)** | Zmapuj dynamikę władzy z wywiadów. Zidentyfikuj kto kształtuje narrację i czyje opinie są pomijane. |
+| **Bloki treści** | **Power Map** — aktorzy: rola + wpływ (H/M/L) + postawa + relacje · **Narrative Control** — kto kształtuje dominującą narrację i czyje głosy są marginalizowane · **Interview Bias** — jak hierarchia mogła wpłynąć na to co ludzie mówili lub przemilczeli |
+| **Źródło danych** | Transkrypty — AI organizational analysis + metadane stanowisk respondentów |
+| **AI Genesis** | Trigger: na żądanie. |
+| **AI Consultant** | "Szukaj: czyje opinie inni cytują, kto mówi 'my' vs 'oni', gdzie widać autocenzurę. Interview Bias: oceń wprost." Menu: Mapuj dynamikę · Oceń bias · Kontynuuj |
+| **Wymóg dowodu** | Power Map: pośrednie dowody z języka. Interview Bias: konkretne momenty sesji. |
+| **Pusty stan** | "Brak analizy dynamiki władzy." |
+| **Widoczność domyślna** | ❌ Ukryta domyślnie |
+| **Mark Complete** | Wszystkie 3 bloki wypełnione. Power Map + Narrative Control + Bias. |
+| **Eksport** | Power Map jako diagram. Narrative Control i Bias jako prose. Opcja "exclude from client export" (poufne). |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -412,18 +448,38 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 | Pole | Wartość |
 |------|---------|
 | **Historia / pytanie** | "Jakie hipotezy badawcze potwierdzają lub obalają zebrane dane?" |
-| **Typ treści** | Hypothesis cards: treść hipotezy + status (Supported / Refuted / Insufficient Data / Pending) + dowody za + dowody przeciw |
-| **Źródło (auto-load)** | AI hypothesis generation + manual |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Gdy hipotezy dodane ręcznie lub przez AI |
-| **Pusty stan** | "Brak hipotez. Dodaj hipotezy badawcze i sprawdź je z danymi." |
-| **AI sekcji (✨)** | Wygeneruj hipotezy z wniosków insightu i przetestuj każdą z dowodami z transkryptów. |
+| **Bloki treści** | **Hypothesis cards** — każda: treść hipotezy + status (Supported / Refuted / Insufficient Data / Pending) + dowody za (lista cytatów) + dowody przeciw (lista cytatów) + konkluzja (1 zdanie) |
+| **Źródło danych** | Hipotezy ręczne (ustawiane przed/podczas badania) + AI testuje z transkryptów |
+| **AI Genesis** | Trigger: na żądanie (po dodaniu hipotez ręcznie lub z findings). |
+| **AI Consultant** | "Bądź bezstronny — nawet gdy hipoteza należy do sponsora projektu. Insufficient Data = potrzeba więcej sesji." Menu: Testuj hipotezy · Wygeneruj hipotezy z findings · Kontynuuj |
+| **Wymóg dowodu** | Każda hipoteza: ≥ 1 cytat za i ≥ 1 przeciw (lub nota "brak dowodów przeciw znalezionych"). |
+| **Pusty stan** | "Dodaj hipotezy badawcze — AI przetestuje je z transkryptów." |
+| **Widoczność domyślna** | ❌ Ukryta domyślnie |
+| **Mark Complete** | Wszystkie hipotezy mają status inny niż Pending. Każda z konkluzją. |
+| **Eksport** | Tabela hipotez ze statusem i kluczowymi dowodami. |
+| **Layout** | cSpan: 1 · Badge: — · cHidden: nigdy |
 
 ---
 
-### DOWODY
+### EVIDENCE
+
+---
+
+#### `quote-bank` — Quote Bank / Bank cytatów ★
+
+| Pole | Wartość |
+|------|---------|
+| **Historia / pytanie** | "Najlepsze i najbardziej reprezentatywne cytaty z badania — skarbiec konsultanta" |
+| **Bloki treści** | **Curated quotes** pogrupowane tematycznie — każdy: treść + rola respondenta + sesja + temat (tag) + siła (★ top quote / standard) · **Uncategorized** — nowe cytaty z ostatniej sesji czekające na tagowanie |
+| **Źródło danych** | AI ekstrakcja z transkryptów + manualne oznaczenia konsultanta |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja. Wybiera 3–5 najsilniejszych cytatów per sesja i taguje do tematów. |
+| **AI Consultant** | "Wybierz cytaty: konkretne, zaskakujące lub perfectly illustrative. Unikaj banałów. Taguj do tematów." Menu: Wyodrębnij cytaty · Otaguj · Oznacz top quotes · Kontynuuj |
+| **Wymóg dowodu** | Każdy cytat IS dowodem — musi mieć atrybucję roli + sesję. Imię respondenta opcjonalne (privacy). |
+| **Pusty stan** | "Dodaj sesje — AI wypełni Quote Bank z transkryptów." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | ≥ 10 cytatów. Wszystkie otagowane. Top quotes (★) oznaczone. |
+| **Eksport** | Cytaty per temat. Top quotes callout w raporcie. Opcja "Quote Booklet" — osobny dokument. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -431,51 +487,61 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Gdzie w transkryptach jest konkretne poparcie dla każdego wniosku insightu?" |
-| **Typ treści** | Evidence cards: wniosek (claim) + cytat źródłowy + sesja + speaker (rola) + timestamp w nagraniu |
-| **Źródło (auto-load)** | AI evidence extraction — mapuje wnioski do konkretnych fragmentów transkryptów |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po ekstrakcji AI |
-| **Pusty stan** | "Brak mapy dowodów. Uruchom analizę AI." |
-| **AI sekcji (✨)** | Zbuduj mapę dowodów: dla każdego kluczowego wniosku znajdź 2–3 cytaty potwierdzające z konkretnych sesji. |
+| **Historia / pytanie** | "Gdzie w transkryptach jest konkretne poparcie dla każdego kluczowego twierdzenia?" |
+| **Bloki treści** | **Evidence cards** — każda: twierdzenie (claim) + cytat źródłowy (verbatim) + sesja + rola + timestamp + siła dowodu (Strong/Moderate/Weak) · **Unclaimed findings** — twierdzenia bez dowodu (auto-alert) |
+| **Źródło danych** | AI evidence extraction + link do Themes i Findings |
+| **AI Genesis** | ★ Trigger: tworzenie + nowa sesja. Mapuje kluczowe twierdzenia do cytatów. |
+| **AI Consultant** | "Unclaimed findings = alarm. Sprawdź czy dowody są naprawdę relevantne, nie tylko tematycznie powiązane." Menu: Zbuduj mapę · Sprawdź unclaimed · Kontynuuj |
+| **Wymóg dowodu** | Evidence Map IS mapą dowodów — twierdzenie bez cytatu nie może istnieć. Strong claim: ≥ 2 niezależne cytaty. |
+| **Pusty stan** | "Dodaj sesje — AI zbuduje mapę dowodów." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Zero Unclaimed findings. Każdy Strong claim ma ≥ 2 cytaty. |
+| **Eksport** | Tabela claim → evidence. Używana do obrony wniosków przy pytaniach klienta. |
+| **Layout** | cSpan: 2 · Badge: liczba Unclaimed (alert) · cHidden: nigdy |
 
 ---
 
-#### `candidate-triage` — Findings & Evidence / Wnioski i dowody
+#### `analysis-matrix` — Analysis Matrix / Macierz analizy ★
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jakie pojedyncze wnioski i fragmenty dowodów czekają na włączenie lub odrzucenie?" |
-| **Typ treści** | Triage list: treść wniosku + sesja źródłowa + status (Include / Exclude / Review) + link do evidence-map |
-| **Źródło (auto-load)** | AI candidate extraction z sesji powiązanych z insightem |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Po ekstrakcji kandydatów z sesji |
-| **Pusty stan** | "Brak kandydatów do triaży. Powiąż sesje z insightem." |
-| **AI sekcji (✨)** | Wyodrębnij kandydatów na wnioski ze wszystkich powiązanych sesji. Wstępnie klasyfikuj według trafności. |
+| **Historia / pytanie** | "Jak tematy rozkładają się między respondentami, rolami i sesjami — struktura danych w jednym widoku?" |
+| **Bloki treści** | **Matrix** — tabela: wiersze = tematy, kolumny = role/respondenci, komórki = obecność (●/○) + sentyment (kolor) + licznik cytatów · **Summary row** — per temat: % respondentów którzy go poruszyli · **Summary column** — per respondent: zakres tematyczny |
+| **Źródło danych** | AI matrix build z Themes × transkryptów |
+| **AI Genesis** | ★ Trigger: ≥ 2 sesje. Rebuild przy każdej nowej sesji. |
+| **AI Consultant** | "Zaznacz tematy poruszone przez < 20% (marginal) i > 80% respondentów (universal)." Menu: Odbuduj macierz · Zmień granularność · Kontynuuj |
+| **Wymóg dowodu** | Komórki macierzy to wynik analizy — dowody żyją w Quote Bank i Evidence Map. |
+| **Pusty stan** | "Potrzebne ≥ 2 sesje i wyodrębnione tematy żeby zbudować macierz." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Macierz z ≥ 3 sesji i ≥ 5 tematów. |
+| **Eksport** | Tabela matrix z legendą. Heatmapa kolorów sentymentu. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: gdy < 2 sesje |
 
 ---
 
-#### `source-pack` — Sources / Źródła
+### SOURCES
+
+---
+
+#### `source-pack` — Source Pack / Źródła
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jakie sesje, materiały i dokumenty stanowią podstawę tego insightu?" |
-| **Typ treści** | Source list: tytuł sesji + typ (Interview/FGI/Survey/Document) + data + liczba uczestników + status (Exported/Source/Draft) |
-| **Źródło (auto-load)** | `insight.sessions` — powiązane sesje wywiadu |
-| **cSpan** | 1 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Gdy sesje powiązane z insightem |
-| **Pusty stan** | "Brak powiązanych źródeł. Dodaj sesje do insightu." |
-| **AI sekcji (✨)** | — (lista systemowa, nie AI) |
+| **Historia / pytanie** | "Jakie sesje i materiały stanowią podstawę tego insightu?" |
+| **Bloki treści** | **Session list** — każda: tytuł sesji + typ (Interview/FGI/Survey/Document) + data + liczba uczestników + status (Source/Exported/Draft) + link |
+| **Źródło danych** | `insight.sessions` — powiązane sesje |
+| **AI Genesis** | Nie dotyczy — lista systemowa. |
+| **AI Consultant** | — |
+| **Wymóg dowodu** | Nie dotyczy — to lista źródeł, nie analiza. |
+| **Pusty stan** | "Brak powiązanych sesji. Dodaj sesje żeby zasilić analizę insightu." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Wszystkie planowane sesje powiązane i mają status Source. |
+| **Eksport** | Lista źródeł z datami. Appendix "Metodologia — źródła danych". |
+| **Layout** | cSpan: 1 · Badge: liczba sesji · cHidden: nigdy |
 
 ---
 
-### DOSTARCZANE
+### DELIVERABLES
 
 ---
 
@@ -483,35 +549,39 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jakie gotowe materiały są dostępne do dostarczenia klientowi lub zespołowi?" |
-| **Typ treści** | Report cards: typ raportu + status (Draft/Final) + data wygenerowania + [Pobierz] + [Udostępnij]; podgląd miniaturki |
-| **Źródło (auto-load)** | Wygenerowane raporty powiązane z insightem |
-| **cSpan** | 3 (pełna szerokość) |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Gdy istnieją wygenerowane raporty |
-| **Pusty stan** | "Brak raportów. Wygeneruj raport z zawartości insightu." |
-| **AI sekcji (✨)** | Wygeneruj pełny raport z insightu w wybranym formacie (Executive Memo / Full Report / Slide Pack). |
+| **Historia / pytanie** | "Gotowe materiały do dostarczenia klientowi lub zespołowi" |
+| **Bloki treści** | **Reports** — karty: typ (Executive Memo / Full Report / Slide Pack / Quote Booklet) + status (Draft/In Review/Final) + data wygenerowania + [Pobierz] + [Udostępnij] + miniaturka podglądu |
+| **Źródło danych** | Wygenerowane raporty z insightu |
+| **AI Genesis** | Nie — raporty generowane na żądanie. |
+| **AI Consultant** | "Wygeneruj raport z zawartości insightu w wybranym formacie." Menu: Executive Memo · Full Report · Slide Pack · Quote Booklet · Kontynuuj |
+| **Wymóg dowodu** | Nie dotyczy — to deliverable, nie analiza. |
+| **Pusty stan** | "Brak raportów. Wygeneruj raport z AI lub stwórz ręcznie." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | ≥ 1 raport ze statusem Final. |
+| **Eksport** | Nie dotyczy — sama jest kontenerem eksportów. |
+| **Layout** | cSpan: 3 · Badge: — · cHidden: nigdy |
 
 ---
 
-### AUDYT
+### AUDIT
 
 ---
 
-#### `material-quality` — Quality & Trust / Jakość i zaufanie
+#### `quality-trust` — Quality & Trust / Jakość i zaufanie
 
 | Pole | Wartość |
 |------|---------|
-| **Historia / pytanie** | "Jak wiarygodne i reprezentatywne są zebrane dane — co trzeba wziąć pod uwagę przy interpretacji?" |
-| **Typ treści** | Quality dashboard: próba (n=X) + pokrycie ról + wskaźniki biasu + luki danych + ocena reprezentatywności |
-| **Źródło (auto-load)** | AI quality assessment z metadanych sesji |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Zawsze; AI genesis ocenia jakość po powiązaniu sesji |
-| **Pusty stan** | "Brak oceny jakości. Uruchom audyt AI." |
-| **AI sekcji (✨)** | Oceń jakość i reprezentatywność danych. Zidentyfikuj luki próby i potencjalne biasy. |
+| **Historia / pytanie** | "Jak wiarygodne i reprezentatywne są zebrane dane — co trzeba uwzględnić przy interpretacji?" |
+| **Bloki treści** | **Sample Quality** — próba (n=X) + pokrycie ról + pokrycie hierarchii + czas badania · **Consistency Check** — ile respondentów wykazało wewnętrzne sprzeczności + zagregowany wpływ na pewność wniosków · **Bias Indicators** — lista potencjalnych biasów (social desirability / framing / recall) + ocena wpływu · **Data Gaps** — czego brakuje: role / tematy / perspektywy + rekomendacja czy uzupełnić |
+| **Źródło danych** | Metadane sesji + AI quality assessment |
+| **AI Genesis** | Trigger: po dodaniu ≥ 1 sesji (auto-refresh). Update przy każdej nowej sesji. |
+| **AI Consultant** | "Bądź bezwzględnie szczery. Jeśli próba zbyt mała lub jednorodna — napisz to wprost. Rekomenduj czy potrzeba więcej sesji." Menu: Oceń jakość · Sprawdź luki · Kontynuuj |
+| **Wymóg dowodu** | Bias Indicators: przykłady z transkryptów gdy bias był widoczny. Data Gaps: opis co jest nieobecne. |
+| **Pusty stan** | "Jakość danych zostanie oceniona automatycznie po dodaniu sesji." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Wszystkie 4 bloki wypełnione. Data Gaps: plan uzupełnienia lub świadoma decyzja o akceptacji luk. |
+| **Eksport** | Sekcja "Methodology & Limitations". Transparentność zwiększa wiarygodność raportu. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: nigdy |
 
 ---
 
@@ -520,14 +590,16 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 | Pole | Wartość |
 |------|---------|
 | **Historia / pytanie** | "Co zespół dyskutuje na bieżąco w kontekście tego insightu?" |
-| **Typ treści** | Thread comments: avatar + imię + treść + timestamp + reakcje emoji + reply thread |
-| **Źródło (auto-load)** | Tabela `comments` filtrowana po `insightId` |
-| **cSpan** | 1 |
-| **Badge** | `comments.length` gdy > 0 |
-| **cHidden** | Gdy `comments.length === 0` |
-| **Kiedy wypełnione** | Gdy istnieje ≥ 1 komentarz |
-| **Pusty stan** | "Brak komentarzy. Rozpocznij dyskusję." |
-| **AI sekcji (✨)** | — (komentarze to głos ludzki, nie AI) |
+| **Bloki treści** | **Thread** — wątkowe komentarze: avatar + imię + treść (rich text) + timestamp + reakcje emoji + reply (max 1 poziom) + opcja "Mark as Action Item" |
+| **Źródło danych** | Tabela `comments` filtrowana po `insightId` |
+| **AI Genesis** | Nie dotyczy. |
+| **AI Consultant** | — (komentarze to głos ludzki) |
+| **Wymóg dowodu** | Nie dotyczy. |
+| **Pusty stan** | "Brak komentarzy. Zacznij dyskusję." |
+| **Widoczność domyślna** | ✅ Widoczna domyślnie |
+| **Mark Complete** | Nie dotyczy. |
+| **Eksport** | Lista komentarzy z datami (opcjonalna przy eksporcie). |
+| **Layout** | cSpan: 1 · Badge: liczba komentarzy · cHidden: gdy 0 |
 
 ---
 
@@ -536,42 +608,48 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 | Pole | Wartość |
 |------|---------|
 | **Historia / pytanie** | "Co się zmieniło w tym insighcie, kto to zmienił i kiedy?" |
-| **Typ treści** | Timeline log: ikona akcji + opis zmiany + user avatar + timestamp |
-| **Źródło (auto-load)** | Tabela `history` / audit log dla `insightId` |
-| **cSpan** | 2 |
-| **Badge** | — |
-| **cHidden** | Nigdy |
-| **Kiedy wypełnione** | Od momentu pierwszej akcji |
+| **Bloki treści** | **Log** — chronologiczna lista: ikona akcji + opis zmiany + avatar + timestamp + opcjonalny diff |
+| **Źródło danych** | Tabela `history` / audit log dla `insightId` |
+| **AI Genesis** | Nie dotyczy — dane systemowe. |
+| **AI Consultant** | — |
+| **Wymóg dowodu** | Nie dotyczy. |
 | **Pusty stan** | "Brak historii zmian." |
-| **AI sekcji (✨)** | — (logi systemowe, nie AI) |
+| **Widoczność domyślna** | ❌ Ukryta domyślnie |
+| **Mark Complete** | Nie dotyczy. |
+| **Eksport** | Skrócony log (ostatnie 20 zmian) opcjonalnie jako appendix. |
+| **Layout** | cSpan: 2 · Badge: — · cHidden: gdy 0 |
 
 ---
 
 ## Kolejność kanoniczna (eksport / raport)
 
-1. Executive Summary
-2. Consulting Readout
-3. Themes
-4. Issues & Risks
-5. Opportunities
-6. Next Actions
-7. People
-8. Consensus & Divergence
-9. Analysis Matrix
-10. Sentiment & Tone
-11. Implicit Assumptions
-12. Silences
-13. Signals
-14. Power Dynamics
-15. Quote Comparison
-16. Hypothesis Board
-17. Evidence Map
-18. Findings & Evidence
-19. Sources
-20. Quality & Trust
-21. Report Pack
-22. Comments
-23. Activity Log
+Kolejność podąża za grupami nawigacyjnymi: Synthesis → Findings → Deep Reading → Evidence → Sources → Deliverables → Audit.
+
+| # | Karta | Grupa |
+|---|-------|-------|
+| 1 | Executive Summary | Synthesis |
+| 2 | Consulting Readout | Synthesis |
+| 3 | Recommendations | Synthesis |
+| 4 | Themes | Findings |
+| 5 | Issues & Risks | Findings |
+| 6 | Opportunities | Findings |
+| 7 | Benchmarks | Findings |
+| 8 | Perspectives | Deep Reading |
+| 9 | Consensus & Divergence | Deep Reading |
+| 10 | Sentiment & Tone | Deep Reading |
+| 11 | Implicit Assumptions | Deep Reading |
+| 12 | Silences | Deep Reading |
+| 13 | Signals | Deep Reading |
+| 14 | Power Dynamics | Deep Reading |
+| 15 | Hypothesis Board | Deep Reading |
+| 16 | Quote Bank | Evidence |
+| 17 | Evidence Map | Evidence |
+| 18 | Analysis Matrix | Evidence |
+| 19 | Source Pack | Sources |
+| 20 | Report Pack | Deliverables |
+| 21 | Quality & Trust | Audit |
+| 22 | Comments | Audit |
+| 23 | Activity Log | Audit |
 
 > Kolejność eksportu jest niezmienna. Kolejność w sidebarze jest personalna i nie wpływa na eksport.
 
@@ -579,13 +657,21 @@ Każda SectionCard ma własny status niezależny od statusu insightu.
 
 ## Zasady Genesis (AI przy tworzeniu)
 
-Sekcje oznaczone ★ są wypełniane w całości przez AI w momencie tworzenia insightu z powiązanych sesji:
-`artifact-actions`, `executive-summary`, `consulting-readout`, `themes`, `issues-risks`, `opportunities`, `people`, `analysis-matrix`, `consensus-divergence`, `sentiment-tone`, `evidence-map`
+Sekcje oznaczone ★ są wypełniane w całości przez AI. Trigger zależy od karty — tworzenie insightu, dodanie nowej sesji lub na żądanie:
+
+`recommendations`, `executive-summary`, `consulting-readout`, `themes`, `issues-risks`, `opportunities`, `perspectives`, `consensus-divergence`, `sentiment-tone`, `quote-bank`, `evidence-map`, `analysis-matrix`
+
+**12 sekcji Genesis** — największy zakres spośród wszystkich artefaktów w systemie (inicjatywa: 8).
 
 AI genesis używa:
 - Transkryptów wszystkich powiązanych sesji wywiadu
 - Tematu i opisu insightu podanego przez użytkownika
 - Metadanych sesji (role respondentów, daty, typ sesji)
+
+**3 momenty triggera:**
+- **tworzenie** — uruchamiane automatycznie przy pierwszym zapisie insightu z powiązanymi sesjami
+- **nowa sesja** — AI odświeża oznaczone karty gdy dołączona zostanie nowa sesja (partial update)
+- **na żądanie** — użytkownik uruchamia ręcznie z toolbar (≡ AI Consultant)
 
 **Zasada subtelności dowodów:** cytaty w genesis są wybierane jako krótkie, celne fragmenty (max 40 słów). Długie transkrypty nie są wklejane wprost — AI je interpretuje, a pełne cytaty pozostają dostępne przez link do sesji.
 
@@ -595,11 +681,12 @@ Genesis nigdy nie blokuje — użytkownik może edytować każde pole natychmias
 
 ## Reguły walidacji sekcji
 
-- Sekcja ma `badge` tylko gdy zawiera dane z bazy (komentarze)
-- Sekcje bez `cHidden` są zawsze widoczne w sidebarze
-- `cHidden: true` = sekcja schowana do momentu pojawienia się danych (tylko `comments`)
-- `cSpan: 2` = karta zajmuje 2 kolumny canvas
-- `cSpan: 3` = karta zajmuje pełną szerokość canvas (consulting-readout, report-pack)
+- Sekcja ma `badge` tylko gdy zawiera dane zliczalne: komentarze (`comments`), sesje (`source-pack`), unclaimed findings (`evidence-map`)
+- Sekcje bez warunku `cHidden` są zawsze widoczne w sidebarze
+- `cHidden: gdy < 2 sesje` — `analysis-matrix` (potrzebuje minimum do budowy macierzy)
+- `cHidden: gdy 0` — `comments`, `activity-log` (ukryte gdy brak wpisów)
+- `cSpan: 2` = karta zajmuje 2 kolumny canvas (`quote-bank`, `evidence-map`, `analysis-matrix`, `quality-trust`, `activity-log`)
+- `cSpan: 3` = karta zajmuje pełną szerokość canvas (`consulting-readout`, `report-pack`)
 - Brak `cSpan` = standardowa 1-kolumnowa karta
 
 ---
@@ -611,8 +698,12 @@ Genesis nigdy nie blokuje — użytkownik może edytować każde pole natychmias
 | **Cel artefaktu** | Zarządzanie i dostarczenie pracy | Zrozumienie i komunikacja odkryć |
 | **Czas życia** | Miesiące–lata | Tygodnie–miesiące |
 | **Główny użytkownik** | PM / Initiative Owner | Researcher / Consultant |
-| **Grupy sekcji** | Scope/Risk/Outcomes/People/Records | Findings/Deep/Evidence/Deliverables/Audit |
-| **Genesis scope** | 7 sekcji (struktura i plan) | 11 sekcji (cała analiza) |
+| **Liczba kart** | 21 kart w 6 grupach | 23 karty w 7 grupach |
+| **Grupy sekcji** | Scope & Plan · Decisions & Risk · Goals · Finance · People · Records | Synthesis · Findings · Deep Reading · Evidence · Sources · Deliverables · Audit |
+| **Genesis scope** | 8 sekcji (struktura i plan) | 12 sekcji (cała analiza) |
+| **Genesis trigger** | Tworzenie inicjatywy | Tworzenie + nowa sesja + na żądanie |
+| **Unikalny kontrakt karty** | 10 pól | 11 pól (+ Wymóg dowodu) |
 | **Najważniejsza sekcja** | Initiative Scope | Consulting Readout |
 | **Eksport główny** | Project Brief / Status Report | Consulting Readout / Executive Memo |
-| **AI poziom 3** | "Analyze with AI" → health check + gaps | "Analyze with AI" → full synthesis z sesji |
+| **AI Consultant poziom 3** | Health check + gaps + plan alignment | Full synthesis z transkryptów sesji |
+| **Dowód jakościowy** | Nie wymagany per blok | Wymóg dowodu — każdy blok ma kontrakt cytatu |
