@@ -7,34 +7,141 @@
 ## Anatomia artefaktu (4 warstwy)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  1. IDENTITY                                                │
-│     Title · Status dot · Artifact ID · Saved · N/C toggle  │
-├─────────────────────────────────────────────────────────────┤
-│  2. PROPERTIES STRIP                                        │
-│     TYPE · STATUS · SOURCE · DATE RANGE · SESSIONS · OWNER  │
-├─────────────────────────────────────────────────────────────┤
-│  3. MANAGEMENT TOOLBAR                                      │
-│     [Export · Share · Link to Initiative]  [Analyze with AI →] │
-├───────────────────┬─────────────────────────────────────────┤
-│  4. CONTENT       │                                         │
-│                   │  SectionCard stack dla aktywnej sekcji  │
-│  Left nav         │  ┌──────────────────────────────────┐   │
-│  (242px)          │  │ Section Title          [✨ AI]   │   │
-│                   │  │ Description                      │   │
-│  • Section A ←    │  │ ─────────────────────────────── │   │
-│  • Section B      │  │ Karty / cytaty / tabela / prose  │   │
-│  • Section C      │  └──────────────────────────────────┘   │
-│                   │  [+ Add item]                           │
-└───────────────────┴─────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  1. IDENTITY                                                         │
+│     Title · Status dot · Artifact ID (copy) · Saved · N/C toggle    │
+├──────────────────────────────────────────────────────────────────────┤
+│  2. PROPERTIES STRIP                                                 │
+│     TYPE · STATUS · SOURCE · DATE RANGE · SESSIONS · OWNER           │
+├──────────────────────────────────────────────────────────────────────┤
+│  3. TOOLBAR                                              [⚡ AI Consultant] │
+│     [≡ Sections ▾]  [New]  [Export]  │  [⚡ AI Consultant ▾]        │
+├────────────────────┬─────────────────────────────────────────────────┤
+│  4. CONTENT        │                                                 │
+│                    │  SectionCard stack dla aktywnej sekcji          │
+│  Left nav (242px)  │  ┌───────────────────────────────────────────┐  │
+│                    │  │ Section Title            [✓ Mark Complete] │  │
+│  ✓ Section A ←     │  │ Description                               │  │
+│  · Section B       │  │ ────────────────────────────────────────  │  │
+│  · Section C       │  │ field text           [✨]                 │  │
+│                    │  │ field text           [✨]                 │  │
+│                    │  └───────────────────────────────────────────┘  │
+│                    │  [+ Add item]                                   │
+└────────────────────┴─────────────────────────────────────────────────┘
 ```
 
 **Zasady anatomii:**
 - Każde pole tekstowe ma po prawej subtelny przycisk ✨ (FieldAIButton) — zawsze.
-- AI działa na 3 poziomach: pole (✨) → sekcja (propose→checkboxes→add) → artefakt ("Analyze with AI").
+- AI działa na 3 poziomach: pole (✨) → sekcja (AI Consultant w toolbarze) → artefakt (AI Consultant prawy panel).
 - **Dowód jest subtelny** — cytaty i linki do sesji wzmacniają każdy wniosek, ale nie dominują wizualnie.
 - **Genesis = pełne AI-wypełnienie** — wszystkie sekcje oznaczone ★ są automatycznie wypełniane przez AI w momencie tworzenia insightu z powiązanych sesji.
 - Kolejność sekcji w sidebarze jest **personalna** (drag & drop + localStorage). Kolejność eksportu jest **kanoniczna** (określona poniżej).
+
+---
+
+## Warstwa 2 — Properties Strip
+
+Dokładnie **6 pól** — niezmienne. Zmiany statusu odbywają się przez klik na dane pole w stripie, nie przez przyciski w toolbarze.
+
+| Pole | Wartość | Semantyka kolorów |
+|------|---------|-------------------|
+| **TYPE** | Interview · FGI · Survey · Mixed · Document | Ikona per typ, neutralny kolor |
+| **STATUS** | Draft · In Progress · Complete · Archived | Draft=szary · In Progress=niebieski · Complete=zielony · Archived=wygaszony |
+| **SOURCE** | Projekt lub kontekst źródłowy | — |
+| **DATE RANGE** | Zakres dat sesji (od–do) | Aktualny=neutralny · Stary >6 mies.=wygaszony |
+| **SESSIONS** | Liczba powiązanych sesji (n=X) | 0=czerwony (pusty insight) · ≥1=neutralny |
+| **OWNER** | Osoba odpowiedzialna (dropdown z awatarem) | — |
+
+---
+
+## Warstwa 3 — Toolbar
+
+### Układ
+
+```
+[≡ Sections ▾]  [New]  [Export]  │  [⚡ AI Consultant ▾]
+                                                    (prawa krawędź)
+                                          [⚡ AI Consultant]  ← poza toolbarem,
+                                                    stały przycisk top-right
+```
+
+### Przyciski — specyfikacja
+
+**`≡ Sections ▾`** — dropdown z checkboxami wszystkich sekcji insightu.
+- Zaznaczone = widoczne w lewym nav.
+- System ustawia defaults (które sekcje są domyślnie widoczne).
+- Użytkownik może odkrywać dodatkowe sekcje lub ukrywać nieużywane.
+- Zastępuje przycisk "Show all sections (X)" na dole sidebara (który zostaje usunięty).
+
+**`New`** — kontekstowy przycisk tworzący nowy element w **aktywnej sekcji**.
+- Na Next Actions → nowa akcja
+- Na Themes → nowy temat (manualny)
+- Na Hypothesis Board → nowa hipoteza
+- Na sekcjach systemowych (Activity Log, Sources) → nieaktywny (disabled, nie ukryty)
+
+**`Export`** — eksportuje insight (PDF / DOCX / Executive Memo / Slide Pack). Otwiera modal wyboru formatu.
+
+**`│`** — wizualny separator (border-l) oddzielający akcje funkcjonalne od AI.
+
+**`⚡ AI Consultant ▾`** — split button, AI na poziomie aktywnej sekcji:
+- **Klik** → otwiera chat osadzony w kontekście aktywnej sekcji; AI zagaja rozmowę.
+- **▾** → menu akcji: `Uzupełnij` · `Proponuj zmiany` · `Refresh` · `Kontynuuj`
+
+**`⚡ AI Consultant`** (poza toolbarem, prawy górny róg widoku) — AI na poziomie całego insightu:
+- **Klik** → wysuwa prawy panel (~360px, slide-in).
+- Panel zawiera: menu akcji (`Uzupełnij puste sekcje` · `Synthesize` · `Refresh wszystkiego` · `Kontynuuj` · `Quality check`) + chat z pełnym kontekstem insightu (AI zagaja).
+
+### Zasady toolbara
+
+- **Zero czerwonych** przycisków w toolbarze.
+- Destruktywne akcje (usuń, archiwizuj) żyją wyłącznie w menu kontekstowym `⋯` na poziomie konkretnego elementu w karcie.
+- Zmiany statusu insightu (Complete / Archive) → klik na pole STATUS w Properties Strip.
+
+### Standard wizualny przycisków
+
+```
+Wysokość:    h-8 (32px)
+Tekst:       text-[13px] font-medium
+Promień:     rounded-lg
+Odstępy:     gap-2 między przyciskami w grupie
+Separator:   border-l slate-200/dark:navy-700 między grupą funkcjonalną a AI
+Kolor:       do ustalenia osobno
+```
+
+| Typ | Użycie | Styl |
+|-----|--------|------|
+| **Ghost** | `≡ Sections ▾`, `Export` | border + transparent bg, slate text |
+| **Subtle fill** | `New` | jasne tło (slate-100) bez bordera |
+| **AI accent** | `⚡ AI Consultant ▾`, `⚡ AI Consultant` | wyróżniony kolor AI (TBD) |
+
+---
+
+## SectionCard — Mark Complete
+
+Każda SectionCard ma własny status niezależny od statusu insightu.
+
+| Stan | Znaczenie |
+|------|-----------|
+| **Open** (default) | AI może modyfikować tę sekcję podczas refreshów i genesis |
+| **Complete** | Sekcja zatwierdzona przez człowieka — AI **nie nadpisuje** |
+
+**Zachowanie Mark Complete:**
+- Przycisk `[✓ Mark Complete]` w nagłówku każdej SectionCard (prawy róg).
+- Po kliknięciu: karta zmienia kolor (subtelne zielone tło / border), w lewym nav pojawia się `✓` przy nazwie sekcji.
+- Odwracalne: `[Reopen]` przywraca stan Open i odblokowuje AI.
+- AI przy każdym refreshu i genesis sprawdza status karty przed modyfikacją — Complete = skip.
+
+---
+
+## Architektura AI (3 poziomy)
+
+| Poziom | Element UI | Wyzwalacz | Co robi |
+|--------|-----------|-----------|---------|
+| **Pole** | `✨` FieldAIButton | Klik przy polu | Uzupełnia / przepisuje jedno pole tekstowe |
+| **Sekcja** | `⚡ AI Consultant ▾` w toolbarze | Klik = chat; ▾ = menu | Chat osadzony w kontekście aktywnej sekcji; AI zagaja. Menu: Uzupełnij · Proponuj · Refresh · Kontynuuj |
+| **Artefakt** | `⚡ AI Consultant` top-right | Klik → prawy panel | Chat z pełnym kontekstem insightu + menu: Uzupełnij puste · Synthesize · Quality check · Refresh · Kontynuuj |
+
+**Zasada "Kontynuuj":** AI pamięta ostatnią sesję pracy z tym insightem. `Kontynuuj` wraca do miejsca, gdzie skończyła — bez ponownego tłumaczenia kontekstu.
 
 ---
 
