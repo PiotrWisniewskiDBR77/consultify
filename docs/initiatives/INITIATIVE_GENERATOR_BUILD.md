@@ -80,3 +80,8 @@ lineage i podgląd bramki. Zero błędów w konsoli; screenshot każdego kroku.
   Wszystkie 6 kryteriów akceptacji Fazy 2 spełnione (duplicate/extend/new/contributes-to-goal/
   evidence-only/conflict-depends-reprioritize + coverage gaps & overlaps, czyste deterministyczne).
   Następne: Faza 3 (Tablica propozycji UI).
+- 2026-06-07: **Faza 3 DONE** — `src/components/Initiatives/Wizard/InitiativeProposalBoard.tsx`
+  (nowy, props-decoupled). Plakietki 8 relacji + akcje per typ (new→Create draft; reszta→change),
+  evidence drawer, coverage strip (luki + nakładania), „0 nowych ≠ porażka". Zweryfikowane
+  wizualnie (hash/localStorage temp-mount, cofnięty); tsc+eslint czyste. Kryteria akceptacji Fazy 3 ✓.
+  Następne: Faza 4 (suggested-changes) / Faza 0 (wpięcie) — czekają na styk z przebudową agenta.
