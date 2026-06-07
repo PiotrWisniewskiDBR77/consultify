@@ -12,12 +12,12 @@
  * - monochromatic chrome, color only for semantic data
  */
 
-import { ChevronDown, ChevronUp, Eye, Maximize2 } from 'lucide-react';
+import { Archive, ChevronDown, ChevronRight, ChevronUp, Edit2, RotateCcw, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 
 import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
@@ -39,6 +39,10 @@ interface PortfolioListViewProps {
   onSelectionChange?: (ids: Set<string>) => void;
   /** Table canvas padding (V3 standard: pl-4 pr-1.5 pt-3 pb-4) */
   canvasClassName?: string;
+  /** Called when Archive is clicked (only enabled for DONE/CANCELLED status) */
+  onArchive?: (initiative: PortfolioInitiative) => void;
+  /** Called when Delete is clicked */
+  onDelete?: (initiative: PortfolioInitiative) => void;
 }
 
 type SortField = 'name' | 'status' | 'priority' | 'plannedEndDate' | 'updatedAt';
@@ -93,6 +97,8 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   onQuickUpdate,
   onSelectionChange,
   canvasClassName = 'pl-4 pr-1.5 pt-3 pb-4',
+  onArchive,
+  onDelete,
 }) => {
   const { t } = useTranslation();
   const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: 'asc' | 'desc' }>({
@@ -410,22 +416,91 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     <RowActionsMenu
                       iconVariant="vertical"
-                      actions={
+                      className="opacity-40 transition-opacity group-hover:opacity-100"
+                      sections={
                         [
+                          // GÓRA — kontekstowe
                           {
-                            id: 'preview',
-                            label: t('common.preview', 'Preview'),
-                            icon: Eye,
-                            onClick: () => onInitiativeClick(initiative),
+                            id: 'context',
+                            kind: 'context' as const,
+                            actions: [],
                           },
+                          // DÓŁ — stały (kanon §9): Open preview · Edit · Archiwizuj/Przywróć
                           {
-                            id: 'open',
-                            label: t('common.openFull', 'Open Full'),
-                            icon: Maximize2,
-                            variant: 'primary',
-                            onClick: () => onOpenFull?.(initiative),
+                            id: 'fixed',
+                            kind: 'manage' as const,
+                            actions: [
+                              {
+                                id: 'open-preview',
+                                label: t('common.openPreview', 'Open preview'),
+                                icon: ChevronRight,
+                                onClick: () => onInitiativeClick(initiative),
+                              },
+                              ...(onOpenFull
+                                ? [
+                                    {
+                                      id: 'open-full',
+                                      label: t('common.openFull', 'Open full'),
+                                      icon: ChevronRight,
+                                      onClick: () => onOpenFull(initiative),
+                                    },
+                                  ]
+                                : []),
+                              {
+                                id: 'edit',
+                                label: t('common.edit', 'Edit'),
+                                icon: Edit2,
+                                onClick: () => onInitiativeClick(initiative),
+                              },
+                              initiative.status === InitiativeStatus.ARCHIVED
+                                ? {
+                                    id: 'restore',
+                                    label: t('common.restore', 'Restore'),
+                                    icon: RotateCcw,
+                                    disabled: true,
+                                    description: t('common.comingSoon', 'Coming soon'),
+                                    onClick: () => {},
+                                  }
+                                : {
+                                    id: 'archive',
+                                    label: t('common.archive', 'Archive'),
+                                    icon: Archive,
+                                    disabled:
+                                      !onArchive ||
+                                      ![InitiativeStatus.DONE, InitiativeStatus.CANCELLED].includes(
+                                        initiative.status
+                                      ),
+                                    description:
+                                      !onArchive ||
+                                      ![InitiativeStatus.DONE, InitiativeStatus.CANCELLED].includes(
+                                        initiative.status
+                                      )
+                                        ? t(
+                                            'initiatives.archive.hint',
+                                            'Finish or cancel first'
+                                          )
+                                        : undefined,
+                                    onClick: () => onArchive?.(initiative),
+                                  },
+                            ],
                           },
-                        ] as RowAction[]
+                          // DANGER
+                          {
+                            id: 'danger',
+                            kind: 'danger' as const,
+                            actions: [
+                              {
+                                id: 'delete',
+                                label: t('common.delete', 'Delete'),
+                                icon: Trash2,
+                                variant: 'danger' as const,
+                                disabled: true,
+                                description: t('common.comingSoon', 'Coming soon'),
+                                onClick: () => {},
+                              },
+                            ],
+                          },
+                        ] as RowActionSection[]
                       }
                     />
                   </td>

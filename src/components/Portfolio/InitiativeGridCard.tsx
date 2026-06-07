@@ -9,7 +9,7 @@
  * Tech Sexy v2.0: invisible borders, subtle hover, monochromatic chrome
  */
 
-import { AlertCircle, Calendar, User } from 'lucide-react';
+import { AlertCircle, Archive, Calendar, ChevronRight, Edit2, RotateCcw, Trash2, User } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,14 +17,23 @@ import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
 import { InitiativeStatus, PortfolioInitiative } from '../../types';
 import { formatShortDate, getHealthInfo, getNextStep } from '../../utils/initiativeHelpers';
+import { RowActionSection, RowActionsMenu } from '../shared/RowActionsMenu';
 
 interface InitiativeGridCardProps {
   initiative: PortfolioInitiative;
   onClick: () => void;
+  onArchive?: (initiative: PortfolioInitiative) => void;
+  onOpenFull?: (initiative: PortfolioInitiative) => void;
 }
 
-export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiative, onClick }) => {
-  const { t } = useTranslation();
+export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
+  initiative,
+  onClick,
+  onArchive,
+  onOpenFull,
+}) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const statusStyle = getStatusStyle(initiative.status);
   const priorityStyle = getPriorityStyle(initiative.priority);
   const health = getHealthInfo(initiative);
@@ -34,13 +43,87 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
   const statusLabel =
     STATUS_METADATA[initiative.status as InitiativeStatus]?.label || initiative.status;
 
+  const archiveable = (
+    [InitiativeStatus.DONE, InitiativeStatus.CANCELLED] as string[]
+  ).includes(initiative.status);
+
+  const sections: RowActionSection[] = [
+    { id: 'context', kind: 'context', actions: [] },
+    {
+      id: 'fixed',
+      kind: 'manage',
+      actions: [
+        {
+          id: 'open-preview',
+          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          icon: ChevronRight,
+          onClick,
+        },
+        ...(onOpenFull
+          ? [
+              {
+                id: 'open-full',
+                label: isPolish ? 'Otwórz pełny widok' : 'Open full view',
+                icon: ChevronRight,
+                onClick: () => onOpenFull(initiative),
+              },
+            ]
+          : []),
+        {
+          id: 'edit',
+          label: isPolish ? 'Edytuj' : 'Edit',
+          icon: Edit2,
+          disabled: true,
+          description: isPolish ? 'Wkrótce' : 'Coming soon',
+          onClick: () => {},
+        },
+        initiative.status === InitiativeStatus.ARCHIVED
+          ? {
+              id: 'restore',
+              label: isPolish ? 'Przywróć' : 'Restore',
+              icon: RotateCcw,
+              disabled: true,
+              description: isPolish ? 'Wkrótce' : 'Coming soon',
+              onClick: () => {},
+            }
+          : {
+              id: 'archive',
+              label: isPolish ? 'Archiwizuj' : 'Archive',
+              icon: Archive,
+              disabled: !onArchive || !archiveable,
+              description:
+                !onArchive || !archiveable
+                  ? isPolish
+                    ? 'Zakończ lub anuluj najpierw'
+                    : 'Finish or cancel first'
+                  : undefined,
+              onClick: () => onArchive?.(initiative),
+            },
+      ],
+    },
+    {
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'delete',
+          label: isPolish ? 'Usuń' : 'Delete',
+          icon: Trash2,
+          variant: 'danger' as const,
+          disabled: true,
+          description: isPolish ? 'Wkrótce' : 'Coming soon',
+          onClick: () => {},
+        },
+      ],
+    },
+  ];
+
   return (
     <div
       onClick={onClick}
       className={[
-        'group cursor-pointer rounded-xl overflow-hidden',
-        'border-l-[3px] border border-slate-200/60 dark:border-white/[0.06]',
-        'border-l-blue-500 dark:border-l-blue-400', // Initiative identity (blue)
+        'group relative cursor-pointer rounded-xl',
+        'border border-slate-200/60 dark:border-white/[0.06]',
         'bg-slate-50/80 dark:bg-navy-800/60',
         'hover:bg-white dark:hover:bg-navy-800/80 transition-colors duration-150',
         'p-4',
@@ -64,10 +147,19 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
             {statusLabel}
           </span>
         </div>
-        {/* Health */}
-        <div className="flex items-center gap-1.5">
-          <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
-          <span className="text-[10px] text-slate-600 dark:text-slate-500">{health.label}</span>
+        {/* Health + kebab */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">{health.label}</span>
+          </div>
+          {/* Kebab — shown on card hover, stopPropagation so it doesn't fire onClick */}
+          <div
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <RowActionsMenu sections={sections} />
+          </div>
         </div>
       </div>
 

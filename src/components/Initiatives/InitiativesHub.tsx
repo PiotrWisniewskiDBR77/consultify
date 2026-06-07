@@ -1092,6 +1092,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     t,
   ]);
 
+  // Canon §9: Archive initiative (only DONE/CANCELLED → ARCHIVED per backend rule)
+  const handleArchiveInitiative = useCallback(
+    async (initiative: PortfolioInitiative) => {
+      try {
+        await Api.post(`/initiatives/${initiative.id}/archive`, {});
+        toast.success(t('initiatives.toast.archived', 'Initiative archived'));
+        await fetchData(true);
+      } catch {
+        toast.error(t('initiatives.toast.archiveFailed', 'Could not archive initiative'));
+      }
+    },
+    [fetchData, t]
+  );
+
   useEffect(() => {
     if (!isPilotParticipant) return;
     if (showNewModal) setShowNewModal(false);
@@ -1349,10 +1363,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               <PortfolioListView
                 initiatives={searchedInitiatives}
                 onInitiativeClick={handleInitiativeClick}
+                onOpenFull={(initiative) => handleOpenDocument({ id: initiative.id, type: 'initiative', name: String(initiative.name || ''), status: String(initiative.status || '').toUpperCase() as any })}
                 onStatusChange={handleStatusChange}
                 onQuickUpdate={handleQuickUpdate}
                 onSelectionChange={setSelectedIds}
                 canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+                onArchive={handleArchiveInitiative}
               />
             </TableWithPreviewLayout>
           </div>
@@ -1376,6 +1392,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       key={initiative.id}
                       initiative={initiative}
                       onClick={() => handleInitiativeClick(initiative)}
+                      onArchive={handleArchiveInitiative}
+                      onOpenFull={(initiative) => handleOpenDocument({ id: initiative.id, type: 'initiative', name: String(initiative.name || ''), status: String(initiative.status || '').toUpperCase() as any })}
                     />
                   ))}
                 </div>
