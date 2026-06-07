@@ -67,6 +67,23 @@ export interface NModeSection {
    * Value is persisted in `section_completions JSONB` on the artifact row.
    */
   completed?: boolean;
+  /**
+   * Per-section export contract (canon "Eksport" field). Declares which export
+   * destinations this section feeds and how it renders into each. Consumed by
+   * the Smart Export pipeline; when omitted, a section is treated as
+   * markdown-exportable only (back-compat default).
+   *
+   *   markdown — included in the .md / clipboard export
+   *   slide    — rendered as a presentation slide (cSpan drives the layout)
+   *   pdf      — included in the print/PDF export
+   *   renderer — optional id of a custom slide/pdf renderer for this section
+   */
+  eksport?: {
+    markdown?: boolean;
+    slide?: boolean;
+    pdf?: boolean;
+    renderer?: string;
+  };
   /** The section canvas content (rendered when active) */
   component: React.ReactNode;
 }

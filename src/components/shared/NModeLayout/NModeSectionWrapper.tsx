@@ -41,6 +41,14 @@ interface NModeSectionWrapperProps {
   emptyState?: {
     icon: React.FC<{ size?: number; className?: string }>;
     message: { en: string; pl: string };
+    /**
+     * Optional call-to-action button rendered below the message.
+     * Canon B5: every empty state should offer a way forward, not a dead end.
+     */
+    cta?: {
+      label: { en: string; pl: string };
+      onClick: () => void;
+    };
   };
   /** Whether to show the empty state */
   isEmpty?: boolean;
@@ -126,11 +134,20 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             {heading ? (isPolish ? heading.pl : heading.en) : null}
             {completed && (
-              <CheckCircle2
-                size={15}
-                className="text-success-500 dark:text-success-400 shrink-0"
-                aria-label={isPolish ? 'AI: sekcja gotowa' : 'AI: section complete'}
-              />
+              <span className="inline-flex items-center gap-1.5">
+                <CheckCircle2
+                  size={15}
+                  className="text-success-500 dark:text-success-400 shrink-0"
+                  aria-label={isPolish ? 'AI: sekcja gotowa' : 'AI: section complete'}
+                />
+                {/* Headingless sections (which self-title below) still read clearly:
+                    show a compact label so the success bar is not an orphaned tick. */}
+                {!heading && (
+                  <span className="text-xs font-medium text-success-700 dark:text-success-300">
+                    {isPolish ? 'Ukończono' : 'Complete'}
+                  </span>
+                )}
+              </span>
             )}
           </h2>
           {hasSectionActions && (
@@ -147,9 +164,18 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
       {isEmpty && emptyState ? (
         <div className="text-center py-12">
           <emptyState.icon size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
-          <p className="text-sm text-slate-600 dark:text-slate-500">
+          <p className="text-sm text-slate-700 dark:text-slate-300">
             {isPolish ? emptyState.message.pl : emptyState.message.en}
           </p>
+          {emptyState.cta && (
+            <button
+              type="button"
+              onClick={emptyState.cta.onClick}
+              className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-700/40 text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"
+            >
+              {isPolish ? emptyState.cta.label.pl : emptyState.cta.label.en}
+            </button>
+          )}
         </div>
       ) : layout === 'cols-2' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">{children}</div>

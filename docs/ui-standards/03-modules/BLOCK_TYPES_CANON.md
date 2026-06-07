@@ -786,6 +786,292 @@ CROSS-REFERENCES
 
 ---
 
+## Checkpointy walidacji implementacji
+
+> **Cel:** Ten checklist jest odwrotnością "Canon Completeness Checklist" powyżej.
+> Tamten pyta _czy spec jest kompletny_ (faza projektowania).
+> Ten pyta _czy build jest poprawny_ (code review + smoke-test po implementacji).
+>
+> **Jak używać:**
+> 1. Po implementacji nowego widoku — przejdź przez Bloki A–F i zaznacz każdy punkt.
+> 2. Po dodaniu nowej karty — przejdź przez Blok B + odnośne punkty z Bloku C.
+> 3. Niezaznaczone punkty = blokery przed mergem. Wyjątki opisuj w PR.
+> 4. Każdy artefakt ma własny checklist rozszerzający →
+>    INSIGHT_CANON.md § Checkpointy · INITIATIVE_CANON.md § Checkpointy
+
+---
+
+### BLOK A — Chrome widoku (raz per widok)
+
+Otwierasz widok i weryfikujesz każdy podsystem jako całość.
+
+**A1 — Warstwa Identity**
+
+```
+□ Title: inline edit działa, auto-save na blur, nie wysyła pustego stringa
+□ Status dot: każdy stan (Draft / Active / Done / Archived) ma poprawny kolor
+□ Artifact ID (INS-XXXX / INI-XXXX): widoczny, kopiuje się jednym kliknięciem, toast feedback
+□ Saved indicator: trzy stany (idle / saving / saved) bez race condition
+□ N/C toggle: przełącza layout, stan w localStorage, brak flash przy powrocie do widoku
+```
+
+**A2 — Properties Strip**
+
+```
+□ Dokładnie 6 pól, w kanonicznej kolejności (bez przesunięć)
+□ Każde pole ma pełną semantykę kolorów (Priority: red/amber/green; Status: per kanon)
+□ Click-to-change: dropdown otwiera się, wybranie wartości zapisuje ją natychmiast
+□ Brak pól z wartością null lub "—" bez zdefiniowanego fallbacku w spec
+□ Strip widoczny w trybach N i C; ukryty w trybie Present
+```
+
+**A3 — Toolbar**
+
+```
+□ STICKY: nie scrolluje razem z contentem
+     Klasy: sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm
+□ Slot 1 — Sections dropdown: lista sekcji działa, kliknięcie scrolluje canvas do sekcji
+□ Slot 2 — New button: tworzy nowy element lub otwiera właściwy formularz
+□ Slot 3 — Export dropdown: 4 destynacje widoczne (Notatki · Idee · Prezentacja · PDF)
+□ Slot 5 — AI sekcja: kolor TEAL (bg-teal-50 border-teal-200 text-teal-700), NIE primary
+□ Slot 6 — Fork (⎊): GitFork icon, tworzy kopię z tagiem "Forked from INX-XXXX"
+□ Slot 7 — Present (▶): Monitor icon, uruchamia tryb prezentacji
+□ Slot 9 — AI artefakt: solid teal (bg-teal-600 text-white), otwiera AI Consultant panel
+□ ZERO primary (crimson) buttonów w toolbarze — crimson wyłącznie w CTA modalnych
+□ Dark mode: wszystkie tokeny mają dark: odpowiedniki
+```
+
+**A4 — Left Navigation (NModeLeftNav)**
+
+```
+□ Wszystkie grupy sekcji wyświetlone w kanonicznej kolejności
+□ Drag & drop działa wewnątrz grupy, nie przenosi między grupami
+□ Aktywna sekcja podświetlona; klik w nav przełącza widoczną sekcję
+     (UWAGA: canvas pokazuje JEDNĄ sekcję naraz — model "click-to-switch",
+      nie scroll-all. Scroll-spy/IntersectionObserver NIE dotyczy tego layoutu;
+      poniżej lg breakpointu nawigacja przechodzi do dropdownu Sections w toolbarze)
+□ ✓ badge pojawia się na sekcjach z completed=true
+□ Pasek postępu na dole: "completedCount / completableSections" widoczny
+□ Pasek postępu pojawia się TYLKO gdy ≥ 1 sekcja ma completed=true (showProgress guard)
+□ Pasek animuje się płynnie (transition-all duration-500)
+□ Sidebar collapse działa poprawnie na < 1024px
+```
+
+---
+
+### BLOK B — Walidacja per karta
+
+> Dla każdej sekcji w kanonie artefaktu przejdź przez poniższe punkty osobno.
+> Przy code review oznacz numer karty przy każdym przebiegu (np. "B2 ✓ initiative-definition").
+
+**B1 — Kontrakt karty (spec)**
+
+```
+□ Karta ma kompletny kontrakt w kanonie:
+     inicjatywa — 10 pól: ID · Nazwa · Typ bloku · Opis · Pusty stan
+                           · cSpan · cHidden · Badge · AI w sekcji · Eksport
+     insight    — 11 pól: jak wyżej + Wymóg dowodu
+□ Pole "Eksport" zdefiniowane — określa co i jak trafia do PDF/Prezentacji
+□ Pole "Pusty stan" ma komunikat (pl + en) i CTA (nie pusty div)
+□ Każdy blok ma przypisany typ z 12-type vocabulary
+□ cSpan: wartość lub świadome pominięcie (1 = default, nie zapomniane)
+□ cHidden: warunek lub świadome pominięcie (nie zapomniane)
+```
+
+**B2 — Nagłówek sekcji (NModeSectionWrapper)**
+
+```
+□ heading={{ en: '...', pl: '...' }} przekazany
+□ Sekcje z AI w spec: aiAction lub aiActions przekazane
+□ AI button kolor: teal (border-teal-200 text-teal-700 bg-teal-50), nie primary
+□ Mark Complete visual:
+     - border-l-2 border-success-500 na headerze sekcji
+     - bg-success-50/40 tło headera
+     - CheckCircle2 icon obok tytułu sekcji
+     - Pola karty POZOSTAJĄ edytowalne (nie są disabled po mark complete)
+```
+
+**B3 — Typ bloku (12-type vocabulary)**
+
+```
+□ RichText:       edytor TipTap, toolbar (B/I/U/Link/List), auto-save na blur
+□ LabeledCard:    układa się w LabeledCardGrid (2-kol), badge opcjonalny
+□ MetricCard:     wartość + trend + źródło + delta (kolor: zielony/czerwony/szary)
+□ Timeline:       elementy z datą + ikoną stanu + body, sortowane chronologicznie
+□ DataTable:      sortowalne kolumny, pusty wiersz z CTA "Dodaj", nagłówki bold
+□ BlockQuote:     cytat + autor + timestamp + źródło (sesja lub dokument)
+□ TagCloud:       klikalne tagi, wrap, max visible + "+N więcej" overflow
+□ FileAttachment: lista plików (ikona · nazwa · rozmiar · data), upload CTA
+□ CommentThread:  threading 1-poziomowy, avatar, timestamp, edit/delete własnych
+□ ProgressRing:   wartość 0–100, kolor: < 30 red, 30–70 amber, > 70 green
+□ ScoreCard:      score + label + trend, kolor semantyczny
+□ SourcePack:     lista sesji/dokumentów z linkiem, "Pokaż wszystkie"
+□ ZAKAZ typów "custom" / "generic-text" gdy istnieje właściwy typ z listy 12
+```
+
+**B4 — FieldAIButton (poziom pola)**
+
+```
+□ ✨ pojawia się przy każdym polu oznaczonym AI w spec karty
+□ Loading state: Sparkles zastąpiony spinnerem (Loader2 animate-spin)
+□ Disabled gdy sekcja ma completed=true lub pole jest locked
+□ Wynik AI trafia do konkretnego pola (nie do clipboard, nie do toastu)
+```
+
+**B5 — Stany graniczne karty**
+
+```
+□ Empty state: ikona + komunikat (pl/en) + CTA widoczne (nie pusty biały obszar)
+□ Loading state: skeleton loader (nie puste boxy, nie full-page spinner)
+□ Error state: komunikat + przycisk "Spróbuj ponownie" (nie crash widoku)
+□ Brak "flash of empty" przy ładowaniu — skeleton trzyma layout karty
+```
+
+---
+
+### BLOK C — Architektura AI (trzy poziomy)
+
+```
+□ POZIOM 1 — POLE (FieldAIButton):
+     Działa dla każdego pola z AI-in-spec
+     Wynik wpisywany do konkretnego pola (nie ogólnie "do sekcji")
+
+□ POZIOM 2 — SEKCJA (SectionAIButton):
+     Teal button widoczny w headerze sekcji (NModeSectionWrapper)
+     Wysyła kontekst aktywnej sekcji (nie całego artefaktu)
+     Aktualizuje pola sekcji (nie przeładowuje widoku)
+
+□ POZIOM 3 — ARTEFAKT (AI Consultant):
+     Solid teal button w toolbarze — slot 9 (bg-teal-600 text-white)
+     Panel po PRAWEJ stronie (nie modal, nie overlay na canvas)
+     Kontekst = cały artefakt (wszystkie sekcje + metadata)
+     Full synthesis: pytania, scenariusze, analiza luk
+
+□ GENESIS (sekcje oznaczone ★ w kanonie):
+     Wypełniane automatycznie przy tworzeniu artefaktu
+     AI genesis nie blokuje — użytkownik edytuje natychmiast po wygenerowaniu
+     Spinner / skeleton widoczny podczas genesis (nie pusty ekran)
+
+□ MARK COMPLETE (AI signal):
+     Kliknięcie zapisuje section_completions w DB (nie tylko w stanie UI)
+     Pola sekcji NIE są disabled po mark complete
+     AI level 2 pomija sekcje z completed=true w kolejnych sugestiach
+
+□ KOLOR AI — reguła bezwzględna:
+     Każdy AI button (wszystkie 3 poziomy) = TEAL WYŁĄCZNIE
+     Brak primary (crimson) na jakimkolwiek AI affordance
+```
+
+---
+
+### BLOK D — Persystencja i DB
+
+```
+□ Auto-save na blur: wszystkie pola tekstowe (nie tylko submit lub Enter)
+□ Auto-save guard: wartość niezmieniona → request nie jest wysyłany
+□ Optimistic UI: zmiana widoczna natychmiast, rollback (toast błędu) przy HTTP error
+
+□ section_completions:
+     - lazy ALTER TABLE ADD COLUMN przed pierwszym zapisem (getTableColumns() check)
+     - typ kolumny: TEXT (JSON string), nie JSONB (kompatybilność SQLite + libSQL)
+     - zapis: JSON.stringify({ "section-id": true, "other-section": false })
+     - odczyt: JSON.parse() z fallback {} na null / undefined / ""
+
+□ section_order:
+     Personalna kolejność sekcji zapisana między sesjami (localStorage lub DB)
+
+□ JSON_FIELDS (tags, custom_fields, itp.):
+     stringify przy zapisie, parse przy odczycie
+     Brak double-serialize (nie JSON.stringify(JSON.stringify(...)))
+
+□ Brak orphan records:
+     Usunięcie artefaktu kaskadowo usuwa powiązane dane (insights → sessions, itp.)
+```
+
+---
+
+### BLOK E — Eksport
+
+```
+□ DESTYNACJE — wszystkie 4 działają:
+     → Notatki:      tworzy nową notatkę z tytułem artefaktu + treścią kanoniczną
+     → Idee:         dodaje kartę/node do aktywnej przestrzeni Idei
+     → Prezentacja:  tworzy slide deck (1 sekcja = 1 slide, cSpan respektowany)
+     → PDF:          generuje PDF, paginacja szanuje cSpan kart
+
+□ KOLEJNOŚĆ EKSPORTU = kolejność kanoniczna (z kanonu artefaktu)
+     NIE kolejność sidebarowa (drag w navie nie zmienia kolejności eksportu)
+
+□ FILTRY EKSPORTU:
+     Puste sekcje (EmptyState) → nie eksportowane
+     cHidden=true → nie eksportowane
+
+□ PER-KARTA:
+     Pole "Eksport" z kanonu określa co jest renderowane
+     Bloki bez eksport-definicji pomijane
+
+□ PREZENTACJA — cSpan → slajd:
+     cSpan 1 = pół slajdu (2-kol layout)
+     cSpan 2 = pełny slajd (2-kol, duży content)
+     cSpan 3 = pełny slajd (1-kol, duży font, hero card)
+```
+
+---
+
+### BLOK F — QA wizualne (Harvard/McKinsey standard)
+
+```
+□ PALETA HARVARD/HBS:
+     primary #85182F (Harvard Crimson) = wyłącznie CTA modalne ("Zapisz", "Zatwierdź")
+     teal #00979D (HBS Teal)           = wyłącznie AI affordances
+     success (green)                   = Mark Complete + pozytywne stany
+     Brak niestandardowych kolorów poza design tokenami z tailwind.config
+
+□ TYPOGRAFIA McKinsey — 5 poziomów (nie mniej, nie więcej):
+     H1 — tytuł artefaktu:   text-2xl font-bold text-slate-900 dark:text-slate-50
+     H2 — nagłówek sekcji:   text-lg font-semibold text-slate-800 dark:text-slate-100
+     H3 — nagłówek karty:    text-base font-medium text-slate-700 dark:text-slate-200
+     Body — treść:           text-sm text-slate-700 dark:text-slate-300
+     Caption / meta:         text-xs text-slate-500 dark:text-slate-400
+     Zakaz: text-xl, text-3xl, font-extrabold poza MetricCard value
+
+□ SPACING McKinsey "air":
+     gap-6 między kartami w sekcji
+     space-y-6 wewnątrz sekcji (NModeSectionWrapper default)
+     p-6 padding kart i paneli
+     Zakaz: gap-2, gap-4 tam gdzie spec mówi gap-6
+
+□ GRADIENTY:
+     Dozwolony: bg-gradient-to-br na głównym kontenerze widoku (tło)
+     Zakaz: gradienty na kartach, buttonach, toolbarze, navie
+
+□ DARK MODE:
+     bg-white → dark:bg-navy-900 lub dark:bg-navy-800 (nie brak dark: klasy)
+     text-slate-X → dark:text-slate-Y (odpowiedni poziom kontrastu)
+     border-slate-X → dark:border-navy-X
+     Sprawdź: toolbar, nav, karty, Properties Strip, modale — brak "białych dziur"
+
+□ RESPONSIVE:
+     < 1024px: sidebar collapse, lg:grid-cols-2 → grid-cols-1
+     < 768px: Properties Strip collapse lub horizontal scroll
+     Brak horizontal overflow na głównym canvasie (overflow-x-hidden na root)
+```
+
+---
+
+> **Szybki checklist przed mergem (skrót dla code review):**
+>
+> 1. Toolbar sticky i teal AI? → A3
+> 2. Żaden AI button nie jest crimson? → A3 + C
+> 3. Każda karta ma empty state? → B5
+> 4. Auto-save działa na blur (nie tylko Enter)? → D
+> 5. section_completions: lazy ALTER zaimplementowany? → D
+> 6. Eksport: kolejność kanoniczna, nie sidebarowa? → E
+> 7. Dark mode: zero białych dziur? → F
+> 8. Typy bloków z 12-type vocabulary (nie "custom text")? → B3
+
+---
+
 ## Odniesienia
 
 - [Canon inicjatyw](./INITIATIVE_CANON.md) — mapowanie bloków do kart inicjatyw

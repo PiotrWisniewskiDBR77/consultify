@@ -125,7 +125,40 @@ export const CreateInitiativeSchema = InitiativePayloadBaseSchema.refine(
 
 export const UpdateInitiativeSchema = InitiativePayloadBaseSchema.omit({
   projectId: true,
-}).partial();
+})
+  .partial()
+  .extend({
+    // Mark Complete (AI signal) — map of sectionId → completed. Persisted as a
+    // JSON string in the lazy-ALTER'd `section_completions` TEXT column.
+    sectionCompletions: z.record(z.string(), z.boolean()).optional(),
+    // Canon sections persisted via dedicated lazy-ALTER'd columns. `hypothesisStatement`
+    // is intentionally separate from the legacy `hypothesis` column (which stores the
+    // Initiative Scope narrative via the `description` alias).
+    hypothesisStatement: z.string().max(5000).optional().nullable(),
+    lessonsLearned: z.string().max(10000).optional().nullable(),
+    changeLog: z
+      .array(
+        z.object({
+          id: z.string(),
+          date: z.string().optional(),
+          user: z.string().optional(),
+          change: z.string(),
+          reason: z.string().optional(),
+          impact: z.string().optional(),
+        })
+      )
+      .optional(),
+    okrs: z
+      .array(
+        z.object({
+          id: z.string(),
+          objective: z.string(),
+          keyResults: z.array(z.string()).optional(),
+          confidence: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+        })
+      )
+      .optional(),
+  });
 
 export const UpdateInitiativeStatusSchema = z.object({
   status: InitiativeStatusEnum,

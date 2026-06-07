@@ -538,7 +538,11 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     icon: ShieldAlert,
     label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' },
   },
-  { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
+  {
+    id: 'opportunities',
+    icon: TrendingUp,
+    label: { en: 'Opportunity Spaces', pl: 'Przestrzenie szans' },
+  },
 
   // ── Między wierszami / Between the lines ──────────────────────────────────
   { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' }, cSpan: 2 },
@@ -617,6 +621,24 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   // the existing CommentsCanvas / ActivityLogCanvas wiring.
   { id: 'comments', icon: MessageSquare, label: { en: 'Comments', pl: 'Komentarze' } },
   { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' }, cSpan: 2 },
+
+  // ── Phase D: Canon sections → 23/23 ─────────────────────────────────────────
+  { id: 'key-findings', icon: Star, label: { en: 'Key Findings', pl: 'Kluczowe wnioski' } },
+  { id: 'recommendations', icon: Rocket, label: { en: 'Recommendations', pl: 'Rekomendacje' } },
+  { id: 'tensions', icon: GitCompare, label: { en: 'Tensions', pl: 'Napięcia' } },
+  { id: 'patterns', icon: Layers, label: { en: 'Patterns', pl: 'Wzorce' } },
+  { id: 'mental-models', icon: Brain, label: { en: 'Mental Models', pl: 'Modele myślowe' } },
+  { id: 'moments', icon: Quote, label: { en: 'Moments', pl: 'Momenty' } },
+  { id: 'quote-bank', icon: Quote, label: { en: 'Quote Bank', pl: 'Bank cytatów' }, cSpan: 2 },
+  { id: 'stakeholder-map', icon: Users, label: { en: 'Stakeholder Map', pl: 'Mapa interesariuszy' }, cSpan: 2 },
+  { id: 'source-credibility', icon: Eye, label: { en: 'Source Credibility', pl: 'Wiarygodność źródeł' } },
+  {
+    id: 'consulting-narrative',
+    icon: FileText,
+    label: { en: 'Consulting Narrative', pl: 'Narracja konsultingowa' },
+    cSpan: 3,
+  },
+  { id: 'executive-memo', icon: Sparkles, label: { en: 'Executive Memo', pl: 'Memo zarządcze' }, cSpan: 2 },
 ];
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -1813,6 +1835,45 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [navigate]
   );
 
+  // ── Mark Complete (Canon Blok C — parity with InitiativeDocumentView) ──────
+  // AI signal only; never locks fields. Persisted as JSON map on the insight row
+  // (lazy-ALTER'd section_completions TEXT column server-side; PATCH updateInsight).
+  const sectionCompletions = useMemo<Record<string, boolean>>(() => {
+    const raw = (insight as any)?.sectionCompletions ?? (insight as any)?.section_completions;
+    if (!raw) return {};
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw) || {};
+      } catch {
+        return {};
+      }
+    }
+    return typeof raw === 'object' ? (raw as Record<string, boolean>) : {};
+  }, [insight]);
+
+  const handleToggleSectionComplete = useCallback(
+    async (sectionId: string) => {
+      if (!insight) return;
+      const prevMap = sectionCompletions;
+      const next = { ...prevMap, [sectionId]: !prevMap[sectionId] };
+      // Optimistic — reflect immediately in nav badge + progress.
+      setInsight((prev) =>
+        prev ? ({ ...prev, sectionCompletions: next, section_completions: next } as any) : prev
+      );
+      try {
+        await V8InterviewApi.updateInsight(insight.id, { sectionCompletions: next } as any);
+      } catch {
+        setInsight((prev) =>
+          prev
+            ? ({ ...prev, sectionCompletions: prevMap, section_completions: prevMap } as any)
+            : prev
+        );
+        toast.error(isPolish ? 'Nie udało się zapisać statusu sekcji' : 'Failed to save section status');
+      }
+    },
+    [insight, sectionCompletions, isPolish]
+  );
+
   const handleRegenerate = async () => {
     if (!insight) return;
     setIsRegenerating(true);
@@ -2594,12 +2655,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         readOnly: true,
       },
     ],
-    [
-      findingsSummary.total,
-      insight,
-      isPolish,
-      typeMeta,
-    ]
+    [findingsSummary.total, insight, isPolish, typeMeta]
   );
 
   // ── Activity log → NMode format ───────────────────────────────────────────
@@ -5916,6 +5972,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <NModeSectionWrapper
               heading={{ en: 'Consensus & Divergence Matrix', pl: 'Macierz zgody i rozbieżności' }}
+              aiAction={{
+                title: { en: 'Regenerate this analysis with AI', pl: 'Odśwież tę analizę z AI' },
+                onClick: handleRegenerate,
+                loading: isRegenerating,
+              }}
               isEmpty={!hasMatrix}
               emptyState={{
                 icon: GitCompare,
@@ -6016,6 +6077,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <NModeSectionWrapper
               heading={{ en: 'Implicit Assumptions', pl: 'Ukryte założenia' }}
+              aiAction={{
+                title: { en: 'Regenerate this analysis with AI', pl: 'Odśwież tę analizę z AI' },
+                onClick: handleRegenerate,
+                loading: isRegenerating,
+              }}
               isEmpty={!hasAssumptions}
               emptyState={{
                 icon: Brain,
@@ -6085,6 +6151,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <NModeSectionWrapper
               heading={{ en: 'Silences & Gaps', pl: 'Przemilczenia i luki' }}
+              aiAction={{
+                title: { en: 'Regenerate this analysis with AI', pl: 'Odśwież tę analizę z AI' },
+                onClick: handleRegenerate,
+                loading: isRegenerating,
+              }}
               isEmpty={!hasSilences}
               emptyState={{
                 icon: EyeOff,
@@ -6131,6 +6202,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <NModeSectionWrapper
               heading={{ en: 'Cross-person Quote Comparison', pl: 'Porównanie cytatów osób' }}
+              aiAction={{
+                title: { en: 'Regenerate this analysis with AI', pl: 'Odśwież tę analizę z AI' },
+                onClick: handleRegenerate,
+                loading: isRegenerating,
+              }}
               isEmpty={!hasComparison}
               emptyState={{
                 icon: Quote,
@@ -6206,6 +6282,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <NModeSectionWrapper
               heading={{ en: 'Sentiment & Tone Map', pl: 'Mapa sentymentu i tonu' }}
+              aiAction={{
+                title: { en: 'Regenerate this analysis with AI', pl: 'Odśwież tę analizę z AI' },
+                onClick: handleRegenerate,
+                loading: isRegenerating,
+              }}
               isEmpty={!hasTone}
               emptyState={{
                 icon: Heart,
@@ -6288,6 +6369,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <NModeSectionWrapper
               heading={{ en: 'Power Dynamics', pl: 'Dynamika władzy' }}
+              aiAction={{
+                title: { en: 'Regenerate this analysis with AI', pl: 'Odśwież tę analizę z AI' },
+                onClick: handleRegenerate,
+                loading: isRegenerating,
+              }}
               isEmpty={!hasPower}
               emptyState={{
                 icon: Scale,
@@ -6358,6 +6444,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <NModeSectionWrapper
               heading={{ en: 'Hypothesis Board', pl: 'Tablica hipotez' }}
+              aiAction={{
+                title: { en: 'Regenerate this analysis with AI', pl: 'Odśwież tę analizę z AI' },
+                onClick: handleRegenerate,
+                loading: isRegenerating,
+              }}
               isEmpty={!hasHyp}
               emptyState={{
                 icon: Network,
@@ -6480,6 +6571,353 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       </div>
     );
 
+    // ── Phase D: Canon sections → 23/23 (derived from in-scope data; read-only + AI regenerate) ──
+    const dRegen = {
+      title: { en: 'Regenerate with AI', pl: 'Odśwież z AI' },
+      onClick: handleRegenerate,
+      loading: isRegenerating,
+    };
+    const dCard = 'rounded-lg border border-slate-200/60 dark:border-navy-700/50 px-3 py-2.5';
+    const dTitle = 'text-sm font-medium text-slate-800 dark:text-slate-100';
+    const dBody = 'text-xs text-slate-600 dark:text-slate-400 mt-0.5';
+    const dRegenCta = { label: { en: 'Generate with AI', pl: 'Wygeneruj z AI' }, onClick: handleRegenerate };
+
+    const dPatternItems = [
+      ...v6Themes.filter((t) => t.crossSessionPattern).map((t) => ({ t: t.title, d: t.description })),
+      ...v6Issues.filter((t) => t.crossSessionPattern).map((t) => ({ t: t.title, d: t.description })),
+      ...v6Opportunities
+        .filter((t) => t.crossSessionPattern)
+        .map((t) => ({ t: t.title, d: t.description })),
+      ...v6Signals
+        .filter((s) => s.type === 'emerging_pattern')
+        .map((s) => ({ t: s.title, d: s.description })),
+    ];
+    const dTensionItems = [
+      ...v6Signals
+        .filter((s) => s.type === 'tension' || s.type === 'contradiction')
+        .map((s) => ({ t: s.title, d: s.description })),
+      ...contradictedTopics.map((t) => ({ t: t.label, d: t.divergenceNote || '' })),
+    ];
+    const dMentalLenses = (analysis?.people.stakeholderLenses || []).filter((l) => l.localSummary);
+    const dRoles = analysis?.scope.roles || [];
+    const dDepts = analysis?.scope.departments || [];
+    const dStakeholders = analysis?.scope.stakeholderLabels || [];
+    const dNarrative = (insight?.content || '').trim();
+    const dMemo = (executiveSummary || '').trim();
+
+    composedComponentById['key-findings'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Key Findings', pl: 'Kluczowe wnioski' }}
+        aiAction={dRegen}
+        isEmpty={v6Themes.length === 0}
+        emptyState={{
+          icon: Star,
+          message: {
+            en: 'Key findings surface here once the insight is synthesized from sessions.',
+            pl: 'Kluczowe wnioski pojawią się po syntezie insightu z sesji.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <ol className="space-y-2 list-decimal list-inside">
+          {v6Themes.slice(0, 6).map((t, i) => (
+            <li key={i} className={dCard}>
+              <span className={dTitle}>{t.title}</span>
+              {t.description && <div className={dBody}>{t.description}</div>}
+            </li>
+          ))}
+        </ol>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['recommendations'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Recommendations', pl: 'Rekomendacje' }}
+        aiAction={dRegen}
+        isEmpty={v6Opportunities.length + v6Issues.length === 0}
+        emptyState={{
+          icon: Rocket,
+          message: {
+            en: 'Recommended actions are derived from opportunities to pursue and issues to address.',
+            pl: 'Rekomendowane działania wynikają z szans do wykorzystania i problemów do rozwiązania.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <ul className="space-y-2">
+          {v6Opportunities.map((o, i) => (
+            <li key={`o${i}`} className={dCard}>
+              <span className={dTitle}>
+                <span className="text-teal-600 dark:text-teal-400">
+                  {isPolish ? 'Wykorzystaj: ' : 'Pursue: '}
+                </span>
+                {o.title}
+              </span>
+              {o.description && <div className={dBody}>{o.description}</div>}
+            </li>
+          ))}
+          {v6Issues.map((s, i) => (
+            <li key={`i${i}`} className={dCard}>
+              <span className={dTitle}>
+                <span className="text-amber-600 dark:text-amber-400">
+                  {isPolish ? 'Zaadresuj: ' : 'Address: '}
+                </span>
+                {s.title}
+              </span>
+              {s.description && <div className={dBody}>{s.description}</div>}
+            </li>
+          ))}
+        </ul>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['tensions'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Tensions', pl: 'Napięcia' }}
+        aiAction={dRegen}
+        isEmpty={dTensionItems.length === 0}
+        emptyState={{
+          icon: GitCompare,
+          message: {
+            en: 'Contradictions and tensions between respondents appear here once detected.',
+            pl: 'Sprzeczności i napięcia między respondentami pojawią się po wykryciu.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <ul className="space-y-2">
+          {dTensionItems.map((x, i) => (
+            <li key={i} className={dCard}>
+              <span className={dTitle}>{x.t}</span>
+              {x.d && <div className={dBody}>{x.d}</div>}
+            </li>
+          ))}
+        </ul>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['patterns'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Patterns', pl: 'Wzorce' }}
+        aiAction={dRegen}
+        isEmpty={dPatternItems.length === 0}
+        emptyState={{
+          icon: Layers,
+          message: {
+            en: 'Cross-session patterns appear here when a finding repeats across multiple sessions.',
+            pl: 'Wzorce międzysesyjne pojawią się, gdy obserwacja powtarza się w wielu sesjach.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <ul className="space-y-2">
+          {dPatternItems.map((x, i) => (
+            <li key={i} className={dCard}>
+              <span className={dTitle}>{x.t}</span>
+              {x.d && <div className={dBody}>{x.d}</div>}
+            </li>
+          ))}
+        </ul>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['mental-models'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Mental Models', pl: 'Modele myślowe' }}
+        aiAction={dRegen}
+        isEmpty={dMentalLenses.length === 0}
+        emptyState={{
+          icon: Brain,
+          message: {
+            en: 'How each stakeholder group frames the problem — populated from per-group analysis.',
+            pl: 'Jak każda grupa interesariuszy postrzega problem — z analizy per grupa.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {dMentalLenses.map((l) => (
+            <div key={l.id} className={dCard}>
+              <div className={dTitle}>{l.label}</div>
+              <div className={dBody}>{l.localSummary}</div>
+            </div>
+          ))}
+        </div>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['moments'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Moments', pl: 'Momenty' }}
+        aiAction={dRegen}
+        isEmpty={evidenceQuotes.length === 0}
+        emptyState={{
+          icon: Quote,
+          message: {
+            en: 'Memorable quotes pulled from the sessions surface here.',
+            pl: 'Zapadające w pamięć cytaty z sesji pojawią się tutaj.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <ul className="space-y-3">
+          {evidenceQuotes.map((q, i) => (
+            <li
+              key={i}
+              className="border-l-2 border-teal-300 dark:border-teal-700 pl-3 text-sm italic text-slate-700 dark:text-slate-200"
+            >
+              “{q}”
+            </li>
+          ))}
+        </ul>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['quote-bank'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Quote Bank', pl: 'Bank cytatów' }}
+        aiAction={dRegen}
+        isEmpty={evidenceQuotes.length === 0}
+        emptyState={{
+          icon: Quote,
+          message: {
+            en: 'A curated library of evidence quotes, ready to drop into deliverables.',
+            pl: 'Wykurowana biblioteka cytatów-dowodów, gotowa do użycia w dostawach.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {evidenceQuotes.map((q, i) => (
+            <div key={i} className={dCard}>
+              <div className="text-sm italic text-slate-700 dark:text-slate-200">“{q}”</div>
+            </div>
+          ))}
+        </div>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['stakeholder-map'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Stakeholder Map', pl: 'Mapa interesariuszy' }}
+        aiAction={dRegen}
+        isEmpty={dRoles.length + dDepts.length + dStakeholders.length === 0}
+        emptyState={{
+          icon: Users,
+          message: {
+            en: 'Roles and departments represented across the sessions are mapped here.',
+            pl: 'Role i działy reprezentowane w sesjach są tu zmapowane.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <div className="space-y-3">
+          {[
+            { label: isPolish ? 'Role' : 'Roles', items: dRoles },
+            { label: isPolish ? 'Działy' : 'Departments', items: dDepts },
+            { label: isPolish ? 'Interesariusze' : 'Stakeholders', items: dStakeholders },
+          ]
+            .filter((g) => g.items.length > 0)
+            .map((g) => (
+              <div key={g.label}>
+                <div className="text-[11px] uppercase tracking-wide text-slate-400 mb-1">
+                  {g.label}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {g.items.map((it, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      {it}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+        </div>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['source-credibility'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Source Credibility', pl: 'Wiarygodność źródeł' }}
+        aiAction={dRegen}
+        isEmpty={!analysis || analysis.scope.sourceSessionCount === 0}
+        emptyState={{
+          icon: Eye,
+          message: {
+            en: 'Coverage breadth and source diversity are assessed here once sessions are linked.',
+            pl: 'Zasięg pokrycia i różnorodność źródeł oceniane są po powiązaniu sesji.',
+          },
+          cta: { label: { en: 'Add a session', pl: 'Dodaj sesję' }, onClick: handleRegenerate },
+        }}
+      >
+        {analysis && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className={dCard}>
+              <div className={dBody}>{isPolish ? 'Sesje' : 'Sessions'}</div>
+              <div className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                {analysis.scope.sourceSessionCount}
+              </div>
+            </div>
+            <div className={dCard}>
+              <div className={dBody}>{isPolish ? 'Odrębne głosy' : 'Distinct voices'}</div>
+              <div className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                {analysis.scope.distinctStakeholderCount}
+              </div>
+            </div>
+            <div className={dCard}>
+              <div className={dBody}>{isPolish ? 'Postawa' : 'Posture'}</div>
+              <div className="text-sm font-medium text-slate-800 dark:text-slate-100 mt-1">
+                {analysis.scope.posture.replace(/_/g, ' ')}
+              </div>
+            </div>
+          </div>
+        )}
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['consulting-narrative'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Consulting Narrative', pl: 'Narracja konsultingowa' }}
+        aiAction={dRegen}
+        isEmpty={dNarrative.length === 0}
+        emptyState={{
+          icon: FileText,
+          message: {
+            en: 'The full written consulting narrative for this insight appears here.',
+            pl: 'Pełna pisemna narracja konsultingowa tego insightu pojawi się tutaj.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+          {dNarrative}
+        </div>
+      </NModeSectionWrapper>
+    );
+
+    composedComponentById['executive-memo'] = (
+      <NModeSectionWrapper
+        heading={{ en: 'Executive Memo', pl: 'Memo zarządcze' }}
+        aiAction={dRegen}
+        isEmpty={dMemo.length === 0}
+        emptyState={{
+          icon: Sparkles,
+          message: {
+            en: 'A one-page summary for leadership is distilled here.',
+            pl: 'Jednostronicowe podsumowanie dla kierownictwa jest tu wydestylowane.',
+          },
+          cta: dRegenCta,
+        }}
+      >
+        <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+          {dMemo}
+        </div>
+      </NModeSectionWrapper>
+    );
+
     const badgeMap: Record<string, number | undefined> = {
       'report-pack': reportPack?.degraded
         ? reportPack.degradedReasons.length || 1
@@ -6557,7 +6995,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       themes: 0,
       'issues-risks': 0,
       opportunities: 0,
+      'key-findings': 0,
+      recommendations: 0,
       // 1 — Między wierszami / Between the lines
+      tensions: 1,
+      patterns: 1,
+      'mental-models': 1,
       people: 1,
       signals: 1,
       'analysis-matrix': 1,
@@ -6572,8 +7015,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       'evidence-map': 2,
       'candidate-triage': 2,
       'source-pack': 2,
+      moments: 2,
+      'quote-bank': 2,
+      'stakeholder-map': 2,
+      'source-credibility': 2,
       // 3 — Dostarczane / Deliverables
       'report-pack': 3,
+      'consulting-narrative': 3,
+      'executive-memo': 3,
       // 4 — Audyt / Audit
       'material-quality': 4,
       comments: 4,
@@ -6588,6 +7037,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         badge: badgeMap[section.id],
         hasData: section.id in definiteCounts ? definiteCounts[section.id] > 0 : undefined,
         alwaysShow: alwaysShowSet.has(section.id),
+        completed: !!sectionCompletions[section.id],
         group: groupLabels[groupIndexById[section.id] ?? 4],
       } as NModeSection;
     }).sort((a, b) => order.indexOf(a.group ?? '') - order.indexOf(b.group ?? ''));
@@ -6658,6 +7108,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     handlePublishReportPack,
     handleSubmitReportForReview,
     handleWorksheetStatusUpdate,
+    handleRegenerate,
+    isRegenerating,
+    sectionCompletions,
   ]);
 
   // Apply the persisted drag order (within-group). Unknown/new sections fall to
@@ -6889,9 +7342,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
       renderActionBar={() => (
         <div className="flex items-center gap-2 flex-wrap">
-          {/* #26 — Primary action: Submit for Information (no review/approval gate) */}
+          {/* #26 — Primary action: Submit for Information (no review/approval gate)
+              Canon A3: toolbar carries NO crimson/primary buttons — crimson is
+              reserved for modal CTAs. This is a neutral (secondary) toolbar action. */}
           <Button
-            variant="primary"
+            variant="secondary"
             size="sm"
             icon={<Send />}
             loading={submittingForInfo}
@@ -6915,7 +7370,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               }}
             >
               {isPolish ? 'Eksport' : 'Export'}
-              <ChevronDown size={13} className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={13}
+                className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
+              />
             </Button>
             {exportMenuOpen && (
               <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
@@ -7003,38 +7461,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             )}
           </div>
 
-          {/* #26 — ✨ AI ▾ : uniform outline dropdown (Regenerate) */}
-          <div className="relative" ref={aiMenuRef}>
-            <Button
-              variant="outline"
-              size="sm"
-              icon={<Sparkles />}
-              className="bg-teal-50 border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40"
-              onClick={() => {
-                setAiMenuOpen((v) => !v);
-                setExportMenuOpen(false);
-              }}
-            >
-              {isPolish ? 'AI' : 'AI'}
-              <ChevronDown size={13} className={`ml-0.5 transition-transform ${aiMenuOpen ? 'rotate-180' : ''}`} />
-            </Button>
-            {aiMenuOpen && (
-              <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
-                <button
-                  onClick={() => {
-                    setAiMenuOpen(false);
-                    handleRegenerate();
-                  }}
-                  disabled={isRegenerating}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                >
-                  <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-                  {isPolish ? 'Regeneruj' : 'Regenerate'}
-                </button>
-              </div>
-            )}
-          </div>
-
           {/* Legacy lifecycle controls — only surface for insights already in a
               review/published state (older data). New insights use the
               informational "Submit for Information" flow above (#26b). */}
@@ -7079,6 +7505,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </button>
             </>
           )}
+          {/* ── Mark Complete (contextual to active section) ─────────── */}
+          <button
+            type="button"
+            onClick={() => handleToggleSectionComplete(activeNSection)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+              sectionCompletions[activeNSection]
+                ? 'border-success-400/50 text-success-600 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20'
+                : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60'
+            }`}
+            title={isPolish ? 'Oznacz sekcję jako gotową (sygnał AI)' : 'Mark section complete (AI signal)'}
+          >
+            <CheckCircle2 size={14} />
+            {sectionCompletions[activeNSection]
+              ? isPolish
+                ? 'Gotowe'
+                : 'Complete'
+              : isPolish
+                ? 'Oznacz gotowe'
+                : 'Mark complete'}
+          </button>
+
           {/* ── Fork + Present ─────────────────────────────── */}
           <div className="flex-1 min-w-0" />
           <ToolbarIconButton
@@ -7091,6 +7538,44 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             tooltip={isPolish ? 'Prezentuj' : 'Present'}
             onClick={() => {}}
           />
+
+          {/* ── Slot 9: artifact-level AI (solid teal) ─────────────────
+              Canon C/Level-3: the rightmost AI affordance is a SOLID teal
+              button (bg-teal-600 text-white). Opens the AI menu (Regenerate;
+              AI Consultant panel to follow). */}
+          <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
+          <div className="relative" ref={aiMenuRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setAiMenuOpen((v) => !v);
+                setExportMenuOpen(false);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+            >
+              <Sparkles size={14} />
+              {isPolish ? 'AI' : 'AI'}
+              <ChevronDown
+                size={13}
+                className={`transition-transform ${aiMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {aiMenuOpen && (
+              <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                <button
+                  onClick={() => {
+                    setAiMenuOpen(false);
+                    handleRegenerate();
+                  }}
+                  disabled={isRegenerating}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
+                  {isPolish ? 'Regeneruj' : 'Regenerate'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     >

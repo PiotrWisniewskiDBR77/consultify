@@ -58,7 +58,9 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { AssessmentItemPreview, type AssessmentItem } from './AssessmentItemPreview';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
+import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
@@ -308,6 +310,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [slideOverReportId, setSlideOverReportId] = useState<string | null>(null);
   const [slideOverBuilderReportId, setSlideOverBuilderReportId] = useState<string | null>(null);
   const [slideOverReportOpen, setSlideOverReportOpen] = useState(false);
+  // canon §7.1: selected row for side-preview (assessment 'list' tab)
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
 
   // API data state
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
@@ -1501,6 +1505,59 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           onNewItem={handleNewAssessment}
           newItemLabel="New Assessment"
         />
+      );
+    }
+
+    // canon §2+§7.1: Assessment 'list' tab → TableWithPreviewLayout + side preview
+    if (activeTab === 'list') {
+      type AssessmentItemWithTitle = AssessmentItem & { title: string };
+      const toItem = (row: any): AssessmentItemWithTitle => ({
+        ...(row as AssessmentItem),
+        title: (row.name as string) || 'Assessment',
+      });
+      const selectedRow = selectedAssessmentId
+        ? currentData.find((r: any) => r.id === selectedAssessmentId) ?? null
+        : null;
+      const selectedItem: AssessmentItemWithTitle | null = selectedRow ? toItem(selectedRow) : null;
+
+      return (
+        <TableWithPreviewLayout<AssessmentItemWithTitle>
+          selectedId={selectedAssessmentId}
+          selectedItem={selectedItem}
+          onSelect={setSelectedAssessmentId}
+          onOpenFull={(id) => {
+            const row = currentData.find((r: any) => r.id === id);
+            if (row) handleOpenDocument(row);
+          }}
+          itemIds={currentData.map((r: any) => r.id as string)}
+          getItemById={(id) => {
+            const r = currentData.find((x: any) => x.id === id);
+            return r ? toItem(r) : null;
+          }}
+          renderPreview={(item) => (
+            <AssessmentItemPreview
+              item={item as AssessmentItem}
+              onOpen={() => {
+                const row = currentData.find((r: any) => r.id === item.id);
+                if (row) handleOpenDocument(row);
+              }}
+              onClose={() => setSelectedAssessmentId(null)}
+            />
+          )}
+        >
+          <div className="pl-4 pr-1.5 pt-3 pb-4">
+            <FilterableTable
+              columns={tableColumns}
+              data={currentData}
+              onRowClick={(row) => setSelectedAssessmentId((row as any).id as string)}
+              onRowDoubleClick={handleOpenDocument}
+              onRowAction={handleRowAction}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              emptyMessage={emptyStateMessage}
+            />
+          </div>
+        </TableWithPreviewLayout>
       );
     }
 

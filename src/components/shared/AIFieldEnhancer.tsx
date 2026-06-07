@@ -386,7 +386,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
       <button
         onClick={() => !disabled && !loading && setIsOpen((prev) => !prev)}
         disabled={disabled || loading}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         title={
           disabledTooltip || (isPolish ? 'Akcje AI dla tego pola' : 'AI actions for this field')
         }
@@ -407,7 +407,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
                 onClick={() => handleEnhance(mode)}
                 className={
                   isGenerate
-                    ? 'w-full text-left px-2.5 py-1.5 text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 rounded-md transition-colors font-medium flex items-center gap-1.5'
+                    ? 'w-full text-left px-2.5 py-1.5 text-xs text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-500/10 rounded-md transition-colors font-medium flex items-center gap-1.5'
                     : 'w-full text-left px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors'
                 }
               >

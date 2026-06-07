@@ -920,6 +920,39 @@ export class InitiativeController {
         params.push(newJson);
       }
 
+      // Canon sections persisted via dedicated lazy-ALTER'd TEXT columns. Kept
+      // separate from the legacy `hypothesis` column (which holds the Initiative
+      // Scope narrative via the `description` alias) to avoid collisions.
+      const LAZY_FIELDS: Array<{ key: string; col: string; json?: boolean }> = [
+        { key: 'hypothesisStatement', col: 'hypothesis_statement' },
+        { key: 'lessonsLearned', col: 'lessons_learned' },
+        { key: 'changeLog', col: 'change_log', json: true },
+        { key: 'okrs', col: 'okrs', json: true },
+      ];
+      let lazyColsChecked: ReturnType<typeof getColumnNameSet> | null = null;
+      for (const f of LAZY_FIELDS) {
+        if (body[f.key] === undefined || body[f.key] === null) continue;
+        if (!lazyColsChecked) {
+          lazyColsChecked = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
+        }
+        if (!lazyColsChecked.has(f.col)) {
+          try {
+            await queryHelpers.queryRun(`ALTER TABLE initiatives ADD COLUMN ${f.col} TEXT`);
+            lazyColsChecked.add(f.col);
+          } catch (err: any) {
+            const m = String(err?.message || err).toLowerCase();
+            if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+          }
+        }
+        const val = f.json
+          ? typeof body[f.key] === 'string'
+            ? body[f.key]
+            : JSON.stringify(body[f.key])
+          : body[f.key];
+        updates.push(`${f.col} = ?`);
+        params.push(val ?? null);
+      }
+
       if (updates.length === 0) {
         res.json({ id, message: 'No changes detected' });
         return;

@@ -595,3 +595,176 @@ Genesis nigdy nie blokuje — użytkownik może edytować każde pole natychmias
 - `cSpan: 3` = pełna szerokość canvas
 - `cHidden: true` = karta schowana w sidebarze do pojawienia się danych lub spełnienia warunku
 - Badge pokazuje tylko dane z bazy (nie z AI genesis)
+
+---
+
+## Checkpointy walidacji — InitiativeDocumentView
+
+> **Cel:** Lista kontrolna do weryfikowania poprawności BUILD-u widoku inicjatyw.
+> Uzupełnia master checklist z [BLOCK_TYPES_CANON.md § Checkpointy walidacji implementacji](./BLOCK_TYPES_CANON.md).
+>
+> **Kolejność weryfikacji:** Master (Bloki A–F) → Poniższe bloki (IN-1 do IN-4).
+> Oba muszą przejść przed mergem.
+
+---
+
+### IN-1 — Kompletność widoku: 21 kart w 6 grupach
+
+```
+□ GRUPA 1 — SCOPE & PLAN (5 kart):
+     □ initiative-definition    genesis ★
+     □ timeline                 genesis ★
+     □ target-state-scope       genesis ★
+     □ deliverables-milestones  cSpan 2
+     □ dependencies             (non-genesis)
+
+□ GRUPA 2 — DECISIONS & RISK (4 karty):
+     □ decision-log             cSpan 1, badge: decisions count
+     □ risk-raid                cSpan 2, genesis ★ (RAID table)
+     □ change-log               badge: changes count
+     □ lessons-learned          (non-genesis)
+
+□ GRUPA 3 — GOALS (3 karty):
+     □ kpi                      genesis ★, MetricCard array
+     □ okr                      (non-genesis), MetricCard array
+     □ hypothesis                (non-genesis)
+
+□ GRUPA 4 — FINANCE (2 karty):
+     □ financial-analysis       genesis ★, DataTable
+     □ financial-impact         genesis ★, MetricCard + DataTable
+
+□ GRUPA 5 — PEOPLE (3 karty):
+     □ team                     genesis ★, DataTable / LabeledCardGrid
+     □ stakeholders             DataTable
+     □ workstream-owners        LabeledCardGrid
+
+□ GRUPA 6 — RECORDS (4 karty):
+     □ documents-resources      FileAttachment list
+     □ related-initiatives      SourcePack (links)
+     □ comments                 cHidden: gdy 0, badge: count, CommentThread
+     □ activity-log             cHidden: gdy 0, Timeline
+
+□ ŁĄCZNA LICZBA: 21 kart (nie 20, nie 22)
+```
+
+---
+
+### IN-2 — Właściwości specyficzne dla inicjatyw
+
+**Kontrakt 10-polowy (bez Wymogu dowodu)**
+
+```
+□ Każda karta ma 10 pól (nie 11 — Wymóg dowodu nie dotyczy inicjatyw)
+□ Brak BlockQuote jako wymogu — cytaty opcjonalne (nie kontraktowe)
+□ DataTable jest głównym blokiem danych (nie RichText) w finance i team
+```
+
+**AI Genesis — 8 sekcji oznaczonych ★**
+
+```
+□ Sekcje genesis: initiative-definition · timeline · target-state-scope ·
+  financial-analysis · financial-impact · risk-raid · team · kpi
+□ Genesis trigger: tworzenie inicjatywy (NIE nowa sesja — inicjatywy nie mają sesji)
+□ Genesis używa: tytuł + opis + kategoria inicjatywy (IT/HR/Ops/Product)
+□ Genesis spinner/skeleton podczas wypełniania (nie pusty ekran)
+□ Genesis nie blokuje edycji — pola edytowalne natychmiast
+□ AI pomija sekcje z completed=true przy kolejnych run
+```
+
+**Properties Strip — pola specyficzne dla inicjatyw**
+
+```
+□ STATUS:     Draft (slate) / Planning (blue) / Active (green) / On Hold (amber)
+              / Done (success) / Cancelled (red)
+□ PHASE:      Discovery / Design / Build / Launch / Stabilize / Closed
+□ NEXT GATE:  data następnego gate review (date picker)
+□ PRIORITY:   P1 (red) / P2 (amber) / P3 (green) / P4 (slate)
+□ OWNER:      avatar + imię (nie ID)
+□ TARGET:     data docelowa ukończenia (date picker)
+```
+
+**RAID (risk-raid) — specyfika tabeli**
+
+```
+□ RAID = Risks · Assumptions · Issues · Dependencies (4 typy wierszy)
+□ Każdy wiersz: Type · Title · Impact (H/M/L) · Owner · Status · Due Date
+□ Impact: High = red badge, Medium = amber, Low = green
+□ Status: Open / In Progress / Closed / Accepted
+□ Lazy ALTER: raid_items tabela lub JSONB w initiatives.raid_data
+□ Eksport: pełna tabela RAID (nie summary)
+```
+
+---
+
+### IN-3 — Eksport inicjatyw: kolejność kanoniczna
+
+> Kolejność eksportu jest stała. Drag w sidebarze NIE zmienia kolejności eksportu.
+
+```
+□ 1.  Initiative Definition
+□ 2.  Timeline
+□ 3.  Target State & Scope
+□ 4.  Deliverables & Milestones
+□ 5.  Dependencies
+□ 6.  Decision Log
+□ 7.  Risk & RAID
+□ 8.  Change Log
+□ 9.  Lessons Learned
+□ 10. KPI
+□ 11. OKR
+□ 12. Hypothesis
+□ 13. Financial Analysis
+□ 14. Financial Impact
+□ 15. Team
+□ 16. Stakeholders
+□ 17. Workstream Owners
+□ 18. Documents & Resources
+□ 19. Related Initiatives
+□ 20. Comments           ← pomijany w eksporcie
+□ 21. Activity Log       ← pomijany w eksporcie
+
+□ Eksport PDF/Prezentacja: sekcje 1–19 (bez records audit)
+□ "Project Brief" = sekcje 1–5 (scope + plan)
+□ "Status Report" = sekcje 1, 6, 7, 10, 14 (definition + risks + KPIs + finance)
+```
+
+---
+
+### IN-4 — Stany specjalne inicjatyw
+
+**Inicjatywa w fazie Draft (nowa)**
+
+```
+□ initiative-definition: po genesis wypełniona z nazwy + opisu
+□ timeline: po genesis zawiera przynajmniej 3 kamienie milowe (placeholder)
+□ kpi: po genesis zawiera ≥ 2 metryki (placeholder z wartościami TBD)
+□ deliverables-milestones: empty state z CTA "Dodaj milestone"
+□ dependencies: empty state z CTA "Dodaj zależność"
+□ risk-raid: po genesis ≥ 2 ryzyka z Impact=High lub Medium
+□ financial-analysis: po genesis tabela kosztów z kategoriami
+□ team: po genesis zawiera Owner jako pierwszy wiersz
+```
+
+**Inicjatywa Active / Done**
+
+```
+□ decision-log badge: aktualna liczba decyzji (live)
+□ change-log badge: aktualna liczba zmian (live)
+□ comments badge: aktualna liczba komentarzy (live)
+□ activity-log: pojawia się automatycznie gdy ≥ 1 aktywność
+```
+
+**Mark Complete flow (InitiativeDocumentView-specific)**
+
+```
+□ Mark Complete button: widoczny w NModeSectionWrapper per sekcja
+□ Kliknięcie → optimistic UI (border-success pojawia się natychmiast)
+□ API call: PATCH /initiatives/:id z { sectionCompletions: { "section-id": true } }
+□ lazy ALTER działa: section_completions kolumna tworzona w initiatives jeśli nie istnieje
+□ Odczyt przy otwarciu: section_completions parsowany, completed prop przekazany
+□ ✓ badge w NModeLeftNav pojawia się natychmiast po mark complete
+□ Pasek postępu aktualizuje się natychmiast
+□ Pola sekcji POZOSTAJĄ edytowalne (nie disabled po mark complete)
+□ AI Consultant level 3: "Health check" — analizuje completed vs open sekcje
+     i wskazuje luki w dokumentacji inicjatywy
+```

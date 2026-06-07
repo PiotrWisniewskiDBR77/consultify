@@ -34,7 +34,10 @@ import type { NModeSection } from './types';
 const isSectionVisible = (s: NModeSection, showAll: boolean) =>
   showAll || s.alwaysShow || s.hasData !== false;
 
-const N_MODE_LEFT_NAV_WIDTH_CLASS = 'w-[242px]';
+// Canon A4: the rail collapses below the lg breakpoint (< 1024px) so the
+// 2-pane layout never breaks on tablet/mobile. Section switching there falls
+// back to the toolbar's Sections dropdown.
+const N_MODE_LEFT_NAV_WIDTH_CLASS = 'hidden lg:block w-[242px]';
 
 interface NModeLeftNavProps {
   /** Available sections */

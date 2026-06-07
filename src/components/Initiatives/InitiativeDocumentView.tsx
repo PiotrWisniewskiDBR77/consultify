@@ -14,6 +14,7 @@ import {
   Archive,
   Calendar,
   CheckCircle,
+  CheckCircle2,
   CheckSquare,
   ChevronDown,
   ChevronUp,
@@ -49,6 +50,10 @@ import {
   Users,
   X,
   XCircle,
+  FileText,
+  GraduationCap,
+  Lightbulb,
+  Package,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -106,6 +111,7 @@ import {
   NModePropertiesStrip,
   type NModePropertyField,
   type NModeSection,
+  NModeSectionWrapper,
   ToolbarIconButton,
 } from '../shared/NModeLayout';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
@@ -1122,6 +1128,167 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const canEditTargetDate = !!topBarCaps?.canEditTargetDate;
   const canEditCards = !!gateReadiness?.capabilities?.cards?.canEditCards;
   const canUseAi = !!gateReadiness?.capabilities?.ctaBar?.canUseAi;
+
+  // ── Mark Complete (Canon Blok C) ────────────────────────────────────────
+  // section_completions is an AI signal only — it never locks fields. Persisted
+  // as a JSON map on the initiatives row (lazy-ALTER'd TEXT column server-side).
+  const sectionCompletions = useMemo<Record<string, boolean>>(() => {
+    const raw = initiative?.sectionCompletions ?? initiative?.section_completions;
+    if (!raw) return {};
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw) || {};
+      } catch {
+        return {};
+      }
+    }
+    return typeof raw === 'object' ? (raw as Record<string, boolean>) : {};
+  }, [initiative]);
+
+  const handleToggleSectionComplete = useCallback(
+    async (sectionId: string) => {
+      const prevMap = sectionCompletions;
+      const next = { ...prevMap, [sectionId]: !prevMap[sectionId] };
+      // Optimistic — reflect immediately in nav badge + section visual.
+      setInitiative((prev: any) => ({
+        ...prev,
+        sectionCompletions: next,
+        section_completions: next,
+      }));
+      try {
+        await saveInitiativeWriteTruth(initiativeId, { sectionCompletions: next });
+      } catch {
+        // Rollback on failure.
+        setInitiative((prev: any) => ({
+          ...prev,
+          sectionCompletions: prevMap,
+          section_completions: prevMap,
+        }));
+        toast.error(isPolish ? 'Nie udało się zapisać statusu sekcji' : 'Failed to save section status');
+      }
+    },
+    [sectionCompletions, initiativeId, isPolish]
+  );
+
+  // ── Canon sections persisted via lazy-ALTER'd columns (Phase C) ──────────
+  // hypothesis_statement is separate from the legacy `hypothesis` column (which
+  // stores the Initiative Scope narrative via the `description` alias).
+  const savedHypothesis = (initiative?.hypothesisStatement ??
+    initiative?.hypothesis_statement ??
+    '') as string;
+  const savedLessons = (initiative?.lessonsLearned ?? initiative?.lessons_learned ?? '') as string;
+  const parseJsonField = useCallback((raw: unknown): any[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') {
+      try {
+        const v = JSON.parse(raw);
+        return Array.isArray(v) ? v : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, []);
+  const changeLogItems = useMemo(
+    () => parseJsonField(initiative?.changeLog ?? initiative?.change_log),
+    [initiative, parseJsonField]
+  );
+  const okrItems = useMemo(
+    () => parseJsonField(initiative?.okrs),
+    [initiative, parseJsonField]
+  );
+
+  const [hypothesisDraft, setHypothesisDraft] = useState('');
+  const [lessonsDraft, setLessonsDraft] = useState('');
+  const [changeLogDraft, setChangeLogDraft] = useState('');
+  const [okrDraft, setOkrDraft] = useState('');
+  useEffect(() => {
+    setHypothesisDraft(savedHypothesis);
+  }, [savedHypothesis]);
+  useEffect(() => {
+    setLessonsDraft(savedLessons);
+  }, [savedLessons]);
+
+  // Generic persist for the lazy-ALTER'd canon fields. Optimistic + rollback.
+  const persistInitiativeField = useCallback(
+    async (patch: Record<string, unknown>, mirror: Record<string, unknown>) => {
+      const snapshot = { ...mirror };
+      setInitiative((prev: any) => ({ ...prev, ...patch, ...mirror }));
+      try {
+        await saveInitiativeWriteTruth(initiativeId, patch);
+      } catch {
+        setInitiative((prev: any) => ({ ...prev, ...snapshot }));
+        toast.error(isPolish ? 'Nie udało się zapisać' : 'Save failed');
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const saveHypothesis = useCallback(() => {
+    if (hypothesisDraft === savedHypothesis) return;
+    void persistInitiativeField(
+      { hypothesisStatement: hypothesisDraft },
+      { hypothesisStatement: hypothesisDraft, hypothesis_statement: hypothesisDraft }
+    );
+  }, [hypothesisDraft, savedHypothesis, persistInitiativeField]);
+
+  const saveLessons = useCallback(() => {
+    if (lessonsDraft === savedLessons) return;
+    void persistInitiativeField(
+      { lessonsLearned: lessonsDraft },
+      { lessonsLearned: lessonsDraft, lessons_learned: lessonsDraft }
+    );
+  }, [lessonsDraft, savedLessons, persistInitiativeField]);
+
+  const genId = useCallback(() => Math.random().toString(36).slice(2, 10), []);
+  const addChangeLogEntry = useCallback(
+    (entry: { change: string; reason?: string; impact?: string }) => {
+      const cu = currentUser as any;
+      const next = [
+        ...changeLogItems,
+        {
+          id: genId(),
+          date: new Date().toISOString().slice(0, 10),
+          user: cu?.firstName || cu?.email || 'You',
+          change: entry.change,
+          reason: entry.reason || '',
+          impact: entry.impact || '',
+        },
+      ];
+      void persistInitiativeField({ changeLog: next }, { changeLog: next, change_log: next });
+    },
+    [changeLogItems, currentUser, genId, persistInitiativeField]
+  );
+  const removeChangeLogEntry = useCallback(
+    (id: string) => {
+      const next = changeLogItems.filter((e: any) => e.id !== id);
+      void persistInitiativeField({ changeLog: next }, { changeLog: next, change_log: next });
+    },
+    [changeLogItems, persistInitiativeField]
+  );
+
+  const addOkr = useCallback(
+    (objective: string) => {
+      const next = [...okrItems, { id: genId(), objective, keyResults: [], confidence: 'MEDIUM' }];
+      void persistInitiativeField({ okrs: next }, { okrs: next });
+    },
+    [okrItems, genId, persistInitiativeField]
+  );
+  const updateOkr = useCallback(
+    (id: string, patch: Record<string, unknown>) => {
+      const next = okrItems.map((o: any) => (o.id === id ? { ...o, ...patch } : o));
+      void persistInitiativeField({ okrs: next }, { okrs: next });
+    },
+    [okrItems, persistInitiativeField]
+  );
+  const removeOkr = useCallback(
+    (id: string) => {
+      const next = okrItems.filter((o: any) => o.id !== id);
+      void persistInitiativeField({ okrs: next }, { okrs: next });
+    },
+    [okrItems, persistInitiativeField]
+  );
 
   const toggleSection = useCallback((id: string) => {
     setExpandedSections((prev) => {
@@ -4594,6 +4761,49 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         cHidden: history.length === 0,
         component: null,
       },
+      // ── Canon sections added in Phase C (→ 21/21) ──────────────────────────
+      {
+        id: 'deliverables-milestones',
+        icon: Package,
+        label: { en: 'Deliverables & Milestones', pl: 'Produkty i kamienie milowe' },
+        badge: deliverableItems.length > 0 ? deliverableItems.length : undefined,
+        cSpan: 2,
+        component: null,
+      },
+      {
+        id: 'change-log',
+        icon: FileText,
+        label: { en: 'Change Log', pl: 'Dziennik zmian' },
+        badge: changeLogItems.length > 0 ? changeLogItems.length : undefined,
+        cSpan: 2,
+        component: null,
+      },
+      {
+        id: 'okr',
+        icon: Target,
+        label: { en: 'OKR', pl: 'OKR' },
+        badge: okrItems.length > 0 ? okrItems.length : undefined,
+        cSpan: 2,
+        component: null,
+      },
+      {
+        id: 'hypothesis',
+        icon: Lightbulb,
+        label: { en: 'Hypothesis', pl: 'Hipoteza' },
+        component: null,
+      },
+      {
+        id: 'workstream-owners',
+        icon: Users,
+        label: { en: 'Workstream Owners', pl: 'Właściciele strumieni' },
+        component: null,
+      },
+      {
+        id: 'lessons-learned',
+        icon: GraduationCap,
+        label: { en: 'Lessons Learned', pl: 'Wnioski i lekcje' },
+        component: null,
+      },
     ];
 
     // Group tabs (mirrors InsightViewer's bilingual groupLabels + groupIndexById).
@@ -4605,23 +4815,29 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       'initiative-definition': 0,
       tasks: 0,
       timeline: 0,
+      'deliverables-milestones': 0,
       dependencies: 0,
       // 1 — Decyzje i ryzyko / Decisions & Risk
       decisions: 1,
       'risk-raid': 1,
+      'change-log': 1,
       gates: 1,
       // 2 — Rezultaty / Outcomes
       'target-state-scope': 2,
       kpi: 2,
+      okr: 2,
+      hypothesis: 2,
       'financial-analysis': 2,
       'financial-impact': 2,
       // 3 — Ludzie / People
       team: 3,
+      'workstream-owners': 3,
       raci: 3,
       // 4 — Zapisy / Records
       resources: 4,
       'attachments-links': 4,
       'used-in': 4,
+      'lessons-learned': 4,
       comments: 4,
       'activity-log': 4,
     };
@@ -7698,13 +7914,387 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           );
           break;
         }
+
+        // ── Phase C: Canon sections → 21/21 ───────────────────────────────
+        case 'deliverables-milestones': {
+          const persistDeliverables = (items: typeof deliverableItems) => {
+            setDeliverableItems(items);
+            const texts = items.map((d) => d.text).filter((t) => t.trim());
+            void persistInitiativeField({ deliverables: texts }, {});
+          };
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Produkty i kamienie milowe' : 'Deliverables & Milestones'}
+                </h2>
+                {canEditCards && (
+                  <button
+                    onClick={() =>
+                      persistDeliverables([
+                        ...deliverableItems,
+                        { id: genId(), text: '', done: false },
+                      ])
+                    }
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
+                  >
+                    <Plus size={13} /> {isPolish ? 'Dodaj produkt' : 'Add deliverable'}
+                  </button>
+                )}
+              </div>
+              {deliverableItems.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak produktów. Dodaj kluczowe rezultaty inicjatywy; kamienie milowe znajdziesz w sekcji Harmonogram.'
+                    : 'No deliverables yet. Add the initiative’s key outputs; milestones live in the Timeline section.'}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {deliverableItems.map((d) => (
+                    <li
+                      key={d.id}
+                      className="flex items-center gap-2 rounded-lg border border-slate-200/60 dark:border-navy-700/50 px-3 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={d.done}
+                        disabled={!canEditCards}
+                        onChange={() =>
+                          persistDeliverables(
+                            deliverableItems.map((x) =>
+                              x.id === d.id ? { ...x, done: !x.done } : x
+                            )
+                          )
+                        }
+                        className="accent-teal-600"
+                      />
+                      <input
+                        defaultValue={d.text}
+                        readOnly={!canEditCards}
+                        onBlur={(e) =>
+                          persistDeliverables(
+                            deliverableItems.map((x) =>
+                              x.id === d.id ? { ...x, text: e.target.value } : x
+                            )
+                          )
+                        }
+                        placeholder={isPolish ? 'Opis produktu…' : 'Deliverable…'}
+                        className="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none"
+                      />
+                      {canEditCards && (
+                        <button
+                          onClick={() =>
+                            persistDeliverables(deliverableItems.filter((x) => x.id !== d.id))
+                          }
+                          className="text-slate-400 hover:text-rose-500"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'change-log': {
+          component = (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Dziennik zmian' : 'Change Log'}
+              </h2>
+              {canEditCards && (
+                <div className="flex items-center gap-2">
+                  <input
+                    value={changeLogDraft}
+                    onChange={(e) => setChangeLogDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && changeLogDraft.trim()) {
+                        addChangeLogEntry({ change: changeLogDraft.trim() });
+                        setChangeLogDraft('');
+                      }
+                    }}
+                    placeholder={
+                      isPolish ? 'Opisz zmianę i naciśnij Enter…' : 'Describe a change, press Enter…'
+                    }
+                    className="flex-1 rounded-lg border border-slate-300/50 dark:border-navy-600/60 bg-transparent px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400"
+                  />
+                  <button
+                    onClick={() => {
+                      if (changeLogDraft.trim()) {
+                        addChangeLogEntry({ change: changeLogDraft.trim() });
+                        setChangeLogDraft('');
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
+                  >
+                    <Plus size={13} /> {isPolish ? 'Dodaj' : 'Add'}
+                  </button>
+                </div>
+              )}
+              {changeLogItems.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak zarejestrowanych zmian strategicznych.'
+                    : 'No strategic changes recorded yet.'}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {changeLogItems.map((e: any) => (
+                    <li
+                      key={e.id}
+                      className="flex items-start gap-3 rounded-lg border border-slate-200/60 dark:border-navy-700/50 px-3 py-2"
+                    >
+                      <span className="text-[11px] font-mono text-slate-400 pt-0.5 shrink-0">
+                        {e.date}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-slate-700 dark:text-slate-200">{e.change}</div>
+                        {e.reason && (
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {e.reason}
+                          </div>
+                        )}
+                        {e.user && (
+                          <div className="text-[11px] text-slate-400 mt-0.5">{e.user}</div>
+                        )}
+                      </div>
+                      {canEditCards && (
+                        <button
+                          onClick={() => removeChangeLogEntry(e.id)}
+                          className="text-slate-400 hover:text-rose-500"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'okr': {
+          component = (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">OKR</h2>
+              {canEditCards && (
+                <div className="flex items-center gap-2">
+                  <input
+                    value={okrDraft}
+                    onChange={(e) => setOkrDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && okrDraft.trim()) {
+                        addOkr(okrDraft.trim());
+                        setOkrDraft('');
+                      }
+                    }}
+                    placeholder={isPolish ? 'Cel (Objective)…' : 'Objective…'}
+                    className="flex-1 rounded-lg border border-slate-300/50 dark:border-navy-600/60 bg-transparent px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400"
+                  />
+                  <button
+                    onClick={() => {
+                      if (okrDraft.trim()) {
+                        addOkr(okrDraft.trim());
+                        setOkrDraft('');
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
+                  >
+                    <Plus size={13} /> {isPolish ? 'Dodaj cel' : 'Add objective'}
+                  </button>
+                </div>
+              )}
+              {okrItems.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak celów OKR. Dodaj cel i kluczowe rezultaty (Key Results).'
+                    : 'No OKRs yet. Add an objective and its key results.'}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {okrItems.map((o: any) => (
+                    <div
+                      key={o.id}
+                      className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 p-3 space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <input
+                          defaultValue={o.objective}
+                          readOnly={!canEditCards}
+                          onBlur={(e) => updateOkr(o.id, { objective: e.target.value })}
+                          className="flex-1 bg-transparent text-sm font-medium text-slate-800 dark:text-slate-100 focus:outline-none"
+                        />
+                        <select
+                          value={o.confidence || 'MEDIUM'}
+                          disabled={!canEditCards}
+                          onChange={(e) => updateOkr(o.id, { confidence: e.target.value })}
+                          className="text-[11px] rounded-md bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5"
+                        >
+                          <option value="LOW">{isPolish ? 'Niska' : 'Low'}</option>
+                          <option value="MEDIUM">{isPolish ? 'Średnia' : 'Medium'}</option>
+                          <option value="HIGH">{isPolish ? 'Wysoka' : 'High'}</option>
+                        </select>
+                        {canEditCards && (
+                          <button
+                            onClick={() => removeOkr(o.id)}
+                            className="text-slate-400 hover:text-rose-500"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                      <textarea
+                        defaultValue={(o.keyResults || []).join('\n')}
+                        readOnly={!canEditCards}
+                        onBlur={(e) =>
+                          updateOkr(o.id, {
+                            keyResults: e.target.value
+                              .split('\n')
+                              .map((s) => s.trim())
+                              .filter(Boolean),
+                          })
+                        }
+                        rows={2}
+                        placeholder={
+                          isPolish ? 'Kluczowe rezultaty (po jednym w wierszu)…' : 'Key results (one per line)…'
+                        }
+                        className="w-full bg-transparent text-xs text-slate-600 dark:text-slate-300 focus:outline-none resize-none border-t border-slate-100 dark:border-navy-700/40 pt-2"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'hypothesis': {
+          component = (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Hipoteza' : 'Hypothesis'}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {isPolish
+                  ? 'Wartościowa hipoteza inicjatywy — co zakładamy, że osiągniemy i dlaczego.'
+                  : 'The value hypothesis — what we believe this initiative will achieve and why.'}
+              </p>
+              <textarea
+                value={hypothesisDraft}
+                readOnly={!canEditCards}
+                onChange={(e) => setHypothesisDraft(e.target.value)}
+                onBlur={saveHypothesis}
+                rows={5}
+                placeholder={
+                  isPolish
+                    ? 'Wierzymy, że… ponieważ… Zmierzymy to przez…'
+                    : 'We believe that… because… We will measure this by…'
+                }
+                className="w-full rounded-lg border border-slate-200/60 dark:border-navy-700/50 bg-transparent px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400 resize-y"
+              />
+            </div>
+          );
+          break;
+        }
+
+        case 'workstream-owners': {
+          const owners = [
+            {
+              role: isPolish ? 'Właściciel biznesowy' : 'Business Owner',
+              name:
+                (initiative as any)?.ownerBusinessName ||
+                `${(initiative as any)?.ob_first_name || ''} ${(initiative as any)?.ob_last_name || ''}`.trim(),
+            },
+            {
+              role: isPolish ? 'Właściciel wykonawczy' : 'Execution Owner',
+              name:
+                (initiative as any)?.ownerExecutionName ||
+                `${(initiative as any)?.oe_first_name || ''} ${(initiative as any)?.oe_last_name || ''}`.trim(),
+            },
+          ].filter((o) => o.name);
+          component = (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Właściciele strumieni' : 'Workstream Owners'}
+              </h2>
+              {owners.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak przypisanych właścicieli. Przypisz w sekcji Zespół.'
+                    : 'No owners assigned. Assign them in the Team section.'}
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {owners.map((o, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 p-3"
+                    >
+                      <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                        {o.role}
+                      </div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100 mt-0.5">
+                        {o.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'lessons-learned': {
+          component = (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Wnioski i lekcje' : 'Lessons Learned'}
+              </h2>
+              <textarea
+                value={lessonsDraft}
+                readOnly={!canEditCards}
+                onChange={(e) => setLessonsDraft(e.target.value)}
+                onBlur={saveLessons}
+                rows={6}
+                placeholder={
+                  isPolish
+                    ? 'Co zadziałało, co nie, co zrobimy inaczej następnym razem…'
+                    : 'What worked, what didn’t, what we’d do differently next time…'
+                }
+                className="w-full rounded-lg border border-slate-200/60 dark:border-navy-700/50 bg-transparent px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400 resize-y"
+              />
+            </div>
+          );
+          break;
+        }
       }
 
-      return { ...section, component };
+      // Canon Blok C / P0-9: every section is wrapped so it carries a uniform
+      // completion visual (success rail + ✓). Sections self-title internally, so
+      // no `heading` is passed here (avoids a double header). The contextual
+      // section-AI + Mark Complete affordances live in the toolbar.
+      const completed = !!sectionCompletions[section.id];
+      const wrappedComponent =
+        component != null ? (
+          <NModeSectionWrapper completed={completed}>{component}</NModeSectionWrapper>
+        ) : (
+          component
+        );
+
+      return { ...section, completed, component: wrappedComponent };
     });
   }, [
     initiativeNSections,
     initiative,
+    sectionCompletions,
     isPolish,
     summary,
     setSummary,
@@ -7809,6 +8399,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     openLinkedItemTarget,
     initiativeBacklinks,
     initiativeBacklinksLoading,
+    // Phase C canon sections — reactive drafts/data + handlers
+    canEditCards,
+    changeLogItems,
+    okrItems,
+    hypothesisDraft,
+    lessonsDraft,
+    changeLogDraft,
+    okrDraft,
+    genId,
+    setDeliverableItems,
+    persistInitiativeField,
+    saveHypothesis,
+    saveLessons,
+    addChangeLogEntry,
+    removeChangeLogEntry,
+    addOkr,
+    updateOkr,
+    removeOkr,
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
@@ -8927,8 +9535,39 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         </>
                       );
                     })()}
-                    {/* ── Fork + Present ─────────────────────────────── */}
+                    {/* ── Mark Complete (AI signal) + Fork + Present ────────── */}
                     <div className="flex-1 min-w-0" />
+                    {activeNSection !== 'activity-log' && activeNSection !== 'comments' && (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSectionComplete(activeNSection)}
+                        title={
+                          sectionCompletions[activeNSection]
+                            ? isPolish
+                              ? 'Oznacz sekcję jako niegotową'
+                              : 'Mark section as not complete'
+                            : isPolish
+                              ? 'Oznacz sekcję jako gotową'
+                              : 'Mark section as complete'
+                        }
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                          sectionCompletions[activeNSection]
+                            ? 'border-success-400/50 text-success-600 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20 hover:bg-success-100/60'
+                            : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60'
+                        }`}
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>
+                          {sectionCompletions[activeNSection]
+                            ? isPolish
+                              ? 'Gotowe'
+                              : 'Complete'
+                            : isPolish
+                              ? 'Oznacz gotowe'
+                              : 'Mark complete'}
+                        </span>
+                      </button>
+                    )}
                     <ToolbarIconButton
                       icon={<GitFork size={14} />}
                       tooltip={isPolish ? 'Forkuj' : 'Fork'}
@@ -8939,6 +9578,36 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       tooltip={isPolish ? 'Prezentuj' : 'Present'}
                       onClick={() => {}}
                     />
+
+                    {/* ── Slot 9: artifact-level AI (solid teal) ─────────────
+                        Canon C/Level-3: rightmost AI affordance is a SOLID teal
+                        button (bg-teal-600 text-white). Drives AI on the active
+                        section; AI Consultant panel to follow. */}
+                    <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!canUseAi) {
+                          toast.error(
+                            isPolish
+                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                              : 'AI is unavailable because you have no edit permissions in this context.'
+                          );
+                          return;
+                        }
+                        void handleGenerateAI(activeNSection);
+                      }}
+                      disabled={!canUseAi || isGeneratingAI === activeNSection}
+                      title={isPolish ? 'Asystent AI' : 'AI Consultant'}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+                    >
+                      {isGeneratingAI === activeNSection ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={14} />
+                      )}
+                      <span>AI</span>
+                    </button>
                   </div>
                 </div>
 

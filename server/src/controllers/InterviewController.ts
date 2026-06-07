@@ -733,22 +733,48 @@ async function ensureInterviewInsightLifecycleColumns(): Promise<void> {
   }
 }
 
+// Module-level flag: true once we've confirmed section_completions exists (avoids repeated DDL).
+let _insightSectionCompletionsEnsured = false;
+
 /**
  * Lazy ALTER — adds section_completions JSON column to interview_insights.
  * Called from updateInsight when the payload includes sectionCompletions.
  * Stores: { "themes": true, "issues-risks": true, ... } (AI Mark Complete signal).
+ *
+ * Uses pg_attribute (catalog table, no table-lock) to check existence first.
+ * This avoids the ALTER TABLE ACCESS EXCLUSIVE lock that can hang when a prior
+ * DDL on the same table is still queued on the DB server.
  */
 async function ensureInsightSectionCompletionsColumn(): Promise<void> {
-  const cols = await getTableColumns('interview_insights');
-  if (!cols.has('section_completions')) {
-    try {
-      await queryHelpers.queryRun(
-        `ALTER TABLE interview_insights ADD COLUMN section_completions TEXT`
-      );
-    } catch (err: any) {
-      const m = String(err?.message || err).toLowerCase();
-      if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+  if (_insightSectionCompletionsEnsured) return;
+  try {
+    // pg_attribute lookup — much faster than information_schema and does NOT
+    // compete with table-level locks that block ALTER TABLE.
+    const rows = await queryHelpers.queryAll<{ attname: string }>(
+      `SELECT attname FROM pg_attribute
+       WHERE attrelid = 'interview_insights'::regclass
+         AND attname = 'section_completions'
+         AND attnum > 0
+         AND NOT attisdropped`,
+      []
+    );
+    if (rows && rows.length > 0) {
+      // Column already exists — no DDL needed.
+      _insightSectionCompletionsEnsured = true;
+      return;
     }
+    // Column missing — add it (no IF NOT EXISTS: cleaner error if race condition).
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_insights ADD COLUMN section_completions TEXT`
+    );
+    _insightSectionCompletionsEnsured = true;
+  } catch (err: any) {
+    const m = String(err?.message || err).toLowerCase();
+    if (m.includes('already exists') || m.includes('duplicate column')) {
+      _insightSectionCompletionsEnsured = true;
+      return;
+    }
+    throw err;
   }
 }
 
@@ -7767,6 +7793,8 @@ ${JSON.stringify(questions || [], null, 2)}
     const { id } = req.params;
     const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } = req.body;
 
+    logger.info(`[updateInsight] START id=${id} body-keys=${Object.keys(req.body).join(',')}`);
+
     const updates: string[] = [];
     const values: any[] = [];
 
@@ -7788,7 +7816,9 @@ ${JSON.stringify(questions || [], null, 2)}
     }
     // Lifecycle: archive / restore (soft, reversible). Ensure columns exist first.
     if (archived !== undefined) {
+      logger.info(`[updateInsight] calling ensureInterviewInsightLifecycleColumns`);
       await ensureInterviewInsightLifecycleColumns();
+      logger.info(`[updateInsight] ensureInterviewInsightLifecycleColumns done`);
       if (archived) {
         updates.push('archived_at = ?', 'archived_by = ?');
         values.push(new Date().toISOString(), user.id);
@@ -7800,7 +7830,9 @@ ${JSON.stringify(questions || [], null, 2)}
 
     // Mark Complete — AI signal only; persisted as JSON { sectionId: boolean, ... }
     if (sectionCompletions !== undefined && sectionCompletions !== null) {
+      logger.info(`[updateInsight] calling ensureInsightSectionCompletionsColumn`);
       await ensureInsightSectionCompletionsColumn();
+      logger.info(`[updateInsight] ensureInsightSectionCompletionsColumn done`);
       updates.push('section_completions = ?');
       values.push(
         typeof sectionCompletions === 'string'
@@ -7819,10 +7851,12 @@ ${JSON.stringify(questions || [], null, 2)}
     values.push(id);
     values.push(user.organizationId);
 
+    logger.info(`[updateInsight] running UPDATE, updates=[${updates.join(', ')}]`);
     await queryHelpers.queryRun(
       `UPDATE interview_insights SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
       values
     );
+    logger.info(`[updateInsight] UPDATE done`);
 
     if (typeof title === 'string') {
       void logInterviewInsightActivity({

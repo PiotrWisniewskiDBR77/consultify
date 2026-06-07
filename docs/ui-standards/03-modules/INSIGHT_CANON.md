@@ -694,3 +694,167 @@ Genesis nigdy nie blokuje — użytkownik może edytować każde pole natychmias
 | **Eksport główny** | Project Brief / Status Report | Consulting Readout / Executive Memo |
 | **AI Consultant poziom 3** | Health check + gaps + plan alignment | Full synthesis z transkryptów sesji |
 | **Dowód jakościowy** | Nie wymagany per blok | Wymóg dowodu — każdy blok ma kontrakt cytatu |
+
+---
+
+## Checkpointy walidacji — InsightViewer
+
+> **Cel:** Lista kontrolna do weryfikowania poprawności BUILD-u widoku insightów.
+> Uzupełnia master checklist z [BLOCK_TYPES_CANON.md § Checkpointy walidacji implementacji](./BLOCK_TYPES_CANON.md).
+>
+> **Kolejność weryfikacji:** Master (Bloki A–F) → Poniższe bloki (IG-1 do IG-4).
+> Oba muszą przejść przed mergem.
+
+---
+
+### IG-1 — Kompletność widoku: 23 karty w 7 grupach
+
+```
+□ GRUPA 1 — SYNTHESIS (3 karty):
+     □ consulting-readout    cSpan 3, genesis ★
+     □ key-findings          cSpan 1, genesis ★
+     □ recommendations       cSpan 1, genesis ★
+
+□ GRUPA 2 — FINDINGS (6 kart):
+     □ themes                genesis ★
+     □ tensions              genesis ★
+     □ patterns              genesis ★
+     □ mental-models         genesis ★
+     □ moments               (non-genesis)
+     □ quote-bank            cSpan 2
+
+□ GRUPA 3 — DEEP READING (4 karty):
+     □ analysis-matrix       cSpan 2, cHidden: gdy < 2 sesje
+     □ perspective-map       genesis ★
+     □ issues-risks          genesis ★
+     □ opportunity-spaces    genesis ★
+
+□ GRUPA 4 — EVIDENCE (3 karty):
+     □ evidence-map          cSpan 2, badge: unclaimed findings
+     □ source-credibility    (non-genesis)
+     □ quality-trust         cSpan 2
+
+□ GRUPA 5 — SOURCES (2 karty):
+     □ source-pack           cSpan 1, badge: sessions count
+     □ stakeholder-map       (non-genesis)
+
+□ GRUPA 6 — DELIVERABLES (3 karty):
+     □ report-pack           cSpan 3
+     □ consulting-narrative  (non-genesis)
+     □ executive-memo        (non-genesis)
+
+□ GRUPA 7 — AUDIT (2 karty):
+     □ comments              cHidden: gdy 0, badge: count
+     □ activity-log          cHidden: gdy 0
+
+□ ŁĄCZNA LICZBA: 23 karty (nie 22, nie 24)
+```
+
+---
+
+### IG-2 — Właściwości specyficzne dla insightów
+
+**Wymóg dowodu (pole nr 11 — wyłącznie insight)**
+
+```
+□ Każda karta ma zdefiniowany Wymóg dowodu w kanonie
+□ Bloki RichText mają FieldAIButton z kontekstem "Quote required"
+□ BlockQuote obecny w sekcjach synthesis: consulting-readout, key-findings,
+  recommendations, themes, tensions, patterns, mental-models, perspective-map,
+  issues-risks, opportunity-spaces, source-credibility
+□ Evidence-map: UI sygnalizuje unclaimed findings (badge, highlight)
+```
+
+**AI Genesis — 12 sekcji oznaczonych ★**
+
+```
+□ Sekcje genesis: consulting-readout · key-findings · recommendations ·
+  themes · tensions · patterns · mental-models · perspective-map ·
+  issues-risks · opportunity-spaces + 2 z grupy Findings
+□ Genesis trigger: tworzenie insightu ORAZ nowa sesja ORAZ na żądanie (re-generate)
+□ Genesis spinner/skeleton podczas wypełniania (nie pusty ekran)
+□ Genesis nie blokuje edycji — pola edytowalne natychmiast
+□ AI pomija sekcje z completed=true przy kolejnych genesis
+```
+
+**Properties Strip — pola specyficzne dla insightów**
+
+```
+□ TYPE:         Research / Consulting / User Interview / Expert / Desk Research
+□ STATUS:       Draft (slate) / Active (blue) / Ready (green) / Archived (grey)
+□ SOURCE:       link lub etykieta źródła sesji
+□ DATE RANGE:   zakres dat sesji (auto z sessions)
+□ SESSIONS:     liczba powiązanych sesji (klikalne → sesje)
+□ OWNER:        avatar + imię (nie ID)
+```
+
+---
+
+### IG-3 — Eksport insightów: kolejność kanoniczna
+
+> Kolejność eksportu jest stała. Drag w sidebarze NIE zmienia kolejności eksportu.
+
+```
+□ 1.  Consulting Readout
+□ 2.  Key Findings
+□ 3.  Recommendations
+□ 4.  Themes
+□ 5.  Tensions & Contradictions
+□ 6.  Patterns
+□ 7.  Mental Models
+□ 8.  Moments (Memorable Quotes)
+□ 9.  Quote Bank
+□ 10. Analysis Matrix
+□ 11. Perspective Map
+□ 12. Issues & Risks
+□ 13. Opportunity Spaces
+□ 14. Evidence Map
+□ 15. Source Credibility
+□ 16. Quality & Trust
+□ 17. Source Pack
+□ 18. Stakeholder Map
+□ 19. Report Pack
+□ 20. Consulting Narrative
+□ 21. Executive Memo
+□ 22. Comments          ← pomijany w eksporcie
+□ 23. Activity Log      ← pomijany w eksporcie
+
+□ Eksport PDF/Prezentacja: sekcje 1–21 (bez audit)
+□ Eksport do Notatek: sekcje 1–3 (synthesis only) lub pełen (user choice)
+```
+
+---
+
+### IG-4 — Stany specjalne insightów
+
+**Insight bez sesji (nowy)**
+
+```
+□ source-pack: empty state z CTA "Dodaj sesję"
+□ consulting-readout: empty state z CTA "Przeprowadź pierwszą sesję"
+□ analysis-matrix: cHidden=true (ukryta, czeka na ≥ 2 sesje)
+□ evidence-map: badge = 0, empty state z CTA "Dodaj dowód"
+□ Genesis ★ sekcje: wypełniane z tytułu + kontekstu projektu (bez sesji)
+```
+
+**Insight z sesjami**
+
+```
+□ source-pack badge: aktualna liczba sesji (live, nie cached)
+□ evidence-map badge: liczba unclaimed findings (nie 0 gdy są nowe)
+□ analysis-matrix: pojawia się automatycznie po ≥ 2 sesjach
+□ consulting-readout: AI może re-synthesize po dodaniu nowej sesji
+```
+
+**Mark Complete flow (InsightViewer-specific)**
+
+```
+□ Mark Complete button: widoczny w NModeSectionWrapper per sekcja
+□ Kliknięcie → optimistic UI (border-success pojawia się natychmiast)
+□ API call: PATCH /insights/:id z { sectionCompletions: { "section-id": true } }
+□ lazy ALTER działa: section_completions kolumna tworzona jeśli nie istnieje
+□ Odczyt przy otwarciu: section_completions parsowany, completed prop przekazany
+□ ✓ badge w NModeLeftNav: pojawia się natychmiast po mark complete
+□ Pasek postępu aktualizuje się natychmiast
+□ Pola sekcji POZOSTAJĄ edytowalne (nie disabled po mark complete)
+```

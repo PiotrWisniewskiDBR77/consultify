@@ -143,6 +143,13 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             type="text"
             value={title}
             onChange={(e) => !titleReadOnly && onTitleChange(e.target.value)}
+            onBlur={() => {
+              // Canon A1: auto-save on blur. Only fire when editable, there are
+              // unsaved changes, and we're not mid-save (avoid double-submit).
+              if (!titleReadOnly && isDirty && !saving && effectiveSaveState !== 'saving') {
+                onSave?.();
+              }
+            }}
             readOnly={titleReadOnly}
             className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
             placeholder={
