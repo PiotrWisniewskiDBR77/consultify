@@ -1,6 +1,8 @@
 # Canon insightów — Insight Detail View
 
 > **Przeznaczenie.** Ten dokument jest jedyną prawdziwą specyfikacją sekcji widoku szczegółów insightu (`InsightViewer`). Każda nowa sekcja, każde AI-wypełnienie i każdy refactor MUSI tu zaczynać i kończyć.
+>
+> **Typy bloków treści** (jak renderuje się zawartość kart) → [BLOCK_TYPES_CANON.md](./BLOCK_TYPES_CANON.md)
 
 ---
 

@@ -1,6 +1,8 @@
 # Canon inicjatyw — Initiative Detail View
 
 > **Przeznaczenie.** Ten dokument jest jedyną prawdziwą specyfikacją sekcji widoku szczegółów inicjatywy (`InitiativeDocumentView`). Każda nowa sekcja, każdy refactor i każde AI-wypełnienie MUSI tu zaczynać i kończyć.
+>
+> **Typy bloków treści** (jak renderuje się zawartość kart) → [BLOCK_TYPES_CANON.md](./BLOCK_TYPES_CANON.md)
 
 ---
 
