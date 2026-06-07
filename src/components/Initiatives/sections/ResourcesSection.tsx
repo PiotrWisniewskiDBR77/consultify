@@ -215,13 +215,18 @@ const INLINE_SELECT_CLS =
 // Shared helpers
 // ==========================================
 
-const statusBadgeClass = (status: string): string => {
+/** canon §4.2 — status pill shell is always neutral; colour lives in the signal dot. */
+const STATUS_BADGE_SHELL =
+  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border border-slate-200/70 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300';
+
+/** Signal-tone dot for embedded resource-status pills (no hardcoded shell fills). */
+const statusDotClass = (status: string): string => {
   const map: Record<string, string> = {
-    planned: 'bg-slate-100 dark:bg-slate-500/10 text-slate-600 dark:text-slate-400',
-    active: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-300',
-    deprecated: 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400',
-    expired: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    renewed: 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300',
+    planned: 'bg-slate-400 dark:bg-slate-500',
+    active: 'bg-c-success',
+    deprecated: 'bg-c-danger',
+    expired: 'bg-c-warning',
+    renewed: 'bg-c-info',
   };
   return map[status] || map.planned;
 };
@@ -2603,9 +2608,8 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                       '—'}
                   </td>
                   <td className="py-2.5 pr-2">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs ${statusBadgeClass(item.status)}`}
-                    >
+                    <span className={STATUS_BADGE_SHELL}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass(item.status)}`} />
                       {TOOL_STATUS_OPTIONS.find((s) => s.value === item.status)?.[
                         isPolish ? 'labelPl' : 'labelEn'
                       ] || item.status}
@@ -2973,9 +2977,8 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                     {item.validUntil ? new Date(item.validUntil).toLocaleDateString() : '—'}
                   </td>
                   <td className="py-2.5 pr-2">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs ${statusBadgeClass(item.status)}`}
-                    >
+                    <span className={STATUS_BADGE_SHELL}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass(item.status)}`} />
                       {INTANGIBLE_STATUS_OPTIONS.find((s) => s.value === item.status)?.[
                         isPolish ? 'labelPl' : 'labelEn'
                       ] || item.status}

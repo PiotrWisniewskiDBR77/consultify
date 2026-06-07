@@ -105,7 +105,7 @@ import {
   type TableFilters,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
-import { getStatusStyle, getTypeStyle } from '@/constants/statusColors';
+import { getTypeStyle } from '@/constants/statusColors';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
@@ -4318,8 +4318,8 @@ export const InterviewHub: React.FC = () => {
                   )}
                   {isPolish ? 'Klonuj' : 'Clone'}
                 </button>
-                {canAssign && (
-                  isArchived ? (
+                {canAssign &&
+                  (isArchived ? (
                     <button
                       type="button"
                       onClick={handleBulkRestoreTemplates}
@@ -4347,8 +4347,7 @@ export const InterviewHub: React.FC = () => {
                       )}
                       {isPolish ? 'Archiwizuj' : 'Archive'}
                     </button>
-                  )
-                )}
+                  ))}
               </div>
               <div className="shrink-0" />
             </div>
@@ -4677,9 +4676,7 @@ export const InterviewHub: React.FC = () => {
                         .filter((i) => _isPromoted(i.status))
                         .map((i) => i.id);
                       if (ids[0])
-                        navigate(
-                          `/initiatives?open=${encodeURIComponent(ids[0])}&mode=doc`
-                        );
+                        navigate(`/initiatives?open=${encodeURIComponent(ids[0])}&mode=doc`);
                     }}
                     className={MENU_3_ACTION_NEUTRAL}
                   >
@@ -5554,7 +5551,9 @@ export const InterviewHub: React.FC = () => {
                                 label: isPolish ? 'Edytuj' : 'Edit',
                                 icon: Edit2,
                                 disabled: true,
-                                description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                                description: isPolish
+                                  ? 'Wkrótce (backend)'
+                                  : 'Coming soon (backend)',
                                 onClick: () => {},
                               },
                               ...(sessionLifecycle === 'active'
@@ -5724,9 +5723,7 @@ export const InterviewHub: React.FC = () => {
   };
 
   // Render grid view for sessions
-  const renderSessionsGrid = ({
-    onCardClick,
-  }: { onCardClick?: (id: string) => void } = {}) => (
+  const renderSessionsGrid = ({ onCardClick }: { onCardClick?: (id: string) => void } = {}) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {filteredSessions.map((session) => {
         const progress = getSessionProgress(session);
@@ -5738,11 +5735,57 @@ export const InterviewHub: React.FC = () => {
 
         const statusConfig = getSessionStatusConfig(workflowStatus);
 
-        // canon §8.1: NO status-colored gradients; canonical neutral card
+        // canon §8.0/§8.1: card kebab = identyczne sekcje co w tabeli (kontekst →
+        // fixed bottom manifest → danger). NO status-colored gradients.
         const kebabSections: import('../shared/RowActionsMenu').RowActionSection[] = [
+          // GÓRA — kontekstowe (wg statusu sesji) — parytet z tabelą
           {
             id: 'context',
             kind: 'context',
+            actions: [
+              ...(isSubmitted && linkedAssignment
+                ? [
+                    {
+                      id: 'approve',
+                      label: isPolish ? 'Zatwierdź' : 'Approve',
+                      icon: Check,
+                      onClick: () => handleApproveAssignment(linkedAssignment),
+                    },
+                    {
+                      id: 'send-back',
+                      label: isPolish ? 'Odeślij' : 'Send back',
+                      icon: ArrowRight,
+                      onClick: () => handleOpenSendBackModal(linkedAssignment),
+                      variant: 'danger' as const,
+                    },
+                  ]
+                : []),
+              ...(canRemind && linkedAssignment
+                ? [
+                    {
+                      id: 'remind',
+                      label: isPolish ? 'Przypomnij' : 'Remind',
+                      icon: Clock,
+                      onClick: () => handleOpenReminderModal(linkedAssignment),
+                    },
+                  ]
+                : []),
+              ...(isApproved
+                ? [
+                    {
+                      id: 'generate-insight',
+                      label: isPolish ? 'Generuj wnioski AI' : 'Generate AI insights',
+                      icon: Lightbulb,
+                      onClick: () => handleGenerateInsight(session, 'summary'),
+                    },
+                  ]
+                : []),
+            ],
+          },
+          // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): Open preview · Edit · Archiwizuj/Przywróć · [Delay]
+          {
+            id: 'fixed',
+            kind: 'manage',
             actions: [
               {
                 id: 'open_preview',
@@ -5752,11 +5795,109 @@ export const InterviewHub: React.FC = () => {
                   onCardClick ? onCardClick(session.id) : setPreviewSessionId(session.id),
               },
               {
-                id: 'open_full',
-                label: isPolish ? 'Otwórz pełny widok' : 'Open full view',
-                icon: ExternalLink,
-                onClick: () => handleViewSession(session),
+                id: 'edit',
+                label: isPolish ? 'Edytuj' : 'Edit',
+                icon: Edit2,
+                disabled: true,
+                description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                onClick: () => {},
               },
+              ...(sessionLifecycle === 'active'
+                ? [
+                    {
+                      id: 'archive',
+                      label: isPolish ? 'Archiwizuj' : 'Archive',
+                      icon: Archive,
+                      disabled: sessionLifecycleBusy,
+                      onClick: () => handleSessionLifecycleAction(session, 'archive'),
+                    },
+                  ]
+                : []),
+              ...(sessionLifecycle === 'archived'
+                ? [
+                    {
+                      id: 'restore',
+                      label: isPolish ? 'Przywróć' : 'Restore',
+                      icon: RotateCcw,
+                      disabled: sessionLifecycleBusy,
+                      onClick: () => handleSessionLifecycleAction(session, 'restore'),
+                    },
+                  ]
+                : []),
+              ...(sessionLifecycle === 'trash'
+                ? [
+                    {
+                      id: 'untrash',
+                      label: isPolish ? 'Przywróć' : 'Restore',
+                      icon: RotateCcw,
+                      disabled: sessionLifecycleBusy,
+                      onClick: () => handleSessionLifecycleAction(session, 'untrash'),
+                    },
+                  ]
+                : []),
+              ...(linkedAssignment
+                ? [
+                    {
+                      id: 'delay',
+                      label: isPolish ? 'Odłóż termin' : 'Delay',
+                      icon: Clock,
+                      onClick: () => {},
+                      submenu: [1, 3, 7].map((d) => ({
+                        id: `delay-${d}`,
+                        label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                        icon: Clock,
+                        onClick: () => void handleDelayAssignment(linkedAssignment, d),
+                      })),
+                    },
+                  ]
+                : []),
+            ],
+          },
+          // DANGER — Trash / Delete forever (realny lifecycle) — parytet z tabelą
+          {
+            id: 'danger',
+            kind: 'danger',
+            actions: [
+              ...(sessionLifecycle === 'active'
+                ? [
+                    {
+                      id: 'trash-from-active',
+                      label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                      icon: Trash2,
+                      variant: 'danger' as const,
+                      disabled: true,
+                      description: isPolish ? 'Archiwizuj najpierw' : 'Archive first',
+                      onClick: () => {},
+                    },
+                  ]
+                : []),
+              ...(sessionLifecycle === 'archived'
+                ? [
+                    {
+                      id: 'trash',
+                      label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                      icon: Trash2,
+                      variant: 'danger' as const,
+                      disabled: sessionLifecycleBusy,
+                      onClick: () => handleSessionLifecycleAction(session, 'trash'),
+                    },
+                  ]
+                : []),
+              ...(sessionLifecycle === 'trash'
+                ? [
+                    {
+                      id: 'delete-forever',
+                      label: isPolish ? 'Usuń na stałe' : 'Delete forever',
+                      icon: Trash2,
+                      variant: 'danger' as const,
+                      disabled: sessionLifecycleBusy,
+                      onClick: () => {
+                        setSessionDeleteConfirmText('');
+                        setSessionDeleteTarget(session);
+                      },
+                    },
+                  ]
+                : []),
             ],
           },
         ];
@@ -5833,30 +5974,11 @@ export const InterviewHub: React.FC = () => {
 
             {/* Footer */}
             <div className="px-4 pb-4 flex items-center justify-between">
-              <div
-                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusConfig.bgColor}`}
-              >
-                <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
-                <span className={`text-xs font-medium ${statusConfig.textColor}`}>
-                  {workflowStatus === 'approved' || workflowStatus === 'completed'
-                    ? isPolish
-                      ? 'Zatwierdzony'
-                      : 'Approved'
-                    : workflowStatus === 'in_progress'
-                      ? isPolish
-                        ? 'W trakcie'
-                        : 'In Progress'
-                      : workflowStatus === 'submitted'
-                        ? isPolish
-                          ? 'Wysłany'
-                          : 'Submitted'
-                        : workflowStatus === 'sent_back'
-                          ? isPolish
-                            ? 'Do poprawy'
-                            : 'Sent back'
-                          : workflowStatus}
-                </span>
-              </div>
+              {/* canon §4.1/§8.1: status via EntityStatusChip (statusChipTone → c.*) */}
+              <EntityStatusChip
+                status={workflowStatus}
+                label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
+              />
               <span className="text-xs text-slate-600 dark:text-slate-400">
                 {session.dueAt
                   ? `${isPolish ? 'Due' : 'Due'} ${new Date(session.dueAt).toLocaleDateString()}`
@@ -7032,6 +7154,188 @@ export const InterviewHub: React.FC = () => {
     );
   };
 
+  // canon §8.0: single SSOT for the Templates row/card ⋮ sections.
+  // Used identically by the table row AND the grid card (zero divergence).
+  const buildTemplateRowSections = (
+    template: InterviewTemplate
+  ): import('../shared/RowActionsMenu').RowActionSection[] => [
+    // GÓRA — kontekstowe (typowe dla szablonu)
+    {
+      id: 'context',
+      kind: 'context' as const,
+      actions: [
+        {
+          id: 'use',
+          label: isPolish ? 'Użyj szablonu' : 'Use template',
+          icon: Sparkles,
+          onClick: async () => {
+            const projectId = await ensureProjectId();
+            if (!projectId) {
+              toast.error(
+                isPolish
+                  ? 'Wybierz projekt przed utworzeniem sesji'
+                  : 'Select a project before creating a session'
+              );
+              return;
+            }
+            Api.post(`/interview/templates/${template.id}/use`, {
+              projectId,
+              name: `${template.name} ${new Date().toLocaleDateString()}`,
+            })
+              .then((created) => {
+                const newSession = created as InterviewSession;
+                setSessions((prev) => [newSession, ...prev]);
+                handleOpenDocument({
+                  id: newSession.id,
+                  type: 'interview_session',
+                  subType: 'interview',
+                  name: newSession.name || 'Interview Session',
+                  status: (
+                    (newSession as any)?.status || 'in_progress'
+                  ).toUpperCase() as any,
+                });
+                toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
+              })
+              .catch(() => {
+                toast.error(
+                  isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session'
+                );
+              });
+          },
+        },
+        ...(canAssign
+          ? [
+              {
+                id: 'assign',
+                label: isPolish ? 'Przydziel' : 'Assign',
+                icon: UserPlus,
+                onClick: () => {
+                  setSelectedTemplateForAssign(template);
+                  setShowAssignModal(true);
+                },
+              },
+            ]
+          : []),
+        {
+          id: 'clone',
+          label: isPolish ? 'Klonuj szablon' : 'Clone template',
+          icon: Copy,
+          onClick: () => handleCloneTemplate(template),
+        },
+        {
+          id: 'view-usage',
+          label: isPolish ? 'Zobacz użycie' : 'View usage',
+          icon: BarChart3,
+          rightLabel: String(getTemplateUsageCount(template)),
+          onClick: () => handleViewTemplate(template),
+        },
+        ...(canAssign
+          ? [
+              {
+                id: 'toggle-default',
+                label: template.isDefault
+                  ? isPolish
+                    ? 'Usuń jako domyślny'
+                    : 'Unset default'
+                  : isPolish
+                    ? 'Ustaw jako domyślny'
+                    : 'Set as default',
+                icon: template.isDefault ? StarOff : Star,
+                onClick: () => handleToggleTemplateDefault(template),
+              },
+            ]
+          : []),
+      ],
+    },
+    // DÓŁ — stały: Open preview · Edytuj · Archiwizuj/Przywróć.
+    // (Templates: brak terminu → Delay N/A.)
+    {
+      id: 'fixed',
+      kind: 'manage' as const,
+      actions: [
+        {
+          id: 'open',
+          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          icon: ChevronRight,
+          // canon §9: "Open preview" → side pane, NOT full view
+          onClick: () => setSelectedTemplateId(template.id),
+        },
+        {
+          id: 'edit',
+          label: isPolish ? 'Edytuj szablon' : 'Edit template',
+          icon: Edit2,
+          disabled: !canAssign,
+          description: !canAssign
+            ? isPolish
+              ? 'Tylko menedżer'
+              : 'Manager only'
+            : undefined,
+          onClick: () => canAssign && handleEditTemplate(template.id),
+        },
+        ...(canAssign && !template.isDefault
+          ? String(template.status || '').toLowerCase() === 'archived'
+            ? [
+                {
+                  id: 'restore',
+                  label: isPolish ? 'Przywróć szablon' : 'Restore template',
+                  icon: RotateCcw,
+                  onClick: () => handleRestoreTemplate(template),
+                },
+              ]
+            : [
+                {
+                  id: 'archive',
+                  label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
+                  icon: Archive,
+                  onClick: () => handleArchiveTemplate(template),
+                },
+              ]
+          : !canAssign
+            ? [
+                {
+                  id: 'archive',
+                  label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
+                  icon: Archive,
+                  disabled: true,
+                  description: isPolish ? 'Tylko menedżer' : 'Manager only',
+                  onClick: () => {},
+                },
+              ]
+            : []),
+      ],
+    },
+    // DANGER — Usuń (realny dla canAssign; placeholder dla !canAssign)
+    {
+      id: 'danger',
+      kind: 'danger' as const,
+      actions: [
+        ...(canAssign && !template.isDefault
+          ? [
+              {
+                id: 'delete',
+                label: isPolish ? 'Usuń szablon' : 'Delete template',
+                icon: Trash2,
+                onClick: () => handleDeleteTemplate(template),
+                variant: 'danger' as const,
+              },
+            ]
+          : !canAssign
+            ? [
+                {
+                  id: 'delete',
+                  label: isPolish ? 'Usuń szablon' : 'Delete template',
+                  icon: Trash2,
+                  variant: 'danger' as const,
+                  disabled: true,
+                  description: isPolish ? 'Tylko menedżer' : 'Manager only',
+                  onClick: () => {},
+                },
+              ]
+            : []),
+      ],
+    },
+  ];
+
   // Render templates table (Resizable + Preview-ready)
   const renderTemplatesTable = (opts?: {
     onSelectRow?: (id: string) => void;
@@ -7756,187 +8060,7 @@ export const InterviewHub: React.FC = () => {
                     <div className="flex items-center justify-end">
                       <RowActionsMenu
                         iconVariant="vertical"
-                        sections={[
-                          // GÓRA — kontekstowe (typowe dla szablonu)
-                          {
-                            id: 'context',
-                            kind: 'context' as const,
-                            actions: [
-                              {
-                                id: 'use',
-                                label: isPolish ? 'Użyj szablonu' : 'Use template',
-                                icon: Sparkles,
-                                onClick: async () => {
-                                  const projectId = await ensureProjectId();
-                                  if (!projectId) {
-                                    toast.error(
-                                      isPolish
-                                        ? 'Wybierz projekt przed utworzeniem sesji'
-                                        : 'Select a project before creating a session'
-                                    );
-                                    return;
-                                  }
-                                  Api.post(`/interview/templates/${template.id}/use`, {
-                                    projectId,
-                                    name: `${template.name} ${new Date().toLocaleDateString()}`,
-                                  })
-                                    .then((created) => {
-                                      const newSession = created as InterviewSession;
-                                      setSessions((prev) => [newSession, ...prev]);
-                                      handleOpenDocument({
-                                        id: newSession.id,
-                                        type: 'interview_session',
-                                        subType: 'interview',
-                                        name: newSession.name || 'Interview Session',
-                                        status: (
-                                          (newSession as any)?.status || 'in_progress'
-                                        ).toUpperCase() as any,
-                                      });
-                                      toast.success(
-                                        isPolish ? 'Sesja utworzona' : 'Session created'
-                                      );
-                                    })
-                                    .catch(() => {
-                                      toast.error(
-                                        isPolish
-                                          ? 'Nie udało się utworzyć sesji'
-                                          : 'Failed to create session'
-                                      );
-                                    });
-                                },
-                              },
-                              ...(canAssign
-                                ? [
-                                    {
-                                      id: 'assign',
-                                      label: isPolish ? 'Przydziel' : 'Assign',
-                                      icon: UserPlus,
-                                      onClick: () => {
-                                        setSelectedTemplateForAssign(template);
-                                        setShowAssignModal(true);
-                                      },
-                                    },
-                                  ]
-                                : []),
-                              {
-                                id: 'clone',
-                                label: isPolish ? 'Klonuj szablon' : 'Clone template',
-                                icon: Copy,
-                                onClick: () => handleCloneTemplate(template),
-                              },
-                              {
-                                id: 'view-usage',
-                                label: isPolish ? 'Zobacz użycie' : 'View usage',
-                                icon: BarChart3,
-                                rightLabel: String(getTemplateUsageCount(template)),
-                                onClick: () => handleViewTemplate(template),
-                              },
-                              ...(canAssign
-                                ? [
-                                    {
-                                      id: 'toggle-default',
-                                      label: template.isDefault
-                                        ? isPolish
-                                          ? 'Usuń jako domyślny'
-                                          : 'Unset default'
-                                        : isPolish
-                                          ? 'Ustaw jako domyślny'
-                                          : 'Set as default',
-                                      icon: template.isDefault ? StarOff : Star,
-                                      onClick: () => handleToggleTemplateDefault(template),
-                                    },
-                                  ]
-                                : []),
-                            ],
-                          },
-                          // DÓŁ — stały: Open preview · Edytuj · Archiwizuj/Przywróć.
-                          // (Templates: brak terminu → Delay N/A.)
-                          {
-                            id: 'fixed',
-                            kind: 'manage' as const,
-                            actions: [
-                              {
-                                id: 'open',
-                                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                                icon: ChevronRight,
-                                // canon §9: "Open preview" → side pane, NOT full view
-                                onClick: () => setSelectedTemplateId(template.id),
-                              },
-                              {
-                                id: 'edit',
-                                label: isPolish ? 'Edytuj szablon' : 'Edit template',
-                                icon: Edit2,
-                                disabled: !canAssign,
-                                description: !canAssign
-                                  ? isPolish
-                                    ? 'Tylko menedżer'
-                                    : 'Manager only'
-                                  : undefined,
-                                onClick: () => canAssign && handleEditTemplate(template.id),
-                              },
-                              ...(canAssign && !template.isDefault
-                                ? String(template.status || '').toLowerCase() === 'archived'
-                                  ? [
-                                      {
-                                        id: 'restore',
-                                        label: isPolish ? 'Przywróć szablon' : 'Restore template',
-                                        icon: RotateCcw,
-                                        onClick: () => handleRestoreTemplate(template),
-                                      },
-                                    ]
-                                  : [
-                                      {
-                                        id: 'archive',
-                                        label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
-                                        icon: Archive,
-                                        onClick: () => handleArchiveTemplate(template),
-                                      },
-                                    ]
-                                : !canAssign
-                                  ? [
-                                      {
-                                        id: 'archive',
-                                        label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
-                                        icon: Archive,
-                                        disabled: true,
-                                        description: isPolish ? 'Tylko menedżer' : 'Manager only',
-                                        onClick: () => {},
-                                      },
-                                    ]
-                                  : []),
-                            ],
-                          },
-                          // DANGER — Usuń (realny dla canAssign; placeholder dla !canAssign)
-                          {
-                            id: 'danger',
-                            kind: 'danger' as const,
-                            actions: [
-                              ...(canAssign && !template.isDefault
-                                ? [
-                                    {
-                                      id: 'delete',
-                                      label: isPolish ? 'Usuń szablon' : 'Delete template',
-                                      icon: Trash2,
-                                      onClick: () => handleDeleteTemplate(template),
-                                      variant: 'danger' as const,
-                                    },
-                                  ]
-                                : !canAssign
-                                  ? [
-                                      {
-                                        id: 'delete',
-                                        label: isPolish ? 'Usuń szablon' : 'Delete template',
-                                        icon: Trash2,
-                                        variant: 'danger' as const,
-                                        disabled: true,
-                                        description: isPolish ? 'Tylko menedżer' : 'Manager only',
-                                        onClick: () => {},
-                                      },
-                                    ]
-                                  : []),
-                            ],
-                          },
-                        ]}
+                        sections={buildTemplateRowSections(template)}
                       />
                     </div>
                   </td>
@@ -8031,9 +8155,12 @@ export const InterviewHub: React.FC = () => {
           const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
 
           return (
-            <button
+            // canon §8.0/§8.1: card root = div role=button (kebab can't nest in a <button>);
+            // single-click → side preview/select, double-click/Enter/Space → full view.
+            <div
               key={template.id}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={() => {
                 setSelectedTemplateId(template.id);
                 opts?.onSelectRow?.(template.id);
@@ -8041,29 +8168,44 @@ export const InterviewHub: React.FC = () => {
               onDoubleClick={() => {
                 opts?.onOpenFull?.(template.id);
               }}
-              className={`group relative flex flex-col text-left rounded-2xl border transition-all hover:shadow-lg ${
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  opts?.onOpenFull?.(template.id);
+                }
+              }}
+              className={`group relative flex flex-col text-left rounded-2xl border transition-all hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
                 selectedTemplateId === template.id
                   ? 'border-primary-500/40 bg-primary-500/5 dark:bg-primary-500/10 shadow-md'
                   : 'border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >
               <div className="p-4 flex-1 space-y-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${scopeColor}`}
-                  >
-                    {scopeLabel}
-                  </span>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}
-                  >
-                    {statusLabel}
-                  </span>
-                  {template.isDefault && (
-                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400">
-                      Default
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${scopeColor}`}
+                    >
+                      {scopeLabel}
                     </span>
-                  )}
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}
+                    >
+                      {statusLabel}
+                    </span>
+                    {template.isDefault && (
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  {/* canon §8.0/§8.1: kebab = SAME RowActionsMenu sections as the table row */}
+                  <div className="-mr-1 -mt-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <RowActionsMenu
+                      iconVariant="vertical"
+                      sections={buildTemplateRowSections(template)}
+                    />
+                  </div>
                 </div>
 
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-2 leading-snug">
@@ -8102,7 +8244,7 @@ export const InterviewHub: React.FC = () => {
                 {template.estimatedTimeMinutes && <span>{template.estimatedTimeMinutes} min</span>}
                 <span>{template.category}</span>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
@@ -10063,123 +10205,123 @@ Return ONLY the answer text (no markdown fences).`;
         <div className="h-full overflow-hidden">
           {renderDegradedBanner()}
           <TableWithPreviewLayout<InterviewSession & { title: string }>
-              selectedId={previewSessionId}
-              selectedItem={selectedItem}
-              onSelect={(id) => setPreviewSessionId(id)}
-              onOpenFull={(id) => {
-                const s = rows.find((x) => x.id === id);
-                if (s) handleViewSession(s);
-              }}
-              itemIds={rows.map((r) => r.id)}
-              getItemById={(id) => {
-                const x = rows.find((i) => i.id === id);
-                return x ? ({ ...x, title: x.name || 'Interview Session' } as any) : null;
-              }}
-              renderPreview={(item) => {
-                const s = item as InterviewSession;
-                const progress =
-                  s.totalQuestions > 0
-                    ? Math.round((s.answeredQuestions / s.totalQuestions) * 100)
-                    : 0;
-                const workflowStatus = getSessionWorkflowStatus(s);
-                const statusCfg = getSessionStatusConfig(workflowStatus);
+            selectedId={previewSessionId}
+            selectedItem={selectedItem}
+            onSelect={(id) => setPreviewSessionId(id)}
+            onOpenFull={(id) => {
+              const s = rows.find((x) => x.id === id);
+              if (s) handleViewSession(s);
+            }}
+            itemIds={rows.map((r) => r.id)}
+            getItemById={(id) => {
+              const x = rows.find((i) => i.id === id);
+              return x ? ({ ...x, title: x.name || 'Interview Session' } as any) : null;
+            }}
+            renderPreview={(item) => {
+              const s = item as InterviewSession;
+              const progress =
+                s.totalQuestions > 0
+                  ? Math.round((s.answeredQuestions / s.totalQuestions) * 100)
+                  : 0;
+              const workflowStatus = getSessionWorkflowStatus(s);
+              const statusCfg = getSessionStatusConfig(workflowStatus);
 
-                return (
-                  <InterviewSessionPreviewBody
-                    session={s}
-                    isPolish={isPolish}
-                    statusConfig={statusCfg}
-                    progress={progress}
-                    detailsExpanded={sessionPreviewDetailsExpanded}
-                    onToggleDetailsExpanded={() => setSessionPreviewDetailsExpanded((v) => !v)}
-                    onCopyStats={() =>
-                      copyToClipboard(
-                        [
-                          `id: ${s.id}`,
-                          `status: ${workflowStatus}`,
-                          `answered: ${s.answeredQuestions}/${s.totalQuestions}`,
-                          `startedAt: ${s.startedAt}`,
-                        ].join('\n')
-                      )
-                    }
-                    onCopyId={() => copyToClipboard(s.id)}
-                  />
-                );
-              }}
-              renderPreviewFooter={(item) => {
-                const s = item as InterviewSession;
-                const workflowStatus = getSessionWorkflowStatus(s);
-                const canRunAi = ['approved', 'completed'].includes(workflowStatus);
-                const aiHints = isPolish
-                  ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
-                  : ['Summarize', 'Risks', 'Next steps'];
-                const hintToType: Record<string, InsightPromptType> = {
-                  Podsumuj: 'summary',
-                  Summarize: 'summary',
-                  Ryzyka: 'risk_assessment',
-                  Risks: 'risk_assessment',
-                  'Następne kroki': 'recommendations',
-                  'Next steps': 'recommendations',
-                };
-                const relations = [
-                  {
-                    label: `${isPolish ? 'Assignee' : 'Assignee'}: ${s.assigneeName || s.respondentName || '—'}`,
-                    tone: 'text-slate-600 dark:text-slate-300',
-                  },
-                  {
-                    label: `${isPolish ? 'Template' : 'Template'}: ${s.templateName || s.templateCategory || '—'}`,
-                    tone: 'text-slate-600 dark:text-slate-300',
-                  },
-                  {
-                    label: `${isPolish ? 'Projekt' : 'Project'}: ${s.projectId || '—'}`,
-                    tone: 'text-slate-600 dark:text-slate-300',
-                  },
-                  {
-                    label: `${isPolish ? 'Organizacja' : 'Org'}: ${s.organizationId || '—'}`,
-                    tone: 'text-slate-600 dark:text-slate-300',
-                  },
-                ];
+              return (
+                <InterviewSessionPreviewBody
+                  session={s}
+                  isPolish={isPolish}
+                  statusConfig={statusCfg}
+                  progress={progress}
+                  detailsExpanded={sessionPreviewDetailsExpanded}
+                  onToggleDetailsExpanded={() => setSessionPreviewDetailsExpanded((v) => !v)}
+                  onCopyStats={() =>
+                    copyToClipboard(
+                      [
+                        `id: ${s.id}`,
+                        `status: ${workflowStatus}`,
+                        `answered: ${s.answeredQuestions}/${s.totalQuestions}`,
+                        `startedAt: ${s.startedAt}`,
+                      ].join('\n')
+                    )
+                  }
+                  onCopyId={() => copyToClipboard(s.id)}
+                />
+              );
+            }}
+            renderPreviewFooter={(item) => {
+              const s = item as InterviewSession;
+              const workflowStatus = getSessionWorkflowStatus(s);
+              const canRunAi = ['approved', 'completed'].includes(workflowStatus);
+              const aiHints = isPolish
+                ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
+                : ['Summarize', 'Risks', 'Next steps'];
+              const hintToType: Record<string, InsightPromptType> = {
+                Podsumuj: 'summary',
+                Summarize: 'summary',
+                Ryzyka: 'risk_assessment',
+                Risks: 'risk_assessment',
+                'Następne kroki': 'recommendations',
+                'Next steps': 'recommendations',
+              };
+              const relations = [
+                {
+                  label: `${isPolish ? 'Assignee' : 'Assignee'}: ${s.assigneeName || s.respondentName || '—'}`,
+                  tone: 'text-slate-600 dark:text-slate-300',
+                },
+                {
+                  label: `${isPolish ? 'Template' : 'Template'}: ${s.templateName || s.templateCategory || '—'}`,
+                  tone: 'text-slate-600 dark:text-slate-300',
+                },
+                {
+                  label: `${isPolish ? 'Projekt' : 'Project'}: ${s.projectId || '—'}`,
+                  tone: 'text-slate-600 dark:text-slate-300',
+                },
+                {
+                  label: `${isPolish ? 'Organizacja' : 'Org'}: ${s.organizationId || '—'}`,
+                  tone: 'text-slate-600 dark:text-slate-300',
+                },
+              ];
 
-                return (
-                  <InterviewSessionPreviewFooter
-                    session={s}
-                    isPolish={isPolish}
-                    canRunAi={canRunAi}
-                    aiHints={aiHints}
-                    onRunAiHint={(hint) => {
-                      const type = hintToType[hint] ?? 'summary';
-                      void handleGenerateInsight(s, type);
-                    }}
-                    relations={relations}
-                    onOpenFull={() => handleViewSession(s)}
-                    onGenerateInsight={
-                      canRunAi
-                        ? (type) => handleGenerateInsight(s, type as InsightPromptType)
-                        : undefined
-                    }
-                    onCopyId={() => copyToClipboard(s.id)}
-                  />
-                );
-              }}
-            >
-              {viewMode === 'table' ? (
-                <div className="pl-4 pr-1.5 pt-3 pb-4">
-                  {renderSessionsTable(rows, {
-                    onRowClick: setPreviewSessionId,
-                    onRowDoubleClick: (id) => {
-                      const s = rows.find((x) => x.id === id);
-                      if (s) handleViewSession(s);
-                    },
-                    selectedId: previewSessionId,
-                  })}
-                </div>
-              ) : (
-                /* canon §8: grid inside same TableWithPreviewLayout; single-click → preview */
-                <div className="pl-4 pr-1.5 pt-3 pb-4">
-                  {renderSessionsGrid({ onCardClick: setPreviewSessionId })}
-                </div>
-              )}
-            </TableWithPreviewLayout>
+              return (
+                <InterviewSessionPreviewFooter
+                  session={s}
+                  isPolish={isPolish}
+                  canRunAi={canRunAi}
+                  aiHints={aiHints}
+                  onRunAiHint={(hint) => {
+                    const type = hintToType[hint] ?? 'summary';
+                    void handleGenerateInsight(s, type);
+                  }}
+                  relations={relations}
+                  onOpenFull={() => handleViewSession(s)}
+                  onGenerateInsight={
+                    canRunAi
+                      ? (type) => handleGenerateInsight(s, type as InsightPromptType)
+                      : undefined
+                  }
+                  onCopyId={() => copyToClipboard(s.id)}
+                />
+              );
+            }}
+          >
+            {viewMode === 'table' ? (
+              <div className="pl-4 pr-1.5 pt-3 pb-4">
+                {renderSessionsTable(rows, {
+                  onRowClick: setPreviewSessionId,
+                  onRowDoubleClick: (id) => {
+                    const s = rows.find((x) => x.id === id);
+                    if (s) handleViewSession(s);
+                  },
+                  selectedId: previewSessionId,
+                })}
+              </div>
+            ) : (
+              /* canon §8: grid inside same TableWithPreviewLayout; single-click → preview */
+              <div className="pl-4 pr-1.5 pt-3 pb-4">
+                {renderSessionsGrid({ onCardClick: setPreviewSessionId })}
+              </div>
+            )}
+          </TableWithPreviewLayout>
         </div>
       );
     }
@@ -10430,38 +10572,18 @@ Return ONLY the answer text (no markdown fences).`;
     if (activeTab === 'initiatives') {
       const rows = filteredInterviewInitiatives;
 
+      // Status → human label only. Tone/colour comes from EntityStatusChip
+      // (statusChipTone → c.* tokens) per canon §4.1 — no legacy getStatusStyle,
+      // no status-coloured row/card accent bars (§3.5/§4.0a).
       const statusMeta = (statusValue?: string) => {
         const status = String(statusValue || 'DRAFT').toUpperCase();
-        const style = getStatusStyle(status);
         if (status === 'PENDING_REVIEW') {
-          return {
-            label: isPolish ? 'Do przeglądu' : 'Pending review',
-            cls: `border border-current/20 ${style.bg} ${style.text}`,
-            accentClass: `shadow-[inset_4px_0_0_theme(colors.amber.500)]`,
-            dotClass: style.dot,
-          };
+          return { label: isPolish ? 'Do przeglądu' : 'Pending review' };
         }
         if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(status)) {
-          const movedStyle = getStatusStyle(status);
-          return {
-            label: isPolish ? 'Przekazane dalej' : 'Moved forward',
-            cls: `border border-current/20 ${movedStyle.bg} ${movedStyle.text}`,
-            accentClass:
-              status === 'PROMOTED'
-                ? 'shadow-[inset_4px_0_0_theme(colors.blue.500)]'
-                : status === 'APPROVED'
-                  ? 'shadow-[inset_4px_0_0_theme(colors.emerald.500)]'
-                  : 'shadow-[inset_4px_0_0_theme(colors.amber.500)]',
-            dotClass: movedStyle.dot,
-          };
+          return { label: isPolish ? 'Przekazane dalej' : 'Moved forward' };
         }
-        const draftStyle = getStatusStyle('DRAFT');
-        return {
-          label: isPolish ? 'Szkic' : 'Draft',
-          cls: `border border-current/20 ${draftStyle.bg} ${draftStyle.text}`,
-          accentClass: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
-          dotClass: draftStyle.dot,
-        };
+        return { label: isPolish ? 'Szkic' : 'Draft' };
       };
 
       // Map initiative priority → canon PriorityChip level (neutral shell + colored dot).
@@ -10811,18 +10933,16 @@ Return ONLY the answer text (no markdown fences).`;
                           (isPolish ? 'Inicjatywa' : 'Initiative');
                         const status = String(initiative.status || 'DRAFT').toUpperCase();
                         const m = statusMeta(status);
-                        const isSelected =
-                          selectedInterviewInitiativeId === initiative.id;
+                        const isSelected = selectedInterviewInitiativeId === initiative.id;
                         const desc = String(initiative.description || '')
                           .replace(/^#\s.+$/m, '')
                           .trim();
-                        const dateStr =
-                          initiative.createdAt
-                            ? new Date(initiative.createdAt).toLocaleDateString(
-                                isPolish ? 'pl-PL' : 'en-US',
-                                { month: 'short', day: 'numeric' }
-                              )
-                            : '—';
+                        const dateStr = initiative.createdAt
+                          ? new Date(initiative.createdAt).toLocaleDateString(
+                              isPolish ? 'pl-PL' : 'en-US',
+                              { month: 'short', day: 'numeric' }
+                            )
+                          : '—';
                         const src = initiative.sourceId
                           ? insights.find((i) => i.id === initiative.sourceId)
                           : null;
@@ -10837,9 +10957,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 : 'border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 hover:shadow-md hover:-translate-y-px',
                             ].join(' ')}
                             onClick={() =>
-                              setSelectedInterviewInitiativeId(
-                                isSelected ? null : initiative.id
-                              )
+                              setSelectedInterviewInitiativeId(isSelected ? null : initiative.id)
                             }
                             onDoubleClick={() => {
                               if (promoted)
@@ -10850,20 +10968,11 @@ Return ONLY the answer text (no markdown fences).`;
                           >
                             {/* 1 BADGE ROW */}
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span
-                                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${m.cls}`}
-                              >
-                                <span className={`h-1.5 w-1.5 rounded-full ${m.dotClass}`} />
-                                {m.label}
-                              </span>
+                              <EntityStatusChip status={status} label={m.label} />
                               {initiative.priority &&
                                 ['critical', 'urgent', 'high'].includes(
                                   String(initiative.priority).toLowerCase()
-                                ) && (
-                                  <PriorityChip
-                                    level={priorityLevel(initiative.priority)}
-                                  />
-                                )}
+                                ) && <PriorityChip level={priorityLevel(initiative.priority)} />}
                             </div>
                             {/* 2 TITLE */}
                             <p
@@ -10949,9 +11058,7 @@ Return ONLY the answer text (no markdown fences).`;
                                               : []),
                                             {
                                               id: 'back-to-draft',
-                                              label: isPolish
-                                                ? 'Wróć do szkicu'
-                                                : 'Back to draft',
+                                              label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
                                               icon: RotateCcw,
                                               onClick: () =>
                                                 void handleUpdateInterviewInitiativeStatus(
@@ -11033,633 +11140,641 @@ Return ONLY the answer text (no markdown fences).`;
                     </div>
                   )
                 ) : (
-                <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
-                  <table
-                    className="w-full table-fixed rounded-xl"
-                    style={{ minWidth: tableMinWidth }}
-                  >
-                    <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
-                      <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
-                        <th
-                          className="px-3 py-2 text-left"
-                          style={{ width: initiativesColumnWidths.select }}
-                        >
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleAllVisibleInitiatives();
-                            }}
-                            className={[
-                              'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
-                              'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
-                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                              allVisibleSelected || someVisibleSelected
-                                ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
-                                : 'opacity-70',
-                            ].join(' ')}
-                            aria-label={
-                              isPolish
-                                ? 'Zaznacz widoczne inicjatywy'
-                                : 'Select visible initiatives'
-                            }
-                            aria-pressed={allVisibleSelected}
-                          >
-                            {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
-                            {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
-                          </button>
-                        </th>
-                        <th
-                          className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                          style={{ width: initiativesColumnWidths.title }}
-                        >
-                          {isPolish ? 'Inicjatywa' : 'Initiative'}
-                          {renderInitiativeResizer('title')}
-                        </th>
-                        {!hiddenSet.has('status') ? (
+                  <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
+                    <table
+                      className="w-full table-fixed rounded-xl"
+                      style={{ minWidth: tableMinWidth }}
+                    >
+                      <thead className="sticky top-0 z-20 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.06]">
+                        <tr className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 dark:border-white/[0.06] dark:bg-navy-900/60">
                           <th
-                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                            style={{ width: initiativesColumnWidths.status }}
-                          >
-                            <div className="flex items-center justify-start gap-1">
-                              <span
-                                className={
-                                  (initiativeTableFilters.status as string[] | undefined)?.length
-                                    ? 'text-primary-500'
-                                    : ''
-                                }
-                              >
-                                {isPolish ? 'Status' : 'Status'}
-                              </span>
-                              <FilterDropdown
-                                column={initiativeStatusCol}
-                                value={initiativeTableFilters.status as string[] | undefined}
-                                onChange={(v) =>
-                                  setInitiativeTableFilters((f) => ({
-                                    ...f,
-                                    status: v as string[],
-                                  }))
-                                }
-                                isOpen={openInitiativeFilterId === 'status'}
-                                onToggle={() =>
-                                  setOpenInitiativeFilterId((id) =>
-                                    id === 'status' ? null : 'status'
-                                  )
-                                }
-                                onClose={() => setOpenInitiativeFilterId(null)}
-                              />
-                            </div>
-                            {renderInitiativeResizer('status')}
-                          </th>
-                        ) : null}
-                        {!hiddenSet.has('priority') ? (
-                          <th
-                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                            style={{ width: initiativesColumnWidths.priority }}
-                          >
-                            <div className="flex items-center justify-start gap-1">
-                              <span
-                                className={
-                                  (initiativeTableFilters.priority as string[] | undefined)?.length
-                                    ? 'text-primary-500'
-                                    : ''
-                                }
-                              >
-                                {isPolish ? 'Priorytet' : 'Priority'}
-                              </span>
-                              <FilterDropdown
-                                column={initiativePriorityCol}
-                                value={initiativeTableFilters.priority as string[] | undefined}
-                                onChange={(v) =>
-                                  setInitiativeTableFilters((f) => ({
-                                    ...f,
-                                    priority: v as string[],
-                                  }))
-                                }
-                                isOpen={openInitiativeFilterId === 'priority'}
-                                onToggle={() =>
-                                  setOpenInitiativeFilterId((id) =>
-                                    id === 'priority' ? null : 'priority'
-                                  )
-                                }
-                                onClose={() => setOpenInitiativeFilterId(null)}
-                              />
-                            </div>
-                            {renderInitiativeResizer('priority')}
-                          </th>
-                        ) : null}
-                        {!hiddenSet.has('source') ? (
-                          <th
-                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                            style={{ width: initiativesColumnWidths.source }}
-                          >
-                            <div className="flex items-center justify-start gap-1">
-                              <span
-                                className={
-                                  (initiativeTableFilters.source as string[] | undefined)?.length
-                                    ? 'text-primary-500'
-                                    : ''
-                                }
-                              >
-                                {isPolish ? 'Źródło' : 'Source'}
-                              </span>
-                              <FilterDropdown
-                                column={initiativeSourceCol}
-                                value={initiativeTableFilters.source as string[] | undefined}
-                                onChange={(v) =>
-                                  setInitiativeTableFilters((f) => ({
-                                    ...f,
-                                    source: v as string[],
-                                  }))
-                                }
-                                isOpen={openInitiativeFilterId === 'source'}
-                                onToggle={() =>
-                                  setOpenInitiativeFilterId((id) =>
-                                    id === 'source' ? null : 'source'
-                                  )
-                                }
-                                onClose={() => setOpenInitiativeFilterId(null)}
-                              />
-                            </div>
-                            {renderInitiativeResizer('source')}
-                          </th>
-                        ) : null}
-                        {!hiddenSet.has('date') ? (
-                          <th
-                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                            style={{ width: initiativesColumnWidths.date }}
-                          >
-                            {isPolish ? 'Data' : 'Date'}
-                            {renderInitiativeResizer('date')}
-                          </th>
-                        ) : null}
-                        <th
-                          className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                          style={{ width: initiativesColumnWidths.actions }}
-                        >
-                          <div
-                            ref={initiativesViewSettingsRef}
-                            className="flex items-center justify-end"
+                            className="px-3 py-2 text-left"
+                            style={{ width: initiativesColumnWidths.select }}
                           >
                             <button
                               type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                const r = event.currentTarget.getBoundingClientRect();
-                                const PANEL_W = 288;
-                                const left = Math.min(
-                                  Math.max(8, Math.round(r.right - PANEL_W)),
-                                  Math.round(window.innerWidth - PANEL_W - 8)
-                                );
-                                setInitiativesViewSettingsPos({
-                                  top: Math.round(r.bottom + 8),
-                                  left,
-                                  maxH: Math.max(
-                                    180,
-                                    Math.round(window.innerHeight - r.bottom - 24)
-                                  ),
-                                });
-                                setIsInitiativesViewSettingsOpen((open) => !open);
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleAllVisibleInitiatives();
                               }}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                              className={[
+                                'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                                'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                                allVisibleSelected || someVisibleSelected
+                                  ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                                  : 'opacity-70',
+                              ].join(' ')}
                               aria-label={
-                                isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
+                                isPolish
+                                  ? 'Zaznacz widoczne inicjatywy'
+                                  : 'Select visible initiatives'
                               }
-                              aria-expanded={isInitiativesViewSettingsOpen}
-                              title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                              aria-pressed={allVisibleSelected}
                             >
-                              <Settings2 size={15} />
+                              {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
+                              {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
                             </button>
-                            {isInitiativesViewSettingsOpen && initiativesViewSettingsPos
-                              ? createPortal(
-                                  <div
-                                    ref={initiativesViewSettingsPanelRef}
-                                    style={{
-                                      position: 'fixed',
-                                      top: initiativesViewSettingsPos.top,
-                                      left: initiativesViewSettingsPos.left,
-                                      maxHeight: initiativesViewSettingsPos.maxH,
-                                    }}
-                                    className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                                    role="menu"
-                                    onClick={(event) => event.stopPropagation()}
-                                  >
-                                    <div className="px-2 pb-2 pt-1">
-                                      <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                                        {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                                      </div>
-                                      <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                                        {isPolish
-                                          ? 'Wybierz widoczne kolumny.'
-                                          : 'Choose visible columns.'}
-                                      </div>
-                                    </div>
-                                    <div className="space-y-0.5">
-                                      {[
-                                        {
-                                          id: 'title',
-                                          label: isPolish ? 'Inicjatywa' : 'Initiative',
-                                        },
-                                        { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                                        {
-                                          id: 'priority',
-                                          label: isPolish ? 'Priorytet' : 'Priority',
-                                        },
-                                        { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
-                                        { id: 'date', label: isPolish ? 'Data' : 'Date' },
-                                        { id: 'actions', label: isPolish ? 'Akcje' : 'Actions' },
-                                      ].map((column) => {
-                                        const alwaysVisible =
-                                          column.id === 'title' || column.id === 'actions';
-                                        const checked = alwaysVisible
-                                          ? true
-                                          : !hiddenSet.has(column.id);
-                                        return (
-                                          <label
-                                            key={column.id}
-                                            className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                                              alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                                            }`}
-                                          >
-                                            <input
-                                              type="checkbox"
-                                              checked={checked}
-                                              disabled={alwaysVisible}
-                                              onChange={() => {
-                                                if (alwaysVisible) return;
-                                                setInitiativesHiddenColumns((prev) => {
-                                                  const set = new Set(prev);
-                                                  if (set.has(column.id)) set.delete(column.id);
-                                                  else set.add(column.id);
-                                                  const next = Array.from(set);
-                                                  saveHiddenColumns(
-                                                    INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY,
-                                                    next
-                                                  );
-                                                  return next;
-                                                });
-                                              }}
-                                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                            />
-                                            <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                              {column.label}
-                                            </span>
-                                            {alwaysVisible ? (
-                                              <span className="text-[10px] font-medium text-slate-600">
-                                                {isPolish ? 'Wymagane' : 'Required'}
-                                              </span>
-                                            ) : null}
-                                          </label>
-                                        );
-                                      })}
-                                    </div>
-                                    <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                                      <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                                        <input
-                                          type="checkbox"
-                                          checked={showInitiativeRowDescription}
-                                          onChange={(event) => {
-                                            setShowInitiativeRowDescription(event.target.checked);
-                                            saveBooleanSetting(
-                                              INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY,
-                                              event.target.checked
-                                            );
-                                          }}
-                                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                        />
-                                        <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                          {isPolish
-                                            ? 'Pokaż opis / uzasadnienie'
-                                            : 'Show row description'}
-                                        </span>
-                                      </label>
-                                    </div>
-                                  </div>,
-                                  document.body
-                                )
-                              : null}
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((initiative) => {
-                        const title =
-                          initiative.title ||
-                          initiative.name ||
-                          (isPolish ? 'Inicjatywa' : 'Initiative');
-                        const meta = statusMeta(initiative.status);
-                        const sourceInsight = initiative.sourceId
-                          ? insights.find((insight) => insight.id === initiative.sourceId)
-                          : null;
-                        const sourceStyle = getTypeStyle('source');
-                        const isSelected = selectedInterviewInitiativeId === initiative.id;
-                        const isInitiativeSelected = selectedInitiativeIds.has(initiative.id);
-                        const status = String(initiative.status || 'DRAFT').toUpperCase();
-                        const cleanedDescription = (initiative.description || '')
-                          .replace(/^#\s.+$/m, '')
-                          .trim();
-
-                        return (
-                          <tr
-                            key={initiative.id}
-                            className={`group cursor-pointer border-b border-slate-200/70 transition-colors last:border-0 dark:border-white/[0.06] ${
-                              isSelected || isInitiativeSelected
-                                ? `${INTERVIEW_TABLE_SELECTED_ROW_CLASS} shadow-[inset_4px_0_0_theme(colors.primary.500)]`
-                                : `${INTERVIEW_TABLE_HOVER_ROW_CLASS} ${meta.accentClass}`
-                            }`}
-                            onClick={() => setSelectedInterviewInitiativeId(initiative.id)}
-                            onDoubleClick={() => {
-                              if (isInitiativePromoted(initiative.status))
-                                navigate(
-                                  `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                                );
-                            }}
-                            title={isPolish ? 'Otwórz podgląd' : 'Open preview'}
+                          </th>
+                          <th
+                            className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            style={{ width: initiativesColumnWidths.title }}
                           >
-                            <td
-                              className="px-3 py-3"
-                              style={{ width: initiativesColumnWidths.select }}
+                            {isPolish ? 'Inicjatywa' : 'Initiative'}
+                            {renderInitiativeResizer('title')}
+                          </th>
+                          {!hiddenSet.has('status') ? (
+                            <th
+                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                              style={{ width: initiativesColumnWidths.status }}
+                            >
+                              <div className="flex items-center justify-start gap-1">
+                                <span
+                                  className={
+                                    (initiativeTableFilters.status as string[] | undefined)?.length
+                                      ? 'text-primary-500'
+                                      : ''
+                                  }
+                                >
+                                  {isPolish ? 'Status' : 'Status'}
+                                </span>
+                                <FilterDropdown
+                                  column={initiativeStatusCol}
+                                  value={initiativeTableFilters.status as string[] | undefined}
+                                  onChange={(v) =>
+                                    setInitiativeTableFilters((f) => ({
+                                      ...f,
+                                      status: v as string[],
+                                    }))
+                                  }
+                                  isOpen={openInitiativeFilterId === 'status'}
+                                  onToggle={() =>
+                                    setOpenInitiativeFilterId((id) =>
+                                      id === 'status' ? null : 'status'
+                                    )
+                                  }
+                                  onClose={() => setOpenInitiativeFilterId(null)}
+                                />
+                              </div>
+                              {renderInitiativeResizer('status')}
+                            </th>
+                          ) : null}
+                          {!hiddenSet.has('priority') ? (
+                            <th
+                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                              style={{ width: initiativesColumnWidths.priority }}
+                            >
+                              <div className="flex items-center justify-start gap-1">
+                                <span
+                                  className={
+                                    (initiativeTableFilters.priority as string[] | undefined)
+                                      ?.length
+                                      ? 'text-primary-500'
+                                      : ''
+                                  }
+                                >
+                                  {isPolish ? 'Priorytet' : 'Priority'}
+                                </span>
+                                <FilterDropdown
+                                  column={initiativePriorityCol}
+                                  value={initiativeTableFilters.priority as string[] | undefined}
+                                  onChange={(v) =>
+                                    setInitiativeTableFilters((f) => ({
+                                      ...f,
+                                      priority: v as string[],
+                                    }))
+                                  }
+                                  isOpen={openInitiativeFilterId === 'priority'}
+                                  onToggle={() =>
+                                    setOpenInitiativeFilterId((id) =>
+                                      id === 'priority' ? null : 'priority'
+                                    )
+                                  }
+                                  onClose={() => setOpenInitiativeFilterId(null)}
+                                />
+                              </div>
+                              {renderInitiativeResizer('priority')}
+                            </th>
+                          ) : null}
+                          {!hiddenSet.has('source') ? (
+                            <th
+                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                              style={{ width: initiativesColumnWidths.source }}
+                            >
+                              <div className="flex items-center justify-start gap-1">
+                                <span
+                                  className={
+                                    (initiativeTableFilters.source as string[] | undefined)?.length
+                                      ? 'text-primary-500'
+                                      : ''
+                                  }
+                                >
+                                  {isPolish ? 'Źródło' : 'Source'}
+                                </span>
+                                <FilterDropdown
+                                  column={initiativeSourceCol}
+                                  value={initiativeTableFilters.source as string[] | undefined}
+                                  onChange={(v) =>
+                                    setInitiativeTableFilters((f) => ({
+                                      ...f,
+                                      source: v as string[],
+                                    }))
+                                  }
+                                  isOpen={openInitiativeFilterId === 'source'}
+                                  onToggle={() =>
+                                    setOpenInitiativeFilterId((id) =>
+                                      id === 'source' ? null : 'source'
+                                    )
+                                  }
+                                  onClose={() => setOpenInitiativeFilterId(null)}
+                                />
+                              </div>
+                              {renderInitiativeResizer('source')}
+                            </th>
+                          ) : null}
+                          {!hiddenSet.has('date') ? (
+                            <th
+                              className="relative px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                              style={{ width: initiativesColumnWidths.date }}
+                            >
+                              {isPolish ? 'Data' : 'Date'}
+                              {renderInitiativeResizer('date')}
+                            </th>
+                          ) : null}
+                          <th
+                            className="relative px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            style={{ width: initiativesColumnWidths.actions }}
+                          >
+                            <div
+                              ref={initiativesViewSettingsRef}
+                              className="flex items-center justify-end"
                             >
                               <button
                                 type="button"
                                 onClick={(event) => {
-                                  event.preventDefault();
                                   event.stopPropagation();
-                                  toggleInitiativeSelection(initiative.id);
+                                  const r = event.currentTarget.getBoundingClientRect();
+                                  const PANEL_W = 288;
+                                  const left = Math.min(
+                                    Math.max(8, Math.round(r.right - PANEL_W)),
+                                    Math.round(window.innerWidth - PANEL_W - 8)
+                                  );
+                                  setInitiativesViewSettingsPos({
+                                    top: Math.round(r.bottom + 8),
+                                    left,
+                                    maxH: Math.max(
+                                      180,
+                                      Math.round(window.innerHeight - r.bottom - 24)
+                                    ),
+                                  });
+                                  setIsInitiativesViewSettingsOpen((open) => !open);
                                 }}
-                                className={[
-                                  'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
-                                  'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
-                                  'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
-                                  'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
-                                  'group-focus-within:opacity-100 group-focus-within:border-primary-400',
-                                  isInitiativeSelected
-                                    ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
-                                    : 'opacity-0',
-                                ].join(' ')}
-                                aria-label={isPolish ? 'Zaznacz inicjatywę' : 'Select initiative'}
-                                aria-pressed={isInitiativeSelected}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                                aria-label={
+                                  isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
+                                }
+                                aria-expanded={isInitiativesViewSettingsOpen}
+                                title={isPolish ? 'Ustawienia widoku' : 'View settings'}
                               >
-                                {isInitiativeSelected ? <Check size={10} strokeWidth={3} /> : null}
+                                <Settings2 size={15} />
                               </button>
-                            </td>
-                            <td
-                              className="px-3 py-3 align-middle"
-                              style={{ width: initiativesColumnWidths.title }}
+                              {isInitiativesViewSettingsOpen && initiativesViewSettingsPos
+                                ? createPortal(
+                                    <div
+                                      ref={initiativesViewSettingsPanelRef}
+                                      style={{
+                                        position: 'fixed',
+                                        top: initiativesViewSettingsPos.top,
+                                        left: initiativesViewSettingsPos.left,
+                                        maxHeight: initiativesViewSettingsPos.maxH,
+                                      }}
+                                      className="z-[100] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                                      role="menu"
+                                      onClick={(event) => event.stopPropagation()}
+                                    >
+                                      <div className="px-2 pb-2 pt-1">
+                                        <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                                          {isPolish ? 'Ustawienia widoku' : 'View settings'}
+                                        </div>
+                                        <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                          {isPolish
+                                            ? 'Wybierz widoczne kolumny.'
+                                            : 'Choose visible columns.'}
+                                        </div>
+                                      </div>
+                                      <div className="space-y-0.5">
+                                        {[
+                                          {
+                                            id: 'title',
+                                            label: isPolish ? 'Inicjatywa' : 'Initiative',
+                                          },
+                                          { id: 'status', label: isPolish ? 'Status' : 'Status' },
+                                          {
+                                            id: 'priority',
+                                            label: isPolish ? 'Priorytet' : 'Priority',
+                                          },
+                                          { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
+                                          { id: 'date', label: isPolish ? 'Data' : 'Date' },
+                                          { id: 'actions', label: isPolish ? 'Akcje' : 'Actions' },
+                                        ].map((column) => {
+                                          const alwaysVisible =
+                                            column.id === 'title' || column.id === 'actions';
+                                          const checked = alwaysVisible
+                                            ? true
+                                            : !hiddenSet.has(column.id);
+                                          return (
+                                            <label
+                                              key={column.id}
+                                              className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
+                                                alwaysVisible ? 'opacity-55' : 'cursor-pointer'
+                                              }`}
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                checked={checked}
+                                                disabled={alwaysVisible}
+                                                onChange={() => {
+                                                  if (alwaysVisible) return;
+                                                  setInitiativesHiddenColumns((prev) => {
+                                                    const set = new Set(prev);
+                                                    if (set.has(column.id)) set.delete(column.id);
+                                                    else set.add(column.id);
+                                                    const next = Array.from(set);
+                                                    saveHiddenColumns(
+                                                      INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY,
+                                                      next
+                                                    );
+                                                    return next;
+                                                  });
+                                                }}
+                                                className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                              />
+                                              <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                                {column.label}
+                                              </span>
+                                              {alwaysVisible ? (
+                                                <span className="text-[10px] font-medium text-slate-600">
+                                                  {isPolish ? 'Wymagane' : 'Required'}
+                                                </span>
+                                              ) : null}
+                                            </label>
+                                          );
+                                        })}
+                                      </div>
+                                      <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
+                                        <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
+                                          <input
+                                            type="checkbox"
+                                            checked={showInitiativeRowDescription}
+                                            onChange={(event) => {
+                                              setShowInitiativeRowDescription(event.target.checked);
+                                              saveBooleanSetting(
+                                                INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY,
+                                                event.target.checked
+                                              );
+                                            }}
+                                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                          />
+                                          <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                            {isPolish
+                                              ? 'Pokaż opis / uzasadnienie'
+                                              : 'Show row description'}
+                                          </span>
+                                        </label>
+                                      </div>
+                                    </div>,
+                                    document.body
+                                  )
+                                : null}
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((initiative) => {
+                          const title =
+                            initiative.title ||
+                            initiative.name ||
+                            (isPolish ? 'Inicjatywa' : 'Initiative');
+                          const meta = statusMeta(initiative.status);
+                          const sourceInsight = initiative.sourceId
+                            ? insights.find((insight) => insight.id === initiative.sourceId)
+                            : null;
+                          const sourceStyle = getTypeStyle('source');
+                          const isSelected = selectedInterviewInitiativeId === initiative.id;
+                          const isInitiativeSelected = selectedInitiativeIds.has(initiative.id);
+                          const status = String(initiative.status || 'DRAFT').toUpperCase();
+                          const cleanedDescription = (initiative.description || '')
+                            .replace(/^#\s.+$/m, '')
+                            .trim();
+
+                          return (
+                            <tr
+                              key={initiative.id}
+                              className={`group cursor-pointer border-b border-slate-200/70 transition-colors last:border-0 dark:border-white/[0.06] ${
+                                isSelected || isInitiativeSelected
+                                  ? `${INTERVIEW_TABLE_SELECTED_ROW_CLASS} shadow-[inset_4px_0_0_theme(colors.primary.500)]`
+                                  : INTERVIEW_TABLE_HOVER_ROW_CLASS
+                              }`}
+                              onClick={() => setSelectedInterviewInitiativeId(initiative.id)}
+                              onDoubleClick={() => {
+                                if (isInitiativePromoted(initiative.status))
+                                  navigate(
+                                    `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                  );
+                              }}
+                              title={isPolish ? 'Otwórz podgląd' : 'Open preview'}
                             >
-                              <div className="flex min-w-0 items-center">
-                                <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
-                                  {title}
+                              <td
+                                className="px-3 py-3"
+                                style={{ width: initiativesColumnWidths.select }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    toggleInitiativeSelection(initiative.id);
+                                  }}
+                                  className={[
+                                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
+                                    'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
+                                    'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                                    'group-focus-within:opacity-100 group-focus-within:border-primary-400',
+                                    isInitiativeSelected
+                                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                                      : 'opacity-0',
+                                  ].join(' ')}
+                                  aria-label={isPolish ? 'Zaznacz inicjatywę' : 'Select initiative'}
+                                  aria-pressed={isInitiativeSelected}
+                                >
+                                  {isInitiativeSelected ? (
+                                    <Check size={10} strokeWidth={3} />
+                                  ) : null}
+                                </button>
+                              </td>
+                              <td
+                                className="px-3 py-3 align-middle"
+                                style={{ width: initiativesColumnWidths.title }}
+                              >
+                                <div className="flex min-w-0 items-center">
+                                  <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">
+                                    {title}
+                                  </div>
                                 </div>
-                              </div>
-                              {showInitiativeRowDescription && cleanedDescription ? (
-                                <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
-                                  {cleanedDescription}
-                                </div>
+                                {showInitiativeRowDescription && cleanedDescription ? (
+                                  <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+                                    {cleanedDescription}
+                                  </div>
+                                ) : null}
+                              </td>
+                              {!hiddenSet.has('status') ? (
+                                <td
+                                  className="px-3 py-3 text-left align-middle"
+                                  style={{ width: initiativesColumnWidths.status }}
+                                >
+                                  <EntityStatusChip status={status} label={meta.label} />
+                                </td>
                               ) : null}
-                            </td>
-                            {!hiddenSet.has('status') ? (
-                              <td
-                                className="px-3 py-3 text-left align-middle"
-                                style={{ width: initiativesColumnWidths.status }}
-                              >
-                                <EntityStatusChip status={status} label={meta.label} />
-                              </td>
-                            ) : null}
-                            {!hiddenSet.has('priority') ? (
-                              <td
-                                className="px-3 py-3 text-left align-middle"
-                                style={{ width: initiativesColumnWidths.priority }}
-                              >
-                                {initiative.priority ? (
-                                  <PriorityChip
-                                    level={priorityLevel(initiative.priority)}
-                                    label={String(initiative.priority).toLowerCase()}
-                                  />
-                                ) : (
-                                  <span className="text-[11px] text-slate-600">—</span>
-                                )}
-                              </td>
-                            ) : null}
-                            {!hiddenSet.has('source') ? (
-                              <td
-                                className="px-3 py-3 text-left align-middle"
-                                style={{ width: initiativesColumnWidths.source }}
-                              >
-                                {sourceInsight ? (
-                                  <button
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      handleViewInsight(sourceInsight);
-                                    }}
-                                    className={`inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-medium leading-none transition-colors ${sourceStyle.bg} ${sourceStyle.text}`}
-                                  >
-                                    <Lightbulb size={12} />
-                                    {isPolish ? 'Insight' : 'Insight'}
-                                  </button>
-                                ) : (
-                                  <span className="text-[11px] text-slate-600">—</span>
-                                )}
-                              </td>
-                            ) : null}
-                            {!hiddenSet.has('date') ? (
-                              <td
-                                className="px-3 py-3 text-left align-middle text-[11px] font-medium text-slate-500 dark:text-slate-500"
-                                style={{ width: initiativesColumnWidths.date }}
-                              >
-                                {initiative.updatedAt || initiative.createdAt
-                                  ? new Date(
-                                      initiative.updatedAt || initiative.createdAt || ''
-                                    ).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
-                                  : '—'}
-                              </td>
-                            ) : null}
-                            <td
-                              className="px-3 py-3 text-right align-middle"
-                              style={{ width: initiativesColumnWidths.actions }}
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <RowActionsMenu
-                                iconVariant="vertical"
-                                className="opacity-40 transition-opacity group-hover:opacity-100"
-                                sections={[
-                                  // GÓRA — kontekstowe (przejścia statusu wg etapu)
-                                  {
-                                    id: 'context',
-                                    kind: 'context' as const,
-                                    actions: [
-                                      ...(status === 'DRAFT'
-                                        ? [
-                                            {
-                                              id: 'send-to-review',
-                                              label: isPolish
-                                                ? 'Wyślij do przeglądu'
-                                                : 'Send to review',
-                                              icon: ArrowRight,
-                                              onClick: () =>
-                                                void handleUpdateInterviewInitiativeStatus(
-                                                  initiative.id,
-                                                  'PENDING_REVIEW'
-                                                ),
-                                            },
-                                          ]
-                                        : []),
-                                      ...(status === 'PENDING_REVIEW'
-                                        ? [
-                                            ...(canReviewInsights
-                                              ? [
-                                                  {
-                                                    id: 'approve-to-initiatives',
-                                                    label: isPolish
-                                                      ? 'Zatwierdź i przekaż dalej'
-                                                      : 'Approve and move forward',
-                                                    icon: Rocket,
-                                                    onClick: () =>
-                                                      void handleUpdateInterviewInitiativeStatus(
-                                                        initiative.id,
-                                                        'REVIEW',
-                                                        { openInInitiatives: true }
-                                                      ),
-                                                  },
-                                                ]
-                                              : []),
-                                            {
-                                              id: 'back-to-draft',
-                                              label: isPolish ? 'Wróć do szkicu' : 'Back to draft',
-                                              icon: RotateCcw,
-                                              onClick: () =>
-                                                void handleUpdateInterviewInitiativeStatus(
-                                                  initiative.id,
-                                                  'DRAFT'
-                                                ),
-                                            },
-                                          ]
-                                        : []),
-                                    ],
-                                  },
-                                  // DÓŁ — stały (kanon §9): Open preview · Edit · [Open in module] · Archiwizuj
-                                  {
-                                    id: 'fixed',
-                                    kind: 'manage' as const,
-                                    actions: [
-                                      {
-                                        id: 'open-preview',
-                                        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                                        icon: ChevronRight,
-                                        onClick: () =>
-                                          setSelectedInterviewInitiativeId(initiative.id),
-                                      },
-                                      {
-                                        id: 'edit',
-                                        label: isPolish ? 'Edytuj' : 'Edit',
-                                        icon: Edit2,
-                                        disabled: true,
-                                        description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
-                                        onClick: () => {},
-                                      },
-                                      {
-                                        id: 'open-module',
-                                        label: isPolish
-                                          ? 'Otwórz w module Initiatives'
-                                          : 'Open in Initiatives',
-                                        icon: ExternalLink,
-                                        onClick: () =>
-                                          navigate(
-                                            `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                                          ),
-                                      },
-                                      {
-                                        id: 'archive',
-                                        label: isPolish ? 'Archiwizuj' : 'Archive',
-                                        icon: Archive,
-                                        description: isPolish
-                                          ? 'Wkrótce (backend)'
-                                          : 'Coming soon (backend)',
-                                        disabled: true,
-                                        onClick: () => {},
-                                      },
-                                    ],
-                                  },
-                                  // DANGER — stały (kanon §9): Usuń (disabled — brak endpointu, backlog B-1).
-                                  {
-                                    id: 'danger',
-                                    kind: 'danger' as const,
-                                    actions: [
-                                      {
-                                        id: 'delete',
-                                        label: isPolish ? 'Usuń' : 'Delete',
-                                        icon: Trash2,
-                                        variant: 'danger' as const,
-                                        description: isPolish
-                                          ? 'Wkrótce (backend)'
-                                          : 'Coming soon (backend)',
-                                        disabled: true,
-                                        onClick: () => {},
-                                      },
-                                    ],
-                                  },
-                                ]}
-                              />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {rows.length === 0 ? (
-                        <tr>
-                          <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
-                            <div className="mx-auto flex max-w-md flex-col items-center">
-                              <Rocket className="mb-3 h-10 w-10 text-slate-500" />
-                              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                {interviewInitiatives.length === 0
-                                  ? isPolish
-                                    ? 'Brak inicjatyw stworzonych z wywiadu'
-                                    : 'No initiatives created from interview yet'
-                                  : isPolish
-                                    ? 'Brak inicjatyw dla tego filtra'
-                                    : 'No initiatives here'}
-                              </p>
-                              {interviewInitiatives.length === 0 ? (
-                                <>
-                                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish
-                                      ? 'Brak inicjatyw — przekaż wnioski z zakładki Wnioski lub uruchom kreator inicjatyw.'
-                                      : 'No initiatives yet — promote insights from the Insights tab or run the initiative wizard.'}
-                                  </p>
-                                  <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row">
+                              {!hiddenSet.has('priority') ? (
+                                <td
+                                  className="px-3 py-3 text-left align-middle"
+                                  style={{ width: initiativesColumnWidths.priority }}
+                                >
+                                  {initiative.priority ? (
+                                    <PriorityChip
+                                      level={priorityLevel(initiative.priority)}
+                                      label={String(initiative.priority).toLowerCase()}
+                                    />
+                                  ) : (
+                                    <span className="text-[11px] text-slate-600">—</span>
+                                  )}
+                                </td>
+                              ) : null}
+                              {!hiddenSet.has('source') ? (
+                                <td
+                                  className="px-3 py-3 text-left align-middle"
+                                  style={{ width: initiativesColumnWidths.source }}
+                                >
+                                  {sourceInsight ? (
                                     <button
                                       type="button"
-                                      onClick={() => {
-                                        setActiveTab('insights');
-                                        setActiveDocumentId(null);
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleViewInsight(sourceInsight);
                                       }}
-                                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-crimson-600 px-3 text-[11px] font-semibold text-white transition hover:bg-crimson-700"
+                                      className={`inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-medium leading-none transition-colors ${sourceStyle.bg} ${sourceStyle.text}`}
                                     >
-                                      <Lightbulb size={14} />
-                                      {isPolish ? 'Przejdź do Wniosków' : 'Go to Insights'}
+                                      <Lightbulb size={12} />
+                                      {isPolish ? 'Insight' : 'Insight'}
                                     </button>
-                                    {canCreateInsights ? (
+                                  ) : (
+                                    <span className="text-[11px] text-slate-600">—</span>
+                                  )}
+                                </td>
+                              ) : null}
+                              {!hiddenSet.has('date') ? (
+                                <td
+                                  className="px-3 py-3 text-left align-middle text-[11px] font-medium text-slate-500 dark:text-slate-500"
+                                  style={{ width: initiativesColumnWidths.date }}
+                                >
+                                  {initiative.updatedAt || initiative.createdAt
+                                    ? new Date(
+                                        initiative.updatedAt || initiative.createdAt || ''
+                                      ).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')
+                                    : '—'}
+                                </td>
+                              ) : null}
+                              <td
+                                className="px-3 py-3 text-right align-middle"
+                                style={{ width: initiativesColumnWidths.actions }}
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <RowActionsMenu
+                                  iconVariant="vertical"
+                                  className="opacity-40 transition-opacity group-hover:opacity-100"
+                                  sections={[
+                                    // GÓRA — kontekstowe (przejścia statusu wg etapu)
+                                    {
+                                      id: 'context',
+                                      kind: 'context' as const,
+                                      actions: [
+                                        ...(status === 'DRAFT'
+                                          ? [
+                                              {
+                                                id: 'send-to-review',
+                                                label: isPolish
+                                                  ? 'Wyślij do przeglądu'
+                                                  : 'Send to review',
+                                                icon: ArrowRight,
+                                                onClick: () =>
+                                                  void handleUpdateInterviewInitiativeStatus(
+                                                    initiative.id,
+                                                    'PENDING_REVIEW'
+                                                  ),
+                                              },
+                                            ]
+                                          : []),
+                                        ...(status === 'PENDING_REVIEW'
+                                          ? [
+                                              ...(canReviewInsights
+                                                ? [
+                                                    {
+                                                      id: 'approve-to-initiatives',
+                                                      label: isPolish
+                                                        ? 'Zatwierdź i przekaż dalej'
+                                                        : 'Approve and move forward',
+                                                      icon: Rocket,
+                                                      onClick: () =>
+                                                        void handleUpdateInterviewInitiativeStatus(
+                                                          initiative.id,
+                                                          'REVIEW',
+                                                          { openInInitiatives: true }
+                                                        ),
+                                                    },
+                                                  ]
+                                                : []),
+                                              {
+                                                id: 'back-to-draft',
+                                                label: isPolish
+                                                  ? 'Wróć do szkicu'
+                                                  : 'Back to draft',
+                                                icon: RotateCcw,
+                                                onClick: () =>
+                                                  void handleUpdateInterviewInitiativeStatus(
+                                                    initiative.id,
+                                                    'DRAFT'
+                                                  ),
+                                              },
+                                            ]
+                                          : []),
+                                      ],
+                                    },
+                                    // DÓŁ — stały (kanon §9): Open preview · Edit · [Open in module] · Archiwizuj
+                                    {
+                                      id: 'fixed',
+                                      kind: 'manage' as const,
+                                      actions: [
+                                        {
+                                          id: 'open-preview',
+                                          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                                          icon: ChevronRight,
+                                          onClick: () =>
+                                            setSelectedInterviewInitiativeId(initiative.id),
+                                        },
+                                        {
+                                          id: 'edit',
+                                          label: isPolish ? 'Edytuj' : 'Edit',
+                                          icon: Edit2,
+                                          disabled: true,
+                                          description: isPolish
+                                            ? 'Wkrótce (backend)'
+                                            : 'Coming soon (backend)',
+                                          onClick: () => {},
+                                        },
+                                        {
+                                          id: 'open-module',
+                                          label: isPolish
+                                            ? 'Otwórz w module Initiatives'
+                                            : 'Open in Initiatives',
+                                          icon: ExternalLink,
+                                          onClick: () =>
+                                            navigate(
+                                              `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                            ),
+                                        },
+                                        {
+                                          id: 'archive',
+                                          label: isPolish ? 'Archiwizuj' : 'Archive',
+                                          icon: Archive,
+                                          description: isPolish
+                                            ? 'Wkrótce (backend)'
+                                            : 'Coming soon (backend)',
+                                          disabled: true,
+                                          onClick: () => {},
+                                        },
+                                      ],
+                                    },
+                                    // DANGER — stały (kanon §9): Usuń (disabled — brak endpointu, backlog B-1).
+                                    {
+                                      id: 'danger',
+                                      kind: 'danger' as const,
+                                      actions: [
+                                        {
+                                          id: 'delete',
+                                          label: isPolish ? 'Usuń' : 'Delete',
+                                          icon: Trash2,
+                                          variant: 'danger' as const,
+                                          description: isPolish
+                                            ? 'Wkrótce (backend)'
+                                            : 'Coming soon (backend)',
+                                          disabled: true,
+                                          onClick: () => {},
+                                        },
+                                      ],
+                                    },
+                                  ]}
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {rows.length === 0 ? (
+                          <tr>
+                            <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
+                              <div className="mx-auto flex max-w-md flex-col items-center">
+                                <Rocket className="mb-3 h-10 w-10 text-slate-500" />
+                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                  {interviewInitiatives.length === 0
+                                    ? isPolish
+                                      ? 'Brak inicjatyw stworzonych z wywiadu'
+                                      : 'No initiatives created from interview yet'
+                                    : isPolish
+                                      ? 'Brak inicjatyw dla tego filtra'
+                                      : 'No initiatives here'}
+                                </p>
+                                {interviewInitiatives.length === 0 ? (
+                                  <>
+                                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                      {isPolish
+                                        ? 'Brak inicjatyw — przekaż wnioski z zakładki Wnioski lub uruchom kreator inicjatyw.'
+                                        : 'No initiatives yet — promote insights from the Insights tab or run the initiative wizard.'}
+                                    </p>
+                                    <div className="mt-4 flex flex-col items-center gap-2 sm:flex-row">
                                       <button
                                         type="button"
-                                        onClick={() => setShowInitiativeWizard(true)}
-                                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                                        onClick={() => {
+                                          setActiveTab('insights');
+                                          setActiveDocumentId(null);
+                                        }}
+                                        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-crimson-600 px-3 text-[11px] font-semibold text-white transition hover:bg-crimson-700"
                                       >
-                                        <Sparkles size={14} />
-                                        {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                                        <Lightbulb size={14} />
+                                        {isPolish ? 'Przejdź do Wniosków' : 'Go to Insights'}
                                       </button>
-                                    ) : null}
-                                  </div>
-                                </>
-                              ) : null}
-                            </div>
-                          </td>
-                        </tr>
-                      ) : null}
-                    </tbody>
-                  </table>
-                </div>
-                )} {/* end initiativesViewMode === 'table' */}
+                                      {canCreateInsights ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => setShowInitiativeWizard(true)}
+                                          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-300/70 bg-white/70 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                                        >
+                                          <Sparkles size={14} />
+                                          {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                                        </button>
+                                      ) : null}
+                                    </div>
+                                  </>
+                                ) : null}
+                              </div>
+                            </td>
+                          </tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                )}{' '}
+                {/* end initiativesViewMode === 'table' */}
               </div>
             </TableWithPreviewLayout>
           </div>

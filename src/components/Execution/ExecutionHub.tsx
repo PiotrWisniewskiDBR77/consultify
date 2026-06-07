@@ -43,6 +43,7 @@ import {
   Shield,
   Sparkles,
   Target,
+  Trash2,
   TrendingUp,
   Users,
 } from 'lucide-react';
@@ -54,7 +55,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { LoadingState } from '@/components/ui/primitives';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { DueChip, EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -1753,7 +1754,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.table.name'),
         render: (row) => (
           <span
-            className="text-sm text-slate-900 dark:text-white font-medium truncate block max-w-[420px]"
+            className="text-sm text-slate-900 dark:text-white font-medium truncate block"
             title={String(row.name || '')}
           >
             {row.name}
@@ -1837,18 +1838,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         width: '140px',
         render: (row) => {
           const progress = row.progress || 0;
-          const isBlocked = row.status === InitiativeStatus.BLOCKED;
+          // §4.3/§4.0: progress fill is NEVER danger/crimson. info (in-progress)
+          // → success @100%; amber only for the explicit "at-risk" (overdue) signal.
           const isOverdue =
             row.plannedEndDate &&
             new Date(row.plannedEndDate) < new Date() &&
             row.status !== InitiativeStatus.DONE;
-          const color = isBlocked
-            ? 'bg-rose-500'
-            : isOverdue
-              ? 'bg-amber-500'
-              : progress >= 100
-                ? 'bg-emerald-500'
-                : 'bg-blue-500';
+          const color = isOverdue
+            ? 'bg-amber-500'
+            : progress >= 100
+              ? 'bg-emerald-500'
+              : 'bg-blue-500';
           return (
             <div className="flex items-center gap-2">
               <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
@@ -1865,64 +1865,26 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
       {
-        id: 'timeRemaining',
-        label: t('execution.table.timeLeft'),
-        width: '120px',
+        // Canon §4.4 — ONE DueChip column (was split across timeRemaining +
+        // alerts overdue badge + deadline). DueChip renders relative time +
+        // overdue/soon state itself; falls back to SLA deadline.
+        id: 'due',
+        label: t('execution.table.deadline'),
+        width: '130px',
         render: (row) => {
-          if (!row.plannedEndDate) {
+          const deadline = row.plannedEndDate || row.slaDeadline;
+          if (!deadline) {
             return (
-              <span className="text-xs text-slate-500">{t('execution.table.noDeadline')}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
             );
           }
-          const now = new Date();
-          const end = new Date(row.plannedEndDate);
-          const diffMs = end.getTime() - now.getTime();
-          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-          if (row.status === InitiativeStatus.DONE) {
-            return (
-              <span className="text-xs text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 size={12} />
-                {t('execution.badges.done')}
-              </span>
-            );
-          }
-
-          if (diffDays < 0) {
-            return (
-              <span className="text-xs text-rose-400 font-medium flex items-center gap-1">
-                <AlertTriangle size={12} />
-                {Math.abs(diffDays)}
-                {t('execution.time.daysOverdue')}
-              </span>
-            );
-          }
-
-          if (diffDays <= 7) {
-            return (
-              <span className="text-xs text-amber-400 flex items-center gap-1">
-                <Clock size={12} />
-                {diffDays}
-                {t('execution.time.daysLeft')}
-              </span>
-            );
-          }
-
-          if (diffDays <= 30) {
-            return (
-              <span className="text-xs text-slate-700 dark:text-slate-300">
-                {diffDays}
-                {t('execution.time.daysLeft')}
-              </span>
-            );
-          }
-
-          const weeks = Math.ceil(diffDays / 7);
+          const terminal = row.status === InitiativeStatus.DONE;
           return (
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {weeks}
-              {t('execution.time.weeksLeft')}
-            </span>
+            <DueChip
+              label={new Date(deadline).toLocaleDateString()}
+              due={terminal ? null : deadline}
+              showIcon
+            />
           );
         },
       },
@@ -1953,21 +1915,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             );
           }
 
-          if (
-            row.plannedEndDate &&
-            new Date(row.plannedEndDate) < new Date() &&
-            row.status !== InitiativeStatus.DONE
-          ) {
-            badges.push(
-              <span
-                key="overdue"
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-400"
-              >
-                <Clock size={10} />
-                {t('execution.badges.overdue')}
-              </span>
-            );
-          }
+          // Overdue signal lives in the single DueChip column (canon §4.4) —
+          // not duplicated here.
 
           if (blockedTasks > 0) {
             badges.push(
@@ -2018,25 +1967,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           return (
             <span className="text-xs text-slate-700 dark:text-slate-300">
               {doneCount}/{initiativeTasks.length}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'deadline',
-        label: t('execution.table.deadline'),
-        width: '100px',
-        render: (row) => {
-          if (!row.plannedEndDate && !row.slaDeadline) {
-            return <span className="text-slate-500 text-sm">-</span>;
-          }
-          const deadline = row.slaDeadline || row.plannedEndDate;
-          const isOverdue = new Date(deadline) < new Date() && row.status !== InitiativeStatus.DONE;
-          return (
-            <span
-              className={`text-sm ${isOverdue ? 'text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}
-            >
-              {new Date(deadline).toLocaleDateString()}
             </span>
           );
         },
@@ -2383,6 +2313,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           onClick: () => undefined,
         });
       }
+      // Canon §9.1/§9.2 — danger Usuń always present (last), never silently
+      // omitted. No delete endpoint exists → disabled "Wkrótce (backend)".
+      actions.push({
+        id: 'delete',
+        label: t('common.delete', 'Usuń'),
+        icon: Trash2,
+        variant: 'danger',
+        disabled: true,
+        description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+        onClick: () => undefined,
+      });
       return actions;
     },
     [handleOpenDocument, isPilotParticipant, t]
@@ -4402,6 +4343,25 @@ Please return:
                     label: t('common.openFull', 'Otwórz pełny widok'),
                     icon: FileText,
                     onClick: () => handleOpenReport(r),
+                  },
+                  // §9.2 Fixed Bottom Manifest — report catalog rows are generated
+                  // definitions (no per-row edit/archive backend); slots stay visible
+                  // and disabled rather than silently omitted.
+                  {
+                    id: 'edit',
+                    label: t('common.edit', 'Edytuj'),
+                    icon: Pencil,
+                    disabled: true,
+                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+                    onClick: () => undefined,
+                  },
+                  {
+                    id: 'archive',
+                    label: t('common.archive', 'Archiwizuj'),
+                    icon: Archive,
+                    disabled: true,
+                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+                    onClick: () => undefined,
                   },
                 ];
               }}

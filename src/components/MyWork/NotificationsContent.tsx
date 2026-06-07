@@ -362,20 +362,19 @@ const NotificationTableRow: React.FC<{
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -10 }}
-      whileHover={{
-        y: -2,
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        transition: { duration: 0.2 },
-      }}
       onClick={() => {
         if (!isRead) onMarkRead(notification.id);
         onClick(notification);
       }}
       className={`
-        group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
+        group relative cursor-pointer border-b border-slate-200 dark:border-navy-700/50
         transition-colors duration-150
-        ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : isRead ? 'bg-slate-50/50 dark:bg-navy-900/30' : 'bg-white dark:bg-navy-900'}
-        hover:bg-slate-50 dark:hover:bg-navy-800/50
+        ${
+          isSelected
+            ? 'bg-primary-500/8 dark:bg-primary-500/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary-500'
+            : ''
+        }
+        hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
     >
       {/* Select Checkbox */}
@@ -386,11 +385,11 @@ const NotificationTableRow: React.FC<{
             onSelect(notification.id);
           }}
           className={`
-            w-5 h-5 rounded border flex items-center justify-center transition-all
+            h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-primary-500 border-primary-500 text-white'
-                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+                ? 'bg-primary-500 border-primary-500 text-white opacity-100'
+                : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035]'
             }
           `}
         >
@@ -1139,7 +1138,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   <button
                     onClick={() => handleSelectAll(!allSelected)}
                     className={`
-                      w-5 h-5 rounded border flex items-center justify-center transition-colors
+                      h-4 w-4 rounded-[4px] border flex items-center justify-center transition-colors
                       ${
                         allSelected
                           ? 'bg-primary-500 border-primary-500 text-white'
@@ -1161,7 +1160,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
 
                 {/* Severity with Filter */}
                 <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.severity }}
                 >
                   <div className="flex items-center gap-1">
@@ -1194,7 +1193,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
 
                 {/* Type with Filter */}
                 <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.type }}
                 >
                   <div className="flex items-center gap-1">
@@ -1221,11 +1220,11 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   />
                 </th>
 
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-full">
+                <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-full">
                   Notification
                 </th>
                 <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.source }}
                 >
                   <span>Source</span>
@@ -1238,7 +1237,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   />
                 </th>
                 <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: columnWidths.time }}
                 >
                   <span>Time</span>
@@ -1251,7 +1250,7 @@ export const NotificationsContent: React.FC<NotificationsContentProps> = ({
                   />
                 </th>
                 <th
-                  className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.actions }}
                 >
                   Actions

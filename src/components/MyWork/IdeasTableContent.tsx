@@ -26,6 +26,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 
 import {
   type ActionRow,
@@ -40,6 +41,7 @@ import {
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
+import { ChipBase, ChipDot, CHIP_TONE_VAR } from '@/components/ui/primitives/chips/chipBase';
 import type {
   ColumnDef,
   ColumnWidths,
@@ -258,6 +260,15 @@ function getStageMeta(stage?: IdeaStage) {
   return STAGE_META[(stage || 'spark') as IdeaStage] || STAGE_META.spark;
 }
 
+/** Stage → signal-tone dot color (canon §4.0a: neutral chip shell, color only in dot). */
+const STAGE_DOT_VAR: Record<IdeaStage, string | undefined> = {
+  spark: CHIP_TONE_VAR.warning,
+  incubating: CHIP_TONE_VAR.success,
+  shaping: CHIP_TONE_VAR.info,
+  ready: CHIP_TONE_VAR.info,
+  promoted: CHIP_TONE_VAR.accent,
+};
+
 function getToolMeta(tool?: string | null) {
   const key = String(tool || 'mindmap').toLowerCase();
   return TOOL_META[key] || TOOL_META.mindmap;
@@ -316,6 +327,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const viewSettingsRef = useRef<HTMLDivElement | null>(null);
+  // Portal popover (canon §16): trigger button anchor + panel ref + fixed position.
+  const viewSettingsTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const viewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
+  const [viewSettingsRect, setViewSettingsRect] = useState<{ top: number; right: number } | null>(
+    null
+  );
   const [hiddenColumns, setHiddenColumns] =
     useState<IdeasTableOptionalColumn[]>(loadHiddenIdeaColumns);
   const [showRowDescription, setShowRowDescription] = useState(loadIdeaRowDescriptionSetting);
@@ -388,10 +405,23 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   );
 
   useEffect(() => {
-    if (!viewSettingsOpen) return;
+    if (!viewSettingsOpen) {
+      setViewSettingsRect(null);
+      return;
+    }
+
+    const computeRect = () => {
+      const trigger = viewSettingsTriggerRef.current;
+      if (!trigger) return;
+      const r = trigger.getBoundingClientRect();
+      // Anchor panel under the trigger, right-aligned to the trigger's right edge.
+      setViewSettingsRect({ top: r.bottom + 8, right: window.innerWidth - r.right });
+    };
+    computeRect();
 
     const handlePointerDown = (event: PointerEvent) => {
       if (viewSettingsRef.current?.contains(event.target as Node)) return;
+      if (viewSettingsPanelRef.current?.contains(event.target as Node)) return;
       setViewSettingsOpen(false);
     };
 
@@ -403,9 +433,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
     window.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', computeRect);
+    window.addEventListener('scroll', computeRect, true);
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', computeRect);
+      window.removeEventListener('scroll', computeRect, true);
     };
   }, [viewSettingsOpen]);
 
@@ -497,14 +531,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
   const renderStageBadge = (stage?: IdeaStage) => {
     const meta = getStageMeta(stage);
-    const Icon = meta.icon;
+    const dotVar = STAGE_DOT_VAR[(stage || 'spark') as IdeaStage];
+    // Canon §4.0a: neutral chip shell, color only in the leading signal dot.
     return (
-      <span
-        className={`inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-[10px] font-semibold leading-none ${meta.badge}`}
-      >
-        <Icon size={11} className={meta.iconClass} />
+      <ChipBase size="sm" leading={<ChipDot colorVar={dotVar} size="sm" />}>
         {isPolish ? meta.labelPl : meta.label}
-      </span>
+      </ChipBase>
     );
   };
 
@@ -527,7 +559,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 
     // Canonical neutral metadata chips (MetaChip) — tags are never colored (§N).
     return (
-      <div className="flex min-w-0 flex-nowrap items-center justify-center gap-1 overflow-hidden">
+      <div className="flex min-w-0 flex-nowrap items-center justify-start gap-1 overflow-hidden">
         {tags.slice(0, max).map((tag) => (
           <MetaChip key={tag} label={tag} />
         ))}
@@ -742,13 +774,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               </th>
               {isColumnVisible('stage') ? (
                 <th
-                  className="relative px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.stage }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <button
                       onClick={() => onSort('stage')}
-                      className="inline-flex items-center justify-center text-center transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                     >
                       <span
                         className={
@@ -781,13 +813,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('tags') ? (
                 <th
-                  className="relative px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.tags }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <button
                       onClick={() => onSort('tags')}
-                      className="inline-flex items-center justify-center text-center transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                     >
                       <span
                         className={
@@ -820,13 +852,13 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('tool') ? (
                 <th
-                  className="relative px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.tool }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <button
                       onClick={() => onSort('tool')}
-                      className="inline-flex items-center justify-center text-center transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                      className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                     >
                       <span
                         className={
@@ -859,12 +891,12 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               ) : null}
               {isColumnVisible('date') ? (
                 <th
-                  className="relative px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.date }}
                 >
                   <button
                     onClick={() => onSort('date')}
-                    className="inline-flex items-center justify-center text-center transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                    className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                   >
                     {isPolish ? 'Data' : 'Updated'}
                     <SortIndicator active={sortField === 'date'} direction={sortDir} />
@@ -884,6 +916,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
               >
                 <div ref={viewSettingsRef} className="flex items-center justify-end">
                   <button
+                    ref={viewSettingsTriggerRef}
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -896,11 +929,14 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   >
                     <Settings2 size={14} />
                   </button>
-                  {viewSettingsOpen ? (
-                    <div
-                      className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                      onClick={(event) => event.stopPropagation()}
-                    >
+                  {viewSettingsOpen && viewSettingsRect
+                    ? ReactDOM.createPortal(
+                        <div
+                          ref={viewSettingsPanelRef}
+                          className="fixed z-[100] w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                          style={{ top: viewSettingsRect.top, right: viewSettingsRect.right }}
+                          onClick={(event) => event.stopPropagation()}
+                        >
                       <div className="px-2 pb-2 pt-1">
                         <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
                           {isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -971,8 +1007,10 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           </span>
                         </label>
                       </div>
-                    </div>
-                  ) : null}
+                        </div>,
+                        document.body
+                      )
+                    : null}
                 </div>
               </th>
             </tr>
@@ -1260,7 +1298,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   </td>
                   {isColumnVisible('stage') ? (
                     <td
-                      className="px-3 py-3 text-center align-middle"
+                      className="px-3 py-3 text-left align-middle"
                       style={{ width: columnWidths.stage }}
                     >
                       {renderStageBadge(idea.stage)}
@@ -1268,7 +1306,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('tags') ? (
                     <td
-                      className="px-3 py-3 text-center align-middle"
+                      className="px-3 py-3 text-left align-middle"
                       style={{ width: columnWidths.tags }}
                     >
                       {renderTagBadges(idea.tags)}
@@ -1276,7 +1314,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('tool') ? (
                     <td
-                      className="px-3 py-3 text-center align-middle"
+                      className="px-3 py-3 text-left align-middle"
                       style={{ width: columnWidths.tool }}
                     >
                       {renderToolBadge(idea.preferredTool)}
@@ -1284,7 +1322,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   ) : null}
                   {isColumnVisible('date') ? (
                     <td
-                      className="px-3 py-3 text-center align-middle text-[11px] font-medium leading-5 text-slate-500 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400"
+                      className="px-3 py-3 text-left align-middle text-[11px] font-medium leading-5 text-slate-500 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400"
                       style={{ width: columnWidths.date }}
                     >
                       {formatIdeaDate(idea)}

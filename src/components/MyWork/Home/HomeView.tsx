@@ -547,7 +547,7 @@ function RadarCanvas({
   const layout = useMemo(() => computeSignalLayout(signals), [signals]);
   const selectedSignal =
     signals.find((signal) => signal.id === selectedSignalId) ?? signals[0] ?? null;
-  const selectedPosition = selectedSignal ? layout.get(selectedSignal.id) ?? null : null;
+  const selectedPosition = selectedSignal ? (layout.get(selectedSignal.id) ?? null) : null;
   const sectors = useMemo(
     () =>
       QUADRANTS.map((q) => {
@@ -618,10 +618,40 @@ function RadarCanvas({
           ))}
 
           {/* Concentric horizon rings */}
-          <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(148,163,184,0.30)" strokeWidth="0.4" />
-          <circle cx="50" cy="50" r="34.5" fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth="0.3" strokeDasharray="0.6 0.9" />
-          <circle cx="50" cy="50" r="23" fill="none" stroke="rgba(148,163,184,0.16)" strokeWidth="0.3" strokeDasharray="0.6 0.9" />
-          <circle cx="50" cy="50" r="11.5" fill="none" stroke="rgba(125,211,252,0.28)" strokeWidth="0.35" />
+          <circle
+            cx="50"
+            cy="50"
+            r="46"
+            fill="none"
+            stroke="rgba(148,163,184,0.30)"
+            strokeWidth="0.4"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="34.5"
+            fill="none"
+            stroke="rgba(148,163,184,0.18)"
+            strokeWidth="0.3"
+            strokeDasharray="0.6 0.9"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="23"
+            fill="none"
+            stroke="rgba(148,163,184,0.16)"
+            strokeWidth="0.3"
+            strokeDasharray="0.6 0.9"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="11.5"
+            fill="none"
+            stroke="rgba(125,211,252,0.28)"
+            strokeWidth="0.35"
+          />
 
           {/* Axis cross */}
           <line x1="50" y1="4" x2="50" y2="96" stroke="rgba(148,163,184,0.16)" strokeWidth="0.28" />
@@ -629,10 +659,36 @@ function RadarCanvas({
 
           {/* Sonar pulses from the core */}
           {[0, 2, 4].map((delay) => (
-            <circle key={delay} cx="50" cy="50" r="11.5" fill="none" stroke="rgba(125,211,252,0.5)" strokeWidth="0.4">
-              <animate attributeName="r" values="6;46" dur="6s" begin={`${delay}s`} repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.5;0" dur="6s" begin={`${delay}s`} repeatCount="indefinite" />
-              <animate attributeName="stroke-width" values="0.5;0.1" dur="6s" begin={`${delay}s`} repeatCount="indefinite" />
+            <circle
+              key={delay}
+              cx="50"
+              cy="50"
+              r="11.5"
+              fill="none"
+              stroke="rgba(125,211,252,0.5)"
+              strokeWidth="0.4"
+            >
+              <animate
+                attributeName="r"
+                values="6;46"
+                dur="6s"
+                begin={`${delay}s`}
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="opacity"
+                values="0.5;0"
+                dur="6s"
+                begin={`${delay}s`}
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="stroke-width"
+                values="0.5;0.1"
+                dur="6s"
+                begin={`${delay}s`}
+                repeatCount="indefinite"
+              />
             </circle>
           ))}
 
@@ -646,8 +702,19 @@ function RadarCanvas({
               dur={`${ambientMotion === 'soft' ? 22 : 15}s`}
               repeatCount="indefinite"
             />
-            <path d="M50,50 L96,50 A46,46 0 0,0 76.5,11.4 Z" fill="url(#radarSweep)" opacity="0.7" />
-            <line x1="50" y1="50" x2="96" y2="50" stroke="rgba(125,211,252,0.55)" strokeWidth="0.3" />
+            <path
+              d="M50,50 L96,50 A46,46 0 0,0 76.5,11.4 Z"
+              fill="url(#radarSweep)"
+              opacity="0.7"
+            />
+            <line
+              x1="50"
+              y1="50"
+              x2="96"
+              y2="50"
+              stroke="rgba(125,211,252,0.55)"
+              strokeWidth="0.3"
+            />
           </g>
 
           {/* Glowing core */}
@@ -666,7 +733,12 @@ function RadarCanvas({
                 strokeWidth="0.45"
                 strokeDasharray="1.4 1"
               >
-                <animate attributeName="stroke-dashoffset" values="0;-4.8" dur="0.9s" repeatCount="indefinite" />
+                <animate
+                  attributeName="stroke-dashoffset"
+                  values="0;-4.8"
+                  dur="0.9s"
+                  repeatCount="indefinite"
+                />
               </line>
             </g>
           )}
@@ -718,7 +790,8 @@ function RadarCanvas({
           const typeMeta = TYPE_META[signal.signalType] ?? TYPE_META.TREND;
           const accent = TYPE_ACCENT[signal.signalType] ?? '#A78BFA';
           const Icon = typeMeta.Icon;
-          const base = signal.importanceLevel === 'large' ? 34 : signal.importanceLevel === 'small' ? 26 : 30;
+          const base =
+            signal.importanceLevel === 'large' ? 34 : signal.importanceLevel === 'small' ? 26 : 30;
           const size = selected ? base + 8 : base;
 
           return (
@@ -753,7 +826,10 @@ function RadarCanvas({
                   <motion.span
                     className="absolute inset-0 rounded-full"
                     animate={{
-                      boxShadow: ['0 0 0 0 rgba(186,230,253,0.5)', '0 0 0 12px rgba(186,230,253,0)'],
+                      boxShadow: [
+                        '0 0 0 0 rgba(186,230,253,0.5)',
+                        '0 0 0 12px rgba(186,230,253,0)',
+                      ],
                     }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }}
                   />
@@ -791,8 +867,8 @@ function RadarCanvas({
 
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-2.5 py-2 text-[10px] text-slate-400">
         <div className="truncate">
-          <span className="text-slate-500">Areas:</span> My Development · My Projects · My Industry ·
-          My Role
+          <span className="text-slate-500">Areas:</span> My Development · My Projects · My Industry
+          · My Role
         </div>
         <div className="truncate">
           <span className="text-slate-500">Horizon:</span> Now · Prepare · Learn · Observe

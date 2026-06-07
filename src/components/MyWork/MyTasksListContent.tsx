@@ -48,6 +48,7 @@ import {
 } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { ErrorState } from '@/components/ui/primitives';
+import { deriveDueRisk, DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   type ColumnDef,
@@ -602,7 +603,7 @@ const TaskTableRow: React.FC<{
       {/* Status — inline editable */}
       {!hiddenCols?.has('status') && (
         <td
-          className="px-3 py-2.5 text-center relative"
+          className="px-3 py-2.5 text-left relative"
           style={{ width: columnWidths.status }}
           onClick={(e) => {
             e.stopPropagation();
@@ -647,7 +648,7 @@ const TaskTableRow: React.FC<{
       {/* Priority — inline editable */}
       {!hiddenCols?.has('priority') && (
         <td
-          className="px-3 py-2.5 text-center relative"
+          className="px-3 py-2.5 text-left relative"
           style={{ width: columnWidths.priority }}
           onClick={(e) => {
             e.stopPropagation();
@@ -676,25 +677,25 @@ const TaskTableRow: React.FC<{
       {/* Due Date — inline editable */}
       {!hiddenCols?.has('date') && (
         <td
-          className="px-3 py-2.5 text-center relative"
+          className="px-3 py-2.5 text-left relative"
           style={{ width: columnWidths.date }}
           onClick={(e) => {
             e.stopPropagation();
             setInlineDropdown(inlineDropdown === 'date' ? null : 'date');
           }}
         >
-          <div
-            className={`flex items-center gap-1.5 text-xs cursor-pointer hover:underline decoration-dotted ${
-              !task.dueDate
-                ? 'text-slate-700 dark:text-slate-300 dark:text-slate-400 italic'
-                : overdue
-                  ? 'text-rose-700 dark:text-rose-300 font-medium'
-                  : 'text-slate-600 dark:text-slate-400'
-            }`}
-          >
-            <Calendar size={12} />
-            <span>{formatDueDate(task.dueDate)}</span>
-          </div>
+          {!task.dueDate ? (
+            <span className="text-xs italic text-slate-400 dark:text-slate-500 cursor-pointer hover:underline decoration-dotted">
+              {formatDueDate(task.dueDate)}
+            </span>
+          ) : (
+            <DueChip
+              label={formatDueDate(task.dueDate)}
+              risk={overdue ? 'overdue' : deriveDueRisk(task.dueDate)}
+              showIcon
+              className="cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
+            />
+          )}
           <AnimatePresence>
             {inlineDropdown === 'date' && (
               <motion.div
@@ -729,8 +730,8 @@ const TaskTableRow: React.FC<{
 
       {/* Assignee */}
       {!hiddenCols?.has('assignee') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.assignee }}>
-          <div className="flex items-center justify-center gap-2">
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.assignee }}>
+          <div className="flex items-center gap-2">
             {assigneeInitial ? (
               <div className="w-6 h-6 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] flex items-center justify-center text-[10px] font-semibold text-slate-600 dark:text-slate-200">
                 {assigneeInitial}
@@ -2177,10 +2178,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('status') && (
                         <th
-                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.status }}
                         >
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-start gap-1">
                             <span
                               className={
                                 (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
@@ -2211,10 +2212,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('priority') && (
                         <th
-                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.priority }}
                         >
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-start gap-1">
                             <span
                               className={
                                 (tableFilters.priority as string[])?.length
@@ -2247,7 +2248,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('date') && (
                         <th
-                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.date }}
                         >
                           <span>{isPolish ? 'Termin' : 'Due Date'}</span>
@@ -2262,7 +2263,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       )}
                       {!hiddenSet.has('assignee') && (
                         <th
-                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.assignee }}
                         >
                           <span>{isPolish ? 'Właściciel' : 'Assignee'}</span>

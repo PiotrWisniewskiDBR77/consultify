@@ -1394,9 +1394,8 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
 
                     {/* Status */}
                     <td className="py-2.5 pr-2">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs ${statusConfig.bgColor} ${statusConfig.textColor}`}
-                      >
+                      {/* canon §4.2 — neutral shell; colour carried by the signal dot only */}
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border border-slate-200/70 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300">
                         <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor}`} />
                         {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                       </span>

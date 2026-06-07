@@ -79,6 +79,7 @@ import {
   RowActionsMenu,
 } from '@/components/shared/RowActionsMenu';
 import { ErrorState } from '@/components/ui/primitives';
+import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   type ColumnDef,
@@ -2359,7 +2360,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         data-index={index}
         className={`
           group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
-          border-l-[4px] ${u.heatColor}
           ${
             isSelected
               ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
@@ -2367,7 +2367,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           }
           ${
             isPreviewed
-              ? 'bg-primary-50/70 dark:bg-primary-500/[0.10] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/20 ring-inset border-l-primary-500!'
+              ? 'bg-primary-50/70 dark:bg-primary-500/[0.10] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/20 ring-inset'
               : ''
           }
           ${isFocused && !isPreviewed ? 'ring-2 ring-inset ring-primary-500/35 bg-primary-50/30 dark:bg-primary-500/[0.08]' : ''}
@@ -2447,7 +2447,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Status */}
         {!hiddenSet.has('status') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.status }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.status }}>
             {(() => {
               const st = item.itemStatus || (item.triaged ? 'done' : 'open');
               const cfg: Record<string, { color: string; dot: string; label: string }> = {
@@ -2494,7 +2494,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Urgency */}
         {!hiddenSet.has('urgency') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.urgency }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.urgency }}>
             <span
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
             >
@@ -2506,7 +2506,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Type */}
         {!hiddenSet.has('type') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.type }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.type }}>
             <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <span className="truncate">
                 {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
@@ -2517,7 +2517,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Section */}
         {!hiddenSet.has('section') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.section }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.section }}>
             <span className="text-xs text-slate-600 dark:text-slate-400">
               {SMART_SECTIONS.find((s) => s.id === item.section)?.[
                 isPolish ? 'labelPl' : 'labelEn'
@@ -2528,7 +2528,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Source */}
         {!hiddenSet.has('source') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.source }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.source }}>
             {(() => {
               const src = item.source?.type || 'system';
               const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
@@ -2565,18 +2565,23 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           </td>
         )}
 
-        {/* SLA */}
+        {/* SLA / due — single DueChip (canon §4.4) */}
         {!hiddenSet.has('sla') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.sla }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.sla }}>
             {sla.label === '-' ? (
-              <span className={sla.className}>{sla.label}</span>
+              <span className="text-slate-400 dark:text-slate-500">—</span>
             ) : (
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${sla.className}`}
+              <DueChip
+                label={sla.label}
+                risk={
+                  item.sla?.isBreached
+                    ? 'overdue'
+                    : item.sla && item.sla.level !== 'none' && item.sla.level !== 'L1'
+                      ? 'soon'
+                      : 'none'
+                }
                 title={sla.title}
-              >
-                {sla.label}
-              </span>
+              />
             )}
           </td>
         )}
@@ -2692,7 +2697,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     <thead>
       <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
         {/* Select All */}
-        <th className="w-10 px-2 py-2 border-l-[3px] border-l-transparent">
+        <th className="w-10 px-2 py-2">
           <button
             onClick={() => handleSelectAll(!allSelected)}
             className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors ${
@@ -2734,13 +2739,15 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const isFilterable = Boolean(col.filterable);
           const hasFilter = isFilterable && col.filterOptions?.length;
           const isResizable = Boolean(col.resizable);
+          // Canon §3.3: chip/text columns left-aligned (status/urgency/type/section/source).
+          const leftAligned = ['status', 'urgency', 'type', 'section', 'source'].includes(colId);
           return (
             <th
               key={colId}
-              className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+              className={`px-3 py-2 ${leftAligned ? 'text-left' : 'text-center'} text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header`}
               style={{ width: columnWidths[colId] }}
             >
-              <div className="flex items-center justify-center gap-1">
+              <div className={`flex items-center gap-1 ${leftAligned ? 'justify-start' : 'justify-center'}`}>
                 <span
                   className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
                 >
@@ -2906,10 +2913,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         <div
           key={item.id}
           className={[
-            'group relative rounded-xl border-l-[4px] border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
-            kindCfg.borderLeft,
-            'bg-slate-50/80 dark:bg-navy-800/60',
-            'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-sm',
+            'group relative rounded-xl border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
+            'bg-white dark:bg-navy-900',
+            'hover:shadow-md',
             isSelected ? 'ring-2 ring-primary-400/50' : '',
             isPreviewed ? 'ring-2 ring-primary-400/40' : '',
           ].join(' ')}

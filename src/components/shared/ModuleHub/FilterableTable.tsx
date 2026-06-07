@@ -22,8 +22,18 @@ export interface TableColumn {
   filterable?: boolean;
   filterOptions?: { value: string; label: string; color?: string }[];
   sortable?: boolean;
+  /**
+   * Canon §3.3 cell alignment by role: title/text = left (default),
+   * counts/metrics = right, rare centered badges = center. Applied to both
+   * the header cell and body cells so header and data never desync.
+   */
+  align?: 'left' | 'center' | 'right';
   render?: (row: any) => React.ReactNode;
 }
+
+// Canon §3.3 — map column.align to a Tailwind text-align utility (left = default).
+const alignToClass = (align?: TableColumn['align']): string =>
+  align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
 
 // Row data
 export interface TableRow {
@@ -393,14 +403,22 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   return (
                     <th
                       key={column.id}
-                      className={`${cellPadding} relative text-left text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
+                      className={`${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
                       style={{
                         width: `${width}px`,
                         minWidth: `${minWidth}px`,
                         maxWidth: `${maxWidth}px`,
                       }}
                     >
-                      <div className="flex items-center gap-1">
+                      <div
+                        className={`flex items-center gap-1 ${
+                          column.align === 'right'
+                            ? 'justify-end'
+                            : column.align === 'center'
+                              ? 'justify-center'
+                              : ''
+                        }`}
+                      >
                         <span>{column.label}</span>
                         {column.filterable && (
                           <FilterDropdown
@@ -424,7 +442,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 })}
                 {!hideRowActions ? (
                   <th
-                    className={`${cellPadding} text-right text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
+                    className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
                   >
                     {enableColumnSettings ? (
                       <div className="flex justify-end">
@@ -475,7 +493,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     ].join(' ')}
                   >
                     {visibleColumns.map((column) => (
-                      <td key={column.id} className={cellPadding}>
+                      <td
+                        key={column.id}
+                        className={`${cellPadding} ${column.align ? alignToClass(column.align) : ''}`}
+                      >
                         {column.render ? (
                           column.render(row)
                         ) : column.id === 'status' ? (

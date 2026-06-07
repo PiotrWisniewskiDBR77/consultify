@@ -109,7 +109,8 @@ const buildColumns = (pl: boolean): ColumnDef[] => [
     maxWidth: 150,
     resizable: true,
     filterable: false,
-    align: 'center',
+    // canon §3.3 — numeric counts align right.
+    align: 'right',
   },
   {
     id: 'date',
@@ -119,7 +120,8 @@ const buildColumns = (pl: boolean): ColumnDef[] => [
     maxWidth: 190,
     resizable: true,
     filterable: false,
-    align: 'center',
+    // canon §3.3 — dates align left.
+    align: 'left',
   },
   {
     id: 'actions',
@@ -367,7 +369,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                     </span>
                   </div>
                 </td>
-                <td style={{ width: columnWidths.scope }} className="px-3 py-2.5 text-center">
+                <td style={{ width: columnWidths.scope }} className="px-3 py-2.5 text-left">
                   {nb.scope === 'team' ? (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300">
                       <Users size={11} />
@@ -380,7 +382,7 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                     </span>
                   )}
                 </td>
-                <td style={{ width: columnWidths.context }} className="px-3 py-2.5 text-center">
+                <td style={{ width: columnWidths.context }} className="px-3 py-2.5 text-left">
                   {nb.contextSharing === 'org_context' ? (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300">
                       <Globe size={11} />
@@ -392,13 +394,13 @@ export const NotebookLibraryContent: React.FC<NotebookLibraryContentProps> = ({
                 </td>
                 <td
                   style={{ width: columnWidths.notes }}
-                  className="px-3 py-2.5 text-center text-sm text-slate-500 dark:text-slate-400"
+                  className="px-3 py-2.5 text-right text-sm text-slate-500 dark:text-slate-400"
                 >
                   {nb.pageCount}
                 </td>
                 <td
                   style={{ width: columnWidths.date }}
-                  className="px-3 py-2.5 text-center text-xs text-slate-600 dark:text-slate-500"
+                  className="px-3 py-2.5 text-left text-xs text-slate-600 dark:text-slate-500"
                 >
                   {formatRelative(nb.updatedAt, pl)}
                 </td>

@@ -23,7 +23,8 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -241,15 +242,6 @@ const DECISION_COLUMNS: ColumnDef[] = [
     filterable: false,
   },
   {
-    id: 'indicator',
-    label: '',
-    width: 32,
-    minWidth: 32,
-    maxWidth: 32,
-    resizable: false,
-    filterable: false,
-  },
-  {
     id: 'title',
     label: 'Decision',
     width: 560,
@@ -391,14 +383,6 @@ const DecisionTableRow: React.FC<{
   const isPolish = i18n.language?.startsWith('pl');
 
   const level = priorityLevel(decision.priority);
-  const dotColor =
-    level === 'urgent'
-      ? 'bg-rose-500'
-      : level === 'high'
-        ? 'bg-amber-500'
-        : level === 'medium'
-          ? 'bg-blue-500'
-          : 'bg-slate-400';
   const dueDate = decision.dueDate || decision.deadline;
   const overdue = isOverdue(dueDate) && decision.status?.toUpperCase() === 'PENDING';
   const daysWaiting = getDaysWaiting(decision.createdAt);
@@ -551,14 +535,6 @@ const DecisionTableRow: React.FC<{
         </td>
       )}
 
-      {/* Priority Dot */}
-      <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div
-          className={`w-2.5 h-2.5 rounded-full ${dotColor}`}
-          title={priorityLabel(decision.priority, !!isPolish)}
-        />
-      </td>
-
       {/* Decision Title */}
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
@@ -675,14 +651,6 @@ const AwaitingDecisionTableRow: React.FC<{
   const isPolish = i18n.language?.startsWith('pl');
 
   const level = priorityLevel(decision.priority);
-  const dotColor =
-    level === 'urgent'
-      ? 'bg-rose-500'
-      : level === 'high'
-        ? 'bg-amber-500'
-        : level === 'medium'
-          ? 'bg-blue-500'
-          : 'bg-slate-400';
   const dueDate = decision.dueDate || decision.deadline;
   const overdue = isOverdue(dueDate) && decision.status?.toUpperCase() === 'PENDING';
   const daysWaiting = getDaysWaiting(decision.createdAt);
@@ -849,13 +817,6 @@ const AwaitingDecisionTableRow: React.FC<{
         </td>
       )}
 
-      <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div
-          className={`w-2.5 h-2.5 rounded-full ${overdue ? 'bg-rose-500' : dotColor}`}
-          title={overdue ? (isPolish ? 'Po terminie' : 'Overdue') : priorityLabel(decision.priority, !!isPolish)}
-        />
-      </td>
-
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
           <span className="text-sm font-medium text-slate-900 dark:text-white">
@@ -905,7 +866,11 @@ const AwaitingDecisionTableRow: React.FC<{
             </div>
             <div className="flex min-w-0 flex-col text-left">
               <span className="text-xs text-slate-900 dark:text-white truncate">
-                {decision.ownerName || (isPolish ? 'Nieznany' : 'Unknown')}
+                {decision.ownerName || (
+                  <span className="italic text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Nieprzypisany' : 'Unassigned'}
+                  </span>
+                )}
               </span>
               {decision.ownerRole && (
                 <span className="text-[10px] text-slate-500 truncate">{decision.ownerRole}</span>
@@ -981,7 +946,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   }, [isColumnVisible]);
   const tableMinWidth = useMemo(() => {
     const visibleWidth = DECISION_COLUMNS.reduce((sum, column) => {
-      if (column.id !== 'select' && column.id !== 'indicator' && hiddenSet.has(column.id)) {
+      if (column.id !== 'select' && hiddenSet.has(column.id)) {
         return sum;
       }
       return sum + (columnWidths[column.id] || column.width);
@@ -991,12 +956,58 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   }, [columnWidths, hiddenSet]);
   const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
   const viewSettingsRef = useRef<HTMLDivElement | null>(null);
+  const viewSettingsTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const viewSettingsPopoverRef = useRef<HTMLDivElement | null>(null);
+  const [viewSettingsPos, setViewSettingsPos] = useState<{
+    top: number;
+    left: number;
+    maxHeight: number;
+  } | null>(null);
+
+  // Portal popover positioning: fixed coords from trigger rect, auto-flip up,
+  // max-height + own scroll so every option stays reachable (canon §16).
+  useLayoutEffect(() => {
+    if (!isViewSettingsOpen) {
+      setViewSettingsPos(null);
+      return;
+    }
+    const compute = () => {
+      const trigger = viewSettingsTriggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const POPOVER_WIDTH = 288; // w-72
+      const GAP = 8;
+      const MARGIN = 12;
+      const viewportH = window.innerHeight;
+      const viewportW = window.innerWidth;
+      const spaceBelow = viewportH - rect.bottom - GAP - MARGIN;
+      const spaceAbove = rect.top - GAP - MARGIN;
+      const flipUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(160, flipUp ? spaceAbove : spaceBelow);
+      // Right-align popover to trigger's right edge, clamp into viewport.
+      let left = rect.right - POPOVER_WIDTH;
+      if (left < MARGIN) left = MARGIN;
+      if (left + POPOVER_WIDTH > viewportW - MARGIN) {
+        left = viewportW - MARGIN - POPOVER_WIDTH;
+      }
+      const top = flipUp ? rect.top - GAP : rect.bottom + GAP;
+      setViewSettingsPos({ top, left, maxHeight });
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    window.addEventListener('scroll', compute, true);
+    return () => {
+      window.removeEventListener('resize', compute);
+      window.removeEventListener('scroll', compute, true);
+    };
+  }, [isViewSettingsOpen]);
 
   useEffect(() => {
     if (!isViewSettingsOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
       if (viewSettingsRef.current?.contains(event.target as Node)) return;
+      if (viewSettingsPopoverRef.current?.contains(event.target as Node)) return;
       setIsViewSettingsOpen(false);
     };
 
@@ -1851,7 +1862,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       <button
                         onClick={() => handleSelectAll(!allSelected)}
                         className={`
-                          h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors
+                          h-4 w-4 rounded-[4px] border flex items-center justify-center transition-colors
                           ${
                             allSelected
                               ? 'bg-primary-500 border-primary-500 text-white'
@@ -1887,7 +1898,6 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       </th>
                     )}
 
-                    <th className="w-8 px-1 py-2" />
                     <th
                       className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                       style={{ width: columnWidths.title }}
@@ -2017,6 +2027,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       >
                         <div ref={viewSettingsRef} className="flex items-center justify-end">
                           <button
+                            ref={viewSettingsTriggerRef}
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -2031,11 +2042,26 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                           >
                             <Settings2 size={14} />
                           </button>
-                          {isViewSettingsOpen ? (
-                            <div
-                              className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                              onClick={(event) => event.stopPropagation()}
-                            >
+                          {isViewSettingsOpen && viewSettingsPos
+                            ? ReactDOM.createPortal(
+                                <div
+                                  ref={viewSettingsPopoverRef}
+                                  style={{
+                                    position: 'fixed',
+                                    top: viewSettingsPos.top,
+                                    left: viewSettingsPos.left,
+                                    width: 288,
+                                    maxHeight: viewSettingsPos.maxHeight,
+                                    transform:
+                                      viewSettingsPos.top <
+                                      (viewSettingsTriggerRef.current?.getBoundingClientRect()
+                                        .bottom ?? 0)
+                                        ? 'translateY(-100%)'
+                                        : undefined,
+                                  }}
+                                  className="z-[60] flex flex-col overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
                               <div className="px-2 pb-2 pt-1">
                                 <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
                                   {isPolish ? 'Ustawienia widoku' : 'View settings'}
@@ -2048,7 +2074,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                               </div>
                               <div className="space-y-0.5">
                                 {DECISION_COLUMNS.filter(
-                                  (c) => !['select', 'indicator'].includes(c.id)
+                                  (c) => c.id !== 'select'
                                 ).map((col) => {
                                   const alwaysVisible = col.id === 'title' || col.id === 'actions';
                                   const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
@@ -2137,8 +2163,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                   </span>
                                 </label>
                               </div>
-                            </div>
-                          ) : null}
+                                </div>,
+                                document.body
+                              )
+                            : null}
                         </div>
                       </th>
                     )}

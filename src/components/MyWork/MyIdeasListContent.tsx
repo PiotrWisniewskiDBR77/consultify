@@ -1499,9 +1499,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   className={[
                     'group relative text-left overflow-hidden',
                     'p-4 rounded-xl',
-                    `border-l-[3px] border ${tc.borderColor} border-slate-200/60 dark:border-white/[0.06]`,
-                    'bg-slate-50/80 dark:bg-navy-800/60',
-                    'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-md transition-all duration-150',
+                    'border border-slate-200/60 dark:border-white/[0.06]',
+                    'bg-white dark:bg-navy-900',
+                    'hover:shadow-md transition-all duration-150',
                     isSelected ? 'ring-2 ring-primary-500/40' : '',
                   ].join(' ')}
                 >
