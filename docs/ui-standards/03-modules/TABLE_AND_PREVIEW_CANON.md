@@ -317,6 +317,8 @@ Grupowanie w pasku: **Dokumenty** = Raport·Deck·Tabela; **W aplikacji** = Idea
 ## 13) Acceptance criteria (skrót)
 > To skrót szybkiego sprawdzenia. **Pełna operacyjna checklista audytu (A–S) + procedura 6 kroków = §27** — to nią przelatujemy każdą tabelę.
 
+- [ ] 🔴 **Preview pane ISTNIEJE** — single-click otwiera boczny podgląd, nie nawiguje od razu. §7 / §27.A0
+- [ ] 🔴 **Filtry kolumn ISTNIEJĄ** — `FilterDropdown` na sensownych kolumnach. §5 / §27.A0
 - [ ] Renderowana przez `TableWithPreviewLayout` + `FilterableTable` (lub spełnia §3–§7 jeśli na `ResizableTable`).
 - [ ] Nagłówek `sticky top-0 z-10`, `text-[11px] uppercase tracking-wider`, `text-slate-500 dark:text-slate-400`; rodzic bez `overflow-hidden`.
 - [ ] Wyrównanie wg roli identyczne na każdej zakładce (tytuł left / metryki center / akcje right).
@@ -605,6 +607,21 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 
 ---
 
+### A0. PARITY GATE — czy tabela MA komplet maszynerii? (ZRÓB NAJPIERW; brak = blokujący)
+> Najpierw inwentaryzacja „czy to w ogóle JEST", dopiero potem jakość. Brak któregokolwiek = 🔴
+> **blokujący brak funkcji**, nie „kosmetyka/opcjonalne". (Dodane po wpadce na Initiatives: brak preview
+> i brak filtrów kolumn przeszły niezauważone, bo audyt skakał od razu w detale wyrównania.)
+- [ ] 🔴 **Preview pane JEST** — single-click wiersza otwiera BOCZNY podgląd (`TableWithPreviewLayout`), a NIE nawiguje od razu do innego modułu/karty. → `jak:` klik wiersz → panel z prawej, nie zmiana ekranu. §7
+- [ ] 🔴 **Filtry kolumn SĄ** — każda sensowna kolumna (status/typ/priorytet/źródło/data) ma `FilterDropdown` w nagłówku (ikona lejka, klikalna). → `jak:` klik ikonę filtra w nagłówku → lista wartości. §5
+- [ ] 🔴 **Sort JEST** — nagłówki klikalne + wskaźnik kierunku (`ChevronUp/Down`). §5
+- [ ] 🔴 **Resize JEST** — uchwyt na granicy kolumn, zero-sum, szerokości persystowane. §5
+- [ ] 🔴 **Sticky header JEST** — `position: sticky` trzyma nagłówek przy scrollu. §3.2
+- [ ] 🔴 **Popover „widoczne kolumny" JEST** i portalowany (nieclipowany). §6 / §16
+- [ ] 🔴 **Kebab (⋮) JEST** — 3-strefowy, portalowany, prawą krawędzią równy do przycisku. §9
+- [ ] 🔴 **Pasek bulk JEST** (zaznacz ≥1) — lewo, framed `Clear` z X. §15.3
+- [ ] 🔴 **Stany** empty / loading / error obsłużone (nie blank). §10
+> Każde „NIE MA" → wpisz do raportu jako **brakująca funkcja (blokujące)** i napraw, ZANIM przejdziesz do detali A–U.
+
 ### A. Identyfikacja i komponenty (SSOT)
 - [ ] 🔴 Renderowana przez `TableWithPreviewLayout` + `FilterableTable` (lub — tymczasowo — spełnia A–S wizualnie, jeśli na `ResizableTable`/ręczna). §2
 - [ ] Ustalona **która zakładka(i)** i czy współdzielą jeden renderer (jeśli tak — zmiana dotyka wszystkich; jeśli nie — sprawdź każdą). 
@@ -678,6 +695,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] 🔴 **Archiwizuj = miękkie/odwracalne** (`archived_at` via guarded lazy ALTER, nie migracja), Przywróć w scope `archived`, Usuń = twarde/danger/confirm. Uprawnienia = jak edycja. §14 → `jak:` archiwizuj wiersz → znika z `active`, jest w `archived`, „Przywróć" go wraca. (Wymaga realnych danych + prawa edycji — nie demo-fixtures.)
 
 ### I. Preview pane (wzorzec zatwierdzony 2026-06-07 — §7.3)
+- [ ] 🔴 **PREVIEW W OGÓLE ISTNIEJE** (A0) — tabela jest w `TableWithPreviewLayout`, single-click = boczny panel. Jeśli klik wiersza nawiguje do innego modułu zamiast otworzyć podgląd → brak preview = blokujące. §7
 - [ ] 🔴 Domyślnie zamknięty; single‑click=preview, dbl/Enter=full, Esc=zamknij. §7.1
 - [ ] Szerokość `clamp(340px,28%,480px)`; separacja `gap-1.5` bez `border-l`. §7.2
 - [ ] Header sticky: kicker+tytuł(1 linia,truncate)+**„Open" (jedyne w preview)**+„X". §7.3
@@ -716,8 +734,9 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Focus ring widoczny; focus‑trap w popoverze i preview‑modal (mobile). §21
 
 ### O. Sort / Filter / Resize / Persistencja
+- [ ] 🔴 **FILTRY KOLUMN W OGÓLE ISTNIEJĄ** (A0) — każda sensowna kolumna ma `FilterDropdown` w nagłówku (ikona lejka). Brak ikon filtra na nagłówkach = blokujące. §5 → `jak:` klik nagłówek status/typ/priorytet → lista wartości do odfiltrowania.
 - [ ] Sort: klik nagłówka + ikona kierunku (`ChevronUp/Down`); default per moduł persystowany. §5 / §22
-- [ ] Filtry per kolumna; presety/aktywne filtry jako chipy w Menu 3; stan persystowany. §5 / §22
+- [ ] Filtry per kolumna multiselect (AND między kolumnami / OR wewnątrz); aktywne filtry jako chipy w Menu 3; stan persystowany. §5 / §22
 - [ ] Resize zero‑sum z sąsiadem; szerokość tabeli stała; szerokości persystowane. §5
 
 ### P. Zabezpieczenia inżynierskie (RC)
