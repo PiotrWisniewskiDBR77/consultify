@@ -31,6 +31,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { AuditLogViewer } from '../../AISettings';
 import { CustomComplianceTemplateEditor } from './CustomComplianceTemplateEditor';
@@ -150,9 +151,34 @@ export const AuditComplianceTab: React.FC = () => {
     }
   };
 
-  const exportAuditLog = (format: 'csv' | 'json') => {
-    toast.success(`Exporting audit log as ${format.toUpperCase()}...`);
-    // TODO: Implement actual export
+  const exportAuditLog = async (format: 'csv' | 'json') => {
+    try {
+      const stamp = new Date().toISOString().slice(0, 10);
+      let blob: Blob;
+      let filename: string;
+
+      if (format === 'csv') {
+        blob = await Api.exportTenantAdminAuditLogs();
+        filename = `audit-log-${stamp}.csv`;
+      } else {
+        const data = await Api.getTenantAdminAuditLogs();
+        blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        filename = `audit-log-${stamp}.json`;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+
+      toast.success(`Audit log exported as ${format.toUpperCase()}`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to export audit log');
+    }
   };
 
   const getSeverityColor = (severity: string) => {

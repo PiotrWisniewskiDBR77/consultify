@@ -151,7 +151,9 @@ export function AuditLogViewer() {
       const statsData = await Api.getAuditLogStats();
       setStats({
         total_requests: statsData.total || 0,
-        flagged_requests: 0, // TODO: Add flagged count to stats
+        // "Flagged" == elevated-risk events (HIGH + CRITICAL), matching
+        // AuditLogService.flaggedOnly (risk_level IN ('HIGH','CRITICAL')).
+        flagged_requests: (statsData.high_risk || 0) + (statsData.critical_risk || 0),
         high_risk: statsData.high_risk || 0,
         medium_risk: statsData.medium_risk || 0,
         low_risk: statsData.low_risk || 0,

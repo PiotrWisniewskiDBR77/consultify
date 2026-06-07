@@ -155,10 +155,12 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
     try {
       setIsGeneratingCode(true);
-      const response = await Api.post('/admin/access-codes', {
-        role: generatedInviteRole,
+      const response = await Api.post('/access-codes/generate', {
+        type: 'INVITE',
+        organizationId: orgId,
         maxUses: generatedInviteMaxUses,
         expiresInDays: 7,
+        metadata: { invitedRole: generatedInviteRole },
       });
 
       const code = response?.code?.code || response?.code;
