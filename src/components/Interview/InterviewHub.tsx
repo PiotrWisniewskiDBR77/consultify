@@ -4494,6 +4494,37 @@ export const InterviewHub: React.FC = () => {
         },
       ];
 
+      const selectedInitiativeList = Array.from(selectedInitiativeIds)
+        .map((id) => interviewInitiatives.find((x) => x.id === id))
+        .filter(Boolean) as InterviewInitiativeDraft[];
+      const draftSelectedCount = selectedInitiativeList.filter(
+        (i) => String(i.status || 'DRAFT').toUpperCase() === 'DRAFT'
+      ).length;
+      const pendingSelectedCount = selectedInitiativeList.filter((i) =>
+        ['PENDING_REVIEW', 'IN_REVIEW', 'REVIEW', 'SUBMITTED'].includes(
+          String(i.status || '').toUpperCase()
+        )
+      ).length;
+      const bulkInitiativeTransition = async (
+        target: 'PENDING_REVIEW' | 'REVIEW',
+        from: string[]
+      ) => {
+        const targetIds = selectedInitiativeList
+          .filter((i) => from.includes(String(i.status || 'DRAFT').toUpperCase()))
+          .map((i) => i.id);
+        if (!targetIds.length) return;
+        await Promise.all(
+          targetIds.map((id) =>
+            Api.patch(`/initiatives/${id}/status`, { status: target }).catch(() => null)
+          )
+        );
+        setSelectedInitiativeIds(new Set());
+        await loadInterviewInitiatives();
+        toast.success(
+          isPolish ? `Zaktualizowano (${targetIds.length})` : `Updated (${targetIds.length})`
+        );
+      };
+
       if (selectedCount > 0) {
         return (
           <div className={MENU_3_ROW_CLASS}>
@@ -4510,6 +4541,36 @@ export const InterviewHub: React.FC = () => {
                   <X size={14} />
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
+                {draftSelectedCount > 0 ? (
+                  <>
+                    <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
+                    <button
+                      type="button"
+                      onClick={() => void bulkInitiativeTransition('PENDING_REVIEW', ['DRAFT'])}
+                      className={MENU_3_ACTION_NEUTRAL}
+                    >
+                      <ArrowRight size={14} />
+                      {isPolish ? 'Wyślij do przeglądu' : 'Send to review'}
+                    </button>
+                  </>
+                ) : null}
+                {canReviewInsights && pendingSelectedCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void bulkInitiativeTransition('REVIEW', [
+                        'PENDING_REVIEW',
+                        'IN_REVIEW',
+                        'REVIEW',
+                        'SUBMITTED',
+                      ])
+                    }
+                    className={MENU_3_ACTION_NEUTRAL}
+                  >
+                    <Rocket size={14} />
+                    {isPolish ? 'Zatwierdź i przekaż dalej' : 'Approve & move forward'}
+                  </button>
+                ) : null}
               </div>
               <div className="shrink-0" />
             </div>
@@ -11032,31 +11093,30 @@ Return ONLY the answer text (no markdown fences).`;
                                         : []),
                                     ],
                                   },
-                                  // DÓŁ — stały: Open. (Inicjatywy nie mają tu Edytuj/Archiwizuj/Delay
-                                  // ani Usuń — brak endpointu; lifecycle = backlog B-1.)
+                                  // DÓŁ — stały: Otwórz podgląd (w Wywiadzie) + Otwórz w module Initiatives.
+                                  // (Inicjatywy nie mają tu Edytuj/Archiwizuj/Usuń — brak endpointu; lifecycle = backlog B-1.)
                                   {
                                     id: 'fixed',
                                     kind: 'manage' as const,
                                     actions: [
-                                      isInitiativePromoted(initiative.status)
-                                        ? {
-                                            id: 'open-module',
-                                            label: isPolish
-                                              ? 'Otwórz w module Initiatives'
-                                              : 'Open in Initiatives',
-                                            icon: ExternalLink,
-                                            onClick: () =>
-                                              navigate(
-                                                `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                                              ),
-                                          }
-                                        : {
-                                            id: 'open-preview',
-                                            label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                                            icon: ChevronRight,
-                                            onClick: () =>
-                                              setSelectedInterviewInitiativeId(initiative.id),
-                                          },
+                                      {
+                                        id: 'open-preview',
+                                        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                                        icon: ChevronRight,
+                                        onClick: () =>
+                                          setSelectedInterviewInitiativeId(initiative.id),
+                                      },
+                                      {
+                                        id: 'open-module',
+                                        label: isPolish
+                                          ? 'Otwórz w module Initiatives'
+                                          : 'Open in Initiatives',
+                                        icon: ExternalLink,
+                                        onClick: () =>
+                                          navigate(
+                                            `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                          ),
+                                      },
                                     ],
                                   },
                                 ]}
