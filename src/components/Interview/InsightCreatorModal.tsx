@@ -1725,9 +1725,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   };
 
   const renderGoalStep = () => (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
           {isPolish ? 'Tytuł wniosków' : 'Insight Title'} *
         </label>
         <input
@@ -1739,7 +1739,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Analiza transformacji cyfrowej Q1 2024'
               : 'e.g. Digital Transformation Analysis Q1 2024'
           }
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
         {renderSimilarWarning()}
         {title.trim().length >= 4 &&
@@ -1756,20 +1756,20 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
           {isPolish ? 'Typ wyniku' : 'Output type'} *
         </label>
-        <div className="space-y-1.5">
-          <div className="max-h-64 space-y-1.5 overflow-auto pr-1">
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2 max-h-64 overflow-auto pr-1">
             {ANALYSIS_TYPES.map((type) => {
               const isSelected = selectedTypes.includes(type.id);
               return (
                 <label
                   key={type.id}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
+                  className={`relative flex cursor-pointer flex-col gap-2 rounded-xl border p-3 transition-all ${
                     isSelected
-                      ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+                      ? 'border-primary-500/60 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/15'
+                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700/60 dark:bg-navy-800/40 dark:hover:border-white/[0.16]'
                   }`}
                 >
                   <input
@@ -1778,17 +1778,19 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     onChange={() => toggleAnalysisType(type.id)}
                     className="sr-only"
                   />
-                  <StyledCheck checked={isSelected} />
-                  <div
-                    className={`flex h-7 w-7 items-center justify-center rounded-md ${getColorClasses(
-                      type.color,
-                      'bg'
-                    )} ${getColorClasses(type.color, 'text')}`}
-                  >
-                    {type.icon}
+                  <div className="flex items-start justify-between gap-2">
+                    <div
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${getColorClasses(
+                        type.color,
+                        'bg'
+                      )} ${getColorClasses(type.color, 'text')}`}
+                    >
+                      {type.icon}
+                    </div>
+                    <StyledCheck checked={isSelected} />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {isPolish ? type.namePl : type.name}
                     </div>
                     <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
@@ -1813,10 +1815,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   );
 
   const renderPeopleStep = () => (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="mb-2 flex items-center justify-between">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
             {isPolish ? 'Wybierz osoby' : 'Select people'}
             <InfoHint
               text={
@@ -2024,11 +2026,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   };
 
   const renderSourceStep = () => (
-    <div className="space-y-3">
+    <div className="space-y-5">
       {renderSourceBasketControl()}
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {isPolish ? 'Zakres dat materiału' : 'Material date range'}
           </label>
           {(filterDateFrom || filterDateTo) && (
@@ -2071,8 +2073,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
       <div className="grid gap-3 md:grid-cols-2">
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {isPolish ? 'Rola respondenta' : 'Respondent role'}
             </label>
             {filterRole && (
@@ -2103,8 +2105,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </div>
 
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {isPolish ? 'Dział respondenta' : 'Respondent department'}
             </label>
             {filterDepartment && (
@@ -2139,8 +2141,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {isPolish ? 'Wybierz sesje źródłowe' : 'Select source sessions'} *
           </label>
           {filteredSessions.length > 0 && (
@@ -2244,9 +2246,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   );
 
   const renderAnalysisStep = () => (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <div>
-        <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+        <label className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
           {isPolish ? 'Tryb analizy' : 'Analysis mode'}
           <InfoHint
             text={
@@ -2300,8 +2302,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-xs font-medium text-slate-500">
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {isPolish ? 'Zakres tematyczny' : 'Topic focus'}
           </label>
           {selectedTopicFocus.length > 0 && (
@@ -2345,7 +2347,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
           {isPolish ? 'Zakres kontekstu AI' : 'AI context boundary'}
           <InfoHint
             text={
@@ -2399,10 +2401,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   );
 
   const renderContextStep = () => (
-    <div className="space-y-3">
+    <div className="space-y-5">
       {renderSimilarWarning()}
       <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
           {isPolish ? 'Pytanie prowadzące' : 'Leading question'}
         </label>
         <input
@@ -2414,12 +2416,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
               : 'e.g. Where do ownership handoffs most often break?'
           }
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
           {isPolish ? 'Uwagi' : 'Notes'}
         </label>
         <textarea
@@ -2431,12 +2433,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Skup się na różnicach między działem IT a biznesem. Użyj języka polskiego.'
               : 'e.g. Focus on differences between IT and business departments. Use formal language.'
           }
-          className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
-        <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
           {isPolish ? 'Dokumenty kontekstowe' : 'Context documents'}
           <InfoHint
             text={
@@ -2570,7 +2572,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
           {isPolish ? 'Linki do artefaktów wewnętrznych' : 'Internal artifact links'}
         </label>
         <textarea
@@ -2582,7 +2584,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'Wklej po jednym linku lub identyfikatorze artefaktu w linii.'
               : 'Paste one link or artifact identifier per line.'
           }
-          className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
     </div>
@@ -2628,13 +2630,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         />
 
         {/* Content */}
-        <form onSubmit={handleFormSubmit} className="flex-1 space-y-4 overflow-auto p-3">
+        <form onSubmit={handleFormSubmit} className="flex-1 overflow-auto px-6 py-5">
           {renderGlobalLoadError()}
           {renderCurrentStep()}
         </form>
 
         {/* Footer */}
-        <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08]">
+        <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
           <Button type="button" variant="ghost" onClick={onClose} disabled={isGenerating}>
             {isPolish ? 'Anuluj' : 'Cancel'}
           </Button>
