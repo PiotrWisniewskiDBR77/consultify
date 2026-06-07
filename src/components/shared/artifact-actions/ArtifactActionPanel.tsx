@@ -1,13 +1,13 @@
 import {
   BookOpen,
   ExternalLink,
-  FileSpreadsheet,
   FileText,
   Lightbulb,
   Loader2,
   Presentation,
   Rocket,
   StickyNote,
+  Table,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -90,7 +90,7 @@ const TARGET_META: Record<
     labelEn: 'Create table',
     descriptionPl: 'Arkusz do uporządkowania danych i decyzji.',
     descriptionEn: 'Workbook for structured follow-up.',
-    icon: FileSpreadsheet,
+    icon: Table,
     tone: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20',
   },
   idea: {
@@ -107,7 +107,7 @@ const TARGET_META: Record<
     descriptionPl: 'Zachowaj kontekst w Notatniku.',
     descriptionEn: 'Save context in Notebook.',
     icon: StickyNote,
-    tone: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/20',
+    tone: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-200 dark:bg-sky-500/10 dark:border-sky-500/20',
   },
   initiative: {
     labelPl: 'Utwórz inicjatywę',
@@ -115,7 +115,7 @@ const TARGET_META: Record<
     descriptionPl: 'Przenieś insight do intake inicjatyw.',
     descriptionEn: 'Move the insight into initiative intake.',
     icon: Rocket,
-    tone: 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20',
+    tone: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/20',
   },
 };
 
@@ -665,7 +665,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         }
         disabled={loading || isActionDisabled}
         title={isPolish ? meta.descriptionPl : meta.descriptionEn}
-        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/70 px-2.5 text-[11px] font-medium text-slate-700 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.08]"
+        className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:brightness-110 ${meta.tone}`}
       >
         {loading ? (
           <Loader2 size={13} className="animate-spin" />

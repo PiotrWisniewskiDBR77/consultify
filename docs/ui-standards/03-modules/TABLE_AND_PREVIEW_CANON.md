@@ -210,21 +210,37 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 ### 7.2 Wymiary i separacja
 **MUST:** szerokość `clamp(340px, 28%, 480px)`. Separacja od tabeli = `gap-1.5`, **bez `border-l`**. Wrapper: `bg-slate-50 dark:bg-navy-950 p-3`. Karta wewnątrz: `rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] backdrop-blur`. Jeśli tabela `rounded-xl` → preview też `rounded-xl` (spójność „composite container").
 
-### 7.3 Anatomia (SSOT: `PreviewPaneShell`)
+### 7.3 Anatomia — ŻELAZNY UKŁAD (góra→dół, MUST; SSOT: `PreviewPaneShell`)
+> Kolejność jest sztywna i identyczna we wszystkich tabelach. Strefa bez treści = ukryta (nie pusty box),
+> ale **kolejność obecnych stref się nie zmienia**.
+
 1. **Header (sticky `top-0 z-10`)**: opcjonalny kicker „Preview" (11px uppercase) + tytuł encji (1 linia, truncate+tooltip, semibold) + akcje right: „Open in Full View" (ghost/outline pill) + „Close (X)".
-2. **Entity Meta Bar**: statusy/typ/priorytet/SLA (poziom +2, `p-4`, `rounded-lg`) — to stan, nie treść.
-3. **Details**: nagłówek „Details" (overline) + ⋮; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (np. cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state z podpowiedzią, nie blank. Cel: preview ma od razu „opowiadać" encję, nie zmuszać do „Open".
-4. **Stopka — KOLEJNOŚĆ SZTYWNA (MUST):**
-   1. **„Co dalej" / create-strip (opcjonalny, gdy encja jest źródłem cross-module)**: ZWARTY pasek
-      małych przycisków (`h-8 rounded-full`, ikona+label, neutralne), pogrupowany „Dokumenty / W aplikacji".
-      **NIGDY wielkie karty w body** — opis (Details) zostaje w centrum, akcje tworzenia są zwarte na dole.
-      (Insight: `ArtifactActionPanel variant="compact"`; `variant="full"` tylko w pełnej karcie.)
+2. **Entity Meta Bar**: statusy/typ/sesje/priorytet/SLA/data (poziom +2, `p-4`, `rounded-lg`) — to stan, nie treść.
+3. **Details (treść — wypełnia centrum)**: nagłówek „Details" (overline) + ⋮; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state, nie blank. **Details NIGDY nie ustępuje miejsca przyciskom** — opis zostaje w środku, akcje schodzą na dół.
+4. **Stopka — KOLEJNOŚĆ SZTYWNA (MUST), góra→dół:**
+   1. **AI**: label „AI" + ikona; chipy outline (`Podsumuj`, `Zasugeruj działania`); rozwijane bullety. AI asystuje treści, więc jest **najwyżej** w stopce.
    2. divider (`border-t`)
-   3. **AI hints**: label „AI Insights" + ikona + ⋮; **3 chipy** outline; rozwijane bullety.
+   3. **Relations** (jeśli są): **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
    4. divider (`border-t`)
-   5. **Relations**: **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
+   5. **„Co dalej" / create-strip (opcjonalny, gdy encja jest źródłem cross-module)**: ZWARTY pasek małych przycisków (`h-8 rounded-full`, ikona+label), pogrupowany **„Dokumenty / W aplikacji"**. **NIGDY wielkie karty w body.** (Insight: `ArtifactActionPanel variant="compact"`; `variant="full"` tylko w pełnej karcie.) Ikony+kolory wg §7.3a.
    6. divider (`border-t`)
-   7. **Actions**: pille `h-9 rounded-full`, hierarchia primary→secondary→ghost; **te same akcje co full view** (parytet, te same guardraile; destrukcyjne = confirm).
+   7. **Actions (sticky dół)**: pille `h-9 rounded-full`, hierarchia primary→secondary→ghost; **te same akcje co full view** (parytet, te same guardraile; destrukcyjne = confirm).
+
+### 7.3a Tożsamość akcji tworzenia (create-targets) — kolor = moduł docelowy (MUST)
+> Jeden spójny wątek dla całej aplikacji: ikona + hue przycisku = **moduł, do którego trafia artefakt**.
+> Forma: **lekki tint tła (~8%) + kolorowa ikona** na zwartym pillu (nie wielki, kolorowy fill).
+> Zero kolizji ikon (6 różnych) i hue (6 różnych). SSOT: `ArtifactActionPanel` `TARGET_META`.
+
+| Akcja | Moduł docelowy | Ikona (lucide) | Hue |
+|---|---|---|---|
+| **Raport** (report) | Documents | `FileText` | slate |
+| **Deck / Prezentacja** (presentation) | Presentations | `Presentation` | fuchsia |
+| **Tabela** (table) | Table Studio | `Table` | emerald |
+| **Idea** (idea) | Ideas / My Work | `Lightbulb` | amber |
+| **Notatka** (note) | Notebook | `StickyNote` | sky |
+| **Inicjatywa** (initiative) | Initiatives | `Rocket` | indigo |
+
+Grupowanie w pasku: **Dokumenty** = Raport·Deck·Tabela; **W aplikacji** = Idea·Notatka·Inicjatywa.
 
 ---
 

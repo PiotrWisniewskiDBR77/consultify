@@ -204,8 +204,13 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
 
   return (
     <div className="space-y-0">
+      {/* Canon §7.3 footer order: AI → (Relations) → What next (create) → Actions. */}
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip hints={aiHints} />
+      </div>
       {showActionPanel && (
         <>
+          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
           <ArtifactActionPanel
             variant="compact"
             isPolish={isPolish}
@@ -220,12 +225,8 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
               sourceSessionCount: insight.sourceSessionCount || (insight.sessionId ? 1 : 0),
             }}
           />
-          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
         </>
       )}
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-        <PreviewAIHintStrip hints={aiHints} />
-      </div>
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
       <PreviewActionBar
         rows={[
