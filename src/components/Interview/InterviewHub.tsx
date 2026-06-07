@@ -5725,7 +5725,9 @@ export const InterviewHub: React.FC = () => {
   };
 
   // Render grid view for sessions
-  const renderSessionsGrid = () => (
+  const renderSessionsGrid = ({
+    onCardClick,
+  }: { onCardClick?: (id: string) => void } = {}) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {filteredSessions.map((session) => {
         const progress = getSessionProgress(session);
@@ -5736,22 +5738,32 @@ export const InterviewHub: React.FC = () => {
         const canRemind = ['in_progress', 'sent_back'].includes(workflowStatus);
 
         const statusConfig = getSessionStatusConfig(workflowStatus);
-        const typeColor =
-          workflowStatus === 'approved' || workflowStatus === 'completed'
-            ? 'from-emerald-50 via-white to-white border-emerald-200 dark:from-emerald-500/20 dark:to-emerald-600/10 dark:border-emerald-500/30'
-            : workflowStatus === 'in_progress'
-              ? 'from-blue-50 via-white to-white border-blue-200 dark:from-blue-500/20 dark:to-blue-600/10 dark:border-blue-500/30'
-              : workflowStatus === 'submitted'
-                ? 'from-amber-50 via-white to-white border-amber-200 dark:from-amber-500/15 dark:to-amber-600/10 dark:border-amber-500/30'
-                : workflowStatus === 'sent_back'
-                  ? 'from-rose-50 via-white to-white border-rose-200 dark:from-rose-500/15 dark:to-rose-600/10 dark:border-rose-500/30'
-                  : 'from-slate-50 via-white to-white border-slate-200 dark:from-slate-500/20 dark:to-slate-600/10 dark:border-slate-500/30';
+
+        // canon §8.1: NO status-colored gradients; canonical neutral card
+        const kebabSections = [
+          {
+            kind: 'context' as const,
+            items: [
+              {
+                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                icon: ChevronRight,
+                onClick: () =>
+                  onCardClick ? onCardClick(session.id) : setPreviewSessionId(session.id),
+              },
+              {
+                label: isPolish ? 'Otwórz pełny widok' : 'Open full view',
+                icon: ExternalLink,
+                onClick: () => handleViewSession(session),
+              },
+            ],
+          },
+        ];
 
         return (
           <div
             key={session.id}
-            onClick={() => handleViewSession(session)}
-            className={`group relative bg-gradient-to-br ${typeColor} border rounded-xl overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30 transition-all duration-200`}
+            onClick={() => (onCardClick ? onCardClick(session.id) : handleViewSession(session))}
+            className="group relative bg-white dark:bg-navy-900 rounded-xl border border-slate-200/60 dark:border-white/[0.08] overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30 transition-all duration-200"
           >
             {/* Header */}
             <div className="p-4 pb-2">
@@ -5782,6 +5794,10 @@ export const InterviewHub: React.FC = () => {
                             ? 'FIX'
                             : 'ARCH'}
                   </span>
+                </div>
+                {/* canon §8: kebab on card */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <RowActionsMenu sections={kebabSections} />
                 </div>
               </div>
             </div>
@@ -9874,8 +9890,11 @@ Return ONLY the answer text (no markdown fences).`;
                                 id: 'open',
                                 label: isPolish ? 'Otwórz podgląd' : 'Open preview',
                                 icon: ChevronRight,
-                                onClick: () =>
-                                  void openInterviewAssignmentFull(assignment, showAssignee),
+                                // canon §9: "Open preview" → side pane, NOT full view
+                                onClick: () => {
+                                  setPreviewAssignmentId(assignment.id);
+                                  setPreviewAssignmentOpen(true);
+                                },
                               },
                               {
                                 id: 'edit',
@@ -10040,8 +10059,7 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <div className="h-full overflow-hidden">
           {renderDegradedBanner()}
-          {viewMode === 'table' ? (
-            <TableWithPreviewLayout<InterviewSession & { title: string }>
+          <TableWithPreviewLayout<InterviewSession & { title: string }>
               selectedId={previewSessionId}
               selectedItem={selectedItem}
               onSelect={(id) => setPreviewSessionId(id)}
@@ -10141,20 +10159,24 @@ Return ONLY the answer text (no markdown fences).`;
                 );
               }}
             >
-              <div className="pl-4 pr-1.5 pt-3 pb-4">
-                {renderSessionsTable(rows, {
-                  onRowClick: setPreviewSessionId,
-                  onRowDoubleClick: (id) => {
-                    const s = rows.find((x) => x.id === id);
-                    if (s) handleViewSession(s);
-                  },
-                  selectedId: previewSessionId,
-                })}
-              </div>
+              {viewMode === 'table' ? (
+                <div className="pl-4 pr-1.5 pt-3 pb-4">
+                  {renderSessionsTable(rows, {
+                    onRowClick: setPreviewSessionId,
+                    onRowDoubleClick: (id) => {
+                      const s = rows.find((x) => x.id === id);
+                      if (s) handleViewSession(s);
+                    },
+                    selectedId: previewSessionId,
+                  })}
+                </div>
+              ) : (
+                /* canon §8: grid inside same TableWithPreviewLayout; single-click → preview */
+                <div className="pl-4 pr-1.5 pt-3 pb-4">
+                  {renderSessionsGrid({ onCardClick: setPreviewSessionId })}
+                </div>
+              )}
             </TableWithPreviewLayout>
-          ) : (
-            <div className="pl-4 pr-1.5 pt-3 pb-4">{renderSessionsGrid()}</div>
-          )}
         </div>
       );
     }
@@ -11712,17 +11734,7 @@ Return ONLY the answer text (no markdown fences).`;
         }
       };
 
-      if (templatesViewMode === 'cards') {
-        return (
-          <div className="h-full flex flex-col overflow-auto">
-            {renderTemplatesCards({
-              onSelectRow: (id) => setSelectedTemplateId(id),
-              onOpenFull: (id) => onOpenFull(id),
-            })}
-          </div>
-        );
-      }
-
+      // canon §8: grid/cards MUST be inside the same TableWithPreviewLayout (preview pane stays alive)
       return (
         <div className="h-full flex flex-col">
           <TableWithPreviewLayout<InterviewTemplate & { title: string }>
@@ -11794,12 +11806,21 @@ Return ONLY the answer text (no markdown fences).`;
               );
             }}
           >
-            <div className="pl-4 pr-1.5 pt-3 pb-4">
-              {renderTemplatesTable({
-                onSelectRow: (id) => setSelectedTemplateId(id),
-                onOpenFull: (id) => onOpenFull(id),
-              })}
-            </div>
+            {templatesViewMode === 'cards' ? (
+              <div className="h-full flex flex-col overflow-auto">
+                {renderTemplatesCards({
+                  onSelectRow: (id) => setSelectedTemplateId(id),
+                  onOpenFull: (id) => onOpenFull(id),
+                })}
+              </div>
+            ) : (
+              <div className="pl-4 pr-1.5 pt-3 pb-4">
+                {renderTemplatesTable({
+                  onSelectRow: (id) => setSelectedTemplateId(id),
+                  onOpenFull: (id) => onOpenFull(id),
+                })}
+              </div>
+            )}
           </TableWithPreviewLayout>
         </div>
       );
