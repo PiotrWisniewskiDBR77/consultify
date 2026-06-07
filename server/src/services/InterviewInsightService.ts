@@ -359,6 +359,7 @@ export interface Insight {
   generationTimeMs?: number;
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
+  archivedAt?: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -1622,15 +1623,24 @@ class InterviewInsightService {
    */
   async list(
     organizationId: string,
-    options?: { limit?: number; offset?: number }
+    options?: { limit?: number; offset?: number; scope?: 'active' | 'archived' | 'all' }
   ): Promise<Insight[]> {
     const db = await this.getDb();
     const limit = options?.limit || 50;
     const offset = options?.offset || 0;
+    const scope = options?.scope || 'active';
+
+    // Lifecycle scope filter. Caller (controller) ensures archived_at exists first.
+    const scopeSql =
+      scope === 'archived'
+        ? ' AND archived_at IS NOT NULL'
+        : scope === 'all'
+          ? ''
+          : ' AND archived_at IS NULL';
 
     const rows = await db.all<any>(
       `SELECT * FROM interview_insights
-       WHERE organization_id = ?
+       WHERE organization_id = ?${scopeSql}
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,
       [organizationId, limit, offset]
@@ -2441,6 +2451,7 @@ ${answerText}
       generationTimeMs: row.generation_time_ms || undefined,
       exportedToTools: row.exported_to_tools === 1,
       exportedToAssessment: row.exported_to_assessment === 1,
+      archivedAt: row.archived_at || null,
       createdBy: row.created_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -2455,8 +2466,10 @@ export default interviewInsightService;
 // Named exports
 export const create = (input: CreateInsightInput) => interviewInsightService.create(input);
 export const getById = (id: string) => interviewInsightService.getById(id);
-export const list = (organizationId: string, options?: { limit?: number; offset?: number }) =>
-  interviewInsightService.list(organizationId, options);
+export const list = (
+  organizationId: string,
+  options?: { limit?: number; offset?: number; scope?: 'active' | 'archived' | 'all' }
+) => interviewInsightService.list(organizationId, options);
 export const listContextLineage = (organizationId: string, insightId: string) =>
   interviewInsightService.listContextLineage(organizationId, insightId);
 export const regenerate = (id: string) => interviewInsightService.regenerate(id);

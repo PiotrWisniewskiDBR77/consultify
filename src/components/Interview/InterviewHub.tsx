@@ -486,6 +486,7 @@ interface InterviewInsight {
   actionable?: boolean;
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
+  archivedAt?: string | null;
   sourceSessionCount?: number;
   tokensUsed?: number;
   generationTimeMs?: number;
@@ -826,6 +827,8 @@ export const InterviewHub: React.FC = () => {
     useState<InterviewTemplate | null>(null);
   const [insightTypeFilter, setInsightTypeFilter] = useState<string>('all');
   const [insightStatusFilter, setInsightStatusFilter] = useState<string>('all');
+  // Lifecycle scope (active vs archived) — Menu 3 chip toggles this; drives server query.
+  const [insightScope, setInsightScope] = useState<'active' | 'archived'>('active');
   const [insightsViewMode, setInsightsViewMode] = useState<InsightsViewMode>('flat');
   const [insightsHiddenColumns, setInsightsHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY, [], ['title', 'actions'])
@@ -1478,9 +1481,11 @@ export const InterviewHub: React.FC = () => {
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
-      const insightsRes = await V8InterviewApi.listInsights()
+      const insightsRes = await V8InterviewApi.listInsights({ scope: insightScope })
         .then((r) => r.insights)
-        .catch(() => Api.get('/interview/insights'));
+        .catch(() =>
+          Api.get(`/interview/insights${insightScope !== 'active' ? `?scope=${insightScope}` : ''}`)
+        );
       const apiInsights = unwrapApiList(insightsRes, 'insights');
       setInsights(apiInsights);
       setInsightsLoadError(null);
@@ -1492,7 +1497,18 @@ export const InterviewHub: React.FC = () => {
           : 'Failed to load insights. Try refreshing.'
       );
     }
-  }, [isPolish, unwrapApiList]);
+  }, [isPolish, unwrapApiList, insightScope]);
+
+  // Reload insights whenever the active/archived scope flips (skip initial mount —
+  // the main load already fetches the default 'active' scope).
+  const insightScopeDidMount = useRef(false);
+  useEffect(() => {
+    if (!insightScopeDidMount.current) {
+      insightScopeDidMount.current = true;
+      return;
+    }
+    void loadInsights();
+  }, [insightScope, loadInsights]);
 
   const loadInterviewInitiatives = useCallback(async () => {
     try {
@@ -4329,6 +4345,25 @@ export const InterviewHub: React.FC = () => {
                   <Download size={14} />
                   {isPolish ? 'Eksport CSV' : 'Export CSV'}
                 </button>
+                {insightScope === 'archived' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkSetInsightsArchived(false)}
+                    className={MENU_3_ACTION_NEUTRAL}
+                  >
+                    <RotateCcw size={14} />
+                    {isPolish ? 'Przywróć' : 'Restore'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleBulkSetInsightsArchived(true)}
+                    className={MENU_3_ACTION_NEUTRAL}
+                  >
+                    <Archive size={14} />
+                    {isPolish ? 'Archiwizuj' : 'Archive'}
+                  </button>
+                )}
               </div>
               <div className="shrink-0" />
             </div>
@@ -4362,6 +4397,19 @@ export const InterviewHub: React.FC = () => {
                   </button>
                 );
               })}
+              {/* Lifecycle scope toggle — Active (default) vs Archived. */}
+              <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
+              <button
+                type="button"
+                onClick={() =>
+                  setInsightScope((prev) => (prev === 'archived' ? 'active' : 'archived'))
+                }
+                className={`${chipBase} ${insightScope === 'archived' ? chipActive : chipInactive}`}
+                title={isPolish ? 'Pokaż zarchiwizowane wnioski' : 'Show archived insights'}
+              >
+                <Archive size={14} />
+                <span>{isPolish ? 'Zarchiwizowane' : 'Archived'}</span>
+              </button>
             </div>
             <div className="shrink-0" />
           </div>
@@ -5759,6 +5807,72 @@ export const InterviewHub: React.FC = () => {
     }
   };
 
+  // Archive / restore an insight (soft, reversible). Row leaves the current scope view.
+  const handleSetInsightArchived = async (insightId: string, archived: boolean) => {
+    try {
+      await V8InterviewApi.updateInsight(insightId, { archived }).catch(() =>
+        Api.patch(`/interview/insights/${insightId}`, { archived })
+      );
+      // Optimistic: row drops out of the current list (active→archived or archived→active).
+      setInsights((prev) => prev.filter((i) => i.id !== insightId));
+      setSelectedInsightIds((prev) => {
+        const next = new Set(prev);
+        next.delete(insightId);
+        return next;
+      });
+      toast.success(
+        archived
+          ? isPolish
+            ? 'Wniosek zarchiwizowany'
+            : 'Insight archived'
+          : isPolish
+            ? 'Wniosek przywrócony'
+            : 'Insight restored'
+      );
+    } catch (error) {
+      toast.error(
+        archived
+          ? isPolish
+            ? 'Nie udało się zarchiwizować'
+            : 'Failed to archive'
+          : isPolish
+            ? 'Nie udało się przywrócić'
+            : 'Failed to restore'
+      );
+      console.error('[InterviewHub] Failed to set insight archived:', error);
+    }
+  };
+
+  // Bulk archive / restore for the current selection.
+  const handleBulkSetInsightsArchived = async (archived: boolean) => {
+    const ids = Array.from(selectedInsightIds);
+    if (ids.length === 0) return;
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          V8InterviewApi.updateInsight(id, { archived }).catch(() =>
+            Api.patch(`/interview/insights/${id}`, { archived })
+          )
+        )
+      );
+      const idSet = new Set(ids);
+      setInsights((prev) => prev.filter((i) => !idSet.has(i.id)));
+      setSelectedInsightIds(new Set());
+      toast.success(
+        archived
+          ? isPolish
+            ? `Zarchiwizowano (${ids.length})`
+            : `Archived (${ids.length})`
+          : isPolish
+            ? `Przywrócono (${ids.length})`
+            : `Restored (${ids.length})`
+      );
+    } catch (error) {
+      toast.error(isPolish ? 'Operacja częściowo nieudana' : 'Operation partially failed');
+      console.error('[InterviewHub] Bulk archive/restore failed:', error);
+    }
+  };
+
   // Render insights table (optional selection for preview pane)
   const renderInsightsTable = (
     rows: typeof filteredInsights = filteredInsights,
@@ -6560,7 +6674,7 @@ export const InterviewHub: React.FC = () => {
                               },
                             ],
                           },
-                          // DÓŁ — stały: Open. (Wnioski AI nie mają Edytuj/Archiwizuj/Delay.)
+                          // DÓŁ — stały: Open · Archiwizuj/Przywróć. (Wnioski AI nie mają Edytuj/Delay.)
                           {
                             id: 'fixed',
                             kind: 'manage' as const,
@@ -6571,6 +6685,19 @@ export const InterviewHub: React.FC = () => {
                                 icon: ChevronRight,
                                 onClick: () => handleViewInsight(insight),
                               },
+                              insight.archivedAt || insightScope === 'archived'
+                                ? {
+                                    id: 'restore',
+                                    label: isPolish ? 'Przywróć' : 'Restore',
+                                    icon: RotateCcw,
+                                    onClick: () => handleSetInsightArchived(insight.id, false),
+                                  }
+                                : {
+                                    id: 'archive',
+                                    label: isPolish ? 'Archiwizuj' : 'Archive',
+                                    icon: Archive,
+                                    onClick: () => handleSetInsightArchived(insight.id, true),
+                                  },
                             ],
                           },
                           // DANGER — Usuń

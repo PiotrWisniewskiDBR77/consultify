@@ -703,6 +703,36 @@ async function ensureInterviewSessionLifecycleColumns(): Promise<void> {
   }
 }
 
+/**
+ * Lazy-ensure lifecycle columns on interview_insights (dev schema; DB_MANAGED_SCHEMA=off).
+ * Mirrors the session/assignment lifecycle pattern so Insights can be archived/restored
+ * without a migration. Idempotent + safe under per-process column cache.
+ */
+async function ensureInterviewInsightLifecycleColumns(): Promise<void> {
+  const cols = await getTableColumns('interview_insights');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'archived_at',
+      sql: `ALTER TABLE interview_insights ADD COLUMN archived_at TIMESTAMP`,
+    },
+    {
+      name: 'archived_by',
+      sql: `ALTER TABLE interview_insights ADD COLUMN archived_by TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
+    }
+  }
+}
+
 async function ensureInterviewQuestionTemplatesTable(): Promise<void> {
   await queryHelpers.queryRun(
     `CREATE TABLE IF NOT EXISTS interview_question_templates (
@@ -7493,12 +7523,18 @@ ${JSON.stringify(questions || [], null, 2)}
 
   listInsights: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    const { limit = 50, offset = 0 } = req.query;
+    const { limit = 50, offset = 0, scope } = req.query;
+
+    // Lifecycle scope: active (default) | archived | all. Ensure the column exists first.
+    const normalizedScope: 'active' | 'archived' | 'all' =
+      scope === 'archived' ? 'archived' : scope === 'all' ? 'all' : 'active';
+    await ensureInterviewInsightLifecycleColumns();
 
     const interviewInsightService = await import('../services/InterviewInsightService.js');
     const insights = await interviewInsightService.list(user.organizationId, {
       limit: Number(limit),
       offset: Number(offset),
+      scope: normalizedScope,
     });
 
     res.json(insights);
@@ -7710,7 +7746,7 @@ ${JSON.stringify(questions || [], null, 2)}
   updateInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { title, status, exportedToTools, exportedToAssessment } = req.body;
+    const { title, status, exportedToTools, exportedToAssessment, archived } = req.body;
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -7730,6 +7766,17 @@ ${JSON.stringify(questions || [], null, 2)}
     if (exportedToAssessment !== undefined) {
       updates.push('exported_to_assessment = ?');
       values.push(exportedToAssessment ? 1 : 0);
+    }
+    // Lifecycle: archive / restore (soft, reversible). Ensure columns exist first.
+    if (archived !== undefined) {
+      await ensureInterviewInsightLifecycleColumns();
+      if (archived) {
+        updates.push('archived_at = ?', 'archived_by = ?');
+        values.push(new Date().toISOString(), user.id);
+      } else {
+        updates.push('archived_at = ?', 'archived_by = ?');
+        values.push(null, null);
+      }
     }
 
     if (updates.length === 0) {
@@ -7753,6 +7800,15 @@ ${JSON.stringify(questions || [], null, 2)}
         insightId: id,
         type: 'edit',
         description: 'Insight updated',
+        userId: user.id,
+      });
+    }
+    if (archived !== undefined) {
+      void logInterviewInsightActivity({
+        organizationId: user.organizationId,
+        insightId: id,
+        type: 'edit',
+        description: archived ? 'Insight archived' : 'Insight restored',
         userId: user.id,
       });
     }

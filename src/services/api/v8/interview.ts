@@ -182,6 +182,7 @@ export interface V8InterviewInsight {
   reviewedBy?: string;
   exportedToTools?: boolean;
   exportedToAssessment?: boolean;
+  archivedAt?: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -641,10 +642,15 @@ export const V8InterviewApi = {
 
   // --- Insights ---
 
-  listInsights: (params?: { limit?: number; offset?: number }) => {
+  listInsights: (params?: {
+    limit?: number;
+    offset?: number;
+    scope?: 'active' | 'archived' | 'all';
+  }) => {
     const query: Record<string, string> = {};
     if (params?.limit !== undefined) query.limit = String(params.limit);
     if (params?.offset !== undefined) query.offset = String(params.offset);
+    if (params?.scope !== undefined) query.scope = params.scope;
     return v8Get<{ insights: V8InterviewInsight[] }>(
       '/interview/insights',
       Object.keys(query).length ? query : undefined
@@ -771,13 +777,11 @@ export const V8InterviewApi = {
       status?: string;
       exportedToTools?: boolean;
       exportedToAssessment?: boolean;
+      archived?: boolean;
     }
   ) => v8Patch<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}`, payload),
 
-  exportInsight: (
-    id: string,
-    payload: { target: 'tools' | 'assessment'; sectionIds?: string[] }
-  ) =>
+  exportInsight: (id: string, payload: { target: 'tools' | 'assessment'; sectionIds?: string[] }) =>
     v8Post<{ success: boolean; target: string; targetId: string; assessmentType?: string }>(
       `/interview/insights/${encodeURIComponent(id)}/export`,
       payload
