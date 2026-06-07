@@ -69,7 +69,8 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const [panelPos, setPanelPos] = useState<{
     top: number;
-    left: number;
+    right: number;
+    maxWidth: number;
     placement: 'top' | 'bottom';
   } | null>(null);
 
@@ -103,6 +104,9 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   }, [isOpen]);
 
   // Position panel (fixed) so it won't be clipped by overflow containers.
+  // Right-anchored to the button's right edge via CSS `right` — robust to panel width
+  // (no width measurement, which mis-fired on first paint and detached the menu). A
+  // ResizeObserver re-runs once the panel settles, so height-based flip is also correct.
   useLayoutEffect(() => {
     if (!isOpen) return;
     if (!anchorRect) return;
@@ -111,22 +115,33 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
 
     const margin = 8;
     const gap = 6; // matches mt-1 (~4px) + a bit of breathing room
-    const panelWidth = panel.offsetWidth || 160;
-    const panelHeight = panel.offsetHeight || 200;
 
-    const canOpenDown = anchorRect.bottom + gap + panelHeight <= window.innerHeight - margin;
-    const canOpenUp = anchorRect.top - gap - panelHeight >= margin;
-    const placement: 'top' | 'bottom' = !canOpenDown && canOpenUp ? 'top' : 'bottom';
+    const reposition = () => {
+      const p = panelRef.current;
+      if (!p) return;
+      const panelHeight = p.offsetHeight || 200;
 
-    const top =
-      placement === 'bottom'
-        ? Math.min(window.innerHeight - margin - panelHeight, anchorRect.bottom + gap)
-        : Math.max(margin, anchorRect.top - gap - panelHeight);
+      const canOpenDown = anchorRect.bottom + gap + panelHeight <= window.innerHeight - margin;
+      const canOpenUp = anchorRect.top - gap - panelHeight >= margin;
+      const placement: 'top' | 'bottom' = !canOpenDown && canOpenUp ? 'top' : 'bottom';
 
-    const desiredLeft = anchorRect.right - panelWidth;
-    const left = Math.max(margin, Math.min(desiredLeft, window.innerWidth - margin - panelWidth));
+      const top =
+        placement === 'bottom'
+          ? Math.min(window.innerHeight - margin - panelHeight, anchorRect.bottom + gap)
+          : Math.max(margin, anchorRect.top - gap - panelHeight);
 
-    setPanelPos({ top, left, placement });
+      // Anchor the panel's RIGHT edge to the button's right edge. The panel grows leftward,
+      // so its width never affects horizontal placement. Clamp width so it can't overflow left.
+      const right = Math.max(margin, Math.round(window.innerWidth - anchorRect.right));
+      const maxWidth = Math.max(160, Math.round(anchorRect.right - margin));
+
+      setPanelPos({ top, right, maxWidth, placement });
+    };
+
+    reposition();
+    const ro = new ResizeObserver(reposition);
+    ro.observe(panel);
+    return () => ro.disconnect();
   }, [isOpen, anchorRect]);
 
   // Close on Escape
@@ -205,10 +220,11 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                 panelPos
                   ? {
                       top: panelPos.top,
-                      left: panelPos.left,
+                      right: panelPos.right,
+                      maxWidth: panelPos.maxWidth,
                       transformOrigin: panelPos.placement === 'top' ? 'bottom right' : 'top right',
                     }
-                  : { top: -9999, left: -9999 }
+                  : { top: -9999, right: -9999 }
               }
               onClick={(e) => {
                 // Prevent row click/selection from firing behind the menu.

@@ -92,7 +92,13 @@ import { StatusPill } from '@/components/shared/StatusPill';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import { LoadingState } from '@/components/ui/primitives';
 import { AssigneeCell, ProgressCell } from '@/components/ui/primitives/cells';
-import { categoryTone, DueChip, EntityStatusChip } from '@/components/ui/primitives/chips';
+import {
+  categoryTone,
+  DueChip,
+  EntityStatusChip,
+  PriorityChip,
+  type PriorityLevel,
+} from '@/components/ui/primitives/chips';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -100,7 +106,7 @@ import {
   type TableFilters,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
-import { getPriorityStyle, getStatusStyle, getTypeStyle } from '@/constants/statusColors';
+import { getStatusStyle, getTypeStyle } from '@/constants/statusColors';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
@@ -10167,9 +10173,19 @@ Return ONLY the answer text (no markdown fences).`;
         };
       };
 
-      const priorityMeta = (priorityValue?: string) => {
-        const style = getPriorityStyle(priorityValue);
-        return `border border-current/20 ${style.bg} ${style.text}`;
+      // Map initiative priority → canon PriorityChip level (neutral shell + colored dot).
+      const priorityLevel = (priorityValue?: string): PriorityLevel => {
+        switch (String(priorityValue || '').toLowerCase()) {
+          case 'critical':
+          case 'urgent':
+            return 'urgent';
+          case 'high':
+            return 'high';
+          case 'low':
+            return 'low';
+          default:
+            return 'medium';
+        }
       };
 
       const hiddenSet = new Set(initiativesHiddenColumns);
@@ -10623,15 +10639,7 @@ Return ONLY the answer text (no markdown fences).`;
                           className="px-3 py-3 text-left align-middle"
                           style={{ width: initiativesColumnWidths.status }}
                         >
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none ${meta.cls}`}
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full ${meta.dotClass}`}
-                              aria-hidden="true"
-                            />
-                            {meta.label}
-                          </span>
+                          <EntityStatusChip status={status} label={meta.label} />
                         </td>
                       ) : null}
                       {!hiddenSet.has('priority') ? (
@@ -10640,13 +10648,10 @@ Return ONLY the answer text (no markdown fences).`;
                           style={{ width: initiativesColumnWidths.priority }}
                         >
                           {initiative.priority ? (
-                            <span
-                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none ${priorityMeta(
-                                initiative.priority
-                              )}`}
-                            >
-                              {String(initiative.priority).toLowerCase()}
-                            </span>
+                            <PriorityChip
+                              level={priorityLevel(initiative.priority)}
+                              label={String(initiative.priority).toLowerCase()}
+                            />
                           ) : (
                             <span className="text-[11px] text-slate-600">—</span>
                           )}
