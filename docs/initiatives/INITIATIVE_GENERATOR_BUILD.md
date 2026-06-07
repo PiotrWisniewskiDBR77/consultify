@@ -61,6 +61,18 @@ Podpięcie jednego przycisku w hubach/insighcie. **Robione po wylądowaniu przeb
 jego pliki). Do tego czasu wszystko testowalne przez hash-mount.
 - ☐ Jeden komponent-launcher otwierany z `source`+`mode`; ☐ wpięty w ≥2 miejscach; ☐ E2E z realnym źródłem.
 
+- 2026-06-07: **Fazy 2b / 4 / 5 ZBUDOWANE i ZINTEGROWANE** (3 agenty równolegle, addytywnie),
+  commit `f4c848056c`:
+  - 2b `proposeCandidates.ts` (AI-first + deterministic fallback) — wpięte: modal auto-proponuje z `source.content`.
+  - 4 `suggestedChanges.ts` + `SuggestedChangesPanel.tsx` — wpięte: „accept change" → submitSuggestedChange (graceful, backend TBD).
+  - 5 `InitiativeCoverageWaveView.tsx` — wpięte: zakładka „Coverage & waves" (luki MECE + fale + WIP-limit).
+  Zweryfikowane live (temp-mount): tekst źródła → 4 propozycje; coverage tab → luki + „over capacity 4>3".
+  tsc+eslint czyste; testy 12/12 + propose-engine 3/3.
+  **Realne luki (uczciwie):** backend `/initiatives/propose` i persystencja suggested-changes = TBD
+  (działa fallback); `SuggestedChangesPanel` zbudowany ale niemontowany w detalu inicjatywy (WIP agenta);
+  GeneratorModal nie ma produkcyjnego launch-pointu (sensowny wpięty z insightu = `InsightViewer`, w WIP agenta);
+  live-klik w zalogowanym Hubie do potwierdzenia po re-loginie.
+
 ## Runda audytowa (po pełnym przejściu Faz 1–5)
 Audytor przechodzi checklistę ☐ z każdej fazy + globalnie:
 - ☐ Zero edycji plików drugiego agenta (git: tylko nowe pliki + ewentualnie Faza 0 po koordynacji).
