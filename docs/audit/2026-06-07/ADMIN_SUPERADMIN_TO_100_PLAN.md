@@ -147,6 +147,19 @@ S4 (testy smoke), S9 (error-states), OA-6..10, SA-3, SA-5 (smoke wizualny per-za
 
 ---
 
+## 7a. FAZA 1 — STATUS PO WERYFIKACJI KODU (2026-06-07)
+
+> **META-WNIOSEK (ważny dla całego planu):** listy luk oparte na audycie 06-02, specach i szybkich skanach sub-agentów **mocno zawyżają** niekompletność. Z items prześwietlonych w kodzie realna była ~1 na 7. **Każdy punkt trzeba zweryfikować w runtime kodzie zanim się go buduje** — inaczej budujemy na fałszywych przesłankach.
+
+| ID | Deklarowany problem | Werdykt po weryfikacji | Dowód |
+|---|---|---|---|
+| P0-6 / OA-1 | ADMIN nie zarządza szablonami wywiadów | ✅ FUNKCJONALNIE ZAMKNIĘTE. ADMIN przechodzi enforcement przez `FALLBACK_INTERVIEW_PERMISSIONS[ADMIN]`; panel nie gate'uje przycisków | `permissionService.ts:338-351,403`; `permission.middleware.ts:262-321`; `InterviewAssignmentsPanel.tsx` (0 ref. permission) |
+| OA-2 | ADMIN brak POLICY_RULE_UPDATE/DELETE/TOGGLE | ⚠️ DO POTWIERDZENIA — może być zamierzone OWNER-only; brak dowodu na zepsuty flow | `539_*.sql` (tylko CREATE/VIEW) |
+| OA-4 | Org Profile nie zapisuje (stub) | ❌ NIEPRAWDA. Pełne wiring: `PUT /api/organization-profiles/:id` + potwierdzenie zapisu re-fetch, upload logo, weryfikacja domeny (914 linii) | `OrganizationProfileView.tsx:209-230`; backend `organization-profiles.routes.ts:369` |
+| OA-5 | Billing Settings nie zapisuje (stub) | 🔴 REALNA LUKA. FE woła `GET/PUT /api/billing/settings` — endpoint NIE istnieje w backendzie → 404, cichy fail. Kontakty są lokalne ("In production this would call an API") | `BillingSettingsView.tsx:106,140,211`; brak `/settings` w `routes/billing/` |
+
+**Wniosek operacyjny:** przed budowaniem czegokolwiek z list OA-6..OA-11 / SA-* — najpierw code-verified re-audit (jak wyżej). Jedyny potwierdzony buildowalny gap: **OA-5** (backend billing settings: tabela + GET/PUT + ewentualnie kontakty/export).
+
 ## 8a. DECYZJE WŁAŚCICIELA (2026-06-07)
 
 - **D2 Billing → faktury manualne.** Stripe poza GA. Flaga `isBillingSelfServeEnabled()` zostaje OFF; 3 widoki revenue ukryte (`BillingFeaturePending`). P0-1 = potwierdzić świadome OFF, NIE wdrażamy Stripe teraz.
