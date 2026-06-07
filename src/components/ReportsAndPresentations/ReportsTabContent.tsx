@@ -4,7 +4,7 @@
  * Connected to /api/report-builder backend
  */
 
-import { Archive, Download, ExternalLink, FileText, MessageCircle, Share2 } from 'lucide-react';
+import { Archive, ChevronRight, Download, ExternalLink, FileText, MessageCircle, Share2 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -222,6 +222,13 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   };
 
   const getRowActions = (row: ReportItem): RowAction[] => [
+    // canon §9.2 FIXED BOTTOM MANIFEST position 1
+    {
+      id: 'open_preview',
+      label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+      icon: ChevronRight,
+      onClick: () => setSelectedId(row.id),
+    },
     {
       id: 'open',
       label: t('rap.actions.open', 'Otwórz'),
@@ -265,11 +272,11 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
       },
     },
     {
+      // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
       id: 'archive',
-      label: t('rap.actions.delete', 'Usuń'),
+      label: t('rap.actions.archive', 'Archiwizuj'),
       icon: Archive,
       divider: true,
-      variant: 'danger',
       onClick: async () => {
         const ok = await actions.archiveReport(row);
         if (ok) onRefresh();

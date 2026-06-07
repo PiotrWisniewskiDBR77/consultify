@@ -4,7 +4,7 @@
  * Connected to /api/presentations/decks backend
  */
 
-import { Archive, Download, Edit, ExternalLink, MessageCircle, Share2 } from 'lucide-react';
+import { Archive, ChevronRight, Download, Edit, ExternalLink, MessageCircle, Share2 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -201,6 +201,13 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
   };
 
   const getRowActions = (row: PresentationItem): RowAction[] => [
+    // canon §9.2 FIXED BOTTOM MANIFEST position 1
+    {
+      id: 'open_preview',
+      label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+      icon: ChevronRight,
+      onClick: () => setSelectedId(row.id),
+    },
     {
       id: 'open',
       label: t('rap.actions.open', 'Otwórz'),
@@ -259,11 +266,11 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
       },
     },
     {
+      // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
       id: 'archive',
-      label: t('rap.actions.delete', 'Usuń'),
+      label: t('rap.actions.archive', 'Archiwizuj'),
       icon: Archive,
       divider: true,
-      variant: 'danger',
       onClick: async () => {
         const ok = await actions.archiveDeck(row);
         if (ok) onRefresh();

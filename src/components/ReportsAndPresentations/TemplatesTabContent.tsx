@@ -5,7 +5,9 @@
  */
 
 import {
+  Archive,
   BookTemplate,
+  ChevronRight,
   Copy,
   Edit,
   FileSpreadsheet,
@@ -233,6 +235,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   );
 
   const getRowActions = (row: TemplateItem): RowAction[] => [
+    // canon §9.2 FIXED BOTTOM MANIFEST position 1
+    {
+      id: 'open_preview',
+      label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+      icon: ChevronRight,
+      onClick: () => setSelectedId(row.id),
+    },
     {
       id: 'use',
       label: t('rap.actions.useTemplate', 'Użyj wzorca'),
@@ -292,6 +301,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       label: t('rap.actions.edit', 'Edytuj'),
       icon: Edit,
       onClick: () => navigate(resolveTemplateEditPath(row.id, row.type)),
+    },
+    {
+      // canon §14 + §9.2: Archive slot — soft-delete placeholder (backend TBD)
+      id: 'archive',
+      label: t('rap.actions.archive', 'Archiwizuj'),
+      icon: Archive,
+      divider: true,
+      disabled: true,
+      description: 'Wkrótce',
+      onClick: () => {},
     },
   ];
 

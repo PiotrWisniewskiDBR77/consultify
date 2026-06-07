@@ -7,6 +7,7 @@ import {
   Archive,
   BookTemplate,
   CheckCircle2,
+  ChevronRight,
   Download,
   ExternalLink,
   FileSpreadsheet,
@@ -464,6 +465,13 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const getRowActions = (row: AggregateRow): RowAction[] => {
     const isTemplateArtifact = Boolean((row.governance?.originSummary as any)?.template);
     const base: RowAction[] = [
+      // canon §9.2 FIXED BOTTOM MANIFEST position 1
+      {
+        id: 'open_preview',
+        label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+        icon: ChevronRight,
+        onClick: () => setSelectedId(row.id),
+      },
       {
         id: 'open',
         label: t('rap.actions.open', 'Otwórz'),
@@ -592,11 +600,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         onClick: () => actions.exportReportPdf(row),
       });
       base.push({
+        // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
         id: 'archive',
-        label: t('rap.actions.delete', 'Usuń'),
+        label: t('rap.actions.archive', 'Archiwizuj'),
         icon: Archive,
         divider: true,
-        variant: 'danger',
         onClick: async () => {
           const ok = await actions.archiveReport(row);
           if (ok) onRefresh();
@@ -610,11 +618,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         onClick: () => actions.exportDeckPptx(row),
       });
       base.push({
+        // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
         id: 'archive',
-        label: t('rap.actions.delete', 'Usuń'),
+        label: t('rap.actions.archive', 'Archiwizuj'),
         icon: Archive,
         divider: true,
-        variant: 'danger',
         onClick: async () => {
           const ok = await actions.archiveDeck(row);
           if (ok) onRefresh();

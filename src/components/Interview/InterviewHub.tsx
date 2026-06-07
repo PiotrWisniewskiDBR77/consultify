@@ -5740,17 +5740,20 @@ export const InterviewHub: React.FC = () => {
         const statusConfig = getSessionStatusConfig(workflowStatus);
 
         // canon §8.1: NO status-colored gradients; canonical neutral card
-        const kebabSections = [
+        const kebabSections: import('../shared/RowActionsMenu').RowActionSection[] = [
           {
-            kind: 'context' as const,
-            items: [
+            id: 'context',
+            kind: 'context',
+            actions: [
               {
+                id: 'open_preview',
                 label: isPolish ? 'Otwórz podgląd' : 'Open preview',
                 icon: ChevronRight,
                 onClick: () =>
                   onCardClick ? onCardClick(session.id) : setPreviewSessionId(session.id),
               },
               {
+                id: 'open_full',
                 label: isPolish ? 'Otwórz pełny widok' : 'Open full view',
                 icon: ExternalLink,
                 onClick: () => handleViewSession(session),
