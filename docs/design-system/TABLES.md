@@ -1,5 +1,8 @@
 # Tables — graphic canon (#18)
 
+> ⚠️ **SUPERSEDED (2026-06-06) — SSOT to [`TABLE_AND_PREVIEW_CANON.md`](../ui-standards/03-modules/TABLE_AND_PREVIEW_CANON.md).**
+> **KOREKTA:** reguła „use `StatusPill`" w §3 jest **nieaktualna** — `StatusPill` jest legacy. Status renderuj przez rodzinę chipów `c.*` (`EntityStatusChip`/`statusChipTone()`), patrz kanon §4.1.
+
 > The single visual + behavioural spec for every data table in Consultify.
 > **Status: canonical (enforced)** · Updated 2026-06-05
 

@@ -144,7 +144,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
             value={title}
             onChange={(e) => !titleReadOnly && onTitleChange(e.target.value)}
             readOnly={titleReadOnly}
-            className="flex-1 text-xl font-semibold bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
+            className="flex-1 text-xl font-bold bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
             placeholder={
               titlePlaceholder ? (isPolish ? titlePlaceholder.pl : titlePlaceholder.en) : undefined
             }

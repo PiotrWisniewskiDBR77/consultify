@@ -7,7 +7,7 @@
  * AC (A2, A3, A6): Row actions as "⋯" or dropdown; always readable.
  */
 
-import { MoreHorizontal, MoreVertical } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal, MoreVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -23,6 +23,9 @@ export interface RowAction {
   rightLabel?: string;
   /** If true, shows a divider above this action */
   divider?: boolean;
+  /** Optional inline sub-menu (e.g. Delay ▸ +1/+3/+7). Clicking the parent
+   *  expands these items inline instead of firing onClick. */
+  submenu?: RowAction[];
 }
 
 export type RowActionSectionKind =
@@ -60,6 +63,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   iconVariant = 'vertical',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
@@ -79,6 +83,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
     if (!isOpen) {
       setAnchorRect(null);
       setPanelPos(null);
+      setExpandedId(null);
       return;
     }
 
@@ -223,6 +228,8 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                     ) : null}
                     {section.actions.map((action) => {
                       const Icon = action.icon;
+                      const hasSub = !!action.submenu?.length;
+                      const expanded = expandedId === action.id;
                       return (
                         <React.Fragment key={action.id}>
                           {action.divider && (
@@ -232,12 +239,17 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                             onClick={(e) => {
                               e.stopPropagation();
                               if (action.disabled) return;
+                              if (hasSub) {
+                                setExpandedId((prev) => (prev === action.id ? null : action.id));
+                                return;
+                              }
                               action.onClick();
                               setIsOpen(false);
                             }}
                             disabled={action.disabled}
                             className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[action.variant || 'default']}`}
                             role="menuitem"
+                            aria-expanded={hasSub ? expanded : undefined}
                             title={action.description}
                           >
                             {Icon && <Icon size={14} className="shrink-0" />}
@@ -254,7 +266,36 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                                 {action.rightLabel}
                               </span>
                             ) : null}
+                            {hasSub ? (
+                              expanded ? (
+                                <ChevronDown size={13} className="shrink-0 opacity-60" />
+                              ) : (
+                                <ChevronRight size={13} className="shrink-0 opacity-60" />
+                              )
+                            ) : null}
                           </button>
+                          {hasSub && expanded
+                            ? action.submenu!.map((sub) => {
+                                const SubIcon = sub.icon;
+                                return (
+                                  <button
+                                    key={sub.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (sub.disabled) return;
+                                      sub.onClick();
+                                      setIsOpen(false);
+                                    }}
+                                    disabled={sub.disabled}
+                                    className={`w-full flex items-center gap-2 py-1.5 pl-8 pr-3 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[sub.variant || 'default']}`}
+                                    role="menuitem"
+                                  >
+                                    {SubIcon && <SubIcon size={13} className="shrink-0" />}
+                                    <span className="min-w-0 flex-1 truncate">{sub.label}</span>
+                                  </button>
+                                );
+                              })
+                            : null}
                         </React.Fragment>
                       );
                     })}

@@ -4847,10 +4847,10 @@ export const InterviewHub: React.FC = () => {
               )}
               {!hiddenSet.has('status') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: sessionsColumnWidths.status }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
                         'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
@@ -5128,7 +5128,7 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('status') && (
                     <td
-                      className="px-3 py-3 text-center align-middle"
+                      className="px-3 py-3 text-left align-middle"
                       style={{ width: sessionsColumnWidths.status }}
                     >
                       {/* Shared StatusPill (SSOT) for tone, with the
@@ -6844,10 +6844,10 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('questions') && (
                 <th
-                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.questions }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-end gap-1">
                     <span
                       className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                       onClick={() => toggleTemplateSort('questions')}
@@ -6868,10 +6868,10 @@ export const InterviewHub: React.FC = () => {
               {/* #16 — Usage count */}
               {!hiddenSet.has('usage') && (
                 <th
-                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.usage }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-end gap-1">
                     <span
                       className="cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200"
                       onClick={() => toggleTemplateSort('usage')}
@@ -6928,10 +6928,10 @@ export const InterviewHub: React.FC = () => {
 
               {!hiddenSet.has('status') && (
                 <th
-                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.status }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
                         'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
@@ -7240,7 +7240,7 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('questions') && (
                     <td
-                      className="px-3 py-3 text-center text-sm text-slate-500 dark:text-slate-400"
+                      className="px-3 py-3 text-right text-sm text-slate-500 dark:text-slate-400 tabular-nums"
                       style={{ width: templatesColumnWidths.questions }}
                     >
                       {template.questionCount}
@@ -7250,7 +7250,7 @@ export const InterviewHub: React.FC = () => {
                   {/* #16 — Usage count (real, derived from assignment data). */}
                   {!hiddenSet.has('usage') && (
                     <td
-                      className="px-3 py-3 text-center text-sm text-slate-500 dark:text-slate-400"
+                      className="px-3 py-3 text-right text-sm text-slate-500 dark:text-slate-400 tabular-nums"
                       style={{ width: templatesColumnWidths.usage }}
                     >
                       {(() => {
@@ -7290,7 +7290,7 @@ export const InterviewHub: React.FC = () => {
 
                   {!hiddenSet.has('status') && (
                     <td
-                      className="px-3 py-3 text-center"
+                      className="px-3 py-3 text-left"
                       style={{ width: templatesColumnWidths.status }}
                     >
                       {/* V-A S5 — real status chip (draft/in_review/approved/
@@ -8787,10 +8787,10 @@ Return ONLY the answer text (no markdown fences).`;
               )}
               {!hiddenSet.has('status') && (
                 <th
-                  className="relative px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   style={{ width: columnWidths.status }}
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span
                       className={[
                         'cursor-pointer select-none transition-colors hover:text-slate-700 dark:hover:text-slate-200',
@@ -9137,9 +9137,18 @@ Return ONLY the answer text (no markdown fences).`;
                           </span>
                           {assignment.template?.category ? (
                             <span
-                              className="shrink-0 max-w-[160px] truncate inline-flex items-center h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300"
+                              className="shrink-0 max-w-[160px] truncate inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300"
                               title={assignment.template.category}
                             >
+                              {categoryTone(assignment.template.category) ? (
+                                <span
+                                  aria-hidden="true"
+                                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                                  style={{
+                                    backgroundColor: categoryTone(assignment.template.category)!,
+                                  }}
+                                />
+                              ) : null}
                               {assignment.template.category}
                             </span>
                           ) : null}
@@ -9168,7 +9177,7 @@ Return ONLY the answer text (no markdown fences).`;
                   )}
                   {!hiddenSet.has('status') && (
                     <td
-                      className="px-4 py-3 text-center align-middle"
+                      className="px-4 py-3 text-left align-middle"
                       style={{ width: columnWidths.status }}
                     >
                       {/* Shared StatusPill (SSOT) for tone, with the

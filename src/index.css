@@ -63,6 +63,21 @@
     --c-warning: #ae6429; /* was #d97706 — HBS Orange 1 */
     --c-danger: #e80538; /* was #dc2626 — HBS Red 2 */
     --c-info: #3b2883; /* was #2563eb — HBS Blue 1 */
+    /* Tag/identity palette (light) — MUTED, equal-weight hues for category/type/
+     * source chips. Deliberately distinct from the signal tones above so a tag
+     * NEVER reads as status/alarm. Used only as a thin left accent / dot. */
+    --c-tag-1: #3b8ea5; /* cyan-blue */
+    --c-tag-2: #6a74d8; /* periwinkle */
+    --c-tag-3: #9d5bd2; /* violet */
+    --c-tag-4: #c45b9c; /* magenta */
+    --c-tag-5: #b06a4a; /* terracotta */
+    --c-tag-6: #5a9367; /* sage */
+    --c-tag-7: #8a8f3a; /* olive */
+    --c-tag-8: #7b8794; /* slate */
+    --c-tag-9: #b5783a; /* amber-brown */
+    --c-tag-10: #5566b8; /* blue */
+    --c-tag-11: #a0568f; /* plum */
+    --c-tag-12: #4f9e6f; /* emerald-muted */
   }
 
   .dark {
@@ -117,6 +132,19 @@
     --c-warning: #f7c76b; /* was #fbbf24 — HBS Orange 4 */
     --c-danger: #ed5541; /* was #f87171 — HBS Red 3 */
     --c-info: #aac8eb; /* was #60a5fa — HBS Blue 4 */
+    /* Tag/identity palette (dark) — lifted for contrast on navy. */
+    --c-tag-1: #5ab0c4;
+    --c-tag-2: #8e96e6;
+    --c-tag-3: #b97fe0;
+    --c-tag-4: #d97fb5;
+    --c-tag-5: #cc8a6e;
+    --c-tag-6: #7fb88f;
+    --c-tag-7: #aeb35f;
+    --c-tag-8: #9aa4b2;
+    --c-tag-9: #d29a5a;
+    --c-tag-10: #7d8de0;
+    --c-tag-11: #c47fb0;
+    --c-tag-12: #6fc492;
   }
 }
 

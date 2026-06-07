@@ -1336,6 +1336,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     return uniqueNonEmpty([...fromSummaries, ...fromNarrative])
       .map(stripMarkdownPreview)
       .filter(Boolean)
+      .filter((item) => (item.match(/·/g) || []).length < 3)
       .slice(0, 10);
   }, [parsedInsightSections, sourceSessionSummaries, sourceSessions]);
 
@@ -2575,33 +2576,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         readOnly: true,
       },
       {
-        id: 'genTime',
-        label: { en: 'Gen Time', pl: 'Czas gen.' },
-        type: 'text' as const,
-        value: insight?.generationTimeMs ? `${(insight.generationTimeMs / 1000).toFixed(1)}s` : '-',
-        onChange: () => {},
-        readOnly: true,
-      },
-      {
         id: 'sessions',
         label: { en: 'Sessions', pl: 'Sesje' },
         type: 'text' as const,
         value: String(insight?.sourceSessionCount || 0),
         onChange: () => {},
         readOnly: true,
-      },
-      {
-        id: 'reviewStatus',
-        label: { en: 'Review', pl: 'Recenzja' },
-        type: 'select' as const,
-        value: insight?.reviewStatus || 'draft',
-        onChange: () => {},
-        readOnly: true,
-        options: [
-          { value: 'draft', label: { en: 'Draft', pl: 'Szkic' } },
-          { value: 'in_review', label: { en: 'In Review', pl: 'W recenzji' } },
-          { value: 'published', label: { en: 'Published', pl: 'Opublikowano' } },
-        ],
       },
       {
         id: 'findings',
@@ -2611,38 +2591,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         onChange: () => {},
         readOnly: true,
       },
-      {
-        id: 'candidates',
-        label: { en: 'Candidates', pl: 'Kandydaci' },
-        type: 'text' as const,
-        value: String(candidateSummary.total),
-        onChange: () => {},
-        readOnly: true,
-      },
-      {
-        id: 'evidence',
-        label: { en: 'Evidence', pl: 'Dowody' },
-        type: 'text' as const,
-        value: String(findingsSummary.activeEvidence),
-        onChange: () => {},
-        readOnly: true,
-      },
-      {
-        id: 'readback',
-        label: { en: 'Readback', pl: 'Readback' },
-        type: 'text' as const,
-        value: `${readbackSummary.confirmed}/${findingsSummary.total}`,
-        onChange: () => {},
-        readOnly: true,
-      },
     ],
     [
-      candidateSummary.total,
-      findingsSummary.activeEvidence,
       findingsSummary.total,
       insight,
       isPolish,
-      readbackSummary.confirmed,
       typeMeta,
     ]
   );
@@ -2934,27 +2887,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </Callout>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-900/40 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.slate.300)] dark:shadow-[inset_3px_0_0_theme(colors.slate.600)]">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Official answers' : 'Official answers'}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
                     {officialAnswers.length}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-xl border border-rose-200/40 dark:border-rose-900/30 bg-rose-50/60 dark:bg-rose-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.rose.400)]">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-rose-500 dark:text-rose-400">
                     {isPolish ? 'Issues / Risks' : 'Issues / risks'}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
                     {issuesReadout.length}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.emerald.400)]">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
                     {isPolish ? 'Signals / Opportunities' : 'Signals / opportunities'}
                   </div>
-                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
                     {hiddenSignals.length + opportunityReadout.length}
                   </div>
                 </div>
@@ -3013,7 +2966,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     officialAnswers.map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                        className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-900/40 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 shadow-[inset_3px_0_0_theme(colors.slate.300)] dark:shadow-[inset_3px_0_0_theme(colors.slate.600)]"
                       >
                         {item}
                       </div>
@@ -3029,14 +2982,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-500 dark:text-rose-400">
                     {isPolish ? 'Issues / Risks' : 'Issues / Risks'}
                   </div>
                   {issuesReadout.length > 0 ? (
                     issuesReadout.map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl bg-rose-500/[0.04] dark:bg-rose-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                        className="rounded-xl border border-rose-200/40 dark:border-rose-900/30 bg-rose-50/60 dark:bg-rose-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 shadow-[inset_3px_0_0_theme(colors.rose.400)]"
                       >
                         {item}
                       </div>
@@ -3054,14 +3007,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
                     {isPolish ? 'Signals / Opportunities' : 'Signals / Opportunities'}
                   </div>
                   {uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).length > 0 ? (
                     uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl bg-emerald-500/[0.04] dark:bg-emerald-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                        className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300 shadow-[inset_3px_0_0_theme(colors.emerald.400)]"
                       >
                         {item}
                       </div>

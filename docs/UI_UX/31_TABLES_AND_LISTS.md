@@ -7,6 +7,8 @@ status: canonical
 last_updated: 2026-05-09
 ---
 
+> ⚠️ **SUPERSEDED (2026-06-06) — SSOT to [`TABLE_AND_PREVIEW_CANON.md`](../ui-standards/03-modules/TABLE_AND_PREVIEW_CANON.md).** W razie konfliktu obowiązuje kanon.
+
 # Tables & lists (App Table canon)
 
 ## Purpose

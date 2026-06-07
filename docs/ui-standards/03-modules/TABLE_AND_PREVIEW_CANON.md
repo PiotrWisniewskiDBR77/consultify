@@ -1,0 +1,676 @@
+---
+uiux_doc_id: UIUX_TABLE_PREVIEW_CANON
+doc_kind: AUTHOR_CANON
+version: 1.0
+owner: user
+status: canonical
+last_updated: 2026-06-06
+supersedes_as_index:
+  - docs/ui-standards/03-modules/app-table-standard.md
+  - docs/ui-standards/03-modules/table-preview-pane-standard.md
+  - docs/ui-standards/03-modules/view-modes-standard.md
+  - docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md
+  - docs/design-system/TABLES.md
+  - docs/UI_UX/31_TABLES_AND_LISTS.md
+---
+
+# Table + Preview Canon (app-wide) — KANON v1
+
+> **Status:** Canonical, single source of truth dla tabel listowych i preview pane w całej aplikacji. Podrzędny tylko wobec `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`.
+> **Rola:** Ten dokument **konsoliduje i rozstrzyga** 6 wcześniejszych, częściowo sprzecznych standardów tabel (patrz front‑matter `supersedes_as_index`). Te dokumenty pozostają jako materiał szczegółowy, ale **w razie konfliktu obowiązuje TEN plik.**
+> **Siostra:** kanon menu — `13_MENU_2_MODULE_TOPBAR.md`, `14_MENU_3_COMMAND_ROW.md`, `module-hub-standard.md`. Tabela żyje POD Menu 2/3 i z nimi nie konkuruje.
+> **Złote referencje wizualne:** `docs/ui-standards/assets/app-table-golden-reference-{dark,light}-2026-05-02.png`.
+
+---
+
+## 0) TL;DR — kanon w 12 zdaniach
+
+1. **Jedna tabela**: `FilterableTable` (24 adopcje) renderowana jako `children` `TableWithPreviewLayout` (orkiestracja preview + J/K + historia). To jest „TA tabela".
+2. **Jedne karty**: `GridView` (alternatywny widok), zawsze WEWNĄTRZ tego samego `TableWithPreviewLayout`.
+3. **Jeden status**: rodzina chipów `c.*` (`ui/primitives/chips/StatusChip` + bridge `statusChipTone()`) → tony semantyczne na tokenach HBS (`--c-success/warning/danger/info` + neutral). Zero ad‑hoc badge'y, zero hardcodowanych blue‑900. `shared/StatusPill` = legacy do migracji.
+4. **Nagłówek**: `text-[11px] font-semibold uppercase tracking-wider`, kolor `text-slate-500 dark:text-slate-400`, **zawsze `sticky top-0 z-10`**, rodzic NIGDY `overflow-hidden`.
+5. **Wyrównanie kolumn (2026)**: tytuł = `text-left`; **tabliczki/chipy (tag/kategoria/typ/źródło + status) = `text-left` + wiodąca kropka**; **liczby = `text-right`**; assignee/due = left; akcje = `text-right`. Centrowane chipy/statusy = ZAKAZ. **Ta sama rola = to samo wyrównanie wszędzie.**
+6. **Gęstość**: `px-4 py-3` (comfortable, default) / `px-4 py-2` (compact, tylko kolejki admin). Wysokość wiersza **nie zmienia się** na hover.
+7. **Wiersz**: monochromatyczny, brak zebry, separatory `divide-y divide-slate-200/60 dark:divide-white/[0.03]`. Selected = `bg-primary-500/8` + 4px lewy akcent. **Nigdy** tła wiersza barwionego statusem.
+8. **Resize + persistencja**: `table-fixed`, resizer sąsiadujący (zero‑sum), szerokości i widoczność kolumn **persystowane do localStorage** przez `persistKey`.
+9. **Ustawienia kolumn**: portalowy `TableSettingsPopover` (NIE modal), ikona `Settings2` w prawym górnym rogu nagłówka.
+10. **Preview**: domyślnie ZAMKNIĘTY; single‑click → select+preview, double‑click/Enter → full view, Esc → zamknij. Szerokość `clamp(340px, 28%, 480px)`, separacja `gap-1.5` (BEZ `border-l`).
+11. **Stopka preview — sztywna kolejność**: AI hints (3 chipy + ⋮) → divider → Relations (2 wiersze, stała wysokość) → divider → Actions (pill `h-9`).
+12. **Puste komórki**: `—` (em dash, wyciszony), nigdy puste. Empty/Loading/Error: współdzielone stany, nigdy biały ekran/„coś poszło nie tak" bez retry.
+
+---
+
+## 1) Definicja i zakres
+
+**Tabela listowa (interactive list table)** = przeglądalna kolekcja encji org‑scoped z akcjami (select, filter, sort, resize, row actions, preview). To jest jedyny przedmiot tego kanonu.
+
+### 1.1 W ZAKRESIE (MUST stosować kanon)
+Wszystkie listy/indeksy encji: My Work (Ideas/Tasks/Decisions/Inbox/Notifications), Assessment, Admin/SuperAdmin panele listowe, Results/Finance/Benefits listy, Interview (Inbox/Sessions/Assigned/Templates/Insights/Initiatives), Reports/ReportBuilder listy zarządcze, Partner, Settings panele listowe.
+
+### 1.2 POZA ZAKRESEM (NIE migrować — mają własne reguły)
+- **Tabele dokumentowe / raportowe read‑only** (~20 plików): `Reports/Management/*Report.tsx`, `FullReportDocument`, `ExecutiveSummaryView`, `LegalDocumentView`, `Help/KnowledgeArticleView`, `docs/DocsArticleView`. To są tabele do druku/eksportu, generowane, nieinteraktywne.
+- **Renderery artefaktów AI** (~11 plików): `AIChat/Artifacts/renderers/*` (`TableRenderer`, `MarkdownRenderer`, `ComparisonMatrixRenderer`…). Lekkie, read‑only.
+- **Edytory macierzowe / komórkowe** (~4 pliki): `PMO/RACIMatrix`, `Finance/FinancialStatementMappingEditor`, `Results/ROIAssumptionEditor`, `ReportBuilder|Presentations/blocks/TableBlock`. To edytory cell‑by‑cell — osobny spec (TODO: `matrix-editor-standard.md`).
+
+> Reguła rozstrzygająca: jeśli użytkownik **przegląda i działa na liście encji** → kanon. Jeśli to **treść w dokumencie / artefakcie / edytor komórek** → poza kanonem.
+
+---
+
+## 2) SSOT — komponenty (kontrakt implementacyjny)
+
+| Warstwa | Komponent (SSOT) | Rola | Adopcja |
+|---|---|---|---|
+| Orkiestracja | `src/components/shared/TableWithPreviewLayout.tsx` | layout tabela+preview, single/double‑click, J/K, Alt+←/→ historia, pin, mobile modal | 25 |
+| Tabela | `src/components/shared/ModuleHub/FilterableTable.tsx` | nagłówki, resize, filtry kolumnowe, row actions, widoczność kolumn, **persistKey→localStorage**, empty/loading | 24 |
+| Karty | `src/components/shared/ModuleHub/GridView.tsx` | alternatywny widok kart (border‑l accent typu) | 8 |
+| Chipy (status/priority/meta/tool/due) | `src/components/ui/primitives/chips/*` na tokenach `c.*` (`ChipBase`, `StatusChip`, `PriorityChip`, `MetaChip`, `ToolChip`, `DueChip`) + bridge `statusChipTone()` | jedyna rodzina chipów; HBS, token‑driven, light/dark za darmo | 2 (do podniesienia) |
+| Komórki tabeli | `src/components/ui/primitives/cells/*` (`ProgressCell`, `AssigneeCell`) na `c.*` | progres + asignee jako prymitywy | nowe (Faza 0) |
+| Ustawienia kolumn | `src/components/shared/ModuleHub/TableSettingsPopover.tsx` | portalowy popover widoczności kolumn + „pokaż opis" | 5 |
+| Prymitywy | `src/components/ui/ResizableTable/{TableHeader,index}.tsx`, `ColumnResizer`, `PreviewPaneShell.tsx` | niskopoziomowe: resizer, sticky header, shell preview | 19 |
+
+**MUST:** nowa tabela listowa = `TableWithPreviewLayout` + `FilterableTable`. Nie pisać nowego `<table>` od zera.
+
+### 2.1 Komponenty WYCOFANE (nie używać; do usunięcia w sprzątaniu)
+- `Admin/shared/EnhancedDataTable.tsx` (2 importery, 884 LOC) — zastąpione przez FilterableTable.
+- `Admin/shared/AdminTable.tsx` (2 importery) — j.w.
+- `shared/TablePresentationToggle.tsx` (0 importerów) — **martwy kod**, usunąć.
+- `ui/composed/DataTable.tsx` — 0 importerów (jeśli istnieje), usunąć.
+
+### 2.1a Legacy do migracji (NIE nowy kod)
+- `src/components/shared/StatusPill.tsx` + `src/constants/statusColors.ts` (`getStatusStyle`/`getPriorityStyle`) — stary system na palecie sprzed rebrandingu HBS. **~34 callerów** do migracji na rodzinę chipów `c.*`. Nie usuwać, dopóki callerzy nie zmigrowani; nie używać w nowym kodzie.
+
+### 2.2 Dług do konsolidacji (osobny ticket)
+- `ui/ResizableTable` (19 adopcji, m.in. My Work, Interview) i `FilterableTable` re‑implementują ten sam rdzeń (resize + filter dropdown). **Cel docelowy:** `FilterableTable` = jedyna powłoka, `ResizableTable` zredukowany do prymitywów (TableHeader/ColumnResizer/PreviewPaneShell). Do czasu konsolidacji: tabele już na `ResizableTable` muszą spełniać reguły §3–§7 (wygląd), nawet jeśli pod spodem inny komponent.
+- **Interview** ma 5 ręcznych `<table>` (świadoma decyzja, plik 8.9k linii). Traktujemy jako tymczasowy wyjątek: muszą spełniać §3–§7 wizualnie; migracja na FilterableTable = ostatnia faza.
+
+---
+
+## 3) Layout tabeli (KANON v3)
+
+### 3.1 Surface i kontener
+**MUST:**
+- Tło modułu (zewnętrzne): `bg-slate-50 dark:bg-navy-950`.
+- Karta tabeli: `rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06]`.
+- Brak zebry. Separatory wierszy: `divide-y divide-slate-200/60 dark:divide-white/[0.03]`.
+- Layout: `table-fixed` (warunek resizable).
+
+### 3.2 Nagłówek
+**MUST:**
+- Typografia: `text-[11px] font-semibold uppercase tracking-wider`.
+- Kolor: `text-slate-500 dark:text-slate-400` (jeden szary dla roli nagłówka — koniec z mieszaniem slate‑500/slate‑600).
+- **`sticky top-0 z-10`** zawsze. Rodzic scrolla NIGDY `overflow-hidden` (root‑cause RC‑4 zniknięcia nagłówka).
+- Tło nagłówka: dziedziczy z karty + hairline `border-b border-slate-200/60 dark:border-white/[0.03]`.
+- Ikona ustawień kolumn `Settings2` (`h-7`/`h-8`) w prawym górnym rogu (przy kolumnie akcji).
+
+**MUST NOT:** kolor semantyczny w chrome nagłówka. Nagłówek jest monochromatyczny.
+
+### 3.3 Model i wyrównanie kolumn
+**MUST:**
+- Kolejność: **obiekt/tytuł (left) → metadane (status/tagi/owner/data/priorytet) → Actions (right)**.
+- **Wyrównanie wg roli (KANON 2026 — Linear/Notion), identyczne na każdej zakładce:**
+  - tytuł/nazwa/obiekt → `text-left`
+  - **tabliczki/chipy: tag/kategoria/typ/źródło ORAZ status → `text-left` + wiodąca kropka znaczenia** (identity dot dla tagów §4.0a; signal dot dla statusu) — tworzą pionową „szynę skanu"
+  - **liczby (questions/usage/progress%/counts/kwoty) → `text-right`** (wyrównanie cyfr)
+  - assignee, daty/`DueChip` → `text-left`
+  - akcje → `text-right`
+  - **MUST NOT:** centrowane chipy/statusy (pływają, łamią szynę) — to był stary błąd „metryki center".
+- Kolumna tytułowa ma własny resizer (nie jest „resztą flexa").
+- Każda kolumna: jawne min/max width; resize zatrzymuje się na limicie (bez kaskady).
+- Puste komórki: `—` wyciszony, nigdy blank.
+- Liczniki nadmiaru: `+N` jako pill, nie goły tekst.
+
+### 3.4 Gęstość i wiersz
+**MUST:**
+- Comfortable (default): `px-4 py-3`. Compact (kolejki admin): `px-4 py-2`.
+- Wysokość wiersza **stała** — nie zmienia się na hover/focus (żadnego „falowania").
+- 2 linie (tytuł + opis/uzasadnienie) = **domyślne**; opis można ukryć w ustawieniach, ale odstęp się nie zwija. Opis: lżejsza waga, ~11px, niższa opacity.
+
+### 3.5 Selection / stany wiersza
+**MUST:**
+- Checkbox: body `h-3.5 w-3.5`, select‑all `h-4 w-4`, wyciszony; w „premium" odsłania się na hover/focus, zaznaczone zawsze widoczne.
+- Hover: `hover:bg-slate-50/70 dark:hover:bg-white/[0.03]` (subtelny).
+- Selected: `bg-primary-500/8 dark:bg-primary-500/10` + 4px lewy akcent `primary` + inset ring. Hover nie nadpisuje akcentu selekcji.
+- **MUST NOT:** tło wiersza barwione statusem/priorytetem/kategorią. Status wyłącznie w pill wewnątrz komórki.
+
+---
+
+## 4) Statusy, progress, due (semantyka kolorów)
+
+### 4.0 Formuła kolorów (system sygnałów) — RDZEŃ
+**Kolor = SYGNAŁ, nie dekoracja. Czerwień = ALARM i jest zarezerwowana.** Tabela robocza ma być spokojna; kolor pojawia się tylko, gdy coś znaczy. Narzędzie pracy potrzebuje pełnej palety, nie „biało‑czerwieni".
+
+| Ton | Token | Znaczenie | Stosujemy do |
+|---|---|---|---|
+| **neutral** | `c-text-muted`/`c-border`/`c-surface-raised` | brak sygnału, dane spoczynkowe | większość treści, typy/kategorie, daty „w porządku", shell chipów |
+| **info** | `--c-info` (HBS blue) | informacja / w toku | status in‑progress/scheduled, **wypełnienie progresu** |
+| **success** | `--c-success` (HBS green) | pozytyw / done / on‑track | approved/completed, progres 100%, KPI on‑track |
+| **warning** | `--c-warning` (HBS amber) | uwaga / wkrótce / at‑risk | pending/in‑review, due‑soon, progres at‑risk |
+| **danger** | `--c-danger` (HBS red) | **ALARM** | overdue, error, blocked, rejected, delete — **i nic poza tym** |
+| **accent** | `--c-accent` (HBS crimson) | MARKA | primary CTA, aktywna selekcja — **nie** status/dane |
+
+**MUST:**
+- Czerwień (`danger`) **wyłącznie** dla realnego alarmu. **Nigdy** dla progresu, neutralnych dat, „w toku".
+- **Progres NIE jest czerwony** — neutralny/`info`, `success` @100%, `warning` tylko gdy moduł jawnie liczy „at‑risk".
+- Crimson (`accent`) = marka/CTA/selekcja; **nie** jako kolor danych (czyta się jak alarm).
+- Domyślny stan komórki = neutralny; kolor dokładamy tylko, gdy niesie znaczenie.
+- **Test ekranu:** jeśli widać dużo czerwieni naraz → nadużycie `danger`, przejść na neutral/info/warning.
+
+### 4.0a Tag / identity tone (bounded exception) — `categoryTone()`
+Kolory **tożsamości** (kategoria/typ/źródło) to ŚWIADOMY wyjątek od „kolor = sygnał": pomagają skanować, ale nie wolno ich pomylić ze statusem/alarmem. Dlatego **osobna, stłumiona paleta `--c-tag-1..12`** (równo‑ważone hue, wizualnie inne niż info/success/warning/danger) i ścisłe reguły:
+- **MUST — tylko wiodąca KROPKA** (`h-1.5 w-1.5 rounded-full`, kolor = `categoryTone(label)`), shell chipa **neutralny** (`INTERVIEW_META_CHIP_CLASS`/`MetaChip`). **MUST NOT:** wypełnienie kolorem ani boczny pasek (kanban/priorytet — kolizja znaczeniowa).
+- **MUST — chip wyrównany do LEWEJ** (kropki tworzą pionową szynę). §3.3
+- **Deterministyczny:** `categoryTone()` = jawna mapa znanych kategorii (zero kolizji) + hash fallback; **ta sama kategoria = ten sam kolor app‑wide**.
+- **Tylko skończone taksonomie tożsamości** (category/type/source/tool). NIE status/priority/due/progress (te trzymają tony sygnałowe).
+- a11y: kolor redundantny (label zawsze obecny) → bezpieczne dla daltonistów.
+- SSOT: `src/components/ui/primitives/chips/categoryTone.ts` + tokeny `--c-tag-*`.
+
+### 4.1 Status — `StatusChip` + bridge `statusChipTone()`
+**MUST:** każda komórka statusu = `<EntityStatusChip status={raw} />` (cienka nakładka na `StatusChip`, przyjmuje surowy status). Kolor wyłącznie przez `statusChipTone(raw)` → `ChipTone` na tokenach `c.*`. Mapowanie surowego statusu → ton:
+- **info** (`--c-info`): `in_progress, draft, open, generating, planning, new, scheduled, executing, promoted`
+- **warning** (`--c-warning`): `submitted, pending, pending_review, pending_approval, awaiting_approval, in_review, review, escalated`
+- **success** (`--c-success`): `approved, completed, done, published, active, utilized, tracking`
+- **danger** (`--c-danger`): `sent_back, rejected, failed, blocked, cancelled, overdue`
+- **neutral**: `archived, trashed, final, unknown, [nierozpoznane]`
+
+**MUST NOT:** hardcodowane `bg-blue-50 text-blue-900`, własne `getSessionStatusConfig`/`getAssignmentStatusColor`/inline `statusConfig`, ani `shared/StatusPill` (legacy). Migrować do rodziny chipów `c.*`.
+
+### 4.2 Geometria pill (z `ChipBase`)
+Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised text-c-text-secondary`, rozmiary `sm` (`h-6 px-2 text-[11px]`) / `md` (`h-7 px-2.5 text-xs`), kropka‑sygnał `ChipDot` (`h-1.5 w-1.5` sm). Kolor niesie wyłącznie kropka/ikona (sygnał), shell zostaje neutralny.
+
+### 4.3 Progress
+`ProgressCell` — pasek liniowy + label `%`. **Fill = `info` (w toku) → `success` @100%; NIGDY `danger`/crimson** (progres 50% to nie alarm — patrz §4.0). `warning` tylko gdy moduł jawnie liczy „at‑risk". Track neutralny (`c-border-subtle`). Ten sam komponent w tabeli i w kartach.
+
+### 4.4 Due / overdue — JEDEN model
+**MUST:** jedna kolumna „Termin" z `<DueChip>`: data w porządku = **neutral**; due‑soon = **warning**; przekroczone = **danger** (ikona `AlertTriangle` + „Xd overdue"). Kolor niesie ikona/kropka (sygnał), shell neutralny (`ChipBase`). To jedyne miejsce, gdzie w tej kolumnie pojawia się czerwień — i tylko dla realnego overdue.
+**MUST NOT:** dwie osobne kolumny `DUE` + `OVERDUE` (rozjazd Sessions vs Assigned). Jeden chip = jedna kolumna na wszystkich zakładkach.
+
+---
+
+## 5) Sort / Filter / Resize / Persistencja
+
+**MUST:**
+- **Sort:** klik nagłówka sortuje, wskaźnik `ChevronDown` + kierunek; opt‑in per kolumna (`sortable`). Default sort definiowany per moduł i persystowany.
+- **Filter:** filtr per kolumna przez `FilterDropdown` (multiselect, AND między kolumnami / OR wewnątrz). Złożone filtry → przycisk „Filters…" w Menu 2 (nie duplikować w nagłówkach).
+- **Resize:** grip na granicy (hit ~12px), zero‑sum z sąsiadem, szerokość tabeli stała; ostatnia kolumna bez prawego resizera.
+- **Persistencja (localStorage, klucz `persistKey="modul.widok"`):** szerokości kolumn **i** widoczność **i** „pokaż opis". Reset w popoverze ustawień. (Naprawa luki: dziś szerokości często giną po reloadzie.)
+
+---
+
+## 6) Ustawienia kolumn (popover)
+**MUST:** portalowy `TableSettingsPopover` (pozycjonowany `getBoundingClientRect`, fixed, nigdy clipowany przez scroll), auto‑flip w górę, dismiss na Esc/outside‑pointer. Lista checkboxów kolumn; kolumny wymagane (tytuł/akcje) zablokowane; toggle „Pokaż opis/uzasadnienie". Persistencja per `persistKey`.
+**MUST NOT:** modal dla zwykłej widoczności kolumn (modal tylko dla ciężkich „saved views"/grupowania).
+
+---
+
+## 7) Preview pane
+
+### 7.1 Zachowanie
+**MUST:** domyślnie **zamknięty**. Single‑click = select + open preview. Double‑click/Enter = full detail (N‑mode/workspace). Esc = zamknij (tabela wraca do `flex-1`). J/K (opcjonalnie) = nawigacja wierszy z auto‑update preview. Bulk‑select nie zamyka preview.
+
+### 7.2 Wymiary i separacja
+**MUST:** szerokość `clamp(340px, 28%, 480px)`. Separacja od tabeli = `gap-1.5`, **bez `border-l`**. Wrapper: `bg-slate-50 dark:bg-navy-950 p-3`. Karta wewnątrz: `rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] backdrop-blur`. Jeśli tabela `rounded-xl` → preview też `rounded-xl` (spójność „composite container").
+
+### 7.3 Anatomia (SSOT: `PreviewPaneShell`)
+1. **Header (sticky `top-0 z-10`)**: opcjonalny kicker „Preview" (11px uppercase) + tytuł encji (1 linia, truncate+tooltip, semibold) + akcje right: „Open in Full View" (ghost/outline pill) + „Close (X)".
+2. **Entity Meta Bar**: statusy/typ/priorytet/SLA (poziom +2, `p-4`, `rounded-lg`) — to stan, nie treść.
+3. **Details**: nagłówek „Details" (overline) + ⋮; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (np. cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state z podpowiedzią, nie blank. Cel: preview ma od razu „opowiadać" encję, nie zmuszać do „Open".
+4. **Stopka — KOLEJNOŚĆ SZTYWNA (MUST):**
+   1. **AI hints**: label „AI Insights" + ikona + ⋮; **3 chipy** outline; rozwijane bullety.
+   2. divider (`border-t`)
+   3. **Relations**: **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
+   4. divider (`border-t`)
+   5. **Actions**: pille `h-9 rounded-full`, hierarchia primary→secondary→ghost; **te same akcje co full view** (parytet, te same guardraile; destrukcyjne = confirm).
+
+---
+
+## 8) Widoki alternatywne (cards / kanban / timeline / calendar)
+**MUST:**
+- Każdy alternatywny widok renderowany **wewnątrz tego samego `TableWithPreviewLayout`** (select→preview i J/K przeżywają). Wzór wzorcowy: Insights „report".
+- Przełącznik widoku = **segmentowany ikonowy** (nie dropdown „Table ▾"), kanoniczna kolejność ikon (`view-modes-standard.md`).
+- **Karty** (`GridView`): header (typ + status right) → tytuł (1–2 linie) → sygnały (progress/priorytet/due) → akcje (⋮ + opc. 1 CTA). Akcent `border-l-[3px]` w kolorze typu, tło `bg-slate-50/80 dark:bg-navy-800/60`, hover lift. Menu ⋮ jak w tabeli. Brak własnych mini‑toolbarów (filtry/sort żyją w Menu 2).
+- **Kanban (prezentacja tabeli jako tablica):** kolumny = wartości jednego pola (status/etap), karta = `GridView`. Pełna specyfikacja kanban (kolumny, drag&drop, WIP, kolejność) zostanie dopisana w kolejnych historiach — **na bieżącym case (Wywiad Inbox) nie ma kanbana, więc go nie opisujemy tu**; reguły lock w §23, przełącznik w `view-modes-standard.md`. To świadoma luka „do dopisania", nie pominięcie.
+
+---
+
+## 9) Row actions menu (⋮) — 3 strefy (góra kontekst / dół stały / danger)
+**Zasada nadrzędna (decyzja ownera 2026-06-06):** menu ma **stały DÓŁ identyczny w każdej tabeli/zakładce** i **GÓRĘ kontekstową** (typową dla obszaru/statusu). Ręka trafia w to samo miejsce w każdym oknie.
+
+| Strefa | Pozycje | Reguła |
+|---|---|---|
+| **GÓRA — kontekst** | typowe dla obszaru/statusu. Inbox: `Continue`/`Start`/`Fix`. Assigned (manager): `Approve`·`Send back`·`Reassign`·`Send reminder`·`Escalate` | tylko dotyczące danego statusu/roli; pusta strefa = ukryta |
+| separator | — | auto między strefami |
+| **DÓŁ — ZAWSZE TEN SAM** | `Open` · `Edytuj` · `Archiwizuj` (lub `Przywróć`) · `Delay ▸` | identyczny wszędzie; `Edytuj` kontekstowe w działaniu (manager→modal zarządzania, assignee→edycja odpowiedzi); `Delay ▸` = submenu `+1/+3/+7 dni` |
+| separator | — | auto |
+| **DANGER** | `Usuń` | zawsze ostatni, ton danger, confirm. Gdy brak endpointu delete → `disabled` z opisem „Wkrótce (backend)" (slot widoczny, bez martwej akcji) |
+
+**MUST:** każda pozycja = ikona+label; **ten sam verb = ta sama pozycja** wszędzie; dół (Open/Edytuj/Archiwizuj/Delay) niezmienny; akcja z >2 wariantami → **submenu inline** (`▸`, np. Delay); destrukcyjne → confirm. Komponent SSOT: `RowActionsMenu.tsx` (`sections` + `submenu` — zaimplementowane). Wzorzec referencyjny: Interview Inbox/Assigned.
+
+---
+
+## 10) Stany: empty / loading / error
+**MUST:**
+- **Loading:** spinner + „Loading…" / skeleton; nigdy blank.
+- **Error:** karta błędu + **retry**; nigdy „coś poszło nie tak" bez wyjścia. Guard danych: `(field || '').toLowerCase()` itp.
+- **Empty:** jeden `EmptyState` z rozróżnieniem „brak danych" vs „brak danych dla filtra" (wzór: Initiatives), ikona + copy + CTA. i18n PL/EN przez `useTranslation` (bez hardcode).
+
+---
+
+## 11) Rozstrzygnięcia sprzeczności (vs stare dokumenty)
+| Temat | Stare rozjazdy | **Kanon v1** |
+|---|---|---|
+| Szerokość preview | `clamp(340,28%,480)` vs „~420px" | **`clamp(340px, 28%, 480px)`** |
+| Widoczność kolumn | modal vs popover | **portalowy popover** (`TableSettingsPopover`) |
+| Wiersz 1 vs 2 linie | „1 linia MUST" vs „opis domyślnie widoczny" | **2 linie domyślnie**, opis ukrywany w ustawieniach |
+| Status | StatusBadge legacy / StatusPill (palette) / chipy c.* | **rodzina chipów `c.*` + `statusChipTone()` (SSOT, HBS)**; StatusPill+statusColors = legacy do migracji |
+| Przełącznik widoku | dropdown vs segment | **segment ikonowy** |
+| Due/Overdue | 1 kolumna vs 2 kolumny | **1 kolumna `DueChip`** |
+| Kolor nagłówka | slate‑500 vs slate‑600 | **slate‑500 dark:slate‑400** |
+
+---
+
+## 12) Plan migracji (ranking ROI)
+**Faza 0 — prymitywy (S, niskie ryzyko):** wydzielić/ujednolicić `StatusPill`/`ProgressCell`/`DueChip`/`AssigneeCell`/`TableViewSettings`/`useColumnResize(persist)`; podpiąć `getStatusStyle()`; włączyć sticky header wszędzie. Czysty refaktor, wygląd ~bez zmian.
+
+**Tier 1 — listy o najwyższym ruchu (~44 pliki):** My Work (14), Assessment (15), Admin core (15). Największy wpływ na użytkownika.
+
+**Tier 2 (~16 plików):** Results/Finance/Benefits, Interview, Partner, Governance — jeśli kanon pokrywa ≥80% wzorca.
+
+**Faza końcowa:** Interview 5 ręcznych tabel → FilterableTable; konsolidacja `ResizableTable`→prymitywy; usunięcie martwych komponentów (§2.1).
+
+**Poza migracją:** ~24 pliki (raporty/dokumenty read‑only + macierze + artefakty AI) — §1.2.
+
+---
+
+## 13) Acceptance criteria (skrót)
+> To skrót szybkiego sprawdzenia. **Pełna operacyjna checklista audytu (A–S) + procedura 6 kroków = §27** — to nią przelatujemy każdą tabelę.
+
+- [ ] Renderowana przez `TableWithPreviewLayout` + `FilterableTable` (lub spełnia §3–§7 jeśli na `ResizableTable`).
+- [ ] Nagłówek `sticky top-0 z-10`, `text-[11px] uppercase tracking-wider`, `text-slate-500 dark:text-slate-400`; rodzic bez `overflow-hidden`.
+- [ ] Wyrównanie wg roli identyczne na każdej zakładce (tytuł left / metryki center / akcje right).
+- [ ] Gęstość `px-4 py-3`; wysokość wiersza stała na hover.
+- [ ] Wiersz monochromatyczny, separatory hairline, selected = `bg-primary-500/8` + 4px akcent; brak tła barwionego statusem.
+- [ ] Status = `EntityStatusChip`/`statusChipTone()` (rodzina chipów `c.*`); brak hardcodowanych kolorów statusu, brak `StatusPill` w nowym kodzie.
+- [ ] Termin = jedna kolumna `DueChip` (nie DUE+OVERDUE).
+- [ ] Resize zero‑sum; szerokości + widoczność kolumn persystowane (`persistKey`).
+- [ ] Ustawienia kolumn = portalowy popover, nieclipowany.
+- [ ] Preview domyślnie zamknięty; szer. `clamp(340,28%,480)`; separacja `gap-1.5` bez `border-l`; stopka w kolejności AI→Relations→Actions.
+- [ ] Empty/Loading/Error obsłużone; Error ma retry; puste komórki `—`.
+- [ ] i18n PL/EN bez hardcode.
+
+---
+
+## 15) Menu 1 / Menu 2 / Menu 3 — zachowanie nad tabelą
+
+Tabela żyje pod trzema paskami menu. SSOT Menu 2/3: `13_MENU_2_MODULE_TOPBAR.md`, `14_MENU_3_COMMAND_ROW.md`, `module-hub-standard.md`, komponent `src/components/shared/ModuleMenu3.tsx`.
+
+### 15.1 Menu 1 (global sidebar) — NIE zmienia się
+Globalna nawigacja aplikacji. Tabela ani moduł **nigdy** jej nie modyfikują. Poza zakresem tego kanonu.
+
+### 15.2 Menu 2 (Module Topbar) — zmienia się per moduł, stałe reguły
+**MUST:**
+- Lewa strona: search toggle → główne taby modułu (np. Inbox/Sessions/Assigned/…). **Taby NIE pokazują liczników** (liczniki są w Menu 3).
+- Prawy klaster — stała kolejność wizualna **od prawej krawędzi**:
+  1. **Area** (toggle panelu/split) — jeśli moduł go ma,
+  2. **Primary CTA „Działania/Add"** (np. `Assign`, `New session`) — bez leading `+`,
+  3. **Tool** (jeśli dotyczy),
+  4. **View modes** — segmentowane ikony (kolejność z `view-modes-standard.md`),
+  5. **Filters** — maks. 1 główny dropdown; reszta w Menu 3 / w nagłówkach kolumn.
+- Wszystkie kontrolki `h-9`, jeden family, spokojny styl (bez gradientów).
+> Uwaga (decyzja właściciela 2026‑06‑06): „Działania" = istniejący Primary CTA (Add), NIE osobny dropdown.
+
+**MUST NOT:** `Help` w prawym klastrze; dropdown `Table ▾` do przełączania widoków; dublowanie filtrów / mini‑toolbary pod Menu 2.
+
+### 15.3 Menu 3 (Command Row) — dynamiczny, ≥3 formuły
+Jeden rząd pod Menu 2. SSOT: `ModuleMenu3.tsx`. Przyjmuje jedną z formuł zależnie od kontekstu (priorytet: **bulk > otwarte‑karty > filtry**):
+
+**Formuła 1 — STANDARD (filtry/liczniki).**
+- Po lewej: counter‑chipy = presety/statusy z licznikami (np. `All 7 · In progress 4 · Submitted 0 · Approved 3`) + przełączniki zakresu (`Active/Archive/Trash`). Triggery domenowe, nie generyczne `Wszystkie`.
+- **MUST:** ta sama tabela‑rola = ten sam zestaw counter‑chipów na każdej zakładce modułu (koniec z „Sessions ma liczniki, Inbox/Assigned nie").
+
+**Formuła 2 — MULTI‑SELECT (bulk action bar).**
+- Gdy zaznaczono ≥1 wiersz: Menu 3 **natychmiast** zamienia się w pasek „**N selected · Clear**" + **przyciski** akcji zbiorczych „co można z tym zrobić". **MUST:** żaden ekran z multi‑select nie może pokazać samego „N selected" bez przycisków (bug Inbox).
+- **Wygląd przycisków bulk (MUST):** prawdziwe przyciski **w ramkach (outline)**, `rounded-full`, **`h-8`** (mniejsze niż główne CTA `h-9`), ikona+label, spójne na każdej tabeli. Nigdy „gołe słowo". Danger (`Delete/Trash`) wyróżniony tonem `danger` + confirm.
+- **Zestaw STANDARDOWY** (zawsze, gdy dotyczy): `Export CSV` · `Tag` · `Assign/Reassign` · `Change due date` · `Archive` · `Delete`.
+- **Zestaw KONTEKSTOWY** (dokładany per moduł wg deskryptora `menu3.bulkActions`): np. Wywiad `Approve · Send back · AI insights`. Standardowe + kontekstowe w jednym pasku, danger zawsze na końcu.
+- Po `Clear`/odznaczeniu wraca formuła 1.
+
+**Formuła 3 — OTWARTE KARTY (cross‑module tabs).**
+- Single‑click w wierszu = **przejściowy preview pane** po prawej (NIE tworzy taba).
+- Akcja **„Open"** (z preview footer / kebaba) = otwiera **pełną kartę na ekranie głównym** ORAZ dodaje **trwały tab** w Menu 3.
+- Menu 3 pokazuje **wszystkie otwarte karty z całej sesji pracy, CROSS‑MODULE** — np. 4 inicjatywy + 2 insighty = 6 tabów. Tab = ikona‑typu + tytuł encji + `×` (close). Klik w tab = przełączenie na pełną kartę.
+- SSOT stanu: `useModuleOpenDocuments(moduleKey)`. **MUST:** tytuł taba = realny tytuł encji (zakaz zaszumionych/uciętych artefaktów typu „abaliza").
+
+---
+
+## 16) Wiersz nagłówka — wybór kolumn + podtytuły
+
+To pierwsza linia tabeli i jej kontrolki. SSOT: `TableSettingsPopover` (portalowy).
+
+**MUST — wybór aktywnych kolumn:**
+- Ikona `Settings2` w prawym górnym rogu nagłówka → portalowy popover „**Visible columns**".
+- Lista checkboxów wszystkich kolumn; kolumny wymagane (np. tytuł, Actions) oznaczone „**Required**" i zablokowane.
+- Stan widoczności persystowany per `persistKey` (localStorage).
+
+**MUST — podtytuł pod tytułem (row description):**
+- W tym samym popoverze toggle „**Show row description**".
+- Włączony → pod tytułem renderuje się druga linia (opis/uzasadnienie/subtytuł), lżejsza waga ~11px, niższa opacity.
+- Wyłączony → druga linia ukryta, **wysokość wiersza i rytm się nie zwijają skokowo** (stała geometria).
+- Stan persystowany per `persistKey`.
+
+**MUST:** popover nigdy nie jest clipowany (portal `document.body`, pozycja `fixed` z `getBoundingClientRect`, **auto‑flip w górę** gdy brak miejsca, **`max-height` + własny scroll** gdy lista kolumn dłuższa niż viewport — wszystkie pozycje muszą być osiągalne), dismiss Esc/outside. **Bug do naprawy:** dzisiejszy popover Wywiadu (legacy) rozwija się w dół i jest ucinany — migracja na `TableSettingsPopover` to zamyka.
+
+---
+
+## 17) Kebab (⋮) — standard akcji wiersza
+Rozszerza §9. **MUST:**
+- Ikona pionowa `MoreVertical`, `opacity-40 group-hover:opacity-100`, hit ≥ `h-8 w-8`, kotwiczona do prawej (kolumna Actions).
+- Otwiera portalowe menu (nieclipowane), sekcje w kanonicznej kolejności (§9): Open · [Tool] · Context · AI · Convert to · Create output · Manage · Danger.
+- Te same akcje co preview footer i full view (parytet nazw/uprawnień). 5–7 pozycji bezpośrednich; nadmiar → sub‑picker.
+
+---
+
+## 18) Przyciski per tabela — standard + deskryptor
+Każda tabela musi mieć **udokumentowany, wystandaryzowany** zestaw kontrolek. Wygląd/kolejność = §15 (Menu 2/3) + §17 (kebab) + §7.3.4 (preview footer). Treść (jakie konkretnie przyciski) opisujemy przez **deskryptor tabeli** — jeden blok per zakładka modułu:
+
+```yaml
+table: <modul>.<zakladka>           # np. interview.sessions
+persistKey: <modul>.<zakladka>      # localStorage
+menu2:
+  tabs: [..]                        # główne taby modułu (lewa)
+  primaryCTA: <label>               # np. "New session"
+  viewModes: [list, grid|board|..]  # segmentowane ikony
+  filters: [<1 główny dropdown lub none>]
+menu3:
+  counters: [<chip:licznik>, ..]    # formuła 1
+  bulkActions: [<akcja>, ..]        # formuła 2
+columns:                            # model kolumn (§3.3)
+  - { id, label, align: left|center|right, sortable, filter, hideable, required, width }
+rowKebab: [Open, <context..>, <ai..>, <convert..>, <manage..>, <danger..>]
+previewFooter:
+  aiHints: [<3 chipy>]
+  relations: [<typy relacji>]
+  actions: [<akcje, parytet z full view>]
+```
+
+> Deskryptory poszczególnych tabel trzymamy w aneksie modułu (osobne pliki/ sekcje), nie w tym pliku‑rdzeniu. Rdzeń definiuje STANDARD + szablon; moduły go wypełniają.
+
+---
+
+## 19) Specyfikacja graficzna i układ (lock — wszystkie tabele identyczne)
+Cel: każda tabela w aplikacji wygląda tak samo. Lock przez klasy Tailwind + tokeny `c.*`, nie surowe px. Referencja wizualna: `docs/ui-standards/assets/app-table-golden-reference-{dark,light}-2026-05-02.png`.
+
+### 19.1 Geometria kontrolek (stała)
+| Element | Token/klasa |
+|---|---|
+| Kontrolki Menu 2 | `h-9`, `rounded-full` |
+| Chipy Menu 3 / status / meta | `h-6 px-2 text-[11px]` (sm) / `h-7 px-2.5 text-xs` (md) |
+| Ikona w chipie | 12px (sm) / 14px (md) |
+| Nagłówek kolumny | `text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400` |
+| Komórka (gęstość) | `px-4 py-3` (comfortable) / `px-4 py-2` (compact) |
+| Avatar w `AssigneeCell` | `h-6 w-6 text-[10px]` (sm) |
+| Kropka‑sygnał (`ChipDot`) | `h-1.5 w-1.5` (sm) |
+| Pasek progresu (`ProgressCell`) | track `h-1` (sm), fill `bg-c-accent` → `bg-c-success` @100% |
+| Kebab hit | `h-8 w-8`, ikona pionowa |
+| Preview pane | `clamp(340px, 28%, 480px)`, separacja `gap-1.5`, bez `border-l` |
+
+### 19.2 Powierzchnie i kolory (tokeny `c.*`)
+- Tło modułu: `bg-c-bg`. Karta tabeli/preview: `bg-c-surface` (lub `bg-white/70 dark:bg-navy-900/70`), border `border-c-border`, hairliny `border-c-border-subtle`.
+- Chip shell: neutralny `bg-c-surface-raised border-c-border text-c-text-secondary`; kolor wyłącznie jako sygnał (kropka/ikona) z `--c-success/warning/danger/info/accent`.
+- Selected row: `bg-c-accent-soft` + 4px lewy akcent `--c-accent`. Hover: subtelny lift, bez tła barwionego statusem.
+
+### 19.3 Układ stref (layout grafik) — stała kolejność
+- **Menu 2 (góra):** [search ▸ taby] ………………………… [Filters · Views · Tool · CTA · Area] (od prawej).
+- **Menu 3 (pod spodem):** formuła 1 liczniki(lewa) / formuła 2 „N selected + akcje" / formuła 3 taby otwartych kart.
+- **Tabela:** `[checkbox][tytuł(+podtytuł) →left] [metryki →center] [⋮ Actions →right]`, nagłówek `sticky top-0 z-10`.
+- **Preview (prawa, opcjonalnie):** Header(sticky) → Meta bar → Details → [AI hints (3) · divider · Relations (2 wiersze) · divider · Actions].
+- **Pełna karta (po „Open"):** zajmuje ekran główny; przełączana tabami Menu 3 (formuła 3).
+
+### 19.4 Akceptacja graficzna
+- [ ] Porównanie z `app-table-golden-reference-{dark,light}` (light NIE wyprany, dark ma realne separatory).
+- [ ] Wszystkie kontrolki w geometriach z §19.1; kolor tylko jako sygnał.
+- [ ] Identyczny układ stref §19.3 na każdej tabeli modułu.
+
+---
+
+## 20) Zabezpieczenia inżynierskie — anty‑wzorce RC‑1…RC‑8 (MUST NOT)
+Źródło: `docs/audit/2026-06-03/TABLE_GRAPHICS_ROOTCAUSE.md`. To są dokładnie błędy, przez które wracaliśmy do tabel „po raz setny". Każdy ma twardy zakaz + regułę.
+- **RC‑1 — podwójny scroll:** **MUST NOT** zagnieżdżać dwóch `overflow-auto`/`overflow-x-auto` wokół tej samej tabeli (de‑sync sticky header w poziomie). Jeden kontener scrolla.
+- **RC‑2 — zwężenie przez preview:** gdy preview otwarty, wewnętrzny scroll tabeli **MUST** przeliczać szerokość (flex‑min‑0), nie zostawiać phantom‑scrolla.
+- **RC‑3 — mismatch szerokości header/body:** w `table-fixed` szerokości `thead` i `tbody` **MUST** pochodzić z jednego źródła (`columnWidths`), zakaz 4px driftu.
+- **RC‑4 — `overflow-hidden` rodzica:** rodzic sticky‑`thead` **MUST NOT** mieć `overflow-hidden` (łamie sticky). (Akceptacja §13.)
+- **RC‑5 — surowy `<table>`:** nowy ekran **MUST NOT** renderować ręcznego `<table>`; używa SSOT (§2). Lint/PR‑review pilnuje.
+- **RC‑6 — sticky w hidden:** dotyczy 5 ręcznych tabel Interview — j.w., do migracji.
+- **RC‑7 — hardcoded `colSpan`:** wiersze empty/error **MUST** liczyć `colSpan` z liczby widocznych kolumn (po hide), nigdy stała `={7}`.
+- **RC‑8 — ad‑hoc `max-w-[…]`:** **MUST NOT** wstrzykiwać `max-w-[760px]` itp. na komórkę tytułu; szerokość wyłącznie z modelu kolumn (`width/minWidth/maxWidth`).
+
+## 21) Dostępność i klawiatura (MUST)
+- **Klawiatura:** ↑/↓ (oraz J/K) nawigują wiersze; Enter/dbl‑click = full view; Esc = zamknij preview; Space = toggle zaznaczenia; Tab = logiczna kolejność.
+- **ARIA:** tabela `role=table`/semantyczny `<table>`; sortowalny nagłówek `aria-sort`; zaznaczenie ogłaszane (`aria-live="polite"` z licznikiem „N selected"); preview pane `role="complementary"`/`dialog` (mobile) z `aria-label` = tytuł encji.
+- **Focus:** widoczny ring focus (`--c-focus`) na nagłówkach/wierszach/kontrolkach; focus trap w popoverze ustawień i w preview‑modal (mobile).
+- **Kontrast:** light NIE wyprany, dark z realnymi separatorami; każdy ton chipa spełnia WCAG AA (tekst/tło).
+
+## 22) Pozostałe reguły normatywne (uzupełnienie)
+- **Przełącznik gęstości:** comfortable/compact wybierany w popoverze ustawień (§16), persystowany per `persistKey`. Compact domyślnie chowa podtytuł.
+- **Sort:** ikona kierunku — `ChevronUp` (asc) / `ChevronDown` (desc) przy aktywnej kolumnie; brak ikony = brak sortu. Multi‑sort: Shift+klik dodaje klucz wtórny (opcjonalne per moduł).
+- **Filtry — presety i persistencja:** stan filtrów persystowany per moduł (przeżywa zmianę zakładki); aktywne filtry pokazywane jako usuwalne chipy w Menu 3 (formuła 1); „Filters…" w Menu 2 = maks. 1 dropdown złożony.
+- **Empty‑state — 3 warianty:** (a) „brak danych w ogóle" + CTA tworzenia; (b) „brak danych dla filtra" + „Wyczyść filtry"; (c) „brak wyników wyszukiwania". i18n PL/EN.
+- **Czas względny:** daty jako czas względny (`2d temu`/`2d ago`), z tooltipem daty absolutnej; format locale‑aware.
+- **Truncacja i18n:** tytuł/nazwa `truncate` + tooltip pełnej wartości; kolumny nie łamią się przy dłuższych łańcuchach (np. DE/PL).
+
+## 23) Reguły lock widoków alternatywnych (z `view-modes-standard.md`)
+- **Kanban:** drag&drop oraz reorder w kolumnie są **per‑moduł włączane/wyłączane**; brak uprawnień → toast, nie cichy no‑op. Affordance: edytowalne karty jaśniejsze, read‑only ciemniejsze.
+- **Timeline/Gantt:** selektor skali (dzień/tydz./mies./kwartał) **MUST** być w Menu 2, nie w lokalnym toolbarze; marker „dziś".
+- **Calendar:** klik eventu = preview (single) / full (dbl), spójnie z tabelą.
+- **Matrix:** dopuszczalny tylko gdy 2 osie mają sens; element‑klik spójny z tabelą.
+- **Wspólne:** każdy widok renderowany WEWNĄTRZ `TableWithPreviewLayout`; przełącznik = segment ikonowy; bez lokalnych mini‑toolbarów (filtry/sort w Menu 2/3).
+
+## 24) Pełna karta (po „Open") — anatomia
+Po akcji „Open" (§15.3 formuła 3) encja otwiera się jako **pełna karta na ekranie głównym** (nie preview):
+- Zajmuje główny obszar (zamiast listy); lista wraca przez „≡ List" w Menu 3.
+- Anatomia = detail‑view N‑mode (`NModeShell`): Header(sticky) + PropertiesStrip + Canvas/sekcje + ActionBar. Akcje = parytet z preview/kebabem.
+- Przełączanie między otwartymi kartami = taby Menu 3 (cross‑module). Zamknięcie taba (`×`) usuwa kartę z paska.
+- Wiele kart otwartych naraz; aktywna = podświetlony tab. SSOT stanu: `useModuleOpenDocuments` (patrz §26 — wymaga store globalnego).
+
+## 25) Deskryptory tabel — lokalizacja, instancja, presety
+- **Lokalizacja:** `docs/ui-standards/03-modules/table-descriptors/<modul>.<zakladka>.md` (jeden plik per tabela). Pola MUST: `table, persistKey, menu2.tabs, menu2.primaryCTA, menu2.viewModes, columns, rowKebab`. Warunkowe: `menu2.filters, menu2.tool, menu3.counters, menu3.bulkActions, previewFooter`.
+- **Instancja referencyjna** (`interview.sessions`):
+```yaml
+table: interview.sessions
+persistKey: interview.sessions
+menu2: { tabs: [Inbox, Sessions, Assigned, Templates, Insights, Initiatives], primaryCTA: "New session", viewModes: [list, grid], filters: [none] }
+menu3:
+  counters: [All, "In progress", Submitted, Approved]   # + zakres: Active/Archive/Trash
+  bulkActions: [Approve, "Send back", "AI insights", "Export CSV", Archive, Trash]
+columns:
+  - { id: name, label: Name, align: left, sortable: true, hideable: false, required: true }
+  - { id: assignee, label: Assignee, align: left, sortable: true, filter: true, hideable: true }
+  - { id: status, label: Status, align: center, sortable: true, filter: true, hideable: true }
+  - { id: progress, label: Progress, align: center, sortable: true, hideable: true }
+  - { id: due, label: Due, align: center, sortable: true, hideable: true }   # JEDNA kolumna DueChip (nie DUE+OVERDUE)
+rowKebab: [Open, Reassign, "Change due date", "Send reminder", "Escalate now", Archive]
+previewFooter: { aiHints: ["Summarize","Risks","Next steps"], relations: [Initiative, Insight], actions: [Open, Approve, "Send back"] }
+```
+- **Presety counter‑chipów per moduł (formuła 1):** ta sama tabela‑rola = ten sam zestaw na każdej zakładce. Np. Interview Inbox = `All/Answered/Approved/Sent back`; Sessions = `All/In progress/Submitted/Approved` (+Active/Archive/Trash). Pełna lista presetów per moduł = w plikach deskryptorów.
+
+## 26) Egzekwowalność i luki adopcyjne (uczciwy stan kod↔kanon)
+Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wymagają adopcji:
+- **`FilterableTable` MUST zmienić:** `StatusPill`→`EntityStatusChip`; inline `ProgressBar`→`ProgressCell`; legacy `ColumnSelector`(modal)→`TableSettingsPopover`(portal); ikona `Columns`→`Settings2`; dodać **sort** (klik nagłówka + ikona kierunku); dodać `border-b` nagłówka.
+- **Preview footer:** `PreviewPaneShell` przyjmuje `footer` jako opaque — kolejność AI→Relations→Actions (§7.3.4) **nie jest wymuszana komponentem**; do czasu wymuszenia obowiązuje jako reguła autorska + akceptacja §13.
+- **🔴 Cross‑module taby (§15.3/§24) NIE DZIAŁAJĄ dziś:** `useModuleOpenDocuments` ma store **per‑moduł** (`storageKey = PREFIX+moduleKey`). Aby spełnić wymóg „4 inicjatywy + 2 insighty razem" **MUST** przejść na **globalny store sesji** (jeden klucz, wpis = {module, entityType, id, title}). To jest zadanie komponentowe (osobny ticket), nie sama dokumentacja.
+> Dopóki te luki nie zamknięte, tabela jest „zgodna z kanonem" jeśli spełnia §3–§23 wizualnie; pełna zgodność (chipy `c.*`, cross‑module taby) wymaga powyższych zmian komponentowych.
+
+## 27) PROCEDURA AUDYTU TABELI + PEŁNA CHECKLISTA (operacyjna)
+
+> To jest narzędzie do „atakowania" każdej kolejnej tabeli. Wrzucasz tabelę → przelatuję **wszystkie** punkty A–S → koryguję odstępstwa → bramki → dowód wizualny → raport `PASS/FAIL/N-A` per punkt.
+
+### Procedura (6 kroków, zawsze ta sama)
+1. **Identyfikacja** — który plik/komponent, która zakładka, czy to tabela listowa (§1.1) czy poza zakresem (§1.2).
+2. **Przelot checklisty A–S** — każdy punkt: `PASS` / `FAIL` / `N/A` (+ `file:line` dla FAIL).
+3. **Korekta** — naprawiam każdy `FAIL` wg reguły kanonu (link w punkcie).
+4. **Bramki** — FE `tsc`=0, BE `esbuild`=0, eslint 0 błędów.
+5. **Dowód wizualny** — preview/screenshot przed‑po + weryfikacja computed‑style krytycznych punktów (kolor, sticky, wyrównanie).
+6. **Raport** — tabela `PASS/FAIL/N-A`, co zmienione, co świadomie odłożone.
+
+> Karta NIE jest „zgodna", dopóki którykolwiek punkt **krytyczny** (🔴) ma `FAIL`.
+> ⚠️ **WERYFIKACJA PER‑ZAKŁADKA (MUST):** wiele tabel ma per‑zakładkowe paski bulk i kebaby (Inbox ≠ Assigned ≠ Sessions). Fix w jednej zakładce **NIE** = fix wszędzie. Przelatuj D/H/F **dla każdej zakładki osobno** i potwierdzaj wizualnie w każdej (a nie tylko tam, gdzie są dane demo).
+
+---
+
+### Toolkit weryfikacji (jak sprawdzać — nie „na oko")
+- **Computed-style (DOM):** `preview_eval` → `getComputedStyle(el)` na konkretnym elemencie. Używaj do: koloru (`backgroundColor`/`color` vs token), wyrównania (`textAlign`), pozycji/clipowania (`position`, `getBoundingClientRect().bottom <= innerHeight`), sticky (`position==='sticky'`), `maxHeight`/`overflowY`.
+- **Per-zakładka loop:** dla KAŻDEJ zakładki (Inbox/Sessions/Assigned/Templates/Insights/Initiatives…) powtórz D/F/G/H + selekcję + kebab. Fix w jednej ≠ fix wszędzie.
+- **Per-stan wiersza:** otwórz kebab/preview dla wiersza w KAŻDYM statusie (assigned/in-progress/submitted/approved/completed/sent-back) — akcje kontekstowe różnią się per status.
+- **Selekcja:** zaznacz 1 i ≥2 wiersze → sprawdź pasek bulk (formuła 2). Zaznacz „select all".
+- **Screenshot przed/po** + zrzut DOM (lista itemów/nagłówków) jako dowód w raporcie.
+- **Świeżość kodu:** `curl -s localhost:3000/src/.../Plik.tsx | grep -c <token>` (pułapka stale-cache Vite na dużych plikach); hard-reload.
+- **Pułapki danych demo:** część zakładek pusta na demo (np. Inbox) lub gated RBAC (ADMIN bez `canAssign`) → zaznacz w raporcie „zweryfikowane na koncie OWNER / nie do sprawdzenia na demo".
+- **Bramki:** FE `rm -f tsconfig.tsbuildinfo && npx tsc --noEmit` = 0 · BE `esbuild` = 0 · `eslint` 0 błędów.
+
+---
+
+### A. Identyfikacja i komponenty (SSOT)
+- [ ] 🔴 Renderowana przez `TableWithPreviewLayout` + `FilterableTable` (lub — tymczasowo — spełnia A–S wizualnie, jeśli na `ResizableTable`/ręczna). §2
+- [ ] Ustalona **która zakładka(i)** i czy współdzielą jeden renderer (jeśli tak — zmiana dotyka wszystkich; jeśli nie — sprawdź każdą). 
+- [ ] `persistKey` ustawiony (per moduł.widok) — warunek persistencji kolumn/szerokości/filtrów.
+- [ ] Brak surowego `<table>` w nowym kodzie (RC‑5). §20
+- [ ] Nie używa komponentów wycofanych (`EnhancedDataTable`/`AdminTable`/`TablePresentationToggle`). §2.1
+- [ ] Nie używa legacy `StatusPill`/`statusColors` (→ chipy `c.*`). §2.1a
+
+### B. Menu 1 (global sidebar)
+- [ ] Nie zmienia się, nie jest nadpisywane lokalnie. §15.1
+
+### C. Menu 2 (Module Topbar)
+- [ ] 🔴 Lewa strona: search toggle → główne taby (bez liczników w tabach). §15.2
+- [ ] 🔴 Prawy klaster od prawej: **Area → Primary CTA (Add) → Tool → View modes → Filters**. §15.2
+- [ ] View toggle = segment ikonowy (nie dropdown „Table ▾"). §15.2
+- [ ] Wysokość kontrolek `h-9`, spójny styl, bez gradientów; brak `Help` w prawym klastrze.
+- [ ] Brak dublowania filtrów / mini‑toolbarów pod Menu 2.
+
+### D. Menu 3 (Command Row — dynamiczny, 3 formuły)
+- [ ] 🔴 Formuła 1 (filtry): counter‑chipy z licznikami; **ten sam zestaw na każdej zakładce roli** (nie „Sessions ma, Inbox nie"). §15.3
+- [ ] 🔴 Formuła 2 (multi‑select): zaznacz ≥1 → **natychmiast** pasek z przyciskami „co można zrobić". → `jak:` zaznacz 1 i 2 wiersze, sprawdź pasek.
+- [ ] 🔴 **Wszystkie przyciski bulk IDENTYCZNE** (`MENU_3_ACTION_NEUTRAL`, outline, `h-8`, ikona+label) — w tym **`Clear` to przycisk z ramką, NIE „gołe słowo"/ghost**. → `jak:` computed-style — `Clear` ma `border`, ta sama wysokość co reszta.
+- [ ] 🔴 **WSZYSTKIE przyciski bulk WYRÓWNANE DO LEWEJ** (zgrupowane tuż przy liczniku „N selected"), **NIGDY** wypchnięte na prawą krawędź paska. → `jak:` screenshot/`getBoundingClientRect` — `left` przycisków blisko licznika, nie po przeciwnej stronie. (Bug: Sessions miał akcje po prawej.)
+- [ ] 🔴 **Identyczna GRAFIKA wszystkich przycisków** — ta sama klasa `MENU_3_ACTION_NEUTRAL` (`outline`, `h-8`, `rounded-full`, ikona+label). **`Clear` ma wyglądać DOKŁADNIE jak reszta** (ikona X), nie „ghost"/inny styl. → `jak:` computed-style — `Clear` ma to samo `border`/`height`/`borderRadius` co `Archive`/akcje.
+- [ ] 🔴 **Układ:** najpierw stałe/uniwersalne lewo (`Clear · Archiwizuj`), potem kontekstowe dla obszaru (Inbox: `+1 dzień · +3 dni · +7 dni`); separator między grupami. §15.3 / §18
+- [ ] 🔴 **Sprawdź w KAŻDEJ zakładce osobno** — paski bulk bywają per‑zakładka (bug: Assigned miał, Inbox tylko „Clear").
+- [ ] Zestaw: uniwersalne (`Clear·Export CSV·Tag·Archive·Delete`) + kontekst per obszar (Inbox: Delay +1/+3/+7); danger ostatni, confirm. §15.3
+- [ ] Akcje bulk wpięte w **realne handlery** (nie atrapy); brak endpointu → przycisk pominięty lub `disabled` z notą, nie martwy. 
+- [ ] Formuła 3 (otwarte karty): single‑click=preview (bez taba); „Open"=pełna karta + trwały tab; taby **cross‑module**; tytuł=realny (bez artefaktów typu „abaliza"). §15.3 / §24
+- [ ] Dokładnie jeden rząd Menu 3 (bez dodatkowych stripów). 
+
+### E. Wiersz nagłówka (kolumny + podtytuły)
+- [ ] 🔴 Typografia `text-[11px] font-semibold uppercase tracking-wider`, kolor `text-slate-500 dark:text-slate-400`. §3.2
+- [ ] 🔴 `sticky top-0 z-10`; rodzic bez `overflow-hidden` (RC‑4). §3.2 / §20
+- [ ] Hairline `border-b` pod nagłówkiem. §3.2
+- [ ] 🔴 Wyrównanie wg roli (KANON 2026): tytuł **left** · **tabliczki/chipy (tag/kategoria/typ/źródło + status) left + kropka znaczenia** · **liczby (questions/usage/%/counts) right** · assignee/due **left** · akcje **right**. **Brak centrowanych chipów/statusów.** §3.3
+- [ ] 🔴 Tagi tożsamości (category/type/source) = neutralny chip **lewo + wiodąca kropka** `categoryTone()` (paleta `--c-tag-*`); **nie** wypełnienie, **nie** boczny pasek; ta sama kategoria = ten sam kolor. §4.0a → `jak:` computed-style — kropka ma `--c-tag-*`, chip lewy.
+- [ ] 🔴 Ikona `Settings2` → **PORTALOWY** popover „Visible columns" (`createPortal`+`position:fixed` z `getBoundingClientRect`). **Samo `max-height` NIE wystarcza** — popover `absolute` jest clipowany przez `overflow:hidden/auto` rodziców (kontener scrolla tabeli + wrappery layoutu). Zweryfikuj realnie, że **ostatnie pozycje (Submitted/AI Score/Escalation + toggle opisu) są widoczne i scrollowalne**, nie ucięte. §16
+- [ ] Kolumny wymagane oznaczone „Required" i zablokowane. §16
+- [ ] Toggle „Show row description" w popoverze; włączony = druga linia (subtytuł ~11px), wyłączony = brak skoku wysokości. §16 / §3.4
+- [ ] Widoczność + szerokości + „row description" persystowane per `persistKey`. §5 / §16
+
+### F. Kolumny / komórki
+- [ ] 🔴 Status = `EntityStatusChip` (`statusChipTone` → `c.*`); brak hardcodów. §4.1 → `jak:` grep brak `StatusPill`/`bg-blue-900`; computed-style kropki = ton `c.*`.
+- [ ] 🔴 Progress = `ProgressCell`; fill `info`→`success`@100%, **nigdy danger/crimson**. §4.3/§4.0 → `jak:` `getComputedStyle(fill).backgroundColor` ≠ wartość `--c-accent`/czerwień przy <100%.
+- [ ] 🔴 Termin = **jedna** kolumna `DueChip` (nie DUE+OVERDUE). §4.4 → `jak:` zrzut nagłówków — brak osobnej kolumny „Overdue"/„Po terminie".
+- [ ] Assignee = `AssigneeCell` (avatar+imię **left**), graceful „Unassigned" (nie „? Unknown"). §3.3 → `jak:` wiersz bez asignee pokazuje kursywne „Unassigned", nie „?".
+- [ ] Typ/kategoria/źródło = neutralny chip (`getTypeStyle`/MetaChip). §4
+- [ ] Puste komórki = `—` wyciszony, nigdy blank. §3.3
+- [ ] Nadmiar chipów = `+N` jako pill. §3.3
+- [ ] Brak `max-w-[…]`/`colSpan` hardcode na komórkach (RC‑7/RC‑8). §20
+
+### G. Wiersz (gęstość, hover, selekcja)
+- [ ] Gęstość `px-4 py-3` (comfortable) / `px-4 py-2` (compact); wysokość stała na hover. §3.4
+- [ ] Brak zebry; separatory `divide-y` hairline. §3.1
+- [ ] 🔴 Tło wiersza NIGDY barwione statusem; status tylko w pill. §3.5
+- [ ] Hover subtelny; selected = `bg-primary-500/8` + 4px lewy akcent + ring; hover nie nadpisuje selekcji. §3.5
+- [ ] Checkbox `h-3.5 w-3.5`, quiet/reveal‑on‑hover; checked zawsze widoczny. §3.5
+
+### H. Kebab (⋮) — 3 strefy (góra kontekst / dół stały / danger)
+- [ ] 🔴 **DÓŁ ZAWSZE TEN SAM**: `Open · Edytuj · Archiwizuj(/Przywróć) · Delay ▸` — identyczny w każdej tabeli/zakładce/statusie. §9 → `jak:` otwórz kebab, sprawdź że dolne 4 pozycje są zawsze te same.
+- [ ] 🔴 **GÓRA kontekstowa** wg statusu/roli (Inbox: Continue/Start/Fix; Assigned: Approve/Send back/Reassign/Remind/Escalate); pusta strefa = ukryta. §9 → `jak:` otwórz kebab dla wiersza w każdym statusie.
+- [ ] 🔴 **DANGER**: `Usuń` ostatni, oddzielony, ton danger, confirm; brak endpointu → `disabled` z „Wkrótce (backend)" (slot widoczny, nie martwy). §9
+- [ ] `Edytuj` kontekstowe w działaniu (manager→modal zarządzania; assignee→edycja odpowiedzi), ale stała pozycja. §9
+- [ ] `Delay ▸` = **submenu inline** `+1/+3/+7 dni` (chevron, rozwija pod spodem). §9 → `jak:` klik Delay → pojawiają się 3 pod-pozycje.
+- [ ] Każda pozycja = ikona+label; separatory auto między strefami. §9
+- [ ] Menu **portalowe, auto-flip, nieclipowane, w viewport** (`getBoundingClientRect().bottom <= innerHeight`). §9 → `jak:` computed-style menu.
+- [ ] Akcje = parytet z preview footer i full view (te same nazwy/uprawnienia). §17
+- [ ] 🔴 **Sprawdzone w KAŻDEJ zakładce** (Inbox/Assigned/Sessions/…) i KAŻDYM statusie wiersza. Komponent SSOT: `RowActionsMenu` (`sections` + `submenu`).
+
+### I. Preview pane
+- [ ] 🔴 Domyślnie zamknięty; single‑click=preview, dbl/Enter=full, Esc=zamknij. §7.1
+- [ ] Szerokość `clamp(340px,28%,480px)`; separacja `gap-1.5` bez `border-l`. §7.2
+- [ ] Header sticky: kicker+tytuł(1 linia,truncate)+„Open in Full View"+„X". §7.3
+- [ ] 🔴 Details — **bogaty domyślny szablon** (cel/zakres/kontekst/właściciel/daty/powiązania), nie jednolinijkowy; pusto=empty state. §7.3
+- [ ] 🔴 Stopka — sztywna kolejność: AI hints(3 chipy+⋮)→divider→Relations(2 wiersze)→divider→Actions(pille `h-9`). §7.3
+- [ ] Akcje stopki = parytet z full view; destrukcyjne=confirm. §7.3
+
+### J. Pełna karta + cross‑module
+- [ ] „Open" otwiera pełną kartę (N‑mode), nie tylko preview; lista wraca przez „≡ List". §24
+- [ ] Taby otwartych kart cross‑module w Menu 3; `×` zamyka. §24 / §15.3
+
+### K. Kolory (formuła sygnałów)
+- [ ] 🔴 Czerwień (`danger`) tylko realny alarm (overdue/error/blocked/rejected/delete). §4.0
+- [ ] 🔴 Test ekranu: brak „biało‑czerwieni"; progres/neutralne daty/„w toku" nie są czerwone. §4.0
+- [ ] Crimson (`accent`) tylko marka/CTA/selekcja, nie dane. §4.0
+- [ ] Tony: neutral/info/success/warning/danger wg znaczenia. §4.0
+
+### L. Stany
+- [ ] Loading = spinner/skeleton, nigdy blank. §10
+- [ ] Error = karta + retry; guard danych `(x||'').toLowerCase()`. §10
+- [ ] Empty = 3 warianty (brak danych / brak dla filtra / brak wyników) + CTA; i18n. §10 / §22
+
+### M. Grafika i layout (lock)
+- [ ] Geometria kontrolek stała (h‑9 pille, h‑8 bulk, chipy `ChipBase`, ikony 12/14px). §19 / §4.2
+- [ ] Powierzchnie/kolory wyłącznie tokeny `c.*`/zatwierdzone; 0 hex; brak rogue inline‑color. §19
+- [ ] Układ stref w stałej kolejności; zgodność ze złotą referencją `assets/app-table-golden-reference-{dark,light}`. §19
+- [ ] Parytet light/dark (kontrast, separatory). §21
+
+### N. Dostępność i klawiatura
+- [ ] ↑/↓/J/K nawigacja; Enter=full; Esc=zamknij; Space=select. §21
+- [ ] ARIA: `aria-sort`, `aria-live` licznik selekcji, preview `role`/`aria-label`. §21
+- [ ] Focus ring widoczny; focus‑trap w popoverze i preview‑modal (mobile). §21
+
+### O. Sort / Filter / Resize / Persistencja
+- [ ] Sort: klik nagłówka + ikona kierunku (`ChevronUp/Down`); default per moduł persystowany. §5 / §22
+- [ ] Filtry per kolumna; presety/aktywne filtry jako chipy w Menu 3; stan persystowany. §5 / §22
+- [ ] Resize zero‑sum z sąsiadem; szerokość tabeli stała; szerokości persystowane. §5
+
+### P. Zabezpieczenia inżynierskie (RC)
+- [ ] RC‑1 brak podwójnego scrolla · RC‑3 header/body z jednego źródła szerokości · RC‑4 brak `overflow-hidden` rodzica · RC‑5 brak surowego `<table>` · RC‑7 `colSpan` liczony · RC‑8 brak `max-w-[…]` ad‑hoc. §20
+
+### R. i18n
+- [ ] PL/EN przez `useTranslation`, bez hardcode; truncacja+tooltip dla długich łańcuchów. §22
+
+### T. Dark + light (na żywo, oba)
+- [ ] Przełącz `colorScheme` dark/light → tabela czytelna w obu; separatory wierszy realne w dark, light nie „wyprany". §21 → `jak:` `preview_resize colorScheme`.
+- [ ] Chipy/przyciski/kropki‑sygnały czytelne w obu trybach (kontrast tekst/tło AA). §4.2/§21
+- [ ] Brak hardcodowanych kolorów łamiących dark (0 hex; tokeny `c.*`). §19
+
+### U. Runtime / brak crashy (zachowanie)
+- [ ] Otwórz zakładkę → ładuje się (zero spinner‑forever / 429 / „coś poszło nie tak"); console bez errorów. §10 → `jak:` `preview_console_logs level=error`.
+- [ ] Scroll długiej listy: nagłówek sticky trzyma, brak podwójnego scrolla (RC‑1), brak desync header/body (RC‑3). §20
+- [ ] Zaznacz/odznacz, otwórz/zamknij preview, otwórz kebab + submenu, otwórz popover kolumn — żadna akcja nie crashuje ani nie zostawia „ducha" (menu/tooltip nie znika). 
+- [ ] Akcje (bulk/kebab/preview) realnie wołają endpointy i odświeżają listę (toast sukcesu), nie są atrapami. 
+
+### S. Bramki + dowód
+- [ ] FE `tsc`=0 · BE `esbuild`=0 · eslint 0 błędów (warnings repo‑wide OK).
+- [ ] Świeżość serwowanego kodu potwierdzona (stale‑cache Vite na dużych plikach). 
+- [ ] Dowód wizualny: screenshot przed/po + zrzut DOM (nagłówki, lista itemów kebaba/bulk) + computed‑style krytycznych (kolor progresu, sticky, wyrównanie, popover w viewport).
+- [ ] Raport `PASS/FAIL/N-A` per punkt; każdy `N/A` uzasadniony (np. „demo Inbox pusty / ADMIN bez canAssign — zweryfikowane na OWNER").
+
+---
+
+## 28) Related sources
+- `docs/ui-standards/03-modules/app-table-standard.md` (szczegóły anatomii)
+- `docs/ui-standards/03-modules/table-preview-pane-standard.md` (preview)
+- `docs/ui-standards/03-modules/view-modes-standard.md` (widoki)
+- `docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md` (v3 unified)
+- `docs/ui-standards/03-modules/module-hub-standard.md` (Menu 2/3)
+- `docs/design-system/TABLES.md` (design‑system enforcement)
+- `docs/audit/2026-06-03/TABLE_GRAPHICS_ROOTCAUSE.md` (root‑cause bugów graficznych)
+- `docs/audit/2026-06-05/_IV_VISUAL_TABLE_PATTERN.md` (audyt 5 ręcznych tabel Interview)
+- Komponenty SSOT: `src/components/shared/TableWithPreviewLayout.tsx`, `src/components/shared/ModuleHub/{FilterableTable,GridView,TableSettingsPopover}.tsx`, `src/components/ui/primitives/chips/*` (rodzina chipów `c.*`), `src/components/ui/primitives/cells/{ProgressCell,AssigneeCell}.tsx`, `src/components/ui/ResizableTable/{index,TableHeader,PreviewPaneShell}.tsx`
+- Tokeny: `src/index.css` (`--c-*`) + `tailwind.config.js` (namespace `c`)
+- Legacy (migracja): `src/components/shared/StatusPill.tsx`, `src/constants/statusColors.ts`

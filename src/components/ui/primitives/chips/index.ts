@@ -11,6 +11,7 @@
  * those are wired separately to avoid merge churn.
  */
 
+export { categoryTone } from './categoryTone';
 export {
   CHIP_ICON_PX,
   CHIP_TONE_VAR,
@@ -21,6 +22,7 @@ export {
   type ChipTone,
 } from './chipBase';
 export { deriveDueRisk, DueChip, type DueChipProps, type DueRisk } from './DueChip';
+export { EntityStatusChip, type EntityStatusChipProps, statusChipTone } from './EntityStatusChip';
 export { MetaChip, type MetaChipProps } from './MetaChip';
 export { PriorityChip, type PriorityChipProps, type PriorityLevel } from './PriorityChip';
 export { StatusChip, type StatusChipProps, type StatusTone } from './StatusChip';

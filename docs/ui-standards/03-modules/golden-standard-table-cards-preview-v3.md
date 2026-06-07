@@ -1,5 +1,7 @@
 # Golden Standard v3 — Table + Cards + Preview
 
+> ⚠️ **SUPERSEDED (2026-06-06) — zastąpione przez [`TABLE_AND_PREVIEW_CANON.md`](TABLE_AND_PREVIEW_CANON.md).** Dokument historyczny; SSOT to kanon.
+
 > **Status:** Canon (Sprint 1)  
 > **Cel:** Jeden, konsekwentny standard dla **wszystkich miejsc**, gdzie użytkownik pracuje na kolekcjach danych: **Table**, **Cards/Grid**, oraz **Table+Preview (Outlook style)**.
 >
