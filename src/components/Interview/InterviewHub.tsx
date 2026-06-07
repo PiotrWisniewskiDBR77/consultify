@@ -769,6 +769,7 @@ export const InterviewHub: React.FC = () => {
   const [activeTab, setActiveTab] = useState<InterviewTab>('my_assignments');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [assignmentsViewMode, setAssignmentsViewMode] = useState<'list' | 'cards'>('list');
+  const [initiativesViewMode, setInitiativesViewMode] = useState<'table' | 'cards'>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [sessionStatusFilter, setSessionStatusFilter] = useState<string>('all');
@@ -5458,17 +5459,24 @@ export const InterviewHub: React.FC = () => {
                                 : []),
                             ],
                           },
-                          // DÓŁ — stały: Open · Archiwizuj/Przywróć (lifecycle).
-                          // (Sessions: Edytuj≡Open; brak endpointu Delay — świadome N/A.)
+                          // DÓŁ — stały (kanon §9): Open · Edit · Archiwizuj/Przywróć · [Delay]
                           {
                             id: 'fixed',
                             kind: 'manage' as const,
                             actions: [
                               {
                                 id: 'open',
-                                label: isPolish ? 'Otwórz' : 'Open',
+                                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
                                 icon: ChevronRight,
                                 onClick: () => handleViewSession(session),
+                              },
+                              {
+                                id: 'edit',
+                                label: isPolish ? 'Edytuj' : 'Edit',
+                                icon: Edit3,
+                                disabled: true,
+                                description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                                onClick: () => {},
                               },
                               ...(sessionLifecycle === 'active'
                                 ? [
@@ -5535,6 +5543,21 @@ export const InterviewHub: React.FC = () => {
                             id: 'danger',
                             kind: 'danger' as const,
                             actions: [
+                              ...(sessionLifecycle === 'active'
+                                ? [
+                                    {
+                                      id: 'trash-from-active',
+                                      label: isPolish ? 'Przenieś do kosza' : 'Move to trash',
+                                      icon: Trash2,
+                                      variant: 'danger' as const,
+                                      disabled: true,
+                                      description: isPolish
+                                        ? 'Archiwizuj najpierw'
+                                        : 'Archive first',
+                                      onClick: () => {},
+                                    },
+                                  ]
+                                : []),
                               ...(sessionLifecycle === 'archived'
                                 ? [
                                     {
@@ -6819,16 +6842,26 @@ export const InterviewHub: React.FC = () => {
                               },
                             ],
                           },
-                          // DÓŁ — stały: Open · Archiwizuj/Przywróć. (Wnioski AI nie mają Edytuj/Delay.)
+                          // DÓŁ — stały (kanon §9): Open preview · Edit · Archiwizuj/Przywróć
                           {
                             id: 'fixed',
                             kind: 'manage' as const,
                             actions: [
                               {
                                 id: 'open',
-                                label: isPolish ? 'Otwórz' : 'Open',
+                                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
                                 icon: ChevronRight,
                                 onClick: () => handleViewInsight(insight),
+                              },
+                              {
+                                id: 'edit',
+                                label: isPolish ? 'Edytuj' : 'Edit',
+                                icon: Edit3,
+                                disabled: true,
+                                description: isPolish
+                                  ? 'Wnioski AI — tylko do odczytu'
+                                  : 'AI-generated — read-only',
+                                onClick: () => {},
                               },
                               insight.archivedAt || insightScope === 'archived'
                                 ? {
@@ -7722,7 +7755,7 @@ export const InterviewHub: React.FC = () => {
                                 : []),
                             ],
                           },
-                          // DÓŁ — stały: Open · Edytuj · Archiwizuj/Przywróć.
+                          // DÓŁ — stały: Open preview · Edytuj · Archiwizuj/Przywróć.
                           // (Templates: brak terminu → Delay N/A.)
                           {
                             id: 'fixed',
@@ -7730,20 +7763,22 @@ export const InterviewHub: React.FC = () => {
                             actions: [
                               {
                                 id: 'open',
-                                label: isPolish ? 'Otwórz' : 'Open',
+                                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
                                 icon: ChevronRight,
                                 onClick: () => handleViewTemplate(template),
                               },
-                              ...(canAssign
-                                ? [
-                                    {
-                                      id: 'edit',
-                                      label: isPolish ? 'Edytuj szablon' : 'Edit template',
-                                      icon: Edit3,
-                                      onClick: () => handleEditTemplate(template.id),
-                                    },
-                                  ]
-                                : []),
+                              {
+                                id: 'edit',
+                                label: isPolish ? 'Edytuj szablon' : 'Edit template',
+                                icon: Edit3,
+                                disabled: !canAssign,
+                                description: !canAssign
+                                  ? isPolish
+                                    ? 'Tylko menedżer'
+                                    : 'Manager only'
+                                  : undefined,
+                                onClick: () => canAssign && handleEditTemplate(template.id),
+                              },
                               ...(canAssign && !template.isDefault
                                 ? String(template.status || '').toLowerCase() === 'archived'
                                   ? [
@@ -7762,10 +7797,21 @@ export const InterviewHub: React.FC = () => {
                                         onClick: () => handleArchiveTemplate(template),
                                       },
                                     ]
-                                : []),
+                                : !canAssign
+                                  ? [
+                                      {
+                                        id: 'archive',
+                                        label: isPolish ? 'Archiwizuj szablon' : 'Archive template',
+                                        icon: Archive,
+                                        disabled: true,
+                                        description: isPolish ? 'Tylko menedżer' : 'Manager only',
+                                        onClick: () => {},
+                                      },
+                                    ]
+                                  : []),
                             ],
                           },
-                          // DANGER — Usuń (realny, tylko nie‑domyślne)
+                          // DANGER — Usuń (realny dla canAssign; placeholder dla !canAssign)
                           {
                             id: 'danger',
                             kind: 'danger' as const,
@@ -7780,7 +7826,19 @@ export const InterviewHub: React.FC = () => {
                                       variant: 'danger' as const,
                                     },
                                   ]
-                                : []),
+                                : !canAssign
+                                  ? [
+                                      {
+                                        id: 'delete',
+                                        label: isPolish ? 'Usuń szablon' : 'Delete template',
+                                        icon: Trash2,
+                                        variant: 'danger' as const,
+                                        disabled: true,
+                                        description: isPolish ? 'Tylko menedżer' : 'Manager only',
+                                        onClick: () => {},
+                                      },
+                                    ]
+                                  : []),
                             ],
                           },
                         ]}
@@ -9731,14 +9789,14 @@ Return ONLY the answer text (no markdown fences).`;
                                 : []),
                             ],
                           },
-                          // DÓŁ — ZAWSZE TEN SAM: Open · Edytuj · Archiwizuj/Przywróć · Delay▸
+                          // DÓŁ — ZAWSZE TEN SAM: Open preview · Edytuj · Archiwizuj/Przywróć · Delay▸
                           {
                             id: 'fixed',
                             kind: 'manage' as const,
                             actions: [
                               {
                                 id: 'open',
-                                label: isPolish ? 'Otwórz' : 'Open',
+                                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
                                 icon: ChevronRight,
                                 onClick: () =>
                                   void openInterviewAssignmentFull(assignment, showAssignee),
@@ -10634,6 +10692,246 @@ Return ONLY the answer text (no markdown fences).`;
               }}
             >
               <div className="pl-4 pr-1.5 pt-3 pb-4">
+                {initiativesViewMode === 'cards' ? (
+                  // §8.1 GridView — anatomia karty: badges → title → desc → stats footer
+                  rows.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3 py-16">
+                      <Rocket className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Brak inicjatyw' : 'No initiatives yet'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {rows.map((initiative) => {
+                        const cardTitle =
+                          initiative.title ||
+                          initiative.name ||
+                          (isPolish ? 'Inicjatywa' : 'Initiative');
+                        const status = String(initiative.status || 'DRAFT').toUpperCase();
+                        const m = statusMeta(status);
+                        const isSelected =
+                          selectedInterviewInitiativeId === initiative.id;
+                        const desc = String(initiative.description || '')
+                          .replace(/^#\s.+$/m, '')
+                          .trim();
+                        const dateStr =
+                          initiative.createdAt
+                            ? new Date(initiative.createdAt).toLocaleDateString(
+                                isPolish ? 'pl-PL' : 'en-US',
+                                { month: 'short', day: 'numeric' }
+                              )
+                            : '—';
+                        const src = initiative.sourceId
+                          ? insights.find((i) => i.id === initiative.sourceId)
+                          : null;
+                        const promoted = isInitiativePromoted(initiative.status);
+                        return (
+                          <div
+                            key={initiative.id}
+                            className={[
+                              'group relative flex flex-col gap-2.5 rounded-xl border p-4 cursor-pointer transition-all duration-150',
+                              isSelected
+                                ? 'border-primary-400/60 bg-primary-500/5 dark:bg-primary-500/10 shadow-sm'
+                                : 'border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 hover:shadow-md hover:-translate-y-px',
+                            ].join(' ')}
+                            onClick={() =>
+                              setSelectedInterviewInitiativeId(
+                                isSelected ? null : initiative.id
+                              )
+                            }
+                            onDoubleClick={() => {
+                              if (promoted)
+                                navigate(
+                                  `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                );
+                            }}
+                          >
+                            {/* 1 BADGE ROW */}
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${m.cls}`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full ${m.dotClass}`} />
+                                {m.label}
+                              </span>
+                              {initiative.priority &&
+                                ['critical', 'urgent', 'high'].includes(
+                                  String(initiative.priority).toLowerCase()
+                                ) && (
+                                  <PriorityChip
+                                    level={priorityLevel(initiative.priority)}
+                                  />
+                                )}
+                            </div>
+                            {/* 2 TITLE */}
+                            <p
+                              className="line-clamp-2 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                              title={cardTitle}
+                            >
+                              {cardTitle}
+                            </p>
+                            {/* 3 DESCRIPTION */}
+                            {desc ? (
+                              <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                                {desc}
+                              </p>
+                            ) : null}
+                            {/* 4 STATS FOOTER */}
+                            <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] text-slate-500 dark:border-white/[0.05] dark:text-slate-400">
+                              <span>
+                                {initiative.priority
+                                  ? String(initiative.priority).charAt(0).toUpperCase() +
+                                    String(initiative.priority).slice(1).toLowerCase()
+                                  : isPolish
+                                    ? 'Brak priorytetu'
+                                    : 'No priority'}
+                              </span>
+                              <span>
+                                {src
+                                  ? isPolish
+                                    ? '1 wniosek'
+                                    : '1 insight'
+                                  : isPolish
+                                    ? 'bez źródła'
+                                    : 'no source'}
+                              </span>
+                              <span>{dateStr}</span>
+                            </div>
+                            {/* KEBAB (same sections as table) */}
+                            <div
+                              className="absolute right-2 top-2 z-10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <RowActionsMenu
+                                iconVariant="vertical"
+                                className="opacity-0 transition-opacity group-hover:opacity-100"
+                                sections={[
+                                  {
+                                    id: 'context',
+                                    kind: 'context' as const,
+                                    actions: [
+                                      ...(status === 'DRAFT'
+                                        ? [
+                                            {
+                                              id: 'send-to-review',
+                                              label: isPolish
+                                                ? 'Wyślij do przeglądu'
+                                                : 'Send to review',
+                                              icon: ArrowRight,
+                                              onClick: () =>
+                                                void handleUpdateInterviewInitiativeStatus(
+                                                  initiative.id,
+                                                  'PENDING_REVIEW'
+                                                ),
+                                            },
+                                          ]
+                                        : []),
+                                      ...(status === 'PENDING_REVIEW'
+                                        ? [
+                                            ...(canReviewInsights
+                                              ? [
+                                                  {
+                                                    id: 'approve-to-initiatives',
+                                                    label: isPolish
+                                                      ? 'Zatwierdź i przekaż dalej'
+                                                      : 'Approve and move forward',
+                                                    icon: Rocket,
+                                                    onClick: () =>
+                                                      void handleUpdateInterviewInitiativeStatus(
+                                                        initiative.id,
+                                                        'REVIEW',
+                                                        { openInInitiatives: true }
+                                                      ),
+                                                  },
+                                                ]
+                                              : []),
+                                            {
+                                              id: 'back-to-draft',
+                                              label: isPolish
+                                                ? 'Wróć do szkicu'
+                                                : 'Back to draft',
+                                              icon: RotateCcw,
+                                              onClick: () =>
+                                                void handleUpdateInterviewInitiativeStatus(
+                                                  initiative.id,
+                                                  'DRAFT'
+                                                ),
+                                            },
+                                          ]
+                                        : []),
+                                    ],
+                                  },
+                                  {
+                                    id: 'fixed',
+                                    kind: 'manage' as const,
+                                    actions: [
+                                      {
+                                        id: 'open-preview',
+                                        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                                        icon: ChevronRight,
+                                        onClick: () =>
+                                          setSelectedInterviewInitiativeId(initiative.id),
+                                      },
+                                      {
+                                        id: 'edit',
+                                        label: isPolish ? 'Edytuj' : 'Edit',
+                                        icon: Edit3,
+                                        disabled: true,
+                                        description: isPolish
+                                          ? 'Wkrótce (backend)'
+                                          : 'Coming soon (backend)',
+                                        onClick: () => {},
+                                      },
+                                      {
+                                        id: 'open-module',
+                                        label: isPolish
+                                          ? 'Otwórz w module Initiatives'
+                                          : 'Open in Initiatives',
+                                        icon: ExternalLink,
+                                        onClick: () =>
+                                          navigate(
+                                            `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                          ),
+                                      },
+                                      {
+                                        id: 'archive',
+                                        label: isPolish ? 'Archiwizuj' : 'Archive',
+                                        icon: Archive,
+                                        description: isPolish
+                                          ? 'Wkrótce (backend)'
+                                          : 'Coming soon (backend)',
+                                        disabled: true,
+                                        onClick: () => {},
+                                      },
+                                    ],
+                                  },
+                                  {
+                                    id: 'danger',
+                                    kind: 'danger' as const,
+                                    actions: [
+                                      {
+                                        id: 'delete',
+                                        label: isPolish ? 'Usuń' : 'Delete',
+                                        icon: Trash2,
+                                        variant: 'danger' as const,
+                                        description: isPolish
+                                          ? 'Wkrótce (backend)'
+                                          : 'Coming soon (backend)',
+                                        disabled: true,
+                                        onClick: () => {},
+                                      },
+                                    ],
+                                  },
+                                ]}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                ) : (
                 <div className="rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
                   <table
                     className="w-full table-fixed rounded-xl"
@@ -11140,8 +11438,7 @@ Return ONLY the answer text (no markdown fences).`;
                                         : []),
                                     ],
                                   },
-                                  // DÓŁ — stały (kanon §9): Open preview + Open in module + Archiwizuj.
-                                  // Lifecycle (Archiwizuj/Usuń) = backlog B-1; disabled z notą "Wkrótce".
+                                  // DÓŁ — stały (kanon §9): Open preview · Edit · [Open in module] · Archiwizuj
                                   {
                                     id: 'fixed',
                                     kind: 'manage' as const,
@@ -11152,6 +11449,14 @@ Return ONLY the answer text (no markdown fences).`;
                                         icon: ChevronRight,
                                         onClick: () =>
                                           setSelectedInterviewInitiativeId(initiative.id),
+                                      },
+                                      {
+                                        id: 'edit',
+                                        label: isPolish ? 'Edytuj' : 'Edit',
+                                        icon: Edit3,
+                                        disabled: true,
+                                        description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                                        onClick: () => {},
                                       },
                                       {
                                         id: 'open-module',
@@ -11253,6 +11558,7 @@ Return ONLY the answer text (no markdown fences).`;
                     </tbody>
                   </table>
                 </div>
+                )} {/* end initiativesViewMode === 'table' */}
               </div>
             </TableWithPreviewLayout>
           </div>
@@ -12170,6 +12476,38 @@ Return ONLY the answer text (no markdown fences).`;
       );
     }
 
+    if (activeTab === 'initiatives') {
+      controls.push(
+        <div
+          key="initiatives-view"
+          className={viewSegmentClass}
+          role="radiogroup"
+          aria-label={isPolish ? 'Tryb widoku inicjatyw' : 'Initiatives view mode'}
+        >
+          <button
+            type="button"
+            onClick={() => setInitiativesViewMode('table')}
+            className={viewButtonClass(initiativesViewMode === 'table')}
+            title={isPolish ? 'Lista' : 'List'}
+            role="radio"
+            aria-checked={initiativesViewMode === 'table'}
+          >
+            <LayoutList size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setInitiativesViewMode('cards')}
+            className={viewButtonClass(initiativesViewMode === 'cards')}
+            title={isPolish ? 'Karty' : 'Cards'}
+            role="radio"
+            aria-checked={initiativesViewMode === 'cards'}
+          >
+            <LayoutGrid size={15} />
+          </button>
+        </div>
+      );
+    }
+
     return controls.length > 0 ? <div className="flex items-center gap-1.5">{controls}</div> : null;
   }, [
     activeDocumentId,
@@ -12183,6 +12521,7 @@ Return ONLY the answer text (no markdown fences).`;
     sessionStatusFilter,
     viewMode,
     assignmentsViewMode,
+    initiativesViewMode,
   ]);
 
   // Tab-specific primary CTA
