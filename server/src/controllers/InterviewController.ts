@@ -733,6 +733,25 @@ async function ensureInterviewInsightLifecycleColumns(): Promise<void> {
   }
 }
 
+/**
+ * Lazy ALTER — adds section_completions JSON column to interview_insights.
+ * Called from updateInsight when the payload includes sectionCompletions.
+ * Stores: { "themes": true, "issues-risks": true, ... } (AI Mark Complete signal).
+ */
+async function ensureInsightSectionCompletionsColumn(): Promise<void> {
+  const cols = await getTableColumns('interview_insights');
+  if (!cols.has('section_completions')) {
+    try {
+      await queryHelpers.queryRun(
+        `ALTER TABLE interview_insights ADD COLUMN section_completions TEXT`
+      );
+    } catch (err: any) {
+      const m = String(err?.message || err).toLowerCase();
+      if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+    }
+  }
+}
+
 async function ensureInterviewQuestionTemplatesTable(): Promise<void> {
   await queryHelpers.queryRun(
     `CREATE TABLE IF NOT EXISTS interview_question_templates (
@@ -7746,7 +7765,7 @@ ${JSON.stringify(questions || [], null, 2)}
   updateInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { title, status, exportedToTools, exportedToAssessment, archived } = req.body;
+    const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } = req.body;
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -7777,6 +7796,17 @@ ${JSON.stringify(questions || [], null, 2)}
         updates.push('archived_at = ?', 'archived_by = ?');
         values.push(null, null);
       }
+    }
+
+    // Mark Complete — AI signal only; persisted as JSON { sectionId: boolean, ... }
+    if (sectionCompletions !== undefined && sectionCompletions !== null) {
+      await ensureInsightSectionCompletionsColumn();
+      updates.push('section_completions = ?');
+      values.push(
+        typeof sectionCompletions === 'string'
+          ? sectionCompletions
+          : JSON.stringify(sectionCompletions)
+      );
     }
 
     if (updates.length === 0) {

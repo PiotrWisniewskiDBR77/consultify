@@ -2782,6 +2782,9 @@ export interface FullInitiative {
   teamMembers?: InitiativeTeamMember[];
   relatedInitiatives?: RelatedInitiative[];
   versions?: InitiativeVersion[];
+
+  /** Mark Complete — AI signal. { sectionId: boolean, ... }. Persisted in section_completions JSON column. */
+  sectionCompletions?: Record<string, boolean>;
 }
 
 // Alias Initiative to FullInitiative for backend compatibility

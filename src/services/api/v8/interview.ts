@@ -778,6 +778,8 @@ export const V8InterviewApi = {
       exportedToTools?: boolean;
       exportedToAssessment?: boolean;
       archived?: boolean;
+      /** Mark Complete signal — AI only. { sectionId: boolean, ... } */
+      sectionCompletions?: Record<string, boolean>;
     }
   ) => v8Patch<{ success: boolean }>(`/interview/insights/${encodeURIComponent(id)}`, payload),
 

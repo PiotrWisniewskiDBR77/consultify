@@ -897,6 +897,29 @@ export class InitiativeController {
         }
       }
 
+      // Mark Complete — AI signal only; lazy ALTER + JSON persist
+      if (body.sectionCompletions !== undefined && body.sectionCompletions !== null) {
+        const initiativeCols = getColumnNameSet(
+          await queryHelpers.getTableColumns('initiatives')
+        );
+        if (!initiativeCols.has('section_completions')) {
+          try {
+            await queryHelpers.queryRun(
+              `ALTER TABLE initiatives ADD COLUMN section_completions TEXT`
+            );
+          } catch (err: any) {
+            const m = String(err?.message || err).toLowerCase();
+            if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+          }
+        }
+        const newJson =
+          typeof body.sectionCompletions === 'string'
+            ? body.sectionCompletions
+            : JSON.stringify(body.sectionCompletions);
+        updates.push('section_completions = ?');
+        params.push(newJson);
+      }
+
       if (updates.length === 0) {
         res.json({ id, message: 'No changes detected' });
         return;
