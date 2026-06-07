@@ -127,6 +127,7 @@ import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import inboxEnterpriseRoutes from './routes/inbox-enterprise.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
 import initiativeGovernanceRoutes from './routes/initiative-governance.routes.js';
+import initiativesAdditiveRoutes from './routes/initiatives-additive.routes.js';
 import insightSourceBasketsRouter from './routes/insightSourceBaskets.routes.js';
 import automationRoutes from './routes/integrations/automation.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
@@ -453,6 +454,11 @@ export class ApiGateway {
       app.use('/api/sessions', sessionsRoutes);
       app.use('/api/teams', teamsRoutes);
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
+      // Additive initiative slices (suggested-changes CRUD + propose engine). Mounted
+      // on the same base path AFTER the main router so it only serves the new paths
+      // (/:id/suggested-changes, /suggested-changes/:id, /propose) the main router
+      // does not define. Own auth/org middleware is applied inside the router.
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesAdditiveRoutes);
       app.use('/api/admin-alerts', adminAlertsRoutes);
       app.use('/api/admin/backups', adminBackupRoutes);
       app.use('/api/admin/ai-quality', adminAIQualityRoutes);
