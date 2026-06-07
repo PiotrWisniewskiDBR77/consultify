@@ -557,6 +557,12 @@ export const ChatQuickRequestSchema = z.object({
   language: z.string().optional(),
 });
 
+export const AiGenerateRequestSchema = z.object({
+  message: z.string().min(1).max(32000),
+  systemInstruction: z.string().max(16000).optional(),
+  roleName: z.string().max(200).optional(),
+});
+
 // ── T032: AI Authoring ──────────────────────────────────────────────
 
 export const GenerateCardDraftRequestSchema = z.object({

@@ -2070,13 +2070,15 @@ export const Api = {
     roleName?: string
   ) => {
     try {
-      const response = await fetch(`${API_URL}/ai/chat`, {
+      const response = await fetch(`${API_URL}/ai/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history, systemInstruction, roleName }),
+        credentials: 'include',
+        headers: getHeaders(),
+        body: JSON.stringify({ message, systemInstruction, roleName }),
       });
       const data = await response.json();
-      return data.text;
+      if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
+      return data.text ?? '';
     } catch (error) {
       console.error('API Chat Error', error);
       throw error;

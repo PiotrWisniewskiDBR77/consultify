@@ -52,6 +52,7 @@ import {
   AIContextQuerySchema,
   AIReadinessAnalysisRequestSchema,
   ApproveActionRequestSchema,
+  AiGenerateRequestSchema,
   AuditIdParamSchema,
   CalculateQualityRequestSchema,
   CanPerformActionQuerySchema,
@@ -5435,6 +5436,64 @@ router.post(
     }
 
     return res.json({ response: responseText });
+  })
+);
+
+// ==================== AI GENERATE (tool-side single-shot) ====================
+// Lightweight endpoint for in-app tools (TemplateBuilder, etc.) that need a
+// single LLM call with a custom system instruction and no chat orchestration.
+// Returns { text: string }.
+router.post(
+  '/generate',
+  verifyToken,
+  validateBody(AiGenerateRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message, systemInstruction } = req.body as {
+      message: string;
+      systemInstruction?: string;
+    };
+
+    const aiGate = await ensureAiProviderAndAccess(req);
+    if (aiGate) return res.status(aiGate.status).json(aiGate.body);
+
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: req.organizationId,
+      tier: 'STANDARD',
+    } as any);
+
+    logger.info('[AI Generate] Using model:', modelCfg.id, 'provider:', modelCfg.provider);
+
+    let result: any;
+    try {
+      result = (await llmService.callText({
+        type: 'chat',
+        modelConfig: {
+          provider: modelCfg.provider,
+          id: modelCfg.id,
+          endpoint: (modelCfg as any).endpoint,
+          apiKey: (modelCfg as any).apiKey,
+        },
+        systemPrompt: systemInstruction || 'You are a helpful assistant.',
+        messages: [{ role: 'user', content: message }],
+        timeoutMs: 60000,
+        breakerOptions: { retryAttempts: 2, retryBaseDelay: 500, retryMaxDelay: 2000 },
+      } as any)) as any;
+    } catch (err: any) {
+      logger.error('[AI Generate] LLM call failed:', err?.message || err);
+      const mapped = mapLlmCallError(err);
+      return res.status(mapped.status).json(mapped.body);
+    }
+
+    const text = String(result?.content || result?.text || '').trim();
+    if (!text) {
+      return res.status(502).json({ error: 'LLM returned empty response', code: 'EMPTY_LLM_RESPONSE' });
+    }
+
+    return res.json({ text });
   })
 );
 
