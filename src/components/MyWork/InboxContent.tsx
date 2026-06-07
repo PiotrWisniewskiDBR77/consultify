@@ -36,6 +36,8 @@ import {
   CheckSquare,
   ChevronDown,
   ChevronRight,
+  ChevronsUpDown,
+  ChevronUp,
   Clock,
   Copy,
   Edit2,
@@ -51,7 +53,6 @@ import {
   MoreVertical,
   Pin,
   Scale,
-  Settings2,
   Sparkles,
   Square,
   Star,
@@ -78,6 +79,10 @@ import {
   type RowActionSection,
   RowActionsMenu,
 } from '@/components/shared/RowActionsMenu';
+import {
+  type TableSettingsColumn,
+  TableSettingsPopover,
+} from '@/components/shared/ModuleHub/TableSettingsPopover';
 import { ErrorState } from '@/components/ui/primitives';
 import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
@@ -867,6 +872,59 @@ type InboxResizableColumn =
   | 'received'
   | 'sla';
 
+// Per-column sort (canon §5/§27.O) — sortable fields + deterministic ordinals.
+type InboxSortField = 'title' | 'status' | 'urgency' | 'type' | 'section' | 'source' | 'received';
+
+const INBOX_URGENCY_ORDER: Record<InboxUrgency, number> = {
+  critical: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+};
+
+const INBOX_STATUS_ORDER: Record<string, number> = {
+  open: 0,
+  saved: 1,
+  snoozed: 2,
+  done: 3,
+  dismissed: 4,
+};
+
+function compareInboxItems(a: InboxItem, b: InboxItem, field: InboxSortField): number {
+  switch (field) {
+    case 'title':
+      return (a.title || '').localeCompare(b.title || '');
+    case 'status':
+      return (
+        (INBOX_STATUS_ORDER[a.itemStatus] ?? 99) - (INBOX_STATUS_ORDER[b.itemStatus] ?? 99)
+      );
+    case 'urgency':
+      return INBOX_URGENCY_ORDER[a.urgency] - INBOX_URGENCY_ORDER[b.urgency];
+    case 'type':
+      return (a.type || '').localeCompare(b.type || '');
+    case 'section':
+      return (a.section || '').localeCompare(b.section || '');
+    case 'source':
+      return (a.source?.type || '').localeCompare(b.source?.type || '');
+    case 'received':
+      return new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime();
+    default:
+      return 0;
+  }
+}
+
+const InboxSortIcon: React.FC<{
+  field: InboxSortField;
+  sortConfig: { field: InboxSortField; direction: 'asc' | 'desc' } | null;
+}> = ({ field, sortConfig }) => {
+  if (sortConfig?.field !== field) return <ChevronsUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+  return sortConfig.direction === 'asc' ? (
+    <ChevronUp size={12} className="text-primary-500" />
+  ) : (
+    <ChevronDown size={12} className="text-primary-500" />
+  );
+};
+
 const INBOX_RESIZE_BOUNDS: Record<InboxResizableColumn, { min: number; max: number }> = {
   title: { min: 360, max: 900 },
   status: { min: 80, max: 140 },
@@ -1577,9 +1635,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // Column widths
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
 
-  // View settings (Columns) — persisted
-  const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
-  const viewSettingsRef = useRef<HTMLDivElement | null>(null);
+  // View settings (Columns) — persisted via TableSettingsPopover (canon §16)
   const [hiddenColumns, setHiddenColumns] = useState<string[]>(loadInboxHiddenColumns);
   const [showRowDescription, setShowRowDescription] = useState(loadInboxRowDescriptionSetting);
   const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
@@ -1610,25 +1666,19 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     saveInboxRowDescriptionSetting(next);
   }, []);
 
-  useEffect(() => {
-    if (!isViewSettingsOpen) return;
+  // Per-column sort (canon §5/§27.O) — client-side, flat view.
+  const [sortConfig, setSortConfig] = useState<{
+    field: InboxSortField;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
-    const handlePointerDown = (event: PointerEvent) => {
-      if (viewSettingsRef.current?.contains(event.target as Node)) return;
-      setIsViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsViewSettingsOpen(false);
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isViewSettingsOpen]);
+  const handleSort = useCallback((field: InboxSortField) => {
+    setSortConfig((prev) => {
+      if (prev?.field !== field) return { field, direction: 'asc' };
+      if (prev.direction === 'asc') return { field, direction: 'desc' };
+      return null; // asc → desc → none
+    });
+  }, []);
 
   // Filters
   const [tableFilters, setTableFilters] = useState<TableFilters>({});
@@ -1877,8 +1927,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         return false;
       });
 
+    // Per-column sort (canon §5/§27.O) — applied only when a column is active.
+    if (sortConfig) {
+      const dir = sortConfig.direction === 'asc' ? 1 : -1;
+      result = [...result].sort((a, b) => compareInboxItems(a, b, sortConfig.field) * dir);
+    }
+
     return result;
-  }, [items, tableFilters, actionRequiredOnly, aiOnly, criticalOnly, overdueOnly]);
+  }, [items, tableFilters, actionRequiredOnly, aiOnly, criticalOnly, overdueOnly, sortConfig]);
 
   // ── Deduplicated groups ──
   const groups = useMemo(() => groupItems(filteredItems), [filteredItems]);
@@ -2722,7 +2778,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           className="relative px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
           style={{ width: columnWidths.title }}
         >
-          {isPolish ? 'Tytuł' : 'Title'}
+          <button
+            type="button"
+            onClick={() => handleSort('title')}
+            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+          >
+            {isPolish ? 'Tytuł' : 'Title'}
+            <InboxSortIcon field="title" sortConfig={sortConfig} />
+          </button>
           <ColumnResizer
             columnId="title"
             currentWidth={columnWidths.title}
@@ -2741,6 +2804,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const isResizable = Boolean(col.resizable);
           // Canon §3.3: chip/text columns left-aligned (status/urgency/type/section/source).
           const leftAligned = ['status', 'urgency', 'type', 'section', 'source'].includes(colId);
+          // Canon §5/§27.O: every column except SLA is sortable (sla has no stable order).
+          const isSortable = colId !== 'sla';
           return (
             <th
               key={colId}
@@ -2748,11 +2813,24 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               style={{ width: columnWidths[colId] }}
             >
               <div className={`flex items-center gap-1 ${leftAligned ? 'justify-start' : 'justify-center'}`}>
-                <span
-                  className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
-                >
-                  {getColumnLabel(colId)}
-                </span>
+                {isSortable ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSort(colId as InboxSortField)}
+                    className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
+                      (tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''
+                    }`}
+                  >
+                    {getColumnLabel(colId)}
+                    <InboxSortIcon field={colId as InboxSortField} sortConfig={sortConfig} />
+                  </button>
+                ) : (
+                  <span
+                    className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
+                  >
+                    {getColumnLabel(colId)}
+                  </span>
+                )}
                 {hasFilter ? (
                   <FilterDropdown
                     column={col}
@@ -2781,86 +2859,30 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           className="relative px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
           style={{ width: columnWidths.actions }}
         >
-          <div ref={viewSettingsRef} className="flex items-center justify-end">
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                setIsViewSettingsOpen((open) => !open);
-              }}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.06]"
-              aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-              aria-expanded={isViewSettingsOpen}
-              title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-            >
-              <Settings2 size={14} />
-            </button>
-            {isViewSettingsOpen ? (
-              <div
-                className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="px-2 pb-2 pt-1">
-                  <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                    {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                  </div>
-                  <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Wybierz widoczne kolumny.' : 'Choose visible columns.'}
-                  </div>
-                </div>
-                <div className="space-y-0.5">
-                  {INBOX_COLUMNS.filter((c) => c.id !== 'select').map((col) => {
-                    const alwaysVisible = col.id === 'title' || col.id === 'actions';
-                    const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                    return (
-                      <label
-                        key={col.id}
-                        className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                          alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={alwaysVisible}
-                          onChange={() => {
-                            if (alwaysVisible) return;
-                            setHiddenColumns((prev) => {
-                              const set = new Set(prev);
-                              if (set.has(col.id)) set.delete(col.id);
-                              else set.add(col.id);
-                              return Array.from(set);
-                            });
-                          }}
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                        />
-                        <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                          {getColumnLabel(col.id)}
-                        </span>
-                        {alwaysVisible ? (
-                          <span className="text-[10px] font-medium text-slate-600">
-                            {isPolish ? 'Wymagane' : 'Required'}
-                          </span>
-                        ) : null}
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                  <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                    <input
-                      type="checkbox"
-                      checked={showRowDescription}
-                      onChange={(event) => updateRowDescriptionSetting(event.target.checked)}
-                      className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                    />
-                    <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                      {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                    </span>
-                  </label>
-                </div>
-              </div>
-            ) : null}
+          <div className="flex items-center justify-end normal-case tracking-normal">
+            <TableSettingsPopover
+              columns={INBOX_COLUMNS.filter((c) => c.id !== 'select').map(
+                (col): TableSettingsColumn => ({
+                  id: col.id,
+                  label: getColumnLabel(col.id),
+                  required: col.id === 'title' || col.id === 'actions',
+                  visible: col.id === 'title' || col.id === 'actions' ? true : !hiddenSet.has(col.id),
+                })
+              )}
+              onToggle={(columnId, visible) =>
+                setHiddenColumns((prev) => {
+                  const set = new Set(prev);
+                  if (visible) set.delete(columnId);
+                  else set.add(columnId);
+                  return Array.from(set);
+                })
+              }
+              showDescription={showRowDescription}
+              onToggleDescription={updateRowDescriptionSetting}
+              label={isPolish ? 'Ustawienia widoku' : 'View settings'}
+              columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+              descriptionLabel={isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+            />
           </div>
         </th>
       </tr>

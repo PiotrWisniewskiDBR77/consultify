@@ -16,7 +16,6 @@ import {
   PenTool,
   Presentation,
   Rocket,
-  Settings2,
   Sparkles,
   Sprout,
   Star,
@@ -25,8 +24,7 @@ import {
   TreePine,
   Workflow,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   type ActionRow,
@@ -38,6 +36,10 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import {
+  type TableSettingsColumn,
+  TableSettingsPopover,
+} from '@/components/shared/ModuleHub/TableSettingsPopover';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
@@ -325,14 +327,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
 }) => {
   const [previewIdeaId, setPreviewIdeaId] = useState<string | null>(null);
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
-  const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
-  const viewSettingsRef = useRef<HTMLDivElement | null>(null);
-  // Portal popover (canon §16): trigger button anchor + panel ref + fixed position.
-  const viewSettingsTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const viewSettingsPanelRef = useRef<HTMLDivElement | null>(null);
-  const [viewSettingsRect, setViewSettingsRect] = useState<{ top: number; right: number } | null>(
-    null
-  );
+  // Column settings (canon §16): SSOT TableSettingsPopover handles its own portal/anchor.
   const [hiddenColumns, setHiddenColumns] =
     useState<IdeasTableOptionalColumn[]>(loadHiddenIdeaColumns);
   const [showRowDescription, setShowRowDescription] = useState(loadIdeaRowDescriptionSetting);
@@ -403,45 +398,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     },
     [columnWidths, getVisibleResizableColumns, onColumnResize]
   );
-
-  useEffect(() => {
-    if (!viewSettingsOpen) {
-      setViewSettingsRect(null);
-      return;
-    }
-
-    const computeRect = () => {
-      const trigger = viewSettingsTriggerRef.current;
-      if (!trigger) return;
-      const r = trigger.getBoundingClientRect();
-      // Anchor panel under the trigger, right-aligned to the trigger's right edge.
-      setViewSettingsRect({ top: r.bottom + 8, right: window.innerWidth - r.right });
-    };
-    computeRect();
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (viewSettingsRef.current?.contains(event.target as Node)) return;
-      if (viewSettingsPanelRef.current?.contains(event.target as Node)) return;
-      setViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setViewSettingsOpen(false);
-      }
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', computeRect);
-    window.addEventListener('scroll', computeRect, true);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', computeRect);
-      window.removeEventListener('scroll', computeRect, true);
-    };
-  }, [viewSettingsOpen]);
 
   useEffect(() => {
     if (!previewIdeaId) return;
@@ -914,103 +870,38 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 className="relative px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                 style={{ width: columnWidths.actions }}
               >
-                <div ref={viewSettingsRef} className="flex items-center justify-end">
-                  <button
-                    ref={viewSettingsTriggerRef}
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setViewSettingsOpen((open) => !open);
-                    }}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200/70 bg-white/70 text-slate-500 transition-colors hover:border-primary-400/60 hover:bg-primary-50 hover:text-primary-600 active:scale-[0.98] dark:border-white/[0.08] dark:bg-white/[0.035] dark:text-slate-400 dark:hover:border-primary-300/40 dark:hover:bg-primary-500/[0.12] dark:hover:text-primary-200"
-                    aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                    aria-expanded={viewSettingsOpen}
-                    title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                  >
-                    <Settings2 size={14} />
-                  </button>
-                  {viewSettingsOpen && viewSettingsRect
-                    ? ReactDOM.createPortal(
-                        <div
-                          ref={viewSettingsPanelRef}
-                          className="fixed z-[100] w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                          style={{ top: viewSettingsRect.top, right: viewSettingsRect.right }}
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                      <div className="px-2 pb-2 pt-1">
-                        <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                          {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                        </div>
-                        <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Wybierz widoczne kolumny.' : 'Choose visible columns.'}
-                        </div>
-                      </div>
-                      <div className="space-y-0.5">
-                        <label className="flex items-center gap-3 rounded-lg px-2 py-2 opacity-55">
-                          <input
-                            type="checkbox"
-                            checked
-                            disabled
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                          />
-                          <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                            {isPolish ? 'Tytuł' : 'Title'}
-                          </span>
-                          <span className="text-[10px] font-medium text-slate-600">
-                            {isPolish ? 'Wymagane' : 'Required'}
-                          </span>
-                        </label>
-                        {IDEAS_TABLE_OPTIONAL_COLUMNS.map((column) => {
-                          const checked = isColumnVisible(column.id);
-                          return (
-                            <label
-                              key={column.id}
-                              className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => toggleColumnVisibility(column.id)}
-                                className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                              />
-                              <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                {isPolish ? column.labelPl : column.label}
-                              </span>
-                            </label>
-                          );
-                        })}
-                        <label className="flex items-center gap-3 rounded-lg px-2 py-2 opacity-55">
-                          <input
-                            type="checkbox"
-                            checked
-                            disabled
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                          />
-                          <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                            {isPolish ? 'Akcje' : 'Actions'}
-                          </span>
-                          <span className="text-[10px] font-medium text-slate-600">
-                            {isPolish ? 'Wymagane' : 'Required'}
-                          </span>
-                        </label>
-                      </div>
-                      <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                        <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                          <input
-                            type="checkbox"
-                            checked={showRowDescription}
-                            onChange={(event) => updateRowDescriptionSetting(event.target.checked)}
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                          />
-                          <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                            {isPolish ? 'Pokaż opis w wierszu' : 'Show row description'}
-                          </span>
-                        </label>
-                      </div>
-                        </div>,
-                        document.body
-                      )
-                    : null}
+                <div className="flex items-center justify-end normal-case tracking-normal">
+                  <TableSettingsPopover
+                    columns={[
+                      {
+                        id: 'title',
+                        label: isPolish ? 'Tytuł' : 'Title',
+                        required: true,
+                        visible: true,
+                      },
+                      ...IDEAS_TABLE_OPTIONAL_COLUMNS.map(
+                        (column): TableSettingsColumn => ({
+                          id: column.id,
+                          label: isPolish ? column.labelPl : column.label,
+                          visible: isColumnVisible(column.id),
+                        })
+                      ),
+                      {
+                        id: 'actions',
+                        label: isPolish ? 'Akcje' : 'Actions',
+                        required: true,
+                        visible: true,
+                      },
+                    ]}
+                    onToggle={(columnId) =>
+                      toggleColumnVisibility(columnId as IdeasTableOptionalColumn)
+                    }
+                    showDescription={showRowDescription}
+                    onToggleDescription={updateRowDescriptionSetting}
+                    label={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                    columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+                    descriptionLabel={isPolish ? 'Pokaż opis w wierszu' : 'Show row description'}
+                  />
                 </div>
               </th>
             </tr>

@@ -11,7 +11,10 @@ import {
   Calendar,
   CheckCircle2,
   CheckSquare,
+  ChevronDown,
   ChevronRight,
+  ChevronsUpDown,
+  ChevronUp,
   Clock,
   Edit,
   Eye,
@@ -20,7 +23,6 @@ import {
   Minus,
   Pause,
   Plus,
-  Settings2,
   Square,
   Trash2,
   User,
@@ -41,6 +43,10 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import {
+  type TableSettingsColumn,
+  TableSettingsPopover,
+} from '@/components/shared/ModuleHub/TableSettingsPopover';
 import {
   type RowAction,
   type RowActionSection,
@@ -381,6 +387,77 @@ const TASK_RESIZE_BOUNDS: Record<TaskResizableColumn, { min: number; max: number
   priority: { min: 90, max: 160 },
   date: { min: 100, max: 170 },
   assignee: { min: 120, max: 220 },
+};
+
+// Per-column sort (canon §5/§27.O) — sortable fields + deterministic ordinals.
+type TaskSortField = 'title' | 'status' | 'priority' | 'date' | 'assignee';
+
+const TASK_STATUS_SORT_ORDER: Record<string, number> = {
+  blocked: 0,
+  in_progress: 1,
+  'in progress': 1,
+  review: 2,
+  pending_approval: 3,
+  todo: 4,
+  done: 5,
+  completed: 5,
+  validated: 5,
+  cancelled: 6,
+  canceled: 6,
+};
+
+const TASK_PRIORITY_SORT_ORDER: Record<string, number> = {
+  critical: 0,
+  urgent: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+const taskAssigneeName = (task: Task): string =>
+  task.assignee?.firstName || task.assignee?.lastName
+    ? `${task.assignee.firstName || ''} ${task.assignee.lastName || ''}`.trim()
+    : task.assigneeId
+      ? 'You'
+      : '';
+
+function compareTasks(a: Task, b: Task, field: TaskSortField): number {
+  switch (field) {
+    case 'title':
+      return (a.title || '').localeCompare(b.title || '');
+    case 'status':
+      return (
+        (TASK_STATUS_SORT_ORDER[a.status?.toLowerCase() || 'todo'] ?? 99) -
+        (TASK_STATUS_SORT_ORDER[b.status?.toLowerCase() || 'todo'] ?? 99)
+      );
+    case 'priority':
+      return (
+        (TASK_PRIORITY_SORT_ORDER[a.priority?.toLowerCase() || 'medium'] ?? 2) -
+        (TASK_PRIORITY_SORT_ORDER[b.priority?.toLowerCase() || 'medium'] ?? 2)
+      );
+    case 'date': {
+      const at = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+      const bt = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+      return at - bt;
+    }
+    case 'assignee':
+      return taskAssigneeName(a).localeCompare(taskAssigneeName(b));
+    default:
+      return 0;
+  }
+}
+
+const TaskSortIcon: React.FC<{
+  field: TaskSortField;
+  sortConfig: { field: TaskSortField; direction: 'asc' | 'desc' } | null;
+}> = ({ field, sortConfig }) => {
+  if (sortConfig?.field !== field)
+    return <ChevronsUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+  return sortConfig.direction === 'asc' ? (
+    <ChevronUp size={12} className="text-primary-500" />
+  ) : (
+    <ChevronDown size={12} className="text-primary-500" />
+  );
 };
 
 // Default column widths
@@ -999,30 +1076,19 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     return Math.max(980, visibleWidth);
   }, [columnWidths, hiddenSet]);
 
-  const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
-  const viewSettingsRef = useRef<HTMLDivElement | null>(null);
+  // Per-column sort (canon §5/§27.O) — client-side; overrides smartSort when active.
+  const [sortConfig, setSortConfig] = useState<{
+    field: TaskSortField;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
-  useEffect(() => {
-    if (!isViewSettingsOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (viewSettingsRef.current?.contains(event.target as Node)) return;
-      setIsViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsViewSettingsOpen(false);
-      }
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isViewSettingsOpen]);
+  const handleSort = useCallback((field: TaskSortField) => {
+    setSortConfig((prev) => {
+      if (prev?.field !== field) return { field, direction: 'asc' };
+      if (prev.direction === 'asc') return { field, direction: 'desc' };
+      return null; // asc → desc → none
+    });
+  }, []);
 
   // Smart sort toggle (persisted)
   const [smartSort, setSmartSort] = useState<boolean>(() => {
@@ -1710,7 +1776,11 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       result = result.filter((task) => priorityFilter.includes(task.priority?.toLowerCase() || ''));
     }
 
-    if (smartSort) {
+    // Explicit per-column sort takes precedence over smartSort heuristics.
+    if (sortConfig) {
+      const dir = sortConfig.direction === 'asc' ? 1 : -1;
+      result = [...result].sort((a, b) => compareTasks(a, b, sortConfig.field) * dir);
+    } else if (smartSort) {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
       const endOfDay = new Date(now);
@@ -1749,7 +1819,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     }
 
     return result;
-  }, [groupedTasks, tableFilters, smartSort]);
+  }, [groupedTasks, tableFilters, smartSort, sortConfig]);
 
   const orderedTaskIds = useMemo(() => allFilteredTasks.map((t) => t.id), [allFilteredTasks]);
   const scopeSummary = useMemo(() => {
@@ -2166,7 +2236,14 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                         className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                         style={{ width: columnWidths.title }}
                       >
-                        {isPolish ? 'Zadanie' : 'Task'}
+                        <button
+                          type="button"
+                          onClick={() => handleSort('title')}
+                          className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                        >
+                          {isPolish ? 'Zadanie' : 'Task'}
+                          <TaskSortIcon field="title" sortConfig={sortConfig} />
+                        </button>
                         <ColumnResizer
                           columnId="title"
                           currentWidth={columnWidths.title}
@@ -2182,13 +2259,16 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           style={{ width: columnWidths.status }}
                         >
                           <div className="flex items-center justify-start gap-1">
-                            <span
-                              className={
+                            <button
+                              type="button"
+                              onClick={() => handleSort('status')}
+                              className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
                                 (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
-                              }
+                              }`}
                             >
                               Status
-                            </span>
+                              <TaskSortIcon field="status" sortConfig={sortConfig} />
+                            </button>
                             <FilterDropdown
                               column={TASK_COLUMNS.find((c) => c.id === 'status')!}
                               value={tableFilters.status as string[]}
@@ -2216,15 +2296,18 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           style={{ width: columnWidths.priority }}
                         >
                           <div className="flex items-center justify-start gap-1">
-                            <span
-                              className={
+                            <button
+                              type="button"
+                              onClick={() => handleSort('priority')}
+                              className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
                                 (tableFilters.priority as string[])?.length
                                   ? 'text-primary-500'
                                   : ''
-                              }
+                              }`}
                             >
                               Priority
-                            </span>
+                              <TaskSortIcon field="priority" sortConfig={sortConfig} />
+                            </button>
                             <FilterDropdown
                               column={TASK_COLUMNS.find((c) => c.id === 'priority')!}
                               value={tableFilters.priority as string[]}
@@ -2251,7 +2334,14 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.date }}
                         >
-                          <span>{isPolish ? 'Termin' : 'Due Date'}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('date')}
+                            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                          >
+                            {isPolish ? 'Termin' : 'Due Date'}
+                            <TaskSortIcon field="date" sortConfig={sortConfig} />
+                          </button>
                           <ColumnResizer
                             columnId="date"
                             currentWidth={columnWidths.date}
@@ -2266,7 +2356,14 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.assignee }}
                         >
-                          <span>{isPolish ? 'Właściciel' : 'Assignee'}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('assignee')}
+                            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                          >
+                            {isPolish ? 'Właściciel' : 'Assignee'}
+                            <TaskSortIcon field="assignee" sortConfig={sortConfig} />
+                          </button>
                           <ColumnResizer
                             columnId="assignee"
                             currentWidth={columnWidths.assignee}
@@ -2281,119 +2378,64 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                           style={{ width: columnWidths.actions }}
                         >
-                          <div ref={viewSettingsRef} className="flex items-center justify-end">
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setIsViewSettingsOpen((open) => !open);
-                              }}
-                              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                              aria-label={
-                                isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
-                              }
-                              aria-expanded={isViewSettingsOpen}
-                              title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                            >
-                              <Settings2 size={14} />
-                            </button>
-                            {isViewSettingsOpen ? (
-                              <div
-                                className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                <div className="px-2 pb-2 pt-1">
-                                  <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                                    {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                                  </div>
-                                  <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                                    {isPolish
-                                      ? 'Wybierz widoczne kolumny.'
-                                      : 'Choose visible columns.'}
-                                  </div>
-                                </div>
-                                <div className="space-y-0.5">
-                                  {TASK_COLUMNS.filter(
-                                    (c) => !['select', 'indicator'].includes(c.id)
-                                  ).map((col) => {
-                                    const alwaysVisible =
-                                      col.id === 'title' || col.id === 'actions';
-                                    const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                                    const label =
-                                      col.id === 'status'
-                                        ? 'Status'
-                                        : col.id === 'priority'
+                          <div className="flex items-center justify-end normal-case tracking-normal">
+                            <TableSettingsPopover
+                              columns={TASK_COLUMNS.filter(
+                                (c) => !['select', 'indicator'].includes(c.id)
+                              ).map((col): TableSettingsColumn => {
+                                const required = col.id === 'title' || col.id === 'actions';
+                                const label =
+                                  col.id === 'status'
+                                    ? 'Status'
+                                    : col.id === 'priority'
+                                      ? isPolish
+                                        ? 'Pilność'
+                                        : 'Priority'
+                                      : col.id === 'date'
+                                        ? isPolish
+                                          ? 'Termin'
+                                          : 'Due date'
+                                        : col.id === 'assignee'
                                           ? isPolish
-                                            ? 'Pilność'
-                                            : 'Priority'
-                                          : col.id === 'date'
+                                            ? 'Właściciel'
+                                            : 'Assignee'
+                                          : col.id === 'title'
                                             ? isPolish
-                                              ? 'Termin'
-                                              : 'Due date'
-                                            : col.id === 'assignee'
+                                              ? 'Zadanie'
+                                              : 'Task'
+                                            : col.id === 'actions'
                                               ? isPolish
-                                                ? 'Właściciel'
-                                                : 'Assignee'
+                                                ? 'Akcje'
+                                                : 'Actions'
                                               : col.label;
-
-                                    return (
-                                      <label
-                                        key={col.id}
-                                        className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                                          alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                                        }`}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={checked}
-                                          disabled={alwaysVisible}
-                                          onChange={() => {
-                                            if (alwaysVisible) return;
-                                            setHiddenColumns((prev) => {
-                                              const set = new Set(prev);
-                                              if (set.has(col.id)) set.delete(col.id);
-                                              else set.add(col.id);
-                                              const next = Array.from(set);
-                                              localStorage.setItem(
-                                                TASK_TABLE_VIEW_STORAGE_KEY,
-                                                JSON.stringify(next)
-                                              );
-                                              return next;
-                                            });
-                                          }}
-                                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                        />
-                                        <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                          {label}
-                                        </span>
-                                        {alwaysVisible ? (
-                                          <span className="text-[10px] font-medium text-slate-600">
-                                            {isPolish ? 'Wymagane' : 'Required'}
-                                          </span>
-                                        ) : null}
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                                <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                                  <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                                    <input
-                                      type="checkbox"
-                                      checked={showRowDescription}
-                                      onChange={(event) =>
-                                        updateRowDescriptionSetting(event.target.checked)
-                                      }
-                                      className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                    />
-                                    <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                      {isPolish
-                                        ? 'Pokaż opis / uzasadnienie'
-                                        : 'Show row description'}
-                                    </span>
-                                  </label>
-                                </div>
-                              </div>
-                            ) : null}
+                                return {
+                                  id: col.id,
+                                  label,
+                                  required,
+                                  visible: required ? true : !hiddenSet.has(col.id),
+                                };
+                              })}
+                              onToggle={(columnId, visible) =>
+                                setHiddenColumns((prev) => {
+                                  const set = new Set(prev);
+                                  if (visible) set.delete(columnId);
+                                  else set.add(columnId);
+                                  const next = Array.from(set);
+                                  localStorage.setItem(
+                                    TASK_TABLE_VIEW_STORAGE_KEY,
+                                    JSON.stringify(next)
+                                  );
+                                  return next;
+                                })
+                              }
+                              showDescription={showRowDescription}
+                              onToggleDescription={updateRowDescriptionSetting}
+                              label={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                              columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+                              descriptionLabel={
+                                isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'
+                              }
+                            />
                           </div>
                         </th>
                       )}

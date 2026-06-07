@@ -72,7 +72,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
-import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';
 import {
   MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
@@ -130,6 +129,7 @@ import {
 } from './InterviewAssignmentPreview';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { getSafeInterviewErrorMessage } from './interviewErrorCopy';
+import { InterviewInitiativePreviewFooter } from './InterviewInitiativePreview';
 import {
   InterviewInsightPreviewBody,
   InterviewInsightPreviewFooter,
@@ -8837,6 +8837,193 @@ Return ONLY the answer text (no markdown fences).`;
     [getAssignmentStatusLabel, getAssignmentTitle, isPolish]
   );
 
+  // canon §8.0: single SSOT for the Inbox/Assigned assignment row/card ⋮ sections.
+  // Used IDENTICALLY by the table row AND the grid card (zero divergence).
+  const buildAssignmentRowSections = (
+    assignment: InterviewAssignment,
+    showAssignee: boolean
+  ): import('../shared/RowActionsMenu').RowActionSection[] => [
+    // GÓRA — kontekstowe (typowe dla obszaru/statusu)
+    {
+      id: 'context',
+      kind: 'context' as const,
+      actions: [
+        ...(!showAssignee && assignment.status === 'assigned'
+          ? [
+              {
+                id: 'start',
+                label: isPolish ? 'Rozpocznij' : 'Start',
+                icon: Sparkles,
+                onClick: () => startInterviewAssignment(assignment),
+              },
+            ]
+          : []),
+        ...(!showAssignee && assignment.status === 'in_progress' && assignment.sessionId
+          ? [
+              {
+                id: 'continue',
+                label: isPolish ? 'Kontynuuj' : 'Continue',
+                icon: ChevronRight,
+                onClick: async () => {
+                  const session = await Api.get(`/interview/sessions/${assignment.sessionId}`);
+                  handleOpenDocument({
+                    id: (session as InterviewSession).id,
+                    type: 'interview_session',
+                    subType: 'interview',
+                    name: (session as InterviewSession).name || 'Interview Session',
+                    status: (
+                      (session as any)?.status || 'in_progress'
+                    ).toUpperCase() as any,
+                  });
+                },
+              },
+            ]
+          : []),
+        ...(!showAssignee && assignment.status === 'sent_back' && assignment.sessionId
+          ? [
+              {
+                id: 'fix',
+                label: isPolish ? 'Popraw' : 'Fix & Resubmit',
+                icon: RotateCcw,
+                onClick: async () => {
+                  const session = await Api.get(`/interview/sessions/${assignment.sessionId}`);
+                  handleOpenDocument({
+                    id: (session as InterviewSession).id,
+                    type: 'interview_session',
+                    subType: 'interview',
+                    name: (session as InterviewSession).name || 'Interview Session',
+                    status: (
+                      (session as any)?.status || 'in_progress'
+                    ).toUpperCase() as any,
+                  });
+                },
+              },
+            ]
+          : []),
+        ...(showAssignee && canAssign && assignment.status === 'submitted'
+          ? [
+              {
+                id: 'approve',
+                label: isPolish ? 'Zatwierdź' : 'Approve',
+                icon: Check,
+                onClick: () => handleOpenApproveModal(assignment),
+              },
+              {
+                id: 'sendback',
+                label: isPolish ? 'Zwróć do poprawy' : 'Send back',
+                icon: RotateCcw,
+                onClick: () => handleOpenSendBackModal(assignment),
+                variant: 'danger' as const,
+              },
+            ]
+          : []),
+        ...(showAssignee &&
+        canAssign &&
+        (assignment.status === 'assigned' || assignment.status === 'in_progress')
+          ? [
+              {
+                id: 'reassign',
+                label: isPolish ? 'Przypisz ponownie' : 'Reassign',
+                icon: UserPlus,
+                onClick: () => handleReassignAssignment(assignment),
+              },
+            ]
+          : []),
+        ...(showAssignee &&
+        canAssign &&
+        assignment.status !== 'completed' &&
+        assignment.status !== 'approved'
+          ? [
+              {
+                id: 'remind',
+                label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
+                icon: Bell,
+                onClick: () => handleOpenReminderModal(assignment),
+              },
+              {
+                id: 'escalate',
+                label: isPolish ? 'Eskaluj teraz' : 'Escalate now',
+                icon: ArrowUpRight,
+                disabled:
+                  Boolean(assignment.escalatedAt) || Boolean(assignment.escalationTarget),
+                onClick: () => handleEscalateNow(assignment),
+              },
+            ]
+          : []),
+      ],
+    },
+    // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): Open preview · Edytuj · Archiwizuj/Przywróć · Delay▸
+    {
+      id: 'fixed',
+      kind: 'manage' as const,
+      actions: [
+        {
+          id: 'open',
+          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          icon: ChevronRight,
+          // canon §9: "Open preview" → side pane, NOT full view
+          onClick: () => {
+            setPreviewAssignmentId(assignment.id);
+            setPreviewAssignmentOpen(true);
+          },
+        },
+        {
+          id: 'edit',
+          label: isPolish ? 'Edytuj' : 'Edit',
+          icon: Edit2,
+          // Contextual: manager edits via manage modal; assignee edits answers.
+          onClick: () =>
+            showAssignee
+              ? handleOpenDueDateModal(assignment)
+              : startInterviewAssignment(assignment),
+        },
+        managedLifecycle === 'archived' && showAssignee
+          ? {
+              id: 'restore',
+              label: isPolish ? 'Przywróć' : 'Restore',
+              icon: RotateCcw,
+              disabled: managedLifecycleBusy,
+              onClick: () => handleAssignmentLifecycleAction(assignment, 'restore'),
+            }
+          : {
+              id: 'archive',
+              label: isPolish ? 'Archiwizuj' : 'Archive',
+              icon: Archive,
+              disabled: managedLifecycleBusy,
+              onClick: () => handleAssignmentLifecycleAction(assignment, 'archive'),
+            },
+        {
+          id: 'delay',
+          label: isPolish ? 'Odłóż termin' : 'Delay',
+          icon: Clock,
+          onClick: () => {},
+          submenu: [1, 3, 7].map((d) => ({
+            id: `delay-${d}`,
+            label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+            icon: Clock,
+            onClick: () => void handleDelayAssignment(assignment, d),
+          })),
+        },
+      ],
+    },
+    // DANGER — Usuń (brak endpointu delete → disabled, do backendu)
+    {
+      id: 'danger',
+      kind: 'danger' as const,
+      actions: [
+        {
+          id: 'delete',
+          label: isPolish ? 'Usuń' : 'Delete',
+          icon: Trash2,
+          variant: 'danger' as const,
+          disabled: true,
+          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          onClick: () => {},
+        },
+      ],
+    },
+  ];
+
   // Render assignments table (reusable for my/managed/overdue)
   const renderAssignmentsTable = (
     assignments: InterviewAssignment[],
@@ -9902,205 +10089,7 @@ Return ONLY the answer text (no markdown fences).`;
                       <RowActionsMenu
                         iconVariant="vertical"
                         className="opacity-40 transition-opacity group-hover:opacity-100"
-                        sections={[
-                          // GÓRA — kontekstowe (typowe dla obszaru/statusu)
-                          {
-                            id: 'context',
-                            kind: 'context' as const,
-                            actions: [
-                              ...(!showAssignee && assignment.status === 'assigned'
-                                ? [
-                                    {
-                                      id: 'start',
-                                      label: isPolish ? 'Rozpocznij' : 'Start',
-                                      icon: Sparkles,
-                                      onClick: () => startInterviewAssignment(assignment),
-                                    },
-                                  ]
-                                : []),
-                              ...(!showAssignee &&
-                              assignment.status === 'in_progress' &&
-                              assignment.sessionId
-                                ? [
-                                    {
-                                      id: 'continue',
-                                      label: isPolish ? 'Kontynuuj' : 'Continue',
-                                      icon: ChevronRight,
-                                      onClick: async () => {
-                                        const session = await Api.get(
-                                          `/interview/sessions/${assignment.sessionId}`
-                                        );
-                                        handleOpenDocument({
-                                          id: (session as InterviewSession).id,
-                                          type: 'interview_session',
-                                          subType: 'interview',
-                                          name:
-                                            (session as InterviewSession).name ||
-                                            'Interview Session',
-                                          status: (
-                                            (session as any)?.status || 'in_progress'
-                                          ).toUpperCase() as any,
-                                        });
-                                      },
-                                    },
-                                  ]
-                                : []),
-                              ...(!showAssignee &&
-                              assignment.status === 'sent_back' &&
-                              assignment.sessionId
-                                ? [
-                                    {
-                                      id: 'fix',
-                                      label: isPolish ? 'Popraw' : 'Fix & Resubmit',
-                                      icon: RotateCcw,
-                                      onClick: async () => {
-                                        const session = await Api.get(
-                                          `/interview/sessions/${assignment.sessionId}`
-                                        );
-                                        handleOpenDocument({
-                                          id: (session as InterviewSession).id,
-                                          type: 'interview_session',
-                                          subType: 'interview',
-                                          name:
-                                            (session as InterviewSession).name ||
-                                            'Interview Session',
-                                          status: (
-                                            (session as any)?.status || 'in_progress'
-                                          ).toUpperCase() as any,
-                                        });
-                                      },
-                                    },
-                                  ]
-                                : []),
-                              ...(showAssignee && canAssign && assignment.status === 'submitted'
-                                ? [
-                                    {
-                                      id: 'approve',
-                                      label: isPolish ? 'Zatwierdź' : 'Approve',
-                                      icon: Check,
-                                      onClick: () => handleOpenApproveModal(assignment),
-                                    },
-                                    {
-                                      id: 'sendback',
-                                      label: isPolish ? 'Zwróć do poprawy' : 'Send back',
-                                      icon: RotateCcw,
-                                      onClick: () => handleOpenSendBackModal(assignment),
-                                      variant: 'danger' as const,
-                                    },
-                                  ]
-                                : []),
-                              ...(showAssignee &&
-                              canAssign &&
-                              (assignment.status === 'assigned' ||
-                                assignment.status === 'in_progress')
-                                ? [
-                                    {
-                                      id: 'reassign',
-                                      label: isPolish ? 'Przypisz ponownie' : 'Reassign',
-                                      icon: UserPlus,
-                                      onClick: () => handleReassignAssignment(assignment),
-                                    },
-                                  ]
-                                : []),
-                              ...(showAssignee &&
-                              canAssign &&
-                              assignment.status !== 'completed' &&
-                              assignment.status !== 'approved'
-                                ? [
-                                    {
-                                      id: 'remind',
-                                      label: isPolish ? 'Wyślij przypomnienie' : 'Send reminder',
-                                      icon: Bell,
-                                      onClick: () => handleOpenReminderModal(assignment),
-                                    },
-                                    {
-                                      id: 'escalate',
-                                      label: isPolish ? 'Eskaluj teraz' : 'Escalate now',
-                                      icon: ArrowUpRight,
-                                      disabled:
-                                        Boolean(assignment.escalatedAt) ||
-                                        Boolean(assignment.escalationTarget),
-                                      onClick: () => handleEscalateNow(assignment),
-                                    },
-                                  ]
-                                : []),
-                            ],
-                          },
-                          // DÓŁ — ZAWSZE TEN SAM: Open preview · Edytuj · Archiwizuj/Przywróć · Delay▸
-                          {
-                            id: 'fixed',
-                            kind: 'manage' as const,
-                            actions: [
-                              {
-                                id: 'open',
-                                label: isPolish ? 'Otwórz podgląd' : 'Open preview',
-                                icon: ChevronRight,
-                                // canon §9: "Open preview" → side pane, NOT full view
-                                onClick: () => {
-                                  setPreviewAssignmentId(assignment.id);
-                                  setPreviewAssignmentOpen(true);
-                                },
-                              },
-                              {
-                                id: 'edit',
-                                label: isPolish ? 'Edytuj' : 'Edit',
-                                icon: Edit2,
-                                // Contextual: manager edits via manage modal; assignee edits answers.
-                                onClick: () =>
-                                  showAssignee
-                                    ? handleOpenDueDateModal(assignment)
-                                    : startInterviewAssignment(assignment),
-                              },
-                              managedLifecycle === 'archived' && showAssignee
-                                ? {
-                                    id: 'restore',
-                                    label: isPolish ? 'Przywróć' : 'Restore',
-                                    icon: RotateCcw,
-                                    disabled: managedLifecycleBusy,
-                                    onClick: () =>
-                                      handleAssignmentLifecycleAction(assignment, 'restore'),
-                                  }
-                                : {
-                                    id: 'archive',
-                                    label: isPolish ? 'Archiwizuj' : 'Archive',
-                                    icon: Archive,
-                                    disabled: managedLifecycleBusy,
-                                    onClick: () =>
-                                      handleAssignmentLifecycleAction(assignment, 'archive'),
-                                  },
-                              {
-                                id: 'delay',
-                                label: isPolish ? 'Odłóż termin' : 'Delay',
-                                icon: Clock,
-                                onClick: () => {},
-                                submenu: [1, 3, 7].map((d) => ({
-                                  id: `delay-${d}`,
-                                  label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
-                                  icon: Clock,
-                                  onClick: () => void handleDelayAssignment(assignment, d),
-                                })),
-                              },
-                            ],
-                          },
-                          // DANGER — Usuń (brak endpointu delete → disabled, do backendu)
-                          {
-                            id: 'danger',
-                            kind: 'danger' as const,
-                            actions: [
-                              {
-                                id: 'delete',
-                                label: isPolish ? 'Usuń' : 'Delete',
-                                icon: Trash2,
-                                variant: 'danger' as const,
-                                disabled: true,
-                                description: isPolish
-                                  ? 'Wkrótce (backend)'
-                                  : 'Coming soon (backend)',
-                                onClick: () => {},
-                              },
-                            ],
-                          },
-                        ]}
+                        sections={buildAssignmentRowSections(assignment, showAssignee)}
                       />
                     </div>
                   </td>
@@ -10136,6 +10125,115 @@ Return ONLY the answer text (no markdown fences).`;
       </div>
     );
   };
+
+  // canon §8 / §8.1: LOCAL card grid for Inbox & Assigned — mirrors renderSessionsGrid.
+  // Neutral surface (NO border-l status accent), EntityStatusChip status, single-click →
+  // side preview, double-click → full view, kebab = SAME buildAssignmentRowSections() as
+  // the table row (zero divergence; includes the Fixed Bottom Manifest §9.2).
+  const renderAssignmentsGrid = (
+    assignments: InterviewAssignment[],
+    showAssignee: boolean = false
+  ) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {assignments.map((assignment) => {
+        const progress = assignment.session?.completenessPercent ?? 0;
+        const status = String(assignment.status || 'assigned');
+        const statusLabel = getAssignmentStatusLabel(assignment.status);
+        const dtd = getAssignmentDaysToDue(assignment.dueAt);
+        const kebabSections = buildAssignmentRowSections(assignment, showAssignee);
+
+        return (
+          <div
+            key={assignment.id}
+            onClick={() => {
+              setPreviewAssignmentId(assignment.id);
+              setPreviewAssignmentOpen(true);
+            }}
+            onDoubleClick={() => void openInterviewAssignmentFull(assignment, showAssignee)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                void openInterviewAssignmentFull(assignment, showAssignee);
+              } else if (e.key === ' ') {
+                e.preventDefault();
+                setPreviewAssignmentId(assignment.id);
+                setPreviewAssignmentOpen(true);
+              }
+            }}
+            className={[
+              'group relative bg-white dark:bg-navy-900 rounded-xl border overflow-hidden cursor-pointer transition-all duration-200',
+              'hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30',
+              previewAssignmentId === assignment.id
+                ? 'border-primary-500/40'
+                : 'border-slate-200/60 dark:border-white/[0.08]',
+            ].join(' ')}
+          >
+            {/* Header */}
+            <div className="p-4 pb-2">
+              <div className="flex items-start justify-between">
+                <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
+                  <ClipboardList size={16} />
+                </div>
+                {/* canon §8: kebab on card = SAME sections as the table row */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <RowActionsMenu sections={kebabSections} />
+                </div>
+              </div>
+            </div>
+
+            {/* Title */}
+            <div className="px-4 pb-3">
+              <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[40px]">
+                {getAssignmentTitle(assignment)}
+              </h4>
+              <div className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                {assignment.assignee?.name || assignment.assignee?.email || '—'}
+                {' · '}
+                {assignment.template?.category || assignment.template?.name || '—'}
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div className="px-4 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'
+                    }`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-slate-600 dark:text-slate-400">{progress}%</span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 pb-4 flex items-center justify-between">
+              {/* canon §4.1/§8.1: status via EntityStatusChip (statusChipTone → c.*) */}
+              <EntityStatusChip status={status} label={statusLabel} />
+              {dtd ? (
+                <DueChip
+                  label={dtd.label}
+                  risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
+                  showIcon
+                  title={
+                    assignment.dueAt
+                      ? new Date(assignment.dueAt).toLocaleDateString()
+                      : undefined
+                  }
+                />
+              ) : (
+                <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   // Render list content based on active tab
   const renderListContent = () => {
@@ -10908,6 +11006,57 @@ Return ONLY the answer text (no markdown fences).`;
                   navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
               }}
               renderPreview={(item) => renderInitiativePreview(item)}
+              renderPreviewFooter={(item) => {
+                // canon §7.3: AI → Relations → Actions.
+                const src = item.sourceId
+                  ? insights.find((i) => i.id === item.sourceId)
+                  : null;
+                const relations: Array<{ label: string; tone?: string }> = [];
+                if (src)
+                  relations.push({
+                    label: `${isPolish ? 'Wniosek' : 'Insight'}: ${(src.title || src.id).slice(0, 40)}`,
+                    tone: 'text-amber-600 dark:text-amber-300',
+                  });
+                if (item.priority)
+                  relations.push({
+                    label: `${isPolish ? 'Priorytet' : 'Priority'}: ${String(item.priority).toLowerCase()}`,
+                    tone: 'text-slate-700 dark:text-slate-200',
+                  });
+                if (item.updatedAt || item.createdAt)
+                  relations.push({
+                    label: `${isPolish ? 'Aktualizacja' : 'Updated'}: ${new Date(
+                      item.updatedAt || item.createdAt || ''
+                    ).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US')}`,
+                    tone: 'text-slate-600 dark:text-slate-300',
+                  });
+
+                return (
+                  <InterviewInitiativePreviewFooter
+                    isPolish={isPolish}
+                    status={String(item.status || '')}
+                    canReview={canReviewInsights}
+                    relations={relations}
+                    onSendToReview={() =>
+                      void handleUpdateInterviewInitiativeStatus(item.id, 'PENDING_REVIEW')
+                    }
+                    onApproveMoveForward={() =>
+                      void handleUpdateInterviewInitiativeStatus(item.id, 'REVIEW', {
+                        openInInitiatives: true,
+                      })
+                    }
+                    onBackToDraft={() =>
+                      void handleUpdateInterviewInitiativeStatus(item.id, 'DRAFT')
+                    }
+                    onOpenInModule={
+                      isInitiativePromoted(item.status)
+                        ? () =>
+                            navigate(`/initiatives?open=${encodeURIComponent(item.id)}&mode=doc`)
+                        : undefined
+                    }
+                    onCopyId={() => copyToClipboard(item.id)}
+                  />
+                );
+              }}
               itemIds={rows.map((r) => r.id)}
               getItemById={(id) => {
                 const it = rows.find((r) => r.id === id);
@@ -11953,41 +12102,6 @@ Return ONLY the answer text (no markdown fences).`;
           })
         : null;
 
-      const gridItems: GridItem[] = rows.map((a) => {
-        const category = String(a.template?.category || 'interview');
-        const statusMapped =
-          a.status === 'assigned'
-            ? 'PLANNING'
-            : a.status === 'in_progress'
-              ? 'EXECUTING'
-              : a.status === 'submitted'
-                ? 'REVIEW'
-                : a.status === 'sent_back'
-                  ? 'REJECTED'
-                  : a.status === 'approved' || a.status === 'completed'
-                    ? 'DONE'
-                    : 'DRAFT';
-        const title = getAssignmentTitle(a);
-        const assignee = a.assignee?.name || a.assignee?.email || '';
-        const due = a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '';
-        const briefParts = [
-          assignee ? `${isPolish ? 'Przydzielony do' : 'Assignee'}: ${assignee}` : '',
-          due ? `${isPolish ? 'Termin' : 'Due'}: ${due}` : '',
-        ].filter(Boolean);
-
-        return {
-          id: a.id,
-          name: title,
-          type: category,
-          typeColor: category,
-          status: statusMapped,
-          progress: a.session?.completenessPercent ?? 0,
-          updatedAt: a.updatedAt || a.createdAt || new Date().toISOString(),
-          brief: briefParts.join(' • '),
-          _raw: a,
-        };
-      });
-
       return (
         <div className="h-full flex flex-col">
           {renderDegradedBanner()}
@@ -12133,20 +12247,13 @@ Return ONLY the answer text (no markdown fences).`;
             >
               {assignmentsViewMode === 'cards' ? (
                 <div className="pl-4 pr-1.5 pt-3 pb-4">
-                  <GridView
-                    items={gridItems}
-                    onItemClick={(item) => {
-                      setPreviewAssignmentId(String(item.id));
-                      setPreviewAssignmentOpen(true);
-                    }}
-                    onItemAction={(action, item) => {
-                      if (action === 'open') {
-                        const a = (item as any)?._raw as InterviewAssignment | undefined;
-                        if (a) void openInterviewAssignmentFull(a, false);
-                      }
-                    }}
-                    emptyMessage={isPolish ? 'Brak przydziałów' : 'No assignments'}
-                  />
+                  {rows.length === 0 ? (
+                    <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Brak przydziałów' : 'No assignments'}
+                    </div>
+                  ) : (
+                    renderAssignmentsGrid(rows, false)
+                  )}
                 </div>
               ) : (
                 <div className="pl-4 pr-1.5 pt-3 pb-4">{renderAssignmentsTable(rows, false)}</div>
@@ -12165,41 +12272,6 @@ Return ONLY the answer text (no markdown fences).`;
             title: string;
           })
         : null;
-
-      const gridItems: GridItem[] = rows.map((a) => {
-        const category = String(a.template?.category || 'interview');
-        const statusMapped =
-          a.status === 'assigned'
-            ? 'PLANNING'
-            : a.status === 'in_progress'
-              ? 'EXECUTING'
-              : a.status === 'submitted'
-                ? 'REVIEW'
-                : a.status === 'sent_back'
-                  ? 'REJECTED'
-                  : a.status === 'approved' || a.status === 'completed'
-                    ? 'DONE'
-                    : 'DRAFT';
-        const title = getAssignmentTitle(a);
-        const assignee = a.assignee?.name || a.assignee?.email || '';
-        const due = a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '';
-        const briefParts = [
-          assignee ? `${isPolish ? 'Przydzielony do' : 'Assignee'}: ${assignee}` : '',
-          due ? `${isPolish ? 'Termin' : 'Due'}: ${due}` : '',
-        ].filter(Boolean);
-
-        return {
-          id: a.id,
-          name: title,
-          type: category,
-          typeColor: category,
-          status: statusMapped,
-          progress: a.session?.completenessPercent ?? 0,
-          updatedAt: a.updatedAt || a.createdAt || new Date().toISOString(),
-          brief: briefParts.join(' • '),
-          _raw: a,
-        };
-      });
 
       return (
         <div className="h-full flex flex-col">
@@ -12333,20 +12405,13 @@ Return ONLY the answer text (no markdown fences).`;
             >
               {assignmentsViewMode === 'cards' ? (
                 <div className="pl-4 pr-1.5 pt-3 pb-4">
-                  <GridView
-                    items={gridItems}
-                    onItemClick={(item) => {
-                      setPreviewAssignmentId(String(item.id));
-                      setPreviewAssignmentOpen(true);
-                    }}
-                    onItemAction={(action, item) => {
-                      if (action === 'open') {
-                        const a = (item as any)?._raw as InterviewAssignment | undefined;
-                        if (a) void openInterviewAssignmentFull(a, true);
-                      }
-                    }}
-                    emptyMessage={isPolish ? 'Brak przydziałów' : 'No assignments'}
-                  />
+                  {rows.length === 0 ? (
+                    <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Brak przydziałów' : 'No assignments'}
+                    </div>
+                  ) : (
+                    renderAssignmentsGrid(rows, true)
+                  )}
                 </div>
               ) : (
                 <div className="pl-4 pr-1.5 pt-3 pb-4">{renderAssignmentsTable(rows, true)}</div>

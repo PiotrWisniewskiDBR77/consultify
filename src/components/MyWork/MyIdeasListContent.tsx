@@ -1,17 +1,25 @@
 import {
+  Archive,
+  Bot,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  Edit2,
+  ExternalLink,
   Flower2,
   Folder,
+  FolderMinus,
   FolderPlus,
   GitBranch,
   Lightbulb,
   Link2,
   Loader2,
+  type LucideIcon,
+  MessageSquare,
   MessageSquarePlus,
   Network,
   PenTool,
+  Presentation,
   Rocket,
   Sparkles,
   Sprout,
@@ -28,7 +36,21 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  type ActionRow,
+  type MetaPill,
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
+import { ChipBase, ChipDot, CHIP_TONE_VAR } from '@/components/ui/primitives/chips/chipBase';
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
@@ -201,6 +223,23 @@ function getToolConfig(tool?: string | null) {
   return TOOL_CONFIG[t] || TOOL_CONFIG.mindmap;
 }
 
+/** Stage → signal-tone dot color (canon §4.0a: neutral chip shell, color only in dot). */
+const STAGE_DOT_VAR: Record<IdeaStage, string | undefined> = {
+  spark: CHIP_TONE_VAR.warning,
+  incubating: CHIP_TONE_VAR.success,
+  shaping: CHIP_TONE_VAR.info,
+  ready: CHIP_TONE_VAR.info,
+  promoted: CHIP_TONE_VAR.accent,
+};
+
+/** Tool → canonical ToolChip icon color (semantic c.* var, §4.2). */
+const TOOL_ICON_COLOR_VAR: Record<string, string> = {
+  mindmap: 'var(--c-accent)',
+  table: 'var(--c-info)',
+  process_flow: 'var(--c-success)',
+  whiteboard: 'var(--c-warning)',
+};
+
 const IDEAS_TABLE_VIEW_STORAGE_KEY = 'consultify.mywork.ideas.tableView';
 const IDEAS_TABLE_COLUMN_WIDTH_VERSION = 3;
 const DEFAULT_IDEAS_TABLE_FILTERS: TableFilters = {};
@@ -372,6 +411,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
   const [foldersAvailable, setFoldersAvailable] = useState(false);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  // Grid/garden side-preview selection (canon §7/§8.1 — single-click opens preview, not navigation).
+  const [previewIdeaId, setPreviewIdeaId] = useState<string | null>(null);
 
   // Record opens (for the "Recently opened" rail), then delegate to the host.
   const openIdea = useCallback(
@@ -1105,9 +1146,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // ── Shared renderers ──
 
+  // Canon §4.0a: neutral chip shell, color only in the leading signal dot.
   const renderStageBadge = (stage: IdeaStage) => {
-    const cfg = STAGE_CONFIG[stage];
-    const Icon = cfg.icon;
     const labels: Record<IdeaStage, { en: string; pl: string }> = {
       spark: { en: 'Spark', pl: 'Iskra' },
       incubating: { en: 'Growing', pl: 'Rośnie' },
@@ -1116,46 +1156,318 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       promoted: { en: 'Promoted', pl: 'Promowany' },
     };
     return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}
-      >
-        <Icon size={10} />
+      <ChipBase size="sm" leading={<ChipDot colorVar={STAGE_DOT_VAR[stage]} size="sm" />}>
         {isPolish ? labels[stage].pl : labels[stage].en}
-      </span>
+      </ChipBase>
     );
   };
 
+  // Canonical ToolChip: colored tool icon on a neutral (c-token) surface.
   const renderToolBadge = (tool?: string | null) => {
     const tc = getToolConfig(tool);
-    const Icon = tc.icon;
+    const key = String(tool || 'mindmap').toLowerCase();
     return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tc.badgeClass}`}
-      >
-        <Icon size={10} className={tc.badgeIconClass} />
-        {isPolish ? tc.labelPl : tc.label}
-      </span>
+      <ToolChip
+        icon={tc.icon as LucideIcon}
+        iconColor={TOOL_ICON_COLOR_VAR[key] || TOOL_ICON_COLOR_VAR.mindmap}
+        label={isPolish ? tc.labelPl : tc.label}
+      />
     );
   };
 
+  // Canonical neutral metadata chips (MetaChip) — tags are never colored (§4.0a).
   const renderTagBadges = (ideaTags?: string[], max = 3) => {
     if (!ideaTags || ideaTags.length === 0) return null;
     return (
       <div className="flex items-center gap-1 flex-wrap">
         {ideaTags.slice(0, max).map((tag) => (
-          <span
-            key={tag}
-            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.06]"
-          >
-            {tag}
-          </span>
+          <MetaChip key={tag} label={tag} />
         ))}
-        {ideaTags.length > max && (
-          <span className="text-[9px] text-slate-600">+{ideaTags.length - max}</span>
-        )}
+        {ideaTags.length > max && <MetaChip label={`+${ideaTags.length - max}`} />}
       </div>
     );
   };
+
+  // ── Grid/garden side preview (canon §7/§8.1) ──
+  const previewIdea = useMemo(
+    () => (previewIdeaId ? sortedIdeas.find((i) => i.id === previewIdeaId) || null : null),
+    [previewIdeaId, sortedIdeas]
+  );
+  const previewIdeaIds = useMemo(() => sortedIdeas.map((i) => i.id), [sortedIdeas]);
+
+  // Drop a stale preview selection when the underlying idea disappears.
+  useEffect(() => {
+    if (previewIdeaId && !sortedIdeas.some((i) => i.id === previewIdeaId)) {
+      setPreviewIdeaId(null);
+    }
+  }, [sortedIdeas, previewIdeaId]);
+
+  const renderIdeaPreview = (idea: MyIdea) => {
+    const stage = (idea.stage || 'spark') as IdeaStage;
+    const stageLabels: Record<IdeaStage, { en: string; pl: string }> = {
+      spark: { en: 'Spark', pl: 'Iskra' },
+      incubating: { en: 'Growing', pl: 'Rośnie' },
+      shaping: { en: 'Shaping', pl: 'Kształtuje się' },
+      ready: { en: 'Ready', pl: 'Gotowy' },
+      promoted: { en: 'Promoted', pl: 'Promowany' },
+    };
+    const tc = getToolConfig(idea.preferredTool);
+    const metaPills: MetaPill[] = [
+      { label: isPolish ? stageLabels[stage].pl : stageLabels[stage].en, icon: tc.icon },
+      { label: isPolish ? tc.labelPl : tc.label, icon: tc.icon },
+    ];
+    const metaTrailing = (
+      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        {idea.updatedAt
+          ? new Date(idea.updatedAt).toLocaleDateString()
+          : idea.createdAt
+            ? new Date(idea.createdAt).toLocaleDateString()
+            : '—'}
+      </span>
+    );
+    return (
+      <div className="space-y-4">
+        <PreviewMetaCard pills={metaPills} trailing={metaTrailing}>
+          {idea.tags?.length ? (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {idea.tags.map((tag) => (
+                <MetaChip key={tag} label={String(tag)} />
+              ))}
+            </div>
+          ) : null}
+        </PreviewMetaCard>
+        <PreviewDetailsSection
+          text={idea.body || ''}
+          label={isPolish ? 'Szczegóły' : 'Details'}
+        />
+      </div>
+    );
+  };
+
+  const renderIdeaPreviewFooter = (idea: MyIdea) => {
+    const aiHints = isPolish
+      ? ['Dlaczego pilne?', 'Plan działania', 'Kto może pomóc?']
+      : ['Why urgent?', 'Action plan', 'Who can help?'];
+    const relationItems: RelationItem[] = [];
+    if ((idea as any).sourceType) {
+      relationItems.push({
+        label: `${isPolish ? 'Źródło' : 'Source'}: ${(idea as any).sourceType}`,
+        tone: 'text-slate-600 dark:text-slate-400',
+      });
+    }
+    const actionRows: ActionRow[] = [
+      {
+        columns: 3,
+        buttons: [
+          {
+            label: isPolish ? 'Konwertuj' : 'Convert',
+            icon: Sparkles,
+            onClick: () => setConvertIdea(idea),
+            colorScheme: 'purple',
+          },
+          {
+            label: isPolish ? 'Otwórz Flow' : 'Open Flow',
+            icon: Workflow,
+            onClick: () => openIdeaInProcessFlow(idea),
+            colorScheme: 'emerald',
+          },
+          {
+            label: isPolish ? 'Usuń' : 'Delete',
+            icon: Trash2,
+            onClick: () => handleDeleteSingleIdea(idea),
+            colorScheme: 'red',
+          },
+        ],
+      },
+    ];
+    return (
+      <div className="space-y-0">
+        <PreviewAIHintStrip hints={aiHints} />
+        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        <PreviewRelations
+          items={relationItems}
+          emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
+        />
+        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        <PreviewActionBar rows={actionRows} />
+        <div className="mt-2">
+          <ConvertToOutputMenu
+            sourceType="idea"
+            sourceId={idea.id}
+            sourceTitle={idea.title || ''}
+            onConvertComplete={() => fetchIdeas()}
+            variant="dropdown"
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Card ⋮ — canon §8.0: IDENTICAL sections/positions to the Ideas table row.
+  const buildIdeaCardSections = (idea: MyIdea): RowActionSection[] => [
+    {
+      id: 'open',
+      kind: 'open',
+      actions: [
+        {
+          id: 'open',
+          label: isPolish ? 'Otwórz' : 'Open',
+          icon: ExternalLink,
+          onClick: () => openIdea(idea.id, idea),
+        },
+        {
+          id: 'flow',
+          label: 'Process Flow',
+          icon: Workflow,
+          onClick: () => openIdeaInProcessFlow(idea),
+        },
+      ],
+    },
+    {
+      id: 'ai',
+      kind: 'ai',
+      actions: [
+        {
+          id: 'ai_chat',
+          label: 'AI Chat',
+          icon: MessageSquare,
+          onClick: () => handleOpenIdeaAiChat(idea),
+        },
+        {
+          id: 'ai_insights',
+          label: 'AI Insights',
+          icon: Bot,
+          onClick: () => handleOpenIdeaAiInsights(idea),
+        },
+      ],
+    },
+    {
+      id: 'convert',
+      kind: 'convert',
+      label: isPolish ? 'Konwertuj do' : 'Convert to',
+      actions: [
+        {
+          id: 'convert_initiative',
+          label: isPolish ? 'Inicjatywa' : 'Initiative',
+          icon: Rocket,
+          onClick: () => handleConvert('initiative', idea),
+        },
+        {
+          id: 'convert_tasks',
+          label: isPolish ? 'Zadania' : 'Tasks',
+          icon: CheckCircle2,
+          onClick: () => handleConvert('task_set', idea),
+        },
+        {
+          id: 'convert_decision',
+          label: isPolish ? 'Decyzja' : 'Decision',
+          icon: Star,
+          onClick: () => handleConvert('decision', idea),
+        },
+        {
+          id: 'convert_team_chat',
+          label: 'Team Chat',
+          icon: MessageSquarePlus,
+          onClick: () => handleConvert('team_chat', idea),
+        },
+      ],
+    },
+    ...(foldersAvailable && folders.length > 0
+      ? [
+          {
+            id: 'folder',
+            kind: 'manage' as const,
+            label: isPolish ? 'Folder' : 'Folder',
+            actions: [
+              {
+                id: 'folder-none',
+                label: isPolish ? 'Bez folderu' : 'No folder',
+                icon: FolderMinus,
+                onClick: () => handleMoveToFolder(idea, null),
+                disabled: !(idea as any).folderId,
+              },
+              ...folders.map((f) => ({
+                id: `folder-${f.id}`,
+                label: f.name,
+                icon: Folder,
+                onClick: () => handleMoveToFolder(idea, f.id),
+                rightLabel: (idea as any).folderId === f.id ? '✓' : undefined,
+              })),
+            ],
+          },
+        ]
+      : []),
+    // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2). Ideas have no `due_date` → no Delay slot.
+    {
+      id: 'fixed',
+      kind: 'manage',
+      actions: [
+        {
+          id: 'open-preview',
+          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          icon: ChevronRight,
+          onClick: () => setPreviewIdeaId(idea.id),
+        },
+        {
+          id: 'edit',
+          label: isPolish ? 'Edytuj' : 'Edit',
+          icon: Edit2,
+          onClick: () => openIdea(idea.id, idea),
+        },
+        {
+          id: 'archive',
+          label: isPolish ? 'Archiwizuj' : 'Archive',
+          icon: Archive,
+          disabled: true,
+          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          onClick: () => {},
+        },
+      ],
+    },
+    {
+      id: 'output',
+      kind: 'output',
+      actions: [
+        {
+          id: 'output_presentation',
+          label: isPolish ? 'Prezentacja' : 'Presentation',
+          icon: Presentation,
+          disabled: true,
+          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          onClick: () => undefined,
+        },
+        {
+          id: 'output_report',
+          label: isPolish ? 'Raport' : 'Report',
+          icon: GitBranch,
+          disabled: true,
+          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          onClick: () => undefined,
+        },
+        {
+          id: 'output_table',
+          label: isPolish ? 'Tabela' : 'Table',
+          icon: Table2,
+          disabled: true,
+          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          onClick: () => undefined,
+        },
+      ],
+    },
+    {
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'delete',
+          label: isPolish ? 'Usuń' : 'Delete',
+          icon: Trash2,
+          variant: 'danger',
+          onClick: () => handleDeleteSingleIdea(idea),
+        },
+      ],
+    },
+  ];
 
   const tagGroups = useMemo(() => {
     const groups: Record<string, MyIdea[]> = {};
@@ -1472,148 +1784,131 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
 
     return (
-      <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-navy-950">
         {convertModal}
         {tagModal}
+        {confirmDialog}
         {homeShellBar}
-        <div className="p-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {sortedIdeas.map((idea) => {
-              const stage = (idea.stage || 'spark') as IdeaStage;
-              const tc = getToolConfig(idea.preferredTool);
-              const ToolIcon = tc.icon;
-              const isSelected = selectedIds.has(idea.id);
+        <div className="flex flex-col flex-1 min-h-0">
+          <TableWithPreviewLayout<MyIdea>
+            selectedId={previewIdeaId}
+            selectedItem={previewIdea}
+            onSelect={setPreviewIdeaId}
+            previewOpen={Boolean(previewIdeaId)}
+            autoOpenPreview={false}
+            onOpenFull={(id) => {
+              const idea = sortedIdeas.find((item) => item.id === id);
+              if (idea) openIdea(idea.id, idea);
+            }}
+            itemIds={previewIdeaIds}
+            getItemById={(id) => sortedIdeas.find((idea) => idea.id === id) || null}
+            renderPreview={renderIdeaPreview}
+            renderPreviewFooter={renderIdeaPreviewFooter}
+          >
+            <div className="h-full overflow-y-auto p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sortedIdeas.map((idea) => {
+                  const stage = (idea.stage || 'spark') as IdeaStage;
+                  const isSelected = selectedIds.has(idea.id);
+                  const isPreviewSelected = previewIdeaId === idea.id;
 
-              return (
-                <div
-                  key={idea.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openIdea(idea.id, idea)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      openIdea(idea.id, idea);
-                    }
-                  }}
-                  className={[
-                    'group relative text-left overflow-hidden',
-                    'p-4 rounded-xl',
-                    'border border-slate-200/60 dark:border-white/[0.06]',
-                    'bg-white dark:bg-navy-900',
-                    'hover:shadow-md transition-all duration-150',
-                    isSelected ? 'ring-2 ring-primary-500/40' : '',
-                  ].join(' ')}
-                >
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(idea.id);
-                      }}
-                      aria-label={isFavorite(idea.id) ? 'Unstar' : 'Star'}
-                      aria-pressed={isFavorite(idea.id)}
-                      className={`rounded p-0.5 transition-opacity ${
-                        isFavorite(idea.id)
-                          ? 'text-amber-400 opacity-100'
-                          : 'text-slate-600 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-400'
-                      }`}
-                    >
-                      <Star
-                        size={15}
-                        className={isFavorite(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
-                      />
-                    </button>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        toggleSelect(idea.id);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary-500 focus:ring-primary-500/30"
-                    />
-                  </div>
-
-                  <div className="flex items-start gap-3 mb-3">
+                  return (
+                    // Card — canon §8.1 4-zone GridCard. Single-click → side preview;
+                    // double-click → full view. Neutral surface, NO border-l accent.
                     <div
-                      className={`flex-shrink-0 p-2 rounded-xl ${tc.bgColor} group-hover:scale-110 transition-transform`}
+                      key={idea.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setPreviewIdeaId(idea.id)}
+                      onDoubleClick={() => openIdea(idea.id, idea)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          openIdea(idea.id, idea);
+                        }
+                      }}
+                      className={[
+                        'group relative cursor-pointer rounded-xl p-4 text-left',
+                        'border border-slate-200/60 dark:border-white/[0.06]',
+                        'bg-white dark:bg-navy-900',
+                        'hover:shadow-md hover:-translate-y-px transition-all duration-150',
+                        isPreviewSelected || isSelected ? 'ring-2 ring-primary-500/40' : '',
+                      ].join(' ')}
                     >
-                      <ToolIcon size={20} className={tc.color} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                        {idea.title}
+                      {/* Zone 1 — Badge row (stage · tool) + kebab */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {renderStageBadge(stage)}
+                          {renderToolBadge(idea.preferredTool)}
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(idea.id);
+                            }}
+                            aria-label={isFavorite(idea.id) ? 'Unstar' : 'Star'}
+                            aria-pressed={isFavorite(idea.id)}
+                            className={`rounded p-0.5 transition-opacity ${
+                              isFavorite(idea.id)
+                                ? 'text-amber-400 opacity-100'
+                                : 'text-slate-600 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-400'
+                            }`}
+                          >
+                            <Star
+                              size={15}
+                              className={isFavorite(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
+                            />
+                          </button>
+                          {/* Kebab — same RowActionsMenu/sections as the table row (§8.0) */}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <RowActionsMenu sections={buildIdeaCardSections(idea)} />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                        {renderStageBadge(stage)}
-                        {renderToolBadge(idea.preferredTool)}
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+
+                      {/* Zone 2 — Title */}
+                      <h4
+                        className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug"
+                        title={idea.title || ''}
+                      >
+                        {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                      </h4>
+
+                      {/* Zone 3 — Description (when available) */}
+                      {idea.body && (
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                          {idea.body}
+                        </p>
+                      )}
+
+                      {/* Zone 4 — Stats footer: tags · updated date */}
+                      <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-white/[0.05] mt-3 pt-3">
+                        <div className="min-w-0 flex-1">
+                          {(idea.tags || []).length > 0 ? (
+                            renderTagBadges(idea.tags, 2)
+                          ) : (
+                            <span className="text-slate-400 dark:text-slate-500">—</span>
+                          )}
+                        </div>
+                        <span className="shrink-0">
                           {idea.updatedAt
                             ? new Date(idea.updatedAt).toLocaleDateString()
                             : idea.createdAt
                               ? new Date(idea.createdAt).toLocaleDateString()
-                              : ''}
+                              : '—'}
                         </span>
                       </div>
                     </div>
-                  </div>
-
-                  {idea.body && (
-                    <div className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 mb-2">
-                      {idea.body}
-                    </div>
-                  )}
-
-                  {(idea.tags || []).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {(idea.tags || []).slice(0, 4).map((tag) => (
-                        <span
-                          key={`${idea.id}-${tag}`}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/20 dark:border-amber-500/30"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {(idea.tags || []).length > 4 && (
-                        <span className="text-[10px] text-slate-500">
-                          +{(idea.tags || []).length - 4}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => setConvertIdea(idea)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[11px] font-semibold hover:bg-primary-500/15 transition-colors"
-                    >
-                      <Sparkles size={12} />
-                      {isPolish ? 'Konwertuj' : 'Convert'}
-                    </button>
-                    <button
-                      onClick={() => openIdeaInProcessFlow(idea)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-semibold hover:bg-blue-500/15 transition-colors"
-                    >
-                      <Workflow size={12} />
-                      {isPolish ? 'Open Flow' : 'Open Flow'}
-                    </button>
-                    <ConvertToOutputMenu
-                      sourceType="idea"
-                      sourceId={idea.id}
-                      sourceTitle={idea.title || ''}
-                      onConvertComplete={() => fetchIdeas()}
-                      variant="dropdown"
-                      className="shrink-0"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
+          </TableWithPreviewLayout>
         </div>
+
+        <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       </div>
     );
   }

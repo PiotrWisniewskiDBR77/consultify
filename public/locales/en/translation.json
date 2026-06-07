@@ -9761,5 +9761,24 @@
       "deleteFailed": "Failed to delete meeting",
       "statusFailed": "Failed to update meeting status"
     }
+  },
+  "manager": {
+    "col": {
+      "severity": "Severity",
+      "problem": "Problem",
+      "type": "Type",
+      "source": "Source",
+      "overdue": "Overdue",
+      "impact": "Impact",
+      "owner": "Owner"
+    },
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "dueIn": "in",
+    "problems": "problems",
+    "noProblems": "No problems detected — on track."
   }
 }

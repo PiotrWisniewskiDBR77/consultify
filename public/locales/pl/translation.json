@@ -10898,5 +10898,24 @@
       "deleteFailed": "Nie udało się usunąć spotkania",
       "statusFailed": "Nie udało się zaktualizować statusu spotkania"
     }
+  },
+  "manager": {
+    "col": {
+      "severity": "Waga",
+      "problem": "Problem",
+      "type": "Typ",
+      "source": "Źródło",
+      "overdue": "Po terminie",
+      "impact": "Wpływ",
+      "owner": "Właściciel"
+    },
+    "severity": {
+      "critical": "Krytyczny",
+      "warning": "Ostrzeżenie",
+      "info": "Informacja"
+    },
+    "dueIn": "za",
+    "problems": "problemów",
+    "noProblems": "Nie wykryto problemów — bez opóźnień."
   }
 }

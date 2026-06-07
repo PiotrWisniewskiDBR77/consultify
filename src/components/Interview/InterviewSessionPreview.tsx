@@ -12,6 +12,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InterviewSessionPreviewBody
@@ -29,10 +30,9 @@ export interface InterviewSessionPreviewBodyProps {
     ownerId?: string;
   };
   isPolish: boolean;
+  // canon §4.1: tone/colour come from EntityStatusChip(statusChipTone) — NOT
+  // hardcoded bg/text/dot colours. We only need the bilingual label here.
   statusConfig: {
-    bgColor: string;
-    dotColor: string;
-    textColor: string;
     label: { pl: string; en: string };
   };
   progress: number;
@@ -60,11 +60,6 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
       label: isPolish ? 'Sesja' : 'Session',
       className:
         'bg-primary-500/10 text-primary-700 dark:text-primary-200 border-primary-300/30 dark:border-primary-500/20',
-    },
-    {
-      label: isPolish ? statusConfig.label.pl : statusConfig.label.en,
-      className: `${statusConfig.bgColor} ${statusConfig.textColor}`,
-      dot: statusConfig.dotColor,
     },
     {
       label: `${isPolish ? 'Postęp' : 'Progress'}: ${progress}%`,
@@ -108,6 +103,13 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
 
   return (
     <div className="space-y-4">
+      {/* canon §4.1: status via EntityStatusChip (statusChipTone → c.*) */}
+      <div className="flex items-center gap-2">
+        <EntityStatusChip
+          status={session.status}
+          label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
+        />
+      </div>
       <PreviewMetaCard pills={pills} />
       <PreviewDetailsSection
         text={detailsText}

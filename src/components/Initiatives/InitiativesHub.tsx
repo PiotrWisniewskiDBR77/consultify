@@ -7,8 +7,11 @@
 
 import {
   AlertTriangle,
+  Archive,
   BarChart3,
+  CalendarClock,
   CheckCircle2,
+  Download,
   Edit2,
   Filter,
   GitBranch,
@@ -18,8 +21,12 @@ import {
   RefreshCw,
   Shield,
   Sparkles,
+  Tag,
   Target,
+  Trash2,
+  UserPlus,
   Users,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -68,6 +75,7 @@ import {
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
+  MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -1136,6 +1144,66 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [fetchData, t]
   );
 
+  // Canon §15.3 Formula 2: clear multi-select (restores Formula 1 command row).
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  // Canon §15.3 Formula 2: real bulk action — Export selected rows as CSV (frontend-only).
+  const handleExportSelectedCsv = useCallback(() => {
+    const selected = initiatives.filter((i) => selectedIds.has(i.id));
+    if (selected.length === 0) return;
+    const escape = (value: unknown): string => {
+      const s = value == null ? '' : String(value);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const ownerName = (init: PortfolioInitiative): string => {
+      const owner = (init as any).ownerBusiness || (init as any).ownerExecution;
+      return owner ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : '';
+    };
+    const headers = [
+      'id',
+      'name',
+      'status',
+      'priority',
+      'axis',
+      'owner',
+      'plannedEndDate',
+      'updatedAt',
+    ];
+    const rows = selected.map((i) =>
+      [
+        i.id,
+        i.name,
+        i.status,
+        (i as any).priority ?? '',
+        (i as any).axis ?? '',
+        ownerName(i),
+        (i as any).plannedEndDate ?? '',
+        (i as any).updatedAt ?? '',
+      ]
+        .map(escape)
+        .join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    try {
+      const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `initiatives-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(
+        t('initiatives.bulk.exported', { count: selected.length, defaultValue: 'Exported {{count}}' })
+      );
+    } catch {
+      toast.error(t('initiatives.bulk.exportFailed', 'Export failed'));
+    }
+  }, [initiatives, selectedIds, t]);
+
   useEffect(() => {
     if (!isPilotParticipant) return;
     if (showNewModal) setShowNewModal(false);
@@ -1391,6 +1459,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               renderPreviewFooter={renderInitiativePreviewFooter}
             >
               <PortfolioListView
+                persistKey="initiatives.portfolio"
                 initiatives={searchedInitiatives}
                 onInitiativeClick={handleInitiativeClick}
                 onOpenFull={(initiative) =>
@@ -1674,6 +1743,113 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [statusCounts, activeStatusFilter]
   );
 
+  // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
+  // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
+  // "N selected · Clear" + framed action buttons (real where wired, disabled
+  // "Wkrótce (backend)" where the endpoint doesn't exist yet — never omitted).
+  const isBulkMode =
+    viewMode === 'table' &&
+    !activeDocumentId &&
+    activeTab !== 'analysis' &&
+    !isPilotParticipant &&
+    selectedIds.size > 0;
+
+  const comingSoonBackend = t('common.comingSoonBackend', 'Wkrótce (backend)');
+  const bulkButtonBase = `${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`;
+
+  const bulkBarContent = (
+    <div className="flex items-center justify-between gap-2">
+      <div className="inline-flex items-center gap-2">
+        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+          {t('initiatives.bulk.selected', {
+            count: selectedIds.size,
+            defaultValue: '{{count}} selected',
+          })}
+        </span>
+        <button
+          type="button"
+          onClick={handleClearSelection}
+          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+        >
+          <X className="h-3.5 w-3.5" />
+          {t('common.clear', 'Clear')}
+        </button>
+      </div>
+      <div className={`${MENU_3_RIGHT_CLASS} overflow-x-auto no-scrollbar`}>
+        {/* Export CSV — real, frontend-only */}
+        <button type="button" onClick={handleExportSelectedCsv} className={bulkButtonBase}>
+          <Download className="h-3.5 w-3.5" />
+          {t('initiatives.bulk.exportCsv', 'Export CSV')}
+        </button>
+        {/* Tag — no backend endpoint */}
+        <button type="button" disabled className={bulkButtonBase} title={comingSoonBackend}>
+          <Tag className="h-3.5 w-3.5" />
+          {t('initiatives.bulk.tag', 'Tag')}
+        </button>
+        {/* Assign / Reassign — wired via bulk modal (owner change) */}
+        <button
+          type="button"
+          onClick={() => setShowBulkModal(true)}
+          className={bulkButtonBase}
+        >
+          <UserPlus className="h-3.5 w-3.5" />
+          {t('initiatives.bulk.assign', 'Assign')}
+        </button>
+        {/* Change due date — no backend endpoint */}
+        <button type="button" disabled className={bulkButtonBase} title={comingSoonBackend}>
+          <CalendarClock className="h-3.5 w-3.5" />
+          {t('initiatives.bulk.changeDueDate', 'Change due date')}
+        </button>
+        {/* Archive — wired (only DONE/CANCELLED eligible per backend rule) */}
+        <button
+          type="button"
+          onClick={async () => {
+            const eligible = initiatives.filter(
+              (i) =>
+                selectedIds.has(i.id) &&
+                (i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.CANCELLED)
+            );
+            if (eligible.length === 0) {
+              toast.error(
+                t('initiatives.bulk.archiveIneligible', 'Tylko zakończone/anulowane można archiwizować')
+              );
+              return;
+            }
+            for (const init of eligible) {
+              // eslint-disable-next-line no-await-in-loop
+              await handleArchiveInitiative(init);
+            }
+            handleClearSelection();
+          }}
+          className={bulkButtonBase}
+        >
+          <Archive className="h-3.5 w-3.5" />
+          {t('common.archive', 'Archive')}
+        </button>
+        {/* AI: Analizuj zaznaczenie — contextual, retained */}
+        <button
+          type="button"
+          onClick={() => setShowBulkModal(true)}
+          className={MENU_3_ACTION_NEUTRAL}
+          title={t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+        </button>
+        {/* Delete — danger, end, no backend endpoint */}
+        <button
+          type="button"
+          disabled
+          className={`${MENU_3_ACTION_DANGER} disabled:opacity-50 disabled:cursor-not-allowed`}
+          title={comingSoonBackend}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {t('common.delete', 'Delete')}
+        </button>
+      </div>
+    </div>
+  );
+
   const commandRowContent = (
     <div className="flex items-center justify-between gap-2">
       <div className={MENU_3_LEFT_CLASS}>
@@ -1779,26 +1955,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )}
       </div>
       <div className={MENU_3_RIGHT_CLASS}>
-        {/* AI: Analizuj zaznaczenie — disabled when nothing selected (standard §3.1b) */}
-        {viewMode === 'table' && !activeDocumentId && activeTab !== 'analysis' && (
-          <button
-            type="button"
-            disabled={selectedIds.size === 0}
-            onClick={() => setShowBulkModal(true)}
-            className={MENU_3_ACTION_NEUTRAL}
-            title={
-              selectedIds.size === 0
-                ? t('portfolio.ai.selectFirst', 'Zaznacz inicjatywy, aby analizować')
-                : t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')
-            }
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
-            {selectedIds.size > 0 && (
-              <span className={MENU_3_BADGE_INACTIVE}>{selectedIds.size}</span>
-            )}
-          </button>
-        )}
+        {/* Multi-select bulk bar (canon §15.3 Formula 2) replaces this row when ≥1 row is selected. */}
         {!isPilotParticipant && (
           <button
             type="button"
@@ -1858,7 +2015,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
         filterActions={filterActions}
         rightControls={rightControls}
-        commandRowContent={activeTab === 'analysis' ? analysisCommandRow : commandRowContent}
+        commandRowContent={
+          activeTab === 'analysis'
+            ? analysisCommandRow
+            : isBulkMode
+              ? bulkBarContent
+              : commandRowContent
+        }
         availableViewModes={availableViewModes}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>

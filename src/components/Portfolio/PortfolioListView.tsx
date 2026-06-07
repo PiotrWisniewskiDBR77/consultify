@@ -76,7 +76,40 @@ interface PortfolioListViewProps {
   onArchive?: (initiative: PortfolioInitiative) => void;
   /** Called when Delete is clicked */
   onDelete?: (initiative: PortfolioInitiative) => void;
+  /**
+   * Canon §27 — localStorage persistence key for table view state.
+   * This is a hand-rolled static table (fixed column widths, no resize/hide
+   * model), so the persisted "column state it manages" is the per-column
+   * filters + sort. Pass e.g. "initiatives.portfolio".
+   */
+  persistKey?: string;
 }
+
+type PersistedTableState = {
+  filters?: TableFilters;
+  sort?: { field: SortField; direction: 'asc' | 'desc' };
+};
+
+const loadPersistedTableState = (persistKey?: string): PersistedTableState | null => {
+  if (!persistKey || typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(`table-state:${persistKey}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedTableState;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const savePersistedTableState = (persistKey: string | undefined, state: PersistedTableState) => {
+  if (!persistKey || typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(`table-state:${persistKey}`, JSON.stringify(state));
+  } catch {
+    // ignore quota / serialization errors
+  }
+};
 
 type SortField = 'name' | 'status' | 'priority' | 'plannedEndDate' | 'updatedAt';
 
@@ -132,17 +165,26 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   canvasClassName = 'pl-4 pr-1.5 pt-3 pb-4',
   onArchive,
   onDelete,
+  persistKey,
 }) => {
   const { t } = useTranslation();
-  const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: 'asc' | 'desc' }>({
-    field: 'priority',
-    direction: 'asc',
-  });
+  const persisted = useMemo(() => loadPersistedTableState(persistKey), [persistKey]);
+  const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: 'asc' | 'desc' }>(
+    persisted?.sort ?? {
+      field: 'priority',
+      direction: 'asc',
+    }
+  );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [_activeMenu, _setActiveMenu] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
-  const [tableFilters, setTableFilters] = useState<TableFilters>({});
+  const [tableFilters, setTableFilters] = useState<TableFilters>(persisted?.filters ?? {});
   const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+
+  // Canon §27: persist per-column filters + sort to localStorage under persistKey.
+  useEffect(() => {
+    savePersistedTableState(persistKey, { filters: tableFilters, sort: sortConfig });
+  }, [persistKey, tableFilters, sortConfig]);
 
   const isDowngrade = (currentStatus: string, newStatus: string): boolean => {
     const currentLevel = LEVEL_ORDER[currentStatus] || 0;
