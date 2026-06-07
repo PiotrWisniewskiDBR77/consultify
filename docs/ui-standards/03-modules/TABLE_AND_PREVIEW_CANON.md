@@ -388,6 +388,7 @@ Tabela żyje pod trzema paskami menu. SSOT Menu 2/3: `13_MENU_2_MODULE_TOPBAR.md
 Globalna nawigacja aplikacji. Tabela ani moduł **nigdy** jej nie modyfikują. Poza zakresem tego kanonu.
 
 ### 15.2 Menu 2 (Module Topbar) — zmienia się per moduł, stałe reguły
+
 **MUST:**
 - Lewa strona: search toggle → główne taby modułu (np. Inbox/Sessions/Assigned/…). **Taby NIE pokazują liczników** (liczniki są w Menu 3).
 - Prawy klaster — stała kolejność wizualna **od prawej krawędzi**:
@@ -401,18 +402,46 @@ Globalna nawigacja aplikacji. Tabela ani moduł **nigdy** jej nie modyfikują. P
 
 **MUST NOT:** `Help` w prawym klastrze; dropdown `Table ▾` do przełączania widoków; dublowanie filtrów / mini‑toolbary pod Menu 2.
 
+#### 15.2a Podział filtrów: Menu 2 vs nagłówki kolumn vs Menu 3 — decyzja (MUST)
+
+> Trzy miejsca mogą filtrować, ale **każdy typ filtra ma jedno miejsce** — nie duplikuj.
+
+| Typ filtra | Gdzie | Przykład |
+|---|---|---|
+| **Filtr globalny / złożony** (zakres dat, saved view, łączy wiele wymiarów) | Menu 2 — `Filters` dropdown (maks. 1) | „Filtry zaawansowane ▾" |
+| **Filtr per kolumna** (status/typ/priorytet/źródło — wartości z danej kolumny) | **Nagłówek kolumny** — ikona lejka → `FilterDropdown` multiselect | Klik „STATUS ⊽" → lista statusów do zaznaczenia |
+| **Scope / preset zakresu** (Aktywne/Archiwum/Wszystkie, All/Draft/Promoted) | **Menu 3 — counter-chipy** (formuła 1) | `Wszystkie 7 · Szkice 2 · Przekazane 5` + chip `Active/Archive` |
+| **Szybki filtr domenowy** (per-moduł typ/rola) | Menu 3 — counter-chipy | Inbox: `Wszystkie / Odpowiedziano / Zatwierdzone / Odesłane` |
+
+**Reguły rozstrzygające:**
+- Jeśli filtr można wyrazić jako „pokaż wiersze gdzie kolumna X = {wartość z listy}" → **nagłówek kolumny** (`FilterDropdown`). Nie trafia do Menu 2.
+- Jeśli filtr to preset klikowy „zakres" (aktywne/archiwum) lub „etap" (szkic/w toku/zamknięte) → **Menu 3 chip**, z licznikiem w chippie. Nie ma go w nagłówkach.
+- Jeśli filtr łączy wiele pól lub ma złożone kryteria → **Menu 2 `Filters` dropdown** (max 1 taki dropdown per moduł). 
+- **MUST NOT:** ten sam filtr w dwóch miejscach naraz (np. status i w nagłówku i w Menu 2 dropdown).
+- **MUST NOT:** brak filtrów per kolumna gdy kolumna ma skończoną taksonomię wartości (status/typ/priorytet/źródło → zawsze `FilterDropdown`).
+
+#### 15.2b Widoki (view modes) — kiedy i jakie
+
+- Segmentowane ikony view-mode (list/grid/kanban/timeline) są w **prawym klastrze Menu 2** (przed `Filters`).
+- **MUST NOT** view-mode toggle w Menu 3 (tam tylko formuły 1/2/3).
+- Domyślny widok = list; alternatywny (grid/board) włącza się ikoną.
+- View modes persystowane per `persistKey` (localStorage).
+- Jeśli moduł ma tylko 1 widok (np. tylko listę) → nie pokazuj segmentu (brak empty segmentu).
+
 ### 15.3 Menu 3 (Command Row) — dynamiczny, ≥3 formuły
 Jeden rząd pod Menu 2. SSOT: `ModuleMenu3.tsx`. Przyjmuje jedną z formuł zależnie od kontekstu (priorytet: **bulk > otwarte‑karty > filtry**):
 
 **Formuła 1 — STANDARD (filtry/liczniki).**
 - Po lewej: counter‑chipy = presety/statusy z licznikami (np. `All 7 · In progress 4 · Submitted 0 · Approved 3`) + przełączniki zakresu (`Active/Archive/Trash`). Triggery domenowe, nie generyczne `Wszystkie`.
 - **MUST:** ta sama tabela‑rola = ten sam zestaw counter‑chipów na każdej zakładce modułu (koniec z „Sessions ma liczniki, Inbox/Assigned nie").
+- **MUST:** każdy chip pokazuje realny licznik (0 jest OK — widoczny chip z 0 informuje że brak elementów w tym etapie). Brak chipu = użytkownik nie wie ile jest.
 
 **Formuła 2 — MULTI‑SELECT (bulk action bar).**
 - Gdy zaznaczono ≥1 wiersz: Menu 3 **natychmiast** zamienia się w pasek „**N selected · Clear**" + **przyciski** akcji zbiorczych „co można z tym zrobić". **MUST:** żaden ekran z multi‑select nie może pokazać samego „N selected" bez przycisków (bug Inbox).
 - **Wygląd przycisków bulk (MUST):** prawdziwe przyciski **w ramkach (outline)**, `rounded-full`, **`h-8`** (mniejsze niż główne CTA `h-9`), ikona+label, spójne na każdej tabeli. Nigdy „gołe słowo". Danger (`Delete/Trash`) wyróżniony tonem `danger` + confirm.
 - **Zestaw STANDARDOWY** (zawsze, gdy dotyczy): `Export CSV` · `Tag` · `Assign/Reassign` · `Change due date` · `Archive` · `Delete`.
 - **Zestaw KONTEKSTOWY** (dokładany per moduł wg deskryptora `menu3.bulkActions`): np. Wywiad `Approve · Send back · AI insights`. Standardowe + kontekstowe w jednym pasku, danger zawsze na końcu.
+- **MUST — nigdy tylko Clear:** pasek MUSI mieć ≥1 akcję poza `Clear`. Jeśli lifecycle/endpoint nie istnieje → przycisk `disabled` z notą „Wkrótce (backend)" (slot widoczny). Status-specific akcje (np. „Wyślij do przeglądu" dla draftu) **nie zastępują** stałych — muszą być OBOK nich.
 - Po `Clear`/odznaczeniu wraca formuła 1.
 
 **Formuła 3 — OTWARTE KARTY (cross‑module tabs).**

@@ -4526,6 +4526,22 @@ export const InterviewHub: React.FC = () => {
       };
 
       if (selectedCount > 0) {
+        // Kanon §15.3 Formuła 2: ZAWSZE ≥1 akcja poza Clear. Lifecycle (Archiwizuj/Usuń) =
+        // backlog B-1 — disabled z notą, ale widoczne (slot nie może być pusty).
+        const _isPromoted = (raw?: string) => {
+          const s = String(raw || 'DRAFT').toUpperCase();
+          return [
+            'PROMOTED',
+            'PLANNING',
+            'APPROVED',
+            'IN_EXECUTION',
+            'IN_PROGRESS',
+            'REVIEW',
+          ].includes(s);
+        };
+        const promotedSelectedCount = selectedInitiativeList.filter((i) =>
+          _isPromoted(i.status)
+        ).length;
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
@@ -4541,20 +4557,21 @@ export const InterviewHub: React.FC = () => {
                   <X size={14} />
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
-                {draftSelectedCount > 0 ? (
-                  <>
-                    <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
-                    <button
-                      type="button"
-                      onClick={() => void bulkInitiativeTransition('PENDING_REVIEW', ['DRAFT'])}
-                      className={MENU_3_ACTION_NEUTRAL}
-                    >
-                      <ArrowRight size={14} />
-                      {isPolish ? 'Wyślij do przeglądu' : 'Send to review'}
-                    </button>
-                  </>
-                ) : null}
-                {canReviewInsights && pendingSelectedCount > 0 ? (
+                {/* Separator — status-zależne */}
+                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
+                {/* Wyślij do przeglądu — tylko gdy są zaznaczone drafty */}
+                {draftSelectedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void bulkInitiativeTransition('PENDING_REVIEW', ['DRAFT'])}
+                    className={MENU_3_ACTION_NEUTRAL}
+                  >
+                    <ArrowRight size={14} />
+                    {isPolish ? 'Wyślij do przeglądu' : 'Send to review'}
+                  </button>
+                )}
+                {/* Zatwierdź — tylko gdy zaznaczone są pending + canReview */}
+                {canReviewInsights && pendingSelectedCount > 0 && (
                   <button
                     type="button"
                     onClick={() =>
@@ -4570,7 +4587,37 @@ export const InterviewHub: React.FC = () => {
                     <Rocket size={14} />
                     {isPolish ? 'Zatwierdź i przekaż dalej' : 'Approve & move forward'}
                   </button>
-                ) : null}
+                )}
+                {/* Otwórz w module — dla zaznaczonych promoted (zawsze dostępna akcja) */}
+                {promotedSelectedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ids = selectedInitiativeList
+                        .filter((i) => _isPromoted(i.status))
+                        .map((i) => i.id);
+                      if (ids[0])
+                        navigate(
+                          `/initiatives?open=${encodeURIComponent(ids[0])}&mode=doc`
+                        );
+                    }}
+                    className={MENU_3_ACTION_NEUTRAL}
+                  >
+                    <ExternalLink size={14} />
+                    {isPolish ? 'Otwórz w module' : 'Open in module'}
+                  </button>
+                )}
+                {/* Separator + lifecycle (backlog B-1 — disabled z notą) */}
+                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
+                <button
+                  type="button"
+                  disabled
+                  title={isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)'}
+                  className={`${MENU_3_ACTION_NEUTRAL} cursor-not-allowed opacity-40`}
+                >
+                  <Archive size={14} />
+                  {isPolish ? 'Archiwizuj' : 'Archive'}
+                </button>
               </div>
               <div className="shrink-0" />
             </div>
@@ -11093,8 +11140,8 @@ Return ONLY the answer text (no markdown fences).`;
                                         : []),
                                     ],
                                   },
-                                  // DÓŁ — stały: Otwórz podgląd (w Wywiadzie) + Otwórz w module Initiatives.
-                                  // (Inicjatywy nie mają tu Edytuj/Archiwizuj/Usuń — brak endpointu; lifecycle = backlog B-1.)
+                                  // DÓŁ — stały (kanon §9): Open preview + Open in module + Archiwizuj.
+                                  // Lifecycle (Archiwizuj/Usuń) = backlog B-1; disabled z notą "Wkrótce".
                                   {
                                     id: 'fixed',
                                     kind: 'manage' as const,
@@ -11116,6 +11163,34 @@ Return ONLY the answer text (no markdown fences).`;
                                           navigate(
                                             `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
                                           ),
+                                      },
+                                      {
+                                        id: 'archive',
+                                        label: isPolish ? 'Archiwizuj' : 'Archive',
+                                        icon: Archive,
+                                        description: isPolish
+                                          ? 'Wkrótce (backend)'
+                                          : 'Coming soon (backend)',
+                                        disabled: true,
+                                        onClick: () => {},
+                                      },
+                                    ],
+                                  },
+                                  // DANGER — stały (kanon §9): Usuń (disabled — brak endpointu, backlog B-1).
+                                  {
+                                    id: 'danger',
+                                    kind: 'danger' as const,
+                                    actions: [
+                                      {
+                                        id: 'delete',
+                                        label: isPolish ? 'Usuń' : 'Delete',
+                                        icon: Trash2,
+                                        variant: 'danger' as const,
+                                        description: isPolish
+                                          ? 'Wkrótce (backend)'
+                                          : 'Coming soon (backend)',
+                                        disabled: true,
+                                        onClick: () => {},
                                       },
                                     ],
                                   },
