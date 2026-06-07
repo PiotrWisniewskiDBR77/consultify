@@ -20,7 +20,6 @@ import {
   FieldLabel,
   MultiSelect,
   type MultiSelectOption,
-  PriorityPicker,
   Select,
   type SelectOption,
 } from '@/components/shared/forms';
@@ -472,7 +471,17 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
                 <Field>
                   <FieldLabel>{isPolish ? 'Priorytet' : 'Priority'}</FieldLabel>
-                  <PriorityPicker value={priority} onChange={setPriority} isPolish={isPolish} />
+                  <Select
+                    value={priority}
+                    onChange={(v) => setPriority(v as Priority)}
+                    options={[
+                      { value: 'low', label: isPolish ? 'Niski' : 'Low' },
+                      { value: 'medium', label: isPolish ? 'Średni' : 'Medium' },
+                      { value: 'high', label: isPolish ? 'Wysoki' : 'High' },
+                      { value: 'urgent', label: isPolish ? 'Pilny' : 'Urgent' },
+                    ]}
+                    aria-label={isPolish ? 'Priorytet' : 'Priority'}
+                  />
                 </Field>
               </div>
 
