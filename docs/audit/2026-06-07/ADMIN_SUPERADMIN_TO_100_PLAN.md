@@ -158,7 +158,20 @@ S4 (testy smoke), S9 (error-states), OA-6..10, SA-3, SA-5 (smoke wizualny per-za
 | OA-4 | Org Profile nie zapisuje (stub) | ❌ NIEPRAWDA. Pełne wiring: `PUT /api/organization-profiles/:id` + potwierdzenie zapisu re-fetch, upload logo, weryfikacja domeny (914 linii) | `OrganizationProfileView.tsx:209-230`; backend `organization-profiles.routes.ts:369` |
 | OA-5 | Billing Settings nie zapisuje (stub) | 🔴 REALNA LUKA. FE woła `GET/PUT /api/billing/settings` — endpoint NIE istnieje w backendzie → 404, cichy fail. Kontakty są lokalne ("In production this would call an API") | `BillingSettingsView.tsx:106,140,211`; brak `/settings` w `routes/billing/` |
 
-**Wniosek operacyjny:** przed budowaniem czegokolwiek z list OA-6..OA-11 / SA-* — najpierw code-verified re-audit (jak wyżej). Jedyny potwierdzony buildowalny gap: **OA-5** (backend billing settings: tabela + GET/PUT + ewentualnie kontakty/export).
+**AKTUALIZACJA — cała sekcja Org-Admin (OA-*) była oparta na MARTWYCH plikach.** Live org-admin = `AdminSettingsModule.tsx` z 5 panelami; `src/views/admin/*` i większość `src/components/Admin/*` (w tym `OrganizationProfileView`, `BillingSettingsView`, `RolesPermissionsView`, `IntegrationsManagementPanel`...) to ORPHANY (0 referencji). Analiza OA-1..OA-11 dotyczyła kodu, którego nikt nie renderuje.
+
+**Live org-admin (jedyny realny zakres) — stan po weryfikacji:**
+| Panel (live) | Wiring | Werdykt |
+|---|---|---|
+| `AdminMembersRolesPanel` (people) | 5 API calls, 450 linii | ✅ wired |
+| `AdminBillingFinOpsPanel` (billing) | ~10 API calls, 674 linii — summary, payment methods, invoices, alerts, **tax settings (get+update)**, usage, plans | ✅ wired |
+| `AdminAuditLogPanel` (audit) | 6 API calls, 261 linii | ✅ wired |
+| `AdminSecurityIdentityPanel` (security) | kontener 6 zakładek → SecurityPolicy / Collaboration / ApiKeys / IAM / SCIM / Risk | ✅ delegacja (nie stub) |
+| `AdminAIControlCenterPanel` (ai) | 1 API call, 125 linii | ⚠️ cienki — zweryfikować dzieci |
+
+**OA-5 — ANULOWANE (nie jest realną luką).** Żywy backend tax-settings istnieje (`billing.routes.ts:3309` GET+PUT; admin: `adminP32.routes.ts:2078`); żywy panel persystuje. `BillingSettingsView` + `/api/billing/settings` to martwy widok wołający nieistniejący endpoint — bez wpływu na produkt. Budowanie tego = duplikacja działającej funkcji dla niewyświetlanego komponentu → odrzucone (verify-before-claiming).
+
+**Prawdziwy pozostały zakres Org-Admin:** (1) opcjonalny cleanup martwych `src/views/admin/*` + `src/components/Admin/*` orphanów (jak SA-4, zapobiega kolejnym fałszywym audytom); (2) weryfikacja cieńszych live-paneli (`AdminAIControlCenterPanel` + 6 podpaneli security) pod kątem realnych braków. Reszta OA-* = nieaktualna (martwy kod).
 
 ## 8a. DECYZJE WŁAŚCICIELA (2026-06-07)
 
