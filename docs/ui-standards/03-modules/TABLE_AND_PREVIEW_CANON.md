@@ -299,6 +299,50 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 
 ---
 
+## 14) Cykl życia rekordu — Archive / Delete + scope Aktywne/Zarchiwizowane
+
+> Przy dużej liczbie rekordów (insighty, sesje, obserwacje) „aktywne vs archiwum" to jedyny
+> sposób, żeby tabela nie spuchła. To jest **standard cyklu życia** dla każdej tabeli w zakresie §1.1.
+> Powiązane: §9 (kebab — strefy), §15.3 (Menu 3 — formuły).
+
+### 14.1 Dwa czasowniki — semantyka (MUST)
+- **Archiwizuj** = miękkie, **odwracalne**. Ustawia `archived_at` (+ `archived_by`). Rekord znika z
+  domyślnego widoku, wraca przez **Przywróć**. NIE kasuje danych.
+- **Usuń** = twarde, **nieodwracalne**, za potwierdzeniem, w strefie **danger** kebaba (§9).
+- Ten sam czasownik = ta sama pozycja wszędzie: **Archiwizuj/Przywróć w strefie „dół/stały"** kebaba,
+  **Usuń w strefie danger**. Bulk: framed `MENU_3_ACTION_NEUTRAL` (jak reszta, §15.3 formuła 2).
+- Domyślne uprawnienia: **Archiwizuj + Usuń = dla każdego z prawem edycji** danego rekordu
+  (reużywamy istniejącej bramki edycji; nie dorzucamy osobnego RBAC). Zaostrzenie (np. Usuń tylko
+  OWNER/admin) tylko gdy moduł świadomie tak decyduje.
+
+### 14.2 Scope Aktywne / Zarchiwizowane (MUST)
+- **Stany:** `active` (domyślny) · `archived` · opcjonalnie `all`.
+- **Miejsce:** **chip w Menu 3** (command row), obok pozostałych filtrów statusu, oddzielony
+  cienkim dzielnikiem (`mx-1 h-5 w-px`). Ikona `Archive`. Aktywny = `chipActive`.
+  - Uwaga implementacyjna: gdy otwarty jest dokument (zakładka), ModuleHub pokazuje `DynamicTabs`
+    zamiast filtrów — chip scope jest wtedy ukryty (spójne ze wszystkimi filtrami). Wraca po
+    zamknięciu dokumentu. (Jeśli moduł wymaga scope zawsze-widocznego → przenieść do Menu 2/rightControls.)
+- **Filtrowanie po stronie serwera:** `GET …?scope=active|archived|all`. Zmiana scope → przeładowanie
+  listy (nie filtrowanie po stronie klienta — archiwum może być duże i paginowane).
+- Kebab kontekstowo: w `active` pokazuje **Archiwizuj**, w `archived` pokazuje **Przywróć**
+  (sterowane przez `archivedAt` rekordu lub bieżący scope).
+
+### 14.3 Kontrakt danych / backend (MUST — `DB_MANAGED_SCHEMA=off`)
+- Kolumny `archived_at TIMESTAMP`, `archived_by TEXT` dodawane **wyłącznie guarded lazy ALTER**
+  (`getTableColumns` + `cols.has`, idempotentny guard na „already exists"/„duplicate column").
+  **Nigdy migracją.** Wzorzec: `ensureInterview*LifecycleColumns()` (sesje, assignmenty, insighty).
+- Lista filtruje w SQL: `AND archived_at IS NULL` (active) / `AND archived_at IS NOT NULL` (archived) /
+  brak (all). Mapowanie odpowiedzi wystawia `archivedAt`.
+- Archiwizacja przez istniejący `PATCH …/:id { archived: boolean }` (reużywa bramki edycji), nie nowy
+  dedykowany endpoint, jeśli PATCH już istnieje. Log aktywności: `archived` / `restored`.
+
+### 14.4 Status wdrożenia
+- **Pilot: Insights** — zrobiony (chip Menu 3, kebab Archiwizuj/Przywróć, bulk, scope serwerowy,
+  guarded ALTER). Rollout na pozostałe tabele = **backlog §B-1** (`docs/backlog/TABLE_LIFECYCLE_BACKLOG.md`).
+- Sesje i assignmenty mają już `archived_at` w backendzie (wzorzec do reużycia po stronie UI).
+
+---
+
 ## 15) Menu 1 / Menu 2 / Menu 3 — zachowanie nad tabelą
 
 Tabela żyje pod trzema paskami menu. SSOT Menu 2/3: `13_MENU_2_MODULE_TOPBAR.md`, `14_MENU_3_COMMAND_ROW.md`, `module-hub-standard.md`, komponent `src/components/shared/ModuleMenu3.tsx`.
@@ -558,6 +602,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Akcje bulk wpięte w **realne handlery** (nie atrapy); brak endpointu → przycisk pominięty lub `disabled` z notą, nie martwy. 
 - [ ] Formuła 3 (otwarte karty): single‑click=preview (bez taba); „Open"=pełna karta + trwały tab; taby **cross‑module**; tytuł=realny (bez artefaktów typu „abaliza"). §15.3 / §24
 - [ ] Dokładnie jeden rząd Menu 3 (bez dodatkowych stripów). 
+- [ ] 🔴 **Scope Aktywne/Zarchiwizowane** = chip w Menu 3 (ikona `Archive`, dzielnik), `GET …?scope=`, kebab kontekstowo Archiwizuj↔Przywróć. §14.2 → `jak:` klik chip → leci `?scope=archived`, kebab pokazuje „Przywróć". (Pilot: Insights ✅; reszta = backlog §B-1.)
 
 ### E. Wiersz nagłówka (kolumny + podtytuły)
 - [ ] 🔴 Typografia `text-[11px] font-semibold uppercase tracking-wider`, kolor `text-slate-500 dark:text-slate-400`. §3.2
@@ -597,6 +642,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Menu **portalowe, auto-flip, nieclipowane, w viewport** (`getBoundingClientRect().bottom <= innerHeight`). §9 → `jak:` computed-style menu.
 - [ ] Akcje = parytet z preview footer i full view (te same nazwy/uprawnienia). §17
 - [ ] 🔴 **Sprawdzone w KAŻDEJ zakładce** (Inbox/Assigned/Sessions/…) i KAŻDYM statusie wiersza. Komponent SSOT: `RowActionsMenu` (`sections` + `submenu`).
+- [ ] 🔴 **Archiwizuj = miękkie/odwracalne** (`archived_at` via guarded lazy ALTER, nie migracja), Przywróć w scope `archived`, Usuń = twarde/danger/confirm. Uprawnienia = jak edycja. §14 → `jak:` archiwizuj wiersz → znika z `active`, jest w `archived`, „Przywróć" go wraca. (Wymaga realnych danych + prawa edycji — nie demo-fixtures.)
 
 ### I. Preview pane
 - [ ] 🔴 Domyślnie zamknięty; single‑click=preview, dbl/Enter=full, Esc=zamknij. §7.1
