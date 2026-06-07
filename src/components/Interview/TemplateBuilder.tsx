@@ -2665,12 +2665,13 @@ ${sourceText || '(none)'}`;
             {questions.length} {isPolish ? 'pytań łącznie' : 'total questions'}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="outline" size="sm" onClick={onClose}>
               {isPolish ? 'Anuluj' : 'Cancel'}
             </Button>
             <Button
               variant="outline"
-              icon={<TeresaMark size={16} />}
+              size="sm"
+              icon={<TeresaMark size={14} />}
               onClick={handleCheckQuality}
               disabled={isCheckingQuality || questions.length === 0}
               loading={isCheckingQuality}
@@ -2680,6 +2681,7 @@ ${sourceText || '(none)'}`;
             </Button>
             <Button
               variant="outline"
+              size="sm"
               icon={<Save />}
               onClick={() => handleSave(false)}
               disabled={isSaving || isApplicationTemplate}
@@ -2689,6 +2691,7 @@ ${sourceText || '(none)'}`;
             </Button>
             <Button
               variant="primary"
+              size="sm"
               icon={<Send />}
               onClick={() => handleSave(true)}
               disabled={isSaving || isApplicationTemplate}
