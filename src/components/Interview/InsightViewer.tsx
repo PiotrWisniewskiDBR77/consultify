@@ -661,6 +661,44 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // N-mode section order (drag-reorder persistence) — parity with
+  // InitiativeDocumentView so both detail views share the same draggable sidebar.
+  const nModeOrderStorageKey = `insight:nmode:section-order:v1:${insight?.id ?? 'new'}`;
+  const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(nModeOrderStorageKey);
+      if (!raw) {
+        setNModeSectionOrder(null);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(
+          (id): id is string => typeof id === 'string' && id.length > 0
+        );
+        setNModeSectionOrder(cleaned.length > 0 ? cleaned : null);
+      } else {
+        setNModeSectionOrder(null);
+      }
+    } catch {
+      setNModeSectionOrder(null);
+    }
+  }, [nModeOrderStorageKey]);
+
+  const handleNModeSectionReorder = useCallback(
+    (sectionIds: string[]) => {
+      setNModeSectionOrder(sectionIds);
+      try {
+        localStorage.setItem(nModeOrderStorageKey, JSON.stringify(sectionIds));
+      } catch {
+        // Ignore storage errors; drag-and-drop still works for this session.
+      }
+    },
+    [nModeOrderStorageKey]
+  );
+
   // Editable fields
   const [title, setTitle] = useState('');
 
@@ -6667,6 +6705,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     handleWorksheetStatusUpdate,
   ]);
 
+  // Apply the persisted drag order (within-group). Unknown/new sections fall to
+  // the end so the list is never truncated. Mirrors InitiativeDocumentView.
+  const orderedNModeSectionsWithContent = useMemo<NModeSection[]>(() => {
+    if (!nModeSectionOrder || nModeSectionOrder.length === 0) return nModeSectionsWithContent;
+    const byId = new Map(nModeSectionsWithContent.map((section) => [section.id, section]));
+    const ordered = nModeSectionOrder
+      .map((id) => byId.get(id))
+      .filter((section): section is NModeSection => Boolean(section));
+    const missing = nModeSectionsWithContent.filter(
+      (section) => !nModeSectionOrder.includes(section.id)
+    );
+    return [...ordered, ...missing];
+  }, [nModeSectionsWithContent, nModeSectionOrder]);
+
+  useEffect(() => {
+    if (orderedNModeSectionsWithContent.length === 0) return;
+    if (!orderedNModeSectionsWithContent.some((section) => section.id === activeNSection)) {
+      setActiveNSection(orderedNModeSectionsWithContent[0].id);
+    }
+  }, [orderedNModeSectionsWithContent, activeNSection]);
+
   // #25 — content-bearing sections offered in the export dialog. We exclude the
   // pure-UI / audit sections (next-actions, comments, activity log) that have no
   // exportable narrative body.
@@ -6866,9 +6925,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       }}
       properties={propertyFields}
       propertiesMaxColumns={5}
-      sections={nModeSectionsWithContent}
+      sections={orderedNModeSectionsWithContent}
       activeSection={activeNSection}
       onSectionChange={setActiveNSection}
+      onSectionReorder={handleNModeSectionReorder}
       presentationMode={presentationMode}
       onPresentationModeChange={setPresentationMode}
       buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
@@ -6878,7 +6938,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           <button
             onClick={handleSubmitForInformation}
             disabled={submittingForInfo || insight?.status !== 'completed'}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-xs font-semibold shadow-sm hover:from-primary-500 hover:to-indigo-500 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-semibold shadow-sm hover:bg-primary-500 transition-all disabled:opacity-50"
           >
             {submittingForInfo ? (
               <Loader2 size={14} className="animate-spin" />

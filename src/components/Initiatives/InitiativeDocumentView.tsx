@@ -8298,8 +8298,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </Callout>
                 ) : null}
 
-                {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned */}
-                <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
+                {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
+                    Container matches the shared NModeShell action-bar standard (slate, borderless)
+                    so the Initiative toolbar reads identically to the Insight toolbar. */}
+                <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
                   <div className="flex items-center gap-2 flex-wrap">
                     {(() => {
                       const primaryGroup = nModeActions.filter((a) => a.variant === 'success');
