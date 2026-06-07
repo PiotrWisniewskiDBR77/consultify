@@ -74,22 +74,25 @@ last_updated: 2026-06-07
 
 ---
 
-## FAZA 2 — KEBAB ⋮ (3-strefowy, każda zakładka, każdy status)
+## FAZA 2 — KEBAB ⋮ (3-strefowy — GÓRA kontekst / DÓŁ stały / DANGER)
 
 > ⚠️ Otwórz kebab dla wiersza w KAŻDYM statusie (draft / in-progress / submitted / approved / sent-back).
 > ⚠️ Sprawdź w KAŻDEJ zakładce modułu osobno.
+> Kanon §9 — Fixed Bottom Manifest: kolejność i pozycje są ścisłym kontraktem.
 
 | # | Check | Jak sprawdzić | FAIL gdy | Wynik |
 |---|---|---|---|---|
-| **H-1** 🔴 | Kebab wyrównany do ⋮ przycisku | Klik ⋮ → menu pojawia się PRZY przycisku (prawa krawędź menu = prawa krawędź przycisku). Mierz wizualnie lub `getBoundingClientRect()` | Menu oddalone od przycisku o >20px | PASS/FAIL |
-| **H-2** 🔴 | Strefa DÓŁ zawsze obecna i kompletna | Otwórz kebab → w dolnej strefie (stałej) są: `Open/Otwórz podgląd` + `Edytuj` + `Archiwizuj` (lub `Przywróć`) + (`Delay ▸` jeśli encja ma termin). Te 3–4 pozycje są ZAWSZE, niezależnie od statusu | Któraś z tych pozycji brakuje w dowolnym statusie | PASS/FAIL |
-| **H-3** 🔴 | Strefa GÓRA kontekstowa wg statusu | Otwórz kebab dla wiersza w każdym statusie → GÓRA zmienia się (np. draft→„Wyślij do przeglądu"; submitted→„Zatwierdź" + „Wyślij z powrotem"; approved→brak górnej strefy). Pusta strefa = ukryta (bez pustego separator-only) | Góra identyczna dla wszystkich statusów LUB zawsze pusta LUB separator bez pozycji | PASS/FAIL |
-| **H-4** 🔴 | Strefa DANGER: Usuń | Kebab → ostatnia sekcja = „Usuń" w kolorze danger (czerwony), oddzielona separatorem. Klik → pojawia się confirm. Jeśli brak backendowego endpointu → przycisk `disabled` z opisem „Wkrótce (backend)" | Brak strefy danger LUB Usuń bez confirm | PASS/FAIL |
-| **H-5** | Delay ▸ submenu | (jeśli encja ma termin) Klik „Delay ▸" → rozwijają się 3 pod-pozycje: +1 dzień, +3 dni, +7 dni. Klik pod-pozycji zamyka menu i ustawia termin. | Klik Delay wykonuje akcję od razu (bez submenu) | PASS/FAIL/N-A |
-| **H-6** | Ikona przy każdej pozycji | Każda pozycja kebaba = ikona + label (bez pozycji z samym tekstem) | Pozycja bez ikony | PASS/FAIL |
-| **H-7** | Menu portalowe, nieclipowane | Otwórz kebab gdy tabela jest blisko dolnej krawędzi viewport → menu auto-flip w górę. Menu NIE jest ucięte przez scroll-container tabeli. | Menu ucięte przez overflow | PASS/FAIL |
-| **H-8** 🔴 | Parytet z preview | Akcje w kebab = te same co w preview footer (te same labele, te same uprawnienia) | Kebab ma „Archiwizuj" ale preview nie ma, lub odwrotnie | PASS/FAIL |
-| **H-9** 🔴 | Sprawdzono w KAŻDEJ zakładce | Lista zakładek sprawdzonych: `[___]` | Fix w jednej zakładce ≠ fix wszędzie | PASS/FAIL |
+| **H-1** 🔴 | Kebab wyrównany do ⋮ przycisku | Klik ⋮ → prawa krawędź menu = prawa krawędź przycisku (±5px). Mierz wizualnie. | Menu oddalone od przycisku o >20px | PASS/FAIL |
+| **H-2a** 🔴 | DÓŁ pozycja 1: **Otwórz podgląd** (zawsze) | Otwórz kebab dowolnego wiersza w dowolnym statusie → pierwsza pozycja strefy stałej = „Otwórz podgląd" / „Open preview" + ikona `ChevronRight`. Klik → otwiera boczny panel (NIE nawiguje). | Brak tej pozycji w jakimkolwiek statusie | PASS/FAIL |
+| **H-2b** 🔴 | DÓŁ pozycja 2: **Edytuj** (zawsze) | W strefie stałej jest „Edytuj" / „Edit" + ikona `Pencil`/`Edit2`. Disabled gdy brak uprawnień (z opisem), nie pominięty. | Brak tej pozycji LUB pozycja pominięta gdy brak uprawnień (zamiast disabled) | PASS/FAIL |
+| **H-2c** 🔴 | DÓŁ pozycja 3: **Archiwizuj/Przywróć** (zawsze) | W strefie stałej jest „Archiwizuj" (scope active) lub „Przywróć" (scope archived) + ikona `Archive`/`RotateCcw`. Brak endpointu → `disabled` z „Wkrótce (backend)". Slot NIGDY pominięty. | Brak tej pozycji w jakimkolwiek statusie lub zakładce | PASS/FAIL |
+| **H-2d** | DÓŁ pozycja 4: **Delay ▸** (jeśli encja ma termin) | (N/A jeśli brak pola `due_date`) Pozycja „Delay ▸" + ikona `Clock` + chevron → klik → 3 pod-pozycje: +1 dzień, +3 dni, +7 dni. | Delay wykonuje akcję od razu (bez submenu) | PASS/FAIL/N-A |
+| **H-3** 🔴 | GÓRA kontekstowa zmienia się per status | Otwórz kebab dla wiersza w KAŻDYM statusie → GÓRA ma inne akcje dla każdego statusu. Pusta GÓRA = ukryta (zero pustego separator-only bloku). | GÓRA identyczna w każdym statusie LUB separator bez pozycji gdy strefa pusta | PASS/FAIL |
+| **H-4** 🔴 | DANGER: Usuń (zawsze ostatnia) | Ostatnia sekcja = „Usuń" / „Delete" w kolorze danger (czerwony), oddzielona separatorem. Klik aktywnego → confirm dialog. Brak endpointu → `disabled` z „Wkrótce (backend)". | Brak Usuń LUB Usuń bez separatora LUB brak confirm | PASS/FAIL |
+| **H-5** | Ikona przy każdej pozycji | Każda pozycja kebaba = ikona + label (zero pozycji z samym tekstem) | Pozycja bez ikony | PASS/FAIL |
+| **H-6** | Menu portalowe, auto-flip, nieclipowane | Otwórz kebab blisko dolnej krawędzi viewport → menu flip w górę. NIE ucięte przez scroll-container. | Menu ucięte przez overflow | PASS/FAIL |
+| **H-7** 🔴 | Parytet z preview footer | Akcje w kebab = te same co dostępne w preview footer (te same labele, te same uprawnienia — niespójność = FAIL) | Kebab ma „Archiwizuj" ale preview nie, lub odwrotnie | PASS/FAIL |
+| **H-8** 🔴 | Sprawdzono w KAŻDEJ zakładce × KAŻDYM statusie | Wpisz: zakładki × statusy sprawdzone: `[___]` | Fix w jednej zakładce/statusie ≠ fix wszędzie | PASS/FAIL |
 
 **Status Fazy 2:** `PASS` / `FAIL (punkty: ___)`
 
@@ -136,15 +139,45 @@ last_updated: 2026-06-07
 
 ---
 
-## FAZA 5 — MENU 2 / MENU 3 (formuła 1 + scope)
+## FAZA 5 — MENU 2 / MENU 3 (wszystkie 3 formuły + specs wizualne)
+
+### 5a — Menu 2 (topbar)
 
 | # | Check | Jak sprawdzić | FAIL gdy | Wynik |
 |---|---|---|---|---|
 | **C-1** 🔴 | Taby modułu bez liczników | Menu 2 lewa strona → taby (np. Inbox/Sessions/Assigned) bez cyfr w labelach | Taby mają liczniki w nawiasach | PASS/FAIL |
-| **C-2** 🔴 | Prawy klaster: Area → CTA → Tool → Views → Filters (od prawej) | Policz i zwizualizuj kolejność kontrolek od prawej krawędzi | Odwrócona kolejność; CTA po lewej | PASS/FAIL |
-| **D-10** 🔴 | Counter-chipy Menu 3 (formuła 1) | Pod Menu 2 widać pasek chipów: „All N · Status1 M · …". Liczniki są aktualne (zgodne z liczbą wierszy w tabeli). | Brak chipów; liczniki 0 gdy są dane | PASS/FAIL |
-| **D-11** 🔴 | Ten sam zestaw chipów na każdej zakładce | Porównaj chipy na Inbox vs Sessions vs Assigned → te same kategorie. | Inbox ma „All/Answered", Sessions ma „All/In progress" — różne zestawy dla tej samej roli | PASS/FAIL |
-| **D-12** 🔴 | Scope chip Aktywne/Zarchiwizowane | Menu 3 ma chip z ikoną Archive (Aktywne/Zarchiwizowane). Klik → przeładowuje listę z `?scope=archived`. Kebab w archived → pokazuje „Przywróć" zamiast „Archiwizuj". | Brak scope chipa (chyba że świadomie odłożone = B-1 backlog) | PASS/FAIL/BACKLOG |
+| **C-2** 🔴 | Prawy klaster (od prawej): Area → CTA → Tool → Views → Filters | Wizualnie od prawej: 1. Area/toggle, 2. Primary CTA, 3. Tool, 4. View modes segment, 5. Filters dropdown. Max 5 elementów. | Odwrócona kolejność; CTA po lewej; >5 elementów | PASS/FAIL |
+| **C-3** 🔴 | Specs przycisków Menu 2 | DevTools inspect CTA i inne kontrolki → `height: 36px` (h-9), `border-radius: 9999px` (rounded-full), `font-size: 14px` (text-sm), spójny family (brak gradientów, brak `Help` w klastrze) | h≠36px; brak rounded-full; gradient; mieszane style | PASS/FAIL |
+| **C-4** 🔴 | View modes = segment ikonowy (nie dropdown „Table ▾") | Jeśli moduł ma >1 widok → widoczne ikony segmentowe (list/grid/board/timeline). NIE ma dropdownu „Table ▾". Jeśli tylko 1 widok → segment niewidoczny (brak pustego segmentu). | Dropdown zamiast segmentu; pusty segment gdy 1 widok | PASS/FAIL |
+| **C-5** | Filtry w Menu 2 (jeśli są) → max 1 dropdown | Jeśli moduł ma zaawansowane filtry → dokładnie 1 dropdown „Filtry…" w prawym klastrze. NIE ma filtrów per-kolumna w Menu 2 (te idą do nagłówków). | >1 dropdown filtrów; filtr per-kolumna w Menu 2 | PASS/FAIL/N-A |
+
+### 5b — Menu 3 Formuła 1 (counter-chipy)
+
+| # | Check | Jak sprawdzić | FAIL gdy | Wynik |
+|---|---|---|---|---|
+| **D-10** 🔴 | Counter-chipy widoczne z aktualnymi licznikami | Pod Menu 2 widać pasek chipów: „All N · Status1 M · …". Liczniki zgodne z liczbą wierszy. Każdy chip ma licznik (0 = OK, chip widoczny). | Brak chipów; brak liczników | PASS/FAIL |
+| **D-11** 🔴 | Ten sam zestaw chipów na każdej zakładce tej roli | Porównaj chipy na Inbox vs Sessions vs Assigned (ta sama rola użytkownika) → te same kategorie presetu. | Różne zestawy chipów dla tej samej roli | PASS/FAIL |
+| **D-12** 🔴 | Scope chip Aktywne/Zarchiwizowane | Menu 3 ma chip z ikoną `Archive` (scope). Klik → przeładowuje z `?scope=archived`. Kebab w archived → „Przywróć". | Brak scope chipa (jeśli nie backlog B-1) | PASS/FAIL/BACKLOG |
+| **D-13** 🔴 | Specs chipów Menu 3 | Inspect chip → `height: 24px` (h-6), `padding: 0 8px` (px-2), `font-size: 11px`, `border-radius: 9999px`. Aktywny chip = `chipActive` klas (wyróżniony). Nieaktywny = `chipInactive`. | Błędna wysokość/padding/font; brak wyróżnienia aktywnego | PASS/FAIL |
+
+### 5c — Menu 3 Formuła 3 (otwarte karty — często pomijane!)
+
+> ⚠️ Ta formuła włącza się gdy użytkownik otworzy ≥1 kartę przez „Open" (nie single-click preview).
+> Single-click = preview (nie tworzy taba). „Open" = pełna karta + trwały tab w Menu 3.
+
+| # | Check | Jak sprawdzić | FAIL gdy | Wynik |
+|---|---|---|---|---|
+| **D-14** 🔴 | Single-click NIE tworzy taba w Menu 3 | Klik wiersz → panel boczny otwiera się, Menu 3 NIE zmienia się (formuła 1 nadal widoczna) | Single-click dodaje tab do Menu 3 | PASS/FAIL |
+| **D-15** 🔴 | „Open" tworzy trwały tab + pełna karta | Klik „Open" w preview headerze (lub kebab) → Menu 3 pokazuje tab z ikoną+tytułem encji + `×`. Ekran główny pokazuje pełną kartę encji. | Klik „Open" tylko odświeża preview bez taba | PASS/FAIL |
+| **D-16** 🔴 | Tytuł taba = realny tytuł encji | Tab w Menu 3 pokazuje prawdziwy tytuł (np. „Dashboard KPI Zarządu…"), nie kod ID, nie „abaliza", nie placeholder. | Tytuł taba = ID lub artefakt | PASS/FAIL |
+| **D-17** 🔴 | `×` zamyka tab i wraca do listy | Klik `×` na tabie → tab znika z Menu 3, ekran wraca do tabeli (formuła 1). | `×` nie zamyka; wraca do blank | PASS/FAIL |
+| **D-18** | Taby cross-module (multi-moduł w jednym pasku) | Otwórz kartę inicjatywy + kartę insightu → oba taby widoczne w jednym Menu 3, z różnymi ikonami modułu. | Taby są siloed per moduł (inicjatywy osobno, insighty osobno) | PASS/FAIL/N-A |
+
+### 5d — Menu 3 prawa strona: AI buttons (przyszłościowy slot)
+
+| # | Check | Jak sprawdzić | FAIL gdy | Wynik |
+|---|---|---|---|---|
+| **D-19** | AI buttons w prawym klastrze Menu 3 | (N/A dopóki standard AI nie jest wdrożony) Jeśli istnieją → są po PRAWEJ stronie Menu 3, oddzielone od chipów/przycisków bulk. | AI buttons pomieszane z chipami/bulk | PASS/FAIL/N-A |
 
 **Status Fazy 5:** `PASS` / `FAIL (punkty: ___)`
 

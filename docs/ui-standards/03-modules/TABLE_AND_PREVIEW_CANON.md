@@ -268,17 +268,52 @@ Grupowanie w pasku: **Dokumenty** = Raport·Deck·Tabela; **W aplikacji** = Idea
 ---
 
 ## 9) Row actions menu (⋮) — 3 strefy (góra kontekst / dół stały / danger)
-**Zasada nadrzędna (decyzja ownera 2026-06-06):** menu ma **stały DÓŁ identyczny w każdej tabeli/zakładce** i **GÓRĘ kontekstową** (typową dla obszaru/statusu). Ręka trafia w to samo miejsce w każdym oknie.
+
+**Zasada nadrzędna (decyzja ownera 2026-06-06):** menu ma **stały DÓŁ identyczny w każdej tabeli/zakładce** i **GÓRĘ kontekstową** (typową dla obszaru/statusu). Ręka trafia w to samo miejsce w każdym oknie. To musi być zweryfikowane, nie pozostawione przypadkowi.
+
+### 9.1 Anatomia 3 stref
 
 | Strefa | Pozycje | Reguła |
 |---|---|---|
-| **GÓRA — kontekst** | typowe dla obszaru/statusu. Inbox: `Continue`/`Start`/`Fix`. Assigned (manager): `Approve`·`Send back`·`Reassign`·`Send reminder`·`Escalate` | tylko dotyczące danego statusu/roli; pusta strefa = ukryta |
+| **GÓRA — kontekst** | akcje typowe dla statusu/roli danego wiersza. Inbox: `Continue`/`Start`/`Fix`. Assigned (manager): `Approve`·`Send back`·`Reassign`·`Send reminder`·`Escalate` | tylko akcje dotyczące tego statusu/roli; pusta strefa = ukryta (bez pustego separator-only) |
 | separator | — | auto między strefami |
-| **DÓŁ — ZAWSZE TEN SAM** | `Open` · `Edytuj` · `Archiwizuj` (lub `Przywróć`) · `Delay ▸` | identyczny wszędzie; `Edytuj` kontekstowe w działaniu (manager→modal zarządzania, assignee→edycja odpowiedzi); `Delay ▸` = submenu `+1/+3/+7 dni` |
+| **DÓŁ — FIXED BOTTOM MANIFEST** | patrz §9.2 — lista ścisła, identyczna wszędzie | niezmienny niezależnie od statusu/roli/zakładki |
 | separator | — | auto |
-| **DANGER** | `Usuń` | zawsze ostatni, ton danger, confirm. Gdy brak endpointu delete → `disabled` z opisem „Wkrótce (backend)" (slot widoczny, bez martwej akcji) |
+| **DANGER** | `Usuń` | zawsze ostatni, ton danger, confirm; brak endpointu → `disabled` z opisem „Wkrótce (backend)" (slot widoczny, nie pomijać) |
 
-**MUST:** każda pozycja = ikona+label; **ten sam verb = ta sama pozycja** wszędzie; dół (Open/Edytuj/Archiwizuj/Delay) niezmienny; akcja z >2 wariantami → **submenu inline** (`▸`, np. Delay); destrukcyjne → confirm. Komponent SSOT: `RowActionsMenu.tsx` (`sections` + `submenu` — zaimplementowane). Wzorzec referencyjny: Interview Inbox/Assigned.
+### 9.2 FIXED BOTTOM MANIFEST — dokładna lista (MUST, w tej kolejności)
+
+> To jest **ścisły kontrakt**. Każda tabela w aplikacji musi mieć te pozycje w dolnej strefie,
+> w tej kolejności, z tymi verbami. Audyt weryfikuje każdą pozycję z osobna.
+
+| # | Pozycja | Ikona | Warunek | Zachowanie |
+|---|---|---|---|---|
+| 1 | **Otwórz podgląd** / Open preview | `ChevronRight` | zawsze | otwiera boczny preview pane (nie nawiguje) |
+| 2 | **Edytuj** / Edit | `Pencil` / `Edit2` | zawsze (disabled gdy brak uprawnień) | manager→modal zarządzania; assignee→edycja odpowiedzi; owner→edycja inline |
+| 3 | **Archiwizuj** / Archive (lub **Przywróć** / Restore) | `Archive` / `RotateCcw` | zawsze (disabled gdy brak endpointu — „Wkrótce") | soft-delete; zmiana scope; brak endpointu → disabled z notą |
+| 4 | **Delay ▸** / Delay | `Clock` + chevron | tylko gdy encja ma pole terminu (`due_date`) | submenu inline: +1 dzień · +3 dni · +7 dni |
+
+**MUST:**
+- Kolejność 1→2→3→(4) jest stała i nie zmienia się.
+- Pozycja 3 zmienia label/ikonę kontekstowo (scope `active` → „Archiwizuj"; scope `archived` → „Przywróć") — ale **slot zawsze istnieje**.
+- Pozycja 4 = N/A jeśli encja nie ma terminu (nie ma pola `due_date`) → slot pominięty.
+- Brak backend endpointu dla pozycji 2 lub 3 → `disabled: true` z `description: "Wkrótce (backend)"`. **Nigdy cicha pominięcie widocznego slotu.**
+- Każda pozycja = ikona + label (zero pozycji z samym tekstem).
+
+### 9.3 GÓRA kontekstowa — przykłady per moduł
+
+| Moduł / zakładka | Status wiersza | Akcje kontekstowe (GÓRA) |
+|---|---|---|
+| Interview Inbox | assigned | `Continue`, `Start`, `Fix` |
+| Interview Assigned (manager) | submitted | `Approve`, `Send back`, `Reassign`, `Send reminder`, `Escalate` |
+| Interview Initiatives | DRAFT | `Wyślij do przeglądu` |
+| Interview Initiatives | PENDING_REVIEW | `Zatwierdź i przekaż dalej`, `Wróć do szkicu` |
+| Interview Initiatives | REVIEW/PROMOTED | *(pusta strefa — ukryta)* |
+| Interview Templates | active | `Assign`, `Duplicate` |
+
+**MUST:** górna strefa pusta → ukryta (brak pustego separator-only bloku). Weryfikacja: otwórz kebab dla wiersza w każdym statusie — GÓRA musi się różnić.
+
+**MUST:** każda pozycja = ikona+label; ten sam verb = ta sama pozycja wszędzie; akcja z >2 wariantami → submenu inline (`▸`, np. Delay). Komponent SSOT: `RowActionsMenu.tsx` (`sections` + `submenu`). Wzorzec referencyjny: Interview Inbox/Assigned.
 
 ---
 
