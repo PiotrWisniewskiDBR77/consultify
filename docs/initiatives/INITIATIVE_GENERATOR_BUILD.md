@@ -91,3 +91,11 @@ lineage i podgląd bramki. Zero błędów w konsoli; screenshot każdego kroku.
   toast (placeholder Faza 4). Zweryfikowane live end-to-end (board→charter, lineage przeniesiony);
   tsc+eslint czyste. Gotowe do wpięcia jedną linią (Faza 0) po wylądowaniu przebudowy agenta.
   Decyzja CTO: cudzy WIP (1513 l. niezacommitowanych) NIETKNIĘTY — praca tylko w nowych plikach.
+- 2026-06-07: **Faza 0 (częściowo) DONE** — wpięcie `InitiativeCharterWizard` w `InitiativesHub.tsx`
+  (plik poza WIP agenta): przycisk „Charter" → wizard → DRAFT, refresh listy. Addytywnie,
+  bez ruszania quick-create/AI-wizard. Commit `95ce81d175`. Przy okazji **naprawiony pre-existing
+  build-break** wniesiony commitem `7701516eea` (canon §9 kebab wołał niezdefiniowane
+  `handleOpenDocument`) — dodano generyczny opener; moduł znów typechecker-clean.
+  **Pozostaje:** wpięcie handoffu „Zaproponuj" w `InsightViewer` (plik w WIP agenta) + silnik AI
+  (Faza 2b) + suggested-changes (Faza 4). Live-klik w hubie do potwierdzenia po re-loginie
+  (sesja dev wygasła; nie wprowadzam credentiali).
