@@ -583,44 +583,54 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 ## 27) PROCEDURA AUDYTU TABELI + PEŁNA CHECKLISTA (operacyjna)
 
 > To jest narzędzie do „atakowania" każdej kolejnej tabeli. Wrzucasz tabelę → przelatuję **wszystkie** punkty A–S → koryguję odstępstwa → bramki → dowód wizualny → raport `PASS/FAIL/N-A` per punkt.
+>
+> **📋 OPERACYJNY FORMULARZ AUDYTU (gotowy do wypełnienia per tabela):**
+> `docs/ui-standards/03-modules/TABLE_AUDIT_SHEET_TEMPLATE.md`
+> Skopiuj → wypełnij META → przejdź Fazy 0→6 → bramki → raport.
+> **NIE pomijaj Fazy 0.** Właśnie dlatego, że ją pominęliśmy, nie wykryliśmy braku preview i filtrów na Initiatives.
 
 ### Procedura (6 kroków, zawsze ta sama)
 1. **Identyfikacja** — który plik/komponent, która zakładka, czy to tabela listowa (§1.1) czy poza zakresem (§1.2).
-2. **Przelot checklisty A–S** — każdy punkt: `PASS` / `FAIL` / `N/A` (+ `file:line` dla FAIL).
-3. **Korekta** — naprawiam każdy `FAIL` wg reguły kanonu (link w punkcie).
-4. **Bramki** — FE `tsc`=0, BE `esbuild`=0, eslint 0 błędów.
-5. **Dowód wizualny** — preview/screenshot przed‑po + weryfikacja computed‑style krytycznych punktów (kolor, sticky, wyrównanie).
-6. **Raport** — tabela `PASS/FAIL/N-A`, co zmienione, co świadomie odłożone.
+2. **Faza 0 (existence)** — czy tabela MA komplet maszynerii (preview/filtry/sort/resize/sticky/popover/kebab/bulk/stany). Jakikolwiek brak = STOP i napraw ZANIM przejdziesz dalej.
+3. **Fazy 1–6 (jakość)** — każdy punkt: `PASS` / `FAIL` / `N/A` (+ `file:line` dla FAIL). **Per-zakładka i per-status — nie pomijaj żadnej kombinacji.**
+4. **Korekta** — naprawiam każdy `FAIL` wg reguły kanonu (link w punkcie).
+5. **Bramki** — FE `tsc`=0, BE `esbuild`=0, eslint 0 błędów. Świeżość kodu (curl).
+6. **Dowód wizualny** — screenshot przed‑po + weryfikacja computed‑style krytycznych punktów.
 
 > Karta NIE jest „zgodna", dopóki którykolwiek punkt **krytyczny** (🔴) ma `FAIL`.
-> ⚠️ **WERYFIKACJA PER‑ZAKŁADKA (MUST):** wiele tabel ma per‑zakładkowe paski bulk i kebaby (Inbox ≠ Assigned ≠ Sessions). Fix w jednej zakładce **NIE** = fix wszędzie. Przelatuj D/H/F **dla każdej zakładki osobno** i potwierdzaj wizualnie w każdej (a nie tylko tam, gdzie są dane demo).
+> ⚠️ **PER‑ZAKŁADKA + PER‑STATUS (MUST):** kebab i bulk bywają per-zakładkowe (Inbox ≠ Assigned ≠ Sessions). Preview zachowuje się inaczej per status (draft ≠ promoted). Przelatuj każdą kombinację osobno — nie zakładaj, że fix w jednej zakładce naprawił resztę.
 
 ---
 
 ### Toolkit weryfikacji (jak sprawdzać — nie „na oko")
 - **Computed-style (DOM):** `preview_eval` → `getComputedStyle(el)` na konkretnym elemencie. Używaj do: koloru (`backgroundColor`/`color` vs token), wyrównania (`textAlign`), pozycji/clipowania (`position`, `getBoundingClientRect().bottom <= innerHeight`), sticky (`position==='sticky'`), `maxHeight`/`overflowY`.
-- **Per-zakładka loop:** dla KAŻDEJ zakładki (Inbox/Sessions/Assigned/Templates/Insights/Initiatives…) powtórz D/F/G/H + selekcję + kebab. Fix w jednej ≠ fix wszędzie.
-- **Per-stan wiersza:** otwórz kebab/preview dla wiersza w KAŻDYM statusie (assigned/in-progress/submitted/approved/completed/sent-back) — akcje kontekstowe różnią się per status.
-- **Selekcja:** zaznacz 1 i ≥2 wiersze → sprawdź pasek bulk (formuła 2). Zaznacz „select all".
-- **Screenshot przed/po** + zrzut DOM (lista itemów/nagłówków) jako dowód w raporcie.
-- **Świeżość kodu:** `curl -s localhost:3000/src/.../Plik.tsx | grep -c <token>` (pułapka stale-cache Vite na dużych plikach); hard-reload.
-- **Pułapki danych demo:** część zakładek pusta na demo (np. Inbox) lub gated RBAC (ADMIN bez `canAssign`) → zaznacz w raporcie „zweryfikowane na koncie OWNER / nie do sprawdzenia na demo".
+- **Per-zakładka loop:** dla KAŻDEJ zakładki (Inbox/Sessions/Assigned/Templates/Insights/Initiatives…) powtórz Fazy 2–4 (kebab/bulk/preview). Fix w jednej ≠ fix wszędzie.
+- **Per-stan wiersza:** otwórz kebab i preview dla wiersza w KAŻDYM statusie (draft/in-progress/submitted/approved/sent-back/archived) — akcje kontekstowe różnią się per status.
+- **Policz pozycje kebaba:** nie tylko „czy menu otwiera się" — policz pozycje w KAŻDEJ strefie (kontekst/stały/danger). Jeśli strefa stała ma <2 pozycji → FAIL.
+- **Policz przyciski bulk:** nie tylko „czy pasek jest" — jeśli po Clear jest 0 innych przycisków → FAIL.
+- **Preview stopka:** weryfikuj KOLEJNOŚĆ sekcji (AI → Relations → Co dalej → Actions). Sprawdzaj czy „Co dalej" to compact strip `h-8` (nie wielkie karty). Sprawdzaj czy jest drugi „Open" (FAIL jeśli tak).
+- **Selekcja:** zaznacz 1 i ≥2 wiersze → sprawdź pasek bulk. Zaznacz „select all".
+- **Screenshot przed/po** + zrzut DOM (lista nagłówków, lista itemów kebab/bulk) jako dowód w raporcie.
+- **Świeżość kodu:** `curl -s localhost:3000/src/.../Plik.tsx | grep -c <token>` (pułapka stale-cache Vite na dużych plikach); hard-reload przed weryfikacją.
+- **Pułapki danych demo:** część zakładek pusta (np. Inbox) lub gated RBAC (ADMIN bez `canAssign`) → zaznacz w raporcie „zweryfikowane na koncie OWNER / nie do sprawdzenia na demo".
 - **Bramki:** FE `rm -f tsconfig.tsbuildinfo && npx tsc --noEmit` = 0 · BE `esbuild` = 0 · `eslint` 0 błędów.
 
 ---
 
 ### A0. PARITY GATE — czy tabela MA komplet maszynerii? (ZRÓB NAJPIERW; brak = blokujący)
 > Najpierw inwentaryzacja „czy to w ogóle JEST", dopiero potem jakość. Brak któregokolwiek = 🔴
-> **blokujący brak funkcji**, nie „kosmetyka/opcjonalne". (Dodane po wpadce na Initiatives: brak preview
-> i brak filtrów kolumn przeszły niezauważone, bo audyt skakał od razu w detale wyrównania.)
-- [ ] 🔴 **Preview pane JEST** — single-click wiersza otwiera BOCZNY podgląd (`TableWithPreviewLayout`), a NIE nawiguje od razu do innego modułu/karty. → `jak:` klik wiersz → panel z prawej, nie zmiana ekranu. §7
-- [ ] 🔴 **Filtry kolumn SĄ** — każda sensowna kolumna (status/typ/priorytet/źródło/data) ma `FilterDropdown` w nagłówku (ikona lejka, klikalna). → `jak:` klik ikonę filtra w nagłówku → lista wartości. §5
-- [ ] 🔴 **Sort JEST** — nagłówki klikalne + wskaźnik kierunku (`ChevronUp/Down`). §5
-- [ ] 🔴 **Resize JEST** — uchwyt na granicy kolumn, zero-sum, szerokości persystowane. §5
+> **blokujący brak funkcji**, nie „kosmetyka/opcjonalne". (Dodane po wpadce na Initiatives 2026-06-07:
+> brak preview i brak filtrów kolumn przeszły niezauważone, bo audyt skakał od razu w detale wyrównania.)
+
+- [ ] 🔴 **Preview pane JEST** — single-click wiersza otwiera BOCZNY podgląd; URL się NIE zmienia; NIE nawiguje do innego modułu. → `jak:` klik wiersz → panel z prawej + sprawdź URL w pasku. §7
+- [ ] 🔴 **Cross-module draft ZOSTAJE w źródle** (jeśli tabela ma cross-module encje) — draft/pending NIE otwiera modułu docelowego; preview pokazuje notkę „pozostaje w X do przekazania". → `jak:` klik draft → URL bez `/initiatives` lub innego docelowego modułu. §7.1
+- [ ] 🔴 **Filtry kolumn SĄ** — każda sensowna kolumna (status/typ/priorytet/źródło) ma ikonę lejka w nagłówku; klik → dropdown z wartościami. → `jak:` klik lejek przy „Status" → lista checkboxów. §5
+- [ ] 🔴 **Sort JEST** — klik nagłówek → wiersze się sortują + ChevronUp/Down pojawia się przy nagłówku. §5
+- [ ] 🔴 **Resize JEST** — drag uchwyt między kolumnami → kolumna zmienia szerokość, sąsiednia reaguje (zero-sum). §5
 - [ ] 🔴 **Sticky header JEST** — `position: sticky` trzyma nagłówek przy scrollu. §3.2
-- [ ] 🔴 **Popover „widoczne kolumny" JEST** i portalowany (nieclipowany). §6 / §16
-- [ ] 🔴 **Kebab (⋮) JEST** — 3-strefowy, portalowany, prawą krawędzią równy do przycisku. §9
-- [ ] 🔴 **Pasek bulk JEST** (zaznacz ≥1) — lewo, framed `Clear` z X. §15.3
+- [ ] 🔴 **Popover „widoczne kolumny" JEST** i portalowany — otwiera się, NIE jest ucinany; ostatnie pozycje listy widoczne. §6 / §16
+- [ ] 🔴 **Kebab ⋮ JEST i ma treść** — menu się otwiera; strefa stała (dół) ma ≥2 pozycje (Open + Archiwizuj); strefa kontekstowa zmienia się per status. → `jak:` otwórz kebab dla wiersza w każdym statusie; policz pozycje w każdej strefie. §9
+- [ ] 🔴 **Pasek bulk JEST i ma akcje** — zaznacz 1 wiersz → pasek z „N selected · Clear · [≥1 inne przyciski]". Przyciski outline, `h-8`, po LEWEJ. → `jak:` policz przyciski; jeśli jest tylko Clear → FAIL. §15.3
 - [ ] 🔴 **Stany** empty / loading / error obsłużone (nie blank). §10
 > Każde „NIE MA" → wpisz do raportu jako **brakująca funkcja (blokujące)** i napraw, ZANIM przejdziesz do detali A–U.
 
@@ -644,8 +654,8 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 
 ### D. Menu 3 (Command Row — dynamiczny, 3 formuły)
 - [ ] 🔴 Formuła 1 (filtry): counter‑chipy z licznikami; **ten sam zestaw na każdej zakładce roli** (nie „Sessions ma, Inbox nie"). §15.3
-- [ ] 🔴 Formuła 2 (multi‑select): zaznacz ≥1 → **natychmiast** pasek z przyciskami „co można zrobić". → `jak:` zaznacz 1 i 2 wiersze, sprawdź pasek.
-- [ ] 🔴 **Wszystkie przyciski bulk IDENTYCZNE** (`MENU_3_ACTION_NEUTRAL`, outline, `h-8`, ikona+label) — w tym **`Clear` to przycisk z ramką, NIE „gołe słowo"/ghost**. → `jak:` computed-style — `Clear` ma `border`, ta sama wysokość co reszta.
+- [ ] 🔴 Formuła 2 (multi‑select): zaznacz ≥1 → **natychmiast** pasek z przyciskami. **Policz przyciski: jeśli jest tylko „Clear" i nic więcej → FAIL.** → `jak:` zaznacz 1 wiersz → policz przyciski w pasku (musi być ≥2: Clear + ≥1 inna akcja). §15.3
+- [ ] 🔴 **Wszystkie przyciski bulk IDENTYCZNE** (`MENU_3_ACTION_NEUTRAL`, outline, `h-8`, ikona+label) — w tym **`Clear` to przycisk z ramką i ikoną X, NIE „gołe słowo"/ghost**. → `jak:` computed-style `Clear` → ma `border`, `height: 32px`, `border-radius: 9999px`; ta sama klasa co reszta.
 - [ ] 🔴 **WSZYSTKIE przyciski bulk WYRÓWNANE DO LEWEJ** (zgrupowane tuż przy liczniku „N selected"), **NIGDY** wypchnięte na prawą krawędź paska. → `jak:` screenshot/`getBoundingClientRect` — `left` przycisków blisko licznika, nie po przeciwnej stronie. (Bug: Sessions miał akcje po prawej.)
 - [ ] 🔴 **Identyczna GRAFIKA wszystkich przycisków** — ta sama klasa `MENU_3_ACTION_NEUTRAL` (`outline`, `h-8`, `rounded-full`, ikona+label). **`Clear` ma wyglądać DOKŁADNIE jak reszta** (ikona X), nie „ghost"/inny styl. → `jak:` computed-style — `Clear` ma to samo `border`/`height`/`borderRadius` co `Archive`/akcje.
 - [ ] 🔴 **Układ:** najpierw stałe/uniwersalne lewo (`Clear · Archiwizuj`), potem kontekstowe dla obszaru (Inbox: `+1 dzień · +3 dni · +7 dni`); separator między grupami. §15.3 / §18
@@ -685,13 +695,14 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Checkbox `h-3.5 w-3.5`, quiet/reveal‑on‑hover; checked zawsze widoczny. §3.5
 
 ### H. Kebab (⋮) — 3 strefy (góra kontekst / dół stały / danger)
-- [ ] 🔴 **DÓŁ ZAWSZE TEN SAM**: `Open · Edytuj · Archiwizuj(/Przywróć) · Delay ▸` — identyczny w każdej tabeli/zakładce/statusie. §9 → `jak:` otwórz kebab, sprawdź że dolne 4 pozycje są zawsze te same.
-- [ ] 🔴 **GÓRA kontekstowa** wg statusu/roli (Inbox: Continue/Start/Fix; Assigned: Approve/Send back/Reassign/Remind/Escalate); pusta strefa = ukryta. §9 → `jak:` otwórz kebab dla wiersza w każdym statusie.
-- [ ] 🔴 **DANGER**: `Usuń` ostatni, oddzielony, ton danger, confirm; brak endpointu → `disabled` z „Wkrótce (backend)" (slot widoczny, nie martwy). §9
-- [ ] `Edytuj` kontekstowe w działaniu (manager→modal zarządzania; assignee→edycja odpowiedzi), ale stała pozycja. §9
-- [ ] `Delay ▸` = **submenu inline** `+1/+3/+7 dni` (chevron, rozwija pod spodem). §9 → `jak:` klik Delay → pojawiają się 3 pod-pozycje.
-- [ ] Każda pozycja = ikona+label; separatory auto między strefami. §9
-- [ ] Menu **portalowe, auto-flip, nieclipowane, w viewport** (`getBoundingClientRect().bottom <= innerHeight`). §9 → `jak:` computed-style menu.
+- [ ] 🔴 **Kebab wyrównany do ⋮ przycisku** — prawa krawędź menu = prawa krawędź przycisku (±5px). §9 → `jak:` klik ⋮ → sprawdź wizualnie; jeśli menu oddalone >20px → FAIL. Poprawka: `right = innerWidth - anchorRect.right` (NIE `left = anchorRect.right - panelWidth`).
+- [ ] 🔴 **DÓŁ ZAWSZE TEN SAM i KOMPLETNY**: `Open · Edytuj · Archiwizuj(/Przywróć) · Delay ▸` — identyczny w każdej zakładce/statusie. → `jak:` otwórz kebab dla wiersza w KAŻDYM statusie (draft/approved/archived) i policz pozycje w strefie stałej — musi być ≥2 zawsze (nawet dla wiersza, który nie ma kontekstowych akcji). §9
+- [ ] 🔴 **GÓRA kontekstowa zmienia się per status** wg roli; pusta strefa = ukryta (bez pustego separator-only). §9 → `jak:` otwórz kebab dla wiersza w każdym statusie — GÓRA musi się różnić. Jeśli GÓRA identyczna we wszystkich statusach → akcje kontekstowe są statyczne (bug).
+- [ ] 🔴 **DANGER**: `Usuń` ostatni, oddzielony separatorem, ton danger (czerwony), klik → confirm dialog. Brak backend endpointu → przycisk `disabled` z opisem „Wkrótce (backend)" (slot widoczny, nie pomijaj). §9
+- [ ] `Edytuj` kontekstowe w działaniu (manager→modal zarządzania; assignee→edycja odpowiedzi), ale stała pozycja w dolnej strefie. §9
+- [ ] `Delay ▸` = **submenu inline** `+1/+3/+7 dni` (chevron, rozwija pod spodem). §9 → `jak:` klik Delay → pojawiają się 3 pod-pozycje. (N/A jeśli encja nie ma terminu)
+- [ ] Każda pozycja = ikona+label (zero pozycji z samym tekstem bez ikony). §9
+- [ ] Menu **portalowe, auto-flip, nieclipowane, w viewport** (`getBoundingClientRect().bottom <= innerHeight`). §9
 - [ ] Akcje = parytet z preview footer i full view (te same nazwy/uprawnienia). §17
 - [ ] 🔴 **Sprawdzone w KAŻDEJ zakładce** (Inbox/Assigned/Sessions/…) i KAŻDYM statusie wiersza. Komponent SSOT: `RowActionsMenu` (`sections` + `submenu`).
 - [ ] 🔴 **Archiwizuj = miękkie/odwracalne** (`archived_at` via guarded lazy ALTER, nie migracja), Przywróć w scope `archived`, Usuń = twarde/danger/confirm. Uprawnienia = jak edycja. §14 → `jak:` archiwizuj wiersz → znika z `active`, jest w `archived`, „Przywróć" go wraca. (Wymaga realnych danych + prawa edycji — nie demo-fixtures.)
@@ -702,11 +713,13 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Szerokość `clamp(340px,28%,480px)`; separacja `gap-1.5` bez `border-l`. §7.2
 - [ ] Header sticky: kicker+tytuł(1 linia,truncate)+**„Open" (jedyne w preview)**+„X". §7.3
 - [ ] 🔴 Details — **bogaty domyślny szablon** (cel/zakres/kontekst/właściciel/daty/powiązania), nie jednolinijkowy; pusto=empty state; **opis wypełnia centrum, nie ustępuje przyciskom**. §7.3
-- [ ] 🔴 **⋮ przy Details** = Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·**Export do Tools·Pobierz** (eksport/pobieranie żyją TU, nie w dolnym pasku). §7.3
-- [ ] 🔴 **Żelazna kolejność stopki góra→dół: AI → Relations(jeśli są) → „Co dalej"/create-strip → Actions(opcjonalne).** AI **nad** create-strip. §7.3 → `jak:` computed-style — `top` AI < `top` create-strip.
-- [ ] 🔴 **Odstępy stopki = `space-y-2.5` (~10px), BEZ dividerów między kartami z ramką.** §7.3 → `jak:` zmierz gap między kartą AI a „Co dalej".
-- [ ] 🔴 **Anty-duplikacja Actions:** brak drugiego „Open" (jest w nagłówku), brak Export/Copy dублującego ⋮; jeśli nic nieredundantnego → pasek pominięty; gdy jest → padding pod FAB. §7.3
-- [ ] 🔴 **Create-strip** (gdy encja jest źródłem cross-module): zwarty, 2 grupy „Dokumenty/W aplikacji", ikony+hue = moduł docelowy (§7.3a), **nigdy wielkie karty**. §7.3 / §7.3a
+- [ ] 🔴 **⋮ przy Details** = Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·**Export do Tools·Pobierz** (eksport/pobieranie żyją TU, nie w dolnym pasku). §7.3 → `jak:` klik ⋮ przy nagłówku „Details" → lista zawiera Export + Pobierz; NIE ma ich w dolnym pasku Actions.
+- [ ] 🔴 **Żelazna kolejność stopki góra→dół: AI → Relations(jeśli są) → „Co dalej"/create-strip → Actions(opcjonalne).** AI **nad** create-strip. §7.3 → `jak:` scroll stopkę — pierwsza karta = AI; poniżej Relations (jeśli są); poniżej Co dalej; Actions (jeśli w ogóle) ostatnie.
+- [ ] 🔴 **Odstępy stopki = `space-y-2.5` (~10px), BEZ dividerów między kartami z ramką.** §7.3 → `jak:` brak `<hr>` / `border-t` między kartą AI a „Co dalej"; gap ~10px.
+- [ ] 🔴 **Anty-duplikacja „Open":** w całym preview dokładnie **1 przycisk Open/Otwórz** (w nagłówku). Zero w stopce/Actions. → `jak:` grep/inspect całe drzewo preview po tekście „Open" / „Otwórz" — ma być dokładnie 1 trafienie. §7.3
+- [ ] 🔴 **Anty-duplikacja Export/Copy:** Export do Tools i Pobierz żyją wyłącznie w ⋮ Details. NIE ma ich w dolnym pasku Actions. → `jak:` inspect sekcja Actions — brak „Export", „Download", „Pobierz". §7.3
+- [ ] 🔴 **„Co dalej" = COMPACT STRIP** (gdy encja jest źródłem cross-module): każdy przycisk ma `h-8 rounded-full` z ikoną+labelką. **NIGDY wielkie karty z opisem modułu** (`min-h-[...]`, padding, tytuł+opis). 2 grupy: „Dokumenty" / „W aplikacji". → `jak:` inspect sekcja „Co dalej" — sprawdź że nie ma wielkich kart, tylko małe pille. §7.3 / §7.3a
+- [ ] 🔴 **Ikony+hue „Co dalej" zgodne z §7.3a:** Raport=slate/FileText, Deck=fuchsia/Presentation, Tabela=emerald/Table, Idea=amber/Lightbulb, Notatka=sky/StickyNote, Inicjatywa=indigo/Rocket. SSOT: `ArtifactActionPanel TARGET_META`. §7.3a
 - [ ] Akcje (gdziekolwiek) = parytet z full view; destrukcyjne=confirm. §7.3
 
 ### J. Pełna karta + cross‑module
