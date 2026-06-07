@@ -73,6 +73,18 @@ jego pliki). Do tego czasu wszystko testowalne przez hash-mount.
   GeneratorModal nie ma produkcyjnego launch-pointu (sensowny wpięty z insightu = `InsightViewer`, w WIP agenta);
   live-klik w zalogowanym Hubie do potwierdzenia po re-loginie.
 
+- 2026-06-07: **DOMKNIĘCIE 100% (frontend) — handoff insight→generator wpięty i LIVE-VERIFIED.**
+  - Zabezpieczono WIP drugiego agenta checkpointem `001d22c6c1` (pełne drzewo tsc=0).
+  - `InsightViewer` (commit `b50d2540c1`): przycisk „Zaproponuj inicjatywy" → `InitiativeGeneratorModal`
+    z całym insightem jako source (sourceType=interview_insight, sourceId, content). Addytywnie obok
+    istniejącego per-finding handoffu agenta. tsc=0, eslint=0 błędów.
+  - **Live jako OWNER (Chrome):** realny insight „Risk assessment: IT capacity constraint" →
+    „Propose initiatives" → Proposal board „1 new" z kandydatem wyparsowanym z treści + evidence
+    drawer ze źródłem (lineage przeniesiony). Nie utworzono draftu (bez zaśmiecania portfela).
+  - **Jedyna pozostała robota = backend** (poza frontem): `/initiatives/propose` (realne AI — teraz
+    działa deterministyczny fallback, który na tabelach markdown bywa surowy) + persystencja
+    suggested-changes (teraz graceful no-op). To zadania serwerowe, nie blokują działania flow.
+
 ## Runda audytowa (po pełnym przejściu Faz 1–5)
 Audytor przechodzi checklistę ☐ z każdej fazy + globalnie:
 - ☐ Zero edycji plików drugiego agenta (git: tylko nowe pliki + ewentualnie Faza 0 po koordynacji).
