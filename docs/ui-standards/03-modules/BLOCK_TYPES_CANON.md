@@ -646,6 +646,95 @@ Rozszerzenie w przyszłości: osobna tabela `section_completion_log` z `complete
 
 ---
 
+## AI Consultant Panel — Standard (Warstwa 3 · prawy panel)
+
+> Obowiązuje identycznie dla InitiativeDocumentView i InsightViewer.
+
+### Anatomia panelu (~360px, slide-in z prawej)
+
+```
+┌──────────────────────────────────┐
+│  Kontekst: Themes           [✕] │  ← 40px: aktywna sekcja lub "Cały insight"
+│  Q3 Leadership Survey            │     + nazwa artefaktu (L5)
+├──────────────────────────────────┤
+│  [Akcja 1]                       │  ← 3–4 przyciski, collapsible po pierwszej
+│  [Akcja 2]                       │     wiadomości → schodzą do [+ Akcje] chipa
+│  [Akcja 3]                       │
+├──────────────────────────────────┤
+│                                  │
+│  WĄTEK ROZMOWY (scrollable)      │  ← flex-1
+│                                  │
+│  AI: [odpowiedź...]              │
+│  [Kontynuuj] [Pokaż inaczej]     │  ← suggestion chips po każdej odpowiedzi
+│             [Dodaj do karty]     │
+│                                  │
+├──────────────────────────────────┤
+│  [Napisz co chcesz...]      [→]  │  ← 56px fixed bottom
+└──────────────────────────────────┘
+```
+
+### Kontekst: sekcja vs. artefakt
+
+Jeden panel, jedna historia rozmowy, zmienny kontekst. Kontekst widoczny w nagłówku:
+- `⚡ AI Consultant ▾` (split button) → `Kontekst: [nazwa sekcji]`
+- `⚡ AI Consultant` (solid) → `Kontekst: Cały insight / Cała inicjatywa`
+
+Przy zmianie sekcji AI potwierdza krótko: *"Przechodzę do sekcji Issues & Risks."* Historia rozmowy nie restartuje.
+
+### Zagajenie — kontekstowe opening message
+
+Panel nigdy nie otwiera się z pustym ekranem. AI czyta stan artefaktu i zagaja konkretnie:
+
+| Sytuacja | Opening |
+|----------|---------|
+| Karta pusta, sesje dostępne | *"Masz 3 sesje bez wyodrębnionych tematów. Mogę przeanalizować i zaproponować 6–8 tematów z cytatami."* |
+| Karta częściowa, luki | *"Wykryłem 4 twierdzenia bez cytatów. Chcesz żebym znalazł dowody?"* |
+| Karta Complete | *"Ta sekcja jest zatwierdzona. Mogę analizować bez zmian lub otworzyć ją jeśli potrzebujesz edycji."* |
+
+### "Dodaj do karty"
+
+Chip `[Dodaj do karty]` pod każdą odpowiedzią AI. Klik → AI sam decyduje do którego pola w aktywnej karcie trafia treść. Nie ma selectora — AI zna strukturę sekcji i wybiera właściwe miejsce. Zero copy-paste.
+
+### Sesja
+
+Panel otwiera się świeżo za każdym razem. Brak persystentnej historii w V1. "Kontynuuj poprzednią sesję" = feature V2.
+
+---
+
+## Present Mode — Standard (`[▶]`)
+
+### Zachowanie
+
+- Fullscreen: zero chrome (brak toolbara, sidebara, nawigacji)
+- Wyświetla karty **w kolejności sidebarowej** (personalna kolejność użytkownika, nie kanoniczna)
+- Jedna karta na ekranie na raz
+- Nawigacja: `←` `→` strzałki klawiatury lub kliknięcie
+- Wyjście: `Esc`
+
+### Kontrola kolejności
+
+W Present mode aktywna jest możliwość **zmiany kierunku i kolejności kart** bezpośrednio w trybie prezentacji — drag lub przyciski `↑↓` na karcie. Zmiany zapisują się do osobistej kolejności sidebarowej (localStorage).
+
+### Które karty
+
+Wszystkie karty widoczne w sidebarze (zgodnie z ustawieniami `≡ Sections ▾`). Karty ukryte przez użytkownika nie pojawiają się w Present mode.
+
+---
+
+## Fork — Standard (`[⎊]`)
+
+### Zachowanie
+
+Klik → nowy artefakt otwiera się natychmiast (nie wraca do listy). Nowy artefakt zawiera:
+- Identyczną strukturę sekcji
+- Puste dane (treść nie jest kopiowana)
+- Tag **"Forked from: [nazwa oryginału]"** widoczny w Properties Strip
+- Link do oryginalnego artefaktu
+
+Traceability jest zachowana — klient może zawsze zapytać o źródło analizy.
+
+---
+
 ## Odniesienia
 
 - [Canon inicjatyw](./INITIATIVE_CANON.md) — mapowanie bloków do kart inicjatyw
