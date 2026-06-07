@@ -67,7 +67,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Select } from '@/components/shared/forms';
 import { TeresaMark } from '@/components/shared/TeresaMark';
-import { LoadingState } from '@/components/ui/primitives';
+import { Button, LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
 
@@ -2149,59 +2149,51 @@ ${sourceText || '(none)'}`;
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={<Eye />}
                     onClick={() => setShowRespondentPreview(true)}
                     disabled={orderedQuestions.length === 0}
-                    title={
-                      isPolish
-                        ? 'Zobacz formularz oczami respondenta'
-                        : 'See the form as a respondent would'
-                    }
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    title={isPolish ? 'Zobacz formularz oczami respondenta' : 'See the form as a respondent would'}
                   >
-                    <Eye size={13} />
-                    {isPolish ? 'Podgląd respondenta' : 'Preview as respondent'}
-                  </button>
-                  <button
-                    type="button"
+                    {isPolish ? 'Podgląd' : 'Preview'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={<Upload />}
                     onClick={() => reviewImportInputRef.current?.click()}
                     disabled={isImportingSource || isApplicationTemplate}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    loading={isImportingSource}
                   >
-                    {isImportingSource ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <Upload size={13} />
-                    )}
-                    {isPolish ? 'Upload' : 'Upload'}
-                  </button>
-                  <button
+                    Upload
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={<Plus />}
                     onClick={handleAddQuestion}
                     disabled={isApplicationTemplate}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary-500/20 bg-primary-600 dark:bg-primary-600 text-white hover:bg-primary-700 transition-colors text-xs"
                   >
-                    <Plus size={14} />
                     {isPolish ? 'Dodaj pytanie' : 'Add Question'}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={<Sparkles />}
                     onClick={() => void proposeQuestionImprovementsWithAI()}
                     disabled={isAiGenerating || isApplicationTemplate}
+                    loading={isAiGenerating}
                     title={
                       isPolish
                         ? 'Użyj AI, aby przejrzeć i poprawić istniejące pytania (to NIE tworzy ankiety od zera — od tego jest „Stwórz ankietę z AI")'
                         : 'Use AI to review & improve the existing questions (this does NOT create a survey from scratch — use "Create survey with AI" for that)'
                     }
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-primary-500/25 dark:border-primary-500/20 bg-white/70 dark:bg-white/[0.04] text-primary-500 dark:text-primary-300 hover:bg-primary-500/5 dark:hover:bg-primary-400/10 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    className="text-c-accent border-c-accent/30 hover:bg-c-accent/5 dark:hover:bg-c-accent/10"
                   >
-                    {isAiGenerating ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={13} />
-                    )}
                     {isPolish ? 'Popraw z AI' : 'Improve with AI'}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -2224,13 +2216,9 @@ ${sourceText || '(none)'}`;
                     <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
                       {isPolish ? 'Brak pytań w formularzu' : 'No questions in this form'}
                     </p>
-                    <button
-                      onClick={handleAddQuestion}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
-                    >
-                      <Plus size={16} />
+                    <Button variant="primary" icon={<Plus />} onClick={handleAddQuestion}>
                       {isPolish ? 'Dodaj pierwsze pytanie' : 'Add first question'}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <DndContext
@@ -2676,43 +2664,38 @@ ${sourceText || '(none)'}`;
           <div className="text-xs text-slate-500">
             {questions.length} {isPolish ? 'pytań łącznie' : 'total questions'}
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onClose}
-              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            >
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={onClose}>
               {isPolish ? 'Anuluj' : 'Cancel'}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="outline"
+              icon={<TeresaMark size={16} />}
               onClick={handleCheckQuality}
               disabled={isCheckingQuality || questions.length === 0}
+              loading={isCheckingQuality}
               title={isPolish ? 'Sprawdź jakość pytań (AI)' : 'Check question quality (AI)'}
-              className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-50 disabled:pointer-events-none"
             >
-              {isCheckingQuality ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <TeresaMark size={14} />
-              )}
               {isPolish ? 'Sprawdź jakość' : 'Check quality'}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              icon={<Save />}
               onClick={() => handleSave(false)}
               disabled={isSaving || isApplicationTemplate}
-              className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-50 disabled:pointer-events-none"
+              loading={isSaving}
             >
-              {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {isPolish ? 'Zapisz wersję roboczą' : 'Save Draft'}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Send />}
               onClick={() => handleSave(true)}
               disabled={isSaving || isApplicationTemplate}
-              className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-50 disabled:pointer-events-none"
+              loading={isSaving}
             >
-              {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               {isPolish ? 'Opublikuj' : 'Publish'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
