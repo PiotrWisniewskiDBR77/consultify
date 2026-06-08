@@ -45,6 +45,12 @@ import {
   setRegistryHooks,
   setRegistryLoadWarning,
 } from './presentationStudioLayoutCapacityRegistryService.js';
+import { createRequire } from 'module';
+
+// The ESM production build has no global require(); the lazy require('fs'|'path'|'crypto')
+// calls below would otherwise throw "require is not defined" and the layout-capacity
+// persistence init would fail on every boot. createRequire restores it.
+const require = createRequire(import.meta.url);
 
 // ---------------------------------------------------------------------------
 // File system driver (mockable for tests)
