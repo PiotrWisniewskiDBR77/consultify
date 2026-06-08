@@ -8,10 +8,6 @@ import {
 } from '../services/ai/annaKnowledgeService.js';
 import { resolveAnnaSiteConfig } from '../services/ai/annaSiteConfig.js';
 import { buildProductModuleCatalog } from '../services/ai/productModuleCatalog.js';
-import {
-  mintGeminiLiveEphemeralToken,
-  resolveGeminiLiveServerKey,
-} from '../services/ai/geminiLiveTokenService.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
 import { buildConversationIntelligence } from '../services/ai/virtualWorkerConversationIntelligence.js';
 import {
@@ -26,6 +22,7 @@ import {
 } from '../services/ai/virtualWorkerKnowledgeService.js';
 import { getWorkerWithProfile } from '../services/ai/virtualWorkerService.js';
 import { buildWorkerWebAccessResult } from '../services/ai/virtualWorkerWebAccessService.js';
+import { resolveVoiceRuntime } from '../services/ai/voiceRuntimeService.js';
 import {
   PUBLIC_ANNA_FUNNEL_EVENT_NAMES,
   recordPublicAnnaFunnelEvent,
@@ -1200,44 +1197,18 @@ router.post(
 router.get(
   '/voice-config',
   asyncHandler(async (req, res: Response) => {
-    const hasServerKey = Boolean(resolveGeminiLiveServerKey());
-    let voiceName: string | null = null;
-    let workerVoiceEnabled = true;
-
-    try {
-      const workerConfig = await getWorkerWithProfile('anna');
-      const configuredVoiceName = String(workerConfig?.worker?.voice_name || '').trim();
-      if (workerConfig?.worker) {
-        const worker = workerConfig.worker;
-        const workerPublicSurface = worker.surface === 'landing_page' || worker.surface === 'both';
-        if (worker.voice_enabled === false || worker.status !== 'active' || !workerPublicSurface) {
-          workerVoiceEnabled = false;
-        }
-      }
-      if (configuredVoiceName) {
-        voiceName = configuredVoiceName;
-      }
-    } catch {
-      // Worker table may not exist yet.
-    }
-
-    const session =
-      hasServerKey && workerVoiceEnabled
-        ? await mintGeminiLiveEphemeralToken({
-            assistant: 'anna',
-            subjectKey: buildAnnaRateLimitKey(req),
-          })
-        : null;
+    // SSOT: shared voice runtime resolver (DB worker config + env fallback).
+    const runtime = await resolveVoiceRuntime({
+      assistant: 'anna',
+      subjectKey: buildAnnaRateLimitKey(req),
+      requirePublicSurface: true,
+    });
 
     return res.json({
-      enabled: Boolean(session) && workerVoiceEnabled,
-      voiceName,
-      session,
-      unavailableReason: session
-        ? null
-        : hasServerKey
-          ? 'server_voice_proxy_required'
-          : 'server_missing_gemini_live_key',
+      enabled: runtime.enabled,
+      voiceName: runtime.voiceName,
+      session: runtime.session,
+      unavailableReason: runtime.unavailableReason,
     });
   })
 );

@@ -3,14 +3,11 @@ import { z } from 'zod';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import {
-  mintGeminiLiveEphemeralToken,
-  resolveGeminiLiveServerKey,
-} from '../../services/ai/geminiLiveTokenService.js';
-import {
   isTeresaTtsConfigured,
   synthesizeTeresaSpeech,
   TeresaTtsUnavailableError,
 } from '../../services/ai/teresaTtsService.js';
+import { resolveVoiceRuntime } from '../../services/ai/voiceRuntimeService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
@@ -46,37 +43,25 @@ router.get(
   '/voice-config',
   verifyToken,
   asyncHandler(async (req: any, res) => {
-    const hasServerKey = Boolean(resolveGeminiLiveServerKey());
-    const voiceName = String(process.env.TERESA_VOICE_NAME || 'Kore').trim() || 'Kore';
-    const model =
-      String(process.env.TERESA_VOICE_MODEL || '').trim() ||
-      'gemini-2.5-flash-native-audio-preview-09-2025';
-    const enabledByFlag =
-      String(process.env.TERESA_VOICE_ENABLED || 'true').toLowerCase() !== 'false';
-    const session =
-      hasServerKey && enabledByFlag
-        ? await mintGeminiLiveEphemeralToken({
-            assistant: 'teresa',
-            subjectKey: String(req.userId || req.user?.id || req.organizationId || 'unknown'),
-          })
-        : null;
-    const enabled = Boolean(session) && enabledByFlag;
+    // SSOT: shared voice runtime resolver (DB worker config + env fallback).
+    const runtime = await resolveVoiceRuntime({
+      assistant: 'teresa',
+      subjectKey: String(req.userId || req.user?.id || req.organizationId || 'unknown'),
+      // Teresa workspace voice is governed by deployment env (TERESA_VOICE_*),
+      // not the public worker catalog. A stray worker row must not disable it.
+      enableSource: 'env',
+    });
+    const enabled = runtime.enabled;
 
     return res.json({
       assistant: 'teresa',
       surface: 'workspace_copilot',
       capability: 'voice',
       enabled,
-      model,
-      voiceName,
-      session: enabled ? session : null,
-      unavailableReason: enabled
-        ? null
-        : !enabledByFlag
-          ? 'server_disabled'
-          : hasServerKey
-            ? 'server_voice_proxy_required'
-            : 'server_missing_gemini_live_key',
+      model: runtime.model,
+      voiceName: runtime.voiceName || 'Kore',
+      session: enabled ? runtime.session : null,
+      unavailableReason: runtime.unavailableReason,
       fallback: {
         dictation: 'browser_speech_or_text_input',
         tts: 'universal_voice_tts',

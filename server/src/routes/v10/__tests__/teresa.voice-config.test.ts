@@ -20,6 +20,12 @@ vi.mock('../../../services/ai/geminiLiveTokenService.js', () => ({
   resolveGeminiLiveServerKey: resolveGeminiLiveServerKeyMock,
 }));
 
+// Teresa has no DB worker row; the shared voice runtime resolver falls back to
+// env config. Mock the worker lookup so the test stays hermetic (no DB).
+vi.mock('../../../services/ai/virtualWorkerService.js', () => ({
+  getWorkerWithProfile: vi.fn().mockResolvedValue(null),
+}));
+
 const { default: teresaV10Routes } = await import('../teresa.routes.js');
 
 function createApp() {
