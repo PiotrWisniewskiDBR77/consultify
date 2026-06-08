@@ -1,6 +1,7 @@
 import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import KnowledgeBaseService from '../KnowledgeBaseService.js';
+import { buildProductModuleCatalog } from './productModuleCatalog.js';
 
 type SupportedKbLang = 'en' | 'pl';
 
@@ -281,9 +282,12 @@ export async function buildHelpDocsContext(opts: {
 
       const noDocsResult: HelpDocsContextResult = {
         systemInstructionAddon: isProduct
-          ? '\n## HELP / KNOWLEDGE BASE\nNo matching documentation found for this query. ' +
-            'If the user is asking about a product workflow or UI feature, respond: ' +
-            '"Our documentation does not cover this topic yet. I\'ll do my best to help based on general platform knowledge."' +
+          ? '\n' +
+            buildProductModuleCatalog(lang) +
+            '\n\n## HELP / KNOWLEDGE BASE\nNo matching Knowledge Base article found for this query. ' +
+            'Use the CONSULTIFY MODULES catalog above to explain what a module is and does. ' +
+            'If the question needs detail beyond the catalog, respond: ' +
+            '"Our documentation does not cover this in detail yet. I\'ll help based on general platform knowledge."' +
             collectionHint +
             '\n'
           : '',
@@ -398,6 +402,7 @@ export async function buildHelpDocsContext(opts: {
 
     const systemInstructionAddon = [
       '',
+      ...(isProduct ? [buildProductModuleCatalog(lang), ''] : []),
       '## HELP / KNOWLEDGE BASE (product documentation)',
       'Use the documentation snippets below to answer product/how-to questions about Consultify/IRIS.',
       'Rules:',

@@ -1205,6 +1205,643 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
     relatedKnowledgeModuleId: 'reports',
     video: HELP_SYSTEM_OVERVIEW.video,
   },
+  chat: {
+    id: 'chat',
+    moduleId: 'ai_chat',
+    kind: 'support',
+    icon: 'MessagesSquare',
+    title: text('Chat', 'Chat'),
+    shortLabel: text('Talk to Teresa', 'Rozmawiaj z Teresą'),
+    summary: text(
+      'Chat is your always-on workspace with Teresa, the AI consultant who knows your organization context.',
+      'Chat to Twoja zawsze dostępna przestrzeń z Teresą — konsultantką AI, która zna kontekst Twojej organizacji.'
+    ),
+    whatThisIs: text(
+      'A conversational entry point to the whole platform: ask questions, draft work, and trigger actions across modules.',
+      'Konwersacyjny punkt wejścia do całej platformy: zadawaj pytania, twórz robocze materiały i uruchamiaj akcje w modułach.'
+    ),
+    whyItMatters: text(
+      'Most work starts as a question. Chat turns that question into structured output instead of a dead end.',
+      'Większość pracy zaczyna się od pytania. Chat zamienia to pytanie w uporządkowany wynik, a nie w ślepy zaułek.'
+    ),
+    whatYouDoHere: [
+      text(
+        'Ask about any module, workflow, or your own data and get grounded, context-aware answers.',
+        'Pytasz o dowolny moduł, proces lub własne dane i dostajesz osadzone w kontekście odpowiedzi.'
+      ),
+      text(
+        'Draft artifacts — summaries, tables, plans, messages — directly in the conversation.',
+        'Tworzysz artefakty — podsumowania, tabele, plany, wiadomości — bezpośrednio w rozmowie.'
+      ),
+      text(
+        'Hand off context to other modules instead of re-explaining it each time.',
+        'Przekazujesz kontekst do innych modułów zamiast tłumaczyć go za każdym razem od nowa.'
+      ),
+    ],
+    howAiHelpsHere: [
+      text(
+        'Teresa reasons over your organization, project, and screen context, not just the raw message.',
+        'Teresa wnioskuje na podstawie kontekstu organizacji, projektu i ekranu, nie tylko surowej wiadomości.'
+      ),
+      text(
+        'She challenges weak assumptions and proposes the strongest next step.',
+        'Kwestionuje słabe założenia i proponuje najmocniejszy kolejny krok.'
+      ),
+      text(
+        'She cites product documentation when explaining how features work.',
+        'Cytuje dokumentację produktu, gdy wyjaśnia, jak działają funkcje.'
+      ),
+    ],
+    whatComesNext: text(
+      'Use Chat to scope the work, then continue in the dedicated module where the real artifacts live.',
+      'Użyj Chatu, aby określić zakres pracy, a potem kontynuuj w dedykowanym module, gdzie powstają właściwe artefakty.'
+    ),
+    askAiNow: {
+      label: text('Ask Teresa to plan my next step', 'Poproś Teresę o plan kolejnego kroku'),
+      prompt: text(
+        'You are Teresa in the main Chat. Based on my current context, propose the single most useful next step and the exact module where I should do it.',
+        'Jesteś Teresą w głównym Chacie. Na podstawie mojego kontekstu zaproponuj jeden najbardziej użyteczny kolejny krok i dokładny moduł, w którym powinienem go wykonać.'
+      ),
+    },
+    quickGuides: [
+      makeGuide(
+        'chat-context',
+        text('Give Teresa the right context', 'Daj Teresie właściwy kontekst'),
+        text(
+          'Name the module, goal, and constraints so the answer is decision-ready.',
+          'Nazwij moduł, cel i ograniczenia, aby odpowiedź była gotowa pod decyzję.'
+        )
+      ),
+      SHARED_GUIDES.overview,
+      SHARED_GUIDES.askAi,
+    ],
+    faqs: [
+      faq(
+        'support-chat-1',
+        'ai_chat',
+        text('What does Teresa know about my organization?', 'Co Teresa wie o mojej organizacji?'),
+        text(
+          'She uses your organization profile, active project, screen context, and product documentation — never another organization data.',
+          'Korzysta z profilu organizacji, aktywnego projektu, kontekstu ekranu i dokumentacji produktu — nigdy z danych innej organizacji.'
+        ),
+        ['chat', 'teresa', 'ai']
+      ),
+    ],
+    relatedKnowledgeModuleId: 'ai_chat',
+    video: HELP_SYSTEM_OVERVIEW.video,
+  },
+  audits: {
+    id: 'audits',
+    moduleId: 'assessment',
+    kind: 'support',
+    icon: 'ClipboardCheck',
+    title: text('Audits', 'Audyty'),
+    shortLabel: text('Run a structured audit', 'Przeprowadź ustrukturyzowany audyt'),
+    summary: text(
+      'Audits orchestrate structured maturity programs — DRD, SIRI, ADMA, Lean — into a single comparable assessment.',
+      'Audyty orkiestrują ustrukturyzowane programy dojrzałości — DRD, SIRI, ADMA, Lean — w jeden porównywalny pomiar.'
+    ),
+    whatThisIs: text(
+      'A guided way to score the current state against a recognized framework and produce defensible evidence.',
+      'Prowadzony sposób oceny stanu obecnego względem uznanego frameworka i wytworzenia obronnych dowodów.'
+    ),
+    whyItMatters: text(
+      'A consistent framework makes gaps comparable across teams, sites, and time — not just opinions.',
+      'Spójny framework sprawia, że luki są porównywalne między zespołami, zakładami i w czasie — to nie są tylko opinie.'
+    ),
+    whatYouDoHere: [
+      text(
+        'Pick a framework, run the questionnaire, and capture evidence for each dimension.',
+        'Wybierasz framework, przeprowadzasz kwestionariusz i zbierasz dowody dla każdego wymiaru.'
+      ),
+      text(
+        'Turn scores into a gap map that feeds the diagnosis and the target state.',
+        'Zamieniasz wyniki w mapę luk, która zasila diagnozę i stan docelowy.'
+      ),
+      text(
+        'Compare results across audits to track maturity progress over time.',
+        'Porównujesz wyniki między audytami, aby śledzić postęp dojrzałości w czasie.'
+      ),
+    ],
+    howAiHelpsHere: [
+      text(
+        'Suggests scores from your evidence and flags inconsistent answers.',
+        'Proponuje oceny na podstawie dowodów i wskazuje niespójne odpowiedzi.'
+      ),
+      text(
+        'Summarizes the biggest gaps and their likely business impact.',
+        'Podsumowuje największe luki i ich prawdopodobny wpływ biznesowy.'
+      ),
+      text(
+        'Drafts the audit narrative ready for the client report.',
+        'Tworzy narrację audytu gotową do raportu dla klienta.'
+      ),
+    ],
+    whatComesNext: text(
+      'Audit results sharpen the assessment and become the backbone of prioritized initiatives.',
+      'Wyniki audytu wyostrzają ocenę i stają się szkieletem priorytetyzowanych inicjatyw.'
+    ),
+    askAiNow: {
+      label: text('Ask AI to read the audit gaps', 'Poproś AI o odczytanie luk audytu'),
+      prompt: text(
+        'You are helping me in Audits. Review the current scores and evidence, identify the most material gaps, and propose where they should turn into initiatives.',
+        'Pomagasz mi w module Audyty. Przejrzyj aktualne wyniki i dowody, wskaż najbardziej istotne luki i zaproponuj, gdzie powinny zamienić się w inicjatywy.'
+      ),
+    },
+    quickGuides: [
+      makeGuide(
+        'audit-framework',
+        text('Choose the right framework', 'Wybierz właściwy framework'),
+        text(
+          'Match the framework to the question you must answer for the client.',
+          'Dopasuj framework do pytania, na które musisz odpowiedzieć klientowi.'
+        )
+      ),
+      makeGuide(
+        'audit-evidence',
+        text('Capture defensible evidence', 'Zbieraj obronne dowody'),
+        text(
+          'Tie every score to a fact so the result survives challenge.',
+          'Powiąż każdą ocenę z faktem, aby wynik przetrwał kwestionowanie.'
+        )
+      ),
+      SHARED_GUIDES.askAi,
+    ],
+    faqs: [
+      faq(
+        'support-audits-1',
+        'assessment',
+        text('How is Audits different from Tools?', 'Czym Audyty różnią się od Tools?'),
+        text(
+          'Tools cover broad discovery and assessments. Audits run a single recognized framework end to end with comparable scoring.',
+          'Tools obejmują szerokie discovery i oceny. Audyty przeprowadzają jeden uznany framework od początku do końca z porównywalnym scoringiem.'
+        ),
+        ['audits', 'assessment', 'maturity']
+      ),
+    ],
+    relatedKnowledgeModuleId: 'assessment',
+    video: HELP_SYSTEM_OVERVIEW.video,
+  },
+  meeting: {
+    id: 'meeting',
+    moduleId: 'meeting',
+    kind: 'support',
+    icon: 'Video',
+    title: text('Meeting', 'Spotkanie'),
+    shortLabel: text('Capture the meeting', 'Uchwyć spotkanie'),
+    summary: text(
+      'Meeting turns live conversations into structured notes, decisions, and follow-up work.',
+      'Spotkanie zamienia rozmowy na żywo w uporządkowane notatki, decyzje i zadania do wykonania.'
+    ),
+    whatThisIs: text(
+      'A workspace to run or record a session and convert it into shared, actionable output.',
+      'Przestrzeń do prowadzenia lub nagrania sesji i zamiany jej we wspólny, wykonalny wynik.'
+    ),
+    whyItMatters: text(
+      'Decisions made in meetings are lost without a clean record. This keeps the signal.',
+      'Decyzje podjęte na spotkaniach giną bez czystego zapisu. To zachowuje sygnał.'
+    ),
+    whatYouDoHere: [
+      text(
+        'Capture the agenda, discussion, and decisions in one place.',
+        'Zapisujesz agendę, dyskusję i decyzje w jednym miejscu.'
+      ),
+      text(
+        'Convert outcomes into tasks, initiatives, or notes without re-typing.',
+        'Zamieniasz ustalenia w zadania, inicjatywy lub notatki bez przepisywania.'
+      ),
+      text(
+        'Share a concise recap with people who were not in the room.',
+        'Udostępniasz zwięzłe podsumowanie osobom, których nie było na spotkaniu.'
+      ),
+    ],
+    howAiHelpsHere: [
+      text(
+        'Summarizes the conversation into themes, decisions, and open questions.',
+        'Podsumowuje rozmowę w tematy, decyzje i otwarte pytania.'
+      ),
+      text(
+        'Extracts action items with owners and due dates.',
+        'Wyciąga zadania z właścicielami i terminami.'
+      ),
+      text(
+        'Drafts the follow-up message for participants.',
+        'Tworzy wiadomość podsumowującą dla uczestników.'
+      ),
+    ],
+    whatComesNext: text(
+      'Meeting outcomes flow into My Work, Initiatives, and Notes so nothing stalls after the call.',
+      'Ustalenia ze spotkania trafiają do My Work, Initiatives i Notatek, aby nic nie utknęło po rozmowie.'
+    ),
+    askAiNow: {
+      label: text('Ask AI to recap this meeting', 'Poproś AI o podsumowanie spotkania'),
+      prompt: text(
+        'You are helping me in Meeting. Summarize the discussion into decisions, action items with owners, and a short recap I can send to participants.',
+        'Pomagasz mi w module Spotkanie. Podsumuj dyskusję w decyzje, zadania z właścicielami oraz krótki recap, który mogę wysłać uczestnikom.'
+      ),
+    },
+    quickGuides: [
+      makeGuide(
+        'meeting-decisions',
+        text('Separate decisions from discussion', 'Oddziel decyzje od dyskusji'),
+        text(
+          'Record what was decided distinctly from what was debated.',
+          'Zapisuj to, co zostało zdecydowane, oddzielnie od tego, co było dyskutowane.'
+        )
+      ),
+      makeGuide(
+        'meeting-actions',
+        text('Turn talk into action items', 'Zamień rozmowę w zadania'),
+        text(
+          'Every decision needs an owner and a next step.',
+          'Każda decyzja potrzebuje właściciela i kolejnego kroku.'
+        )
+      ),
+      SHARED_GUIDES.askAi,
+    ],
+    faqs: [
+      faq(
+        'support-meeting-1',
+        'meeting',
+        text('What happens to meeting outcomes?', 'Co dzieje się z ustaleniami ze spotkania?'),
+        text(
+          'They can be promoted into tasks, initiatives, or notes so the work continues in the right module.',
+          'Można je przekształcić w zadania, inicjatywy lub notatki, aby praca trwała we właściwym module.'
+        ),
+        ['meeting', 'notes', 'tasks']
+      ),
+    ],
+    relatedKnowledgeModuleId: 'knowledge',
+    video: HELP_SYSTEM_OVERVIEW.video,
+  },
+  document_studio: {
+    id: 'document_studio',
+    moduleId: 'document_studio',
+    kind: 'support',
+    icon: 'FileText',
+    title: text('Document Studio', 'Document Studio'),
+    shortLabel: text('Write documents', 'Twórz dokumenty'),
+    summary: text(
+      'Document Studio is an AI-assisted workspace for writing long-form, structured documents.',
+      'Document Studio to wspierana przez AI przestrzeń do pisania długich, ustrukturyzowanych dokumentów.'
+    ),
+    whatThisIs: text(
+      'A focused editor where you draft, structure, and refine documents with AI alongside you.',
+      'Skoncentrowany edytor, w którym tworzysz, strukturyzujesz i dopracowujesz dokumenty z AI u boku.'
+    ),
+    whyItMatters: text(
+      'Consulting output lives in documents. A good editor turns scattered work into a finished deliverable.',
+      'Wynik konsultingu żyje w dokumentach. Dobry edytor zamienia rozproszoną pracę w gotowy deliverable.'
+    ),
+    whatYouDoHere: [
+      text(
+        'Generate a first draft from a brief, your data, or an outline.',
+        'Generujesz pierwszą wersję z briefu, swoich danych lub konspektu.'
+      ),
+      text(
+        'Edit with structure — headings, sections, tables — and AI rewriting in place.',
+        'Edytujesz ze strukturą — nagłówki, sekcje, tabele — z przepisywaniem AI w miejscu.'
+      ),
+      text(
+        'Export or hand the finished document into Outputs and presentations.',
+        'Eksportujesz lub przekazujesz gotowy dokument do Outputs i prezentacji.'
+      ),
+    ],
+    howAiHelpsHere: [
+      text(
+        'Drafts and restructures sections from a short instruction.',
+        'Tworzy i przebudowuje sekcje na podstawie krótkiej instrukcji.'
+      ),
+      text(
+        'Tightens tone, length, and clarity for the target reader.',
+        'Dostraja ton, długość i jasność pod docelowego czytelnika.'
+      ),
+      text(
+        'Pulls in evidence from your project so the document stays grounded.',
+        'Wciąga dowody z Twojego projektu, aby dokument pozostał osadzony w faktach.'
+      ),
+    ],
+    whatComesNext: text(
+      'A finished document becomes an output you can present, share, or attach to an initiative.',
+      'Gotowy dokument staje się wynikiem, który możesz zaprezentować, udostępnić lub dołączyć do inicjatywy.'
+    ),
+    askAiNow: {
+      label: text('Ask AI to draft this document', 'Poproś AI o szkic dokumentu'),
+      prompt: text(
+        'You are helping me in Document Studio. Draft a clear, well-structured document from my current context, with sections, headings, and a concise executive summary.',
+        'Pomagasz mi w Document Studio. Stwórz jasny, dobrze ustrukturyzowany dokument z mojego kontekstu, z sekcjami, nagłówkami i zwięzłym podsumowaniem executive.'
+      ),
+    },
+    quickGuides: [
+      makeGuide(
+        'doc-outline',
+        text('Start from an outline', 'Zacznij od konspektu'),
+        text(
+          'Agree the structure first, then let AI fill each section.',
+          'Najpierw ustal strukturę, potem pozwól AI uzupełnić każdą sekcję.'
+        )
+      ),
+      makeGuide(
+        'doc-rewrite',
+        text('Rewrite in place', 'Przepisuj w miejscu'),
+        text(
+          'Select text and ask AI to tighten, expand, or change the tone.',
+          'Zaznacz tekst i poproś AI o skrócenie, rozwinięcie lub zmianę tonu.'
+        )
+      ),
+      SHARED_GUIDES.askAi,
+    ],
+    faqs: [
+      faq(
+        'support-document-studio-1',
+        'document_studio',
+        text('When do I use Document Studio vs Presentation Studio?', 'Kiedy używać Document Studio, a kiedy Presentation Studio?'),
+        text(
+          'Use Document Studio for written, detailed deliverables. Use Presentation Studio when the output is a slide deck.',
+          'Używaj Document Studio do pisanych, szczegółowych deliverables. Używaj Presentation Studio, gdy wynikiem jest prezentacja.'
+        ),
+        ['document', 'studio', 'writing']
+      ),
+    ],
+    relatedKnowledgeModuleId: 'reports',
+    video: HELP_SYSTEM_OVERVIEW.video,
+  },
+  presentation_studio: {
+    id: 'presentation_studio',
+    moduleId: 'presentation_studio',
+    kind: 'support',
+    icon: 'Presentation',
+    title: text('Presentation Studio', 'Presentation Studio'),
+    shortLabel: text('Generate decks', 'Generuj prezentacje'),
+    summary: text(
+      'Presentation Studio generates and edits slide decks from your content, fast.',
+      'Presentation Studio generuje i edytuje prezentacje z Twoich treści — szybko.'
+    ),
+    whatThisIs: text(
+      'An AI deck builder that turns a brief, document, or data into a structured, on-brand presentation.',
+      'Kreator prezentacji AI, który zamienia brief, dokument lub dane w ustrukturyzowaną, spójną z marką prezentację.'
+    ),
+    whyItMatters: text(
+      'Decisions often happen in the deck. Building it fast keeps momentum without losing quality.',
+      'Decyzje często zapadają przy prezentacji. Szybkie jej zbudowanie utrzymuje tempo bez utraty jakości.'
+    ),
+    whatYouDoHere: [
+      text(
+        'Generate a full deck from a prompt, outline, or existing document.',
+        'Generujesz całą prezentację z promptu, konspektu lub istniejącego dokumentu.'
+      ),
+      text(
+        'Edit slides, structure, and visuals, then refine with AI.',
+        'Edytujesz slajdy, strukturę i grafiki, a potem dopracowujesz z AI.'
+      ),
+      text(
+        'Export or push the deck into Outputs for sharing.',
+        'Eksportujesz lub przekazujesz prezentację do Outputs do udostępnienia.'
+      ),
+    ],
+    howAiHelpsHere: [
+      text(
+        'Builds a logical slide flow with a clear narrative arc.',
+        'Buduje logiczny przepływ slajdów z czytelnym łukiem narracyjnym.'
+      ),
+      text(
+        'Writes concise slide copy aimed at the decision to be made.',
+        'Pisze zwięzłe teksty slajdów nakierowane na decyzję do podjęcia.'
+      ),
+      text(
+        'Reworks a deck for a different audience or time slot.',
+        'Przerabia prezentację pod inną grupę odbiorców lub krótszy czas.'
+      ),
+    ],
+    whatComesNext: text(
+      'The finished deck becomes an output you present to stakeholders and store with the project.',
+      'Gotowa prezentacja staje się wynikiem, który prezentujesz interesariuszom i zapisujesz przy projekcie.'
+    ),
+    askAiNow: {
+      label: text('Ask AI to build the deck', 'Poproś AI o zbudowanie prezentacji'),
+      prompt: text(
+        'You are helping me in Presentation Studio. Build a concise, decision-ready slide deck from my current context, with a clear narrative and one key message per slide.',
+        'Pomagasz mi w Presentation Studio. Zbuduj zwięzłą, gotową pod decyzję prezentację z mojego kontekstu, z jasną narracją i jednym kluczowym komunikatem na slajd.'
+      ),
+    },
+    quickGuides: [
+      makeGuide(
+        'deck-narrative',
+        text('Lead with the narrative', 'Zacznij od narracji'),
+        text(
+          'Decide the story first; slides serve the story, not the other way round.',
+          'Najpierw zdecyduj historię; slajdy służą historii, nie odwrotnie.'
+        )
+      ),
+      makeGuide(
+        'deck-one-message',
+        text('One message per slide', 'Jeden komunikat na slajd'),
+        text(
+          'If a slide says two things, split it.',
+          'Jeśli slajd mówi dwie rzeczy, podziel go.'
+        )
+      ),
+      SHARED_GUIDES.askAi,
+    ],
+    faqs: [
+      faq(
+        'support-presentation-studio-1',
+        'presentation_studio',
+        text('Can I start from an existing document?', 'Czy mogę zacząć od istniejącego dokumentu?'),
+        text(
+          'Yes — Presentation Studio can turn a Document Studio document or any content into a structured deck.',
+          'Tak — Presentation Studio potrafi zamienić dokument z Document Studio lub dowolną treść w ustrukturyzowaną prezentację.'
+        ),
+        ['presentation', 'studio', 'deck']
+      ),
+    ],
+    relatedKnowledgeModuleId: 'reports',
+    video: HELP_SYSTEM_OVERVIEW.video,
+  },
+  table_studio: {
+    id: 'table_studio',
+    moduleId: 'table_studio',
+    kind: 'support',
+    icon: 'Table',
+    title: text('Table Studio', 'Table Studio'),
+    shortLabel: text('Work with tables', 'Pracuj na tabelach'),
+    summary: text(
+      'Table Studio is an AI-assisted workspace for building and reasoning over operational tables.',
+      'Table Studio to wspierana przez AI przestrzeń do budowania i analizowania tabel operacyjnych.'
+    ),
+    whatThisIs: text(
+      'A spreadsheet-style surface where you structure data and let AI compute, fill, and explain it.',
+      'Powierzchnia w stylu arkusza, gdzie strukturyzujesz dane, a AI je liczy, uzupełnia i wyjaśnia.'
+    ),
+    whyItMatters: text(
+      'Much transformation work is tabular — plans, registers, scorecards. This makes that work fast and consistent.',
+      'Duża część pracy transformacyjnej jest tabelaryczna — plany, rejestry, scorecardy. To czyni ją szybką i spójną.'
+    ),
+    whatYouDoHere: [
+      text(
+        'Create tables from a prompt, paste, or import and structure columns quickly.',
+        'Tworzysz tabele z promptu, wklejki lub importu i szybko strukturyzujesz kolumny.'
+      ),
+      text(
+        'Ask AI to fill, transform, or summarize rows without manual formulas.',
+        'Prosisz AI o uzupełnienie, przekształcenie lub podsumowanie wierszy bez ręcznych formuł.'
+      ),
+      text(
+        'Use tables as registers (RAID, actions, KPIs) that feed other modules.',
+        'Używasz tabel jako rejestrów (RAID, działania, KPI), które zasilają inne moduły.'
+      ),
+    ],
+    howAiHelpsHere: [
+      text(
+        'Generates and structures columns from a plain-language description.',
+        'Generuje i strukturyzuje kolumny z opisu w języku naturalnym.'
+      ),
+      text(
+        'Fills, classifies, or computes cells and explains its reasoning.',
+        'Uzupełnia, klasyfikuje lub liczy komórki i wyjaśnia swoje rozumowanie.'
+      ),
+      text(
+        'Summarizes a table into the few facts that matter for a decision.',
+        'Podsumowuje tabelę do kilku faktów istotnych dla decyzji.'
+      ),
+    ],
+    whatComesNext: text(
+      'A finished table becomes a reusable register or an output you attach to initiatives and reports.',
+      'Gotowa tabela staje się wielokrotnego użytku rejestrem lub wynikiem, który dołączasz do inicjatyw i raportów.'
+    ),
+    askAiNow: {
+      label: text('Ask AI to build the table', 'Poproś AI o zbudowanie tabeli'),
+      prompt: text(
+        'You are helping me in Table Studio. Build a well-structured table for my current need, propose the columns, and fill what you can infer from my context.',
+        'Pomagasz mi w Table Studio. Zbuduj dobrze ustrukturyzowaną tabelę pod moją potrzebę, zaproponuj kolumny i uzupełnij to, co możesz wywnioskować z mojego kontekstu.'
+      ),
+    },
+    quickGuides: [
+      makeGuide(
+        'table-columns',
+        text('Get the columns right first', 'Najpierw ustaw właściwe kolumny'),
+        text(
+          'Good columns make every later row and formula easier.',
+          'Dobre kolumny ułatwiają każdy późniejszy wiersz i formułę.'
+        )
+      ),
+      makeGuide(
+        'table-ai-fill',
+        text('Let AI fill and summarize', 'Pozwól AI uzupełniać i podsumowywać'),
+        text(
+          'Describe the result you want instead of writing formulas.',
+          'Opisz oczekiwany wynik zamiast pisać formuły.'
+        )
+      ),
+      SHARED_GUIDES.askAi,
+    ],
+    faqs: [
+      faq(
+        'support-table-studio-1',
+        'table_studio',
+        text('Is Table Studio just a spreadsheet?', 'Czy Table Studio to tylko arkusz?'),
+        text(
+          'It works like one, but AI can structure, fill, and explain the data, and tables can feed other modules as registers.',
+          'Działa jak arkusz, ale AI potrafi strukturyzować, uzupełniać i wyjaśniać dane, a tabele mogą zasilać inne moduły jako rejestry.'
+        ),
+        ['table', 'studio', 'data']
+      ),
+    ],
+    relatedKnowledgeModuleId: 'reports',
+    video: HELP_SYSTEM_OVERVIEW.video,
+  },
+  settings: {
+    id: 'settings',
+    moduleId: 'settings',
+    kind: 'system',
+    icon: 'Settings',
+    title: text('Settings', 'Ustawienia'),
+    shortLabel: text('Configure your account', 'Skonfiguruj konto'),
+    summary: text(
+      'Settings is where you control your profile, preferences, AI behavior, security, and integrations.',
+      'Ustawienia to miejsce, gdzie kontrolujesz profil, preferencje, zachowanie AI, bezpieczeństwo i integracje.'
+    ),
+    whatThisIs: text(
+      'A central place to make the platform work the way you and your organization expect.',
+      'Centralne miejsce, aby platforma działała tak, jak oczekujesz Ty i Twoja organizacja.'
+    ),
+    whyItMatters: text(
+      'Good defaults save time on every screen; the wrong ones quietly slow you down.',
+      'Dobre ustawienia domyślne oszczędzają czas na każdym ekranie; złe po cichu spowalniają.'
+    ),
+    whatYouDoHere: [
+      text(
+        'Manage your profile, language, appearance, and accessibility.',
+        'Zarządzasz profilem, językiem, wyglądem i dostępnością.'
+      ),
+      text(
+        'Tune AI response style, tone, and proactivity, plus your custom instructions.',
+        'Dostrajasz styl odpowiedzi AI, ton i proaktywność oraz własne instrukcje.'
+      ),
+      text(
+        'Control security, data controls, notifications, and connected apps.',
+        'Kontrolujesz bezpieczeństwo, ustawienia danych, powiadomienia i połączone aplikacje.'
+      ),
+    ],
+    howAiHelpsHere: [
+      text(
+        'Explains what each setting changes and recommends sensible defaults.',
+        'Wyjaśnia, co zmienia każde ustawienie i rekomenduje rozsądne wartości domyślne.'
+      ),
+      text(
+        'Applies your AI preferences consistently across every module.',
+        'Stosuje Twoje preferencje AI spójnie w każdym module.'
+      ),
+      text(
+        'Helps you write custom instructions that improve every answer.',
+        'Pomaga napisać własne instrukcje, które poprawiają każdą odpowiedź.'
+      ),
+    ],
+    whatComesNext: text(
+      'With settings tuned, the rest of the platform behaves the way you want by default.',
+      'Po dostrojeniu ustawień reszta platformy domyślnie zachowuje się tak, jak chcesz.'
+    ),
+    askAiNow: {
+      label: text('Ask AI about a setting', 'Zapytaj AI o ustawienie'),
+      prompt: text(
+        'You are helping me in Settings. Explain what the relevant settings do for my situation and recommend the configuration that fits how I work.',
+        'Pomagasz mi w Ustawieniach. Wyjaśnij, co robią istotne ustawienia w mojej sytuacji, i zarekomenduj konfigurację dopasowaną do tego, jak pracuję.'
+      ),
+    },
+    quickGuides: [
+      makeGuide(
+        'settings-ai',
+        text('Tune how AI responds', 'Dostrój sposób odpowiedzi AI'),
+        text(
+          'Set tone, length, and proactivity once; it applies everywhere.',
+          'Ustaw ton, długość i proaktywność raz; działa wszędzie.'
+        )
+      ),
+      makeGuide(
+        'settings-security',
+        text('Review security and data', 'Przejrzyj bezpieczeństwo i dane'),
+        text(
+          'Check security, data controls, and connected apps periodically.',
+          'Okresowo sprawdzaj bezpieczeństwo, ustawienia danych i połączone aplikacje.'
+        )
+      ),
+      SHARED_GUIDES.askAi,
+    ],
+    faqs: [
+      faq(
+        'support-settings-1',
+        'settings',
+        text('Do my AI settings apply everywhere?', 'Czy moje ustawienia AI działają wszędzie?'),
+        text(
+          'Yes — response style, tone, and custom instructions are applied across all modules where AI helps.',
+          'Tak — styl odpowiedzi, ton i własne instrukcje są stosowane we wszystkich modułach, w których pomaga AI.'
+        ),
+        ['settings', 'ai', 'preferences']
+      ),
+    ],
+    relatedKnowledgeModuleId: 'settings',
+    video: HELP_SYSTEM_OVERVIEW.video,
+  },
   superadmin_overview: createSystemDoc({
     id: 'superadmin_overview',
     moduleId: 'superadmin',

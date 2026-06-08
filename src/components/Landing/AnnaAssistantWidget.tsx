@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { KNOWLEDGE_BASE_SITE, type KnowledgeBaseSiteKey } from '../../config/knowledgeBaseSite';
+import { buildProductHelpDigest } from '../../config/productHelpDigest';
 import { normalizeLanguageCode } from '../../i18n';
 import { ROUTES } from '../../routes/routeConfig';
 import { persistAnnaLpCtaContext } from '../../services/annaLpCtaContext';
@@ -998,7 +999,17 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       }
 
       const surfaceInstruction = buildSurfaceContextInstruction(surfaceContext);
-      const mergedVoiceKnowledgeContext = [voiceKnowledgeContext, surfaceInstruction]
+      // On the Consultify site, give Anna the in-app product module digest so she
+      // can answer "what does Consultify do / what modules are there" questions.
+      const productHelpDigest =
+        KNOWLEDGE_BASE_SITE.key === 'consultify'
+          ? buildProductHelpDigest(voiceSessionLang === 'pl' ? 'pl' : 'en')
+          : '';
+      const mergedVoiceKnowledgeContext = [
+        voiceKnowledgeContext,
+        productHelpDigest,
+        surfaceInstruction,
+      ]
         .filter((item) => Boolean(String(item || '').trim()))
         .join('\n\n');
 

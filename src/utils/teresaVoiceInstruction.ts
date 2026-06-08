@@ -6,6 +6,8 @@
  * module handoff, and proposal-lifecycle governance.
  */
 
+import { buildProductHelpDigest } from '../config/productHelpDigest';
+
 export interface TeresaVoiceContext {
   language: string;
   organizationName?: string;
@@ -110,6 +112,9 @@ EKOSYSTEM DBR77 (6 produktów):
 5. IIoT — Industrial IoT: sensory, telemetria, edge logic.
 6. Marketplace — katalog rozwiązań automatyzacji.
 
+POMOC W MODUŁACH (używaj do pytań „jak to działa" / „co to robi"):
+${buildProductHelpDigest('pl')}
+
 KONTEKST ORGANIZACJI:
 ${buildOrgContext(ctx, true)}
 
@@ -164,6 +169,9 @@ DBR77 ECOSYSTEM (6 products):
 4. Digital Twin — simulation, scenario planning, layout optimization.
 5. IIoT — Industrial IoT: sensors, telemetry, edge logic.
 6. Marketplace — curated catalog of automation solutions.
+
+MODULE HELP (use for "how does it work" / "what does it do" questions):
+${buildProductHelpDigest('en')}
 
 ORGANIZATION CONTEXT:
 ${buildOrgContext(ctx, false)}

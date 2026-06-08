@@ -59,7 +59,7 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
       };
 
     case AppView.AI_CHAT:
-      return { moduleId: 'ai_chat', stage: 'interview', aiPromptKey: 'interview' };
+      return { moduleId: 'ai_chat', documentId: 'chat', aiPromptKey: 'chat' };
 
     case AppView.DASHBOARD:
     case AppView.USER_DASHBOARD:
@@ -88,7 +88,6 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
     case AppView.ASSESSMENT_SUMMARY:
     case AppView.ASSESSMENT_DASHBOARD:
     case AppView.MY_ASSESSMENTS:
-    case AppView.ASSESSMENT_AUDITS:
     case AppView.ASSESSMENT_REPORTS:
     case AppView.GAP_MAP:
     case AppView.DISCOVERY_TOOLS:
@@ -141,6 +140,9 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
         aiPromptKey: 'execution',
       };
 
+    case AppView.ASSESSMENT_AUDITS:
+      return { moduleId: 'audits', documentId: 'audits', aiPromptKey: 'audits' };
+
     case AppView.BENEFITS_REALIZATION:
       return { moduleId: 'results', stage: 'results', aiPromptKey: 'results' };
 
@@ -177,7 +179,28 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
       };
 
     case AppView.MEETING:
-      return { moduleId: 'knowledge', supportModule: 'ideas', aiPromptKey: 'ideas' };
+      return { moduleId: 'meeting', documentId: 'meeting', aiPromptKey: 'meeting' };
+
+    case AppView.WORDY:
+      return {
+        moduleId: 'document_studio',
+        documentId: 'document_studio',
+        aiPromptKey: 'document_studio',
+      };
+
+    case AppView.PREZENTACJE_GEN:
+      return {
+        moduleId: 'presentation_studio',
+        documentId: 'presentation_studio',
+        aiPromptKey: 'presentation_studio',
+      };
+
+    case AppView.TABELE:
+      return {
+        moduleId: 'table_studio',
+        documentId: 'table_studio',
+        aiPromptKey: 'table_studio',
+      };
 
     case AppView.KPI_OKR_DASHBOARD:
       return { moduleId: 'kpi', stage: 'results', aiPromptKey: 'results' };
@@ -200,7 +223,7 @@ export function getHelpMapping(viewId: string): ViewHelpMapping {
     case AppView.SETTINGS_DATA_CONTROLS:
     case AppView.SETTINGS_INTEGRATIONS:
     case AppView.SETTINGS_INTEGRATIONS_MODULE:
-      return { moduleId: 'settings', stage: 'interview', aiPromptKey: 'interview' };
+      return { moduleId: 'settings', documentId: 'settings', aiPromptKey: 'settings' };
 
     case AppView.ONBOARDING_WIZARD:
     case AppView.ORG_SETUP_WIZARD:
