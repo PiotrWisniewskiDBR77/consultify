@@ -555,6 +555,7 @@ interface ClientRowProps {
 }
 
 const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
+  const { t } = useTranslation();
   const statusColors: Record<string, string> = {
     ACTIVE: 'bg-emerald-500/20 text-emerald-400',
     PENDING: 'bg-amber-500/20 text-amber-400',
