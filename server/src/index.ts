@@ -1598,6 +1598,15 @@ const staticFrontendSmartCache = express.static(frontendDistPath, {
   fallthrough: true,
 });
 
+// Short, branded redirect for the VTS wave-2 shared invitation link.
+// Keeps the e-mail clean: https://consultify.ai/vts -> full /invite/<token>.
+app.get('/vts', (_req: Request, res: Response) =>
+  res.redirect(
+    302,
+    '/invite/0728c1a701b9f5995810714921de5f6a3b201fd78d4665178e8c07bb6e69c7ea'
+  )
+);
+
 app.use(staticFrontendSmartCache);
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
