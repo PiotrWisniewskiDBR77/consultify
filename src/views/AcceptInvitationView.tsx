@@ -258,7 +258,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center p-4 [color-scheme:light]">
       <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
         {/* Header */}
         <div className="bg-indigo-600 text-white p-6">
