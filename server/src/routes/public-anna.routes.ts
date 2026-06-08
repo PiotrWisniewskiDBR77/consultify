@@ -7,6 +7,7 @@ import {
   buildAnnaVoiceBootstrap,
 } from '../services/ai/annaKnowledgeService.js';
 import { resolveAnnaSiteConfig } from '../services/ai/annaSiteConfig.js';
+import { buildProductModuleCatalog } from '../services/ai/productModuleCatalog.js';
 import {
   mintGeminiLiveEphemeralToken,
   resolveGeminiLiveServerKey,
@@ -583,7 +584,13 @@ export function buildAnnaRuntimeInstruction(args: {
   const conversationContext = String(args.conversationContext || '').trim();
   const surfaceContext = buildAnnaSurfaceContext(args.surfaceContext, args.siteKey);
   const workerSystemPrompt = String(args.workerSystemPrompt || '').trim();
-  const additiveContext = [surfaceContext, conversationContext]
+  // On the Consultify site, give Anna the in-app product module catalog so she can
+  // explain what each Consultify module is and does in text chat (voice already has it).
+  const moduleCatalog =
+    resolveAnnaSiteConfig(args.siteKey).key === 'consultify'
+      ? buildProductModuleCatalog(args.locale)
+      : '';
+  const additiveContext = [moduleCatalog, surfaceContext, conversationContext]
     .filter((item) => Boolean(String(item || '').trim()))
     .join('\n\n');
   const shapedInstruction = additiveContext
