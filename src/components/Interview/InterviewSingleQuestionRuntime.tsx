@@ -1179,7 +1179,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         rows={QUESTION_INPUT_TYPES.shortText.has(normalizedType) ? 2 : immersive ? 5 : 7}
         className={`w-full rounded-xl border px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 ${
           immersive
-            ? 'border-white/[0.06] bg-white/[0.03] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500'
+            ? 'border-slate-300 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500'
             : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white'
         }`}
         placeholder={
@@ -1722,7 +1722,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               key={currentQuestion.id}
               className={`w-full ${immersive ? 'max-w-4xl' : 'max-w-3xl'} ${
                 immersive
-                  ? 'bg-white/[0.03] dark:bg-white/[0.02] border border-white/[0.04] dark:border-white/[0.03] rounded-2xl backdrop-blur-sm p-6 md:p-8 lg:p-10'
+                  ? 'bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.03] rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none backdrop-blur-sm p-6 md:p-8 lg:p-10'
                   : 'rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-gradient-to-br from-white via-white to-slate-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950 p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-navy-950/50'
               }`}
             >
@@ -2145,7 +2145,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           isRecording
                             ? 'border-rose-500/40 bg-rose-500/15 text-rose-500 animate-pulse'
                             : immersive
-                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
+                              ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2166,7 +2166,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         disabled={isUploadingAttachment}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] disabled:opacity-60 ${
                           immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
+                            ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2181,7 +2181,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         disabled={isUploadingAttachment}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] disabled:opacity-60 ${
                           immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
+                            ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2206,7 +2206,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                                   ? 'border-primary-500/20 bg-primary-500/10 text-primary-400'
                                   : 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
                                 : immersive
-                                  ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-primary-300'
+                                  ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-primary-600 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-primary-300'
                                   : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                             }`}
                           >
@@ -2498,7 +2498,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 <div
                   className={`space-y-3 pt-3 border-t ${
                     immersive
-                      ? 'border-white/[0.06]'
+                      ? 'border-slate-200 dark:border-white/[0.06]'
                       : 'border-slate-200/40 dark:border-navy-700/40'
                   }`}
                 >
@@ -2514,7 +2514,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                     rows={1}
                     className={`w-full rounded-xl border px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary-500 ${
                       immersive
-                        ? 'border-white/[0.06] bg-white/[0.03] text-slate-700 dark:text-slate-200 placeholder:text-slate-500 dark:placeholder:text-slate-500'
+                        ? 'border-slate-300 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.03] text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
                         : 'border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-950 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500'
                     }`}
                     placeholder={
@@ -2540,7 +2540,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                           showLinkForm
                             ? 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-400'
                             : immersive
-                              ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-slate-200'
+                              ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-slate-200'
                               : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >
@@ -2553,7 +2553,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         onClick={() => setArtifactPopoverOpen(true)}
                         className={`inline-flex items-center gap-1.5 h-7 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] ${
                           immersive
-                            ? 'border-white/[0.06] bg-white/[0.04] text-slate-600 hover:bg-white/[0.08] hover:text-primary-300'
+                            ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-primary-600 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-slate-600 dark:hover:bg-white/[0.08] dark:hover:text-primary-300'
                             : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                         }`}
                       >

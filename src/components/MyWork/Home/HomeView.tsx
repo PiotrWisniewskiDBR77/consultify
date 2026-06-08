@@ -4,6 +4,7 @@ import {
   BookOpen,
   Briefcase,
   Cpu,
+  ExternalLink,
   Eye,
   Lightbulb,
   MessageCircle,
@@ -26,12 +27,15 @@ import { cn } from '@/lib/utils';
 import type {
   HomeScreenAction,
   HomeTimeMode,
+  RadarBriefing,
   RadarMapSignal,
+  RadarRing,
   RadarSignalCard,
   RadarSignalStatus,
   RadarSignalType,
 } from './homeV2Types';
 import { useHomeData } from './useHomeData';
+import { useRadarBriefing } from './useRadarBriefing';
 import { useRadarData } from './useRadarData';
 
 interface HomeViewProps {
@@ -69,7 +73,7 @@ const QUADRANTS: QuadrantSpec[] = [
     title: 'My Development',
     subtitle: 'what I should learn',
     fill: 'rgba(56,189,248,0.12)',
-    chip: 'text-cyan-200',
+    chip: 'text-cyan-700 dark:text-cyan-200',
     accent: '#38BDF8',
     corner: 'tl',
     Icon: UserRound,
@@ -81,7 +85,7 @@ const QUADRANTS: QuadrantSpec[] = [
     title: 'My Projects',
     subtitle: 'what helps current work',
     fill: 'rgba(45,212,191,0.11)',
-    chip: 'text-teal-200',
+    chip: 'text-teal-700 dark:text-teal-200',
     accent: '#2DD4BF',
     corner: 'tr',
     Icon: Target,
@@ -93,7 +97,7 @@ const QUADRANTS: QuadrantSpec[] = [
     title: 'My Industry',
     subtitle: 'what matters around company',
     fill: 'rgba(217,70,239,0.11)',
-    chip: 'text-fuchsia-200',
+    chip: 'text-fuchsia-700 dark:text-fuchsia-200',
     accent: '#D946EF',
     corner: 'br',
     Icon: Briefcase,
@@ -105,7 +109,7 @@ const QUADRANTS: QuadrantSpec[] = [
     title: 'My Role',
     subtitle: 'what affects responsibility',
     fill: 'rgba(251,191,36,0.10)',
-    chip: 'text-amber-200',
+    chip: 'text-amber-700 dark:text-amber-200',
     accent: '#FBBF24',
     corner: 'bl',
     Icon: Workflow,
@@ -193,18 +197,26 @@ const TYPE_ACCENT: Record<RadarSignalType, string> = {
 };
 
 const STATUS_META: Record<RadarSignalStatus, { label: string; tone: string }> = {
-  new: { label: 'New', tone: 'border-emerald-400/35 bg-emerald-500/14 text-emerald-200' },
-  updated: { label: 'Updated', tone: 'border-sky-400/35 bg-sky-500/14 text-sky-200' },
-  saved: { label: 'Saved', tone: 'border-indigo-400/35 bg-indigo-500/14 text-indigo-200' },
-  watching: { label: 'Watching', tone: 'border-amber-400/35 bg-amber-500/14 text-amber-200' },
-  ignored: { label: 'Ignored', tone: 'border-slate-400/30 bg-slate-500/12 text-slate-600' },
-};
-
-const RING_WEIGHT: Record<RadarMapSignal['ring'], number> = {
-  NOW: 0.18,
-  PREPARE: 0.38,
-  LEARN: 0.62,
-  OBSERVE: 0.82,
+  new: {
+    label: 'New',
+    tone: 'border-emerald-400/40 bg-emerald-500/15 text-emerald-700 dark:border-emerald-400/35 dark:bg-emerald-500/14 dark:text-emerald-200',
+  },
+  updated: {
+    label: 'Updated',
+    tone: 'border-sky-400/40 bg-sky-500/15 text-sky-700 dark:border-sky-400/35 dark:bg-sky-500/14 dark:text-sky-200',
+  },
+  saved: {
+    label: 'Saved',
+    tone: 'border-indigo-400/40 bg-indigo-500/15 text-indigo-700 dark:border-indigo-400/35 dark:bg-indigo-500/14 dark:text-indigo-200',
+  },
+  watching: {
+    label: 'Watching',
+    tone: 'border-amber-400/40 bg-amber-500/15 text-amber-700 dark:border-amber-400/35 dark:bg-amber-500/14 dark:text-amber-200',
+  },
+  ignored: {
+    label: 'Ignored',
+    tone: 'border-slate-400/40 bg-slate-500/15 text-slate-600 dark:border-slate-400/30 dark:bg-slate-500/12 dark:text-slate-600',
+  },
 };
 
 const QUADRANT_START: Record<RadarMapSignal['quadrant'], number> = {
@@ -309,7 +321,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-[#070B14]">
+    <div className="relative flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-[#070B14]">
       <BgCanvas timeMode={screen.timeMode} ambientMotion={layout.ambientMotion} />
 
       <div className="relative z-10 flex items-center justify-between gap-4 px-4 md:px-5 pt-2.5 pb-1.5">
@@ -328,8 +340,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       <div className="relative z-10 flex-1 overflow-hidden px-4 pb-4 md:px-5">
         <div className="mb-2.5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">Your Radar</h2>
-            <p className="mt-0.5 max-w-3xl text-[12px] text-slate-400">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Your Radar</h2>
+            <p className="mt-0.5 max-w-3xl text-[12px] text-slate-600 dark:text-slate-400">
               A personal map of signals worth your attention — across your development, projects,
               industry and role.
             </p>
@@ -346,15 +358,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                   className={cn(
                     'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition',
                     active
-                      ? 'border-primary-300/60 bg-primary-500/20 text-primary-100'
-                      : 'border-white/10 bg-white/[0.04] text-slate-300 hover:border-white/20 hover:bg-white/[0.08]'
+                      ? 'border-primary-400/60 bg-primary-500/15 text-primary-700 dark:border-primary-300/60 dark:bg-primary-500/20 dark:text-primary-100'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-white/20 dark:hover:bg-white/[0.08]'
                   )}
                 >
                   {filter.label}
                   <span
                     className={cn(
                       'rounded-full px-1.5 text-[10px] tabular-nums',
-                      active ? 'bg-primary-400/30 text-white' : 'bg-white/10 text-slate-300'
+                      active
+                        ? 'bg-primary-500/20 text-primary-700 dark:bg-primary-400/30 dark:text-white'
+                        : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300'
                     )}
                   >
                     {statusCounts[filter.id] ?? 0}
@@ -367,14 +381,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
 
         {radarSignalsAll.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <div className="max-w-md rounded-2xl border border-white/[0.08] bg-white/[0.03] px-8 py-10 text-center">
-              <Radar className="mx-auto mb-3 h-9 w-9 text-primary-300/70" />
-              <p className="text-sm font-medium text-white">{t('myWork.radar.empty')}</p>
-              <p className="mt-1.5 text-[12px] text-slate-400">{t('myWork.radar.emptyHint')}</p>
+            <div className="max-w-md rounded-2xl border border-slate-200/70 bg-white px-8 py-10 text-center shadow-sm dark:border-white/[0.08] dark:bg-white/[0.03] dark:shadow-none">
+              <Radar className="mx-auto mb-3 h-9 w-9 text-primary-500/70 dark:text-primary-300/70" />
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                {t('myWork.radar.empty')}
+              </p>
+              <p className="mt-1.5 text-[12px] text-slate-600 dark:text-slate-400">
+                {t('myWork.radar.emptyHint')}
+              </p>
               <button
                 type="button"
                 onClick={() => void refresh()}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-1.5 text-[12px] font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/[0.1]"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[12px] font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200 dark:hover:border-white/20 dark:hover:bg-white/[0.1]"
               >
                 {t('myWork.radar.retry')}
               </button>
@@ -497,10 +515,25 @@ function clampText(value: string, max: number): string {
 
 type SignalPosition = { x: number; y: number; angle: number; radius: number };
 
-// Distribute signals so they fan out evenly inside each quadrant's 90° arc
-// (grouped per-quadrant, not by global index) — this avoids the old behaviour
-// where everything collapsed into one diagonal streak in a single corner.
+// Radial bands aligned with the drawn horizon rings (r = 11.5 / 23 / 34.5 / 46,
+// expressed as a fraction of the outer radius). A signal sits inside its ring's
+// band; its exact distance from centre is set by the real relevance score, so
+// "closer to the core" literally means "more urgent / higher fit".
+const RING_BAND: Record<RadarRing, [number, number]> = {
+  NOW: [0.15, 0.235],
+  PREPARE: [0.28, 0.47],
+  LEARN: [0.53, 0.71],
+  OBSERVE: [0.78, 0.95],
+};
+const RING_ORDER: Record<RadarRing, number> = { NOW: 0, PREPARE: 1, LEARN: 2, OBSERVE: 3 };
+const RADAR_R = 46; // outer ring radius in the 0–100 viewBox
+
 function computeSignalLayout(signals: RadarMapSignal[]): Map<string, SignalPosition> {
+  const scores = signals.map((s) => s.score ?? 0);
+  const minScore = scores.length ? Math.min(...scores) : 0;
+  const maxScore = scores.length ? Math.max(...scores) : 1;
+  const range = Math.max(1, maxScore - minScore);
+
   const byQuadrant = new Map<RadarMapSignal['quadrant'], RadarMapSignal[]>();
   for (const signal of signals) {
     const bucket = byQuadrant.get(signal.quadrant) ?? [];
@@ -513,17 +546,22 @@ function computeSignalLayout(signals: RadarMapSignal[]): Map<string, SignalPosit
 
   byQuadrant.forEach((bucket, quadrant) => {
     const quadAngle = QUADRANT_START[quadrant];
-    const count = bucket.length;
-    bucket.forEach((signal, i) => {
-      // Even angular slots with padding from both quadrant edges.
+    // Stable, meaningful arrangement: by horizon (NOW first), then score.
+    const ordered = [...bucket].sort(
+      (a, b) => RING_ORDER[a.ring] - RING_ORDER[b.ring] || (b.score ?? 0) - (a.score ?? 0)
+    );
+    const count = ordered.length;
+    ordered.forEach((signal, i) => {
+      // Even angular slots with padding from both quadrant edges (collision-safe).
       const slot = count === 1 ? 0.5 : i / (count - 1);
-      const angle = quadAngle + spread * (0.14 + slot * 0.72);
-      // Nudge same-ring neighbours apart radially so pucks never fully overlap.
-      const jitter = ((i % 3) - 1) * 0.02;
-      const radius = Math.max(0.14, Math.min(0.92, RING_WEIGHT[signal.ring] + jitter));
+      const angle = quadAngle + spread * (0.12 + slot * 0.76);
+      // Radius within the ring band, refined by real score (high score → inner edge).
+      const [inner, outer] = RING_BAND[signal.ring];
+      const norm = ((signal.score ?? 0) - minScore) / range; // 0..1
+      const radius = outer - norm * (outer - inner);
       layout.set(signal.id, {
-        x: 50 + Math.cos(angle) * radius * 45,
-        y: 50 + Math.sin(angle) * radius * 45,
+        x: 50 + Math.cos(angle) * radius * RADAR_R,
+        y: 50 + Math.sin(angle) * radius * RADAR_R,
         angle,
         radius,
       });
@@ -531,6 +569,23 @@ function computeSignalLayout(signals: RadarMapSignal[]): Map<string, SignalPosit
   });
 
   return layout;
+}
+
+// Tracks the app's class-based dark mode so the radar markers can render a
+// light, frosted style on the light canvas and a glassy dark style on the dark one.
+function useIsDark(): boolean {
+  const [isDark, setIsDark] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+  useEffect(() => {
+    const el = document.documentElement;
+    const update = () => setIsDark(el.classList.contains('dark'));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+  return isDark;
 }
 
 function RadarCanvas({
@@ -544,6 +599,7 @@ function RadarCanvas({
   onSelectSignal: (id: string) => void;
   ambientMotion: 'soft' | 'full';
 }) {
+  const isDark = useIsDark();
   const layout = useMemo(() => computeSignalLayout(signals), [signals]);
   const selectedSignal =
     signals.find((signal) => signal.id === selectedSignalId) ?? signals[0] ?? null;
@@ -588,15 +644,15 @@ function RadarCanvas({
   };
 
   return (
-    <div className="relative flex h-full min-h-[620px] flex-col gap-2 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#0A1122] to-[#06080F] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_24px_60px_-24px_rgba(0,0,0,0.8)]">
+    <div className="relative flex h-full min-h-[620px] flex-col gap-2 overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)] dark:border-white/10 dark:from-[#0A1122] dark:to-[#06080F] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_24px_60px_-24px_rgba(0,0,0,0.8)]">
       <div
-        className="relative flex-1 overflow-hidden rounded-2xl border border-white/[0.06] bg-[radial-gradient(circle_at_50%_46%,rgba(56,130,246,0.14),transparent_62%)]"
+        className="relative flex-1 overflow-hidden rounded-2xl border border-slate-200/70 bg-[radial-gradient(circle_at_50%_46%,rgba(56,130,246,0.10),transparent_62%)] dark:border-white/[0.06] dark:bg-[radial-gradient(circle_at_50%_46%,rgba(56,130,246,0.14),transparent_62%)]"
         tabIndex={0}
         onKeyDown={handleCanvasKeyDown}
         aria-label="Radar canvas"
       >
         {/* Ambient depth: vignette + soft core bloom */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,transparent_40%,rgba(3,5,12,0.75))]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_46%,transparent_45%,rgba(148,163,184,0.18))] dark:bg-[radial-gradient(circle_at_50%_46%,transparent_40%,rgba(3,5,12,0.75))]" />
 
         <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
           <defs>
@@ -623,7 +679,7 @@ function RadarCanvas({
             cy="50"
             r="46"
             fill="none"
-            stroke="rgba(148,163,184,0.30)"
+            className="stroke-[rgba(100,116,139,0.45)] dark:stroke-[rgba(148,163,184,0.30)]"
             strokeWidth="0.4"
           />
           <circle
@@ -631,7 +687,7 @@ function RadarCanvas({
             cy="50"
             r="34.5"
             fill="none"
-            stroke="rgba(148,163,184,0.18)"
+            className="stroke-[rgba(100,116,139,0.32)] dark:stroke-[rgba(148,163,184,0.18)]"
             strokeWidth="0.3"
             strokeDasharray="0.6 0.9"
           />
@@ -640,7 +696,7 @@ function RadarCanvas({
             cy="50"
             r="23"
             fill="none"
-            stroke="rgba(148,163,184,0.16)"
+            className="stroke-[rgba(100,116,139,0.30)] dark:stroke-[rgba(148,163,184,0.16)]"
             strokeWidth="0.3"
             strokeDasharray="0.6 0.9"
           />
@@ -649,13 +705,27 @@ function RadarCanvas({
             cy="50"
             r="11.5"
             fill="none"
-            stroke="rgba(125,211,252,0.28)"
+            className="stroke-[rgba(14,165,233,0.45)] dark:stroke-[rgba(125,211,252,0.28)]"
             strokeWidth="0.35"
           />
 
           {/* Axis cross */}
-          <line x1="50" y1="4" x2="50" y2="96" stroke="rgba(148,163,184,0.16)" strokeWidth="0.28" />
-          <line x1="4" y1="50" x2="96" y2="50" stroke="rgba(148,163,184,0.16)" strokeWidth="0.28" />
+          <line
+            x1="50"
+            y1="4"
+            x2="50"
+            y2="96"
+            className="stroke-[rgba(100,116,139,0.28)] dark:stroke-[rgba(148,163,184,0.16)]"
+            strokeWidth="0.28"
+          />
+          <line
+            x1="4"
+            y1="50"
+            x2="96"
+            y2="50"
+            className="stroke-[rgba(100,116,139,0.28)] dark:stroke-[rgba(148,163,184,0.16)]"
+            strokeWidth="0.28"
+          />
 
           {/* Sonar pulses from the core */}
           {[0, 2, 4].map((delay) => (
@@ -718,8 +788,8 @@ function RadarCanvas({
           </g>
 
           {/* Glowing core */}
-          <circle cx="50" cy="50" r="9" fill="url(#coreGlow)" opacity="0.9" />
-          <circle cx="50" cy="50" r="1.7" fill="#E0F2FE" />
+          <circle cx="50" cy="50" r="6.5" fill="url(#coreGlow)" opacity="0.85" />
+          <circle cx="50" cy="50" r="1.5" fill="#E0F2FE" />
 
           {/* Beam from core to the selected signal */}
           {selectedPosition && (
@@ -750,7 +820,7 @@ function RadarCanvas({
               x="51"
               y={ring.y}
               textAnchor="start"
-              className="fill-slate-300 text-[2.1px] font-medium tracking-[0.18em]"
+              className="fill-slate-600 dark:fill-slate-300 text-[2.1px] font-medium tracking-[0.18em]"
             >
               {ring.label}
             </text>
@@ -764,7 +834,7 @@ function RadarCanvas({
             <div
               key={`${q.key}-label`}
               className={cn(
-                'pointer-events-none absolute flex flex-col gap-0.5 rounded-lg border border-white/[0.08] bg-slate-950/45 px-2 py-1.5 backdrop-blur-sm',
+                'pointer-events-none absolute flex flex-col gap-0.5 rounded-lg border border-slate-200/80 bg-white/85 px-2 py-1.5 backdrop-blur-sm dark:border-white/[0.08] dark:bg-slate-950/45',
                 cornerClass[q.corner]
               )}
             >
@@ -777,7 +847,7 @@ function RadarCanvas({
                 <Icon className="h-3 w-3" />
                 {q.title}
               </div>
-              <div className="text-[9px] text-slate-400">{q.subtitle}</div>
+              <div className="text-[9px] text-slate-500 dark:text-slate-400">{q.subtitle}</div>
             </div>
           );
         })}
@@ -794,6 +864,33 @@ function RadarCanvas({
             signal.importanceLevel === 'large' ? 34 : signal.importanceLevel === 'small' ? 26 : 30;
           const size = selected ? base + 8 : base;
 
+          // Theme-aware marker: a frosted white chip with a vivid coloured icon and
+          // a soft coloured glow on the light canvas; a glassy dark gem on the dark
+          // canvas. Selected = a saturated accent-filled chip that pops.
+          const iconColor = selected ? (isDark ? '#0B1220' : '#FFFFFF') : accent;
+          const markerBg = selected
+            ? isDark
+              ? 'linear-gradient(150deg, #FFFFFF 0%, #E6F0FF 100%)'
+              : `linear-gradient(155deg, ${accent} 0%, ${accent}DB 100%)`
+            : isDark
+              ? `linear-gradient(150deg, ${accent}3A 0%, rgba(12,17,28,0.96) 72%)`
+              : `linear-gradient(155deg, #FFFFFF 0%, ${accent}1F 100%)`;
+          const markerBorder = selected
+            ? isDark
+              ? 'rgba(255,255,255,0.92)'
+              : '#FFFFFF'
+            : isDark
+              ? `${accent}66`
+              : `${accent}7A`;
+          const markerShadow = selected
+            ? isDark
+              ? `0 0 0 3px rgba(255,255,255,0.16), 0 8px 22px -6px ${accent}, 0 2px 6px rgba(0,0,0,0.55)`
+              : `0 0 0 3px ${accent}33, 0 10px 22px -6px ${accent}, 0 2px 6px rgba(15,23,42,0.22)`
+            : isDark
+              ? `0 6px 16px -5px ${accent}AA, inset 0 1px 0 rgba(255,255,255,0.14)`
+              : `0 5px 14px -4px ${accent}66, 0 1px 2px rgba(15,23,42,0.12), inset 0 1px 0 #FFFFFF`;
+          const pipBorder = isDark ? '#020617' : '#FFFFFF';
+
           return (
             <motion.button
               key={signal.id}
@@ -808,30 +905,40 @@ function RadarCanvas({
               data-testid={`radar-signal-${signal.id}`}
             >
               <span
-                className="relative flex items-center justify-center rounded-full border transition"
+                className="relative flex items-center justify-center transition-transform"
                 style={{
                   width: size,
                   height: size,
-                  borderColor: selected ? '#FFFFFF' : accent,
-                  backgroundColor: selected ? '#F8FBFF' : 'rgba(8,12,22,0.82)',
-                  color: selected ? '#0B1220' : accent,
-                  boxShadow: selected
-                    ? `0 0 0 3px rgba(255,255,255,0.18), 0 0 24px ${accent}, 0 6px 16px rgba(0,0,0,0.5)`
-                    : `0 0 12px ${accent}66, inset 0 0 6px ${accent}33`,
+                  borderRadius: '34%',
+                  border: `1px solid ${markerBorder}`,
+                  background: markerBg,
+                  color: iconColor,
+                  boxShadow: markerShadow,
                 }}
                 title={`${signal.name} · ${signal.ring} · ${signal.quadrant.replaceAll('_', ' ')}`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon
+                  className={cn(
+                    'drop-shadow-sm',
+                    selected || signal.importanceLevel === 'large' ? 'h-4 w-4' : 'h-3.5 w-3.5'
+                  )}
+                />
                 {selected && (
                   <motion.span
-                    className="absolute inset-0 rounded-full"
-                    animate={{
-                      boxShadow: [
-                        '0 0 0 0 rgba(186,230,253,0.5)',
-                        '0 0 0 12px rgba(186,230,253,0)',
-                      ],
+                    className="absolute inset-0"
+                    style={{ borderRadius: '34%' }}
+                    animate={{ boxShadow: [`0 0 0 0 ${accent}80`, `0 0 0 12px ${accent}00`] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+                  />
+                )}
+                {!selected && (signal.status === 'new' || signal.status === 'updated') && (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full"
+                    style={{
+                      backgroundColor: signal.status === 'new' ? '#34D399' : '#38BDF8',
+                      border: `1.5px solid ${pipBorder}`,
+                      boxShadow: `0 0 6px ${signal.status === 'new' ? '#34D399' : '#38BDF8'}`,
                     }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }}
                   />
                 )}
               </span>
@@ -865,16 +972,14 @@ function RadarCanvas({
         )}
       </div>
 
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-2.5 py-2 text-[10px] text-slate-400">
+      <div className="rounded-xl border border-slate-200/70 bg-white/70 px-2.5 py-2 text-[10px] text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-400">
         <div className="truncate">
-          <span className="text-slate-500">Areas:</span> My Development · My Projects · My Industry
-          · My Role
+          <span className="text-slate-500 dark:text-slate-500">How to read:</span> closer to centre
+          = more urgent · ring = time horizon · quadrant = life area · size = business impact
         </div>
-        <div className="truncate">
-          <span className="text-slate-500">Horizon:</span> Now · Prepare · Learn · Observe
-        </div>
-        <div className="truncate">
-          <span className="text-slate-500">Types:</span> Technology · Skill · Business · Risk · Tool
+        <div className="mt-0.5 truncate">
+          <span className="text-slate-500 dark:text-slate-500">Horizon:</span> Now · Prepare · Learn
+          · Observe
         </div>
       </div>
     </div>
@@ -893,9 +998,11 @@ function RadarPreviewPanel({
   signal: RadarMapSignal | null;
   onAction: (action: HomeScreenAction) => void;
 }) {
+  const { briefing, loading } = useRadarBriefing(signal?.id ?? null);
+
   if (!signal) {
     return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-6 text-center text-slate-400">
+      <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 p-6 text-center text-slate-500 dark:border-white/10 dark:bg-slate-900/40 dark:text-slate-400">
         Pick a signal on the radar to see why it may matter to you right now.
       </div>
     );
@@ -921,7 +1028,7 @@ function RadarPreviewPanel({
       initial={{ opacity: 0, x: 14 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="flex h-full flex-col rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0E1626] to-[#090F1A] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_60px_-24px_rgba(0,0,0,0.8)]"
+      className="flex h-full flex-col rounded-2xl border border-slate-200/70 bg-gradient-to-b from-white to-slate-50 p-4 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)] dark:border-white/[0.08] dark:from-[#0E1626] dark:to-[#090F1A] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_24px_60px_-24px_rgba(0,0,0,0.8)]"
     >
       <div className="flex items-start gap-3">
         <div
@@ -933,33 +1040,52 @@ function RadarPreviewPanel({
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold leading-tight text-white">{signal.name}</h3>
+          <h3 className="text-lg font-semibold leading-tight text-slate-900 dark:text-white">
+            {signal.name}
+          </h3>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <Badge>{signal.ring}</Badge>
             <Badge>{quadrantTitle(signal.quadrant)}</Badge>
             <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
           </div>
-          <p className="mt-2 text-[12px] leading-relaxed text-slate-300">{shortDescription}</p>
+          {signal.sourceName ? (
+            <div className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-500">
+              <span className="truncate">Source: {signal.sourceName}</span>
+              {signal.sourceUrl ? (
+                <a
+                  href={signal.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex items-center text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-200"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-600 dark:text-slate-300">
+            {shortDescription}
+          </p>
         </div>
       </div>
 
-      <div className="mt-3 rounded-xl border border-primary-400/20 bg-primary-500/10 p-3">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-primary-200">
+      <div className="mt-3 rounded-xl border border-primary-400/30 bg-primary-500/10 p-3 dark:border-primary-400/20">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-primary-700 dark:text-primary-200">
           Why this is on your radar
         </div>
-        <p className="mt-1 text-[12px] leading-relaxed text-primary-50/90">{whyItMattersForYou}</p>
+        <p className="mt-1 text-[12px] leading-relaxed text-primary-900/80 dark:text-primary-50/90">
+          {whyItMattersForYou}
+        </p>
       </div>
 
-      <div className="mt-3 flex-1 space-y-2 overflow-auto rounded-xl border border-white/10 bg-white/[0.02] p-3">
-        <Section title="What it is" body={shortDescription} />
-        <Section title="Why it matters" body={preview.whyItMatters} />
-        <Section title="Why it matters for you" body={preview.whyItMattersForYou} />
-        <Section title="How to think about it" body={preview.howToThinkAboutIt} />
-        <Section title="Good first question" body={preview.goodFirstQuestion} />
-        <Section title="Suggested next step" body={preview.suggestedNextStep} />
-      </div>
+      <TeresaBriefing
+        briefing={briefing}
+        loading={loading}
+        preview={preview}
+        shortDescription={shortDescription}
+      />
 
-      <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] p-2.5">
+      <div className="mt-3 rounded-xl border border-slate-200/70 bg-slate-50/60 p-2.5 dark:border-white/10 dark:bg-white/[0.02]">
         <button
           type="button"
           onClick={() =>
@@ -976,7 +1102,7 @@ function RadarPreviewPanel({
               },
             })
           }
-          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary-300/50 bg-gradient-to-r from-primary-500/35 to-primary-400/25 px-3 py-2 text-[12px] font-medium text-primary-50 transition hover:from-primary-500/45 hover:to-primary-400/35"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary-500/50 bg-gradient-to-r from-primary-600 to-primary-500 px-3 py-2 text-[12px] font-medium text-white transition hover:from-primary-700 hover:to-primary-600 dark:border-primary-300/50 dark:from-primary-500/35 dark:to-primary-400/25 dark:text-primary-50 dark:hover:from-primary-500/45 dark:hover:to-primary-400/35"
         >
           <MessageCircle className="h-3.5 w-3.5" />
           Talk to Teresa
@@ -1046,11 +1172,77 @@ function RadarPreviewPanel({
   );
 }
 
+function ShimmerLines() {
+  return (
+    <div className="space-y-3">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="space-y-1.5">
+          <div className="h-2 w-20 animate-pulse rounded bg-slate-200 dark:bg-white/10" />
+          <div className="h-2 w-full animate-pulse rounded bg-slate-100 dark:bg-white/[0.06]" />
+          <div className="h-2 w-4/5 animate-pulse rounded bg-slate-100 dark:bg-white/[0.06]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TeresaBriefing({
+  briefing,
+  loading,
+  preview,
+  shortDescription,
+}: {
+  briefing: RadarBriefing | null;
+  loading: boolean;
+  preview: RadarMapSignal['preview'];
+  shortDescription: string;
+}) {
+  // AI briefing when available; otherwise the sharp deterministic baseline.
+  const items = briefing
+    ? [
+        { title: 'What it really is', body: briefing.whatItIs },
+        { title: 'Why it matters for you', body: briefing.whyItMattersForYou },
+        { title: 'Good first question', body: briefing.goodFirstQuestion },
+        { title: 'Suggested next step', body: briefing.suggestedNextStep },
+      ]
+    : [
+        { title: 'What it is', body: shortDescription },
+        { title: 'Why it matters', body: preview.whyItMatters },
+        { title: 'Why it matters for you', body: preview.whyItMattersForYou },
+        { title: 'How to think about it', body: preview.howToThinkAboutIt },
+        { title: 'Good first question', body: preview.goodFirstQuestion },
+        { title: 'Suggested next step', body: preview.suggestedNextStep },
+      ];
+
+  return (
+    <div className="mt-3 flex-1 overflow-auto rounded-xl border border-slate-200/70 bg-white/60 p-3 dark:border-white/10 dark:bg-white/[0.02]">
+      <div className="mb-2.5 flex items-center gap-1.5">
+        <Sparkles className="h-3.5 w-3.5 text-primary-500 dark:text-primary-300" />
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary-700 dark:text-primary-200">
+          Teresa
+        </span>
+        <span className="text-[10px] text-slate-500 dark:text-slate-500">
+          {loading ? '· reading this signal…' : briefing ? '· AI briefing' : '· quick read'}
+        </span>
+      </div>
+      {loading ? (
+        <ShimmerLines />
+      ) : (
+        <div className="space-y-2">
+          {items.map((item) => (
+            <Section key={item.title} title={item.title} body={item.body} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Badge({ children, tone }: { children: React.ReactNode; tone?: string }) {
   return (
     <span
       className={cn(
-        'rounded-full border border-white/15 bg-white/[0.06] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-300',
+        'rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 dark:border-white/15 dark:bg-white/[0.06] dark:text-slate-300',
         tone
       )}
     >
@@ -1066,10 +1258,10 @@ function Section({ title, body }: { title: string; body: string }) {
   if (!text) return null;
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {title}
       </div>
-      <p className="text-[12px] leading-relaxed text-slate-200">{text}</p>
+      <p className="text-[12px] leading-relaxed text-slate-700 dark:text-slate-200">{text}</p>
     </div>
   );
 }
@@ -1091,8 +1283,10 @@ function ActionChip({
       onClick={onClick}
       className={cn(
         'inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[11px] font-medium transition',
-        tone === 'normal' && 'border-white/12 bg-white/[0.04] text-slate-200 hover:bg-white/[0.1]',
-        tone === 'subtle' && 'border-white/10 bg-white/[0.02] text-slate-400 hover:bg-white/[0.08]'
+        tone === 'normal' &&
+          'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/12 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.1]',
+        tone === 'subtle' &&
+          'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-400 dark:hover:bg-white/[0.08]'
       )}
     >
       {icon}

@@ -526,25 +526,25 @@ const urgencyConfig: Record<
 > = {
   critical: {
     icon: AlertTriangle,
-    pill: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-rose-600 dark:bg-rose-500/15 dark:text-rose-300 dark:border-transparent dark:[&>svg]:text-rose-300',
     label: 'Critical',
     heatColor: 'border-l-rose-500',
   },
   high: {
     icon: AlertCircle,
-    pill: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-amber-600 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent dark:[&>svg]:text-amber-300',
     label: 'High',
     heatColor: 'border-l-amber-500',
   },
   normal: {
     icon: Clock,
-    pill: 'bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-200',
+    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-slate-500 dark:bg-navy-800 dark:text-slate-200 dark:border-transparent',
     label: 'Normal',
     heatColor: 'border-l-slate-300 dark:border-l-navy-600',
   },
   low: {
     icon: Calendar,
-    pill: 'bg-slate-50 text-slate-600 dark:bg-navy-900/40 dark:text-slate-300',
+    pill: 'border border-slate-200 bg-white text-slate-600 [&>svg]:text-slate-400 dark:bg-navy-900/40 dark:text-slate-300 dark:border-transparent',
     label: 'Low',
     heatColor: 'border-l-slate-200 dark:border-l-navy-700',
   },
@@ -681,8 +681,11 @@ const AGING_STYLES = {
 };
 
 // ── SLA pill ──
-const slaPill = (sla: InboxItem['sla']): { label: string; className: string; title?: string } => {
-  if (!sla) return { label: '-', className: 'text-slate-600 dark:text-slate-400' };
+const slaPill = (
+  sla: InboxItem['sla']
+): { label: string; className: string; dot: string; title?: string } => {
+  if (!sla)
+    return { label: '-', className: 'text-slate-600 dark:text-slate-400', dot: 'bg-slate-400' };
   const abs = Math.abs(sla.remainingMs);
   const days = Math.floor(abs / 86400000);
   const hours = Math.floor((abs % 86400000) / 3600000);
@@ -693,13 +696,16 @@ const slaPill = (sla: InboxItem['sla']): { label: string; className: string; tit
       : sla.isBreached
         ? `${sla.level} +${timeStr}`
         : `${sla.level} ${timeStr}`;
+  const isOverdue = sla.isBreached || sla.level === 'L2' || sla.level === 'L3';
   const className =
     sla.level === 'none'
-      ? 'bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-200'
+      ? 'border border-slate-200 bg-white text-slate-700 dark:bg-navy-800 dark:text-slate-200 dark:border-transparent'
       : sla.level === 'L1'
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-        : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300';
-  return { label, className, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
+        ? 'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent'
+        : 'border border-slate-200 bg-white text-slate-700 dark:bg-rose-500/15 dark:text-rose-300 dark:border-transparent';
+  const dot =
+    sla.level === 'none' ? 'bg-slate-400' : isOverdue ? 'bg-rose-500' : 'bg-amber-500';
+  return { label, className, dot, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
 };
 
 // ── Snooze helpers ──
@@ -1197,8 +1203,9 @@ const PreviewPane: React.FC<{
         <>
           <span className="text-slate-600 dark:text-navy-600">·</span>
           <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${sla.className}`}
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${sla.className}`}
           >
+            <span className={`w-1.5 h-1.5 rounded-full ${sla.dot}`} />
             SLA {sla.label}
           </span>
         </>
@@ -2508,28 +2515,32 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               const st = item.itemStatus || (item.triaged ? 'done' : 'open');
               const cfg: Record<string, { color: string; dot: string; label: string }> = {
                 open: {
-                  color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                  color:
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent',
                   dot: 'bg-amber-500',
                   label: isPolish ? 'Otwarte' : 'Open',
                 },
                 done: {
                   color:
-                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-transparent',
                   dot: 'bg-emerald-500',
                   label: isPolish ? 'Gotowe' : 'Done',
                 },
                 saved: {
-                  color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+                  color:
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-blue-500/15 dark:text-blue-300 dark:border-transparent',
                   dot: 'bg-blue-500',
                   label: isPolish ? 'Zapisane' : 'Saved',
                 },
                 snoozed: {
-                  color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                  color:
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent',
                   dot: 'bg-amber-500',
                   label: isPolish ? 'Odłożone' : 'Snoozed',
                 },
                 dismissed: {
-                  color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
+                  color:
+                    'border border-slate-200 bg-white text-slate-600 dark:bg-slate-500/15 dark:text-slate-300 dark:border-transparent',
                   dot: 'bg-slate-400',
                   label: isPolish ? 'Odłożone' : 'Dismissed',
                 },
@@ -3071,9 +3082,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               </span>
               {sla.label !== '-' ? (
                 <span
-                  className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${sla.className}`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${sla.className}`}
                   title={sla.title}
                 >
+                  <span className={`w-1.5 h-1.5 rounded-full ${sla.dot}`} />
                   {sla.label}
                 </span>
               ) : null}

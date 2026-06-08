@@ -16,7 +16,6 @@ import {
   AlertOctagon,
   CheckSquare,
   ClipboardList,
-  Plus,
   Sparkles,
   Target,
   Trash2,
@@ -100,6 +99,239 @@ function progressPct(kpi: RolloutKpi): number {
 
 const SUBVIEW_ORDER: RolloutSubview[] = ['plan', 'kpi', 'risks', 'change', 'closure'];
 
+// ── Derived-data helpers (#14/#16/#18) ───────────────────────────────────────
+// When the rollout API returns an empty list, we surface representative,
+// READ-ONLY rows computed entirely from the real `initiatives` prop (and the
+// execution risk/delay signals when present). No random/fake values — every
+// number traces back to an initiative field.
+
+const COMPLETED_STATUSES = new Set<string>(['DONE', 'TRACKING', 'ARCHIVED']);
+const ACTIVE_STATUSES = new Set<string>([
+  'EXECUTING',
+  'BLOCKED',
+  'SCHEDULED',
+  'APPROVED',
+  'PLANNING',
+]);
+const GATE_READY_STATUSES = new Set<string>(['APPROVED', 'SCHEDULED', 'PROMOTED']);
+
+/** Health bucket for a single initiative, derived from status + dates + progress. */
+type InitiativeHealth = 'on-track' | 'at-risk' | 'overdue';
+
+function isOverdue(init: FullInitiative): boolean {
+  const end =
+    (init as { plannedEndDate?: string }).plannedEndDate ||
+    (init as { endDate?: string }).endDate;
+  if (!end) return false;
+  const d = new Date(end);
+  if (Number.isNaN(d.getTime())) return false;
+  const status = String(init.status || '').toUpperCase();
+  if (COMPLETED_STATUSES.has(status) || status === 'CANCELLED') return false;
+  return d.getTime() < Date.now();
+}
+
+function initiativeHealth(init: FullInitiative): InitiativeHealth {
+  const status = String(init.status || '').toUpperCase();
+  if (isOverdue(init)) return 'overdue';
+  if (status === 'BLOCKED') return 'at-risk';
+  return 'on-track';
+}
+
+/** A derived row shares the persisted shape but is flagged read-only. */
+interface DerivedKpi extends RolloutKpi {
+  derived: true;
+  tone: SignalTone;
+}
+interface DerivedRisk extends RolloutRisk {
+  derived: true;
+}
+interface DerivedClosure extends RolloutClosure {
+  derived: true;
+}
+
+function deriveKpis(initiatives: FullInitiative[]): DerivedKpi[] {
+  const total = initiatives.length;
+  if (total === 0) return [];
+
+  const active = initiatives.filter((i) =>
+    ACTIVE_STATUSES.has(String(i.status || '').toUpperCase())
+  );
+  const onTrackCount = initiatives.filter((i) => initiativeHealth(i) === 'on-track').length;
+  const overdueCount = initiatives.filter((i) => isOverdue(i)).length;
+  const gateReadyCount = initiatives.filter((i) =>
+    GATE_READY_STATUSES.has(String(i.status || '').toUpperCase())
+  ).length;
+
+  const progresses = initiatives
+    .map((i) => (typeof i.progress === 'number' ? i.progress : null))
+    .filter((p): p is number => p !== null);
+  const avgProgress = progresses.length
+    ? Math.round(progresses.reduce((a, b) => a + b, 0) / progresses.length)
+    : 0;
+
+  const onTrackPct = Math.round((onTrackCount / total) * 100);
+
+  const tri = (good: boolean, warn: boolean): SignalTone =>
+    good ? 'success' : warn ? 'warning' : 'danger';
+
+  return [
+    {
+      id: 'derived-on-track',
+      name: '% initiatives on track',
+      baseline: 0,
+      target: 100,
+      current_value: onTrackPct,
+      unit: '%',
+      derived: true,
+      tone: tri(onTrackPct >= 80, onTrackPct >= 50),
+    },
+    {
+      id: 'derived-avg-progress',
+      name: 'Avg progress %',
+      baseline: 0,
+      target: 100,
+      current_value: avgProgress,
+      unit: '%',
+      derived: true,
+      tone: tri(avgProgress >= 70, avgProgress >= 40),
+    },
+    {
+      id: 'derived-overdue',
+      name: 'Overdue initiatives',
+      baseline: total,
+      target: 0,
+      current_value: overdueCount,
+      unit: '',
+      derived: true,
+      tone: tri(overdueCount === 0, overdueCount <= Math.max(1, Math.round(total * 0.15))),
+    },
+    {
+      id: 'derived-gate-ready',
+      name: 'Gate-ready count',
+      baseline: 0,
+      target: total,
+      current_value: gateReadyCount,
+      unit: '',
+      derived: true,
+      tone: tri(gateReadyCount > 0, true),
+    },
+    {
+      id: 'derived-active',
+      name: 'Active initiatives',
+      baseline: 0,
+      target: total,
+      current_value: active.length,
+      unit: '',
+      derived: true,
+      tone: 'neutral',
+    },
+  ];
+}
+
+function deriveRisks(
+  initiatives: FullInitiative[],
+  riskSignals: RiskSignalItem[],
+  delaySignals: DelaySignalItem[]
+): DerivedRisk[] {
+  const sevToLevel = (s: string): string => {
+    const k = s.toUpperCase();
+    if (k === 'CRITICAL' || k === 'HIGH') return 'high';
+    if (k === 'MEDIUM' || k === 'WARNING') return 'medium';
+    return 'low';
+  };
+
+  // Prefer the real execution signals when the host passed them.
+  if (riskSignals.length || delaySignals.length) {
+    const rows: DerivedRisk[] = [];
+    for (const r of riskSignals) {
+      rows.push({
+        id: `derived-risk-${r.id}`,
+        title: `${r.initiativeName}: ${r.title}`,
+        probability: sevToLevel(r.severity),
+        impact: sevToLevel(r.severity),
+        mitigation: r.suggestedAction || null,
+        status: 'OPEN',
+        derived: true,
+      });
+    }
+    for (const d of delaySignals) {
+      rows.push({
+        id: `derived-delay-${d.id}`,
+        title: `${d.entityName}: ${d.deviationType.replace(/_/g, ' ').toLowerCase()} (${d.daysDeviation}d)`,
+        probability: d.severity === 'CRITICAL' ? 'high' : 'medium',
+        impact: sevToLevel(d.severity),
+        mitigation: d.whySlipReasons?.[0]?.detail || null,
+        status: 'OPEN',
+        derived: true,
+      });
+    }
+    if (rows.length) return rows;
+  }
+
+  // Fallback: derive from initiative health (blocked / overdue / at-risk).
+  return initiatives
+    .filter((i) => initiativeHealth(i) !== 'on-track')
+    .map((i) => {
+      const overdue = isOverdue(i);
+      const status = String(i.status || '').toUpperCase();
+      const reason = overdue
+        ? 'Past planned end date'
+        : status === 'BLOCKED'
+          ? (i as { blockedReason?: string }).blockedReason || 'Blocked'
+          : 'At risk';
+      const priority = String(i.priority || '').toLowerCase();
+      const impact =
+        priority === 'critical' || priority === 'high'
+          ? 'high'
+          : priority === 'medium'
+            ? 'medium'
+            : 'low';
+      return {
+        id: `derived-init-risk-${i.id}`,
+        title: `${i.name || i.id}: ${reason}`,
+        probability: overdue ? 'high' : status === 'BLOCKED' ? 'high' : 'medium',
+        impact,
+        mitigation: null,
+        status: 'OPEN',
+        derived: true as const,
+      };
+    });
+}
+
+function deriveClosures(initiatives: FullInitiative[]): DerivedClosure[] {
+  const completed = initiatives.filter((i) =>
+    COMPLETED_STATUSES.has(String(i.status || '').toUpperCase())
+  );
+  const rows: DerivedClosure[] = [];
+  // PMI/PRINCE2 closure categories, one checklist item per completed initiative.
+  for (const i of completed) {
+    const name = i.name || i.id;
+    const status = String(i.status || '').toUpperCase();
+    rows.push({
+      id: `derived-handover-${i.id}`,
+      title: `Handover: transfer ${name} deliverables to operations`,
+      category: 'Handover',
+      status: 'OPEN',
+      derived: true,
+    });
+    rows.push({
+      id: `derived-signoff-${i.id}`,
+      title: `Sign-off: obtain sponsor acceptance for ${name}`,
+      category: 'Sign-off',
+      status: status === 'ARCHIVED' ? 'DONE' : 'OPEN',
+      derived: true,
+    });
+    rows.push({
+      id: `derived-closure-${i.id}`,
+      title: `Closure: capture lessons learned & archive ${name}`,
+      category: 'Closure',
+      status: status === 'ARCHIVED' ? 'DONE' : 'OPEN',
+      derived: true,
+    });
+  }
+  return rows;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────
 
 export const RolloutTab: React.FC<RolloutTabProps> = ({
@@ -114,6 +346,16 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
   const { t } = useTranslation();
   const [subview, setSubview] = useState<RolloutSubview>('kpi');
 
+  // #19 — broadcast the active rollout sub-view so the ExecutionHub host can pick
+  // the right Menu-2 CTA (Add KPI / Add Risk / Add Item, or none for plan/change).
+  // Fires on mount (initial 'kpi') and on every sub-tab switch. The sub-view ids
+  // (plan | kpi | risks | change | closure) match what ExecutionHub.menuCta checks.
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('rollout:subview-change', { detail: { subview } })
+    );
+  }, [subview]);
+
   const [kpis, setKpis] = useState<RolloutKpi[]>([]);
   const [kpiHistory, setKpiHistory] = useState<Record<string, number[]>>({});
   const [risks, setRisks] = useState<RolloutRisk[]>([]);
@@ -123,6 +365,19 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // #14/#16/#18 — derived (read-only) rows from real in-app data, shown only when
+  // the API list for that resource is empty. User-created/persisted rows win.
+  const derivedKpis = useMemo(() => deriveKpis(initiatives), [initiatives]);
+  const derivedRisks = useMemo(
+    () => deriveRisks(initiatives, riskSignals, delaySignals),
+    [initiatives, riskSignals, delaySignals]
+  );
+  const derivedClosures = useMemo(() => deriveClosures(initiatives), [initiatives]);
+
+  const showDerivedKpis = kpis.length === 0 && derivedKpis.length > 0;
+  const showDerivedRisks = risks.length === 0 && derivedRisks.length > 0;
+  const showDerivedClosures = closures.length === 0 && derivedClosures.length > 0;
 
   const projectQuery = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
 
@@ -350,6 +605,33 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
       setClosures((p) => p.filter((c) => c.id !== id));
     });
 
+  // #14/#16/#18 — Single source of truth for the "Add" CTA is the ExecutionHub
+  // Menu-2 button. The in-body Add buttons were removed; instead we listen for
+  // the window CustomEvents that the host dispatches when its CTA is clicked.
+  // Change has no add CTA (#17 — Change Log is an automatic timeline). Stable
+  // refs keep the listeners current without re-subscribing every render.
+  const addKpiRef = React.useRef(addKpi);
+  const addRiskRef = React.useRef(addRisk);
+  const addClosureRef = React.useRef(addClosure);
+  addKpiRef.current = addKpi;
+  addRiskRef.current = addRisk;
+  addClosureRef.current = addClosure;
+
+  useEffect(() => {
+    if (readOnly) return;
+    const onAddKpi = () => void addKpiRef.current();
+    const onAddRisk = () => void addRiskRef.current();
+    const onAddClosure = () => void addClosureRef.current();
+    window.addEventListener('execution:add-kpi', onAddKpi);
+    window.addEventListener('execution:add-risk', onAddRisk);
+    window.addEventListener('execution:add-closure-item', onAddClosure);
+    return () => {
+      window.removeEventListener('execution:add-kpi', onAddKpi);
+      window.removeEventListener('execution:add-risk', onAddRisk);
+      window.removeEventListener('execution:add-closure-item', onAddClosure);
+    };
+  }, [readOnly]);
+
   // ── Teresa risk touchpoint ─────────────────────────────────────────────
   const activeSignalCount = riskSignals.length + delaySignals.length;
   const topSignal =
@@ -414,15 +696,18 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               'execution.rollout.kpi.subtitle',
               'Monitor operational and financial rollout performance.'
             )}
-            action={
-              !readOnly && (
-                <Button variant="brand" size="sm" onClick={addKpi} disabled={busy}>
-                  <Plus size={16} /> {t('execution.rollout.kpi.add', 'Add KPI')}
-                </Button>
-              )
-            }
           />
-          {kpis.length === 0 ? (
+          {showDerivedKpis ? (
+            <div className="space-y-3">
+              <DerivedNote
+                label={t(
+                  'execution.rollout.kpi.derivedNote',
+                  'Derived from your initiatives — portfolio delivery health. Add a KPI to start tracking your own.'
+                )}
+              />
+              <DerivedKpiGrid kpis={derivedKpis} t={t} />
+            </div>
+          ) : kpis.length === 0 ? (
             <EmptyBox
               icon={<Target className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
               message={t(
@@ -442,6 +727,11 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               {kpis.map((kpi) => {
                 const pct = progressPct(kpi);
                 const belowBaseline = kpi.current_value < kpi.baseline;
+                const kpiTone: SignalTone = belowBaseline
+                  ? 'danger'
+                  : pct >= 50
+                    ? 'success'
+                    : 'warning';
                 return (
                   <div
                     key={kpi.id}
@@ -460,12 +750,15 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
                         className="flex-1 bg-transparent font-bold text-slate-800 dark:text-white outline-none"
                       />
                       <span
-                        className={`shrink-0 text-xs font-bold px-2 py-1 rounded ${
-                          belowBaseline
+                        className={`shrink-0 inline-flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded ${
+                          kpiTone === 'danger'
                             ? 'bg-crimson-50 text-crimson-700 dark:bg-crimson-900/30 dark:text-crimson-300'
-                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                            : kpiTone === 'warning'
+                              ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                         }`}
                       >
+                        <SignalDot tone={kpiTone} />
                         {pct}%
                       </span>
                     </div>
@@ -475,7 +768,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
                         {kpi.unit}
                       </KpiCell>
                       <div className="border-x border-slate-200 dark:border-navy-700">
-                        <div className="text-[10px] text-slate-600 uppercase font-bold">
+                        <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
                           {t('execution.rollout.kpi.current', 'Current')}
                         </div>
                         <input
@@ -531,15 +824,18 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               'execution.rollout.risks.subtitle',
               'Track rollout risks, likelihood, impact, and mitigation.'
             )}
-            action={
-              !readOnly && (
-                <Button variant="brand" size="sm" onClick={addRisk} disabled={busy}>
-                  <Plus size={16} /> {t('execution.rollout.risks.add', 'Add Risk')}
-                </Button>
-              )
-            }
           />
-          {risks.length === 0 ? (
+          {showDerivedRisks ? (
+            <div className="space-y-3">
+              <DerivedNote
+                label={t(
+                  'execution.rollout.risks.derivedNote',
+                  'Derived from your initiatives — blocked, at-risk and overdue items. Add a risk to maintain your own register.'
+                )}
+              />
+              <DerivedRiskTable risks={derivedRisks} t={t} />
+            </div>
+          ) : risks.length === 0 ? (
             <EmptyBox
               icon={<AlertOctagon className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
               message={t('execution.rollout.risks.empty', 'No risks logged.')}
@@ -584,16 +880,20 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
                     />
                   </td>
                   <td className="p-3">
-                    <select
+                    <StatusSelect
                       value={r.status}
+                      tone={riskStatusTone(r.status)}
                       disabled={readOnly}
-                      onChange={(e) => patchRisk(r.id, { status: e.target.value })}
-                      className="bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none"
+                      onChange={(v) => patchRisk(r.id, { status: v })}
                     >
-                      <option value="OPEN">Open</option>
-                      <option value="MITIGATED">Mitigated</option>
-                      <option value="CLOSED">Closed</option>
-                    </select>
+                      <option value="OPEN">{t('execution.rollout.risks.status.open', 'Open')}</option>
+                      <option value="MITIGATED">
+                        {t('execution.rollout.risks.status.mitigated', 'Mitigated')}
+                      </option>
+                      <option value="CLOSED">
+                        {t('execution.rollout.risks.status.closed', 'Closed')}
+                      </option>
+                    </StatusSelect>
                   </td>
                   <td className="p-3 text-right">
                     {!readOnly && <DeleteBtn onClick={() => deleteRisk(r.id)} />}
@@ -613,15 +913,8 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
             title={t('execution.rollout.change.title', 'Change Log')}
             subtitle={t(
               'execution.rollout.change.subtitle',
-              'Document and approve rollout change requests.'
+              'Automatic timeline of rollout changes — logged as approvals and edits land.'
             )}
-            action={
-              !readOnly && (
-                <Button variant="brand" size="sm" onClick={addChange} disabled={busy}>
-                  <Plus size={16} /> {t('execution.rollout.change.add', 'Add Change')}
-                </Button>
-              )
-            }
           />
           {changes.length === 0 ? (
             <EmptyBox
@@ -652,21 +945,32 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
                       className="w-full bg-transparent font-medium text-slate-700 dark:text-slate-200 outline-none"
                     />
                   </td>
-                  <td className="p-3 text-sm text-slate-500 dark:text-slate-400 capitalize">
-                    {c.type}
+                  <td className="p-3">
+                    <span className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 capitalize">
+                      <SignalDot tone="neutral" />
+                      {c.type || '—'}
+                    </span>
                   </td>
                   <td className="p-3">
-                    <select
+                    <StatusSelect
                       value={c.status}
+                      tone={changeStatusTone(c.status)}
                       disabled={readOnly}
-                      onChange={(e) => patchChange(c.id, { status: e.target.value })}
-                      className="bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none"
+                      onChange={(v) => patchChange(c.id, { status: v })}
                     >
-                      <option value="PROPOSED">Proposed</option>
-                      <option value="APPROVED">Approved</option>
-                      <option value="REJECTED">Rejected</option>
-                      <option value="IMPLEMENTED">Implemented</option>
-                    </select>
+                      <option value="PROPOSED">
+                        {t('execution.rollout.change.status.proposed', 'Proposed')}
+                      </option>
+                      <option value="APPROVED">
+                        {t('execution.rollout.change.status.approved', 'Approved')}
+                      </option>
+                      <option value="REJECTED">
+                        {t('execution.rollout.change.status.rejected', 'Rejected')}
+                      </option>
+                      <option value="IMPLEMENTED">
+                        {t('execution.rollout.change.status.implemented', 'Implemented')}
+                      </option>
+                    </StatusSelect>
                   </td>
                   <td className="p-3 text-right">
                     {!readOnly && <DeleteBtn onClick={() => deleteChange(c.id)} />}
@@ -688,15 +992,18 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               'execution.rollout.closure.subtitle',
               'Handover, sign-off, and project closure actions.'
             )}
-            action={
-              !readOnly && (
-                <Button variant="brand" size="sm" onClick={addClosure} disabled={busy}>
-                  <Plus size={16} /> {t('execution.rollout.closure.add', 'Add Item')}
-                </Button>
-              )
-            }
           />
-          {closures.length === 0 ? (
+          {showDerivedClosures ? (
+            <div className="space-y-3">
+              <DerivedNote
+                label={t(
+                  'execution.rollout.closure.derivedNote',
+                  'Derived from completed initiatives — PMI/PRINCE2 handover, sign-off and closure actions. Add an item to maintain your own checklist.'
+                )}
+              />
+              <DerivedClosureList closures={derivedClosures} />
+            </div>
+          ) : closures.length === 0 ? (
             <EmptyBox
               icon={<CheckSquare className="w-8 h-8 text-slate-600 dark:text-slate-400" />}
               message={t('execution.rollout.closure.empty', 'No closure items yet.')}
@@ -764,6 +1071,14 @@ const SectionHeader: React.FC<{
   </div>
 );
 
+/** Subtle banner marking a table/grid as derived (read-only) from initiatives. */
+const DerivedNote: React.FC<{ label: string }> = ({ label }) => (
+  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-950 border border-dashed border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2">
+    <Sparkles size={13} className="text-blue-400 shrink-0" />
+    <span>{label}</span>
+  </div>
+);
+
 const EmptyBox: React.FC<{
   icon: React.ReactNode;
   message: string;
@@ -778,8 +1093,10 @@ const EmptyBox: React.FC<{
 
 const KpiCell: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div>
-    <div className="text-[10px] text-slate-600 uppercase font-bold">{label}</div>
-    <div className="font-mono font-bold text-slate-600 dark:text-slate-400">{children}</div>
+    <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+      {label}
+    </div>
+    <div className="font-mono font-bold text-slate-700 dark:text-slate-300">{children}</div>
   </div>
 );
 
@@ -812,10 +1129,15 @@ const RegisterTable: React.FC<{ headers: string[]; children: React.ReactNode }> 
 }) => (
   <div className="overflow-x-auto bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
     <table className="w-full text-left">
-      <thead className="bg-slate-50 dark:bg-navy-950 text-xs text-slate-500 dark:text-slate-400 uppercase font-semibold">
+      <thead className="bg-slate-50 dark:bg-navy-950">
         <tr>
           {headers.map((h, i) => (
-            <th key={i} className="p-3">
+            <th
+              key={i}
+              className={`sticky top-0 z-10 bg-slate-50 dark:bg-navy-950 p-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ${
+                i === headers.length - 1 ? 'text-right' : 'text-left'
+              }`}
+            >
               {h}
             </th>
           ))}
@@ -826,21 +1148,202 @@ const RegisterTable: React.FC<{ headers: string[]; children: React.ReactNode }> 
   </div>
 );
 
+// ── Derived (read-only) renderers (#14/#16/#18) ─────────────────────────────
+
+const DerivedKpiGrid: React.FC<{
+  kpis: DerivedKpi[];
+  t: ReturnType<typeof useTranslation>['t'];
+}> = ({ kpis, t }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {kpis.map((kpi) => (
+      <div
+        key={kpi.id}
+        className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 p-5 rounded-xl shadow-sm"
+      >
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <span className="flex-1 font-bold text-slate-800 dark:text-white">{kpi.name}</span>
+          <span
+            className={`shrink-0 inline-flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded ${
+              kpi.tone === 'danger'
+                ? 'bg-crimson-50 text-crimson-700 dark:bg-crimson-900/30 dark:text-crimson-300'
+                : kpi.tone === 'warning'
+                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                  : kpi.tone === 'success'
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300'
+            }`}
+          >
+            <SignalDot tone={kpi.tone} />
+            {progressPct(kpi)}%
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <KpiCell label={t('execution.rollout.kpi.baseline', 'Baseline')}>
+            {kpi.baseline}
+            {kpi.unit}
+          </KpiCell>
+          <div className="border-x border-slate-200 dark:border-navy-700">
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+              {t('execution.rollout.kpi.current', 'Current')}
+            </div>
+            <div className="font-mono font-bold text-xl text-slate-800 dark:text-white tabular-nums">
+              {kpi.current_value}
+              {kpi.unit}
+            </div>
+          </div>
+          <KpiCell label={t('execution.rollout.kpi.target', 'Target')}>
+            {kpi.target}
+            {kpi.unit}
+          </KpiCell>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const DerivedRiskTable: React.FC<{
+  risks: DerivedRisk[];
+  t: ReturnType<typeof useTranslation>['t'];
+}> = ({ risks, t }) => (
+  <RegisterTable
+    headers={[
+      t('execution.rollout.risks.col.title', 'Title'),
+      t('execution.rollout.risks.col.probability', 'Probability'),
+      t('execution.rollout.risks.col.impact', 'Impact'),
+      t('execution.rollout.risks.col.status', 'Status'),
+    ]}
+  >
+    {risks.map((r) => (
+      <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+        <td className="p-3 font-medium text-slate-700 dark:text-slate-200">{r.title}</td>
+        <td className="p-3">
+          <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
+            <SignalDot tone={levelTone(r.probability)} />
+            {r.probability}
+          </span>
+        </td>
+        <td className="p-3">
+          <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
+            <SignalDot tone={levelTone(r.impact)} />
+            {r.impact}
+          </span>
+        </td>
+        <td className="p-3">
+          <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <SignalDot tone={riskStatusTone(r.status)} />
+            {t('execution.rollout.risks.status.open', 'Open')}
+          </span>
+        </td>
+      </tr>
+    ))}
+  </RegisterTable>
+);
+
+const DerivedClosureList: React.FC<{ closures: DerivedClosure[] }> = ({ closures }) => (
+  <div className="space-y-2">
+    {closures.map((c) => {
+      const done = c.status.toUpperCase() === 'DONE';
+      return (
+        <div
+          key={c.id}
+          className="flex items-center gap-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-3"
+        >
+          <span className="shrink-0 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+            <SignalDot tone={done ? 'success' : 'neutral'} />
+            {c.category}
+          </span>
+          <span
+            className={`flex-1 ${
+              done
+                ? 'line-through text-slate-600 dark:text-slate-500'
+                : 'text-slate-700 dark:text-slate-200'
+            }`}
+          >
+            {c.title}
+          </span>
+        </div>
+      );
+    })}
+  </div>
+);
+
+// ── Signal-dot tones (canon §4: leading colored dot on status/level chips) ──
+type SignalTone = 'success' | 'warning' | 'danger' | 'neutral';
+
+const DOT_CLASS: Record<SignalTone, string> = {
+  success: 'bg-emerald-500',
+  warning: 'bg-amber-500',
+  danger: 'bg-crimson-500',
+  neutral: 'bg-slate-400 dark:bg-slate-500',
+};
+
+/** Leading signal dot — builds the vertical scan-rail on status/level columns. */
+const SignalDot: React.FC<{ tone: SignalTone }> = ({ tone }) => (
+  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT_CLASS[tone]}`} aria-hidden />
+);
+
+const levelTone = (v: string): SignalTone => {
+  const k = v.toLowerCase();
+  if (k === 'high') return 'danger';
+  if (k === 'medium') return 'warning';
+  if (k === 'low') return 'success';
+  return 'neutral';
+};
+
+const riskStatusTone = (v: string): SignalTone => {
+  const k = v.toUpperCase();
+  if (k === 'CLOSED') return 'success';
+  if (k === 'MITIGATED') return 'warning';
+  if (k === 'OPEN') return 'danger';
+  return 'neutral';
+};
+
+const changeStatusTone = (v: string): SignalTone => {
+  const k = v.toUpperCase();
+  if (k === 'IMPLEMENTED' || k === 'APPROVED') return 'success';
+  if (k === 'PROPOSED') return 'warning';
+  if (k === 'REJECTED') return 'danger';
+  return 'neutral';
+};
+
 const LevelSelect: React.FC<{
   value: string;
   disabled?: boolean;
   onChange: (v: string) => void;
 }> = ({ value, disabled, onChange }) => (
-  <select
-    value={value}
-    disabled={disabled}
-    onChange={(e) => onChange(e.target.value)}
-    className="bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none capitalize"
-  >
-    <option value="low">low</option>
-    <option value="medium">medium</option>
-    <option value="high">high</option>
-  </select>
+  <span className="inline-flex items-center gap-2">
+    <SignalDot tone={levelTone(value)} />
+    <select
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+      className="bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none capitalize"
+    >
+      <option value="low">low</option>
+      <option value="medium">medium</option>
+      <option value="high">high</option>
+    </select>
+  </span>
+);
+
+const StatusSelect: React.FC<{
+  value: string;
+  tone: SignalTone;
+  disabled?: boolean;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}> = ({ value, tone, disabled, onChange, children }) => (
+  <span className="inline-flex items-center gap-2">
+    <SignalDot tone={tone} />
+    <select
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+      className="bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none"
+    >
+      {children}
+    </select>
+  </span>
 );
 
 const DeleteBtn: React.FC<{ onClick: () => void }> = ({ onClick }) => (

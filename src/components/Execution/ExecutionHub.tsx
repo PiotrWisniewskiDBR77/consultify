@@ -24,7 +24,6 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   AlertTriangle,
   Archive,
-  BarChart3,
   Calendar,
   CalendarDays,
   CheckCircle2,
@@ -125,6 +124,13 @@ import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './Execut
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
 import { RolloutTab } from './RolloutTab';
+import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
+import type { ReportConfig } from '@/components/Reports/Wizard';
+import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
+import {
+  generateReportDocument,
+  reportDocumentToMarkdown,
+} from '@/components/Reports/reportContentGenerator';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
@@ -554,7 +560,8 @@ interface ExecutionHubProps {
 }
 
 export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const openChatWithContext = useOpenChatWithContext();
@@ -586,11 +593,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
+  // #12 — bulk selection for the Execution Summary table (left checkbox column).
+  const [summarySelectedIds, setSummarySelectedIds] = useState<Set<string>>(new Set());
+  // #19 — active Rollout sub-view, so the Menu-2 CTA can vary per sub-view.
+  // The Rollout tab (lane L8) owns the sub-view state and broadcasts it via a
+  // 'rollout:subview-change' CustomEvent (detail.subview). We listen here.
+  const [rolloutSubview, setRolloutSubview] = useState<string>('kpi');
   const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
   const [reportPreviewId, setReportPreviewId] = useState<string | null>(null);
   const [reportPreset, setReportPreset] = useState<
     'all' | 'weekly' | 'monthly' | 'bi-weekly' | 'on-demand' | 'sponsor'
   >('all');
+  // #20 — reports produced by the Report Generator Wizard. The wizard mounts near
+  // this surface (below) and emits 'reporting:report-created' (detail=ReportConfig)
+  // on Complete; we append the entry here so it shows up in the Reporting list.
+  const [generatedReports, setGeneratedReports] = useState<ReportConfig[]>([]);
 
   // Data state
   const initRetryRef = React.useRef(0);
@@ -1555,6 +1572,75 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return result;
   }, [dashboardBaseInitiatives, activeStatusFilter]);
 
+  // #12 — bulk selection helpers for the Execution Summary table.
+  const summaryVisibleIds = useMemo(
+    () => summaryInitiatives.map((i) => String(i.id)),
+    [summaryInitiatives]
+  );
+  const summaryAllSelected =
+    summaryVisibleIds.length > 0 && summaryVisibleIds.every((id) => summarySelectedIds.has(id));
+
+  const toggleSummaryRow = useCallback((id: string) => {
+    setSummarySelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSummarySelectAll = useCallback(() => {
+    setSummarySelectedIds((prev) => {
+      const allSelected =
+        summaryVisibleIds.length > 0 && summaryVisibleIds.every((id) => prev.has(id));
+      return allSelected ? new Set<string>() : new Set(summaryVisibleIds);
+    });
+  }, [summaryVisibleIds]);
+
+  const clearSummarySelection = useCallback(() => setSummarySelectedIds(new Set()), []);
+
+  // Drop selections for rows that are no longer visible (filter/scope changes).
+  useEffect(() => {
+    setSummarySelectedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const visible = new Set(summaryVisibleIds);
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (visible.has(id)) next.add(id);
+      });
+      return next.size === prev.size ? prev : next;
+    });
+  }, [summaryVisibleIds]);
+
+  // #19 — listen for the Rollout sub-view broadcast from lane L8.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const sv = detail?.subview;
+      if (typeof sv === 'string' && sv) setRolloutSubview(sv);
+    };
+    window.addEventListener('rollout:subview-change', handler as EventListener);
+    return () => window.removeEventListener('rollout:subview-change', handler as EventListener);
+  }, []);
+
+  // #20 — listen for reports created by the Report Generator Wizard and append
+  // them to the Reporting list. Switch to the Reporting tab so the new entry is
+  // visible, and preview-select it.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const config = (e as CustomEvent).detail as ReportConfig | undefined;
+      if (!config || !config.id) return;
+      setGeneratedReports((prev) =>
+        prev.some((r) => r.id === config.id) ? prev : [config, ...prev]
+      );
+      setActiveTab('reports');
+      setReportPreset('all');
+      setReportPreviewId(config.id);
+    };
+    window.addEventListener('reporting:report-created', handler as EventListener);
+    return () => window.removeEventListener('reporting:report-created', handler as EventListener);
+  }, []);
+
   const mapToPreviewModel = useCallback((i: FullInitiative): InitiativePreviewV3Model => {
     return {
       id: i.id,
@@ -1734,6 +1820,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const columns: TableColumn[] = useMemo(
     () => [
       {
+        // #12 — leading bulk-select column. Per canon §3.5, BOTH the select-all
+        // (header) and the per-row checkboxes are now rendered by FilterableTable
+        // itself, driven by the `selection` prop below. We only declare the column
+        // slot here; no per-row render needed.
+        id: 'select',
+        label: '',
+        type: 'select',
+        width: '44px',
+      },
+      {
+        // #12 — NAME is the first content column (title left). Relabeled to
+        // "Initiative".
+        id: 'name',
+        label: t('execution.table.initiative', 'Initiative'),
+        render: (row) => (
+          <span
+            className="text-sm text-slate-900 dark:text-white font-medium truncate block"
+            title={String(row.name || '')}
+          >
+            {row.name}
+          </span>
+        ),
+      },
+      {
+        // #12 — TYPE moved AFTER the NAME column.
         id: 'type',
         label: t('execution.table.type'),
         width: '80px',
@@ -1748,18 +1859,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             </div>
           );
         },
-      },
-      {
-        id: 'name',
-        label: t('execution.table.name'),
-        render: (row) => (
-          <span
-            className="text-sm text-slate-900 dark:text-white font-medium truncate block"
-            title={String(row.name || '')}
-          >
-            {row.name}
-          </span>
-        ),
       },
       {
         id: 'status',
@@ -1903,13 +2002,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
           ).length;
 
+          // #12 — signal-tone system (danger/warning/success) with a leading
+          // signal dot, readable in light mode. Hard-coded rose/amber/emerald
+          // tints replaced with the c.* tokens.
           if (row.status === InitiativeStatus.BLOCKED) {
             badges.push(
               <span
                 key="blocked"
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/20 text-rose-400"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-c-danger"
               >
-                <AlertTriangle size={10} />
+                <span className="h-1.5 w-1.5 rounded-full bg-c-danger" aria-hidden="true" />
                 {t('execution.badges.blocked')}
               </span>
             );
@@ -1922,8 +2024,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             badges.push(
               <span
                 key="btasks"
-                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/15 text-rose-400"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-c-danger"
               >
+                <span className="h-1.5 w-1.5 rounded-full bg-c-danger" aria-hidden="true" />
                 {blockedTasks} {t('execution.badges.blocked')}
               </span>
             );
@@ -1933,8 +2036,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             badges.push(
               <span
                 key="odecisions"
-                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-400"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-warning/10 text-c-warning"
               >
+                <span className="h-1.5 w-1.5 rounded-full bg-c-warning" aria-hidden="true" />
                 {overdueDecisions} {t('execution.badges.decision')}
               </span>
             );
@@ -1942,8 +2046,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
           if (badges.length === 0) {
             return (
-              <span className="text-xs text-emerald-400/70 flex items-center gap-1">
-                <CheckCircle2 size={12} />
+              <span className="inline-flex items-center gap-1 text-xs text-c-success">
+                <span className="h-1.5 w-1.5 rounded-full bg-c-success" aria-hidden="true" />
                 {t('execution.badges.ok')}
               </span>
             );
@@ -1972,7 +2076,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
     ],
-    [decisionsByInitiative, handleInlineStatusChange, isPilotParticipant, t, tasksByInitiative]
+    [
+      decisionsByInitiative,
+      handleInlineStatusChange,
+      isPilotParticipant,
+      t,
+      tasksByInitiative,
+    ]
   );
 
   const scopeToggle = (
@@ -2045,23 +2155,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         </button>
       ) : null;
 
-    const resultsLink = (
-      <button
-        type="button"
-        onClick={() => navigate(ROUTES.BENEFITS)}
-        className="h-9 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-        title={t('execution.viewResults', 'View Results & ROI')}
-      >
-        <BarChart3 size={14} />
-        <span>{t('execution.viewResults', 'Results')}</span>
-      </button>
-    );
+    // #22/#13/#15/#21a — the "Results" button was removed at its single source
+    // here, so it no longer appears on ANY Implementation sub-tab (Summary,
+    // Rollout/*, Reporting, Management).
 
     if (!showScope) {
       return (
         <div className="flex items-center gap-2">
           {execChip}
-          {resultsLink}
         </div>
       );
     }
@@ -2069,11 +2170,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return (
       <div className="flex items-center gap-2">
         {execChip}
-        {resultsLink}
         {scopeToggle}
       </div>
     );
-  }, [activeTab, currentProjectId, execSnapshotSource, execTopline, navigate, scopeToggle, t]);
+  }, [activeTab, currentProjectId, execSnapshotSource, execTopline, scopeToggle, t]);
 
   const portfolioMetrics = useMemo(() => {
     const totalInitiatives = initiatives.length;
@@ -3495,7 +3595,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const totalInitiatives = dashboardBaseInitiatives.length;
     const progressPct = execSnapshot?.overview?.progressPercent ?? null;
 
-    return [
+    type CatalogEntry = Omit<
+      ReportDef,
+      | 'aiExecutiveReadout'
+      | 'aiRecommendedActions'
+      | 'dataQuality'
+      | 'degradedFlags'
+      | 'lastRefreshAt'
+      | 'scenarioNotes'
+    >;
+
+    const base: CatalogEntry[] = [
       {
         id: 'weekly-exec',
         title: 'Weekly Execution Pack',
@@ -3801,7 +3911,35 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         highlights: [{ label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' }],
       },
     ];
-  }, [actionCenter, tasks.length, decisions, dashboardBaseInitiatives.length, execSnapshot]);
+
+    // #20 — prepend reports produced by the Report Generator Wizard so they show
+    // up at the top of the Reporting list. They flow through enrichExecutionReport
+    // like the predefined catalog entries.
+    const wizardEntries: CatalogEntry[] = generatedReports.map((config) => ({
+      id: config.id,
+      title: config.title,
+      audience: config.audience,
+      cadence: config.cadenceLabel,
+      scope: config.scopeNote || config.goal || 'Generated report',
+      dataSources: ['Initiatives', 'Tasks', 'Decisions', 'Risk signals', 'Milestones'],
+      sections: config.sections,
+      ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
+      followUpActions: [],
+      icon: <Sparkles size={18} className="text-indigo-500" />,
+      highlights: [
+        { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
+      ],
+    }));
+
+    return [...wizardEntries, ...base];
+  }, [
+    actionCenter,
+    tasks.length,
+    decisions,
+    dashboardBaseInitiatives.length,
+    execSnapshot,
+    generatedReports,
+  ]);
 
   const reportDataContext = useMemo(
     (): ReportDataContext => ({
@@ -4059,12 +4197,39 @@ Please return:
     [t]
   );
 
-  const renderReportPreviewBody = useCallback((report: ReportDef) => {
+  const renderReportPreviewBody = useCallback(
+    (report: ReportDef) => {
     const rag = computeRAG(report);
     const ragConf = RAG_CONFIG[rag];
     const RagIcon = ragConf.icon;
+
+    // #20 — generate REAL report CONTENT from live data for this report type.
+    // Wizard-created reports carry a period via generatedReports; predefined
+    // catalog entries fall back to a live snapshot.
+    const wizardConfig = generatedReports.find((g) => g.id === report.id);
+    const generatedDoc = generateReportDocument({
+      typeId: (wizardConfig?.typeId as string) || report.id,
+      title: report.title,
+      audience: report.audience,
+      periodFrom: wizardConfig?.periodFrom,
+      periodTo: wizardConfig?.periodTo,
+      scopeNote: wizardConfig?.scopeNote,
+      ctx: reportDataContext,
+      isPolish,
+    });
+
     return (
-      <div className="p-4 space-y-4 overflow-auto">
+      <div className="overflow-auto">
+        {/* Generated, data-backed report document */}
+        <GeneratedReportView doc={generatedDoc} />
+
+        {/* Configuration / methodology descriptor */}
+        <div className="px-4 pb-2 pt-1">
+          <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-500 font-medium border-t border-slate-100 dark:border-navy-800 pt-3">
+            {t('execution.reportPanel.methodology', 'Report configuration & methodology')}
+          </div>
+        </div>
+        <div className="p-4 pt-2 space-y-4">
         {/* RAG badge + title */}
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -4215,9 +4380,12 @@ Please return:
             ))}
           </div>
         </div>
+        </div>
       </div>
     );
-  }, []);
+    },
+    [generatedReports, reportDataContext, isPolish, t]
+  );
 
   const handleGenerateInWordy = useCallback(
     (report: ReportDef) => {
@@ -4258,7 +4426,19 @@ Please return:
           <button
             type="button"
             onClick={() => {
-              const md = buildReportMarkdown(report, rag);
+              // #20 — copy the REAL generated content; fall back to descriptor.
+              const wizardConfig = generatedReports.find((g) => g.id === report.id);
+              const doc = generateReportDocument({
+                typeId: (wizardConfig?.typeId as string) || report.id,
+                title: report.title,
+                audience: report.audience,
+                periodFrom: wizardConfig?.periodFrom,
+                periodTo: wizardConfig?.periodTo,
+                scopeNote: wizardConfig?.scopeNote,
+                ctx: reportDataContext,
+                isPolish,
+              });
+              const md = `${reportDocumentToMarkdown(doc)}\n\n---\n\n${buildReportMarkdown(report, rag)}`;
               navigator.clipboard.writeText(md).then(
                 () => toast.success(t('execution.reportPanel.copied', 'Copied')),
                 () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
@@ -4271,7 +4451,7 @@ Please return:
         </div>
       );
     },
-    [handleGenerateReport, handleGenerateInWordy, t]
+    [handleGenerateReport, handleGenerateInWordy, t, generatedReports, reportDataContext, isPolish]
   );
 
   const renderReportsCatalog = () => {
@@ -4681,26 +4861,59 @@ Please return:
               />
             )}
           >
-            <FilterableTable
-              columns={columns}
-              data={summaryInitiatives as any[]}
-              selectedRowId={summaryPreviewInitiativeId}
-              persistKey="execution-summary"
-              onRowClick={(row) => setSummaryPreviewInitiativeId(String(row.id))}
-              onRowDoubleClick={(row) => {
-                const init = summaryInitiatives.find((x) => x.id === row.id);
-                if (init) handleOpenDocument(init);
-              }}
-              getRowActions={(row) => {
-                const init = summaryInitiatives.find((x) => x.id === row.id);
-                return init ? buildInitiativeRowActions(init) : [];
-              }}
-              activeFilters={summaryFilters}
-              onFilterChange={setSummaryFilters}
-              emptyMessage={t('execution.empty.noInExecution')}
-              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-              density="compact"
-            />
+            <div className="flex h-full min-h-0 flex-col">
+              {/* #12 — bulk action bar. The select-all checkbox + indeterminate
+                  now live in the FilterableTable header (canon §3.5); this bar
+                  only surfaces the selected-count + bulk actions when a selection
+                  exists. */}
+              {summarySelectedIds.size > 0 && (
+                <div className="flex items-center gap-3 px-4 pt-2">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 select-none">
+                    {t('execution.table.selectedCount', '{{count}} selected', {
+                      count: summarySelectedIds.size,
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearSummarySelection}
+                    className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {t('common.clear', 'Clear')}
+                  </button>
+                </div>
+              )}
+              <div className="min-h-0 flex-1">
+                <FilterableTable
+                  columns={columns}
+                  data={summaryInitiatives as any[]}
+                  selectedRowId={summaryPreviewInitiativeId}
+                  persistKey="execution-summary"
+                  selection={{
+                    selectedIds: summarySelectedIds,
+                    onToggleRow: toggleSummaryRow,
+                    onToggleAll: toggleSummarySelectAll,
+                    isAllSelected: summaryAllSelected,
+                    isIndeterminate: summarySelectedIds.size > 0 && !summaryAllSelected,
+                    selectRowLabel: t('execution.table.selectRow', 'Select row'),
+                    selectAllLabel: t('execution.table.selectAll', 'Select all'),
+                  }}
+                  onRowClick={(row) => setSummaryPreviewInitiativeId(String(row.id))}
+                  onRowDoubleClick={(row) => {
+                    const init = summaryInitiatives.find((x) => x.id === row.id);
+                    if (init) handleOpenDocument(init);
+                  }}
+                  getRowActions={(row) => {
+                    const init = summaryInitiatives.find((x) => x.id === row.id);
+                    return init ? buildInitiativeRowActions(init) : [];
+                  }}
+                  activeFilters={summaryFilters}
+                  onFilterChange={setSummaryFilters}
+                  emptyMessage={t('execution.empty.noInExecution')}
+                  canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+                  density="compact"
+                />
+              </div>
+            </div>
           </TableWithPreviewLayout>
         </div>
       );
@@ -4727,6 +4940,53 @@ Please return:
   const isChromelessTab =
     activeTab === ('people_change' as ModuleTab) || activeTab === ('rollout' as ModuleTab);
 
+  // #19 — per-view Menu-2 CTA. The right-side primary action depends on the
+  // active sub-view. Rollout sub-actions are fired as CustomEvents (the contract
+  // with lane L8, which builds the tab tables and listens for them).
+  const menuCta = useMemo((): { onNewItem?: () => void; newItemLabel: string } => {
+    const defaultLabel = t('initiatives.form.newInitiative', 'New Initiative');
+    if (isPilotParticipant) return { onNewItem: undefined, newItemLabel: defaultLabel };
+
+    const dispatch = (name: string) => () => window.dispatchEvent(new CustomEvent(name));
+
+    if (activeTab === 'reports') {
+      return {
+        onNewItem: dispatch('reporting:new-report'),
+        newItemLabel: t('execution.reports.newReport', 'New Report'),
+      };
+    }
+
+    if (activeTab === ('rollout' as ModuleTab)) {
+      switch (rolloutSubview) {
+        case 'kpi':
+          return {
+            onNewItem: dispatch('execution:add-kpi'),
+            newItemLabel: t('execution.rollout.addKpi', 'Add KPI'),
+          };
+        case 'risks':
+          return {
+            onNewItem: dispatch('execution:add-risk'),
+            newItemLabel: t('execution.rollout.addRisk', 'Add Risk'),
+          };
+        case 'closure':
+          return {
+            onNewItem: dispatch('execution:add-closure-item'),
+            newItemLabel: t('execution.rollout.addClosureItem', 'Add Item'),
+          };
+        // 'plan' (Master Rollout Plan) and 'change' (Change Log) -> NO CTA.
+        default:
+          return { onNewItem: undefined, newItemLabel: defaultLabel };
+      }
+    }
+
+    if (activeTab === ('people_change' as ModuleTab)) {
+      return { onNewItem: undefined, newItemLabel: defaultLabel };
+    }
+
+    // Summary ('list') -> keep "New initiative".
+    return { onNewItem: handleCreateInitiative, newItemLabel: defaultLabel };
+  }, [activeTab, handleCreateInitiative, isPilotParticipant, rolloutSubview, t]);
+
   return (
     <>
       <ModuleHub
@@ -4752,8 +5012,8 @@ Please return:
         }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={isPilotParticipant || isChromelessTab ? undefined : handleCreateInitiative}
-        newItemLabel={t('initiatives.form.newInitiative', 'New Initiative')}
+        onNewItem={menuCta.onNewItem}
+        newItemLabel={menuCta.newItemLabel}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
         rightControls={rightControls}
@@ -4791,6 +5051,10 @@ Please return:
             : null
         }
       />
+      {/* #20 — Report Generator Wizard. Self-mounts here so it can catch the
+          'reporting:new-report' CustomEvent dispatched by the Reporting Menu-2 CTA
+          and emit 'reporting:report-created' on Complete (handled above). */}
+      <ReportGeneratorWizard />
     </>
   );
 };

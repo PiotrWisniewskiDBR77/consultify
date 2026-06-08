@@ -15,6 +15,11 @@ import { useAppStore } from '../../../store/useAppStore';
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView } from '../../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../../types/workspace';
+import {
+  BETA_LOCKED_CODE,
+  dispatchBetaAccessBlocked,
+  lockClosedBetaModules,
+} from '../../../utils/betaAccess';
 import { canUseInternalTools } from '../../../utils/internalToolsAccess';
 import {
   dispatchPilotAccessBlocked,
@@ -144,6 +149,13 @@ export const Sidebar: React.FC = () => {
 
     return menuStructure.map((item) => decoratePilotItem(item));
   }, [currentUser?.role, menuStructure]);
+  // Beta gating: closed-beta modules are locked for non-administrators. They see
+  // the polished "access restricted" plate and cannot enter; admins keep access.
+  const betaLockedMessage = t('access.blocked.BETA_LOCKED');
+  const gatedMenuStructure = React.useMemo(
+    () => lockClosedBetaModules(visibleMenuStructure, currentUser?.role, betaLockedMessage),
+    [visibleMenuStructure, currentUser?.role, betaLockedMessage]
+  );
   const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
   const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
   const internalToolsMenuItem = React.useMemo(() => getInternalToolsMenuItem(t), [t]);
@@ -254,10 +266,14 @@ export const Sidebar: React.FC = () => {
       }
 
       if (item.isLocked) {
-        dispatchPilotAccessBlocked({
-          message: item.lockedMessage,
-          href: item.lockedCtaHref,
-        });
+        if (item.lockedCode === BETA_LOCKED_CODE) {
+          dispatchBetaAccessBlocked(item.lockedMessage);
+        } else {
+          dispatchPilotAccessBlocked({
+            message: item.lockedMessage,
+            href: item.lockedCtaHref,
+          });
+        }
         return;
       }
 
@@ -368,10 +384,14 @@ export const Sidebar: React.FC = () => {
   const handleFlyoutNavigate = React.useCallback(
     (item: MenuItem) => {
       if (item.isLocked) {
-        dispatchPilotAccessBlocked({
-          message: item.lockedMessage,
-          href: item.lockedCtaHref,
-        });
+        if (item.lockedCode === BETA_LOCKED_CODE) {
+          dispatchBetaAccessBlocked(item.lockedMessage);
+        } else {
+          dispatchPilotAccessBlocked({
+            message: item.lockedMessage,
+            href: item.lockedCtaHref,
+          });
+        }
         setActiveFloating(null);
         return;
       }
@@ -515,7 +535,7 @@ export const Sidebar: React.FC = () => {
 
           {/* Menu Items */}
           <div className={`space-y-0.5 pb-2 ${showFull ? 'pt-4 px-2' : 'pt-4 px-1'}`}>
-            {visibleMenuStructure.map(renderNavItem)}
+            {gatedMenuStructure.map(renderNavItem)}
           </div>
         </nav>
 

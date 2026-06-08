@@ -88,15 +88,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
         },
       ],
     },
-    // 4.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
-    // The functional hub lives at /audit-programs (AppRoutes), reached via the
-    // canonical audits AppView so it inherits the authenticated app shell.
-    {
-      id: 'MODULE_AUDITS',
-      label: t('sidebar.audits', 'Audits'),
-      icon: React.createElement(ClipboardCheck, { size: 20 }),
-      viewId: AppView.ASSESSMENT_AUDITS,
-    },
     // 5. Inicjatywy - zarządzanie inicjatywami
     {
       id: 'MODULE_INITIATIVES',
@@ -120,6 +111,7 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.results', 'Results'),
       icon: React.createElement(TrendingUp, { size: 20 }),
       viewId: AppView.BENEFITS_REALIZATION,
+      badge: 'beta',
     },
     // 8. Finanse - Financial Analysis v3
     {
@@ -127,6 +119,17 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.economics', 'Finance'),
       icon: React.createElement(Calculator, { size: 20 }),
       viewId: AppView.ECONOMICS,
+      badge: 'beta',
+    },
+    // 8.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
+    // The functional hub lives at /audit-programs (AppRoutes), reached via the
+    // canonical audits AppView so it inherits the authenticated app shell.
+    {
+      id: 'MODULE_AUDITS',
+      label: t('sidebar.audits', 'Audits'),
+      icon: React.createElement(ClipboardCheck, { size: 20 }),
+      viewId: AppView.ASSESSMENT_AUDITS,
+      badge: 'beta',
     },
     // 9. Outputs Library (route /presentations; unified documents, decks, templates)
     {
@@ -134,6 +137,7 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.outputsLibrary', 'Outputs'),
       icon: React.createElement(FolderOutput, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
+      badge: 'beta',
     },
     // 10. Documents — canonical Document Studio (Module 10). The legacy
     // WORDY view now resolves to /document-studio (see routeConfig).
@@ -147,9 +151,10 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
     // 11. Prezentacje — Gamma-style presentation generation (P20) — self-serve
     {
       id: 'MODULE_PREZENTACJE_GEN',
-      label: t('sidebar.prezentacje', 'Presentations'),
+      label: t('sidebar.prezentacje', 'Presentation Studio'),
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PREZENTACJE_GEN,
+      badge: 'beta',
     },
     // 12. Tabele Studio — operational tables (single canonical tables module)
     {
@@ -157,12 +162,14 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.tabele', 'Table Studio'),
       icon: React.createElement(Table, { size: 20 }),
       viewId: AppView.TABELE,
+      badge: 'beta',
     },
     {
       id: 'MODULE_MEETING',
       label: t('sidebar.meeting', 'Meeting'),
       icon: React.createElement(Users, { size: 20 }),
       viewId: AppView.MEETING,
+      badge: 'beta',
     },
     // MCP IRIS (14) and MCP Marketplace (15) removed from navigation per decision
     // D7 (placeholder-only modules dropped). Their routes now redirect to /chat.
@@ -206,7 +213,7 @@ export function getInternalToolsMenuItem(t: TranslationFn): MenuItem {
     label: t('sidebar.internalTools', 'Internal Tools'),
     icon: React.createElement(Brain, { size: 20 }),
     viewId: AppView.AI_OS_HOME,
-    badge: 'new',
+    badge: 'beta',
     subItems: [
       {
         id: 'AI_OS_HOME',
@@ -301,7 +308,7 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
     [AppView.PRESENTATIONS]: t('sidebar.outputsLibrary', 'Outputs'),
-    [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentations'),
+    [AppView.PREZENTACJE_GEN]: t('sidebar.prezentacje', 'Presentation Studio'),
     [AppView.WORDY]: t('sidebar.wordy', 'Documents'),
     [AppView.EXCELE]: t('sidebar.tabele', 'Table Studio'),
     [AppView.TABELE]: t('sidebar.tabele', 'Table Studio'),

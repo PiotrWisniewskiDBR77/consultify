@@ -89,6 +89,11 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
+import {
+  dispatchBetaAccessBlocked,
+  isBetaLockedForRole,
+  isBetaSubareaClosed,
+} from '@/utils/betaAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import {
   dispatchPilotAccessBlocked,
@@ -579,6 +584,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
   const canViewManager = isAdmin || isManager || isSuperAdmin;
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
+  // Beta gating: Ideas is a closed beta — blocked for non-admins, who see the
+  // branded "access restricted" plate. Admins keep access to keep building.
+  const ideasBetaLocked =
+    isBetaSubareaClosed('MYWORK_IDEAS') && isBetaLockedForRole(currentUser?.role);
 
   const restoredDocumentState = useMemo(() => readStoredMyWorkDocuments(), []);
   // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
@@ -772,6 +781,27 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       navigate('/my-work', { replace: true });
     }
   }, [activeTab, isPilotParticipant, location.pathname, navigate, openDocuments, searchParams]);
+  // Beta gating: keep non-admins out of the Ideas tab (incl. deep links / initial
+  // tab restore) and surface the branded access plate instead.
+  useEffect(() => {
+    if (!ideasBetaLocked) return;
+    const onIdeas =
+      activeTab === 'ideas' ||
+      location.pathname.startsWith('/my-work/ideas') ||
+      Boolean(searchParams.get('ideaId')) ||
+      Boolean(searchParams.get('idea'));
+    if (!onIdeas) return;
+    setActiveDocumentId((current) => {
+      if (!current) return current;
+      const activeDoc = openDocuments.find((doc) => doc.id === current);
+      return activeDoc?.type === 'idea' ? null : current;
+    });
+    setActiveTab('home');
+    dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
+    if (location.pathname.startsWith('/my-work/ideas')) {
+      navigate('/my-work', { replace: true });
+    }
+  }, [activeTab, ideasBetaLocked, location.pathname, navigate, openDocuments, searchParams, t]);
   useEffect(() => {
     try {
       window.sessionStorage.setItem(
@@ -1372,7 +1402,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.ideas,
         color: 'bg-amber-500',
         requiresManagerAccess: false,
-        isLocked: isPilotParticipant,
+        isLocked: isPilotParticipant || ideasBetaLocked,
+        betaLocked: ideasBetaLocked,
       },
       {
         id: 'notebook' as ModuleTab,
@@ -1428,7 +1459,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (tab.requiresManagerAccess && !canViewManager) return false;
       return true;
     });
-  }, [isPilotParticipant, isPolish, tabCounts, canViewManager]);
+  }, [isPilotParticipant, ideasBetaLocked, isPolish, tabCounts, canViewManager]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -3287,19 +3318,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </React.Suspense>
         );
       case 'decisions':
-        if (decisionsViewMode === 'timeline') {
-          return (
-            <React.Suspense fallback={lazyFallback}>
-              <DecisionsTimelineContainer
-                viewMode={decisionFilter}
-                searchQuery={searchQuery}
-                onDecisionClick={handleDecisionClick}
-                onCountsChange={handleDecisionCountsChange}
-                refreshTrigger={refreshTrigger}
-              />
-            </React.Suspense>
-          );
-        }
+        // Timeline view is intentionally disabled for Decisions — it is not exposed in the
+        // view switcher and must never render even if a stale 'timeline' value is present;
+        // fall through to the default list (table) view below.
         if (decisionsViewMode === 'kanban') {
           return (
             <React.Suspense fallback={lazyFallback}>
@@ -3395,11 +3416,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     key={tab.id}
                     onClick={() => {
                       if (tab.isLocked) {
-                        const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
-                        dispatchPilotAccessBlocked({
-                          message: detail.message,
-                          href: detail.href,
-                        });
+                        if (tab.betaLocked) {
+                          dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
+                        } else {
+                          const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
+                          dispatchPilotAccessBlocked({
+                            message: detail.message,
+                            href: detail.href,
+                          });
+                        }
                         return;
                       }
                       setActiveTab(tab.id);
@@ -3410,7 +3435,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     data-testid={`mywork-tab-${tab.id}`}
                     title={
                       tab.isLocked
-                        ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                        ? tab.betaLocked
+                          ? t('access.blocked.BETA_LOCKED')
+                          : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
                         : undefined
                     }
                   >
@@ -3574,12 +3601,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         titlePl: 'Kanban',
                         titleEn: 'Kanban',
                       },
-                      {
-                        id: 'timeline' as DecisionsViewMode,
-                        icon: GanttChart,
-                        titlePl: 'Timeline',
-                        titleEn: 'Timeline',
-                      },
+                      // Timeline (Day/Week/Month/Quarter) view intentionally hidden — not a
+                      // sensible view for Decisions. Component retained but unselectable.
                     ] as const
                   ).map(({ id, icon: Icon, titlePl, titleEn }) => {
                     const isActive = decisionsViewMode === id;

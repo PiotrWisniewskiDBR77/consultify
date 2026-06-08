@@ -19,6 +19,13 @@ export interface TableColumn {
   id: string;
   label: string;
   width?: string;
+  /**
+   * Opt-in leading selection column. When set to 'select', the HEADER renders a
+   * select-all checkbox (driven by the `selection` prop) instead of the plain
+   * `label` text, and the filter/resizer affordances are suppressed for it.
+   * Existing tables that don't set this are completely unaffected.
+   */
+  type?: 'select';
   filterable?: boolean;
   filterOptions?: { value: string; label: string; color?: string }[];
   sortable?: boolean;
@@ -69,6 +76,20 @@ interface FilterableTableProps {
    * module-wide "resize lost on reload" bug; one place instead of per-table.)
    */
   persistKey?: string;
+  /**
+   * Opt-in row selection. Drives the leading `type: 'select'` column: the header
+   * renders a select-all checkbox (indeterminate when partial) and each row
+   * renders a row checkbox. Omit to leave existing tables unaffected (canon §3.5).
+   */
+  selection?: {
+    selectedIds: Set<string> | string[];
+    onToggleRow: (id: string) => void;
+    onToggleAll: () => void;
+    isAllSelected: boolean;
+    isIndeterminate: boolean;
+    selectRowLabel?: string;
+    selectAllLabel?: string;
+  };
 }
 
 // True when a regular cell value should render as an em-dash placeholder
@@ -192,10 +213,19 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   density = 'comfortable',
   enableColumnSettings = true,
   persistKey,
+  selection,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const cellPadding = density === 'compact' ? 'px-4 py-2' : 'px-4 py-3';
+
+  // Opt-in selection (canon §3.5). Normalize selectedIds to a Set for O(1) lookup.
+  const selectedIdSet = useMemo(() => {
+    if (!selection) return null;
+    return selection.selectedIds instanceof Set
+      ? selection.selectedIds
+      : new Set(selection.selectedIds);
+  }, [selection]);
 
   // V-B — persisted column layout (widths + visibility/order). Read on mount,
   // written on change. Keyed by `persistKey`; no-op when unset.
@@ -400,6 +430,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   const maxWidth =
                     cfg?.maxWidth ?? (column.id === 'title' || column.id === 'name' ? 520 : 320);
                   const isLastDataCol = idx === visibleColumns.length - 1;
+                  const isSelectCol = column.type === 'select' && !!selection;
                   return (
                     <th
                       key={column.id}
@@ -410,25 +441,47 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         maxWidth: `${maxWidth}px`,
                       }}
                     >
-                      <div
-                        className={`flex items-center gap-1 ${
-                          column.align === 'right'
-                            ? 'justify-end'
-                            : column.align === 'center'
-                              ? 'justify-center'
-                              : ''
-                        }`}
-                      >
-                        <span>{column.label}</span>
-                        {column.filterable && (
-                          <FilterDropdown
-                            column={column}
-                            activeValues={getActiveFilterValues(column.id)}
-                            onApply={(values) => handleColumnFilter(column, values)}
+                      {isSelectCol ? (
+                        // Canon §3.5 — select-all lives in the header column.
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={selection!.isAllSelected}
+                            ref={(el) => {
+                              if (el) el.indeterminate = selection!.isIndeterminate;
+                            }}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              selection!.onToggleAll();
+                            }}
+                            aria-label={
+                              selection!.selectAllLabel ??
+                              t('common.selectAll', isPolish ? 'Zaznacz wszystko' : 'Select all')
+                            }
+                            className="h-4 w-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
                           />
-                        )}
-                      </div>
-                      {!isLastDataCol ? (
+                        </div>
+                      ) : (
+                        <div
+                          className={`flex items-center gap-1 ${
+                            column.align === 'right'
+                              ? 'justify-end'
+                              : column.align === 'center'
+                                ? 'justify-center'
+                                : ''
+                          }`}
+                        >
+                          <span>{column.label}</span>
+                          {column.filterable && (
+                            <FilterDropdown
+                              column={column}
+                              activeValues={getActiveFilterValues(column.id)}
+                              onApply={(values) => handleColumnFilter(column, values)}
+                            />
+                          )}
+                        </div>
+                      )}
+                      {!isLastDataCol && !isSelectCol ? (
                         <ColumnResizer
                           columnId={column.id}
                           currentWidth={width}
@@ -497,7 +550,22 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         key={column.id}
                         className={`${cellPadding} ${column.align ? alignToClass(column.align) : ''}`}
                       >
-                        {column.render ? (
+                        {column.type === 'select' && selection ? (
+                          <input
+                            type="checkbox"
+                            checked={selectedIdSet?.has(String(row.id)) ?? false}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              selection.onToggleRow(String(row.id));
+                            }}
+                            aria-label={
+                              selection.selectRowLabel ??
+                              t('common.selectRow', isPolish ? 'Zaznacz wiersz' : 'Select row')
+                            }
+                            className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
+                          />
+                        ) : column.render ? (
                           column.render(row)
                         ) : column.id === 'status' ? (
                           <EntityStatusChip status={row.status} />

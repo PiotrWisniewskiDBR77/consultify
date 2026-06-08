@@ -157,6 +157,13 @@ function toRadarMapSignal(card: RadarSignalCard, index: number) {
           : 'small',
     fitLevel:
       card.actionability === 'high' ? 'high' : card.actionability === 'medium' ? 'medium' : 'low',
+    score: Math.round(card.finalScore ?? 0),
+    confidence: card.confidenceScore ?? 0.6,
+    sourceName: card.source?.name || 'Source',
+    sourceUrl: card.source?.url,
+    topic: card.tags?.topics?.[0],
+    entity: card.tags?.entities?.[0],
+    publishedAt: card.publishedAt ?? null,
     preview: {
       shortDescription: card.summary,
       whyItMatters: card.whyItMatters,

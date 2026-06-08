@@ -17,7 +17,6 @@ import {
   ChevronUp,
   Clock,
   Compass,
-  Copy,
   Download,
   ExternalLink,
   Eye,
@@ -67,9 +66,21 @@ import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import { NModeSectionWrapper, ToolbarIconButton } from '@/components/shared/NModeLayout';
+import type { AIConsultantAction } from '@/components/shared/NModeLayout/AIConsultantPanel';
+import { AIConsultantPanel } from '@/components/shared/NModeLayout/AIConsultantPanel';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import {
+  ToolbarAISolidButton,
+  ToolbarAISplitButton,
+  ToolbarGhostButton,
+  ToolbarSubtleButton,
+} from '@/components/shared/NModeLayout/NModeToolbar';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
-import type { NModePropertyField, NModeSection } from '@/components/shared/NModeLayout/types';
+import type {
+  NModePropertyField,
+  NModeSection,
+  PropertyFieldOption,
+} from '@/components/shared/NModeLayout/types';
 import {
   ActivityLogCanvas,
   type ActivityLogEntry as NModeActivityLogEntry,
@@ -501,6 +512,41 @@ const STATUS_CONFIG: Record<
   failed: { label: { en: 'Failed', pl: 'Błąd' }, color: 'bg-rose-500', textColor: 'text-rose-500' },
 };
 
+// Colored-pill visual map for the Properties Strip STATUS field (parity with
+// Initiative). bg = soft tint, text = label color, dot = solid swatch.
+const STATUS_PILL: Record<string, { bg: string; text: string; dot: string }> = {
+  generating: {
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    text: 'text-amber-600 dark:text-amber-300',
+    dot: 'bg-amber-500',
+  },
+  draft: {
+    bg: 'bg-slate-100 dark:bg-navy-800',
+    text: 'text-slate-600 dark:text-slate-300',
+    dot: 'bg-slate-500',
+  },
+  completed: {
+    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    text: 'text-emerald-600 dark:text-emerald-300',
+    dot: 'bg-emerald-500',
+  },
+  in_review: {
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    text: 'text-blue-600 dark:text-blue-300',
+    dot: 'bg-blue-500',
+  },
+  published: {
+    bg: 'bg-teal-50 dark:bg-teal-900/20',
+    text: 'text-teal-600 dark:text-teal-300',
+    dot: 'bg-teal-500',
+  },
+  failed: {
+    bg: 'bg-rose-50 dark:bg-rose-900/20',
+    text: 'text-rose-600 dark:text-rose-300',
+    dot: 'bg-rose-500',
+  },
+};
+
 // ── N-mode section definitions (without component — assigned later) ──────────
 
 // Section nav model (#22 / #23c).
@@ -781,8 +827,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // #26 toolbar — uniform outline dropdowns (Export ▾ / ✨ AI ▾)
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
+  const [sectionsMenuOpen, setSectionsMenuOpen] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const aiMenuRef = useRef<HTMLDivElement | null>(null);
+  const sectionsMenuRef = useRef<HTMLDivElement | null>(null);
+  // Toolbar "≡ Sections ▾" visibility toggles (canon BLOCK_TYPES line 571).
+  // Maps section id → hidden. Sections absent from the map are visible.
+  // Local UI state only — drops hidden sections from the nav/canvas; no backend.
+  const [hiddenSectionIds, setHiddenSectionIds] = useState<Set<string>>(new Set());
 
   // #26b — "Submit for Information" (no review/approval gate; just notifies)
   const [submittingForInfo, setSubmittingForInfo] = useState(false);
@@ -812,6 +864,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // Insight-level "Propose initiatives" → opens the initiative generator (reconciles
   // AI/heuristic candidates from this insight against the live initiative grid).
   const [genOpen, setGenOpen] = useState(false);
+
+  // Artifact-level AI Consultant panel (POZIOM 3 — right slide-over). The
+  // slot-9 solid-teal toolbar button toggles this instead of a dropdown.
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   // Lifecycle transition state
   const [lifecycleTransitioning, setLifecycleTransitioning] = useState(false);
@@ -1105,7 +1161,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // #26 — close toolbar dropdowns on outside click / Escape (repo pattern)
   useEffect(() => {
-    if (!exportMenuOpen && !aiMenuOpen) return;
+    if (!exportMenuOpen && !aiMenuOpen && !sectionsMenuOpen) return;
     const handlePointer = (e: MouseEvent) => {
       const target = e.target as Node;
       if (exportMenuOpen && exportMenuRef.current && !exportMenuRef.current.contains(target)) {
@@ -1114,11 +1170,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       if (aiMenuOpen && aiMenuRef.current && !aiMenuRef.current.contains(target)) {
         setAiMenuOpen(false);
       }
+      if (
+        sectionsMenuOpen &&
+        sectionsMenuRef.current &&
+        !sectionsMenuRef.current.contains(target)
+      ) {
+        setSectionsMenuOpen(false);
+      }
     };
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setExportMenuOpen(false);
         setAiMenuOpen(false);
+        setSectionsMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handlePointer);
@@ -1127,7 +1191,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       document.removeEventListener('mousedown', handlePointer);
       document.removeEventListener('keydown', handleKey);
     };
-  }, [exportMenuOpen, aiMenuOpen]);
+  }, [exportMenuOpen, aiMenuOpen, sectionsMenuOpen]);
 
   useEffect(() => {
     const loadInsight = async () => {
@@ -1359,6 +1423,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     () => parseInsightContent(insight?.content),
     [insight?.content]
   );
+
+  // Whole-artifact plain-text summary for the AI Consultant panel: title +
+  // each section's heading & body in canonical order. Reuses the existing
+  // markdown section parser (`parsedInsightSections`) and falls back to the
+  // raw markdown content. No new backend.
+  const aiContextText = useMemo(() => {
+    if (!insight) return '';
+    const titleLine = insight.title ? `# ${insight.title}` : '';
+    const sectionText = parsedInsightSections
+      .map((s) => {
+        const heading = s.heading ? `## ${s.heading}` : '';
+        const body = (s.body || '').trim();
+        return [heading, body].filter(Boolean).join('\n');
+      })
+      .filter(Boolean)
+      .join('\n\n');
+    const composed = [titleLine, sectionText].filter(Boolean).join('\n\n').trim();
+    return composed || (insight.content || '').trim();
+  }, [insight, parsedInsightSections]);
 
   const executiveSummary = useMemo(() => {
     if (!insight?.content) return '';
@@ -2016,16 +2099,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [insight?.content]
   );
 
-  const handleCopy = async () => {
-    if (!insight?.content) return;
-    try {
-      await navigator.clipboard.writeText(insight.content);
-      toast.success(isPolish ? 'Skopiowano do schowka' : 'Copied to clipboard');
-    } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować' : 'Failed to copy');
-    }
-  };
-
   const handleExportMarkdown = (sectionIds?: string[]) => {
     if (!insight?.content) return;
     // #25 — when a section subset is supplied, emit a section-filtered markdown
@@ -2682,32 +2755,96 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const propertyFields = useMemo<NModePropertyField[]>(
     () => [
-      {
-        id: 'status',
-        label: { en: 'Status', pl: 'Status' },
-        type: 'select' as const,
-        value:
+      // Canon (INSIGHT_CANON line 60/101): status changes happen by clicking the
+      // STATUS field in the Properties Strip — NOT via toolbar buttons. The strip
+      // select is now interactive and routes the publish/review transitions to
+      // the EXISTING `handleLifecycleTransition` handler (same backend the old
+      // toolbar buttons used). The option set is curated by current governance
+      // state so only valid transitions are offered.
+      (() => {
+        const currentStatus =
           insight?.reviewStatus === 'in_review' || insight?.reviewStatus === 'published'
             ? insight.reviewStatus
-            : insight?.status || 'generating',
-        onChange: () => {},
-        readOnly: true,
-        options: [
+            : insight?.status || 'generating';
+        // Always include the current (display) value so the select renders it.
+        const baseOptions: PropertyFieldOption[] = [
           { value: 'draft', label: { en: 'Draft', pl: 'Szkic' } },
           { value: 'generating', label: { en: 'Generating', pl: 'Generowanie' } },
           { value: 'completed', label: { en: 'Completed', pl: 'Ukończone' } },
           { value: 'in_review', label: { en: 'In Review', pl: 'W recenzji' } },
           { value: 'published', label: { en: 'Published', pl: 'Opublikowano' } },
           { value: 'failed', label: { en: 'Failed', pl: 'Błąd' } },
-        ],
-      },
+        ];
+        // Governance transitions only fire when the value actually changes to a
+        // valid target; AI-generation statuses (draft/generating/completed/failed)
+        // are not user-settable, so selecting them is a no-op.
+        const editable = !lifecycleTransitioning;
+        const runTransition = (next: string) => {
+          if (next === currentStatus) return;
+          if (next === 'in_review' && currentStatus === 'completed') {
+            void handleLifecycleTransition('submit_review');
+          } else if (next === 'published') {
+            void handleLifecycleTransition('approve');
+          } else if (next === 'draft' && currentStatus === 'published') {
+            void handleLifecycleTransition('revert_draft');
+          }
+          // Any other target is an AI-generation status → not user-settable.
+        };
+        // Colored-pill visual parity with Initiative (bg / text / dot per state):
+        // Draft=slate · Generating=amber · In Review=blue · Completed=emerald ·
+        // Published(Ready)=teal · Failed=rose.
+        const pill = STATUS_PILL[currentStatus] || STATUS_PILL.completed;
+        const pillLabel = isPolish
+          ? STATUS_CONFIG[currentStatus]?.label.pl
+          : STATUS_CONFIG[currentStatus]?.label.en;
+        return {
+          id: 'status',
+          label: { en: 'Status', pl: 'Status' },
+          type: 'custom' as const,
+          value: currentStatus,
+          readOnly: !editable,
+          onChange: runTransition,
+          options: baseOptions,
+          render: () => (
+            <div className="relative">
+              <div
+                className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${pill.bg} border border-slate-200/60 dark:border-navy-600/60 ${pill.text}`}
+              >
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${pill.dot}`} />
+                <span className="flex-1 truncate">{pillLabel || currentStatus}</span>
+                {editable && <ChevronDown size={12} className="flex-shrink-0 opacity-60" />}
+              </div>
+              {editable && (
+                <select
+                  value={currentStatus}
+                  onChange={(e) => runTransition(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  title={isPolish ? 'Zmień status' : 'Change status'}
+                >
+                  {baseOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {isPolish ? opt.label.pl : opt.label.en}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          ),
+        };
+      })(),
       {
         id: 'type',
         label: { en: 'Analysis Type', pl: 'Typ analizy' },
-        type: 'text' as const,
+        type: 'custom' as const,
         value: isPolish ? typeMeta.labelPl : typeMeta.label,
         onChange: () => {},
         readOnly: true,
+        render: () => (
+          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-900/20 border border-slate-200/60 dark:border-navy-600/60 text-indigo-600 dark:text-indigo-300">
+            <span className="w-2 h-2 rounded-full flex-shrink-0 bg-indigo-500" />
+            <span className="flex-1 truncate">{isPolish ? typeMeta.labelPl : typeMeta.label}</span>
+          </div>
+        ),
       },
       {
         id: 'created',
@@ -2720,10 +2857,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       {
         id: 'sessions',
         label: { en: 'Sessions', pl: 'Sesje' },
-        type: 'text' as const,
+        type: 'custom' as const,
         value: String(insight?.sourceSessionCount || 0),
         onChange: () => {},
         readOnly: true,
+        render: () => (
+          <div className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-900/20 border border-slate-200/60 dark:border-navy-600/60 text-blue-600 dark:text-blue-300">
+            <span className="w-2 h-2 rounded-full flex-shrink-0 bg-blue-500" />
+            <span className="flex-1 truncate">{String(insight?.sourceSessionCount || 0)}</span>
+          </div>
+        ),
       },
       {
         id: 'findings',
@@ -2734,7 +2877,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         readOnly: true,
       },
     ],
-    [findingsSummary.total, insight, isPolish, typeMeta]
+    [
+      findingsSummary.total,
+      insight,
+      isPolish,
+      typeMeta,
+      handleLifecycleTransition,
+      lifecycleTransitioning,
+    ]
   );
 
   // ── Activity log → NMode format ───────────────────────────────────────────
@@ -7233,12 +7383,76 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     return [...ordered, ...missing];
   }, [nModeSectionsWithContent, nModeSectionOrder]);
 
+  // Canon: section "Mark complete" lives in the SectionCard header (INSIGHT_CANON
+  // 106–119), NOT the toolbar. NModeSectionWrapper renders only a passive
+  // `completed` indicator and we cannot edit it from here, so we inject a small
+  // success-green toggle at the top of the ACTIVE section's content. The nav ✓
+  // badge + progress keep working via the `completed` flag on each section.
+  const renderSectionCompleteToggle = useCallback(
+    (sectionId: string) => {
+      const done = !!sectionCompletions[sectionId];
+      return (
+        <div className="flex justify-end mb-3">
+          <button
+            type="button"
+            onClick={() => handleToggleSectionComplete(sectionId)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+              done
+                ? 'border-success-400/50 text-success-700 dark:text-success-300 bg-success-50/60 dark:bg-success-900/20'
+                : 'border-slate-300/60 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60'
+            }`}
+            title={
+              isPolish
+                ? 'Oznacz sekcję jako gotową (sygnał AI)'
+                : 'Mark section complete (AI signal)'
+            }
+          >
+            <CheckCircle2
+              size={14}
+              className={done ? 'text-success-600 dark:text-success-400' : ''}
+            />
+            {done
+              ? isPolish
+                ? 'Otwórz ponownie'
+                : 'Reopen'
+              : isPolish
+                ? 'Oznacz gotowe'
+                : 'Mark complete'}
+          </button>
+        </div>
+      );
+    },
+    [sectionCompletions, handleToggleSectionComplete, isPolish]
+  );
+
+  // Apply Sections-dropdown visibility toggles + inject the Mark-complete control
+  // into the active section. Hidden sections drop out of the nav/canvas entirely.
+  const visibleNModeSections = useMemo<NModeSection[]>(
+    () =>
+      orderedNModeSectionsWithContent
+        .filter((section) => !hiddenSectionIds.has(section.id))
+        .map((section) =>
+          section.id === activeNSection
+            ? {
+                ...section,
+                component: (
+                  <>
+                    {renderSectionCompleteToggle(section.id)}
+                    {section.component}
+                  </>
+                ),
+              }
+            : section
+        ),
+    [orderedNModeSectionsWithContent, hiddenSectionIds, activeNSection, renderSectionCompleteToggle]
+  );
+
   useEffect(() => {
-    if (orderedNModeSectionsWithContent.length === 0) return;
-    if (!orderedNModeSectionsWithContent.some((section) => section.id === activeNSection)) {
-      setActiveNSection(orderedNModeSectionsWithContent[0].id);
+    if (visibleNModeSections.length === 0) return;
+    if (!visibleNModeSections.some((section) => section.id === activeNSection)) {
+      setActiveNSection(visibleNModeSections[0].id);
     }
-  }, [orderedNModeSectionsWithContent, activeNSection]);
+  }, [visibleNModeSections, activeNSection]);
 
   // #25 — content-bearing sections offered in the export dialog. We exclude the
   // pure-UI / audit sections (next-actions, comments, activity log) that have no
@@ -7542,267 +7756,323 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }}
         properties={propertyFields}
         propertiesMaxColumns={5}
-        sections={orderedNModeSectionsWithContent}
+        sections={visibleNModeSections}
         activeSection={activeNSection}
         onSectionChange={setActiveNSection}
         onSectionReorder={handleNModeSectionReorder}
         presentationMode={presentationMode}
         onPresentationModeChange={setPresentationMode}
         buildArtifactCode={(type, id) => buildArtifactCode(type as ArtifactType, id)}
-        renderActionBar={() => (
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* #26 — Primary action: Submit for Information (no review/approval gate)
-              Canon A3: toolbar carries NO crimson/primary buttons — crimson is
-              reserved for modal CTAs. This is a neutral (secondary) toolbar action. */}
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<Send />}
-              loading={submittingForInfo}
-              disabled={submittingForInfo || insight?.status !== 'completed'}
-              onClick={handleSubmitForInformation}
-            >
-              {isPolish ? 'Wyślij do wiadomości' : 'Submit for Information'}
-            </Button>
+        renderActionBar={() => {
+          // Canon toolbar (BLOCK_TYPES_CANON §Toolbar artefaktu / INSIGHT_CANON §3):
+          //   [≡ Sections ▾] [New] [Export ▾]  · active section ·  │
+          //   [⚡ AI ▾ section]  ···spacer···  [⎊ Fork] [▶ Present]  │  [⚡ AI Consultant solid]
+          // Two zones split by a divider. ZERO crimson/primary; AI = teal only.
+          const activeSectionMeta = INSIGHT_SECTIONS.find((s) => s.id === activeNSection);
+          const activeSectionLabel = activeSectionMeta
+            ? isPolish
+              ? activeSectionMeta.label.pl
+              : activeSectionMeta.label.en
+            : '';
+          // No current insight section is an additive user list (all are
+          // AI-generated analysis sections), so "New" has no per-section add
+          // handler to bind to — it stays disabled with an explanatory tooltip
+          // rather than inventing a backend (canon: disabled + tooltip allowed).
+          const canAddInSection = false;
+          return (
+            <div className="flex items-center gap-1 min-h-[36px] flex-wrap">
+              {/* ── LEFT ZONE: content work ───────────────────────────────── */}
+              {/* Slot 1 — ≡ Sections ▾ : visibility toggles for the left nav */}
+              <div className="relative" ref={sectionsMenuRef}>
+                <ToolbarGhostButton
+                  icon={<Layers size={14} />}
+                  onClick={() => {
+                    setSectionsMenuOpen((v) => !v);
+                    setExportMenuOpen(false);
+                    setAiMenuOpen(false);
+                  }}
+                >
+                  {isPolish ? 'Sekcje' : 'Sections'}
+                  <ChevronDown
+                    size={13}
+                    className={`ml-0.5 transition-transform ${sectionsMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </ToolbarGhostButton>
+                {sectionsMenuOpen && (
+                  <div className="absolute left-0 z-30 mt-1 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                    {(() => {
+                      // Group like the left nav (#22b). Walk in canonical order.
+                      const groups: { group: string; items: NModeSection[] }[] = [];
+                      orderedNModeSectionsWithContent.forEach((s) => {
+                        const g = s.group ?? '';
+                        let bucket = groups.find((b) => b.group === g);
+                        if (!bucket) {
+                          bucket = { group: g, items: [] };
+                          groups.push(bucket);
+                        }
+                        bucket.items.push(s);
+                      });
+                      return groups.map((bucket) => (
+                        <div key={bucket.group} className="px-1 py-1">
+                          {bucket.group && (
+                            <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                              {bucket.group}
+                            </div>
+                          )}
+                          {bucket.items.map((s) => {
+                            const empty = s.hasData === false && !s.alwaysShow;
+                            const hidden = hiddenSectionIds.has(s.id);
+                            const Icon = s.icon;
+                            return (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() =>
+                                  setHiddenSectionIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(s.id)) next.delete(s.id);
+                                    else next.add(s.id);
+                                    return next;
+                                  })
+                                }
+                                className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800"
+                              >
+                                <span className="shrink-0 text-slate-400 dark:text-slate-500">
+                                  {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </span>
+                                <Icon
+                                  size={13}
+                                  className={
+                                    empty
+                                      ? 'text-slate-300 dark:text-slate-600'
+                                      : 'text-slate-500 dark:text-slate-400'
+                                  }
+                                />
+                                <span
+                                  className={`flex-1 truncate ${
+                                    empty
+                                      ? 'text-slate-400 dark:text-slate-500'
+                                      : 'text-slate-700 dark:text-slate-200'
+                                  } ${hidden ? 'line-through opacity-60' : ''}`}
+                                >
+                                  {isPolish ? s.label.pl : s.label.en}
+                                </span>
+                                {empty && (
+                                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500">
+                                    {isPolish ? 'brak' : 'empty'}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ));
+                    })()}
+                    <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHiddenSectionIds(new Set());
+                        setSectionsMenuOpen(false);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
+                    >
+                      <RefreshCw size={14} />
+                      {isPolish ? 'Przywróć domyślne' : 'Restore defaults'}
+                    </button>
+                  </div>
+                )}
+              </div>
 
-            {/* Insight → initiative generator (propose & reconcile against the grid) */}
-            <Button
-              variant="outline"
-              size="sm"
-              icon={<Sparkles />}
-              disabled={!insight?.id}
-              onClick={() => setGenOpen(true)}
-            >
-              {isPolish ? 'Zaproponuj inicjatywy' : 'Propose initiatives'}
-            </Button>
+              {/* Slot 2 — New : contextual add in the active section */}
+              <ToolbarSubtleButton
+                icon={<Plus size={14} />}
+                disabled={!canAddInSection}
+                title={
+                  canAddInSection
+                    ? undefined
+                    : isPolish
+                      ? 'Ta sekcja nie obsługuje ręcznego dodawania'
+                      : 'This section has no manual add action'
+                }
+              >
+                {isPolish ? 'Nowy' : 'New'}
+              </ToolbarSubtleButton>
 
-            <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
+              {/* Slot 3 — Export ▾ : canon destinations only */}
+              <div className="relative" ref={exportMenuRef}>
+                <ToolbarGhostButton
+                  icon={<ExternalLink size={14} />}
+                  onClick={() => {
+                    setExportMenuOpen((v) => !v);
+                    setAiMenuOpen(false);
+                    setSectionsMenuOpen(false);
+                  }}
+                >
+                  {isPolish ? 'Eksport' : 'Export'}
+                  <ChevronDown
+                    size={13}
+                    className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </ToolbarGhostButton>
+                {exportMenuOpen && (
+                  <div className="absolute left-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
+                    {/* Canon destinations: Notatki · Idee/Tools · Prezentacja · PDF */}
+                    <button
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        handleExportToNotebook();
+                      }}
+                      disabled={isExportingNotebook || insight?.status !== 'completed'}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                    >
+                      {isExportingNotebook ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <BookOpen size={14} />
+                      )}
+                      {isPolish ? 'Do Notatnika' : 'To Notebook'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        handleExportToTools();
+                      }}
+                      disabled={isExportingTools || insight?.status !== 'completed'}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                    >
+                      {isExportingTools ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Target size={14} />
+                      )}
+                      {isPolish ? 'Do Idei / Tools' : 'To Ideas / Tools'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        setExportTarget('deck');
+                        setPresentOpen(true);
+                      }}
+                      disabled={insight?.status !== 'completed'}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                    >
+                      <LayoutGrid size={14} />
+                      {isPolish ? 'Do Prezentacji' : 'To Deck'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        setExportTarget('report');
+                        openExportDialog();
+                      }}
+                      disabled={insight?.status !== 'completed'}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                    >
+                      <FileText size={14} />
+                      {isPolish ? 'PDF / Raport' : 'PDF / Report'}
+                    </button>
+                    <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                    <button
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        openExportDialog();
+                      }}
+                      disabled={insight?.status !== 'completed'}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                    >
+                      <Sparkles size={14} />
+                      {isPolish ? 'Inteligentny eksport…' : 'Smart export…'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        handleExportMarkdown();
+                      }}
+                      disabled={insight?.status !== 'completed'}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                    >
+                      <Download size={14} />
+                      {isPolish ? 'Pobierz Markdown' : 'Download MD'}
+                    </button>
+                    <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
+                    {/* Propose initiatives — moved here from the old AI dropdown so
+                        the feature stays reachable after the slot-9 rework. */}
+                    <button
+                      onClick={() => {
+                        setExportMenuOpen(false);
+                        setGenOpen(true);
+                      }}
+                      disabled={!insight?.id}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
+                    >
+                      <Rocket size={14} />
+                      {isPolish ? 'Zaproponuj inicjatywy' : 'Propose initiatives'}
+                    </button>
+                  </div>
+                )}
+              </div>
 
-            {/* #26 — Export ▾ : uniform outline dropdown (all secondary exports) */}
-            <div className="relative" ref={exportMenuRef}>
-              <Button
-                variant="outline"
-                size="sm"
-                icon={<ExternalLink />}
+              {/* Slot 4 — active section label (orientation, not a button) */}
+              <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+              {activeSectionLabel && (
+                <span className="px-1 text-[12px] text-slate-400 dark:text-slate-500 truncate max-w-[160px]">
+                  · {activeSectionLabel} ·
+                </span>
+              )}
+
+              {/* Slot 5 — section-level AI (teal-subtle split). Wired to the same
+                  per-section AI handler used by each section's `aiAction`. */}
+              <ToolbarAISplitButton
+                icon={<Sparkles size={14} />}
+                disabled={isRegenerating}
+                onClick={handleRegenerate}
+                title={
+                  isPolish
+                    ? `AI dla sekcji: ${activeSectionLabel}`
+                    : `AI for section: ${activeSectionLabel}`
+                }
+              >
+                {isRegenerating && <Loader2 size={13} className="animate-spin" />}
+                {isPolish ? 'AI sekcji' : 'AI section'}
+              </ToolbarAISplitButton>
+
+              {/* ── spacer ─────────────────────────────────────────────────── */}
+              <div className="flex-1 min-w-0" />
+
+              {/* ── RIGHT ZONE: AI + modes ─────────────────────────────────── */}
+              {/* Slot 6 — Fork · Slot 7 — Present */}
+              <ToolbarIconButton
+                icon={<GitFork size={14} />}
+                tooltip={isPolish ? 'Forkuj' : 'Fork'}
+                disabled={isForking}
+                onClick={handleFork}
+              />
+              <ToolbarIconButton
+                icon={<Monitor size={14} />}
+                tooltip={isPolish ? 'Prezentuj' : 'Present'}
+                onClick={() => setPresentOpen(true)}
+              />
+
+              {/* Slot 9 — artifact-level AI Consultant (solid teal). Now TOGGLES
+                  the right-side AIConsultantPanel (POZIOM 3) instead of opening a
+                  one-shot dropdown. Stays teal/solid. */}
+              <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+              <ToolbarAISolidButton
+                icon={<Sparkles size={14} />}
                 onClick={() => {
-                  setExportMenuOpen((v) => !v);
+                  setAiPanelOpen((v) => !v);
+                  setExportMenuOpen(false);
+                  setSectionsMenuOpen(false);
                   setAiMenuOpen(false);
                 }}
+                title={isPolish ? 'AI Konsultant' : 'AI Consultant'}
               >
-                {isPolish ? 'Eksport' : 'Export'}
-                <ChevronDown
-                  size={13}
-                  className={`ml-0.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`}
-                />
-              </Button>
-              {exportMenuOpen && (
-                <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
-                  <button
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      openExportDialog();
-                    }}
-                    disabled={insight?.status !== 'completed'}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                  >
-                    <Sparkles size={14} />
-                    {isPolish ? 'Inteligentny eksport…' : 'Smart export…'}
-                  </button>
-                  <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
-                  <button
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      handleExportToTools();
-                    }}
-                    disabled={isExportingTools || insight?.status !== 'completed'}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                  >
-                    {isExportingTools ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Target size={14} />
-                    )}
-                    {isPolish ? 'Eksportuj do Tools' : 'Export to Tools'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      handleExportToAssessment();
-                    }}
-                    disabled={isExportingAssessment || insight?.status !== 'completed'}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                  >
-                    {isExportingAssessment ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <BarChart3 size={14} />
-                    )}
-                    {isPolish ? 'Eksportuj do Assessment' : 'Export to Assessment'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      handleExportToNotebook();
-                    }}
-                    disabled={isExportingNotebook || insight?.status !== 'completed'}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                  >
-                    {isExportingNotebook ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <BookOpen size={14} />
-                    )}
-                    {isPolish ? 'Do Notatnika' : 'To Notebook'}
-                  </button>
-                  <div className="my-1 h-px bg-slate-100 dark:bg-navy-700" />
-                  <button
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      handleExportMarkdown();
-                    }}
-                    disabled={insight?.status !== 'completed'}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                  >
-                    <Download size={14} />
-                    {isPolish ? 'Pobierz Markdown' : 'Download MD'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setExportMenuOpen(false);
-                      handleCopy();
-                    }}
-                    disabled={insight?.status !== 'completed'}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                  >
-                    <Copy size={14} />
-                    {isPolish ? 'Kopiuj markdown' : 'Copy markdown'}
-                  </button>
-                </div>
-              )}
+                {isPolish ? 'AI Konsultant' : 'AI Consultant'}
+              </ToolbarAISolidButton>
             </div>
-
-            {/* Legacy lifecycle controls — only surface for insights already in a
-              review/published state (older data). New insights use the
-              informational "Submit for Information" flow above (#26b). */}
-            {insight?.reviewStatus === 'in_review' && (
-              <>
-                <button
-                  onClick={() => handleLifecycleTransition('approve')}
-                  disabled={lifecycleTransitioning}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  {lifecycleTransitioning ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <CheckCircle2 size={14} />
-                  )}
-                  {isPolish ? 'Zatwierdź i opublikuj' : 'Approve & Publish'}
-                </button>
-                <button
-                  onClick={() => handleLifecycleTransition('reject')}
-                  disabled={lifecycleTransitioning}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  <X size={14} />
-                  {isPolish ? 'Odrzuć' : 'Reject'}
-                </button>
-              </>
-            )}
-
-            {insight?.reviewStatus === 'published' && (
-              <>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-                  <CheckCircle2 size={14} />
-                  {isPolish ? 'Opublikowano' : 'Published'}
-                </span>
-                <button
-                  onClick={() => handleLifecycleTransition('revert_draft')}
-                  disabled={lifecycleTransitioning}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 text-xs font-medium transition-all disabled:opacity-50"
-                >
-                  <RefreshCw size={14} />
-                  {isPolish ? 'Przywróć do szkicu' : 'Revert to Draft'}
-                </button>
-              </>
-            )}
-            {/* ── Mark Complete (contextual to active section) ─────────── */}
-            <button
-              type="button"
-              onClick={() => handleToggleSectionComplete(activeNSection)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                sectionCompletions[activeNSection]
-                  ? 'border-success-400/50 text-success-600 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20'
-                  : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60'
-              }`}
-              title={
-                isPolish
-                  ? 'Oznacz sekcję jako gotową (sygnał AI)'
-                  : 'Mark section complete (AI signal)'
-              }
-            >
-              <CheckCircle2 size={14} />
-              {sectionCompletions[activeNSection]
-                ? isPolish
-                  ? 'Gotowe'
-                  : 'Complete'
-                : isPolish
-                  ? 'Oznacz gotowe'
-                  : 'Mark complete'}
-            </button>
-
-            {/* ── Fork + Present ─────────────────────────────── */}
-            <div className="flex-1 min-w-0" />
-            <ToolbarIconButton
-              icon={<GitFork size={14} />}
-              tooltip={isPolish ? 'Forkuj' : 'Fork'}
-              disabled={isForking}
-              onClick={handleFork}
-            />
-            <ToolbarIconButton
-              icon={<Monitor size={14} />}
-              tooltip={isPolish ? 'Prezentuj' : 'Present'}
-              onClick={() => setPresentOpen(true)}
-            />
-
-            {/* ── Slot 9: artifact-level AI (solid teal) ─────────────────
-              Canon C/Level-3: the rightmost AI affordance is a SOLID teal
-              button (bg-teal-600 text-white). Opens the AI menu (Regenerate;
-              AI Consultant panel to follow). */}
-            <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
-            <div className="relative" ref={aiMenuRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  setAiMenuOpen((v) => !v);
-                  setExportMenuOpen(false);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
-              >
-                <Sparkles size={14} />
-                {isPolish ? 'AI' : 'AI'}
-                <ChevronDown
-                  size={13}
-                  className={`transition-transform ${aiMenuOpen ? 'rotate-180' : ''}`}
-                />
-              </button>
-              {aiMenuOpen && (
-                <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg py-1">
-                  <button
-                    onClick={() => {
-                      setAiMenuOpen(false);
-                      handleRegenerate();
-                    }}
-                    disabled={isRegenerating}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50"
-                  >
-                    <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-                    {isPolish ? 'Regeneruj' : 'Regenerate'}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+          );
+        }}
       >
         {insight && (
           <InitiativeGeneratorModal
@@ -8184,6 +8454,68 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           the canonical NModeCBoard (top group-tabs + dense 3-col grid), driven
           by the same `sections`. No custom children needed. (#21) */}
       </NModeShell>
+
+      {/* POZIOM 3 — artifact-level AI Consultant (canonical right slide-over).
+          Toggled by the slot-9 solid-teal toolbar button. The 5 canon actions:
+          Refresh runs the real `handleRegenerate`; the other four have no
+          distinct backend, so they ensure the panel is open and defer to the
+          embedded chat (which already carries the whole-artifact context +
+          quick prompts) — no invented endpoints. */}
+      {insight && (
+        <AIConsultantPanel
+          open={aiPanelOpen}
+          onClose={() => setAiPanelOpen(false)}
+          artifactType="insight"
+          artifactId={insight.id}
+          artifactTitle={insight.title}
+          contextText={aiContextText}
+          isPolish={isPolish}
+          isBusy={isRegenerating}
+          actions={
+            [
+              {
+                id: 'fill-empty',
+                label: 'Fill empty',
+                labelPl: 'Uzupełnij puste',
+                icon: <Plus size={14} />,
+                onClick: () => setAiPanelOpen(true),
+              },
+              {
+                id: 'synthesize',
+                label: 'Synthesize',
+                labelPl: 'Synteza',
+                icon: <Layers size={14} />,
+                onClick: () => setAiPanelOpen(true),
+              },
+              {
+                id: 'quality-check',
+                label: 'Quality check',
+                labelPl: 'Kontrola jakości',
+                icon: <CheckCircle2 size={14} />,
+                onClick: () => setAiPanelOpen(true),
+              },
+              {
+                id: 'refresh',
+                label: 'Refresh',
+                labelPl: 'Odśwież',
+                icon: <RefreshCw size={14} />,
+                onClick: () => {
+                  void handleRegenerate();
+                },
+                busy: isRegenerating,
+              },
+              {
+                id: 'continue',
+                label: 'Continue',
+                labelPl: 'Kontynuuj',
+                icon: <Send size={14} />,
+                onClick: () => setAiPanelOpen(true),
+              },
+            ] satisfies AIConsultantAction[]
+          }
+        />
+      )}
+
       {/* Phase A3 — fullscreen Present mode over the canonical insight sections */}
       {presentOpen && presentCards.length > 0 && (
         <PresentMode

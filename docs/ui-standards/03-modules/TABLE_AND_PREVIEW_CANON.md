@@ -937,6 +937,46 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 
 ---
 
+## 27a) Light mode — kontrast chipów i Menu 3 (MUST)
+
+Kanon tabel był pierwotnie tonowany pod DARK; w LIGHT tony bywały zbyt blade.
+Poniższe reguły kodyfikują wzmocnienie kontrastu w trybie jasnym. DARK pozostaje
+bez zmian — nigdy nie modyfikuj wariantów `dark:` ani wartości `.dark { … }`.
+
+### Tokeny `c.*` (light `:root` w `src/index.css`)
+- `--c-border` musi być widoczny na białym tle chipa/wiersza — wartość
+  `#cbd2da` (nie blade `#e2e5e9`). Obrys chipa na `bg-c-surface(-raised)` MUST być
+  dostrzegalny.
+- `--c-surface-raised` ma lekki tint (`#f8fafc`), aby chip odróżniał się od białego
+  wiersza (`--c-surface` = `#ffffff`).
+- `--c-border-subtle` = `#e6e9ed` (hairline nadal subtelny, ale nie „wyprany").
+- Tony sygnałów (`--c-success/warning/danger/info`) i tagi (`--c-tag-*`) — bez zmian
+  (już AA na białym; patrz §4.0).
+
+### Menu 3 — chipy nawigacyjne (`ModuleMenu3.tsx`)
+- INACTIVE (light): `border-slate-300 bg-slate-100 text-slate-700`,
+  hover `bg-slate-200 text-slate-900`. Czytelny obrys i tekst (nie `slate-200/60` +
+  `slate-600`).
+- ACTIVE (light): JEDEN kolor PRIMARY — `border-primary-500/60 bg-primary-500/15
+  text-primary-800` + inset `rgba(168,85,247,0.18)`. Mocniejszy fill i ciemniejszy
+  tekst niż dawne `/40 + /10 + text-primary-700`.
+- BADGE counters (light): INACTIVE `bg-slate-300 text-slate-700`;
+  ACTIVE `bg-primary-500/25 text-primary-800` — czytelne liczniki.
+
+### Menu 3 — przyciski AI (`ModuleHub/menu3ActionButtonStyles.ts`) — unifikacja
+- Przyciski AI dzielą TĘ SAMĄ skorupę i JEDEN kolor active co chipy nawigacyjne
+  (PRIMARY), nie własny BLUE. Active = `bg-primary-500/15 text-primary-800
+  border-primary-500/60` + ten sam inset; INACTIVE = skorupa jak `MENU_3_CHIP_INACTIVE`.
+- Ikony zachowują swoje zróżnicowane kolory — standaryzujemy tylko skorupę przycisku,
+  nie kolor ikon.
+
+### Reguła ogólna
+Naprawiaj kontrast w WARSTWIE WSPÓLNEJ (tokeny `c.*`, `ChipBase`, klasy Menu 3),
+nie per‑konsument — wtedy wszystkie tabele poprawiają się naraz. Każda zmiana light
+MUST mieć zachowany odpowiednik `dark:` (lub brak zmiany w dark).
+
+---
+
 ## 28) Related sources
 - `docs/ui-standards/03-modules/app-table-standard.md` (szczegóły anatomii)
 - `docs/ui-standards/03-modules/table-preview-pane-standard.md` (preview)

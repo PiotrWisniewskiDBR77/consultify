@@ -196,31 +196,31 @@ const getStatusConfig = (status?: string) => {
     case 'completed':
     case 'validated':
       return {
-        color: 'text-emerald-600 dark:text-emerald-400',
-        bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
+        color: 'text-emerald-700 dark:text-emerald-400',
+        bg: 'bg-emerald-100 dark:bg-emerald-500/10',
         dot: 'bg-emerald-500',
         label: 'Done',
       };
     case 'in_progress':
     case 'in progress':
       return {
-        color: 'text-blue-600 dark:text-blue-400',
-        bg: 'bg-blue-50/70 dark:bg-blue-500/10',
+        color: 'text-blue-700 dark:text-blue-400',
+        bg: 'bg-blue-100 dark:bg-blue-500/10',
         dot: 'bg-blue-500',
         label: 'In progress',
       };
     case 'pending_approval':
     case 'pending approval':
       return {
-        color: 'text-amber-600 dark:text-amber-400',
-        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+        color: 'text-amber-700 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-500/10',
         dot: 'bg-amber-500',
         label: 'Pending approval',
       };
     case 'review':
       return {
-        color: 'text-amber-600 dark:text-amber-400',
-        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+        color: 'text-amber-700 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-500/10',
         dot: 'bg-amber-500',
         label: 'In review',
       };
@@ -241,9 +241,9 @@ const getStatusConfig = (status?: string) => {
       };
     default:
       return {
-        color: 'text-slate-600 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-navy-800/60',
-        dot: 'bg-slate-400 dark:bg-slate-500',
+        color: 'text-slate-700 dark:text-slate-400',
+        bg: 'bg-slate-200/80 dark:bg-navy-800/60',
+        dot: 'bg-slate-500 dark:bg-slate-500',
         label: 'To Do',
       };
   }
@@ -636,14 +636,6 @@ const TaskTableRow: React.FC<{
         </button>
       </td>
 
-      {/* Priority Dot */}
-      <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div
-          className={`w-2.5 h-2.5 rounded-full ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
-          title={priorityConfig.label}
-        />
-      </td>
-
       {/* Task Title */}
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
@@ -733,8 +725,12 @@ const TaskTableRow: React.FC<{
           }}
         >
           <span
-            className={`text-xs font-medium cursor-pointer hover:underline decoration-dotted ${priorityConfig.color}`}
+            className={`inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer hover:underline decoration-dotted ${priorityConfig.color}`}
           >
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
+              aria-hidden="true"
+            />
             {priorityConfig.label}
           </span>
           <AnimatePresence>
@@ -1822,26 +1818,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }, [groupedTasks, tableFilters, smartSort, sortConfig]);
 
   const orderedTaskIds = useMemo(() => allFilteredTasks.map((t) => t.id), [allFilteredTasks]);
-  const scopeSummary = useMemo(() => {
-    const orgId = dataContext?.organization.activeOrganizationId || 'unknown-org';
-    const modeLabel =
-      dataContext?.demo.enabled || dataContext?.demo.headerActive
-        ? isPolish
-          ? 'Tryb demo'
-          : 'Demo mode'
-        : isPolish
-          ? 'Dane realne'
-          : 'Real data';
-    return [
-      isPolish ? 'Zakres: zadania osobiste' : 'Scope: personal tasks',
-      'API: /my-work/personal-tasks',
-      `${isPolish ? 'Org' : 'Org'}: ${orgId}`,
-      isPolish
-        ? 'Domyślnie ukryte: done/completed/validated'
-        : 'Hidden by default: done/completed/validated',
-      modeLabel,
-    ];
-  }, [dataContext, isPolish]);
 
   const previewTask = useMemo(
     () => allFilteredTasks.find((t) => t.id === previewTaskId) || null,
@@ -2172,16 +2148,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           }}
         >
           <div className="pl-4 pr-1.5 pt-3 pb-4">
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
-              {scopeSummary.map((item) => (
-                <span
-                  key={item}
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] px-2.5 py-1 text-slate-600 dark:text-slate-300"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
             {tasks.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
                 <CheckCircle2 size={48} className="text-slate-600 mb-4" />
@@ -2231,7 +2197,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           )}
                         </button>
                       </th>
-                      <th className="px-1 py-2" style={{ width: columnWidths.indicator }} />
                       <th
                         className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                         style={{ width: columnWidths.title }}

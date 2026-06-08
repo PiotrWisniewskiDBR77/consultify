@@ -5,6 +5,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  AlertTriangle,
   Archive,
   Bell,
   Check,
@@ -12,13 +13,18 @@ import {
   CheckSquare,
   ChevronRight,
   Clock,
+  Cpu,
+  DollarSign,
   Edit2,
   FolderKanban,
   Loader2,
+  type LucideIcon,
   Minus,
   Scale,
   Settings2,
+  Shield,
   Square,
+  Target,
   Trash2,
   TrendingUp,
   X,
@@ -163,6 +169,27 @@ const priorityLabel = (priority: string | undefined, isPolish: boolean): string 
   }
 };
 
+// Distinct icon per decision type (dot/icon carries the type signal).
+const getDecisionTypeIcon = (type?: string): LucideIcon => {
+  switch (type?.toUpperCase()) {
+    case 'SCOPE':
+      return Target;
+    case 'RISK':
+      return AlertTriangle;
+    case 'TECH':
+    case 'TECHNICAL':
+      return Cpu;
+    case 'APPROVAL':
+      return CheckCircle2;
+    case 'GOVERNANCE':
+      return Shield;
+    case 'BUDGET':
+      return DollarSign;
+    default:
+      return Scale;
+  }
+};
+
 const statusLabel = (status: string | undefined, isPolish: boolean): string => {
   switch (status?.toUpperCase()) {
     case 'APPROVED':
@@ -233,20 +260,20 @@ const DECISION_COLUMNS: ColumnDef[] = [
     filterable: false,
   },
   {
-    id: 'type',
-    label: 'Type',
-    width: 100,
-    minWidth: 80,
-    maxWidth: 140,
-    resizable: true,
-    filterable: false,
-  },
-  {
     id: 'title',
     label: 'Decision',
     width: 560,
     minWidth: 360,
     maxWidth: 900,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'type',
+    label: 'Type',
+    width: 100,
+    minWidth: 80,
+    maxWidth: 140,
     resizable: true,
     filterable: false,
   },
@@ -525,16 +552,6 @@ const DecisionTableRow: React.FC<{
         </button>
       </td>
 
-      {/* Type Badge */}
-      {!hiddenColumns?.has('type') && (
-        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.type }}>
-          <MetaChip
-            icon={Scale}
-            label={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
-          />
-        </td>
-      )}
-
       {/* Decision Title */}
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
@@ -548,6 +565,16 @@ const DecisionTableRow: React.FC<{
           ) : null}
         </div>
       </td>
+
+      {/* Type Badge */}
+      {!hiddenColumns?.has('type') && (
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.type }}>
+          <MetaChip
+            icon={getDecisionTypeIcon(decision.decisionType || decision.type)}
+            label={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
+          />
+        </td>
+      )}
 
       {/* Status */}
       {!hiddenColumns?.has('status') && (
@@ -808,15 +835,6 @@ const AwaitingDecisionTableRow: React.FC<{
         </button>
       </td>
 
-      {!hiddenColumns?.has('type') && (
-        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.type }}>
-          <MetaChip
-            icon={Scale}
-            label={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
-          />
-        </td>
-      )}
-
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
           <span className="text-sm font-medium text-slate-900 dark:text-white">
@@ -829,6 +847,15 @@ const AwaitingDecisionTableRow: React.FC<{
           ) : null}
         </div>
       </td>
+
+      {!hiddenColumns?.has('type') && (
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.type }}>
+          <MetaChip
+            icon={getDecisionTypeIcon(decision.decisionType || decision.type)}
+            label={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
+          />
+        </td>
+      )}
 
       {!hiddenColumns?.has('status') && (
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.status }}>
@@ -1882,6 +1909,20 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       </button>
                     </th>
 
+                    <th
+                      className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                      style={{ width: columnWidths.title }}
+                    >
+                      {isPolish ? 'Decyzja' : 'Decision'}
+                      <ColumnResizer
+                        columnId="title"
+                        currentWidth={columnWidths.title}
+                        minWidth={DECISION_RESIZE_BOUNDS.title.min}
+                        maxWidth={DECISION_RESIZE_BOUNDS.title.max}
+                        onResize={handleColumnResize}
+                      />
+                    </th>
+
                     {!hiddenSet.has('type') && (
                       <th
                         className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
@@ -1897,20 +1938,6 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                         />
                       </th>
                     )}
-
-                    <th
-                      className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                      style={{ width: columnWidths.title }}
-                    >
-                      {isPolish ? 'Decyzja' : 'Decision'}
-                      <ColumnResizer
-                        columnId="title"
-                        currentWidth={columnWidths.title}
-                        minWidth={DECISION_RESIZE_BOUNDS.title.min}
-                        maxWidth={DECISION_RESIZE_BOUNDS.title.max}
-                        onResize={handleColumnResize}
-                      />
-                    </th>
 
                     {!hiddenSet.has('status') && (
                       <th

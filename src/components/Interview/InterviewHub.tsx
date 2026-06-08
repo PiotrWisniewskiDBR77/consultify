@@ -274,6 +274,7 @@ const INTERVIEW_SESSIONS_TABLE_RESIZE_BOUNDS: Record<
 const INTERVIEW_INSIGHTS_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
   select: 44,
   title: 430,
+  crossRole: 180,
   type: 150,
   status: 140,
   source: 130,
@@ -287,6 +288,7 @@ const INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS: Record<
 > = {
   select: { minWidth: 44, maxWidth: 44 },
   title: { minWidth: 300, maxWidth: 680 },
+  crossRole: { minWidth: 140, maxWidth: 280 },
   type: { minWidth: 120, maxWidth: 240 },
   status: { minWidth: 120, maxWidth: 220 },
   source: { minWidth: 110, maxWidth: 220 },
@@ -6474,6 +6476,15 @@ export const InterviewHub: React.FC = () => {
                 )}
                 {renderInsightResizer('title')}
               </th>
+              {!hiddenSet.has('crossRole') && (
+                <th
+                  className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  style={{ width: insightColumnWidths.crossRole }}
+                >
+                  {isPolish ? 'Cross-role / rozjazdy' : 'Cross-role'}
+                  {renderInsightResizer('crossRole')}
+                </th>
+              )}
               {!hiddenSet.has('type') && (
                 <th
                   className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
@@ -6678,6 +6689,10 @@ export const InterviewHub: React.FC = () => {
                           </div>
                           {(
                             [
+                              {
+                                id: 'crossRole',
+                                label: isPolish ? 'Cross-role / rozjazdy' : 'Cross-role',
+                              },
                               { id: 'type', label: isPolish ? 'Typ' : 'Type' },
                               { id: 'status', label: isPolish ? 'Status' : 'Status' },
                               { id: 'source', label: isPolish ? 'Źródło' : 'Source' },
@@ -6872,25 +6887,34 @@ export const InterviewHub: React.FC = () => {
                             {rowDescriptionPreview}
                           </span>
                         ) : null}
-                        {(crossPerspectiveCount > 0 || divergenceCount > 0) && (
-                          <div className="mt-1 flex flex-wrap gap-1.5">
-                            {crossPerspectiveCount > 0 && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
-                                <Users size={10} />
-                                {crossPerspectiveCount} {isPolish ? 'cross-role' : 'cross-role'}
-                              </span>
-                            )}
-                            {divergenceCount > 0 && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
-                                <AlertTriangle size={10} />
-                                {divergenceCount} {isPolish ? 'rozjazdów' : 'divergences'}
-                              </span>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </td>
+                  {!hiddenSet.has('crossRole') && (
+                    <td
+                      className="px-3 py-3 text-left align-middle"
+                      style={{ width: insightColumnWidths.crossRole }}
+                    >
+                      {crossPerspectiveCount > 0 || divergenceCount > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {crossPerspectiveCount > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                              <Users size={10} />
+                              {crossPerspectiveCount} {isPolish ? 'cross-role' : 'cross-role'}
+                            </span>
+                          )}
+                          {divergenceCount > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
+                              <AlertTriangle size={10} />
+                              {divergenceCount} {isPolish ? 'rozjazdów' : 'divergences'}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
+                      )}
+                    </td>
+                  )}
                   {!hiddenSet.has('type') && (
                     <td
                       className="px-3 py-3 text-left align-middle"
@@ -7190,16 +7214,12 @@ export const InterviewHub: React.FC = () => {
                   type: 'interview_session',
                   subType: 'interview',
                   name: newSession.name || 'Interview Session',
-                  status: (
-                    (newSession as any)?.status || 'in_progress'
-                  ).toUpperCase() as any,
+                  status: ((newSession as any)?.status || 'in_progress').toUpperCase() as any,
                 });
                 toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
               })
               .catch(() => {
-                toast.error(
-                  isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session'
-                );
+                toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
               });
           },
         },
@@ -7265,11 +7285,7 @@ export const InterviewHub: React.FC = () => {
           label: isPolish ? 'Edytuj szablon' : 'Edit template',
           icon: Edit2,
           disabled: !canAssign,
-          description: !canAssign
-            ? isPolish
-              ? 'Tylko menedżer'
-              : 'Manager only'
-            : undefined,
+          description: !canAssign ? (isPolish ? 'Tylko menedżer' : 'Manager only') : undefined,
           onClick: () => canAssign && handleEditTemplate(template.id),
         },
         ...(canAssign && !template.isDefault
@@ -8871,9 +8887,7 @@ Return ONLY the answer text (no markdown fences).`;
                     type: 'interview_session',
                     subType: 'interview',
                     name: (session as InterviewSession).name || 'Interview Session',
-                    status: (
-                      (session as any)?.status || 'in_progress'
-                    ).toUpperCase() as any,
+                    status: ((session as any)?.status || 'in_progress').toUpperCase() as any,
                   });
                 },
               },
@@ -8892,9 +8906,7 @@ Return ONLY the answer text (no markdown fences).`;
                     type: 'interview_session',
                     subType: 'interview',
                     name: (session as InterviewSession).name || 'Interview Session',
-                    status: (
-                      (session as any)?.status || 'in_progress'
-                    ).toUpperCase() as any,
+                    status: ((session as any)?.status || 'in_progress').toUpperCase() as any,
                   });
                 },
               },
@@ -8944,8 +8956,7 @@ Return ONLY the answer text (no markdown fences).`;
                 id: 'escalate',
                 label: isPolish ? 'Eskaluj teraz' : 'Escalate now',
                 icon: ArrowUpRight,
-                disabled:
-                  Boolean(assignment.escalatedAt) || Boolean(assignment.escalationTarget),
+                disabled: Boolean(assignment.escalatedAt) || Boolean(assignment.escalationTarget),
                 onClick: () => handleEscalateNow(assignment),
               },
             ]
@@ -10220,9 +10231,7 @@ Return ONLY the answer text (no markdown fences).`;
                   risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
                   showIcon
                   title={
-                    assignment.dueAt
-                      ? new Date(assignment.dueAt).toLocaleDateString()
-                      : undefined
+                    assignment.dueAt ? new Date(assignment.dueAt).toLocaleDateString() : undefined
                   }
                 />
               ) : (
@@ -11001,16 +11010,15 @@ Return ONLY the answer text (no markdown fences).`;
               })()}
               onSelect={setSelectedInterviewInitiativeId}
               onOpenFull={(id) => {
-                const it = rows.find((r) => r.id === id);
-                if (it && isInitiativePromoted(it.status))
-                  navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
+                // Double-click / Enter / "Open" → full initiative doc view in the
+                // Initiatives module. Drafts open too (they exist in the DB and the
+                // module renders them fine); promotion only governs listing, not viewing.
+                navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
               }}
               renderPreview={(item) => renderInitiativePreview(item)}
               renderPreviewFooter={(item) => {
                 // canon §7.3: AI → Relations → Actions.
-                const src = item.sourceId
-                  ? insights.find((i) => i.id === item.sourceId)
-                  : null;
+                const src = item.sourceId ? insights.find((i) => i.id === item.sourceId) : null;
                 const relations: Array<{ label: string; tone?: string }> = [];
                 if (src)
                   relations.push({
@@ -11047,11 +11055,8 @@ Return ONLY the answer text (no markdown fences).`;
                     onBackToDraft={() =>
                       void handleUpdateInterviewInitiativeStatus(item.id, 'DRAFT')
                     }
-                    onOpenInModule={
-                      isInitiativePromoted(item.status)
-                        ? () =>
-                            navigate(`/initiatives?open=${encodeURIComponent(item.id)}&mode=doc`)
-                        : undefined
+                    onOpenInModule={() =>
+                      navigate(`/initiatives?open=${encodeURIComponent(item.id)}&mode=doc`)
                     }
                     onCopyId={() => copyToClipboard(item.id)}
                   />
@@ -11095,7 +11100,6 @@ Return ONLY the answer text (no markdown fences).`;
                         const src = initiative.sourceId
                           ? insights.find((i) => i.id === initiative.sourceId)
                           : null;
-                        const promoted = isInitiativePromoted(initiative.status);
                         return (
                           <div
                             key={initiative.id}
@@ -11109,10 +11113,9 @@ Return ONLY the answer text (no markdown fences).`;
                               setSelectedInterviewInitiativeId(isSelected ? null : initiative.id)
                             }
                             onDoubleClick={() => {
-                              if (promoted)
-                                navigate(
-                                  `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                                );
+                              navigate(
+                                `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                              );
                             }}
                           >
                             {/* 1 BADGE ROW */}
@@ -11627,12 +11630,11 @@ Return ONLY the answer text (no markdown fences).`;
                               }`}
                               onClick={() => setSelectedInterviewInitiativeId(initiative.id)}
                               onDoubleClick={() => {
-                                if (isInitiativePromoted(initiative.status))
-                                  navigate(
-                                    `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
-                                  );
+                                navigate(
+                                  `/initiatives?open=${encodeURIComponent(initiative.id)}&mode=doc`
+                                );
                               }}
-                              title={isPolish ? 'Otwórz podgląd' : 'Open preview'}
+                              title={isPolish ? 'Otwórz' : 'Open'}
                             >
                               <td
                                 className="px-3 py-3"

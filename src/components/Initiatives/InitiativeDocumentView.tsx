@@ -11,7 +11,9 @@
 
 import {
   AlertTriangle,
-  Archive,
+  ArrowRight,
+  Ban,
+  Calculator,
   Calendar,
   CheckCircle,
   CheckCircle2,
@@ -34,6 +36,7 @@ import {
   GitFork,
   GraduationCap,
   History,
+  Layers,
   Lightbulb,
   Link2,
   ListChecks,
@@ -43,9 +46,9 @@ import {
   MoreVertical,
   NotebookPen,
   Package,
-  Play,
   Plus,
   Presentation,
+  RotateCcw,
   Scale,
   Search,
   Shield,
@@ -57,6 +60,7 @@ import {
   Undo2,
   User,
   Users,
+  Wand2,
   X,
   XCircle,
 } from 'lucide-react';
@@ -116,7 +120,6 @@ import {
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
 import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
-  type NModeAction,
   NModeCanvas,
   NModeCBoard,
   NModeHeader,
@@ -125,8 +128,16 @@ import {
   type NModePropertyField,
   type NModeSection,
   NModeSectionWrapper,
+  ToolbarAISolidButton,
+  ToolbarAISplitButton,
+  ToolbarGhostButton,
   ToolbarIconButton,
+  ToolbarSubtleButton,
 } from '../shared/NModeLayout';
+import {
+  type AIConsultantAction,
+  AIConsultantPanel,
+} from '../shared/NModeLayout/AIConsultantPanel';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
   ActivityLogCanvas,
@@ -541,6 +552,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
+  // Canon Toolbar (Warstwa 3) — user-toggled section visibility for the left nav.
+  // Drops section ids from the nav until restored ("Przywróć domyślne").
+  const [hiddenSectionIds, setHiddenSectionIds] = useState<Set<string>>(new Set());
+  // Canon Toolbar dropdown open-state (Sections / New / Export / kebab).
+  const [showSectionsMenu, setShowSectionsMenu] = useState(false);
+  const [showNewMenu, setShowNewMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showToolbarKebab, setShowToolbarKebab] = useState(false);
 
   // Suggested changes (Formula §5 / Faza 4) — owner-side mini-gate. The Generator
   // proposes CHANGES to an existing initiative as pending suggested changes; the
@@ -549,6 +568,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const [suggestedChangesLoading, setSuggestedChangesLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
+  // Slot 9 — canonical artifact-level AI Consultant right panel (POZIOM 3).
+  // Toggled by the solid-teal toolbar button; replaces the old one-shot generate.
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   // Present mode (Phase A3) — fullscreen card-by-card walk of the canonical sections.
   const [presentOpen, setPresentOpen] = useState(false);
@@ -1147,6 +1169,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     [initiative]
   );
   const primaryActions = statusActions.filter((a) => a.variant === 'primary').slice(0, 2);
+  // Canon Toolbar (Warstwa 3): non-destructive transitions (primary + secondary,
+  // e.g. Start Execution, Mark Complete → Done, Start Tracking, Archive) become
+  // the Properties-Strip STATUS options. Destructive ones (danger: Block /
+  // Cancel / Reject) live in the toolbar kebab only. Both reuse the same
+  // handleStatusAction handler — no new transition semantics are introduced.
+  const stripStatusActions = useMemo(
+    () => statusActions.filter((a) => a.variant === 'primary' || a.variant === 'secondary'),
+    [statusActions]
+  );
+  const destructiveStatusActions = useMemo(
+    () => statusActions.filter((a) => a.variant === 'danger'),
+    [statusActions]
+  );
   const contextActions = useMemo(() => {
     return gateReadiness?.capabilities?.ctaBar?.contextCreateActions || [];
   }, [gateReadiness]);
@@ -2015,8 +2050,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           sc.map((t: string, i: number) => ({ id: `sc-${i}`, text: t, done: false }))
         );
         const dl = td.deliverables || data.deliverables || [];
+        // Done flags persist as an index-aligned boolean[] alongside the texts.
+        const dlDone = Array.isArray(data.deliverablesDone)
+          ? data.deliverablesDone
+          : Array.isArray(data.deliverables_done)
+            ? data.deliverables_done
+            : [];
         setDeliverableItems(
-          dl.map((t: string, i: number) => ({ id: `dl-${i}`, text: t, done: false }))
+          dl.map((t: string, i: number) => ({
+            id: `dl-${i}`,
+            text: t,
+            done: !!dlDone[i],
+          }))
         );
       }
       setTags(data.tags || []);
@@ -2731,9 +2776,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             })
           : undefined;
 
-      const normalizedDeliverables = deliverableItems
-        .map((d) => String(d.text || '').trim())
-        .filter(Boolean);
+      // Keep texts + done[] index-aligned: filter on text once, derive both.
+      const keptDeliverables = deliverableItems.filter((d) => String(d.text || '').trim() !== '');
+      const normalizedDeliverables = keptDeliverables.map((d) => String(d.text || '').trim());
+      const normalizedDeliverablesDone = keptDeliverables.map((d) => !!d.done);
       const normalizedSuccessCriteria = successCriteriaItems
         .map((c) => String(c.text || '').trim())
         .filter(Boolean);
@@ -2756,6 +2802,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         problemStatement: problemDefinitionPayload,
         marketContext: marketContextDraft || undefined,
         deliverables: normalizedDeliverables,
+        deliverablesDone: normalizedDeliverablesDone,
         successCriteria: normalizedSuccessCriteria,
         scopeIn: normalizedScopeIn,
         scopeOut: normalizedScopeOut,
@@ -2822,6 +2869,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         resourceTools,
         resource_tools: resourceTools,
         deliverables: normalizedDeliverables,
+        deliverablesDone: normalizedDeliverablesDone,
+        deliverables_done: normalizedDeliverablesDone,
         successCriteria: normalizedSuccessCriteria,
         scopeIn: normalizedScopeIn,
         scopeOut: normalizedScopeOut,
@@ -4944,22 +4993,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
 
   const nModePropertyFields: NModePropertyField[] = useMemo(() => {
-    const statusOptions = [
-      { value: 'DRAFT', label: { en: 'Draft', pl: 'Szkic' } },
-      { value: 'PENDING_REVIEW', label: { en: 'Pending Review', pl: 'Oczekuje na przegląd' } },
-      { value: 'REVIEW', label: { en: 'Review', pl: 'Przegląd' } },
-      { value: 'PROMOTED', label: { en: 'Promoted', pl: 'Promowana' } },
-      { value: 'PLANNING', label: { en: 'Planning', pl: 'Planowanie' } },
-      { value: 'APPROVED', label: { en: 'Approved', pl: 'Zatwierdzona' } },
-      { value: 'SCHEDULED', label: { en: 'Scheduled', pl: 'Zaplanowana' } },
-      { value: 'EXECUTING', label: { en: 'Executing', pl: 'W realizacji' } },
-      { value: 'BLOCKED', label: { en: 'Blocked', pl: 'Zablokowana' } },
-      { value: 'DONE', label: { en: 'Done', pl: 'Zakończona' } },
-      { value: 'TRACKING', label: { en: 'Tracking', pl: 'Śledzenie' } },
-      { value: 'CANCELLED', label: { en: 'Cancelled', pl: 'Anulowana' } },
-      { value: 'ARCHIVED', label: { en: 'Archived', pl: 'Zarchiwizowana' } },
-    ];
-
     const priorityOptions = [
       { value: 'critical', label: { en: 'Critical', pl: 'Krytyczny' } },
       { value: 'high', label: { en: 'High', pl: 'Wysoki' } },
@@ -5089,31 +5122,59 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Status', pl: 'Status' },
         type: 'custom' as const,
         value: status,
-        onChange: () => {},
-        readOnly: true,
+        // Canon: status changes IN the strip. Selecting a valid next-state runs
+        // the SAME transition handler the old toolbar buttons called (with all its
+        // gate/preflight guards). Destructive transitions are excluded (kebab only).
+        onChange: (next: string) => {
+          if (!next || next === status) return;
+          const action = stripStatusActions.find((a) => a.targetStatus === next);
+          if (action) void handleStatusAction(action);
+        },
+        readOnly: stripStatusActions.length === 0,
         alertBorderClass: statusAlertBorder,
-        render: () => (
-          <div className="relative">
-            <div
-              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentStatusColor}`}
-            >
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentStatusDot}`} />
-              <span className="flex-1 truncate">{currentStatusLabel}</span>
+        render: () => {
+          const canChangeStatus = stripStatusActions.length > 0 && !isMutating;
+          return (
+            <div className="relative">
+              <div
+                className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentStatusColor}`}
+              >
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentStatusDot}`} />
+                <span className="flex-1 truncate">{currentStatusLabel}</span>
+                {canChangeStatus && <ChevronDown size={12} className="flex-shrink-0 opacity-60" />}
+              </div>
+              <select
+                value={status}
+                disabled={!canChangeStatus}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  if (!next || next === status) return;
+                  const action = stripStatusActions.find((a) => a.targetStatus === next);
+                  if (action) void handleStatusAction(action);
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default"
+                title={
+                  canChangeStatus
+                    ? isPolish
+                      ? 'Zmień status'
+                      : 'Change status'
+                    : isPolish
+                      ? 'Brak dostępnych zmian statusu'
+                      : 'No status changes available'
+                }
+              >
+                {/* Current status — always present so the select reflects state */}
+                <option value={status}>{currentStatusLabel}</option>
+                {/* Valid non-destructive next-states (reuse transition definitions) */}
+                {stripStatusActions.map((action) => (
+                  <option key={action.targetStatus} value={action.targetStatus}>
+                    {isPolish ? action.labelPl : action.label}
+                  </option>
+                ))}
+              </select>
             </div>
-            <select
-              value={status}
-              onChange={() => {}}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              title={isPolish ? 'Podgląd listy statusów' : 'Preview status list'}
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {isPolish ? opt.label.pl : opt.label.en}
-                </option>
-              ))}
-            </select>
-          </div>
-        ),
+          );
+        },
       },
       {
         id: 'phase',
@@ -5359,6 +5420,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     isPolish,
     moduleConfig,
     statusActions,
+    stripStatusActions,
+    isMutating,
     handleStatusAction,
     setPriority,
     setOwnerId,
@@ -6971,100 +7034,58 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'financial-analysis': {
+          // Canon empty-state (BLOCK_TYPES_CANON §1044: no gradient, no emoji).
+          // Mirrors NModeSectionWrapper's empty-state markup exactly so the card
+          // reads as "empty, ready to fill" rather than "coming soon / broken".
           component = (
-            <div className="flex flex-col items-center justify-center py-16 space-y-5">
-              {/* Fun accountant illustration */}
-              <div className="relative">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-100 via-primary-50 to-crimson-200 dark:from-primary-500/15 dark:via-primary-500/10 dark:to-crimson-700/15 flex items-center justify-center shadow-lg shadow-primary-200/40 dark:shadow-primary-500/10">
-                  <span className="text-5xl" role="img" aria-label="accountant">
-                    🧮
-                  </span>
-                </div>
-                {/* Floating decorations */}
-                <span
-                  className="absolute -top-2 -right-3 text-2xl animate-bounce"
-                  style={{ animationDelay: '0.1s', animationDuration: '2s' }}
-                >
-                  📊
-                </span>
-                <span
-                  className="absolute -bottom-1 -left-3 text-xl animate-bounce"
-                  style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}
-                >
-                  💰
-                </span>
-                <span
-                  className="absolute -top-1 -left-4 text-lg animate-bounce"
-                  style={{ animationDelay: '0.8s', animationDuration: '3s' }}
-                >
-                  ✨
-                </span>
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-500">
-                  {isPolish
-                    ? 'Nasz księgowy jeszcze liczy... 🤓'
-                    : 'Our accountant is still crunching numbers... 🤓'}
-                </p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-500/10 border border-primary-200/60 dark:border-primary-500/20">
-                  <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
-                    {isPolish ? 'Wkrótce' : 'Coming soon'}
-                  </span>
-                </div>
-              </div>
+            <div className="text-center py-12">
+              <Calculator size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                {isPolish
+                  ? 'Analiza finansowa nie została jeszcze przygotowana.'
+                  : "Financial analysis isn't set up yet."}
+              </p>
+              <button
+                type="button"
+                disabled
+                title={
+                  isPolish
+                    ? 'Generowanie AI niedostępne dla tej sekcji'
+                    : 'AI generation not available for this section yet'
+                }
+                className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-600/60 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/40 cursor-not-allowed"
+              >
+                <Sparkles size={13} />
+                {isPolish ? 'Wygeneruj z AI' : 'Generate with AI'}
+              </button>
             </div>
           );
           break;
         }
 
         case 'financial-impact': {
+          // Canon empty-state (BLOCK_TYPES_CANON §1044: no gradient, no emoji).
           component = (
-            <div className="flex flex-col items-center justify-center py-16 space-y-5">
-              {/* Fun money impact illustration */}
-              <div className="relative">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-100 via-blue-50 to-blue-100 dark:from-emerald-500/15 dark:via-blue-500/10 dark:to-blue-500/15 flex items-center justify-center shadow-lg shadow-emerald-200/40 dark:shadow-emerald-500/10">
-                  <span className="text-5xl" role="img" aria-label="money chart">
-                    📈
-                  </span>
-                </div>
-                {/* Floating decorations */}
-                <span
-                  className="absolute -top-2 -right-3 text-2xl animate-bounce"
-                  style={{ animationDelay: '0.2s', animationDuration: '2.2s' }}
-                >
-                  🪙
-                </span>
-                <span
-                  className="absolute -bottom-1 -left-3 text-xl animate-bounce"
-                  style={{ animationDelay: '0.6s', animationDuration: '2.8s' }}
-                >
-                  💸
-                </span>
-                <span
-                  className="absolute top-0 -left-4 text-lg animate-bounce"
-                  style={{ animationDelay: '1s', animationDuration: '3s' }}
-                >
-                  🎯
-                </span>
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Wpływ finansowy' : 'Financial Impact'}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-500">
-                  {isPolish
-                    ? 'Pieniądze się liczą... dosłownie! 💵'
-                    : 'The money is counting itself... literally! 💵'}
-                </p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20">
-                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    {isPolish ? 'Wkrótce' : 'Coming soon'}
-                  </span>
-                </div>
-              </div>
+            <div className="text-center py-12">
+              <TrendingUp size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                {isPolish
+                  ? 'Wpływ finansowy nie został jeszcze przygotowany.'
+                  : "Financial impact isn't set up yet."}
+              </p>
+              <button
+                type="button"
+                disabled
+                title={
+                  isPolish
+                    ? 'Generowanie AI niedostępne dla tej sekcji'
+                    : 'AI generation not available for this section yet'
+                }
+                className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-600/60 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/40 cursor-not-allowed"
+              >
+                <Sparkles size={13} />
+                {isPolish ? 'Wygeneruj z AI' : 'Generate with AI'}
+              </button>
             </div>
           );
           break;
@@ -8014,8 +8035,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         case 'deliverables-milestones': {
           const persistDeliverables = (items: typeof deliverableItems) => {
             setDeliverableItems(items);
-            const texts = items.map((d) => d.text).filter((t) => t.trim());
-            void persistInitiativeField({ deliverables: texts }, {});
+            // Keep texts as the canonical string[] shape (exports/badges/other
+            // readers depend on it) and persist an index-aligned done[] alongside
+            // so the checkbox state round-trips on reload. Both arrays are built
+            // from the SAME filtered set to stay aligned.
+            const kept = items.filter((d) => d.text.trim());
+            const texts = kept.map((d) => d.text);
+            const done = kept.map((d) => !!d.done);
+            void persistInitiativeField(
+              { deliverables: texts, deliverablesDone: done },
+              { deliverablesDone: done, deliverables_done: done }
+            );
           };
           component = (
             <div className="space-y-4">
@@ -8631,18 +8661,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
-    if (!nModeSectionOrder || nModeSectionOrder.length === 0) return nModeSectionsWithContent;
+    const ordered = (() => {
+      if (!nModeSectionOrder || nModeSectionOrder.length === 0) return nModeSectionsWithContent;
 
-    const byId = new Map(nModeSectionsWithContent.map((section) => [section.id, section]));
-    const ordered = nModeSectionOrder
-      .map((id) => byId.get(id))
-      .filter((section): section is NModeSection => Boolean(section));
-    const missing = nModeSectionsWithContent.filter(
-      (section) => !nModeSectionOrder.includes(section.id)
-    );
+      const byId = new Map(nModeSectionsWithContent.map((section) => [section.id, section]));
+      const inOrder = nModeSectionOrder
+        .map((id) => byId.get(id))
+        .filter((section): section is NModeSection => Boolean(section));
+      const missing = nModeSectionsWithContent.filter(
+        (section) => !nModeSectionOrder.includes(section.id)
+      );
+      return [...inOrder, ...missing];
+    })();
 
-    return [...ordered, ...missing];
-  }, [nModeSectionsWithContent, nModeSectionOrder]);
+    // Canon Toolbar (Slot 1): user-hidden sections drop out of the nav.
+    if (hiddenSectionIds.size === 0) return ordered;
+    return ordered.filter((section) => !hiddenSectionIds.has(section.id));
+  }, [nModeSectionsWithContent, nModeSectionOrder, hiddenSectionIds]);
 
   useEffect(() => {
     if (orderedNModeSectionsWithContent.length === 0) return;
@@ -8981,48 +9016,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   }, [isForking, initiativeId, isPolish]);
 
-  // N-mode status actions for NModeActionBar
-  // Dynamically built from statusActions (workflow transitions) + contextActions (create buttons)
-  const nModeActions: NModeAction[] = useMemo(() => {
-    const actions: NModeAction[] = [];
+  // ==========================================
+  // CANON TOOLBAR (Warstwa 3) — derived helpers
+  // ==========================================
 
-    // Helper: pick icon based on action variant and target status
-    const getActionIcon = (sa: StatusAction) => {
-      if (sa.variant === 'danger' && sa.targetStatus === InitiativeStatus.CANCELLED) return XCircle;
-      if (sa.variant === 'danger') return AlertTriangle;
-      if (sa.variant === 'secondary' && sa.targetStatus === InitiativeStatus.DRAFT) return Undo2;
-      if (sa.variant === 'secondary' && sa.targetStatus === InitiativeStatus.ARCHIVED)
-        return Archive;
-      if (sa.targetStatus === InitiativeStatus.EXECUTING) return Play;
-      return CheckSquare;
-    };
-
-    // Helper: map StatusAction variant to NModeAction variant
-    const mapVariant = (sa: StatusAction): 'success' | 'danger' | 'neutral' => {
-      if (sa.variant === 'primary') return 'success';
-      if (sa.variant === 'danger') return 'danger';
-      return 'neutral';
-    };
-
-    // 1. Primary status actions first (forward progress)
-    for (const sa of statusActions.filter((a) => a.variant === 'primary')) {
-      actions.push({
-        id: `status-${sa.targetStatus}`,
-        label: { en: sa.label, pl: sa.labelPl },
-        icon: getActionIcon(sa),
-        variant: 'success',
-        onClick: () => handleStatusAction(sa),
-        disabled: isMutating,
-      });
-    }
-
-    // 2. Context-dependent create actions (between status actions)
+  // Slot 2 — "New ▾": the context create action(s) for the active/relevant
+  // section. Reuses the same handlers the old contextGroup buttons called.
+  const newMenuActions = useMemo(() => {
+    const items: Array<{ id: string; label: { en: string; pl: string }; onClick: () => void }> = [];
     if (contextActions.includes('task')) {
-      actions.push({
+      items.push({
         id: 'new-task',
         label: { en: 'New Task', pl: 'Nowe zadanie' },
-        icon: CheckSquare,
-        variant: 'neutral',
         onClick: () => {
           toggleSection('tasks');
           setShowCreateTask(true);
@@ -9030,11 +9035,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       });
     }
     if (contextActions.includes('decision')) {
-      actions.push({
+      items.push({
         id: 'new-decision',
         label: { en: 'New Decision', pl: 'Nowa decyzja' },
-        icon: Scale,
-        variant: 'neutral',
         onClick: () => {
           toggleSection('decisions');
           setShowCreateDecision(true);
@@ -9042,53 +9045,219 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       });
     }
     if (contextActions.includes('raid')) {
-      actions.push({
+      items.push({
         id: 'add-raid',
         label: { en: 'Add RAID', pl: 'Dodaj RAID' },
-        icon: AlertTriangle,
-        variant: 'neutral',
         onClick: () => {
           toggleSection('raid');
           setShowCreateRaid(true);
         },
       });
     }
+    return items;
+  }, [contextActions, toggleSection, setShowCreateTask, setShowCreateDecision, setShowCreateRaid]);
 
-    // 3. Secondary actions (backward/alternative)
-    for (const sa of statusActions.filter((a) => a.variant === 'secondary')) {
-      actions.push({
-        id: `status-${sa.targetStatus}-secondary`,
-        label: { en: sa.label, pl: sa.labelPl },
-        icon: getActionIcon(sa),
-        variant: mapVariant(sa),
-        onClick: () => handleStatusAction(sa),
-        disabled: isMutating,
-      });
+  // Slot 5 — section-level AI: dispatches to the existing per-section request
+  // handler for the active section (same calls the old per-section buttons made).
+  const activeSectionAiBusy = useMemo(() => {
+    switch (activeNSection) {
+      case 'tasks':
+        return !!tasksAiRequest;
+      case 'decisions':
+        return !!decisionsAiRequest;
+      case 'comments':
+        return !!commentsAiRequest;
+      case 'resources':
+        return !!resourcesAiRequest;
+      case 'timeline':
+        return !!timelineAiRequest;
+      case 'dependencies':
+        return !!dependenciesAiRequest;
+      case 'kpi':
+      case 'kpis':
+        return !!kpisAiRequest;
+      case 'team':
+        return !!teamAiRequest;
+      case 'target-state-scope':
+      case 'targetState':
+        return !!targetStateAiRequest;
+      case 'gates':
+        return !!gatesAiRequest;
+      case 'risk-raid':
+        return !!raidAiRequest || isRaidAIProposing;
+      case 'initiative-definition':
+        return isGeneratingAI === 'scope';
+      default:
+        return isGeneratingAI === activeNSection;
     }
-
-    // 4. Danger actions last (block, cancel, reject)
-    for (const sa of statusActions.filter((a) => a.variant === 'danger')) {
-      actions.push({
-        id: `status-${sa.targetStatus}-danger`,
-        label: { en: sa.label, pl: sa.labelPl },
-        icon: getActionIcon(sa),
-        variant: 'danger',
-        onClick: () => handleStatusAction(sa),
-        disabled: isMutating,
-      });
-    }
-
-    return actions;
   }, [
-    statusActions,
-    contextActions,
-    handleStatusAction,
-    isMutating,
-    toggleSection,
-    setShowCreateTask,
-    setShowCreateDecision,
-    setShowCreateRaid,
+    activeNSection,
+    tasksAiRequest,
+    decisionsAiRequest,
+    commentsAiRequest,
+    resourcesAiRequest,
+    timelineAiRequest,
+    dependenciesAiRequest,
+    kpisAiRequest,
+    teamAiRequest,
+    targetStateAiRequest,
+    gatesAiRequest,
+    raidAiRequest,
+    isRaidAIProposing,
+    isGeneratingAI,
   ]);
+
+  // Sections whose section-AI dispatch falls through to handleGenerateAI, which
+  // only toasts a fake "AI generated content" success and writes nothing. We must
+  // NOT fire that no-op in front of a client — the toolbar AI button is disabled
+  // for these instead. Keep this in sync with the real-AI cases in
+  // runActiveSectionAi's switch (tasks/decisions/timeline/dependencies/team/kpi/
+  // gates/risk-raid/resources/initiative-definition/target-state-scope/comments).
+  const SECTION_AI_NOOP = useMemo(
+    () =>
+      new Set<string>([
+        'financial-analysis',
+        'financial-impact',
+        'raci',
+        'okr',
+        'hypothesis',
+        'change-log',
+        'workstream-owners',
+        'lessons-learned',
+        'suggested-changes',
+      ]),
+    []
+  );
+  const activeSectionAiUnavailable = SECTION_AI_NOOP.has(activeNSection);
+
+  const runActiveSectionAi = useCallback(async () => {
+    if (!canUseAi) {
+      toast.error(
+        isPolish
+          ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+          : 'AI is unavailable because you have no edit permissions in this context.'
+      );
+      return;
+    }
+    switch (activeNSection) {
+      case 'tasks':
+        requestTasksAi('analyze');
+        return;
+      case 'decisions':
+        requestDecisionsAi('analyze');
+        return;
+      case 'comments':
+        requestCommentsAi();
+        return;
+      case 'resources':
+        requestResourcesAi();
+        return;
+      case 'timeline':
+        requestTimelineAi();
+        return;
+      case 'dependencies':
+        requestDependenciesAi();
+        return;
+      case 'kpi':
+      case 'kpis':
+        requestKpisAi();
+        return;
+      case 'team':
+        requestTeamAi();
+        return;
+      case 'target-state-scope':
+      case 'targetState':
+        requestTargetStateAi();
+        return;
+      case 'gates':
+        requestGatesAi();
+        return;
+      case 'risk-raid':
+        requestRaidAi();
+        return;
+      case 'initiative-definition':
+        await handleGenerateScopeCard();
+        return;
+      default:
+        await handleGenerateAI(activeNSection);
+    }
+  }, [
+    canUseAi,
+    isPolish,
+    activeNSection,
+    requestTasksAi,
+    requestDecisionsAi,
+    requestCommentsAi,
+    requestResourcesAi,
+    requestTimelineAi,
+    requestDependenciesAi,
+    requestKpisAi,
+    requestTeamAi,
+    requestTargetStateAi,
+    requestGatesAi,
+    requestRaidAi,
+  ]);
+
+  // Slot 9 — canonical AI Consultant (POZIOM 3 / ARTEFAKT) wiring.
+  // contextText = whole-initiative plain-text summary (title + every section
+  // heading + its content, in canonical nav order). Reuses the Smart Export
+  // markdown builder so the panel chat sees the same SSOT the export does.
+  const aiPanelContextText = useMemo(() => {
+    if (!aiPanelOpen) return '';
+    const allIds = new Set(exportableSections.map((s) => s.id));
+    return buildExportMarkdown(allIds);
+  }, [aiPanelOpen, exportableSections, buildExportMarkdown]);
+
+  // The 5 canon actions. Refresh is wired to the real per-section generate
+  // handler (handleGenerateAI) for the active section. Fill empty / Synthesize /
+  // Quality check / Continue route best-effort to the existing section-level AI
+  // dispatcher (runActiveSectionAi) — no new backend endpoints are invented; the
+  // embedded chat (whole-artifact context) carries the richer intent.
+  const aiConsultantActions = useMemo<AIConsultantAction[]>(() => {
+    const sectionBusy = activeSectionAiBusy;
+    return [
+      {
+        id: 'fill-empty',
+        label: 'Fill empty',
+        labelPl: 'Uzupełnij puste',
+        icon: <Wand2 size={14} />,
+        onClick: () => void runActiveSectionAi(),
+        busy: sectionBusy,
+      },
+      {
+        id: 'synthesize',
+        label: 'Synthesize',
+        labelPl: 'Synteza',
+        icon: <Layers size={14} />,
+        onClick: () => void runActiveSectionAi(),
+        busy: sectionBusy,
+      },
+      {
+        id: 'quality-check',
+        label: 'Quality check',
+        labelPl: 'Kontrola jakości',
+        icon: <ShieldCheck size={14} />,
+        onClick: () => void runActiveSectionAi(),
+        busy: sectionBusy,
+      },
+      {
+        id: 'refresh',
+        label: 'Refresh',
+        labelPl: 'Odśwież',
+        icon: <RotateCcw size={14} />,
+        onClick: () => void handleGenerateAI(activeNSection),
+        busy: isGeneratingAI === activeNSection,
+      },
+      {
+        id: 'continue',
+        label: 'Continue',
+        labelPl: 'Kontynuuj',
+        icon: <ArrowRight size={14} />,
+        onClick: () => void runActiveSectionAi(),
+        busy: sectionBusy,
+      },
+    ];
+  }, [activeSectionAiBusy, runActiveSectionAi, handleGenerateAI, activeNSection, isGeneratingAI]);
 
   // ==========================================
   // LOADING & ERROR STATES
@@ -9454,707 +9623,354 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     Container matches the shared NModeShell action-bar standard (slate, borderless)
                     so the Initiative toolbar reads identically to the Insight toolbar. */}
                 <div className="sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 mb-4">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {(() => {
-                      const primaryGroup = nModeActions.filter((a) => a.variant === 'success');
-                      const contextGroup = nModeActions.filter((a) => a.variant === 'neutral');
-                      const dangerGroup = nModeActions.filter((a) => a.variant === 'danger');
-
-                      const renderButton = (action: NModeAction) => {
-                        const Icon = action.icon;
-                        const variantClasses =
-                          action.variant === 'success'
-                            ? 'border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
-                            : action.variant === 'danger'
-                              ? 'border-rose-400/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10'
-                              : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60';
-                        return (
-                          <button
-                            key={action.id}
-                            onClick={action.onClick}
-                            disabled={action.disabled}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${variantClasses} disabled:opacity-50`}
+                  {(() => {
+                    const activeSectionObj = orderedNModeSectionsWithContent.find(
+                      (s) => s.id === activeNSection
+                    );
+                    const activeSectionName = activeSectionObj
+                      ? isPolish
+                        ? activeSectionObj.label.pl
+                        : activeSectionObj.label.en
+                      : '';
+                    // Grouped section list for the Sections dropdown (mirrors left nav).
+                    const sectionGroups: { group: string; sections: NModeSection[] }[] = [];
+                    for (const s of nModeSectionsWithContent) {
+                      const g = s.group || (isPolish ? 'Pozostałe' : 'Other');
+                      let bucket = sectionGroups.find((x) => x.group === g);
+                      if (!bucket) {
+                        bucket = { group: g, sections: [] };
+                        sectionGroups.push(bucket);
+                      }
+                      bucket.sections.push(s);
+                    }
+                    return (
+                      <div className="flex items-center gap-1 flex-wrap min-h-[36px]">
+                        {/* ── Left zone: Sections · New · Export ─────────────── */}
+                        <div className="relative">
+                          <ToolbarGhostButton
+                            icon={<Layers size={14} />}
+                            onClick={() => setShowSectionsMenu((v) => !v)}
+                            aria-expanded={showSectionsMenu}
                           >
-                            <Icon size={13} />
-                            <span>{isPolish ? action.label.pl : action.label.en}</span>
-                          </button>
-                        );
-                      };
-
-                      return (
-                        <>
-                          {primaryGroup.map(renderButton)}
-                          {primaryGroup.length > 0 && contextGroup.length > 0 && (
-                            <div
-                              key="sep-1"
-                              className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5"
-                            />
-                          )}
-                          {contextGroup.map(renderButton)}
-                          {(primaryGroup.length > 0 || contextGroup.length > 0) &&
-                            dangerGroup.length > 0 && (
+                            <span>{isPolish ? 'Sekcje' : 'Sections'}</span>
+                            <ChevronDown size={12} className="opacity-60" />
+                          </ToolbarGhostButton>
+                          {showSectionsMenu && (
+                            <>
                               <div
-                                key="sep-2"
-                                className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5"
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowSectionsMenu(false)}
                               />
-                            )}
-                          {dangerGroup.map(renderButton)}
-
-                          {/* Right-aligned AI Generate button (hidden for activity-log — no analysis) */}
-                          <div className="flex-1" />
-                          {activeNSection !== 'activity-log' &&
-                            (() => {
-                              if (activeNSection === 'tasks') {
-                                return (
-                                  <div className="inline-flex items-center gap-2">
-                                    <button
-                                      onClick={() => {
-                                        if (!canUseAi) {
-                                          toast.error(
-                                            isPolish
-                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                              : 'AI is unavailable because you have no edit permissions in this context.'
-                                          );
-                                          return;
-                                        }
-                                        requestTasksAi('analyze');
-                                      }}
-                                      disabled={!canUseAi || !!tasksAiRequest}
-                                      title={
-                                        !canUseAi
-                                          ? isPolish
-                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                            : 'No permission to use AI in this context.'
-                                          : undefined
-                                      }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                    >
-                                      {tasksAiRequest?.mode === 'analyze' ? (
-                                        <Loader2 size={13} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={13} />
-                                      )}
-                                      <span>
-                                        {tasksAiRequest?.mode === 'analyze'
-                                          ? isPolish
-                                            ? 'Analizuję...'
-                                            : 'Analyzing...'
-                                          : isPolish
-                                            ? 'Analizuj z AI'
-                                            : 'Analyze with AI'}
-                                      </span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        if (!canUseAi) {
-                                          toast.error(
-                                            isPolish
-                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                              : 'AI is unavailable because you have no edit permissions in this context.'
-                                          );
-                                          return;
-                                        }
-                                        requestTasksAi('addOne');
-                                      }}
-                                      disabled={!canUseAi || !!tasksAiRequest}
-                                      title={
-                                        !canUseAi
-                                          ? isPolish
-                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                            : 'No permission to use AI in this context.'
-                                          : undefined
-                                      }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                    >
-                                      {tasksAiRequest?.mode === 'addOne' ? (
-                                        <Loader2 size={13} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={13} />
-                                      )}
-                                      <span>
-                                        {tasksAiRequest?.mode === 'addOne'
-                                          ? isPolish
-                                            ? 'Dodaję...'
-                                            : 'Generating...'
-                                          : isPolish
-                                            ? 'AI: dodaj task'
-                                            : 'AI: Add task'}
-                                      </span>
-                                    </button>
-                                  </div>
-                                );
-                              }
-                              if (activeNSection === 'decisions') {
-                                return (
-                                  <div className="inline-flex items-center gap-2">
-                                    <button
-                                      onClick={() => {
-                                        if (!canUseAi) {
-                                          toast.error(
-                                            isPolish
-                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                              : 'AI is unavailable because you have no edit permissions in this context.'
-                                          );
-                                          return;
-                                        }
-                                        requestDecisionsAi('analyze');
-                                      }}
-                                      disabled={!canUseAi || !!decisionsAiRequest}
-                                      title={
-                                        !canUseAi
-                                          ? isPolish
-                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                            : 'No permission to use AI in this context.'
-                                          : undefined
-                                      }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                    >
-                                      {decisionsAiRequest?.mode === 'analyze' ? (
-                                        <Loader2 size={13} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={13} />
-                                      )}
-                                      <span>
-                                        {decisionsAiRequest?.mode === 'analyze'
-                                          ? isPolish
-                                            ? 'Analizuję...'
-                                            : 'Analyzing...'
-                                          : isPolish
-                                            ? 'Analizuj z AI'
-                                            : 'Analyze with AI'}
-                                      </span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        if (!canUseAi) {
-                                          toast.error(
-                                            isPolish
-                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                              : 'AI is unavailable because you have no edit permissions in this context.'
-                                          );
-                                          return;
-                                        }
-                                        requestDecisionsAi('addOne');
-                                      }}
-                                      disabled={!canUseAi || !!decisionsAiRequest}
-                                      title={
-                                        !canUseAi
-                                          ? isPolish
-                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                            : 'No permission to use AI in this context.'
-                                          : undefined
-                                      }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                    >
-                                      {decisionsAiRequest?.mode === 'addOne' ? (
-                                        <Loader2 size={13} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={13} />
-                                      )}
-                                      <span>
-                                        {decisionsAiRequest?.mode === 'addOne'
-                                          ? isPolish
-                                            ? 'Dodaję...'
-                                            : 'Generating...'
-                                          : isPolish
-                                            ? 'AI: dodaj decyzję'
-                                            : 'AI: Add decision'}
-                                      </span>
-                                    </button>
-                                  </div>
-                                );
-                              }
-                              if (activeNSection === 'comments') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestCommentsAi();
-                                    }}
-                                    disabled={!canUseAi || !!commentsAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                  >
-                                    {commentsAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {commentsAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'resources') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestResourcesAi();
-                                    }}
-                                    disabled={!canUseAi || !!resourcesAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                  >
-                                    {resourcesAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {resourcesAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'timeline') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestTimelineAi();
-                                    }}
-                                    disabled={!canUseAi || !!timelineAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                  >
-                                    {timelineAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {timelineAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'dependencies') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestDependenciesAi();
-                                    }}
-                                    disabled={!canUseAi || !!dependenciesAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                  >
-                                    {dependenciesAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {dependenciesAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'kpis') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestKpisAi();
-                                    }}
-                                    disabled={!canUseAi || !!kpisAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                  >
-                                    {kpisAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {kpisAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'team') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestTeamAi();
-                                    }}
-                                    disabled={!canUseAi || !!teamAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                  >
-                                    {teamAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {teamAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'targetState') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestTargetStateAi();
-                                    }}
-                                    disabled={!canUseAi || !!targetStateAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                  >
-                                    {targetStateAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {targetStateAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'gates') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestGatesAi();
-                                    }}
-                                    disabled={!canUseAi || !!gatesAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                  >
-                                    {gatesAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {gatesAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-
-                              const aiSectionKey =
-                                activeNSection === 'initiative-definition'
-                                  ? 'scope'
-                                  : activeNSection === 'risk-raid'
-                                    ? 'raid'
-                                    : activeNSection;
-                              const aiLabel =
-                                activeNSection === 'initiative-definition'
-                                  ? isPolish
-                                    ? 'Generuj scope'
-                                    : 'Generate scope'
-                                  : activeNSection === 'risk-raid'
-                                    ? isPolish
-                                      ? 'Analizuj RAID'
-                                      : 'Analyze RAID'
-                                    : isPolish
-                                      ? 'Analyze with AI'
-                                      : 'Analyze with AI';
-                              const isRaidAnalyzing =
-                                activeNSection === 'risk-raid' &&
-                                (!!raidAiRequest || isRaidAIProposing);
-                              return (
-                                <button
-                                  onClick={async () => {
-                                    if (!canUseAi) {
-                                      toast.error(
-                                        isPolish
-                                          ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                          : 'AI is unavailable because you have no edit permissions in this context.'
+                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                {sectionGroups.map((grp) => (
+                                  <div key={grp.group} className="py-0.5">
+                                    <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                      {grp.group}
+                                    </div>
+                                    {grp.sections.map((s) => {
+                                      const isEmpty = s.cHidden === true;
+                                      const isVisible = !hiddenSectionIds.has(s.id);
+                                      const SectionIcon = s.icon;
+                                      return (
+                                        <button
+                                          key={s.id}
+                                          type="button"
+                                          onClick={() =>
+                                            setHiddenSectionIds((prev) => {
+                                              const next = new Set(prev);
+                                              if (next.has(s.id)) next.delete(s.id);
+                                              else next.add(s.id);
+                                              return next;
+                                            })
+                                          }
+                                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-slate-50 dark:hover:bg-navy-800/60 ${
+                                            isEmpty
+                                              ? 'text-slate-400 dark:text-slate-600'
+                                              : 'text-slate-700 dark:text-slate-200'
+                                          }`}
+                                        >
+                                          <span
+                                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                                              isVisible
+                                                ? 'border-teal-500 bg-teal-500 text-white'
+                                                : 'border-slate-300 dark:border-navy-600'
+                                            }`}
+                                          >
+                                            {isVisible && <CheckCircle size={10} />}
+                                          </span>
+                                          <SectionIcon size={13} className="shrink-0 opacity-70" />
+                                          <span className="flex-1 truncate">
+                                            {isPolish ? s.label.pl : s.label.en}
+                                          </span>
+                                          {isEmpty && (
+                                            <span className="shrink-0 rounded bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-400">
+                                              {isPolish ? 'brak' : 'empty'}
+                                            </span>
+                                          )}
+                                        </button>
                                       );
-                                      return;
-                                    }
-                                    if (activeNSection === 'initiative-definition') {
-                                      await handleGenerateScopeCard();
-                                      return;
-                                    }
-                                    if (activeNSection === 'risk-raid') {
-                                      requestRaidAi();
-                                      return;
-                                    }
-                                    await handleGenerateAI(aiSectionKey);
-                                  }}
-                                  disabled={
-                                    !canUseAi ||
-                                    (activeNSection === 'risk-raid'
-                                      ? isRaidAnalyzing
-                                      : isGeneratingAI === aiSectionKey)
-                                  }
-                                  title={
-                                    !canUseAi
-                                      ? isPolish
-                                        ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                        : 'No permission to use AI in this context.'
-                                      : undefined
-                                  }
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50"
-                                >
-                                  {activeNSection === 'risk-raid' ? (
-                                    isRaidAnalyzing ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )
-                                  ) : isGeneratingAI === aiSectionKey ? (
-                                    <Loader2 size={13} className="animate-spin" />
-                                  ) : (
-                                    <Sparkles size={13} />
-                                  )}
-                                  <span>
-                                    {activeNSection === 'risk-raid' && isRaidAnalyzing
-                                      ? isPolish
-                                        ? 'Analizuję...'
-                                        : 'Analyzing...'
-                                      : aiLabel}
-                                  </span>
-                                </button>
-                              );
-                            })()}
-                        </>
-                      );
-                    })()}
-                    {/* ── Mark Complete (AI signal) + Fork + Present ────────── */}
-                    <div className="flex-1 min-w-0" />
-                    {activeNSection !== 'activity-log' && activeNSection !== 'comments' && (
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSectionComplete(activeNSection)}
-                        title={
-                          sectionCompletions[activeNSection]
-                            ? isPolish
-                              ? 'Oznacz sekcję jako niegotową'
-                              : 'Mark section as not complete'
-                            : isPolish
-                              ? 'Oznacz sekcję jako gotową'
-                              : 'Mark section as complete'
-                        }
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          sectionCompletions[activeNSection]
-                            ? 'border-success-400/50 text-success-600 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20 hover:bg-success-100/60'
-                            : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60'
-                        }`}
-                      >
-                        <CheckCircle2 size={13} />
-                        <span>
-                          {sectionCompletions[activeNSection]
-                            ? isPolish
-                              ? 'Gotowe'
-                              : 'Complete'
-                            : isPolish
-                              ? 'Oznacz gotowe'
-                              : 'Mark complete'}
-                        </span>
-                      </button>
-                    )}
-                    <ToolbarIconButton
-                      icon={<GitFork size={14} />}
-                      tooltip={isPolish ? 'Forkuj' : 'Fork'}
-                      onClick={() => void handleFork()}
-                    />
-                    <ToolbarIconButton
-                      icon={<Download size={14} />}
-                      tooltip={isPolish ? 'Eksportuj' : 'Export'}
-                      onClick={() => setShowExportDialog(true)}
-                    />
-                    <ToolbarIconButton
-                      icon={<Monitor size={14} />}
-                      tooltip={isPolish ? 'Prezentuj' : 'Present'}
-                      onClick={() => setPresentOpen(true)}
-                    />
+                                    })}
+                                  </div>
+                                ))}
+                                {hiddenSectionIds.size > 0 && (
+                                  <div className="mt-1 border-t border-slate-100 dark:border-navy-800 pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => setHiddenSectionIds(new Set())}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+                                    >
+                                      <RotateCcw size={13} className="shrink-0" />
+                                      <span>
+                                        {isPolish ? 'Przywróć domyślne' : 'Restore defaults'}
+                                      </span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
 
-                    {/* ── Slot 9: artifact-level AI (solid teal) ─────────────
-                        Canon C/Level-3: rightmost AI affordance is a SOLID teal
-                        button (bg-teal-600 text-white). Drives AI on the active
-                        section; AI Consultant panel to follow. */}
-                    <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!canUseAi) {
-                          toast.error(
-                            isPolish
-                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                              : 'AI is unavailable because you have no edit permissions in this context.'
-                          );
-                          return;
-                        }
-                        void handleGenerateAI(activeNSection);
-                      }}
-                      disabled={!canUseAi || isGeneratingAI === activeNSection}
-                      title={isPolish ? 'Asystent AI' : 'AI Consultant'}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
-                    >
-                      {isGeneratingAI === activeNSection ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Sparkles size={14} />
-                      )}
-                      <span>AI</span>
-                    </button>
-                  </div>
+                        {/* Slot 2 — New ▾ (context create actions) */}
+                        <div className="relative">
+                          <ToolbarSubtleButton
+                            icon={<Plus size={14} />}
+                            onClick={() => setShowNewMenu((v) => !v)}
+                            disabled={newMenuActions.length === 0}
+                            aria-expanded={showNewMenu}
+                            title={
+                              newMenuActions.length === 0
+                                ? isPolish
+                                  ? 'Brak akcji tworzenia w tym stanie'
+                                  : 'No create actions available in this state'
+                                : undefined
+                            }
+                          >
+                            <span>{isPolish ? 'Nowy' : 'New'}</span>
+                            <ChevronDown size={12} className="opacity-60" />
+                          </ToolbarSubtleButton>
+                          {showNewMenu && newMenuActions.length > 0 && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowNewMenu(false)}
+                              />
+                              <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                {newMenuActions.map((item) => (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setShowNewMenu(false);
+                                      item.onClick();
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors"
+                                  >
+                                    <Plus size={13} className="shrink-0 opacity-70" />
+                                    <span>{isPolish ? item.label.pl : item.label.en}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Slot 3 — Export ▾ (destination selector) */}
+                        <div className="relative">
+                          <ToolbarGhostButton
+                            icon={<Download size={14} />}
+                            onClick={() => setShowExportMenu((v) => !v)}
+                            aria-expanded={showExportMenu}
+                          >
+                            <span>{isPolish ? 'Eksport' : 'Export'}</span>
+                            <ChevronDown size={12} className="opacity-60" />
+                          </ToolbarGhostButton>
+                          {showExportMenu && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowExportMenu(false)}
+                              />
+                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                {(
+                                  [
+                                    {
+                                      id: 'notebook',
+                                      label: { en: '→ Notebook', pl: '→ Notatnik' },
+                                      icon: NotebookPen,
+                                      onClick: () => void handleExportNotebook(),
+                                    },
+                                    {
+                                      id: 'deck',
+                                      label: { en: '→ Presentation', pl: '→ Prezentacja' },
+                                      icon: Presentation,
+                                      onClick: () => handleExportDeck(),
+                                    },
+                                    {
+                                      id: 'pdf',
+                                      label: { en: '→ PDF', pl: '→ PDF' },
+                                      icon: FileType,
+                                      onClick: () => void handleExportReportPDF(),
+                                    },
+                                    {
+                                      id: 'markdown',
+                                      label: { en: '→ Markdown', pl: '→ Markdown' },
+                                      icon: FileDown,
+                                      onClick: () => handleExportMarkdown(),
+                                    },
+                                    {
+                                      id: 'more',
+                                      label: { en: 'Smart Export…', pl: 'Eksport zaawansowany…' },
+                                      icon: FileText,
+                                      onClick: () => setShowExportDialog(true),
+                                    },
+                                  ] as const
+                                ).map((item) => {
+                                  const ItemIcon = item.icon;
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setShowExportMenu(false);
+                                        item.onClick();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors"
+                                    >
+                                      <ItemIcon size={13} className="shrink-0 opacity-70" />
+                                      <span>{isPolish ? item.label.pl : item.label.en}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* ── Divider · active section · ─────────────────────── */}
+                        <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+                        {activeSectionName && (
+                          <span className="px-1 text-[12px] text-slate-400 dark:text-slate-500 truncate max-w-[160px]">
+                            {activeSectionName}
+                          </span>
+                        )}
+
+                        {/* Slot 5 — section-level AI (teal split) */}
+                        {activeNSection !== 'activity-log' && (
+                          <ToolbarAISplitButton
+                            onClick={() => void runActiveSectionAi()}
+                            disabled={
+                              !canUseAi || activeSectionAiBusy || activeSectionAiUnavailable
+                            }
+                            title={
+                              activeSectionAiUnavailable
+                                ? isPolish
+                                  ? 'Generowanie AI niedostępne dla tej sekcji'
+                                  : 'AI generation not available for this section yet'
+                                : !canUseAi
+                                  ? isPolish
+                                    ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                    : 'No permission to use AI in this context.'
+                                  : isPolish
+                                    ? 'AI dla tej sekcji'
+                                    : 'AI for this section'
+                            }
+                            icon={
+                              activeSectionAiBusy ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <Sparkles size={13} />
+                              )
+                            }
+                          >
+                            <span>{isPolish ? 'AI sekcja' : 'AI section'}</span>
+                          </ToolbarAISplitButton>
+                        )}
+
+                        {/* ── Spacer ─────────────────────────────────────────── */}
+                        <div className="flex-1 min-w-[8px]" />
+
+                        {/* Slot 6/7 — Fork · Present */}
+                        <ToolbarIconButton
+                          icon={<GitFork size={14} />}
+                          tooltip={isPolish ? 'Forkuj' : 'Fork'}
+                          onClick={() => void handleFork()}
+                        />
+                        <ToolbarIconButton
+                          icon={<Monitor size={14} />}
+                          tooltip={isPolish ? 'Prezentuj' : 'Present'}
+                          onClick={() => setPresentOpen(true)}
+                        />
+
+                        {/* Kebab — destructive actions (Block / Cancel / Archive) */}
+                        {destructiveStatusActions.length > 0 && (
+                          <div className="relative">
+                            <ToolbarIconButton
+                              icon={<MoreVertical size={14} />}
+                              tooltip={isPolish ? 'Więcej' : 'More'}
+                              onClick={() => setShowToolbarKebab((v) => !v)}
+                              aria-expanded={showToolbarKebab}
+                            />
+                            {showToolbarKebab && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-40"
+                                  onClick={() => setShowToolbarKebab(false)}
+                                />
+                                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                  {destructiveStatusActions.map((sa) => {
+                                    const KebabIcon =
+                                      sa.targetStatus === InitiativeStatus.CANCELLED
+                                        ? XCircle
+                                        : sa.targetStatus === InitiativeStatus.BLOCKED
+                                          ? Ban
+                                          : AlertTriangle;
+                                    return (
+                                      <button
+                                        key={sa.targetStatus}
+                                        type="button"
+                                        disabled={isMutating}
+                                        onClick={() => {
+                                          setShowToolbarKebab(false);
+                                          void handleStatusAction(sa);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
+                                      >
+                                        <KebabIcon size={13} className="shrink-0" />
+                                        <span>{isPolish ? sa.labelPl : sa.label}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ── Slot 9: artifact-level AI (solid teal) ─────────── */}
+                        <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+                        <ToolbarAISolidButton
+                          onClick={() => {
+                            if (!canUseAi) {
+                              toast.error(
+                                isPolish
+                                  ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                  : 'AI is unavailable because you have no edit permissions in this context.'
+                              );
+                              return;
+                            }
+                            setAiPanelOpen((v) => !v);
+                          }}
+                          disabled={!canUseAi}
+                          title={isPolish ? 'Asystent AI' : 'AI Consultant'}
+                          aria-expanded={aiPanelOpen}
+                          icon={<Sparkles size={14} />}
+                        >
+                          <span>{isPolish ? 'AI Konsultant' : 'AI Consultant'}</span>
+                        </ToolbarAISolidButton>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* LeftNav + Canvas */}
@@ -10165,10 +9981,53 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     onSectionChange={setActiveNSection}
                     onSectionReorder={handleNModeSectionReorder}
                   />
-                  <NModeCanvas
-                    sections={orderedNModeSectionsWithContent}
-                    activeSection={activeNSection}
-                  />
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    {/* Active-section header — Mark Complete (Canon Warstwa 4 ·
+                        SectionCard). Moved out of the toolbar; AI-signal only,
+                        success-green, never locks fields. Nav ✓ + progress bar
+                        stay wired via sectionCompletions + handleToggleSectionComplete. */}
+                    {activeNSection !== 'activity-log' && activeNSection !== 'comments' && (
+                      <div className="flex items-center justify-end px-1 pb-3">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSectionComplete(activeNSection)}
+                          title={
+                            sectionCompletions[activeNSection]
+                              ? isPolish
+                                ? 'Oznacz sekcję jako niegotową'
+                                : 'Mark section as not complete'
+                              : isPolish
+                                ? 'Oznacz sekcję jako gotową'
+                                : 'Mark section as complete'
+                          }
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            sectionCompletions[activeNSection]
+                              ? 'border-success-400/50 text-success-700 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20 hover:bg-success-100/60'
+                              : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60'
+                          }`}
+                        >
+                          {sectionCompletions[activeNSection] ? (
+                            <Undo2 size={13} />
+                          ) : (
+                            <CheckCircle2 size={13} />
+                          )}
+                          <span>
+                            {sectionCompletions[activeNSection]
+                              ? isPolish
+                                ? 'Otwórz ponownie'
+                                : 'Reopen'
+                              : isPolish
+                                ? 'Oznacz gotowe'
+                                : 'Mark complete'}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    <NModeCanvas
+                      sections={orderedNModeSectionsWithContent}
+                      activeSection={activeNSection}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -10362,6 +10221,21 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Slot 9 — canonical artifact-level AI Consultant right panel (POZIOM 3).
+          Right-side ~360px slide-over with whole-initiative chat context + the
+          5 canon actions. Toggled by the solid-teal toolbar button. */}
+      <AIConsultantPanel
+        open={aiPanelOpen}
+        onClose={() => setAiPanelOpen(false)}
+        artifactType="initiative"
+        artifactId={String(initiative?.id ?? initiativeId)}
+        artifactTitle={String(initiative?.title || initiative?.name || 'Initiative')}
+        contextText={aiPanelContextText}
+        actions={aiConsultantActions}
+        isBusy={!canUseAi}
+        isPolish={isPolish}
+      />
     </InitiativeContext.Provider>
   );
 };

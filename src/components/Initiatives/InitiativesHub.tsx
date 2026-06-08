@@ -140,6 +140,10 @@ const ALLOWED_STATUSES: InitiativeStatus[] =
         InitiativeStatus.ARCHIVED,
       ];
 
+// Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
+const COMING_SOON_BADGE =
+  'ml-1.5 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-500 dark:bg-white/[0.06] dark:text-slate-400';
+
 // D1.1: Initiative type/level — determines governance complexity
 // Downgrade blocked, upgrade possible
 export type InitiativeLevel = 'quick_win' | 'standard' | 'strategic' | 'transformation';
@@ -236,7 +240,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [showNewModal, setShowNewModal] = useState(false);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [showCharter, setShowCharter] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -1612,62 +1615,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  // Module 05: AI initiative generation (Teresa) — real mount at
-  // /api/initiative-generator (promoted from the disabled stub). On success we
-  // refresh the portfolio so the new draft surfaces.
-  const handleGenerateWithTeresa = useCallback(async () => {
-    if (isGenerating) return;
-    setIsGenerating(true);
-    try {
-      await Api.generateInitiatives({
-        source: 'teresa',
-        context: { projectId: currentProjectId || undefined },
-      });
-      toast.success(t('initiatives.generate.success', 'Initiative generation started'));
-      await fetchData(true);
-    } catch {
-      toast.error(t('initiatives.generate.error', "Couldn't generate initiatives"));
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [isGenerating, currentProjectId, t, fetchData]);
-
-  // Module 05 spine: Initiatives → Results. Surface a "View Results" CTA once any
-  // initiative is in execution (Results = Benefits Realization at /benefits).
-  const hasExecutingInitiative = useMemo(
-    () => allInitiatives.some((i) => i.status === InitiativeStatus.EXECUTING),
-    [allInitiatives]
-  );
-
-  const rightControls = (
-    <div className="flex items-center gap-2">
-      {!isPilotParticipant && (
-        <button
-          type="button"
-          onClick={handleGenerateWithTeresa}
-          disabled={isGenerating}
-          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-crimson-200/70 dark:border-crimson-500/30 px-3 text-[11px] font-medium text-crimson-700 dark:text-crimson-300 transition-colors hover:bg-crimson-50 dark:hover:bg-crimson-500/10 disabled:opacity-50"
-          title={t('initiatives.roi.teresa.hint', 'Ask Teresa to model ROI')}
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          {isGenerating
-            ? t('initiatives.generate.running', 'Generating…')
-            : t('initiatives.generate.button', 'Generate with Teresa')}
-        </button>
-      )}
-      {hasExecutingInitiative && (
-        <button
-          type="button"
-          onClick={() => navigate(ROUTES.BENEFITS)}
-          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200/70 dark:border-white/[0.06] px-3 text-[11px] font-medium text-slate-600 dark:text-slate-300 transition-colors hover:bg-white/60 dark:hover:bg-white/[0.06]"
-        >
-          <BarChart3 className="h-3.5 w-3.5" />
-          {t('initiatives.cta.results', 'View Results')}
-        </button>
-      )}
-      {scopeToggle}
-    </div>
-  );
+  const rightControls = <div className="flex items-center gap-2">{scopeToggle}</div>;
 
   const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
     (sum, chain) =>
@@ -1735,13 +1683,33 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  // Menu 3: show only statuses with count > 0, plus always include the currently active status
-  // filter so it doesn't disappear when data re-fetches. Standard §3.1: statuses with 0 are
-  // hidden to avoid crowding the right-side AI action slot.
-  const visibleStatusChips = useMemo(
-    () => ALLOWED_STATUSES.filter((s) => (statusCounts[s] ?? 0) > 0 || s === activeStatusFilter),
-    [statusCounts, activeStatusFilter]
+  // Menu 3 stability: render the FULL portfolio status set ALWAYS (In Review →
+  // Promoted → Planning → Approved → Scheduled), regardless of which filter is
+  // active or which view is shown. Only the active state + the bottom list change —
+  // Menu 3 itself never rebuilds on view/filter change. Any extra active status
+  // (e.g. a non-portfolio status reached via deep link) is appended so it never
+  // disappears while selected.
+  const PORTFOLIO_STATUS_CHIPS: InitiativeStatus[] = useMemo(
+    () => [
+      InitiativeStatus.REVIEW,
+      InitiativeStatus.PROMOTED,
+      InitiativeStatus.PLANNING,
+      InitiativeStatus.APPROVED,
+      InitiativeStatus.SCHEDULED,
+    ],
+    []
   );
+  const visibleStatusChips = useMemo(() => {
+    const base = [...PORTFOLIO_STATUS_CHIPS];
+    if (
+      activeStatusFilter &&
+      ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus) &&
+      !base.includes(activeStatusFilter as InitiativeStatus)
+    ) {
+      base.push(activeStatusFilter as InitiativeStatus);
+    }
+    return base;
+  }, [PORTFOLIO_STATUS_CHIPS, activeStatusFilter]);
 
   // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
   // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
@@ -1755,6 +1723,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     selectedIds.size > 0;
 
   const comingSoonBackend = t('common.comingSoonBackend', 'Wkrótce (backend)');
+  // "Coming soon" affordance for features that are not yet functional (task #11).
+  const comingSoonPrep = t('common.comingSoonPrep', 'w przygotowaniu');
   const bulkButtonBase = `${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`;
 
   const bulkBarContent = (
@@ -1954,32 +1924,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           </>
         )}
       </div>
+      {/* Stable right group — AI Initiative Wizard + Charter. Present at all times
+          (not conditional), separated from the status filters. Both are COMING
+          SOON: disabled + "w przygotowaniu" badge until wired. */}
       <div className={MENU_3_RIGHT_CLASS}>
-        {/* Multi-select bulk bar (canon §15.3 Formula 2) replaces this row when ≥1 row is selected. */}
-        {!isPilotParticipant && (
-          <button
-            type="button"
-            onClick={() => setShowInitiativeWizard(true)}
-            className={MENU_3_ACTION_NEUTRAL}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            AI Initiative Wizard
-          </button>
-        )}
-        {!isPilotParticipant && (
-          <button
-            type="button"
-            onClick={() => setShowCharter(true)}
-            className={MENU_3_ACTION_NEUTRAL}
-            title={t(
-              'initiatives.charter.cta',
-              'Nowa inicjatywa (Charter — szybki, dyscyplina MECE)'
-            )}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {t('initiatives.charter.short', 'Charter')}
-          </button>
-        )}
+        <button
+          type="button"
+          disabled
+          className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+          title={comingSoonPrep}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          AI Initiative Wizard
+          <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
+        </button>
+        <button
+          type="button"
+          disabled
+          className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+          title={comingSoonPrep}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {t('initiatives.charter.short', 'Charter')}
+          <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
+        </button>
       </div>
     </div>
   );
@@ -2006,10 +1974,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           isPilotParticipant ? undefined : (
             <button
               type="button"
-              onClick={() => setShowNewModal(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors duration-150"
+              disabled
+              title={comingSoonPrep}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>{t('initiatives.form.newInitiative')}</span>
+              <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
             </button>
           )
         }

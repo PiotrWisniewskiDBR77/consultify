@@ -94,7 +94,9 @@ export const NavItem: React.FC<NavItemProps> = ({
         data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
         aria-disabled={isLocked ? 'true' : undefined}
         onClick={() => {
-          if (isLocked) return;
+          // Flow-locked items stay silent; items carrying a lockedCode (e.g. beta)
+          // surface their access plate via the parent handler.
+          if (isLocked && !item.lockedCode) return;
           onClick(item);
         }}
         whileTap={{ scale: 0.98 }}

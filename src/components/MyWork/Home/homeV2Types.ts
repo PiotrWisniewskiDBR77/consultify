@@ -68,6 +68,16 @@ export interface RadarSignalPreview {
   suggestedNextStep: string;
 }
 
+export interface RadarBriefing {
+  signalId: string;
+  whatItIs: string;
+  whyItMattersForYou: string;
+  goodFirstQuestion: string;
+  suggestedNextStep: string;
+  aiGenerated: true;
+  generatedAt: string;
+}
+
 export interface RadarMapSignal {
   id: string;
   name: string;
@@ -78,6 +88,15 @@ export interface RadarMapSignal {
   signalType: RadarSignalType;
   importanceLevel: 'small' | 'medium' | 'large';
   fitLevel: 'low' | 'medium' | 'high';
+  /** Real relevance score (0–120) — drives radius within the ring band. */
+  score?: number;
+  /** Model confidence 0–1. */
+  confidence?: number;
+  sourceName?: string;
+  sourceUrl?: string;
+  topic?: string;
+  entity?: string;
+  publishedAt?: string | null;
   preview: RadarSignalPreview;
 }
 
