@@ -97,7 +97,11 @@ import { OutputToolSelector } from './OutputToolSelector';
 import { PrivateModeDetails } from './PrivateModeDetails';
 import { detectProcessFlowIntent } from './processFlowIntentDetector';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
-import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
+import {
+  formatTeresaAdminDiagnostic,
+  getTeresaEmptyResponseMessage,
+  getTeresaStartFailureMessage,
+} from './teresaRuntimeCopy';
 import { TeresaTTSPlayer } from './TeresaTTSPlayer';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
@@ -1296,7 +1300,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
       // Make failures visible in the conversation UI (otherwise user only sees their own messages).
-      const friendly = getTeresaStartFailureMessage(i18n.language);
+      // Admins/owners also get the real cause (HTTP status / code / message) inline.
+      const roleLowerErr =
+        typeof currentUser?.role === 'string' ? currentUser.role.trim().toLowerCase() : '';
+      const isPrivilegedErr = ['admin', 'owner', 'superadmin'].includes(roleLowerErr);
+      const friendly = getTeresaStartFailureMessage(
+        i18n.language,
+        isPrivilegedErr ? formatTeresaAdminDiagnostic(err) : null
+      );
 
       try {
         if (activeConversationId) {
