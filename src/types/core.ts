@@ -1913,6 +1913,8 @@ export interface InvitationValidation {
   expiresAt: string;
   /** When true, the first-login profile (job title + country) is mandatory. */
   requireProfile?: boolean;
+  /** When true, this is a shared/open invitation — the user enters their own email. */
+  requireEmail?: boolean;
   /** Prefilled from a pre-created (pending) account, if any. */
   firstName?: string;
   lastName?: string;

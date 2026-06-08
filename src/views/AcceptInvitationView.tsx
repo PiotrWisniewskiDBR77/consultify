@@ -68,6 +68,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   const [emailMismatch, setEmailMismatch] = useState(false);
 
   // Form state
+  const [enteredEmail, setEnteredEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
@@ -147,6 +148,14 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
       return;
     }
 
+    if (invitation?.requireEmail) {
+      const em = enteredEmail.trim();
+      if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+        setError('Please enter your work email address');
+        return;
+      }
+    }
+
     const requireProfile = invitation?.requireProfile === true;
     if (requireProfile) {
       if (!jobTitle.trim() || !siteLocation.trim()) {
@@ -174,7 +183,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
         },
         body: JSON.stringify({
           token,
-          email: invitation?.email,
+          email: invitation?.requireEmail ? enteredEmail.trim().toLowerCase() : invitation?.email,
           firstName,
           lastName,
           jobTitle: jobTitle.trim(),
@@ -329,10 +338,34 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             </div>
           )}
 
-          <div className="bg-gray-50 rounded-lg p-3 text-sm">
-            <span className="text-gray-600">Joining as:</span>{' '}
-            <span className="font-medium text-gray-900">{invitation?.email}</span>
-          </div>
+          {invitation?.requireEmail ? (
+            <div>
+              <label
+                htmlFor="enteredEmail"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Your work email *
+              </label>
+              <input
+                type="email"
+                id="enteredEmail"
+                value={enteredEmail}
+                onChange={(e) => setEnteredEmail(e.target.value)}
+                placeholder="you@vtsgroup.com"
+                autoComplete="email"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Use the work email this invitation was sent to.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-lg p-3 text-sm">
+              <span className="text-gray-600">Joining as:</span>{' '}
+              <span className="font-medium text-gray-900">{invitation?.email}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

@@ -436,8 +436,14 @@ export class InvitationServiceClass {
     if (!invitation) throw new Error('Invalid invitation token');
 
     // First-login profile enforcement (only when the invitation opts in)
-    const acceptMeta = JSON.parse(invitation.metadata || '{}') as { requireProfile?: boolean };
+    const acceptMeta = JSON.parse(invitation.metadata || '{}') as {
+      requireProfile?: boolean;
+      open?: boolean;
+    };
     const requireProfile = acceptMeta.requireProfile === true;
+    // Shared/open invitation: one link for a whole cohort. Each user enters their
+    // own email; the link is not bound to a single address and is not consumed.
+    const isOpen = acceptMeta.open === true;
     if (requireProfile && (!jobTitle?.trim() || !siteLocation?.trim())) {
       throw new Error('Job title and work location are required to complete your first login.');
     }
@@ -458,8 +464,8 @@ export class InvitationServiceClass {
       throw new Error('Invitation has expired');
     }
 
-    // Email binding
-    if (email.toLowerCase() !== invitation.email.toLowerCase()) {
+    // Email binding (skipped for shared/open invitations — each user enters their own email)
+    if (!isOpen && email.toLowerCase() !== invitation.email.toLowerCase()) {
       throw new Error(
         'Email address does not match invitation. Please use the email address the invitation was sent to.'
       );
@@ -511,7 +517,10 @@ export class InvitationServiceClass {
             logger.warn('[InvitationService] Membership ensure on activation failed:', memberErr);
           }
 
-          await this.deps.dataService.markAsAccepted(invitation.id, existingUser.id);
+          // Shared/open invitations stay reusable for the whole cohort — don't consume.
+          if (!isOpen) {
+            await this.deps.dataService.markAsAccepted(invitation.id, existingUser.id);
+          }
           await this.deps.dataService.logEvent(
             invitation.id,
             INVITATION_EVENT_TYPES.ACCEPTED,
@@ -616,10 +625,12 @@ export class InvitationServiceClass {
       }
     }
 
-    // Mark accepted
-    const accepted = await this.deps.dataService.markAsAccepted(invitation.id, userId);
-    if (!accepted) {
-      throw new Error('Invitation has already been accepted or is no longer valid');
+    // Mark accepted — shared/open invitations stay reusable for the cohort, don't consume.
+    if (!isOpen) {
+      const accepted = await this.deps.dataService.markAsAccepted(invitation.id, userId);
+      if (!accepted) {
+        throw new Error('Invitation has already been accepted or is no longer valid');
+      }
     }
 
     // Seat increment
@@ -852,20 +863,27 @@ export class InvitationServiceClass {
       throw new Error('Invitation has expired');
     }
 
-    const validateMeta = JSON.parse(invitation.metadata || '{}') as { requireProfile?: boolean };
+    const validateMeta = JSON.parse(invitation.metadata || '{}') as {
+      requireProfile?: boolean;
+      open?: boolean;
+    };
+    const isOpen = validateMeta.open === true;
     // Prefill name/profile from a pre-created (pending) account if one exists for this email.
-    const prefill = await this.deps.db.get<{
-      first_name: string | null;
-      last_name: string | null;
-      status: string | null;
-    }>(`SELECT first_name, last_name, status FROM users WHERE email = ? AND organization_id = ?`, [
-      invitation.email.toLowerCase(),
-      invitation.organization_id,
-    ]);
+    // Shared/open invitations have no bound email — each user enters their own.
+    const prefill = isOpen
+      ? null
+      : await this.deps.db.get<{
+          first_name: string | null;
+          last_name: string | null;
+          status: string | null;
+        }>(
+          `SELECT first_name, last_name, status FROM users WHERE email = ? AND organization_id = ?`,
+          [invitation.email.toLowerCase(), invitation.organization_id]
+        );
 
     return {
       id: invitation.id,
-      email: invitation.email,
+      email: isOpen ? '' : invitation.email,
       organizationId: invitation.organization_id,
       organizationName: invitation.organization_name,
       invitationType: invitation.invitation_type,
@@ -874,9 +892,10 @@ export class InvitationServiceClass {
       roleToAssign: invitation.role_to_assign || invitation.role,
       expiresAt: invitation.expires_at,
       requireProfile: validateMeta.requireProfile === true,
+      requireEmail: isOpen,
       firstName: prefill?.first_name || '',
       lastName: prefill?.last_name || '',
-      isFirstLogin: prefill?.status === 'pending',
+      isFirstLogin: isOpen ? true : prefill?.status === 'pending',
     };
   }
 
