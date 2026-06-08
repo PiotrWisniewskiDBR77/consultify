@@ -71,6 +71,15 @@ const featureUnavailable = (res: Response, message: string) =>
     message: message || 'Service temporarily unavailable due to missing configuration',
   });
 
+// T7-be: stable 503 body for intentionally-unimplemented endpoints. The frontend
+// (Agent F) detects code === 'FEATURE_NOT_AVAILABLE' to hide the action gracefully.
+const featureNotAvailable = (res: Response, message: string) =>
+  res.status(503).json({
+    success: false,
+    code: 'FEATURE_NOT_AVAILABLE',
+    message: message || 'This feature is not available yet.',
+  });
+
 function resolvePayoutId(req: Request): string {
   return String(req.params.payoutId || req.body?.payoutId || '').trim();
 }
@@ -230,9 +239,13 @@ router.get('/connection', async (req: Request, res: Response, next: NextFunction
     const userId = (req as any).user?.id || (req as any).userId;
     if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
+    // T1-be: reflect the self-connect feature flag so the frontend can hide the
+    // "Connect" button when self-service partner registration is disabled.
+    const selfConnectEnabled = process.env.PARTNER_SELF_CONNECT_ENABLED === 'true';
+
     const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
     if (!partnerOrgId) {
-      return res.json({ success: true, data: { connected: false } });
+      return res.json({ success: true, data: { connected: false, selfConnectEnabled } });
     }
 
     const db = getDatabase();
@@ -246,7 +259,7 @@ router.get('/connection', async (req: Request, res: Response, next: NextFunction
     );
 
     if (!org) {
-      return res.json({ success: true, data: { connected: false } });
+      return res.json({ success: true, data: { connected: false, selfConnectEnabled } });
     }
 
     const [specializations, regions] = await Promise.all([
@@ -266,6 +279,7 @@ router.get('/connection', async (req: Request, res: Response, next: NextFunction
       success: true,
       data: {
         connected: true,
+        selfConnectEnabled,
         organization: {
           id: org.id,
           name: org.name,
@@ -362,6 +376,17 @@ router.post('/connect', async (req: Request, res: Response, next: NextFunction) 
       });
     }
 
+    // T1-be: Lock self-service partner creation behind an explicit env flag.
+    // Existing (already-connected) users above are unaffected; only NEW partner
+    // org creation is gated. Flip PARTNER_SELF_CONNECT_ENABLED=true to allow.
+    if (process.env.PARTNER_SELF_CONNECT_ENABLED !== 'true') {
+      return res.status(403).json({
+        success: false,
+        code: 'PARTNER_SELF_CONNECT_DISABLED',
+        message: 'Self-service partner registration is currently disabled.',
+      });
+    }
+
     const requestedName = String(req.body?.name || '').trim();
     const name = requestedName || (userName ? `${userName} — Partner` : 'Partner Organization');
     const contactEmail = String(req.body?.contactEmail || userEmail || '').trim();
@@ -439,6 +464,50 @@ router.post('/connect', async (req: Request, res: Response, next: NextFunction) 
     if (isSchemaMissingError(error)) {
       return featureUnavailable(res, 'Partner connect unavailable (database schema missing)');
     }
+    next(error);
+  }
+});
+
+/**
+ * GET /api/partners/catalog
+ * Canonical option lists for partner specialization frameworks and regions.
+ * The backend has no dedicated enum/constant for partner specializations or
+ * regions yet (partner_specializations / partner_regions store free-text
+ * values), so this exposes a single canonical set for the frontend to choose
+ * from. (Contract with Agent E.)
+ * Guarded by the router-level verifyToken (router.use(verifyToken) above).
+ */
+const PARTNER_CATALOG_FRAMEWORKS: string[] = [
+  'DRD',
+  'SIRI',
+  'ADMA',
+  'LEAN 4.0',
+  'PMBOK',
+  'PRINCE2',
+  'ISO 21500',
+];
+
+const PARTNER_CATALOG_REGIONS: string[] = [
+  'DACH',
+  'Nordics',
+  'Benelux',
+  'CEE',
+  'UKI',
+  'Southern Europe',
+  'North America',
+];
+
+router.get('/catalog', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    return res.json({
+      success: true,
+      data: {
+        frameworks: PARTNER_CATALOG_FRAMEWORKS,
+        regions: PARTNER_CATALOG_REGIONS,
+      },
+    });
+  } catch (error: any) {
+    logger.error('Error fetching partner catalog:', error);
     next(error);
   }
 });
@@ -1041,20 +1110,21 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
         certificationLevel: 'registered',
         monthlyRevenue: 0,
         revenueChange: 0,
+        // licenses not yet tracked
         totalLicenses: 0,
+        // licenses not yet tracked
         activeLicenses: 0,
+        // licenses not yet tracked
         availableLicenses: 0,
       },
       recentActivity: [] as Array<{ type: string; text: string; time: string }>,
+      // Honest zero. The real source of truth for certification progress is the
+      // dedicated /api/partners/certifications endpoint; this summary card no
+      // longer fabricates course completion data.
       certificationProgress: {
-        completed: 2,
-        total: 4,
-        courses: [
-          { name: 'Consultify Foundations', status: 'completed' },
-          { name: 'PMO Standards', status: 'completed' },
-          { name: 'AI Intelligence Modules', status: 'in-progress', progress: 45 },
-          { name: 'Assessment Specialist', status: 'locked' },
-        ],
+        completed: 0,
+        total: 0,
+        courses: [] as Array<{ name: string; status: string; progress?: number }>,
       },
     };
 
@@ -1281,7 +1351,7 @@ router.get('/clients', async (req: Request, res: Response, next: NextFunction) =
  */
 router.post('/clients', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner client creation unavailable (no real implementation)');
+    return featureNotAvailable(res, 'Partner client creation is not available yet.');
   } catch (error: any) {
     logger.error('Error creating client:', error);
     next(error);
@@ -1294,7 +1364,7 @@ router.post('/clients', async (req: Request, res: Response, next: NextFunction) 
  */
 router.get('/clients/:clientId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner client details unavailable (no real implementation)');
+    return featureNotAvailable(res, 'Partner client details are not available yet.');
   } catch (error: any) {
     logger.error('Error fetching client:', error);
     next(error);
@@ -1347,10 +1417,7 @@ router.get('/employees', async (req: Request, res: Response, next: NextFunction)
  */
 router.post('/employees', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(
-      res,
-      'Partner employee creation unavailable (no real implementation)'
-    );
+    return featureNotAvailable(res, 'Partner employee creation is not available yet.');
   } catch (error: any) {
     logger.error('Error creating employee:', error);
     next(error);
@@ -1367,7 +1434,7 @@ router.post('/employees', async (req: Request, res: Response, next: NextFunction
  */
 router.get('/stats', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner stats unavailable (no real implementation)');
+    return featureNotAvailable(res, 'Partner stats are not available yet.');
   } catch (error: any) {
     logger.error('Error fetching partner stats:', error);
     next(error);
@@ -1384,7 +1451,7 @@ router.get('/stats', async (req: Request, res: Response, next: NextFunction) => 
  */
 router.post('/access-links', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    return featureUnavailable(res, 'Partner access links unavailable (no real implementation)');
+    return featureNotAvailable(res, 'Partner access links are not available yet.');
   } catch (error: any) {
     logger.error('Error generating access link:', error);
     next(error);

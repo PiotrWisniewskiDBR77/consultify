@@ -61,6 +61,42 @@ import {
   type V8PartnerOnboardingStatus,
 } from '../../services/api/v8';
 import { cn } from '../../utils/cn';
+import { PARTNER_TIERS, resolveCalculatorTier } from './partnerPricingData';
+
+// ============================================================================
+// COMMERCIAL TERMS & CONTACT — AUDITABLE CONSTANTS
+// ============================================================================
+//
+// These values are hard commercial content that could NOT be confirmed with
+// the business at build time. They are centralized here (instead of inlined in
+// JSX) so they are editable/auditable in one place before launch. Do not
+// fabricate new values — confirm the real ones before going live.
+//
+// NOTE: commission percentages are NOT duplicated here — they come from the
+// PARTNER_TIERS SSOT in partnerPricingData.ts.
+
+// TODO(Piotr): confirm before launch — dedicated partner manager identity + links
+const PARTNER_CONTACT = {
+  name: 'Bartosz Sotomski',
+  role: 'Partner Success Manager',
+  initials: 'BS',
+  calendlyUrl: 'https://calendly.com/bartosz-sotomski',
+  email: 'bartosz.sotomski@dbr77.com',
+  linkedinUrl: 'https://www.linkedin.com/in/bartosz-sotomski/',
+  linkedinHandle: 'linkedin.com/in/bartosz-sotomski',
+} as const;
+
+// TODO(Piotr): confirm before launch — commercial program terms quoted in FAQ
+// minCommissionPct / maxCommissionPct must stay in sync with PARTNER_TIERS SSOT
+// (Bronze 10% … Platinum 20%).
+const PARTNER_PROGRAM_TERMS = {
+  minCommissionPct: PARTNER_TIERS[0].commissionRate, // SSOT — Bronze
+  maxCommissionPct: PARTNER_TIERS[PARTNER_TIERS.length - 1].commissionRate, // SSOT — Platinum
+  minPayoutThreshold: '€100',
+  payoutDayOfMonth: 15,
+  coolingOffDays: 30,
+  averageResponseTime: '< 4 godziny',
+} as const;
 
 // ============================================================================
 // WELCOME HERO BANNER
@@ -314,30 +350,25 @@ const BetaSuccessStories: React.FC = () => {
 const TierProgressionSection: React.FC = () => {
   const { t } = useTranslation();
 
-  const tierKeys = ['registered', 'bronze', 'silver', 'gold', 'platinum'] as const;
-  const tierCommissions = ['10%', '12%', '15%', '18%', '20%'];
-  const tierColors = [
-    'bg-slate-400',
-    'bg-amber-600',
-    'bg-slate-300',
-    'bg-yellow-500',
-    'bg-primary-600',
-  ];
-  const tierBadges = [
-    '/images/partner/tier-registered.png',
-    '/images/partner/tier-bronze.png',
-    '/images/partner/tier-silver.png',
-    '/images/partner/tier-gold.png',
-    '/images/partner/tier-platinum.png',
-  ];
+  // SSOT — tier names + commission rates come from PARTNER_TIERS
+  // (partnerPricingData.ts). The 5-tier "Registered 10%" model was dropped:
+  // Bronze is already 10%, so a separate Registered tier was redundant.
+  const tierBadges: Record<string, string> = {
+    BRONZE: '/images/partner/tier-bronze.png',
+    SILVER: '/images/partner/tier-silver.png',
+    GOLD: '/images/partner/tier-gold.png',
+    PLATINUM: '/images/partner/tier-platinum.png',
+  };
 
-  const tiers = tierKeys.map((key, i) => ({
-    name: t(`partner.tiers.${key}.name`),
-    commission: tierCommissions[i],
-    requirement: t(`partner.tiers.${key}.requirement`),
-    color: tierColors[i],
-    badge: tierBadges[i],
-    benefits: t(`partner.tiers.${key}.benefits`, { returnObjects: true }) as string[],
+  const tiers = PARTNER_TIERS.map((tier) => ({
+    id: tier.id,
+    name: tier.name,
+    commission: `${tier.commissionRate}%`,
+    requirement: tier.requirements[0]
+      ? `${tier.requirements[0].label}: ${tier.requirements[0].value}`
+      : '',
+    badge: tierBadges[tier.id],
+    benefits: tier.features.filter((f) => f.included).slice(0, 3).map((f) => f.name),
   }));
 
   return (
@@ -358,8 +389,8 @@ const TierProgressionSection: React.FC = () => {
       <div className="relative mb-8">
         <div className="absolute top-4 left-0 right-0 h-1 bg-slate-200 dark:bg-navy-700 rounded-full" />
         <div className="relative flex justify-between">
-          {tiers.map((tier, index) => (
-            <div key={tier.name} className="flex flex-col items-center" style={{ width: '20%' }}>
+          {tiers.map((tier) => (
+            <div key={tier.name} className="flex flex-col items-center" style={{ width: '25%' }}>
               <div className="w-12 h-12 rounded-full overflow-hidden z-10 bg-white dark:bg-navy-700 shadow-md">
                 <img
                   src={tier.badge}
@@ -382,7 +413,7 @@ const TierProgressionSection: React.FC = () => {
       </div>
 
       {/* Benefits grid */}
-      <div className="grid grid-cols-5 gap-2 text-center">
+      <div className="grid grid-cols-4 gap-2 text-center">
         {tiers.map((tier) => (
           <div key={tier.name} className="space-y-1">
             {tier.benefits.map((benefit, i) => (
@@ -530,7 +561,7 @@ const OnboardingChecklistSection: React.FC = () => {
     ][i],
     bonus:
       i === 1 && status.pricingTier
-        ? t('partner.onboarding.pricingBonus', `Current tier: ${status.pricingTier}`)
+        ? t('partner.onboarding.pricingBonus', `Aktualny poziom: ${status.pricingTier}`)
         : undefined,
     secure: i === 3,
   }));
@@ -572,9 +603,10 @@ const OnboardingChecklistSection: React.FC = () => {
 
       <div className="mb-6 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-900/20 p-4">
         <p className="text-sm text-slate-700 dark:text-slate-300">
-          This is the same shared application flow used from the public landing page and from inside
-          the product. Review the application guide, check a proof case, or go straight to custom
-          commercial discussion when self-serve is not enough.
+          {t(
+            'partner.home.onboarding.sharedFlow',
+            'To ten sam wspólny proces aplikacyjny używany ze strony publicznej i z wnętrza produktu. Przejrzyj przewodnik aplikacji, sprawdź case potwierdzający lub od razu przejdź do rozmowy o niestandardowych warunkach, gdy self-serve to za mało.'
+          )}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <button
@@ -582,21 +614,21 @@ const OnboardingChecklistSection: React.FC = () => {
             className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
           >
             <FileText className="w-4 h-4" />
-            Open application guide
+            {t('partner.home.onboarding.openGuide', 'Otwórz przewodnik aplikacji')}
           </button>
           <button
             onClick={openCaseStudy}
             className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
           >
             <BookOpen className="w-4 h-4" />
-            Review proof case
+            {t('partner.home.onboarding.reviewCase', 'Zobacz case potwierdzający')}
           </button>
           <button
             onClick={openCustomTerms}
             className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             <MessageCircle className="w-4 h-4" />
-            Discuss custom terms
+            {t('partner.home.onboarding.customTerms', 'Omów niestandardowe warunki')}
           </button>
         </div>
       </div>
@@ -635,7 +667,8 @@ const OnboardingChecklistSection: React.FC = () => {
                         : 'text-navy-900 dark:text-white'
                     )}
                   >
-                    Step {step.id}: {step.title}
+                    {t('partner.home.onboarding.stepLabel', 'Krok {{n}}', { n: step.id })}:{' '}
+                    {step.title}
                   </h3>
                   <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                     <Clock className="w-3 h-3" />
@@ -650,21 +683,27 @@ const OnboardingChecklistSection: React.FC = () => {
                 <div className="flex items-start gap-1 text-sm text-slate-500 dark:text-slate-400 mb-3">
                   <HelpCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
-                    <strong>Why?</strong> {step.why}
+                    <strong>{t('partner.home.onboarding.whyLabel', 'Dlaczego?')}</strong>{' '}
+                    {step.why}
                   </span>
                 </div>
 
                 {step.bonus && (
                   <div className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 mb-3">
                     <Sparkles className="w-4 h-4" />
-                    <span>Bonus: {step.bonus}</span>
+                    <span>{t('partner.home.onboarding.bonusLabel', 'Bonus')}: {step.bonus}</span>
                   </div>
                 )}
 
                 {step.secure && (
                   <div className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400 mb-3">
                     <Shield className="w-4 h-4" />
-                    <span>Your data is encrypted and secure</span>
+                    <span>
+                      {t(
+                        'partner.home.onboarding.secureNote',
+                        'Twoje dane są szyfrowane i bezpieczne'
+                      )}
+                    </span>
                   </div>
                 )}
 
@@ -696,17 +735,10 @@ const CommissionCalculatorSection: React.FC = () => {
   const [clientsPerMonth, setClientsPerMonth] = useState<number>(5);
   const [avgClientValue, setAvgClientValue] = useState<number>(2000);
 
-  // Calculate based on tier
-  const getTier = (clients: number) => {
-    if (clients >= 50) return { name: 'Platinum', rate: 0.2 };
-    if (clients >= 25) return { name: 'Gold', rate: 0.18 };
-    if (clients >= 10) return { name: 'Silver', rate: 0.15 };
-    if (clients >= 3) return { name: 'Bronze', rate: 0.12 };
-    return { name: 'Registered', rate: 0.1 };
-  };
-
+  // SSOT — tier + commission rate resolved from PARTNER_TIERS via
+  // resolveCalculatorTier (partnerPricingData.ts). Never hardcode rates here.
   const annualClients = clientsPerMonth * 12;
-  const tier = getTier(annualClients);
+  const tier = resolveCalculatorTier(annualClients);
   const annualRevenue = clientsPerMonth * 12 * avgClientValue;
   const annualCommission = annualRevenue * tier.rate;
 
@@ -715,13 +747,18 @@ const CommissionCalculatorSection: React.FC = () => {
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-2">
           <Calculator className="w-5 h-5" />
-          <span className="font-semibold">Commission Calculator</span>
+          <span className="font-semibold">
+            {t('partner.home.calculator.badge', 'Kalkulator prowizji')}
+          </span>
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          Calculate Your Earning Potential
+          {t('partner.home.calculator.title', 'Oblicz swój potencjał zarobkowy')}
         </h2>
         <p className="text-slate-600 dark:text-slate-400">
-          See how much you could earn as a Consultify Partner
+          {t(
+            'partner.home.calculator.subtitle',
+            'Zobacz, ile możesz zarobić jako Partner Consultify'
+          )}
         </p>
       </div>
 
@@ -729,7 +766,7 @@ const CommissionCalculatorSection: React.FC = () => {
         {/* Clients per month */}
         <div>
           <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-            How many clients can you refer per month?
+            {t('partner.home.calculator.clientsLabel', 'Ilu klientów możesz polecić miesięcznie?')}
           </label>
           <div className="flex gap-2">
             {[1, 3, 5, 10, 15].map((num) => (
@@ -752,7 +789,7 @@ const CommissionCalculatorSection: React.FC = () => {
         {/* Avg client value */}
         <div>
           <label className="block text-sm font-medium text-navy-900 dark:text-white mb-2">
-            Average client value (€/month)
+            {t('partner.home.calculator.avgValueLabel', 'Średnia wartość klienta (€/miesiąc)')}
           </label>
           <input
             type="range"
@@ -776,14 +813,16 @@ const CommissionCalculatorSection: React.FC = () => {
       {/* Results */}
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 text-center">
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
-          Your tier:{' '}
+          {t('partner.home.calculator.yourTier', 'Twój poziom:')}{' '}
           <span className="font-semibold text-primary-600 dark:text-primary-400">{tier.name}</span>{' '}
-          ({Math.round(tier.rate * 100)}% commission)
+          {t('partner.home.calculator.commissionSuffix', '({{rate}}% prowizji)', {
+            rate: Math.round(tier.rate * 100),
+          })}
         </p>
 
         <div className="my-4">
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
-            Your Estimated Annual Earnings
+            {t('partner.home.calculator.estimatedAnnual', 'Szacowane roczne zarobki')}
           </p>
           <p className="text-4xl font-bold text-navy-900 dark:text-white">
             €
@@ -793,8 +832,11 @@ const CommissionCalculatorSection: React.FC = () => {
             })}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Based on {clientsPerMonth * 12} referrals/year at €{avgClientValue.toLocaleString()} avg
-            value
+            {t(
+              'partner.home.calculator.basis',
+              'Na podstawie {{count}} poleceń rocznie przy średniej wartości €{{value}}',
+              { count: clientsPerMonth * 12, value: avgClientValue.toLocaleString() }
+            )}
           </p>
         </div>
 
@@ -803,7 +845,7 @@ const CommissionCalculatorSection: React.FC = () => {
           className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors"
         >
           <Rocket className="w-5 h-5" />
-          Start Earning Now - Generate Your Code
+          {t('partner.home.calculator.cta', 'Zacznij zarabiać — wygeneruj swój kod')}
         </button>
       </div>
     </div>
@@ -818,36 +860,49 @@ const AcademyPreviewSection: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  // TODO(Piotr): confirm before launch — static Academy catalog (course list,
+  // durations) is placeholder content not yet confirmed with the business.
   const courses = [
     {
-      title: 'Platform Fundamentals',
-      description:
-        'Learn the Consultify platform inside out. Master assessments, reporting, and client management.',
-      duration: '45 min',
+      title: t('partner.home.academy.courses.fundamentals.title', 'Podstawy platformy'),
+      description: t(
+        'partner.home.academy.courses.fundamentals.description',
+        'Poznaj platformę Consultify od podszewki. Opanuj oceny, raportowanie i zarządzanie klientami.'
+      ),
+      duration: t('partner.home.academy.courses.fundamentals.duration', '45 min'),
       certificate: true,
       free: true,
       expanded: true,
     },
     {
-      title: 'How to Sell Digital Transformation',
-      description: 'Proven sales methodology for transformation services.',
-      duration: '60 min',
+      title: t('partner.home.academy.courses.selling.title', 'Jak sprzedawać transformację cyfrową'),
+      description: t(
+        'partner.home.academy.courses.selling.description',
+        'Sprawdzona metodologia sprzedaży usług transformacyjnych.'
+      ),
+      duration: t('partner.home.academy.courses.selling.duration', '60 min'),
       certificate: true,
       free: true,
       expanded: false,
     },
     {
-      title: 'Client Success Best Practices',
-      description: 'Maximize client retention and satisfaction scores.',
-      duration: '30 min',
+      title: t('partner.home.academy.courses.success.title', 'Najlepsze praktyki Client Success'),
+      description: t(
+        'partner.home.academy.courses.success.description',
+        'Maksymalizuj retencję i wskaźniki satysfakcji klientów.'
+      ),
+      duration: t('partner.home.academy.courses.success.duration', '30 min'),
       certificate: true,
       free: true,
       expanded: false,
     },
     {
-      title: 'DRD Framework Certification',
-      description: 'Deep dive into Digital Readiness Diagnostic methodology.',
-      duration: '2 hours',
+      title: t('partner.home.academy.courses.drd.title', 'Certyfikacja frameworku DRD'),
+      description: t(
+        'partner.home.academy.courses.drd.description',
+        'Dogłębne poznanie metodologii Digital Readiness Diagnostic.'
+      ),
+      duration: t('partner.home.academy.courses.drd.duration', '2 godziny'),
       certificate: true,
       advanced: true,
       expanded: false,
@@ -863,27 +918,34 @@ const AcademyPreviewSection: React.FC = () => {
         <div className="flex items-center gap-2 mb-4">
           <GraduationCap className="w-5 h-5 text-primary-600 dark:text-primary-400" />
           <h2 className="text-xl font-bold text-navy-900 dark:text-white">
-            Sharpen Your Skills with Partner Academy
+            {t('partner.home.academy.title', 'Rozwijaj umiejętności z Partner Academy')}
           </h2>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-          Structured partner enablement beyond support docs: foundations, role-specific tracks, and
-          certification readiness.
+          {t(
+            'partner.home.academy.subtitle',
+            'Ustrukturyzowane wsparcie partnera wykraczające poza dokumentację: podstawy, ścieżki dla ról i gotowość do certyfikacji.'
+          )}
         </p>
         <div className="mb-6 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-900/20 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-300">
-            Academy boundary
+            {t('partner.home.academy.boundaryLabel', 'Zakres Academy')}
           </div>
           <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
-            Help and partner docs explain workflows when you are working. Partner Academy is the
-            separate learning layer for structured progression, repeatable enablement, and
-            certification signals.
+            {t(
+              'partner.home.academy.boundaryText',
+              'Pomoc i dokumentacja partnera wyjaśniają procesy podczas pracy. Partner Academy to oddzielna warstwa szkoleniowa do ustrukturyzowanego rozwoju, powtarzalnego enablementu i sygnałów certyfikacji.'
+            )}
           </p>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">Foundations</div>
-            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">Role path</div>
             <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
-              Certification
+              {t('partner.home.academy.pillarFoundations', 'Podstawy')}
+            </div>
+            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
+              {t('partner.home.academy.pillarRolePath', 'Ścieżka roli')}
+            </div>
+            <div className="rounded-lg bg-white/80 dark:bg-navy-900/50 px-3 py-2">
+              {t('partner.home.academy.pillarCertification', 'Certyfikacja')}
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
@@ -891,14 +953,14 @@ const AcademyPreviewSection: React.FC = () => {
               onClick={() => navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`)}
               className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
-              Open learning path
+              {t('partner.home.academy.openLearningPath', 'Otwórz ścieżkę nauki')}
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={() => navigate(PARTNER_DOCS.certification.href)}
               className="inline-flex items-center gap-2 rounded-lg border border-primary-300 dark:border-primary-700 px-4 py-2 text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-white/70 dark:hover:bg-navy-900/40"
             >
-              Open certification guide
+              {t('partner.home.academy.openCertGuide', 'Otwórz przewodnik certyfikacji')}
             </button>
           </div>
         </div>
@@ -938,12 +1000,12 @@ const AcademyPreviewSection: React.FC = () => {
                   <div className="flex items-center gap-2">
                     {course.free && !course.advanced && (
                       <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium rounded">
-                        FREE
+                        {t('partner.home.academy.badgeFree', 'BEZPŁATNY')}
                       </span>
                     )}
                     {course.advanced && (
                       <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs font-medium rounded">
-                        ADVANCED
+                        {t('partner.home.academy.badgeAdvanced', 'ZAAWANSOWANY')}
                       </span>
                     )}
                   </div>
@@ -959,7 +1021,7 @@ const AcademyPreviewSection: React.FC = () => {
                       {course.certificate && (
                         <span className="flex items-center gap-1">
                           <Award className="w-3 h-3" />
-                          Certificate included
+                          {t('partner.home.academy.certIncluded', 'Certyfikat w cenie')}
                         </span>
                       )}
                     </div>
@@ -970,7 +1032,7 @@ const AcademyPreviewSection: React.FC = () => {
                       }}
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded transition-colors"
                     >
-                      Start Course
+                      {t('partner.home.academy.startCourse', 'Rozpocznij kurs')}
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -998,32 +1060,40 @@ const ContactPartnerManagerSection: React.FC = () => {
     <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
       <div className="text-center mb-6">
         <h2 className="text-xl font-bold text-navy-900 dark:text-white mb-1">
-          Questions? Let's Talk!
+          {t('partner.home.contact.title', 'Masz pytania? Porozmawiajmy!')}
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Your dedicated Partner Manager is here to help you succeed
+          {t(
+            'partner.home.contact.subtitle',
+            'Twój dedykowany Partner Manager pomoże Ci osiągnąć sukces'
+          )}
         </p>
       </div>
 
       {/* Partner Manager Card */}
       <div className="flex flex-col items-center mb-6">
         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-white text-3xl font-bold mb-4 ring-4 ring-primary-100 dark:ring-primary-900/50">
-          BS
+          {PARTNER_CONTACT.initials}
         </div>
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-white">Bartosz Sotomski</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Partner Success Manager</p>
+        <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
+          {PARTNER_CONTACT.name}
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t('partner.home.contact.role', PARTNER_CONTACT.role)}
+        </p>
       </div>
 
       <blockquote className="text-sm text-slate-600 dark:text-slate-400 italic text-center mb-6 px-4">
-        "I'm here to help you grow your business with Consultify. Whether you have questions about
-        the program, need help with a client pitch, or want to discuss co-marketing opportunities -
-        let's connect!"
+        {t(
+          'partner.home.contact.quote',
+          'Jestem tu, aby pomóc Ci rozwijać biznes z Consultify. Niezależnie od tego, czy masz pytania o program, potrzebujesz wsparcia przy ofercie dla klienta, czy chcesz omówić możliwości co-marketingu — odezwij się!'
+        )}
       </blockquote>
 
       {/* Contact options */}
       <div className="space-y-3">
         <a
-          href="https://calendly.com/bartosz-sotomski"
+          href={PARTNER_CONTACT.calendlyUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors group"
@@ -1032,27 +1102,33 @@ const ContactPartnerManagerSection: React.FC = () => {
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
-            <p className="font-medium text-navy-900 dark:text-white">Book a Call</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Schedule 15-min intro call</p>
+            <p className="font-medium text-navy-900 dark:text-white">
+              {t('partner.home.contact.bookCall', 'Umów rozmowę')}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('partner.home.contact.bookCallSub', 'Zaplanuj 15-min rozmowę wprowadzającą')}
+            </p>
           </div>
           <ExternalLink className="w-4 h-4 text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
         </a>
 
         <a
-          href="mailto:bartosz.sotomski@dbr77.com"
+          href={`mailto:${PARTNER_CONTACT.email}`}
           className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-700/30 border border-slate-200 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700/50 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center">
             <Mail className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
-            <p className="font-medium text-navy-900 dark:text-white">Send Email</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">bartosz.sotomski@dbr77.com</p>
+            <p className="font-medium text-navy-900 dark:text-white">
+              {t('partner.home.contact.sendEmail', 'Wyślij e-mail')}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{PARTNER_CONTACT.email}</p>
           </div>
         </a>
 
         <a
-          href="https://www.linkedin.com/in/bartosz-sotomski/"
+          href={PARTNER_CONTACT.linkedinUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-navy-700/30 border border-slate-200 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700/50 transition-colors group"
@@ -1061,9 +1137,11 @@ const ContactPartnerManagerSection: React.FC = () => {
             <Linkedin className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
-            <p className="font-medium text-navy-900 dark:text-white">Connect on LinkedIn</p>
+            <p className="font-medium text-navy-900 dark:text-white">
+              {t('partner.home.contact.linkedin', 'Połącz się na LinkedIn')}
+            </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              linkedin.com/in/bartosz-sotomski
+              {PARTNER_CONTACT.linkedinHandle}
             </p>
           </div>
           <ExternalLink className="w-4 h-4 text-slate-600 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1072,7 +1150,9 @@ const ContactPartnerManagerSection: React.FC = () => {
 
       <p className="text-center text-xs text-slate-600 dark:text-slate-500 mt-4 flex items-center justify-center gap-1">
         <MessageCircle className="w-3 h-3" />
-        Average response time: &lt; 4 hours
+        {t('partner.home.contact.responseTime', 'Średni czas odpowiedzi: {{time}}', {
+          time: PARTNER_PROGRAM_TERMS.averageResponseTime,
+        })}
       </p>
     </div>
   );
@@ -1087,36 +1167,63 @@ const FAQSection: React.FC = () => {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
+  // TODO(Piotr): confirm before launch — commercial FAQ terms (commission range,
+  // payout threshold/day, cooling-off period) are quoted from PARTNER_PROGRAM_TERMS
+  // (top of file). The % range comes from the PARTNER_TIERS SSOT.
   const faqs = [
     {
-      question: 'How do I earn commissions as a partner?',
-      answer:
-        'You earn commissions by referring new clients to Consultify. When a client signs up using your unique referral code or link and becomes a paying customer, you receive a percentage of their subscription fee. Commission rates range from 10% to 20% depending on your partner tier.',
+      question: t(
+        'partner.home.faq.earn.q',
+        'Jak zarabiam prowizje jako partner?'
+      ),
+      answer: t(
+        'partner.home.faq.earn.a',
+        'Zarabiasz prowizje, polecając nowych klientów Consultify. Gdy klient zarejestruje się za pomocą Twojego unikalnego kodu lub linku i zostanie płacącym klientem, otrzymujesz procent jego opłaty subskrypcyjnej. Stawki prowizji wynoszą od {{min}}% do {{max}}% w zależności od Twojego poziomu partnerskiego.',
+        {
+          min: PARTNER_PROGRAM_TERMS.minCommissionPct,
+          max: PARTNER_PROGRAM_TERMS.maxCommissionPct,
+        }
+      ),
     },
     {
-      question: 'When and how do I get paid?',
-      answer:
-        "Commissions are paid monthly via bank transfer or PayPal, once you reach the €100 minimum threshold. Payments are processed on the 15th of each month for the previous month's approved commissions. You can track all earnings in real-time through your Partner Dashboard.",
+      question: t('partner.home.faq.payout.q', 'Kiedy i jak otrzymuję wypłatę?'),
+      answer: t(
+        'partner.home.faq.payout.a',
+        'Prowizje są wypłacane miesięcznie przelewem bankowym lub przez PayPal, po osiągnięciu minimalnego progu {{threshold}}. Płatności są realizowane {{day}}. dnia każdego miesiąca za zatwierdzone prowizje z poprzedniego miesiąca. Wszystkie zarobki śledzisz w czasie rzeczywistym w Panelu Partnera.',
+        {
+          threshold: PARTNER_PROGRAM_TERMS.minPayoutThreshold,
+          day: PARTNER_PROGRAM_TERMS.payoutDayOfMonth,
+        }
+      ),
     },
     {
-      question: 'What support do I get as a partner?',
-      answer:
-        'All partners receive access to Partner Academy training, marketing materials, and our partner community. Bronze tier and above get priority support and dedicated training. Gold and Platinum partners receive a dedicated Partner Manager, co-marketing opportunities, and early access to new features.',
+      question: t('partner.home.faq.support.q', 'Jakie wsparcie otrzymuję jako partner?'),
+      answer: t(
+        'partner.home.faq.support.a',
+        'Wszyscy partnerzy otrzymują dostęp do szkoleń Partner Academy, materiałów marketingowych i społeczności partnerskiej. Od poziomu Bronze wzwyż dostępne są priorytetowe wsparcie i dedykowane szkolenia. Partnerzy Gold i Platinum otrzymują dedykowanego Partner Managera, możliwości co-marketingu i wczesny dostęp do nowych funkcji.'
+      ),
     },
     {
-      question: 'How long does it take to become certified?',
-      answer:
-        "The Platform Fundamentals certification takes about 45 minutes to complete. Advanced certifications like DRD Framework take 2-3 hours. All certifications are self-paced, so you can complete them whenever it's convenient for you.",
+      question: t('partner.home.faq.certification.q', 'Ile czasu zajmuje uzyskanie certyfikatu?'),
+      answer: t(
+        'partner.home.faq.certification.a',
+        'Certyfikacja Podstawy platformy trwa około 45 minut. Zaawansowane certyfikacje, takie jak framework DRD, zajmują 2-3 godziny. Wszystkie certyfikacje są samodzielne, więc możesz je ukończyć w dogodnym dla siebie czasie.'
+      ),
     },
     {
-      question: 'Can I refer clients from any country?',
-      answer:
-        'Yes! Consultify operates globally, and you can refer clients from any country. Your Partner Directory listing can highlight your regional expertise, helping local clients find you. Commission payments can be made in EUR, USD, or GBP.',
+      question: t('partner.home.faq.countries.q', 'Czy mogę polecać klientów z dowolnego kraju?'),
+      answer: t(
+        'partner.home.faq.countries.a',
+        'Tak! Consultify działa globalnie i możesz polecać klientów z dowolnego kraju. Twój wpis w katalogu partnerów może wyróżniać Twoją wiedzę regionalną, pomagając lokalnym klientom Cię znaleźć. Wypłaty prowizji mogą być realizowane w EUR, USD lub GBP.'
+      ),
     },
     {
-      question: 'What happens if a referred client cancels?',
-      answer:
-        'If a referred client cancels within the first 30 days (cooling-off period), the commission for that client is adjusted. After 30 days, you keep all earned commissions even if the client later cancels. We believe in fair, transparent commission structures.',
+      question: t('partner.home.faq.cancel.q', 'Co się dzieje, gdy polecony klient zrezygnuje?'),
+      answer: t(
+        'partner.home.faq.cancel.a',
+        'Jeśli polecony klient zrezygnuje w ciągu pierwszych {{days}} dni (okres na odstąpienie), prowizja za tego klienta jest korygowana. Po {{days}} dniach zachowujesz wszystkie wypracowane prowizje, nawet jeśli klient później zrezygnuje. Wierzymy w uczciwe i przejrzyste struktury prowizji.',
+        { days: PARTNER_PROGRAM_TERMS.coolingOffDays }
+      ),
     },
   ];
 
@@ -1125,10 +1232,10 @@ const FAQSection: React.FC = () => {
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-2">
           <HelpCircle className="w-5 h-5" />
-          <span className="font-semibold">FAQ</span>
+          <span className="font-semibold">{t('partner.home.faq.badge', 'FAQ')}</span>
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white">
-          Frequently Asked Questions
+          {t('partner.home.faq.title', 'Najczęściej zadawane pytania')}
         </h2>
       </div>
 
@@ -1172,7 +1279,7 @@ const FAQSection: React.FC = () => {
           onClick={() => navigate(PARTNER_DOCS.faq.href)}
           className="inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-navy-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-primary-300 hover:text-primary-600 dark:hover:text-primary-400"
         >
-          Open full partner FAQ
+          {t('partner.home.faq.openFull', 'Otwórz pełne FAQ partnera')}
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
@@ -1185,7 +1292,6 @@ const FAQSection: React.FC = () => {
 // ============================================================================
 
 const FooterResourcesSection: React.FC = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const columns = [
@@ -1257,8 +1363,6 @@ const FooterResourcesSection: React.FC = () => {
 // ============================================================================
 
 export const ProviderHomeView: React.FC = () => {
-  const { t } = useTranslation();
-
   return (
     <div className="space-y-8 pb-12">
       {/* 1. Welcome Hero Banner */}

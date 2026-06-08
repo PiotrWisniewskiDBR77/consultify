@@ -16,9 +16,3 @@
 // Layout components
 export { type Breadcrumb, PartnerLayout } from './PartnerLayout';
 export { type PartnerSection, PartnerSidebar } from './PartnerSidebar';
-
-// Analytics & Dashboard components
-export { AcademyProgress } from './AcademyProgress';
-export { CommissionIntelligence } from './CommissionIntelligence';
-export { EcosystemAnalytics, PMODomainBadge } from './EcosystemAnalytics';
-export { TrustProgressionIndicator } from './TrustProgressionIndicator';

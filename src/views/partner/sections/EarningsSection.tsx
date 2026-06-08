@@ -207,6 +207,38 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(defaultPayoutSettings);
   const [savingPayoutSettings, setSavingPayoutSettings] = useState(false);
 
+  // Single currency formatter driven by API-provided currency code.
+  // Falls back to the summary currency, the first payout/transaction currency,
+  // then 'EUR' only if nothing else is available.
+  const activeCurrency =
+    summary?.currency || payouts[0]?.currency || transactions[0]?.currency || 'EUR';
+
+  const formatCurrency = useCallback(
+    (amount: number | null | undefined, currency?: string) => {
+      const code = currency || activeCurrency || 'EUR';
+      const value = amount ?? 0;
+      try {
+        return new Intl.NumberFormat(undefined, {
+          style: 'currency',
+          currency: code,
+          maximumFractionDigits: 0,
+        }).format(value);
+      } catch {
+        // Invalid/unknown ISO code — degrade gracefully to "<CODE> <number>".
+        return `${code} ${value.toLocaleString()}`;
+      }
+    },
+    [activeCurrency]
+  );
+
+  // Real month-over-month change derived from the earnings summary in state.
+  const monthOverMonthChange = (() => {
+    const current = summary?.thisMonth ?? 0;
+    const previous = summary?.lastMonth ?? 0;
+    if (!previous) return null;
+    return ((current - previous) / previous) * 100;
+  })();
+
   const getCommissionTransactionsWithFallback = useCallback(async (): Promise<
     CommissionTransaction[]
   > => {
@@ -512,7 +544,11 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   // Request payout via API
   const handleRequestPayout = async () => {
     if (!summary || summary.readyForPayout < 100) {
-      toast.error(t('partner.earnings.minimumNotReached', 'Minimum payout amount is €100'));
+      toast.error(
+        t('partner.earnings.minimumNotReached', 'Minimalna kwota wypłaty to {{amount}}', {
+          amount: formatCurrency(100),
+        })
+      );
       return;
     }
 
@@ -638,10 +674,17 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-              {t('partner.earnings.title', 'Partner Commission')}
+              {subsection === 'statements'
+                ? t('partner.earnings.statementsHeading', 'Wyciągi prowizyjne')
+                : t('partner.earnings.title', 'Prowizja partnerska')}
             </h2>
             <p className="text-slate-600 dark:text-slate-500">
-              {t('partner.earnings.subtitle', 'Track your earnings and commissions')}
+              {subsection === 'statements'
+                ? t(
+                    'partner.earnings.statementsSubtitle',
+                    'Wyciągi i historia rozliczeń prowizji w ujęciu okresowym'
+                  )
+                : t('partner.earnings.subtitle', 'Śledź swoje przychody i prowizje')}
             </p>
           </div>
           {nextPaymentDate && (
@@ -715,17 +758,34 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
           <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-emerald-500/20">
-                <DollarSign className="w-5 h-5 text-emerald-400" />
+                <Wallet className="w-5 h-5 text-emerald-400" />
               </div>
-              <span className="text-sm text-slate-600 dark:text-slate-500">Total Earned (YTD)</span>
+              <span className="text-sm text-slate-600 dark:text-slate-500">
+                {t('partner.earnings.totalEarnedYtd', 'Łącznie zarobione (od początku roku)')}
+              </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              €{(summary?.totalEarned ?? 0).toLocaleString()}
+              {formatCurrency(summary?.totalEarned)}
             </p>
-            <div className="flex items-center gap-1 mt-1 text-sm text-emerald-400">
-              <ArrowUpRight className="w-4 h-4" />
-              <span>+32% vs last year</span>
-            </div>
+            {monthOverMonthChange !== null && (
+              <div
+                className={cn(
+                  'flex items-center gap-1 mt-1 text-sm',
+                  monthOverMonthChange >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                )}
+              >
+                {monthOverMonthChange >= 0 ? (
+                  <ArrowUpRight className="w-4 h-4" />
+                ) : (
+                  <ArrowDownRight className="w-4 h-4" />
+                )}
+                <span>
+                  {t('partner.earnings.momChange', '{{value}}% mies./mies.', {
+                    value: `${monthOverMonthChange >= 0 ? '+' : ''}${monthOverMonthChange.toFixed(1)}`,
+                  })}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
@@ -733,13 +793,17 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <div className="p-2 rounded-lg bg-primary-500/20">
                 <TrendingUp className="w-5 h-5 text-primary-400" />
               </div>
-              <span className="text-sm text-slate-600 dark:text-slate-500">This Month</span>
+              <span className="text-sm text-slate-600 dark:text-slate-500">
+                {t('partner.earnings.thisMonth', 'W tym miesiącu')}
+              </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              €{(summary?.thisMonth ?? 0).toLocaleString()}
+              {formatCurrency(summary?.thisMonth)}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              From {summary?.thisMonthCount} referrals
+              {t('partner.earnings.fromReferrals', 'Z {{n}} poleceń', {
+                n: summary?.thisMonthCount ?? 0,
+              })}
             </p>
           </div>
 
@@ -748,12 +812,16 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <div className="p-2 rounded-lg bg-amber-500/20">
                 <Clock className="w-5 h-5 text-amber-400" />
               </div>
-              <span className="text-sm text-slate-600 dark:text-slate-500">Pending Approval</span>
+              <span className="text-sm text-slate-600 dark:text-slate-500">
+                {t('partner.earnings.pendingApproval', 'Oczekuje na zatwierdzenie')}
+              </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              €{(summary?.totalPending ?? 0).toLocaleString()}
+              {formatCurrency(summary?.totalPending)}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Processing...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {t('partner.earnings.processing', 'Przetwarzanie...')}
+            </p>
           </div>
 
           <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4">
@@ -761,10 +829,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               <div className="p-2 rounded-lg bg-blue-500/20">
                 <Banknote className="w-5 h-5 text-blue-400" />
               </div>
-              <span className="text-sm text-slate-600 dark:text-slate-500">Ready for Payout</span>
+              <span className="text-sm text-slate-600 dark:text-slate-500">
+                {t('partner.earnings.readyForPayout', 'Gotowe do wypłaty')}
+              </span>
             </div>
             <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              €{(summary?.readyForPayout ?? 0).toLocaleString()}
+              {formatCurrency(summary?.readyForPayout)}
             </p>
             <button
               onClick={handleRequestPayout}
@@ -776,7 +846,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                   : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
               )}
             >
-              {requestingPayout ? 'Requesting...' : 'Request Payout'}
+              {requestingPayout
+                ? t('partner.earnings.requesting', 'Wysyłanie...')
+                : t('partner.earnings.requestPayout', 'Zażądaj wypłaty')}
             </button>
           </div>
         </div>
@@ -839,12 +911,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="text-slate-600 dark:text-slate-300">
-                            €{(tx.grossAmount ?? 0).toLocaleString()}
+                            {formatCurrency(tx.grossAmount, tx.currency)}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="font-medium text-emerald-400">
-                            €{(tx.commissionAmount ?? 0).toLocaleString()}
+                            {formatCurrency(tx.commissionAmount, tx.currency)}
                           </span>
                           <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
                             ({tx.commissionRate}%)
@@ -926,7 +998,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                       </div>
                       <div>
                         <p className="font-medium text-slate-900 dark:text-white">
-                          €{(payout.netAmount ?? 0).toLocaleString()}
+                          {formatCurrency(payout.netAmount, payout.currency)}
                         </p>
                         <p className="text-sm text-slate-600 dark:text-slate-500">
                           {payout.transactionCount} transactions • {payout.periodStart} to{' '}
@@ -1016,7 +1088,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                     </div>
                     <div>
                       <p className="font-medium text-slate-900 dark:text-white">
-                        €{(payout.netAmount ?? 0).toLocaleString()}
+                        {formatCurrency(payout.netAmount, payout.currency)}
                       </p>
                       <p className="text-sm text-slate-600 dark:text-slate-500">
                         {payout.transactionCount} transactions • {payout.periodStart} to{' '}

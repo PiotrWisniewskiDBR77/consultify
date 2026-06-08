@@ -758,7 +758,7 @@
     "wordy": "Dokumenty",
     "documentStudio": "Studio Dokumentów",
     "excele": "Tabele Studio",
-    "prezentacje": "Prezentacje",
+    "prezentacje": "Prezentacje Studio",
     "tabele": "Tabele Studio",
     "meeting": "Spotkania"
   },
@@ -6276,7 +6276,14 @@
       "employeesDesc": "Zarządzaj dostępem pracowników do kont klientów w jednym miejscu",
       "employeeName": "Imię i nazwisko",
       "permissionSet": "Zestaw uprawnień",
-      "lastActive": "Ostatnia aktywność"
+      "lastActive": "Ostatnia aktywność",
+      "subtitle": "Zarządzaj dostępem pracowników do kont klientów w jednym miejscu",
+      "noEmployeesDesc": "Dodaj członków zespołu, aby zarządzać dostępem klientów.",
+      "complianceDesc": "Wszystkie zmiany dostępu są rejestrowane zgodnie z domeną PMO RESOURCE_RESPONSIBILITY i mapowane na grupę przedmiotową zasobów ISO 21500 (klauzula 4.6).",
+      "allRegions": "Wszystkie regiony",
+      "statusActive": "Aktywny",
+      "statusDeactivated": "Dezaktywowany",
+      "featureSoon": "Wkrótce dostępne"
     },
     "dashboard": {
       "welcome": "Witaj ponownie",
@@ -6337,6 +6344,26 @@
       "regionsDesc": "Wybierz regiony, w których działasz",
       "publicListing": "Wizytówka publiczna",
       "publicListingDesc": "Steruj swoją widocznością w katalogu partnerów"
+    },
+    "home": {
+      "title": "Start",
+      "welcome": "Witaj w Portalu Partnerskim",
+      "subtitle": "Twoje centrum poleceń, prowizji, klientów i zasobów",
+      "getStarted": "Rozpocznij",
+      "quickLinks": "Szybkie linki"
+    },
+    "earnings": {
+      "title": "Prowizje",
+      "subtitle": "Śledź swoje prowizje i wypłaty",
+      "totalEarnings": "Łączne prowizje",
+      "pendingPayout": "Oczekująca wypłata",
+      "paidOut": "Wypłacone",
+      "thisMonth": "W tym miesiącu",
+      "noEarnings": "Brak prowizji",
+      "noEarningsDesc": "Prowizje pojawią się tutaj, gdy Twoje polecenia zostaną zrealizowane.",
+      "statements": "Zestawienia",
+      "payouts": "Historia wypłat",
+      "noPayouts": "Brak wypłat"
     }
   },
   "thinking": {
@@ -7591,7 +7618,12 @@
       "SUBSCRIPTION_PAST_DUE": "Płatność nie powiodła się. Zaktualizuj metodę płatności.",
       "SUBSCRIPTION_CANCELLED": "Twoja subskrypcja została anulowana.",
       "INSUFFICIENT_TOKENS": "Niewystarczająca liczba tokenów. Dodaj metodę płatności lub zmień plan.",
+      "BETA_LOCKED": "Ta funkcja jest obecnie w wersji beta i nie została jeszcze udostępniona na Twoim koncie. Aby uzyskać dostęp, skontaktuj się ze swoim administratorem.",
       "default": "Ta akcja jest zablokowana na Twoim poziomie dostępu."
+    },
+    "beta": {
+      "title": "Brak dostępu",
+      "cta": "Rozumiem"
     },
     "upgrade": {
       "title": "Zmień plan",

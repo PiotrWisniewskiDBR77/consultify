@@ -268,20 +268,8 @@ const PartnerPortalViewNew = lazyWithRetry(() =>
 const PartnerPricingView = lazyWithRetry(() =>
   import('@/views/partner/PartnerPricingView').then((m) => ({ default: m.PartnerPricingView }))
 );
-const PartnerDashboardView = lazyWithRetry(() =>
-  import('@/views/partner/PartnerDashboardView').then((m) => ({ default: m.PartnerDashboardView }))
-);
 const ClientAccessView = lazyWithRetry(() =>
   import('@/views/partner/ClientAccessView').then((m) => ({ default: m.ClientAccessView }))
-);
-const CommissionView = lazyWithRetry(() =>
-  import('@/views/partner/CommissionView').then((m) => ({ default: m.CommissionView }))
-);
-const DirectoryView = lazyWithRetry(() =>
-  import('@/views/partner/DirectoryView').then((m) => ({ default: m.DirectoryView }))
-);
-const ResourcesView = lazyWithRetry(() =>
-  import('@/views/partner/ResourcesView').then((m) => ({ default: m.ResourcesView }))
 );
 const ProviderHomeView = lazyWithRetry(() =>
   import('@/views/partner/ProviderHomeView').then((m) => ({ default: m.ProviderHomeView }))
@@ -2231,7 +2219,15 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Partner Portal - New DBR77 Consultify Partner Portal */}
+        {/* Partner Portal - New DBR77 Consultify Partner Portal
+         *
+         * SECURITY (defense-in-depth): This route is intentionally gated only by
+         * requireAuth, NOT by a partner-role/connection check. Un-connected authed
+         * users only ever see the "connect" screen here — no partner data leaks at
+         * the route level — so testers/internal users can reach and inspect the
+         * portal shell. Access to actual partner DATA is enforced SERVER-SIDE via
+         * partner-scoping on every partner API, and self-connect is flag-gated by
+         * the backend. Do NOT add a client-side role block that hides the view. */}
         <Route
           path={`${ROUTES.PARTNER.LANDING}/*`}
           element={

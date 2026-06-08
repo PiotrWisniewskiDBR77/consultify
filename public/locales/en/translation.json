@@ -1055,7 +1055,14 @@
       "employeesDesc": "Manage your employees' client account access from one place",
       "employeeName": "Employee Name",
       "permissionSet": "Permission Set",
-      "lastActive": "Last Active"
+      "lastActive": "Last Active",
+      "subtitle": "Manage your employees' client account access from one place",
+      "noEmployeesDesc": "Add team members to manage client access.",
+      "complianceDesc": "All access changes are logged according to PMO domain RESOURCE_RESPONSIBILITY and mapped to ISO 21500 Resource Subject Group (Clause 4.6).",
+      "allRegions": "All Regions",
+      "statusActive": "Active",
+      "statusDeactivated": "Deactivated",
+      "featureSoon": "Coming soon"
     },
     "dashboard": {
       "welcome": "Welcome back",
@@ -1116,6 +1123,26 @@
       "regionsDesc": "Select the regions you operate in",
       "publicListing": "Public Listing",
       "publicListingDesc": "Control your visibility in the partner directory"
+    },
+    "home": {
+      "title": "Home",
+      "welcome": "Welcome to the Partner Portal",
+      "subtitle": "Your hub for referrals, earnings, clients and resources",
+      "getStarted": "Get started",
+      "quickLinks": "Quick links"
+    },
+    "earnings": {
+      "title": "Commission Earnings",
+      "subtitle": "Track your commissions and payouts",
+      "totalEarnings": "Total Earnings",
+      "pendingPayout": "Pending Payout",
+      "paidOut": "Paid Out",
+      "thisMonth": "This Month",
+      "noEarnings": "No earnings yet",
+      "noEarningsDesc": "Earnings will appear here once your referrals convert.",
+      "statements": "Statements",
+      "payouts": "Payout History",
+      "noPayouts": "No payouts yet"
     }
   },
   "common": {
@@ -1474,7 +1501,7 @@
     "wordy": "Documents",
     "documentStudio": "Document Studio",
     "excele": "Table Studio",
-    "prezentacje": "Presentations",
+    "prezentacje": "Presentation Studio",
     "tabele": "Table Studio",
     "meeting": "Meeting"
   },
@@ -7040,7 +7067,12 @@
       "SUBSCRIPTION_PAST_DUE": "Payment failed. Please update your payment method.",
       "SUBSCRIPTION_CANCELLED": "Your subscription has been cancelled.",
       "INSUFFICIENT_TOKENS": "Insufficient tokens. Add a payment method or upgrade your plan.",
+      "BETA_LOCKED": "This feature is currently in beta and is not yet available on your account. Please contact your administrator to request access.",
       "default": "This action is blocked in your current access level."
+    },
+    "beta": {
+      "title": "Access restricted",
+      "cta": "Got it"
     },
     "upgrade": {
       "title": "Upgrade Your Plan",

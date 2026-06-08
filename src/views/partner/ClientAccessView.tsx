@@ -56,6 +56,19 @@ interface Employee {
   lastActive?: string;
 }
 
+/**
+ * Detects the stable backend stub response for intentionally non-functional
+ * create-actions: HTTP 503 with body { success:false, code:'FEATURE_NOT_AVAILABLE' }.
+ * Handles both thrown errors (axios-style) and resolved response bodies.
+ */
+function isFeatureNotAvailable(input: unknown): boolean {
+  if (!input || typeof input !== 'object') return false;
+  const obj = input as Record<string, any>;
+  const status = obj?.response?.status ?? obj?.status;
+  const code = obj?.response?.data?.code ?? obj?.data?.code ?? obj?.code;
+  return code === 'FEATURE_NOT_AVAILABLE' || status === 503;
+}
+
 type LegacyPartnerClient = Partial<V8PartnerClient> & {
   clientId?: string;
 };
@@ -167,6 +180,11 @@ export const ClientAccessView: React.FC = () => {
         }
       }
     } catch (err: any) {
+      if (isFeatureNotAvailable(err)) {
+        // Stubbed endpoint — present an empty, non-error state rather than a hard failure.
+        setError(null);
+        return;
+      }
       console.error('Error fetching client access data:', err);
       setError(
         err?.response?.data?.error || t('partner.clientAccess.loadError', 'Failed to load data')
@@ -203,12 +221,18 @@ export const ClientAccessView: React.FC = () => {
       if (response?.success && typeof referralLink === 'string' && referralLink.length > 0) {
         setAccessLink(referralLink);
         toast.success(t('partner.clientAccess.linkGenerated', 'Access link generated!'));
+      } else if (isFeatureNotAvailable(response)) {
+        toast(t('partner.clientAccess.featureSoon', 'Wkrótce dostępne'));
       } else {
         toast.error(
           response?.error || t('partner.clientAccess.linkFailed', 'Failed to generate link')
         );
       }
     } catch (err: any) {
+      if (isFeatureNotAvailable(err)) {
+        toast(t('partner.clientAccess.featureSoon', 'Wkrótce dostępne'));
+        return;
+      }
       console.error('Error generating access link:', err);
       toast.error(
         err?.response?.data?.error ||
@@ -357,7 +381,7 @@ export const ClientAccessView: React.FC = () => {
                     : 'bg-slate-200 dark:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 )}
               >
-                All Regions
+                {t('partner.clientAccess.allRegions', 'Wszystkie regiony')}
               </button>
               {regions.map((region) => (
                 <button
@@ -455,7 +479,10 @@ export const ClientAccessView: React.FC = () => {
                               />
                             </p>
                             <p className="text-xs text-slate-600">
-                              {employee.status === 'ACTIVE' ? 'Active' : 'Deactivated'} |{' '}
+                              {employee.status === 'ACTIVE'
+                                ? t('partner.clientAccess.statusActive', 'Aktywny')
+                                : t('partner.clientAccess.statusDeactivated', 'Dezaktywowany')}{' '}
+                              |{' '}
                               {employee.email}
                             </p>
                           </div>
@@ -557,7 +584,11 @@ const ClientRow: React.FC<ClientRowProps> = ({ client }) => {
             {client.userCount !== undefined && (
               <>
                 <span className="text-slate-600">·</span>
-                <span>{client.userCount} users</span>
+                <span>
+                  {t('partner.clientAccess.userCount', '{{count}} użytkowników', {
+                    count: client.userCount,
+                  })}
+                </span>
               </>
             )}
           </div>

@@ -324,6 +324,14 @@ const DashboardSection: React.FC = () => {
   const recentActivity = dashboardData?.recentActivity || [];
   const certificationCourses = dashboardData?.certificationProgress?.courses || [];
 
+  // Honest empty-state: a freshly-connected partner has all-zero core metrics.
+  const isFreshPartner =
+    !!s &&
+    (s.activeClients ?? 0) === 0 &&
+    (s.activeProjects ?? 0) === 0 &&
+    (s.monthlyRevenue ?? 0) === 0 &&
+    recentActivity.length === 0;
+
   return (
     <div className="space-y-6">
       {v8RuntimeSummary && <PartnerRuntimeSummaryStrip summary={v8RuntimeSummary} />}
@@ -375,6 +383,15 @@ const DashboardSection: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {isFreshPartner && (
+        <div className="rounded-xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-800 dark:border-primary-700/50 dark:bg-primary-900/20 dark:text-primary-200">
+          {t(
+            'partner.dashboard.freshHint',
+            'Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.'
+          )}
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
@@ -775,6 +792,13 @@ const MetricsSection: React.FC = () => {
       ]
     : [];
 
+  // Honest empty-state for a freshly-connected partner with no activity yet.
+  const isFreshMetrics =
+    !!metricsData &&
+    (metricsData.revenue?.totalYTD || 0) === 0 &&
+    (metricsData.clients?.newThisQuarter || 0) === 0 &&
+    (metricsData.satisfaction?.responses || 0) === 0;
+
   const performanceBreakdown: MetricsData['performance']['breakdown'] = metricsData?.performance
     ?.breakdown || {
     clientAcquisition: 0,
@@ -828,6 +852,15 @@ const MetricsSection: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {isFreshMetrics && (
+        <div className="rounded-xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-800 dark:border-primary-700/50 dark:bg-primary-900/20 dark:text-primary-200">
+          {t(
+            'partner.metrics.freshHint',
+            'Twoje dane pojawią się tutaj po pierwszych poleceniach i transakcjach prowizyjnych.'
+          )}
+        </div>
+      )}
 
       {/* Performance Score and Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1592,7 +1625,7 @@ const CertificationSection: React.FC<{
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-              {t('partner.certification.learningPath', 'Learning Path')}
+              {t('partner.certification.learningPath', 'Ścieżka nauki')}
             </h2>
             <p className="text-slate-600">
               {t(
@@ -1614,7 +1647,7 @@ const CertificationSection: React.FC<{
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
             <GraduationCap className="w-12 h-12 text-slate-600 mx-auto mb-4" />
             <p className="text-slate-600">
-              {t('partner.certification.noCourses', 'No courses available yet')}
+              {t('partner.certification.noCourses', 'Brak dostępnych kursów')}
             </p>
           </div>
         ) : (
@@ -1811,10 +1844,10 @@ const CertificationSection: React.FC<{
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {t('partner.certification.exams', 'Certification Exams')}
+            {t('partner.certification.exams', 'Egzaminy certyfikacyjne')}
           </h2>
           <p className="text-slate-600">
-            {t('partner.certification.examsDesc', 'Take exams to earn official certifications')}
+            {t('partner.certification.examsDesc', 'Zdaj egzaminy, aby zdobyć oficjalne certyfikaty')}
           </p>
         </div>
         {hasExamsAvailable ? (
@@ -1866,7 +1899,7 @@ const CertificationSection: React.FC<{
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
             <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
             <p className="text-slate-600">
-              {t('partner.certification.examsEmpty', 'Complete learning path to unlock exams')}
+              {t('partner.certification.examsEmpty', 'Ukończ ścieżkę nauki, aby odblokować egzaminy')}
             </p>
           </div>
         )}
@@ -1877,12 +1910,19 @@ const CertificationSection: React.FC<{
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    Sales Certification Exam
+                    {(() => {
+                      const certName = certifications.find(
+                        (c) => c.id === examCertId
+                      )?.name;
+                      return certName
+                        ? `${certName} — ${t('partner.certification.examTitle', 'Egzamin certyfikacyjny')}`
+                        : t('partner.certification.examTitle', 'Egzamin certyfikacyjny');
+                    })()}
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {examDeadlineAt
-                      ? `Deadline: ${new Date(examDeadlineAt).toLocaleTimeString()}`
-                      : 'Loading...'}
+                      ? `${t('partner.certification.deadline', 'Termin')}: ${new Date(examDeadlineAt).toLocaleTimeString()}`
+                      : t('common.loading', 'Ładowanie…')}
                   </p>
                 </div>
                 <button
@@ -1972,10 +2012,10 @@ const CertificationSection: React.FC<{
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {t('partner.certification.certificates', 'Your Certificates')}
+            {t('partner.certification.certificates', 'Twoje certyfikaty')}
           </h2>
           <p className="text-slate-600">
-            {t('partner.certification.certificatesDesc', 'Download and share your certifications')}
+            {t('partner.certification.certificatesDesc', 'Pobieraj i udostępniaj swoje certyfikaty')}
           </p>
         </div>
         <button
@@ -2114,15 +2154,16 @@ const ResourcesSection: React.FC<{
     fetchResources();
   }, [fetchResources]);
 
-  const handleDownload = async (resourceId: string, title: string) => {
+  const handleDownload = async (resourceId: string, _title: string) => {
     try {
       setDownloading(resourceId);
-      // Backend streams the file directly (no JSON wrapper)
+      // Backend streams the file directly (no JSON wrapper). Opening a new tab is
+      // fire-and-forget — we cannot observe the HTTP status, so do NOT show a
+      // success toast (it would lie on a 404). Errors here are only synchronous.
       window.open(`/api/partners/resources/${resourceId}/download`, '_blank');
-      toast.success(`Downloading ${title}`);
     } catch (err: any) {
       console.error('Error downloading resource:', err);
-      toast.error('Failed to download resource');
+      toast.error(t('partner.resources.downloadError', 'Nie udało się pobrać zasobu.'));
     } finally {
       setDownloading(null);
     }
@@ -2189,7 +2230,7 @@ const ResourcesSection: React.FC<{
             {titles[subsection]}
           </h2>
           <p className="text-slate-600">
-            {t('partner.resources.desc', 'Download resources for your partnership')}
+            {t('partner.resources.desc', 'Pobierz materiały dla swojego partnerstwa')}
           </p>
         </div>
         <button
@@ -2268,7 +2309,7 @@ const ResourcesSection: React.FC<{
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
           <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <p className="text-slate-600">
-            {t('partner.resources.empty', 'No resources available in this category')}
+            {t('partner.resources.empty', 'Brak materiałów w tej kategorii')}
           </p>
         </div>
       ) : (
@@ -2326,6 +2367,28 @@ interface PartnerOrganization {
   regions?: string[];
 }
 
+// Fallback catalogs used when GET /api/partners/catalog is unavailable/empty.
+const FALLBACK_FRAMEWORKS = [
+  'DRD',
+  'SIRI',
+  'ADMA',
+  'CMMI',
+  'Lean 4.0',
+  'ISO 21500',
+  'PMBOK',
+  'PRINCE2',
+];
+const FALLBACK_REGIONS = [
+  'DACH',
+  'Nordics',
+  'Benelux',
+  'UK & Ireland',
+  'France',
+  'Southern Europe',
+  'CEE',
+  'Baltics',
+];
+
 const ProfileSection: React.FC<{
   subsection: 'company-info' | 'specializations' | 'regions' | 'public-listing';
 }> = ({ subsection }) => {
@@ -2346,6 +2409,30 @@ const ProfileSection: React.FC<{
   const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [publicListingEnabled, setPublicListingEnabled] = useState(false);
+  const [allFrameworks, setAllFrameworks] = useState<string[]>(FALLBACK_FRAMEWORKS);
+  const [allRegions, setAllRegions] = useState<string[]>(FALLBACK_REGIONS);
+
+  // Dynamic catalogs; gracefully fall back to hardcoded lists on error/empty.
+  const fetchCatalog = useCallback(async () => {
+    try {
+      const response = await Api.get('/api/partners/catalog');
+      const data = response?.data?.data ?? response?.data;
+      const frameworks = data?.frameworks;
+      const regions = data?.regions;
+      if (Array.isArray(frameworks) && frameworks.length > 0) {
+        setAllFrameworks(frameworks);
+      }
+      if (Array.isArray(regions) && regions.length > 0) {
+        setAllRegions(regions);
+      }
+    } catch {
+      // Keep fallback catalogs; never block the Profile UI.
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCatalog();
+  }, [fetchCatalog]);
 
   const fetchOrganization = useCallback(async () => {
     try {
@@ -2539,27 +2626,6 @@ const ProfileSection: React.FC<{
     </div>
   );
 
-  const allFrameworks = [
-    'DRD',
-    'SIRI',
-    'ADMA',
-    'CMMI',
-    'Lean 4.0',
-    'ISO 21500',
-    'PMBOK',
-    'PRINCE2',
-  ];
-  const allRegions = [
-    'DACH',
-    'Nordics',
-    'Benelux',
-    'UK & Ireland',
-    'France',
-    'Southern Europe',
-    'CEE',
-    'Baltics',
-  ];
-
   if (loading) return <LoadingSkeleton />;
   if (error) return <ErrorDisplay />;
 
@@ -2569,10 +2635,10 @@ const ProfileSection: React.FC<{
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-              {t('partner.profile.companyInfo', 'Company Information')}
+              {t('partner.profile.companyInfo', 'Informacje o firmie')}
             </h2>
             <p className="text-slate-600">
-              {t('partner.profile.companyInfoDesc', 'Manage your company details')}
+              {t('partner.profile.companyInfoDesc', 'Zarządzaj danymi swojej firmy')}
             </p>
           </div>
           <button
@@ -2662,10 +2728,10 @@ const ProfileSection: React.FC<{
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {t('partner.profile.specializations', 'Specializations')}
+            {t('partner.profile.specializations', 'Specjalizacje')}
           </h2>
           <p className="text-slate-600">
-            {t('partner.profile.specializationsDesc', 'Select frameworks you specialize in')}
+            {t('partner.profile.specializationsDesc', 'Wybierz frameworki, w których się specjalizujesz')}
           </p>
         </div>
 
@@ -2719,10 +2785,10 @@ const ProfileSection: React.FC<{
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {t('partner.profile.regions', 'Operating Regions')}
+            {t('partner.profile.regions', 'Regiony działalności')}
           </h2>
           <p className="text-slate-600">
-            {t('partner.profile.regionsDesc', 'Select regions where you operate')}
+            {t('partner.profile.regionsDesc', 'Wybierz regiony, w których działasz')}
           </p>
         </div>
 
@@ -2763,10 +2829,10 @@ const ProfileSection: React.FC<{
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {t('partner.profile.publicListing', 'Public Listing')}
+          {t('partner.profile.publicListing', 'Publiczna wizytówka')}
         </h2>
         <p className="text-slate-600">
-          {t('partner.profile.publicListingDesc', 'Manage your visibility in partner directory')}
+          {t('partner.profile.publicListingDesc', 'Zarządzaj swoją widocznością w katalogu partnerów')}
         </p>
       </div>
 
@@ -2856,6 +2922,9 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
   const [connectName, setConnectName] = useState<string>('');
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
+  // Default to FALSE: self-provisioning of a partner org is gated server-side.
+  // Only enable when the backend explicitly returns selfConnectEnabled === true.
+  const [selfConnectEnabled, setSelfConnectEnabled] = useState<boolean>(false);
 
   const fetchConnection = useCallback(async () => {
     try {
@@ -2866,6 +2935,8 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
       const data = payload?.data;
       if (response?.success && data && typeof data.connected === 'boolean') {
         setIsConnected(Boolean(data.connected));
+        // Gate self-provisioning: only when backend explicitly allows it.
+        setSelfConnectEnabled(data.selfConnectEnabled === true);
         if (!connectName) {
           const seeded =
             String(data.organization?.name || '').trim() ||
@@ -2876,6 +2947,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
         return;
       }
       setIsConnected(false);
+      setSelfConnectEnabled(false);
       setConnectError(
         t(
           'partner.connect.unavailable',
@@ -2884,6 +2956,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
       );
     } catch (err: any) {
       setIsConnected(false);
+      setSelfConnectEnabled(false);
       setConnectError(
         String(
           err?.message ||
@@ -3159,33 +3232,42 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
               )}
             </p>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              <label className="block">
-                <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {t('partner.connect.companyName', 'Company name')}
-                </span>
-                <input
-                  type="text"
-                  value={connectName}
-                  onChange={(e) => setConnectName(e.target.value)}
-                  placeholder={t('partner.connect.companyNamePlaceholder', 'e.g. DBR77 Consulting')}
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                />
-              </label>
+            {selfConnectEnabled ? (
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                <label className="block">
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('partner.connect.companyName', 'Nazwa firmy')}
+                  </span>
+                  <input
+                    type="text"
+                    value={connectName}
+                    onChange={(e) => setConnectName(e.target.value)}
+                    placeholder={t('partner.connect.companyNamePlaceholder', 'np. DBR77 Consulting')}
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                  />
+                </label>
 
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={handleConnectPartnerProfile}
-                  disabled={connecting}
-                  className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:opacity-60"
-                >
-                  {connecting
-                    ? t('partner.connect.connecting', 'Connecting…')
-                    : t('partner.connect.cta', 'Create and connect profile')}
-                </button>
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={handleConnectPartnerProfile}
+                    disabled={connecting}
+                    className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:opacity-60"
+                  >
+                    {connecting
+                      ? t('partner.connect.connecting', 'Łączenie…')
+                      : t('partner.connect.cta', 'Utwórz i połącz profil')}
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-200">
+                {t(
+                  'partner.connect.contactAdmin',
+                  'Aby dołączyć do programu partnerskiego, skontaktuj się z administratorem lub poproś o zaproszenie.'
+                )}
+              </div>
+            )}
 
             {connectError && (
               <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/10 dark:text-rose-300">

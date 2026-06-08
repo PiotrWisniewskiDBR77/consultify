@@ -1077,8 +1077,70 @@ export async function getPartnerClients(
 ): Promise<PartnerClientListItem[]> {
   const attributions = await getPartnerAttributions(partnerOrgId, options);
 
+  // Derive real per-client metrics (projects + users) for the attributed
+  // organizations in two batched aggregate queries (same data sources the
+  // /projects endpoint and the users table already expose).
+  const orgIds = Array.from(
+    new Set(attributions.map((a) => a.organizationId).filter((id): id is string => Boolean(id)))
+  );
+
+  const projectCountByOrg = new Map<string, number>();
+  const userCountByOrg = new Map<string, number>();
+  const planByOrg = new Map<string, string | null>();
+
+  if (orgIds.length > 0) {
+    const placeholders = orgIds.map(() => '?').join(', ');
+    try {
+      const projectRows = await DbPromise.all<{ organization_id: string; count: number | string }>(
+        db,
+        `SELECT organization_id, COUNT(*) as count
+           FROM projects
+          WHERE organization_id IN (${placeholders})
+            AND COALESCE(status, '') NOT IN ('deleted', 'DELETED')
+          GROUP BY organization_id`,
+        [...orgIds]
+      );
+      for (const row of projectRows) {
+        projectCountByOrg.set(String(row.organization_id), Number(row.count) || 0);
+      }
+    } catch (err: any) {
+      logger.warn('[PartnerReferralService] getPartnerClients project counts failed:', err?.message);
+    }
+
+    try {
+      const userRows = await DbPromise.all<{ organization_id: string; count: number | string }>(
+        db,
+        `SELECT organization_id, COUNT(*) as count
+           FROM users
+          WHERE organization_id IN (${placeholders})
+          GROUP BY organization_id`,
+        [...orgIds]
+      );
+      for (const row of userRows) {
+        userCountByOrg.set(String(row.organization_id), Number(row.count) || 0);
+      }
+    } catch (err: any) {
+      logger.warn('[PartnerReferralService] getPartnerClients user counts failed:', err?.message);
+    }
+
+    try {
+      const planRows = await DbPromise.all<{ id: string; plan: string | null }>(
+        db,
+        `SELECT id, plan FROM organizations WHERE id IN (${placeholders})`,
+        [...orgIds]
+      );
+      for (const row of planRows) {
+        planByOrg.set(String(row.id), row.plan ?? null);
+      }
+    } catch (err: any) {
+      logger.warn('[PartnerReferralService] getPartnerClients plan lookup failed:', err?.message);
+    }
+  }
+
   return attributions.map((item) => {
     const organizationName = item.organizationName || 'Organization';
+    const userCount = userCountByOrg.get(item.organizationId) ?? 0;
+    const projects = projectCountByOrg.get(item.organizationId) ?? 0;
     return {
       id: item.organizationId,
       organizationId: item.organizationId,
@@ -1087,13 +1149,15 @@ export async function getPartnerClients(
       clientName: organizationName,
       status: mapAttributionStatusToClientStatus(item.status),
       accessLevel: item.attributionType.toLowerCase().replace(/_/g, ' '),
-      users: 0,
-      userCount: 0,
-      projects: 0,
+      users: userCount,
+      userCount,
+      projects,
+      // assessmentScore: not tracked per attributed client yet (no source table).
       assessmentScore: 0,
+      // industry: organizations table has no industry column yet — left unset.
       industry: 'Unspecified',
       region: null,
-      plan: null,
+      plan: planByOrg.get(item.organizationId) ?? null,
       onboardedAt: item.signupCompletedAt || item.attributedAt,
       contractValue: item.lifetimeValue,
       lifetimeValue: item.lifetimeValue,
