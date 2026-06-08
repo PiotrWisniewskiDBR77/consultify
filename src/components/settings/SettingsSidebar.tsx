@@ -16,7 +16,6 @@ import {
   Bell,
   BookOpen,
   Brain,
-  Building2,
   Calendar,
   ChevronDown,
   Clock,
@@ -40,7 +39,6 @@ import {
   Monitor,
   Moon,
   Palette,
-  PanelsTopLeft,
   Settings,
   Shield,
   Sliders,
@@ -148,9 +146,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   allowedSections,
 }) => {
   const { t } = useTranslation();
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(['settings-root', 'my-settings'])
-  );
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['my-settings']));
   const allowedSectionSet = useMemo(
     () => (allowedSections?.length ? new Set(allowedSections) : null),
     [allowedSections]
@@ -161,43 +157,6 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     () =>
       (
         [
-          {
-            id: 'settings-root',
-            label: t('settings.sidebar.groups.settingsRoot', 'SETTINGS ROOT'),
-            defaultOpen: true,
-            items: [
-              {
-                id: 'overview',
-                label: t('settings.sidebar.overview', 'Overview'),
-                icon: Sparkles,
-                keywords: ['taxonomy', 'ownership', 'overview', 'scope'],
-              },
-              {
-                id: 'tenant-defaults',
-                label: t('settings.sidebar.tenantDefaults', 'Tenant Defaults'),
-                icon: Building2,
-                keywords: ['organization', 'defaults', 'locale', 'currency'],
-              },
-              {
-                id: 'tenant-branding',
-                label: t('settings.sidebar.tenantBranding', 'Branding Handoff'),
-                icon: Sparkles,
-                keywords: ['branding', 'logo', 'colors', 'domain'],
-              },
-              {
-                id: 'tenant-security',
-                label: t('settings.sidebar.tenantSecurity', 'Security Handoff'),
-                icon: Shield,
-                keywords: ['admin', 'security', 'mfa', 'sso', 'policy'],
-              },
-              {
-                id: 'module-preferences',
-                label: t('settings.sidebar.modulePreferences', 'Module Preferences'),
-                icon: PanelsTopLeft,
-                keywords: ['module', 'interview', 'tools', 'assessment', 'copilot'],
-              },
-            ],
-          },
           {
             id: 'my-settings',
             label: t('settings.sidebar.groups.mySettings', 'PERSONAL'),

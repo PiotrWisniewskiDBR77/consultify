@@ -12,27 +12,21 @@
 import {
   AlertTriangle,
   Beaker,
-  Bug,
   Check,
   Code2,
   Copy,
   Eye,
-  EyeOff,
-  FileCode,
   Flag,
   Info,
   RefreshCw,
-  Server,
   Sparkles,
   Terminal,
   ToggleLeft,
   ToggleRight,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '../../lib/utils';
 import Api from '../../services/api';
 import { User } from '../../types';
 import { DegradedState } from '../Admin/AdminState';
@@ -44,15 +38,6 @@ import { Separator } from '../ui/separator';
 import { Switch } from '../ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useToast } from '../ui/use-toast';
-
-interface BetaFeature {
-  id: string;
-  name: string;
-  description: string;
-  enabled: boolean;
-  releaseDate?: string;
-  status: 'alpha' | 'beta' | 'stable';
-}
 
 interface FeatureFlag {
   key: string;
@@ -75,44 +60,13 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
   const [activeTab, setActiveTab] = useState(showBetaFeatures ? 'beta' : 'developer');
 
   // Developer settings state
+  // Only toggles with a real runtime consumer are kept:
+  //  - developerMode gates the debug controls
+  //  - showDebugInfo controls whether the Debug Information card is shown
+  // apiLogging / verboseErrors were removed (no interceptor / error-boundary
+  // wiring consumed them, so they were fake switches).
   const [developerMode, setDeveloperMode] = useState(false);
-  const [apiLogging, setApiLogging] = useState(false);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
-  const [verboseErrors, setVerboseErrors] = useState(false);
-
-  // Beta features state
-  const [betaFeatures, setBetaFeatures] = useState<BetaFeature[]>([
-    {
-      id: 'ai-v2',
-      name: 'AI Chat V2',
-      description: 'New conversational AI interface with enhanced context awareness',
-      enabled: false,
-      status: 'beta',
-      releaseDate: '2024-03',
-    },
-    {
-      id: 'collaborative-editing',
-      name: 'Collaborative Editing',
-      description: 'Real-time collaborative document editing with presence indicators',
-      enabled: false,
-      status: 'alpha',
-    },
-    {
-      id: 'smart-scheduling',
-      name: 'Smart Scheduling',
-      description: 'AI-powered task scheduling based on your work patterns',
-      enabled: true,
-      status: 'beta',
-      releaseDate: '2024-02',
-    },
-    {
-      id: 'voice-commands',
-      name: 'Voice Commands',
-      description: 'Control the app using voice commands',
-      enabled: false,
-      status: 'alpha',
-    },
-  ]);
 
   // Feature flags state
   const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([]);
@@ -134,19 +88,8 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
   };
 
   const applyPersistedSettings = useCallback((settings: Record<string, unknown>) => {
-    const enabledBetaFeatures = Array.isArray(settings.betaFeatures)
-      ? (settings.betaFeatures as string[])
-      : [];
     setDeveloperMode(Boolean(settings.developerMode));
-    setApiLogging(Boolean(settings.apiLogging));
     setShowDebugInfo(Boolean(settings.showDebugInfo));
-    setVerboseErrors(Boolean(settings.verboseErrors));
-    setBetaFeatures((prev) =>
-      prev.map((feature) => ({
-        ...feature,
-        enabled: enabledBetaFeatures.includes(feature.id),
-      }))
-    );
   }, []);
 
   const refreshDeveloperSettings = useCallback(async () => {
@@ -178,12 +121,6 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
       }))
     );
   }, []);
-
-  const getBetaFeatureName = (feature: BetaFeature) =>
-    t(`settings.beta.features.${feature.id}.name`, feature.name);
-
-  const getBetaFeatureDescription = (feature: BetaFeature) =>
-    t(`settings.beta.features.${feature.id}.description`, feature.description);
 
   const getFeatureFlagDescription = (flag: FeatureFlag) =>
     t(`settings.flags.descriptions.${flag.key}`, flag.description || '');
@@ -217,13 +154,9 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
   // Save settings to backend API
   const saveSettings = useCallback(async () => {
     try {
-      const enabledBetaIds = betaFeatures.filter((f) => f.enabled).map((f) => f.id);
       await Api.saveDeveloperSettings({
         developerMode,
-        apiLogging,
         showDebugInfo,
-        verboseErrors,
-        betaFeatures: enabledBetaIds,
       });
       await refreshDeveloperSettings();
       toast({
@@ -241,49 +174,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         variant: 'destructive',
       });
     }
-  }, [
-    developerMode,
-    apiLogging,
-    showDebugInfo,
-    verboseErrors,
-    betaFeatures,
-    refreshDeveloperSettings,
-    toast,
-    t,
-  ]);
-
-  // Toggle beta feature and save to backend
-  const toggleBetaFeature = async (featureId: string) => {
-    const newFeatures = betaFeatures.map((f) =>
-      f.id === featureId ? { ...f, enabled: !f.enabled } : f
-    );
-    setBetaFeatures(newFeatures);
-
-    try {
-      const enabledBetaIds = newFeatures.filter((f) => f.enabled).map((f) => f.id);
-      await Api.saveDeveloperSettings({
-        developerMode,
-        apiLogging,
-        showDebugInfo,
-        verboseErrors,
-        betaFeatures: enabledBetaIds,
-      });
-      await refreshDeveloperSettings();
-      toast({
-        title: t('settings.beta.updated', 'Feature Updated'),
-        description: t('settings.beta.updatedDesc', 'Beta feature setting has been saved'),
-      });
-    } catch (error) {
-      console.error('Failed to save beta feature:', error);
-      // Revert on error
-      setBetaFeatures(betaFeatures);
-      toast({
-        title: t('settings.beta.error', 'Error'),
-        description: t('settings.beta.errorDesc', 'Failed to save beta feature setting'),
-        variant: 'destructive',
-      });
-    }
-  };
+  }, [developerMode, showDebugInfo, refreshDeveloperSettings, toast, t]);
 
   // Copy debug info
   const copyDebugInfo = () => {
@@ -292,39 +183,6 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
       title: t('settings.developer.copied', 'Copied'),
       description: t('settings.developer.copiedDesc', 'Debug info copied to clipboard'),
     });
-  };
-
-  // Get status badge
-  const getStatusBadge = (status: BetaFeature['status']) => {
-    switch (status) {
-      case 'alpha':
-        return (
-          <Badge
-            variant="outline"
-            className="bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800"
-          >
-            Alpha
-          </Badge>
-        );
-      case 'beta':
-        return (
-          <Badge
-            variant="outline"
-            className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-          >
-            Beta
-          </Badge>
-        );
-      case 'stable':
-        return (
-          <Badge
-            variant="outline"
-            className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
-          >
-            Stable
-          </Badge>
-        );
-    }
   };
 
   return (
@@ -395,61 +253,16 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <Server className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                    <span className="font-medium">
-                      {t('settings.developer.apiLogging', 'API Logging')}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t(
-                      'settings.developer.apiLoggingDesc',
-                      'Log all API requests to the browser console'
-                    )}
-                  </p>
-                </div>
-                <Switch
-                  checked={apiLogging}
-                  onCheckedChange={setApiLogging}
-                  disabled={!developerMode}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <Bug className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                    <span className="font-medium">
-                      {t('settings.developer.verboseErrors', 'Verbose Errors')}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t(
-                      'settings.developer.verboseErrorsDesc',
-                      'Show detailed error messages and stack traces'
-                    )}
-                  </p>
-                </div>
-                <Switch
-                  checked={verboseErrors}
-                  onCheckedChange={setVerboseErrors}
-                  disabled={!developerMode}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
                     <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                     <span className="font-medium">
                       {t('settings.developer.showDebug', 'Show Debug Info')}
                     </span>
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('settings.developer.showDebugDesc', 'Display debug panel in the app footer')}
+                    {t(
+                      'settings.developer.showDebugDesc',
+                      'Display the debug information panel below'
+                    )}
                   </p>
                 </div>
                 <Switch
@@ -461,31 +274,33 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
             </CardContent>
           </Card>
 
-          {/* Debug Info */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>{t('settings.developer.debugInfo', 'Debug Information')}</CardTitle>
-                  <CardDescription>
-                    {t(
-                      'settings.developer.debugInfoDesc',
-                      'Current session and environment details'
-                    )}
-                  </CardDescription>
+          {/* Debug Info — only shown when the Show Debug Info toggle is on */}
+          {developerMode && showDebugInfo && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>{t('settings.developer.debugInfo', 'Debug Information')}</CardTitle>
+                    <CardDescription>
+                      {t(
+                        'settings.developer.debugInfoDesc',
+                        'Current session and environment details'
+                      )}
+                    </CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={copyDebugInfo}>
+                    <Copy className="w-4 h-4 mr-2" />
+                    {t('common.copy', 'Copy')}
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={copyDebugInfo}>
-                  <Copy className="w-4 h-4 mr-2" />
-                  {t('common.copy', 'Copy')}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-slate-900 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-                <pre className="text-emerald-400">{JSON.stringify(debugInfo, null, 2)}</pre>
-              </div>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-slate-900 rounded-lg p-4 font-mono text-sm overflow-x-auto">
+                  <pre className="text-emerald-400">{JSON.stringify(debugInfo, null, 2)}</pre>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Button onClick={saveSettings}>
             <Check className="w-4 h-4 mr-2" />
@@ -506,57 +321,22 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
             </AlertDescription>
           </Alert>
 
-          <div className="space-y-4">
-            {betaFeatures.map((feature) => (
-              <Card key={feature.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={cn(
-                          'p-2 rounded-lg',
-                          feature.enabled
-                            ? 'bg-primary-100 dark:bg-primary-900/30'
-                            : 'bg-slate-100 dark:bg-slate-800'
-                        )}
-                      >
-                        <Zap
-                          className={cn(
-                            'w-5 h-5',
-                            feature.enabled
-                              ? 'text-primary-600 dark:text-primary-400'
-                              : 'text-slate-600 dark:text-slate-500'
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-slate-900 dark:text-white">
-                            {getBetaFeatureName(feature)}
-                          </h4>
-                          {getStatusBadge(feature.status)}
-                        </div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                          {getBetaFeatureDescription(feature)}
-                        </p>
-                        {feature.releaseDate && (
-                          <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
-                            {t('settings.beta.expectedRelease', 'Expected release: {{date}}', {
-                              date: feature.releaseDate,
-                            })}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <Switch
-                      checked={feature.enabled}
-                      onCheckedChange={() => toggleBetaFeature(feature.id)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <div className="p-3 rounded-full bg-slate-100 dark:bg-slate-800">
+                <Beaker className="w-6 h-6 text-slate-500 dark:text-slate-400" />
+              </div>
+              <h4 className="font-medium text-slate-900 dark:text-white">
+                {t('settings.beta.emptyTitle', 'No beta features available right now')}
+              </h4>
+              <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
+                {t(
+                  'settings.beta.emptyDesc',
+                  'There are no opt-in beta features for your account at the moment. New experimental features will appear here when they become available.'
+                )}
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Feature Flags Tab */}

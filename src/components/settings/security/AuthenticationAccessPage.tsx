@@ -36,7 +36,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -95,6 +95,14 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [expandedPanel, setExpandedPanel] = useState<ExpandedPanel>(null);
+  const mfaSectionRef = useRef<HTMLDivElement>(null);
+
+  const openMfaPanel = () => {
+    setExpandedPanel('mfa');
+    window.requestAnimationFrame(() => {
+      mfaSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   // Password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -479,7 +487,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
         <SettingsDivider />
 
         {/* ─── Two-Factor Authentication Section ─── */}
-        <div>
+        <div ref={mfaSectionRef}>
           <h4 className={sectionLabel}>
             <Fingerprint size={14} className="text-primary-400" />
             {t('settings.authAccess.mfaSection', 'Two-Factor Authentication')}
@@ -844,12 +852,31 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                             ? t('settings.authAccess.codesRemaining', '{{count}} codes remaining', {
                                 count: backupCodesCount,
                               })
-                            : t('settings.authAccess.noCodes', 'No backup codes generated')}
+                            : currentUser?.mfaEnabled
+                              ? t(
+                                  'settings.authAccess.noCodesGenerate',
+                                  'No backup codes — generate a new set from your 2FA settings'
+                                )
+                              : t(
+                                  'settings.authAccess.codesNeedMfa',
+                                  'Backup codes are created when you set up two-factor authentication'
+                                )}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {backupCodesCount > 0 && <Check size={14} className="text-emerald-400" />}
+                      {backupCodesCount > 0 ? (
+                        <Check size={14} className="text-emerald-400" />
+                      ) : (
+                        <button
+                          onClick={openMfaPanel}
+                          className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded-md hover:bg-primary-500/10 transition-colors whitespace-nowrap"
+                        >
+                          {currentUser?.mfaEnabled
+                            ? t('settings.authAccess.generateCodes', 'Generate codes')
+                            : t('settings.authAccess.setUp2fa', 'Set up 2FA')}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -43,7 +43,6 @@ interface SecurityOverviewPageProps {
 }
 
 interface SecurityStatus {
-  passwordStrength: 'strong' | 'medium' | 'weak' | 'unknown';
   passwordLastChanged?: string;
   mfaEnabled: boolean;
   mfaMethod?: string;
@@ -73,7 +72,6 @@ interface MfaStatusResponse {
 }
 
 const DEFAULT_STATUS: SecurityStatus = {
-  passwordStrength: 'unknown',
   mfaEnabled: false,
   activeSessions: 1,
   recoveryEmail: false,
@@ -111,7 +109,6 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       const mfa = mfaRes as MfaStatusResponse;
 
       setStatus({
-        passwordStrength: 'medium',
         mfaEnabled: currentUser?.mfaEnabled || mfa.isEnabled || false,
         mfaMethod: mfa.method || 'totp',
         activeSessions: sessions.length,
@@ -134,14 +131,15 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   }, [currentUser.id, loadSecurityData]);
 
   const securityScore = useMemo(() => {
+    // Score is computed only from real, verifiable signals. Password strength
+    // for an already-set password is not available client-side, so it is not
+    // factored in (no fabricated value).
     let score = 0;
     const maxScore = 5;
 
-    if (status.passwordStrength === 'strong') score += 1;
-    else if (status.passwordStrength === 'medium') score += 0.5;
-    if (status.mfaEnabled) score += 1.5;
-    if (status.recoveryEmail) score += 0.5;
-    if (status.recoveryPhone) score += 0.5;
+    if (status.mfaEnabled) score += 2.5;
+    if (status.recoveryEmail) score += 0.75;
+    if (status.recoveryPhone) score += 0.75;
     if (status.backupCodes) score += 1;
 
     return { score: Math.min(score, maxScore), maxScore };
@@ -186,20 +184,15 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       id: 'password',
       icon: Key,
       title: t('settings.securityOverview.password', 'Password'),
-      status: status.passwordStrength !== 'weak',
-      statusLabel:
-        status.passwordStrength === 'strong'
-          ? t('settings.securityOverview.strong', 'Strong')
-          : status.passwordStrength === 'medium'
-            ? t('settings.securityOverview.medium', 'Medium')
-            : t('settings.securityOverview.weak', 'Weak'),
+      status: true,
+      statusLabel: t('settings.securityOverview.passwordSet', 'Set'),
       description: status.passwordLastChanged
         ? t('settings.securityOverview.lastChanged', 'Last changed {{date}}', {
             date: new Date(status.passwordLastChanged).toLocaleDateString(),
           })
         : t('settings.securityOverview.updateRegularly', 'Update regularly for best security'),
       action: () => navigateTo('auth-access'),
-      actionLabel: t('settings.securityOverview.manage', 'Manage'),
+      actionLabel: t('settings.securityOverview.change', 'Change'),
       color: 'violet' as const,
     },
     {

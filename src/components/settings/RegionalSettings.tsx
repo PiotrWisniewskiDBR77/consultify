@@ -151,11 +151,9 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
         throw new Error('Regional preferences were not confirmed by the server');
       }
       setPreferences(persisted);
-      // Also update user object for backwards compatibility
-      onUpdateUser({
-        timezone: persisted.timezone,
-        units: persisted.units,
-      });
+      // Note: we intentionally do NOT mirror timezone/units onto the user object.
+      // Nothing in the app consumed that mirror, so it implied an app-wide effect
+      // that does not exist. These remain personal display preferences.
       toast.success(t('settings.regional.saved', 'Regional preferences saved'));
     } catch (error: unknown) {
       toast.error(
@@ -249,8 +247,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             {t(
-              'settings.regional.description',
-              'Configure your locale, timezone, and format preferences'
+              'settings.regional.descriptionPersonal',
+              'Your personal display preferences. The live preview below reflects these choices; broader app-wide formatting will adopt them over time.'
             )}
           </p>
           {organizationDefaults?.profile?.defaultTimezone ||

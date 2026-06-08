@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
-import { changeLanguage, SUPPORTED_LANGUAGES } from '../../i18n';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -27,8 +27,6 @@ import { InfoButton } from '../shared/InfoButton';
 interface ProfileSettingsProps {
   currentUser: User;
   onUpdateUser: (updates: Partial<User>) => void;
-  theme?: 'light' | 'dark' | 'system';
-  toggleTheme?: (newTheme?: 'light' | 'dark' | 'system') => void;
 }
 
 // Job title suggestions
@@ -291,13 +289,9 @@ const sanitizeProfileTextInput = (
   return collapseRepeatedTextFragments(next);
 };
 
-export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
-  currentUser,
-  onUpdateUser,
-  theme,
-  toggleTheme,
-}) => {
-  const { t, i18n } = useTranslation();
+export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, onUpdateUser }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const PRONOUNS_OPTIONS = useMemo(
     () => [
@@ -578,7 +572,13 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         {/* Left Column: Avatar & Basic Info */}
         <div className="md:col-span-1 space-y-6">
           <div className={cardClass + ' flex flex-col items-center text-center'}>
-            <div className="relative group cursor-pointer mb-4">
+            <button
+              type="button"
+              onClick={() => navigate('/settings/avatar')}
+              title={t('settings.profile.changePhoto', 'Change Photo')}
+              aria-label={t('settings.profile.changePhoto', 'Change Photo')}
+              className="relative group cursor-pointer mb-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
               <div className="w-32 h-32 rounded-full bg-slate-100 dark:bg-navy-800 border-4 border-white dark:border-navy-900 shadow-xl overflow-hidden flex items-center justify-center">
                 {currentUser.avatarUrl ? (
                   <img
@@ -595,7 +595,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   {t('settings.profile.changePhoto', 'Change Photo')}
                 </span>
               </div>
-            </div>
+            </button>
             <h3 className="text-lg font-bold text-navy-900 dark:text-white">
               {formState.displayName || `${currentUser.firstName} ${currentUser.lastName}`}
             </h3>
@@ -1117,80 +1117,6 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
               </div>
             </div>
           </div>
-
-          {/* Preferences (Theme & Language) */}
-          {theme !== undefined && toggleTheme && (
-            <div>
-              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 block uppercase tracking-wider">
-                {t('settings.profile.preferences', 'Preferences')}
-              </label>
-              <div className={cardClass + ' space-y-6'}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">
-                      {t('settings.profile.theme', 'Interface Theme')}
-                    </label>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {t('settings.profile.themeHint', 'Select your interface color theme.')}
-                    </p>
-                  </div>
-                  <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg">
-                    <button
-                      onClick={() => toggleTheme('light')}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'light' ? 'bg-white shadow text-navy-900' : 'text-slate-500 dark:text-slate-400'}`}
-                    >
-                      {t('settings.profile.light', 'Light')}
-                    </button>
-                    <button
-                      onClick={() => toggleTheme('dark')}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'dark' ? 'bg-navy-800 shadow text-white' : 'text-slate-500 dark:text-slate-400'}`}
-                    >
-                      {t('settings.profile.dark', 'Dark')}
-                    </button>
-                    <button
-                      onClick={() => toggleTheme('system')}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${theme === 'system' ? 'bg-white dark:bg-navy-800 shadow text-primary-600' : 'text-slate-500 dark:text-slate-400'}`}
-                    >
-                      {t('settings.profile.system', 'System')}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-navy-700">
-                  <div>
-                    <label className="text-sm font-medium text-navy-900 dark:text-white flex items-center gap-2">
-                      {t('settings.profile.language', 'Language')}
-                    </label>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {t('settings.profile.languageHint', 'Select your preferred language.')}
-                    </p>
-                  </div>
-                  <div className="flex bg-slate-100 dark:bg-navy-950 p-1 rounded-lg flex-wrap gap-1">
-                    {(() => {
-                      // SuperAdmin: only Polish and English
-                      // Regular users: all supported languages
-                      const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPERADMIN';
-                      return isSuperAdmin
-                        ? SUPPORTED_LANGUAGES.filter((lang) => ['en', 'pl'].includes(lang))
-                        : SUPPORTED_LANGUAGES;
-                    })().map((lang) => (
-                      <button
-                        key={lang}
-                        onClick={() => changeLanguage(lang)}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                          i18n.language === lang
-                            ? 'bg-white shadow text-navy-900'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-navy-700'
-                        }`}
-                      >
-                        {t(`common.languages.${lang}`)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

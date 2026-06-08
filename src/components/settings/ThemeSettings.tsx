@@ -37,6 +37,57 @@ const ACCENT_COLORS = [
   { key: 'cyan', name: 'Cyan', value: '#3b82f6', class: 'bg-blue-500' },
 ];
 
+/**
+ * SET-08: Apply the chosen accent color at runtime.
+ * The Tailwind `primary-*` palette is static hex (not var-driven), so we set
+ * --user-accent (+ derived hover/soft/focus shades) on <html> and a marker
+ * attribute `data-user-accent`. index.css remaps the common primary/accent
+ * utility classes + semantic tokens onto these vars when the marker is present.
+ * When the accent equals the brand default we clear it so default crimson wins.
+ */
+const BRAND_ACCENT = '#A51C30';
+
+const clampChannel = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+
+const shadeHex = (hex: string, factor: number): string => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const int = parseInt(m[1], 16);
+  const r = clampChannel(((int >> 16) & 0xff) * factor);
+  const g = clampChannel(((int >> 8) & 0xff) * factor);
+  const b = clampChannel((int & 0xff) * factor);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+};
+
+const hexToRgb = (hex: string): [number, number, number] | null => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const int = parseInt(m[1], 16);
+  return [(int >> 16) & 0xff, (int >> 8) & 0xff, int & 0xff];
+};
+
+const applyAccent = (hex: string) => {
+  const root = document.documentElement;
+  const valid = /^#?[0-9a-f]{6}$/i.test(hex.trim());
+  if (!valid || hex.toLowerCase() === BRAND_ACCENT.toLowerCase()) {
+    // Default brand accent — remove overrides so the built-in palette applies.
+    root.removeAttribute('data-user-accent');
+    root.style.removeProperty('--user-accent');
+    root.style.removeProperty('--user-accent-hover');
+    root.style.removeProperty('--user-accent-soft');
+    root.style.removeProperty('--user-accent-focus');
+    return;
+  }
+  const rgb = hexToRgb(hex);
+  root.setAttribute('data-user-accent', '1');
+  root.style.setProperty('--user-accent', hex);
+  root.style.setProperty('--user-accent-hover', shadeHex(hex, 0.82));
+  if (rgb) {
+    root.style.setProperty('--user-accent-soft', `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.1)`);
+    root.style.setProperty('--user-accent-focus', `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.35)`);
+  }
+};
+
 export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const theme = useAppStore((s) => s.theme) as Theme;
@@ -75,6 +126,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
         if (savedAccent) {
           setAccentColor(savedAccent);
           setOriginalAccent(savedAccent);
+          applyAccent(savedAccent);
         }
         if (savedDensity) {
           setDensity(savedDensity);
@@ -101,6 +153,11 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
     applyDensity(d as Density);
   };
 
+  const handleAccentChange = (hex: string) => {
+    setAccentColor(hex);
+    applyAccent(hex);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -118,6 +175,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       }
       toggleTheme(nextTheme);
       setAccentColor(nextAccent);
+      applyAccent(nextAccent);
       setDensity(nextDensity);
       applyDensity(nextDensity);
       setOriginalTheme(nextTheme);
@@ -255,7 +313,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                 return (
                   <button
                     key={color.value}
-                    onClick={() => setAccentColor(color.value)}
+                    onClick={() => handleAccentChange(color.value)}
                     className={cn(
                       'group relative w-12 h-12 rounded-xl transition-all duration-200',
                       'hover:scale-110 active:scale-95',
@@ -282,7 +340,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                 <input
                   type="color"
                   value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
+                  onChange={(e) => handleAccentChange(e.target.value)}
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
               </label>

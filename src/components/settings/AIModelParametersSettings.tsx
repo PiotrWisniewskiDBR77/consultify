@@ -356,12 +356,11 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
                       <p className="text-xs text-slate-600 leading-relaxed">
                         {t(
                           'settings.ai.vectorDesc',
-                          'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations. Currently in beta for early adopters.'
+                          'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations.'
                         )}
                       </p>
-                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 rounded-full">
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                        {t('settings.ai.betaActive', 'Beta active for your account')}
+                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-slate-500/15 text-slate-400 rounded-full">
+                        {t('settings.ai.platformModelBadge', 'Platform AI model')}
                       </span>
                     </div>
                   </div>

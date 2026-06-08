@@ -264,6 +264,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     navigate(getPilotDefaultSettingsRoute(), { replace: true });
   }, [activeSection, isPilotParticipant, navigate]);
 
+  // SET-28: Hidden read-only ownership/handoff sections redirect to Profile.
+  // Their nav entries are removed from the sidebar; if reached via URL, bounce to profile.
+  useEffect(() => {
+    const hiddenOwnershipSections: SettingsSection[] = [
+      'overview',
+      'tenant-defaults',
+      'tenant-branding',
+      'tenant-security',
+      'module-preferences',
+    ];
+    if (hiddenOwnershipSections.includes(activeSection)) {
+      navigate(ROUTES.SETTINGS.PROFILE, { replace: true });
+    }
+  }, [activeSection, navigate]);
+
   // Handle section change - update URL
   const handleSectionChange = useCallback(
     (section: SettingsSection) => {

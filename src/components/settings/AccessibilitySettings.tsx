@@ -7,7 +7,7 @@
  * @version 3.0
  */
 
-import { ALargeSmall, Eye, Keyboard, Volume2 } from 'lucide-react';
+import { ALargeSmall, Eye, Keyboard } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +30,6 @@ interface AccessibilityPreferences {
   fontSize: 'small' | 'medium' | 'large' | 'extra-large';
   highContrastMode: boolean;
   reduceMotion: boolean;
-  screenReaderOptimized: boolean;
   showKeyboardShortcuts: boolean;
   focusHighlight: boolean;
   cursorSize: 'default' | 'large' | 'extra-large';
@@ -40,9 +39,6 @@ interface AccessibilityPreferences {
   fontFamily: string;
   lineHeight: 'default' | 'relaxed' | 'loose';
   letterSpacing: 'default' | 'wide' | 'wider';
-  voiceCommandsEnabled: boolean;
-  textToSpeechEnabled: boolean;
-  speechToTextEnabled: boolean;
   caretWidth: 'default' | 'thick';
   focusIndicatorStyle: 'default' | 'high-contrast' | 'animated';
 }
@@ -51,7 +47,6 @@ const DEFAULT_PREFERENCES: AccessibilityPreferences = {
   fontSize: 'medium',
   highContrastMode: false,
   reduceMotion: false,
-  screenReaderOptimized: false,
   showKeyboardShortcuts: true,
   focusHighlight: true,
   cursorSize: 'default',
@@ -61,9 +56,6 @@ const DEFAULT_PREFERENCES: AccessibilityPreferences = {
   fontFamily: 'system',
   lineHeight: 'default',
   letterSpacing: 'default',
-  voiceCommandsEnabled: false,
-  textToSpeechEnabled: false,
-  speechToTextEnabled: false,
   caretWidth: 'default',
   focusIndicatorStyle: 'default',
 };
@@ -121,6 +113,28 @@ const COLOR_BLIND_OPTIONS = [
   },
 ];
 
+/**
+ * Inject the SVG colorblind-correction filters once. index.css references these
+ * by id (#cb-protanopia etc.) via `filter: url(...)`. We add them to the DOM
+ * here (the panel owns runtime apply) so the colorBlindMode toggle works
+ * without editing app-bootstrap files.
+ */
+const COLORBLIND_SVG_ID = 'a11y-colorblind-filters';
+const ensureColorblindFilters = () => {
+  if (typeof document === 'undefined' || document.getElementById(COLORBLIND_SVG_ID)) return;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `
+    <svg id="${COLORBLIND_SVG_ID}" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+      <defs>
+        <filter id="cb-protanopia"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+        <filter id="cb-deuteranopia"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+        <filter id="cb-tritanopia"><feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/></filter>
+      </defs>
+    </svg>`;
+  const svg = wrapper.firstElementChild;
+  if (svg) document.body.appendChild(svg);
+};
+
 const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
   const root = document.documentElement;
 
@@ -131,6 +145,7 @@ const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
   root.classList.toggle('reduce-motion', prefs.reduceMotion);
   root.classList.toggle('underline-links', prefs.underlineLinks);
 
+  ensureColorblindFilters();
   root.classList.remove(
     'colorblind-protanopia',
     'colorblind-deuteranopia',
@@ -147,7 +162,9 @@ const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
   root.style.setProperty('--letter-spacing-base', letterSpacingMap[prefs.letterSpacing]);
 
   const fontFamilyMap: Record<string, string> = {
-    system: 'system-ui, -apple-system, sans-serif',
+    // "System default" must equal the app's brand font (Inter) so selecting it
+    // — or the default merge on load — does not visually change the UI.
+    system: "'Inter', system-ui, -apple-system, sans-serif",
     inter: 'Inter, sans-serif',
     roboto: 'Roboto, sans-serif',
     'open-sans': '"Open Sans", sans-serif',
@@ -159,6 +176,26 @@ const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
     '--font-family-base',
     fontFamilyMap[prefs.fontFamily] || fontFamilyMap['system']
   );
+
+  // Cursor size (CSS sets a larger SVG cursor on html.cursor-large)
+  root.classList.toggle('cursor-large', prefs.cursorSize !== 'default');
+
+  // Text spacing (WCAG-style spacing bump)
+  root.classList.remove('text-spacing-relaxed', 'text-spacing-spacious');
+  if (prefs.textSpacing === 'relaxed') root.classList.add('text-spacing-relaxed');
+  else if (prefs.textSpacing === 'spacious') root.classList.add('text-spacing-spacious');
+
+  // Caret width
+  root.classList.toggle('caret-thick', prefs.caretWidth === 'thick');
+
+  // Focus highlight + focus indicator style
+  root.classList.toggle('focus-highlight', prefs.focusHighlight);
+  root.classList.remove('focus-style-high-contrast', 'focus-style-animated');
+  if (prefs.focusIndicatorStyle === 'high-contrast') {
+    root.classList.add('focus-style-high-contrast');
+  } else if (prefs.focusIndicatorStyle === 'animated') {
+    root.classList.add('focus-style-animated');
+  }
 };
 
 export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ currentUser }) => {
@@ -677,69 +714,6 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ cu
               size="sm"
             />
           </div>
-        </div>
-      </SettingsSection>
-
-      {/* ── Section 4: Assistive Technology ── */}
-      <SettingsSection
-        icon={Volume2}
-        title={t('settings.accessibility.assistiveTitle', 'Assistive Technology')}
-        description={t(
-          'settings.accessibility.assistiveDesc',
-          'Screen reader, voice control, and speech features'
-        )}
-        cardId="settings-accessibility-assistive"
-        isDirty={isDirty}
-        onSave={handleSave}
-        saving={saving}
-        loading={loading}
-      >
-        <div className="space-y-1">
-          <SettingsToggle
-            checked={preferences.screenReaderOptimized}
-            onChange={(v) => update('screenReaderOptimized', v)}
-            label={t('settings.accessibility.screenReaderOptimized', 'Screen Reader Optimizations')}
-            description={t(
-              'settings.accessibility.screenReaderOptimizedDescription',
-              'Improve compatibility with screen readers like NVDA and VoiceOver'
-            )}
-          />
-
-          <SettingsDivider />
-
-          <SettingsToggle
-            checked={preferences.textToSpeechEnabled}
-            onChange={(v) => update('textToSpeechEnabled', v)}
-            label={t('settings.accessibility.textToSpeech', 'Text to Speech')}
-            description={t(
-              'settings.accessibility.textToSpeechDescription',
-              'Read selected text aloud'
-            )}
-          />
-
-          <SettingsDivider />
-
-          <SettingsToggle
-            checked={preferences.speechToTextEnabled}
-            onChange={(v) => update('speechToTextEnabled', v)}
-            label={t('settings.accessibility.speechToText', 'Speech to Text')}
-            description={t(
-              'settings.accessibility.speechToTextDescription',
-              'Use voice dictation for text input'
-            )}
-          />
-
-          <SettingsDivider />
-
-          <SettingsToggle
-            checked={preferences.voiceCommandsEnabled}
-            onChange={(v) => update('voiceCommandsEnabled', v)}
-            label={t('settings.accessibility.voiceCommands', 'Voice Commands')}
-            description={t(
-              'settings.accessibility.voiceCommandsDescription',
-              'Control the app using voice commands'
-            )}
-          />
         </div>
       </SettingsSection>
     </div>

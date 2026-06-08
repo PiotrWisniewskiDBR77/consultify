@@ -617,8 +617,39 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
   const [mappingIntegrationId, setMappingIntegrationId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // Availability map from the server: which connectors actually have backend
+  // credentials configured (e.g. *_CLIENT_ID env). OAuth providers without
+  // credentials return 503 on connect, so we gate their Connect button.
+  const [availability, setAvailability] = useState<Record<
+    string,
+    { configured: boolean; authType: string }
+  > | null>(null);
+
   const { integrations, providers, connectedCount, loading, error, disconnect, refresh } =
     useUserIntegrations();
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const resp = await fetch('/api/settings/integrations/oauth/status', {
+          credentials: 'include',
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!cancelled && data?.availability && typeof data.availability === 'object') {
+          setAvailability(
+            data.availability as Record<string, { configured: boolean; authType: string }>
+          );
+        }
+      } catch {
+        // Non-fatal: if we can't load availability, leave buttons enabled (fail open).
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const connectedMap = useMemo(() => {
     const map = new Map<string, UserIntegration>();
@@ -642,6 +673,20 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       return true;
     });
   }, [selectedCategory, searchQuery]);
+
+  // An OAuth/token provider is "unavailable" when the server reports it has no
+  // backend credentials configured — connecting would 503. basic (CalDAV) and
+  // api_key providers use user-supplied credentials, so they're never gated.
+  const isProviderUnavailable = useCallback(
+    (app: CatalogApp): boolean => {
+      if (app.authType === 'basic' || app.authType === 'api_key') return false;
+      if (!availability) return false; // fail open until status loads
+      const entry = availability[app.id];
+      if (!entry) return false; // unknown to backend → don't block optimistically
+      return entry.configured === false;
+    },
+    [availability]
+  );
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: CATALOG.length };
@@ -678,6 +723,26 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           provider.id === providerId &&
           provider.isConnected &&
           provider.connection?.status === 'active'
+      ),
+    []
+  );
+
+  // api_key providers (e.g. Monday.com) are inserted by the server as 'pending'
+  // rather than 'active' — the key is validated asynchronously. Accept either
+  // status as a successful connection so we don't show a false error toast.
+  const snapshotHasConnectedProvider = useCallback(
+    (snapshot: { integrations: UserIntegration[]; providers: Provider[] }, providerId: string) =>
+      snapshot.integrations.some(
+        (integration) =>
+          integration.provider === providerId &&
+          (integration.status === 'active' || integration.status === 'pending')
+      ) ||
+      snapshot.providers.some(
+        (provider) =>
+          provider.id === providerId &&
+          (provider.isConnected ||
+            provider.connection?.status === 'active' ||
+            provider.connection?.status === 'pending')
       ),
     []
   );
@@ -893,7 +958,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               throw new Error(err.error || 'Connection failed');
             }
             const snapshot = await fetchIntegrationSnapshot();
-            if (!snapshotHasActiveProvider(snapshot, connectModalApp.id)) {
+            if (!snapshotHasConnectedProvider(snapshot, connectModalApp.id)) {
               throw new Error('Integration connection was not confirmed by the server');
             }
             toast.success(t('settings.integrations.connected', 'Connected successfully'));
@@ -931,6 +996,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     fetchIntegrationSnapshot,
     refresh,
     snapshotHasActiveProvider,
+    snapshotHasConnectedProvider,
     startOAuthFlow,
     t,
   ]);
@@ -1054,6 +1120,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                     const isError = connection?.status === 'error';
                     const isExpired = connection?.status === 'expired';
                     const needsReauth = isError || isExpired;
+                    const unavailable = isProviderUnavailable(app);
                     const Icon = app.icon;
 
                     return (
@@ -1164,7 +1231,19 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 {t('common.reconnect', 'Reconnect')}
                               </button>
                             )}
-                            {!isConnected && !needsReauth && (
+                            {!isConnected && !needsReauth && unavailable && (
+                              <span
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-700/50 rounded-lg cursor-not-allowed"
+                                title={t(
+                                  'settings.integrations.notConfigured',
+                                  'This integration is not available yet — it has not been configured on the server.'
+                                )}
+                              >
+                                <Clock size={12} />
+                                {t('settings.integrations.comingSoon', 'Coming soon')}
+                              </span>
+                            )}
+                            {!isConnected && !needsReauth && !unavailable && (
                               <button
                                 onClick={() => openConnectModal(app)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors shadow-sm"

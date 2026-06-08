@@ -13,8 +13,6 @@
 
 import {
   AlertCircle,
-  ArrowDown,
-  ArrowUp,
   Brain,
   Clock,
   DollarSign,
@@ -22,7 +20,6 @@ import {
   MessageSquare,
   Search,
   Sparkles,
-  TrendingUp,
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -48,16 +45,16 @@ interface UsageStat {
   count: number;
   tokens: number;
   cost: number;
-  trend: number; // percentage change
 }
 
 interface PeriodStats {
   totalRequests: number;
   totalTokens: number;
   totalCost: number;
-  avgResponseTime: number;
-  successRate: number;
-  limit: number;
+  // The backend does not currently track these — null means "hide", never fake.
+  avgResponseTime: number | null;
+  successRate: number | null;
+  limit: number | null;
   used: number;
 }
 
@@ -79,6 +76,11 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
 
   const toFiniteNumber = (value: unknown, fallback = 0) =>
     typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+  // Returns the numeric value only when the backend genuinely provided one,
+  // otherwise null so the metric is hidden rather than shown as a fake 0/100.
+  const toNullableNumber = (value: unknown): number | null =>
+    typeof value === 'number' && Number.isFinite(value) ? value : null;
 
   const normalizeFeatureKey = (feature: unknown) =>
     String(feature || 'general')
@@ -105,13 +107,14 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
           throw new Error('AI usage stats response is missing usage totals');
         }
 
+        const successRateRaw = toNullableNumber(response.stats.successRate);
         setPeriodStats({
           totalRequests: toFiniteNumber(response.stats.totalRequests),
           totalTokens: toFiniteNumber(response.stats.totalTokens),
           totalCost: toFiniteNumber(response.stats.totalCost),
-          avgResponseTime: toFiniteNumber(response.stats.avgResponseTime),
-          successRate: Math.min(Math.max(toFiniteNumber(response.stats.successRate), 0), 100),
-          limit: toFiniteNumber(response.stats.limit),
+          avgResponseTime: toNullableNumber(response.stats.avgResponseTime),
+          successRate: successRateRaw === null ? null : Math.min(Math.max(successRateRaw, 0), 100),
+          limit: toNullableNumber(response.stats.limit),
           used: toFiniteNumber(response.stats.used),
         });
 
@@ -135,7 +138,6 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                 count: toFiniteNumber(item.count),
                 tokens: toFiniteNumber(item.tokens),
                 cost: toFiniteNumber(item.cost),
-                trend: toFiniteNumber(item.trend),
               };
             })
           );
@@ -183,11 +185,14 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
     }).format(amount);
   };
 
-  // Calculate usage percentage
+  // Calculate usage percentage (only when a real limit is provided by the backend)
+  const hasLimit = !!periodStats && periodStats.limit !== null && periodStats.limit > 0;
   const usagePercentage =
-    periodStats && periodStats.limit > 0 ? (periodStats.used / periodStats.limit) * 100 : 0;
-  const isNearLimit = usagePercentage >= 80;
-  const isOverLimit = usagePercentage >= 100;
+    hasLimit && periodStats ? (periodStats.used / (periodStats.limit as number)) * 100 : 0;
+  const isNearLimit = hasLimit && usagePercentage >= 80;
+  const isOverLimit = hasLimit && usagePercentage >= 100;
+  const hasAvgResponseTime = !!periodStats && periodStats.avgResponseTime !== null;
+  const hasSuccessRate = !!periodStats && periodStats.successRate !== null;
 
   if (loading) {
     return (
@@ -291,26 +296,29 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-50 dark:from-blue-900/20 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                  {t('settings.aiUsage.avgResponseTime', 'Avg Response')}
-                </p>
-                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
-                  {periodStats?.avgResponseTime?.toFixed(1)}s
-                </p>
+        {hasAvgResponseTime && (
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-50 dark:from-blue-900/20 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                    {t('settings.aiUsage.avgResponseTime', 'Avg Response')}
+                  </p>
+                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-1">
+                    {periodStats?.avgResponseTime?.toFixed(1)}s
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-100 dark:bg-blue-800/50 rounded-xl">
+                  <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
               </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-800/50 rounded-xl">
-                <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Usage Limit Progress */}
+      {/* Usage Limit Progress — only when the backend reports a real limit */}
+      {hasLimit && (
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -362,6 +370,7 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Usage by Feature */}
       <Card>
@@ -409,19 +418,6 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                           <span className="text-slate-500 dark:text-slate-400">
                             {stat.count} requests
                           </span>
-                          <span
-                            className={cn(
-                              'flex items-center gap-1',
-                              stat.trend > 0 ? 'text-emerald-600' : 'text-rose-600'
-                            )}
-                          >
-                            {stat.trend > 0 ? (
-                              <ArrowUp className="w-3 h-3" />
-                            ) : (
-                              <ArrowDown className="w-3 h-3" />
-                            )}
-                            {Math.abs(stat.trend)}%
-                          </span>
                         </div>
                       </div>
                       <Progress value={percentage} className="h-2" />
@@ -443,10 +439,6 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
               <CardDescription>
                 {t('settings.aiUsage.usageTrendDesc', 'Daily token usage over time')}
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-              <TrendingUp className="w-4 h-4" />
-              <span>+12% vs previous period</span>
             </div>
           </div>
         </CardHeader>
@@ -486,55 +478,57 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
         </CardContent>
       </Card>
 
-      {/* Success Rate & Performance */}
+      {/* Success Rate & Performance — only metrics genuinely tracked by the backend */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              {t('settings.aiUsage.successRate', 'Success Rate')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="relative w-24 h-24">
-                <svg className="w-24 h-24 transform -rotate-90">
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="40"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="none"
-                    className="text-slate-200 dark:text-navy-700"
-                  />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="40"
-                    stroke="currentColor"
-                    strokeWidth="8"
-                    fill="none"
-                    strokeDasharray={`${(periodStats?.successRate || 0) * 2.51} 251`}
-                    className="text-emerald-500"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-slate-900 dark:text-white">
-                    {periodStats?.successRate?.toFixed(1)}%
-                  </span>
+        {hasSuccessRate && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">
+                {t('settings.aiUsage.successRate', 'Success Rate')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24">
+                  <svg className="w-24 h-24 transform -rotate-90">
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="40"
+                      stroke="currentColor"
+                      strokeWidth="8"
+                      fill="none"
+                      className="text-slate-200 dark:text-navy-700"
+                    />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r="40"
+                      stroke="currentColor"
+                      strokeWidth="8"
+                      fill="none"
+                      strokeDasharray={`${(periodStats?.successRate || 0) * 2.51} 251`}
+                      className="text-emerald-500"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-xl font-bold text-slate-900 dark:text-white">
+                      {periodStats?.successRate?.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  <p>
+                    {t(
+                      'settings.aiUsage.successRateDesc',
+                      'Percentage of successful AI requests without errors'
+                    )}
+                  </p>
                 </div>
               </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                <p>
-                  {t(
-                    'settings.aiUsage.successRateDesc',
-                    'Percentage of successful AI requests without errors'
-                  )}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="pb-2">
@@ -544,26 +538,24 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                  Average response time
-                </span>
-                <span className="text-sm font-medium">
-                  {periodStats?.avgResponseTime?.toFixed(2)}s
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                  P95 response time
-                </span>
-                <span className="text-sm font-medium">2.4s</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500 dark:text-slate-400">Error rate</span>
-                <span className="text-sm font-medium text-emerald-600">
-                  {(100 - (periodStats?.successRate || 0)).toFixed(1)}%
-                </span>
-              </div>
+              {hasAvgResponseTime && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    Average response time
+                  </span>
+                  <span className="text-sm font-medium">
+                    {periodStats?.avgResponseTime?.toFixed(2)}s
+                  </span>
+                </div>
+              )}
+              {hasSuccessRate && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Error rate</span>
+                  <span className="text-sm font-medium text-emerald-600">
+                    {(100 - (periodStats?.successRate || 0)).toFixed(1)}%
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-500 dark:text-slate-400">
                   Tokens per request

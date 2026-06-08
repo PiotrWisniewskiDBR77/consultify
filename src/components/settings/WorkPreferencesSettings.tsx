@@ -295,6 +295,18 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
         </button>
       </div>
 
+      {/* Honest disclosure: these preferences are persisted to your account but
+          are not yet applied automatically across project/task/calendar views. */}
+      <div className="flex items-start gap-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+        <Bell size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <p className="text-sm text-amber-800 dark:text-amber-200">
+          {t(
+            'settings.work.notAppliedNote',
+            'These preferences are saved to your account. They are not yet applied automatically across all task, project and calendar views — that rollout is in progress.'
+          )}
+        </p>
+      </div>
+
       {/* Default Project View */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">

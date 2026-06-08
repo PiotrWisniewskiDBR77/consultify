@@ -12249,7 +12249,31 @@ export const Api = {
   },
   // Login History
   getLoginHistory: async (): Promise<any[]> => {
-    return [];
+    try {
+      const res = await fetchWithRetry(`${API_URL}/auth/login-history`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return [];
+      const payload = await res.json().catch(() => null);
+      const rows = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+      return rows.map((entry: any) => ({
+        id: String(entry.id ?? ''),
+        timestamp: entry.time ?? entry.created_at ?? '',
+        status:
+          entry.status === 'failed' || entry.status === 'suspicious'
+            ? entry.status
+            : 'success',
+        location: entry.location ?? 'Unknown location',
+        ip: entry.ip_address ?? entry.ip ?? '',
+        device: entry.device ?? 'Unknown Device',
+      }));
+    } catch {
+      return [];
+    }
   },
   // User Status
   updateUserStatus: async (userId: string, data?: any): Promise<any> => {
@@ -15413,35 +15437,42 @@ export const Api = {
   },
 
   getAIUsageStats: async (period?: string) => {
+    // NOTE: avgResponseTime / successRate / limit are NOT tracked by the backend
+    // (the server hardcodes placeholder values). We deliberately return them as
+    // null so the UI can hide those metrics instead of showing fabricated data.
     try {
-      const res = await fetchWithRetry(
-        `${API_URL}/ai-settings/user/costs?period=${period || '30d'}`,
-        { headers: getHeaders() }
-      );
+      const res = await fetchWithRetry(`${API_URL}/settings/ai-usage?period=${period || '30d'}`, {
+        headers: getHeaders(),
+      });
       const payload = await handleResponse(res, 'Failed to fetch AI usage stats');
-      const dailyRows = Array.isArray(payload)
-        ? payload
-        : payload?.costs || payload?.dailyUsage || [];
-      const dailyUsage = dailyRows.map((row: any) => ({
-        date: row.date,
-        tokens: Number(row.tokens || 0),
-        requests: Number(row.requests || row.count || 0),
-        cost: Number(row.cost || 0),
-      }));
-      const totalTokens = dailyUsage.reduce((sum: number, row: any) => sum + row.tokens, 0);
-      const totalCost = dailyUsage.reduce((sum: number, row: any) => sum + row.cost, 0);
-      const totalRequests = dailyUsage.reduce((sum: number, row: any) => sum + row.requests, 0);
+      const s = payload?.stats || {};
+      const dailyUsage = Array.isArray(payload?.dailyUsage)
+        ? payload.dailyUsage.map((row: any) => ({
+            date: row.date,
+            tokens: Number(row.tokens || 0),
+            requests: Number(row.requests || row.count || 0),
+          }))
+        : [];
+      const usageByFeature = Array.isArray(payload?.usageByFeature)
+        ? payload.usageByFeature.map((row: any) => ({
+            feature: row.feature ?? 'general',
+            count: Number(row.count || 0),
+            tokens: Number(row.tokens || 0),
+            cost: Number(row.cost || 0),
+          }))
+        : [];
       return {
         stats: {
-          totalTokens,
-          totalCost,
-          totalRequests,
-          avgResponseTime: 0,
-          successRate: 100,
-          limit: 1000000,
-          used: totalTokens,
+          totalTokens: Number(s.totalTokens || 0),
+          totalCost: Number(s.totalCost || 0),
+          totalRequests: Number(s.totalRequests || 0),
+          // Not genuinely measured by the backend — hidden in the UI.
+          avgResponseTime: null,
+          successRate: null,
+          limit: null,
+          used: Number(s.used ?? s.totalTokens ?? 0),
         },
-        usageByFeature: payload?.usageByFeature || [],
+        usageByFeature,
         dailyUsage,
       };
     } catch {
@@ -15450,9 +15481,9 @@ export const Api = {
           totalTokens: 0,
           totalCost: 0,
           totalRequests: 0,
-          avgResponseTime: 0,
-          successRate: 100,
-          limit: 10000,
+          avgResponseTime: null,
+          successRate: null,
+          limit: null,
           used: 0,
         },
         usageByFeature: [],

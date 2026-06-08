@@ -218,6 +218,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const [exporting, setExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
   const [requestingDeletion, setRequestingDeletion] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -362,13 +363,20 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       );
       return;
     }
+    if (!deletePassword.trim()) {
+      toast.error(
+        t('settings.data.deletePasswordRequired', 'Please enter your password to confirm deletion')
+      );
+      return;
+    }
     setRequestingDeletion(true);
     try {
       setActionError(null);
-      const response = await Api.requestGdprDeletion();
+      const response = await Api.requestGdprDeletion(deletePassword);
       if (response?.request) {
         setShowDeleteConfirm(false);
         setDeleteConfirmText('');
+        setDeletePassword('');
         toast.success(
           t(
             'settings.data.deletionRequested',
@@ -613,11 +621,23 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       className="w-full px-3 py-2 bg-navy-800 border border-rose-500/30 rounded-lg text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
                       placeholder={deleteConfirmationPhrase}
                     />
+                    <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                      {t('settings.data.deletePasswordLabel', 'Enter your password to confirm:')}
+                    </label>
+                    <input
+                      type="password"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      autoComplete="current-password"
+                      className="w-full px-3 py-2 bg-navy-800 border border-rose-500/30 rounded-lg text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
+                      placeholder={t('settings.data.deletePasswordPlaceholder', 'Your account password')}
+                    />
                     <div className="flex gap-2">
                       <button
                         onClick={handleDeleteRequest}
                         disabled={
                           requestingDeletion ||
+                          !deletePassword.trim() ||
                           deleteConfirmText.toLowerCase() !== deleteConfirmationPhrase.toLowerCase()
                         }
                         className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
@@ -633,6 +653,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                         onClick={() => {
                           setShowDeleteConfirm(false);
                           setDeleteConfirmText('');
+                          setDeletePassword('');
                         }}
                         className="px-4 py-2 bg-white/5 border border-white/10 text-slate-600 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
                       >

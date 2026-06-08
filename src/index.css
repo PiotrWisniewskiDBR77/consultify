@@ -42,9 +42,9 @@
      * ======================================================================== */
     --c-bg: #fafaf9; /* warm off-white — app background */
     --c-surface: #ffffff; /* cards / panels */
-    --c-surface-raised: #ffffff; /* popovers / chips */
-    --c-border-subtle: #eef0f2; /* hairlines */
-    --c-border: #e2e5e9; /* default borders */
+    --c-surface-raised: #f8fafc; /* popovers / chips — slight tint so a chip reads off a white row */
+    --c-border-subtle: #e6e9ed; /* hairlines */
+    --c-border: #cbd2da; /* default borders — strengthened so chip outline is visible on white (light mode) */
     --c-text: #0f172a; /* primary text */
     --c-text-secondary: #475569; /* secondary text */
     --c-text-muted: #64748b; /* muted / placeholder */
@@ -480,4 +480,194 @@ html[data-feedback-redact-active="1"] [data-feedback-redact]::before {
   content: "■■■■■■■■" !important;
   color: #111 !important;
   letter-spacing: 0.1em !important;
+}
+
+/* ============================================================================
+ * RUNTIME-APPLIED USER PREFERENCES
+ * These rules consume CSS custom properties / classes set at runtime by the
+ * settings panels (ThemeSettings, AccessibilitySettings). They make the
+ * "save-only" settings actually take visible effect.
+ * ============================================================================ */
+
+/* ---- SET-08: Accent color override ----------------------------------------
+ * ThemeSettings writes the picked accent hex to --user-accent (+ derived
+ * shades) on <html>. The Tailwind `primary-*` palette is static hex, so we
+ * remap the most common primary/accent utility classes + semantic tokens to
+ * the user's accent when --user-accent is present. Scoped to
+ * html[data-user-accent] so the default crimson is untouched when unset. */
+html[data-user-accent] {
+  /* shadcn / semantic tokens that real components consume */
+  --c-accent: var(--user-accent);
+  --c-accent-soft: var(--user-accent-soft);
+  --c-focus: var(--user-accent-focus);
+}
+html[data-user-accent] .bg-primary-500,
+html[data-user-accent] .bg-primary-600,
+html[data-user-accent] .bg-primary {
+  background-color: var(--user-accent) !important;
+}
+html[data-user-accent] .hover\:bg-primary-600:hover,
+html[data-user-accent] .hover\:bg-primary-700:hover {
+  background-color: var(--user-accent-hover) !important;
+}
+html[data-user-accent] .text-primary-300,
+html[data-user-accent] .text-primary-400,
+html[data-user-accent] .text-primary-500,
+html[data-user-accent] .text-primary-600,
+html[data-user-accent] .text-primary {
+  color: var(--user-accent) !important;
+}
+html[data-user-accent] .border-primary-500,
+html[data-user-accent] .border-primary-600 {
+  border-color: var(--user-accent) !important;
+}
+html[data-user-accent] .ring-primary-500,
+html[data-user-accent] .focus\:ring-primary-500:focus {
+  --tw-ring-color: var(--user-accent) !important;
+}
+
+/* ---- SET-09: UI density ---------------------------------------------------
+ * ThemeSettings toggles density-compact|comfortable|spacious on <html>.
+ * We expose a --density-scale and adjust the root rem so spacing/padding that
+ * derives from rem (most of the app's Tailwind spacing) scales with density.
+ * Kept subtle (0.92 / 1 / 1.08) to remain non-breaking. */
+html.density-compact {
+  font-size: 14.5px;
+  --density-scale: 0.92;
+}
+html.density-comfortable {
+  font-size: 16px;
+  --density-scale: 1;
+}
+html.density-spacious {
+  font-size: 17px;
+  --density-scale: 1.08;
+}
+
+/* ---- SET-10: Accessibility -------------------------------------------------
+ * AccessibilitySettings sets classes + CSS vars on <html>. Below are the
+ * matching rules so those toggles visibly work. */
+
+/* Base font size / line-height / letter-spacing / font-family vars */
+html {
+  /* Default fallback MUST stay the brand font (Inter) so users who never set an
+   * accessibility font preference keep the app's intended typeface. Only an
+   * explicit a11y font choice overrides --font-family-base. */
+  font-family: var(--font-family-base, 'Inter', system-ui, -apple-system, sans-serif);
+}
+body {
+  font-size: var(--base-font-size, 16px);
+  line-height: var(--line-height-base, 1.5);
+  letter-spacing: var(--letter-spacing-base, normal);
+}
+
+/* High contrast: strengthen text + borders, remove low-opacity muting */
+html.high-contrast {
+  --c-text: #000000;
+  --c-text-secondary: #1a1a1a;
+  --c-text-muted: #333333;
+  --c-border: #000000;
+  --c-border-subtle: #444444;
+}
+html.high-contrast.dark,
+html.dark.high-contrast {
+  --c-text: #ffffff;
+  --c-text-secondary: #f1f5f9;
+  --c-text-muted: #cbd5e1;
+  --c-border: #ffffff;
+  --c-border-subtle: #cbd5e1;
+}
+html.high-contrast a {
+  text-decoration: underline;
+}
+
+/* Reduce motion: force-kill animations + transitions */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Underline links everywhere */
+html.underline-links a {
+  text-decoration: underline !important;
+}
+
+/* Colorblind correction filters (SVG matrices defined inline via filter()).
+ * Daltonization-style correction using CSS filters as a lightweight approx. */
+html.colorblind-protanopia {
+  filter: url("#cb-protanopia");
+}
+html.colorblind-deuteranopia {
+  filter: url("#cb-deuteranopia");
+}
+html.colorblind-tritanopia {
+  filter: url("#cb-tritanopia");
+}
+
+/* Cursor size: scale the pointer via a larger SVG cursor */
+html.cursor-large,
+html.cursor-large * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' stroke='%23fff' stroke-width='1' d='M4 2l14 8-6 1 3 7-3 1-3-7-5 5z'/%3E%3C/svg%3E") 4 2, auto;
+}
+
+/* Text spacing (WCAG 1.4.12 style spacing bump) */
+html.text-spacing-relaxed body {
+  letter-spacing: 0.06em;
+  word-spacing: 0.12em;
+  line-height: 1.7;
+}
+html.text-spacing-spacious body {
+  letter-spacing: 0.1em;
+  word-spacing: 0.16em;
+  line-height: 1.9;
+}
+
+/* Caret width */
+html.caret-thick * {
+  caret-color: var(--c-accent, #85182f);
+}
+html.caret-thick input,
+html.caret-thick textarea,
+html.caret-thick [contenteditable="true"] {
+  caret-color: var(--c-accent, #85182f);
+  /* thicker caret via accentuated caret on supporting browsers */
+  caret-shape: block;
+}
+
+/* Focus indicators — enhanced focus highlight + style variants.
+ * focus-visible only, so mouse users are unaffected. */
+html.focus-highlight :focus-visible {
+  outline: 2px solid var(--c-accent, #85182f);
+  outline-offset: 2px;
+}
+html.focus-style-high-contrast :focus-visible {
+  outline: 3px solid #000000 !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #ffffff !important;
+}
+html.dark.focus-style-high-contrast :focus-visible {
+  outline: 3px solid #ffffff !important;
+  box-shadow: 0 0 0 5px #000000 !important;
+}
+html.focus-style-animated :focus-visible {
+  outline: 2px solid var(--c-accent, #85182f);
+  outline-offset: 2px;
+  animation: focus-pulse 1.2s ease-in-out infinite;
+}
+@keyframes focus-pulse {
+  0%,
+  100% {
+    outline-offset: 2px;
+  }
+  50% {
+    outline-offset: 5px;
+  }
+}
+/* reduce-motion wins over animated focus */
+html.reduce-motion.focus-style-animated :focus-visible {
+  animation: none;
 }

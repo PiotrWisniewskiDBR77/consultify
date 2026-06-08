@@ -2,16 +2,11 @@ import {
   BarChart3,
   Brain,
   Briefcase,
-  Calendar,
-  CheckSquare,
   Eye,
   Home,
-  LayoutDashboard,
   MessageSquare,
   Minimize2,
-  RefreshCw,
   RotateCcw,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -223,57 +218,19 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
     return <LoadingState variant="spinner" />;
   }
 
-  const landingPageOptions = [
-    { value: 'ai-assistant', label: t('settings.dashboard.pages.ai', 'AI Chat'), icon: Brain },
-    { value: 'my-work', label: t('settings.dashboard.pages.myWork', 'My Work'), icon: Home },
-    {
-      value: 'projects',
-      label: t('settings.dashboard.pages.projects', 'Projects'),
-      icon: Briefcase,
-    },
-    { value: 'tasks', label: t('settings.dashboard.pages.tasks', 'My Tasks'), icon: CheckSquare },
-    {
-      value: 'calendar',
-      label: t('settings.dashboard.pages.calendar', 'Calendar'),
-      icon: Calendar,
-    },
-    {
-      value: 'dashboard',
-      label: t('settings.dashboard.pages.dashboard', 'Dashboard'),
-      icon: LayoutDashboard,
-    },
-    {
-      value: 'initiatives',
-      label: t('settings.dashboard.pages.initiatives', 'Initiatives'),
-      icon: Briefcase,
-    },
-  ];
-
+  // Only widgets that actually exist on the dashboard are exposed here. The
+  // previous `tasks`, `calendar` and `recentActivity` toggles had no widget to
+  // gate in DashboardOverview, so they were removed to avoid dead controls.
   const widgetOptions = [
-    {
-      key: 'tasks' as const,
-      label: t('settings.dashboard.widgets.tasks', 'My Tasks'),
-      icon: CheckSquare,
-    },
     {
       key: 'initiatives' as const,
       label: t('settings.dashboard.widgets.initiatives', 'Active Initiatives'),
       icon: Briefcase,
     },
     {
-      key: 'calendar' as const,
-      label: t('settings.dashboard.widgets.calendar', 'Calendar Preview'),
-      icon: Calendar,
-    },
-    {
       key: 'aiInsights' as const,
       label: t('settings.dashboard.widgets.aiInsights', 'AI Insights'),
       icon: Brain,
-    },
-    {
-      key: 'recentActivity' as const,
-      label: t('settings.dashboard.widgets.activity', 'Recent Activity'),
-      icon: RefreshCw,
     },
     {
       key: 'quickActions' as const,
@@ -322,48 +279,6 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
 
       {!loadError && (
         <>
-          {/* Default Landing Page */}
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Home size={20} className="text-blue-500" />
-              {t('settings.dashboard.landingPage', 'Default Landing Page')}
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              {t(
-                'settings.dashboard.landingPageDescription',
-                'Choose where you want to land after logging in'
-              )}
-            </p>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-              {landingPageOptions.map((option) => {
-                const Icon = option.icon;
-                const isSelected = preferences.defaultLandingPage === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => updatePreference('defaultLandingPage', option.value)}
-                    className={`p-4 rounded-xl border-2 transition-all text-center ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
-                        : 'border-slate-200 dark:border-navy-700 hover:border-blue-300 dark:hover:border-blue-500/50'
-                    }`}
-                  >
-                    <Icon
-                      size={24}
-                      className={`mx-auto ${isSelected ? 'text-blue-600' : 'text-slate-600 dark:text-slate-500'}`}
-                    />
-                    <div
-                      className={`mt-2 text-xs font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
-                    >
-                      {option.label}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Widget Visibility */}
           <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -468,32 +383,6 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
                 >
                   <span
                     className={`${preferences.showGreeting ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
-                  />
-                </button>
-              </div>
-
-              {/* Live Updates */}
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-navy-700">
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                    <Zap size={16} className="text-blue-500" />
-                    {t('settings.dashboard.liveUpdates', 'Live Updates')}
-                  </label>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t(
-                      'settings.dashboard.liveUpdatesDescription',
-                      'Automatically refresh dashboard data when changes occur'
-                    )}
-                  </p>
-                </div>
-                <button
-                  onClick={() => updatePreference('liveUpdates', !preferences.liveUpdates)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    preferences.liveUpdates ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
-                  }`}
-                >
-                  <span
-                    className={`${preferences.liveUpdates ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white dark:bg-navy-900 transition-transform`}
                   />
                 </button>
               </div>

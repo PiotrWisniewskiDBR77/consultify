@@ -149,10 +149,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const hasStarted =
     safeSession.step1Completed || safeSession.step2Completed || safeSession.step3Completed;
 
+  // Compact Mode tightens vertical spacing across the dashboard.
+  const compact = dashPrefs.compactMode;
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
-      {/* Welcome/Start Section */}
-      {!hasStarted && (
+    <div
+      className={`max-w-7xl mx-auto animate-fade-in ${compact ? 'space-y-3 pb-6' : 'space-y-6 pb-12'}`}
+    >
+      {/* Welcome/Start Section — gated by the Show Greeting preference */}
+      {!hasStarted && dashPrefs.showGreeting && (
         <div className="bg-gradient-to-br from-primary-600 to-crimson-700 rounded-2xl p-8 text-white shadow-lg">
           <h2 className="text-2xl font-bold mb-2">Welcome to Your Transformation Dashboard</h2>
           <p className="text-primary-100 mb-6">
