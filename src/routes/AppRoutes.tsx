@@ -559,12 +559,21 @@ const PublicProductionModuleDisabled: React.FC<{ moduleName: string }> = ({ modu
   </div>
 );
 
+// VTS pilot scope: these route modules stay enabled on public production even
+// when non-core modules are otherwise hidden (sidebar visibility is handled
+// separately in publicProduction.ts / pilotAccess.ts). Keep names in sync with
+// the `moduleName` props below.
+const PUBLIC_PRODUCTION_CORE_ROUTE_MODULES = new Set(['My Work', 'Initiatives', 'Implementation']);
 const ProductionModuleGate: React.FC<{
   enabled: boolean;
   moduleName: string;
   children: React.ReactNode;
 }> = ({ enabled, moduleName, children }) =>
-  enabled ? <>{children}</> : <PublicProductionModuleDisabled moduleName={moduleName} />;
+  enabled || PUBLIC_PRODUCTION_CORE_ROUTE_MODULES.has(moduleName) ? (
+    <>{children}</>
+  ) : (
+    <PublicProductionModuleDisabled moduleName={moduleName} />
+  );
 
 const InternalToolsGate: React.FC<{ enabled: boolean; children: React.ReactNode }> = ({
   enabled,
