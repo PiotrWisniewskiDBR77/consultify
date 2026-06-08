@@ -101,6 +101,14 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
         setCurrentOrg(resolved);
         localStorage.setItem(STORAGE_KEY, resolved.id);
         setCurrentOrganization({ id: resolved.id, name: resolved.name });
+      } else if (savedOrgId) {
+        // QA-2026-06-08 (BUG-02/15): a stale `consultify_current_org_id` (e.g. an org the
+        // user left) was kept in localStorage and sent as `x-org-context`, resolving
+        // server-side to an org without ACTIVE membership → 403 ORG_MEMBERSHIP_REVOKED
+        // (surfaced first by the voice path, which force-creates a conversation on click).
+        // When no valid org resolves, drop the stale id so we stop sending a dead context.
+        localStorage.removeItem(STORAGE_KEY);
+        setCurrentOrg(null);
       }
 
       setError(null);

@@ -144,4 +144,19 @@ router.get(
   })
 );
 
+/**
+ * POST /api/analytics/web-vitals
+ * QA-2026-06-08 (BUG-21): the frontend (src/utils/webVitals.ts) posts Core Web Vitals
+ * here via fetch/sendBeacon, but no handler existed → every beacon returned 404 and the
+ * metrics were silently dropped. Accept and acknowledge; storage can be wired later.
+ */
+router.post(
+  '/web-vitals',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // Intentionally lightweight: acknowledge receipt so the client beacon succeeds.
+    // (Persisting web-vitals to a metrics table is a follow-up; 204 stops the 404 noise.)
+    return res.status(204).end();
+  })
+);
+
 export default router;

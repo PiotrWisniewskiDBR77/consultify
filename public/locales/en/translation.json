@@ -1146,6 +1146,7 @@
     }
   },
   "common": {
+    "more": "More",
     "save": "Save",
     "saving": "Saving...",
     "saveChanges": "Save Changes",
@@ -1468,6 +1469,7 @@
     "recommendationsCount": "Recommendations"
   },
   "sidebar": {
+    "module3_1": "Initiatives",
     "dashboard": "Dashboard",
     "settings": "Settings",
     "help": "Help",

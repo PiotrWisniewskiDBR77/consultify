@@ -83,9 +83,12 @@ const TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:transportCircuit:v1';
 const TRANSPORT_CIRCUIT_BASE_MS = 5000;
 const TRANSPORT_CIRCUIT_MAX_MS = 120000;
 const GLOBAL_TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:globalTransportCircuit:v1';
-const GLOBAL_TRANSPORT_FAILURE_WINDOW_MS = 8000;
-const GLOBAL_TRANSPORT_FAILURE_THRESHOLD = 2;
-const GLOBAL_TRANSPORT_BLOCK_MS = 300000;
+// QA-2026-06-08 (BUG-14): a 2-failure/8s trip with a 5-min block let a couple of
+// transient 429/5xx self-inflict an app-wide synthetic-429 blackout for legit users
+// with multiple tabs / fast navigation. Relaxed to tolerate normal bursts.
+const GLOBAL_TRANSPORT_FAILURE_WINDOW_MS = 20000;
+const GLOBAL_TRANSPORT_FAILURE_THRESHOLD = 6;
+const GLOBAL_TRANSPORT_BLOCK_MS = 45000;
 const AUTH_LOOP_GUARD_STORAGE_KEY = 'consultify:authLoopGuard:v1';
 const AUTH_LOOP_GUARD_WINDOW_MS = 10000;
 // IMPACT-TR-002: Only a genuine 401 -> refresh -> 401 loop should trip the guard.

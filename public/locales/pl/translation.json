@@ -6,6 +6,7 @@
     }
   },
   "common": {
+    "more": "Więcej",
     "optional": "opcjonalnie",
     "save": "Zapisz",
     "saving": "Zapisywanie...",
@@ -725,6 +726,7 @@
     }
   },
   "sidebar": {
+    "module3_1": "Inicjatywy",
     "dashboard": "Panel",
     "settings": "Ustawienia",
     "help": "Pomoc",

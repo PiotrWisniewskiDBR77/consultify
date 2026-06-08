@@ -1050,7 +1050,7 @@ export class ModelRouter {
                 INNER JOIN llm_tier_assignments mta ON p.id = mta.provider_id
                 LEFT JOIN organization_provider_settings ops ON p.id = ops.provider_id AND ops.organization_id = ?
                 WHERE mta.tier = ?
-                  AND mta.is_active = true
+                  AND mta.is_active = 1
                   AND p.is_active = 1
                   AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
@@ -1063,7 +1063,7 @@ export class ModelRouter {
                 FROM llm_providers p
                 INNER JOIN llm_tier_assignments mta ON p.id = mta.provider_id
                 WHERE mta.tier = ?
-                  AND mta.is_active = true
+                  AND mta.is_active = 1
                   AND p.is_active = 1
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
                 ORDER BY mta.priority, p.cost_per_1k, p.priority
