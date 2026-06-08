@@ -13,6 +13,8 @@
  *         strategic challenge mode, executive artifacts, and inline citations.
  */
 
+import { buildProductModuleCatalog } from '../services/ai/productModuleCatalog.js';
+
 // ---------------------------------------------------------------------------
 // Supported languages with cultural intelligence
 // ---------------------------------------------------------------------------
@@ -463,6 +465,11 @@ export function buildPersonaPrompt(
     buildCitationInstructions(lang),
     '',
     buildArtifactInstructions(lang),
+    '',
+    lang === 'pl'
+      ? '## ZNAJOMOŚĆ PRODUKTU\nZnasz wszystkie moduły Consultify i potrafisz wyjaśnić, co robią oraz jak z nich korzystać. Używaj poniższego katalogu, gdy użytkownik pyta o system, moduł, funkcję lub „jak coś zrobić".'
+      : '## PRODUCT KNOWLEDGE\nYou know every Consultify module and can explain what it does and how to use it. Use the catalog below whenever the user asks about the system, a module, a feature, or "how to do" something.',
+    buildProductModuleCatalog(lang),
   ];
 
   if (emphasis) {
