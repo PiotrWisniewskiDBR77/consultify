@@ -1722,9 +1722,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     !isPilotParticipant &&
     selectedIds.size > 0;
 
-  const comingSoonBackend = t('common.comingSoonBackend', 'Wkrótce (backend)');
+  const comingSoonBackend = t('common.comingSoonBackend', 'Coming soon (backend)');
   // "Coming soon" affordance for features that are not yet functional (task #11).
-  const comingSoonPrep = t('common.comingSoonPrep', 'w przygotowaniu');
+  const comingSoonPrep = t('common.comingSoonPrep', 'Coming soon');
   const bulkButtonBase = `${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`;
 
   const bulkBarContent = (

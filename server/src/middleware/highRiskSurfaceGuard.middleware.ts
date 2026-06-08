@@ -146,7 +146,7 @@ async function resolveAccessScope(req: Request): Promise<AccessScope> {
   const userId = getUserId(req);
   if (userId) {
     const user = await dbGet<UserRow>(
-      `SELECT user_status FROM users WHERE id = ? LIMIT 1`,
+      `SELECT status AS user_status FROM users WHERE id = ? LIMIT 1`,
       [userId],
       { fallback: false }
     );

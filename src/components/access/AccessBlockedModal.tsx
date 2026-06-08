@@ -189,7 +189,11 @@ export const AccessBlockedModal: React.FC = () => {
       <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
 
       <div className="relative w-[92vw] max-w-lg rounded-2xl bg-white dark:bg-navy-900 shadow-2xl border border-slate-200 dark:border-navy-700 p-6">
-        <div className="text-xs font-mono text-slate-500 dark:text-slate-400">{resolved.code}</div>
+        {import.meta.env?.DEV && (
+          <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
+            {resolved.code}
+          </div>
+        )}
         <div className="mt-2 text-lg font-semibold text-navy-900 dark:text-white">
           {t('access.modal.title')}
         </div>

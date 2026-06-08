@@ -567,6 +567,20 @@ export class InvitationServiceClass {
       ]
     );
 
+    // Org membership for the new account. Without this the access guard returns
+    // 403 ORG_MEMBERSHIP_REVOKED (Chat / Decisions / etc. break) — the user row
+    // alone is not enough; membership is the source of truth for org access.
+    try {
+      await this.deps.db.run(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+               VALUES (?, ?, ?, ?, 'ACTIVE')
+               ON CONFLICT (organization_id, user_id) DO NOTHING`,
+        [this.deps.uuidv4(), invitation.organization_id, userId, role]
+      );
+    } catch (memberErr) {
+      logger.warn('[InvitationService] Membership create on new-user accept failed:', memberErr);
+    }
+
     // Add to project (project invitation)
     if (invitation.invitation_type === INVITATION_TYPES.PROJECT && invitation.project_id) {
       const metadata = JSON.parse(invitation.metadata || '{}') as {

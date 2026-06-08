@@ -193,7 +193,9 @@ const safeRespond = (
  * Check if user is in Trial Entry status
  */
 export async function isTrialEntryUser(userId: string): Promise<boolean> {
-  const userRow = await dbGet<UserRow>(`SELECT user_status FROM users WHERE id = ?`, [userId]);
+  const userRow = await dbGet<UserRow>(`SELECT status AS user_status FROM users WHERE id = ?`, [
+    userId,
+  ]);
   const status = safeRead(() => String(userRow?.user_status || ''), '')
     .trim()
     .toUpperCase();
