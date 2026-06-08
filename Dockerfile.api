@@ -86,6 +86,13 @@ RUN cp server-package.json ./server-package-temp.json && \
     rm -f server-package-temp.json
 # Explicitly install known server dependencies that might be missing
 RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parser@^1.4.10 pptxgenjs@^4.0.1 rrule@^2.8.1 || true
+# Hardening (post-incident 2026-06-07): the bulk server-dep install above is tolerant (|| true)
+# and silently drops EVERY server dep if a single package errors — this shipped a prod image
+# missing 'rrule' and crashed the runtime. Sweep all declared server runtime deps: install any
+# missing one with its pinned spec, then FAIL THE BUILD (never prod runtime) if any remain absent.
+RUN MISSING="$(node -e "const d=require('./server-package.json').dependencies||{};const fs=require('fs');console.log(Object.entries(d).filter(([p])=>!fs.existsSync('node_modules/'+p)).map(([p,v])=>p+'@'+v).join(' '))")" && \
+    if [ -n "$MISSING" ]; then echo "Sweeping missing server deps: $MISSING" && npm install --save --ignore-scripts $MISSING; else echo "All declared server deps already present"; fi && \
+    node -e "const d=require('./server-package.json').dependencies||{};const fs=require('fs');const m=Object.keys(d).filter(p=>!fs.existsSync('node_modules/'+p));if(m.length){console.error('FATAL: server runtime deps missing from image: '+m.join(', '));process.exit(1);}console.log('OK: all '+Object.keys(d).length+' server runtime deps present in image')"
 
 # Copy TypeScript config files explicitly (needed for build)
 COPY server/tsconfig.json ./
