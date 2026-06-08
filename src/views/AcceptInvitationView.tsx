@@ -329,8 +329,8 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             </div>
           )}
 
-          <div className="bg-gray-50 dark:bg-navy-800 rounded-lg p-3 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Joining as:</span>{' '}
+          <div className="bg-gray-50 rounded-lg p-3 text-sm">
+            <span className="text-gray-600">Joining as:</span>{' '}
             <span className="font-medium text-gray-900">{invitation?.email}</span>
           </div>
 
@@ -347,7 +347,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 id="firstName"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
@@ -363,7 +363,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 id="lastName"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
@@ -383,7 +383,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="e.g. Production Manager"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
@@ -398,7 +398,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 id="siteLocation"
                 value={siteLocation}
                 onChange={(e) => setSiteLocation(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-navy-800"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required={invitation?.requireProfile === true}
               >
                 <option value="">Select a country…</option>
@@ -425,7 +425,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 placeholder="e.g. Operations"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
@@ -444,7 +444,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 8 characters"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
               required
               minLength={8}
             />
@@ -462,7 +462,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
               required
             />
           </div>
