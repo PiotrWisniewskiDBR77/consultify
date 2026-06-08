@@ -264,17 +264,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     navigate(getPilotDefaultSettingsRoute(), { replace: true });
   }, [activeSection, isPilotParticipant, navigate]);
 
-  // SET-28: Hidden read-only ownership/handoff sections redirect to Profile.
-  // Their nav entries are removed from the sidebar; if reached via URL, bounce to profile.
+  // Hidden sections redirect to Profile. Their nav entries are removed from the
+  // sidebar; if reached via URL, bounce to profile.
+  //  - SET-28: read-only ownership/handoff sections (no user value, read-only).
+  //  - 'shortcuts': the Keyboard Shortcuts customizer is hidden until a global
+  //    shortcut-dispatch system exists (rebinds are otherwise not wired app-wide).
   useEffect(() => {
-    const hiddenOwnershipSections: SettingsSection[] = [
+    const hiddenSections: SettingsSection[] = [
       'overview',
       'tenant-defaults',
       'tenant-branding',
       'tenant-security',
       'module-preferences',
+      'shortcuts',
     ];
-    if (hiddenOwnershipSections.includes(activeSection)) {
+    if (hiddenSections.includes(activeSection)) {
       navigate(ROUTES.SETTINGS.PROFILE, { replace: true });
     }
   }, [activeSection, navigate]);

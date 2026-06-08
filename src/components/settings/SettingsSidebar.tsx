@@ -28,7 +28,6 @@ import {
   History,
   Image,
   Key,
-  Keyboard,
   LayoutDashboard,
   LifeBuoy,
   Link2,
@@ -413,12 +412,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 icon: Accessibility,
                 keywords: ['contrast', 'motion', 'font'],
               },
-              {
-                id: 'shortcuts',
-                label: t('settings.sidebar.shortcuts', 'Keyboard Shortcuts'),
-                icon: Keyboard,
-                keywords: ['hotkeys', 'keys'],
-              },
+              // 'shortcuts' (Keyboard Shortcuts) intentionally hidden until a global
+              // shortcut-dispatch system exists. The customizer would otherwise let
+              // users rebind shortcuts that are not wired app-wide. Component and
+              // route are kept for when the dispatcher lands.
             ],
           },
           {

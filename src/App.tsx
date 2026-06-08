@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 
@@ -7,6 +7,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
+import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
 import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 
@@ -189,6 +190,16 @@ function AppContent() {
   useEffect(() => {
     document.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
   }, [i18n.language]);
+
+  // Apply saved accessibility preferences app-wide once the user is known, so
+  // they take effect everywhere — not only while the Settings panel is mounted.
+  // Guarded (runs once), idempotent, and never blocks boot on the fetch.
+  const a11yAppliedRef = useRef(false);
+  useEffect(() => {
+    if (a11yAppliedRef.current || !currentUser?.id) return;
+    a11yAppliedRef.current = true;
+    void bootstrapAccessibilityPreferences(() => Api.getAccessibilitySettings());
+  }, [currentUser?.id]);
 
   // Analytics tracking
   usePageTracking();
