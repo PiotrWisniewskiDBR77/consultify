@@ -1911,6 +1911,13 @@ export interface InvitationValidation {
   email: string;
   roleToAssign: string;
   expiresAt: string;
+  /** When true, the first-login profile (job title + country) is mandatory. */
+  requireProfile?: boolean;
+  /** Prefilled from a pre-created (pending) account, if any. */
+  firstName?: string;
+  lastName?: string;
+  /** True when this token activates a pre-created pending account. */
+  isFirstLogin?: boolean;
 }
 
 // ==========================================

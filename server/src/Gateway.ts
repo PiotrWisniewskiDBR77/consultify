@@ -674,7 +674,21 @@ export class ApiGateway {
       app.use('/api/organizations', organizationRoutes);
       app.use('/api/organizations', ownershipRoutes);
       app.use('/api/organizations', approvedDomainsRoutes);
-      app.use('/api/invitations', gatewayVerifyToken, trialEntryGuard);
+      // Public, token-based invitation endpoints must bypass JWT auth: the recipient
+      // has no account/session yet when validating a link or completing first login.
+      // (req.path here is relative to the '/api/invitations' mount, e.g. '/accept'.)
+      const isPublicInvitePath = (req: { path?: string }): boolean => {
+        const p = typeof req.path === 'string' ? req.path : '';
+        return p === '/accept' || p.startsWith('/validate/');
+      };
+      app.use('/api/invitations', ((req, res, next) =>
+        isPublicInvitePath(req)
+          ? next()
+          : (gatewayVerifyToken as RequestHandler)(req, res, next)) as RequestHandler);
+      app.use('/api/invitations', ((req, res, next) =>
+        isPublicInvitePath(req)
+          ? next()
+          : (trialEntryGuard as RequestHandler)(req, res, next)) as RequestHandler);
       // M16 P0-1: invitations are now a production route (auth guard applied above).
       // Previously wrapped in mountStub, which 404'd the member-invite funnel in prod.
       app.use('/api/invitations', invitationRoutes);
