@@ -28,6 +28,10 @@ export type VoiceRuntimeResult = {
   unavailableReason: string | null;
   /** Where the enable decision came from, for diagnostics. */
   source: 'worker' | 'env';
+  /** Admin-configured persona (from the active worker profile), when available. */
+  persona: string | null;
+  /** Admin-configured tone (from the active worker profile), when available. */
+  tone: string | null;
 };
 
 export type ResolveVoiceRuntimeOptions = {
@@ -41,12 +45,11 @@ export type ResolveVoiceRuntimeOptions = {
   mintSession?: boolean;
   /**
    * Which config governs the enable decision:
-   *   - 'worker' (default): the DB virtual-worker record is authoritative — used
-   *     by the public Anna surface, which is managed via the worker catalog.
-   *   - 'env': the TERESA_VOICE_ENABLED flag is authoritative — used by the
-   *     Teresa workspace copilot, which is configured by deployment env. A stray
-   *     worker row never silently disables it; the worker is only consulted for
-   *     voice name.
+   *   - 'worker' (default): an ACTIVE DB virtual-worker record is authoritative.
+   *     A draft/disabled row never governs — it falls back to env (so a stale or
+   *     not-yet-activated worker can't silently disable a live assistant).
+   *   - 'env': the TERESA_VOICE_ENABLED flag is authoritative; the worker is only
+   *     consulted for voice name / persona.
    */
   enableSource?: 'worker' | 'env';
 };
@@ -73,10 +76,11 @@ export async function resolveVoiceRuntime(
   const model = String(process.env.TERESA_VOICE_MODEL || '').trim() || DEFAULT_VOICE_MODEL;
 
   let voiceName: string | null = envVoiceName;
-  // Default enable decision = env flag. When enableSource is 'worker' and a worker
-  // record exists, the worker becomes authoritative below.
+  // Default enable decision = env flag. An ACTIVE worker overrides it below.
   let enabledByConfig = envEnabled;
   let source: 'worker' | 'env' = 'env';
+  let persona: string | null = null;
+  let tone: string | null = null;
 
   try {
     const workerConfig = await getWorkerWithProfile(assistant);
@@ -86,13 +90,20 @@ export async function resolveVoiceRuntime(
       const configuredVoiceName = String(worker.voice_name || '').trim();
       if (configuredVoiceName) voiceName = configuredVoiceName;
 
-      // ...but it only governs the enable decision when this surface is worker-managed.
-      if (enableSource === 'worker') {
+      // Only an ACTIVE, worker-managed record governs the runtime. A draft/disabled
+      // row falls back to env — this prevents a stale or not-yet-activated worker
+      // from silently disabling a live assistant.
+      if (enableSource === 'worker' && worker.status === 'active') {
         source = 'worker';
         const publicSurfaceOk =
           !requirePublicSurface || worker.surface === 'landing_page' || worker.surface === 'both';
-        enabledByConfig =
-          worker.voice_enabled !== false && worker.status === 'active' && publicSurfaceOk;
+        enabledByConfig = worker.voice_enabled !== false && publicSurfaceOk;
+
+        const profile = workerConfig?.profile;
+        if (profile) {
+          persona = String(profile.persona_description || '').trim() || null;
+          tone = String(profile.tone_description || '').trim() || null;
+        }
       }
     }
   } catch {
@@ -124,5 +135,7 @@ export async function resolveVoiceRuntime(
     session,
     unavailableReason,
     source,
+    persona,
+    tone,
   };
 }

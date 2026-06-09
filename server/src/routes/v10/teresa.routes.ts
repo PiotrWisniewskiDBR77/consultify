@@ -44,12 +44,12 @@ router.get(
   verifyToken,
   asyncHandler(async (req: any, res) => {
     // SSOT: shared voice runtime resolver (DB worker config + env fallback).
+    // Worker-governed: an ACTIVE 'teresa' virtual worker (managed in the admin
+    // panel) controls voice + persona/tone. Until that row is activated, the
+    // resolver falls back to env (TERESA_VOICE_*), so voice never regresses.
     const runtime = await resolveVoiceRuntime({
       assistant: 'teresa',
       subjectKey: String(req.userId || req.user?.id || req.organizationId || 'unknown'),
-      // Teresa workspace voice is governed by deployment env (TERESA_VOICE_*),
-      // not the public worker catalog. A stray worker row must not disable it.
-      enableSource: 'env',
     });
     const enabled = runtime.enabled;
 
@@ -60,6 +60,9 @@ router.get(
       enabled,
       model: runtime.model,
       voiceName: runtime.voiceName || 'Kore',
+      // Admin-configured persona/tone (frozen safety boundaries stay in code).
+      persona: runtime.persona,
+      tone: runtime.tone,
       session: enabled ? runtime.session : null,
       unavailableReason: runtime.unavailableReason,
       fallback: {
