@@ -4911,7 +4911,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {!showFullWelcomeEmptyState && (
           <div
             id="chat-input"
-            className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} border-t border-slate-200 bg-slate-50 dark:border-navy-800 dark:bg-navy-950`}
+            className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} bg-slate-50 dark:bg-navy-950`}
           >
             <div className="mx-auto w-full max-w-5xl">
               {!!lastError && !isStreaming && (
