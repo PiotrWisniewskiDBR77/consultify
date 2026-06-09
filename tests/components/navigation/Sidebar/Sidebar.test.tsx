@@ -171,6 +171,11 @@ vi.mock('../../../../src/components/navigation/Sidebar/menuConfig', () => ({
     label: 'Settings',
     viewId: AppView.SETTINGS_PROFILE_MODULE,
   }),
+  getInternalToolsMenuItem: () => ({
+    id: 'INTERNAL_TOOLS',
+    label: 'Internal Tools',
+    viewId: AppView.AI_CHAT,
+  }),
   getViewName: (_view: any, _t: any) => 'view',
 }));
 
