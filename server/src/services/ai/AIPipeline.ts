@@ -531,8 +531,13 @@ export class AIPipeline {
         model: modelConfig?.model || null,
       };
 
-      // 7. Execute streaming
-      await this.executeStreamingWithProvider(prompt, modelConfig, request.options, onChunk);
+      // 7. Execute streaming (capture usage so the usage log isn't zeroed out)
+      const streamResult = await this.executeStreamingWithProvider(
+        prompt,
+        modelConfig,
+        request.options,
+        onChunk
+      );
 
       // 8. Send done signal
       onChunk({
@@ -545,10 +550,10 @@ export class AIPipeline {
         },
       });
 
-      // 9. Best-effort usage log (streaming typically has no token usage here)
+      // 9. Best-effort usage log — now with usage captured from the stream (QA-2026-06-09).
       await this.logRequest(
         request,
-        { content: '', usage: undefined },
+        { content: '', usage: streamResult?.usage },
         Date.now() - startTime,
         traceId
       );
@@ -2413,7 +2418,7 @@ export class AIPipeline {
     },
     options: AIOptions | undefined,
     onChunk: StreamCallback
-  ): Promise<void> {
+  ): Promise<{ usage?: TokenUsage }> {
     try {
       const systemMessage = messages.find((m) => m.role === 'system');
       const nonSystemMessages = messages.filter((m) => m.role !== 'system');
@@ -2437,20 +2442,49 @@ export class AIPipeline {
       });
 
       const stream = (response as { stream?: AsyncIterable<string> }).stream;
+      let fullText = '';
       if (stream) {
         for await (const chunk of stream) {
+          fullText += typeof chunk === 'string' ? chunk : '';
           onChunk({
             type: 'text',
             content: chunk,
           });
         }
       }
+
+      // QA-2026-06-09: streaming used to log usage:undefined → ai_usage_logs got
+      // prompt_tokens=0/completion_tokens=0 (AI cost tracking was blind on streamed
+      // chats, which is most chat traffic). Prefer the provider's real usage if it
+      // surfaces one; otherwise estimate from input+streamed output (~4 chars/token,
+      // same heuristic as preflightCostService.estimateTokens).
+      const realUsage = (response as { usage?: Partial<TokenUsage> }).usage;
+      let usage: TokenUsage;
+      if (
+        realUsage &&
+        (Number(realUsage.promptTokens) > 0 || Number(realUsage.completionTokens) > 0)
+      ) {
+        const p = Number(realUsage.promptTokens) || 0;
+        const ccount = Number(realUsage.completionTokens) || 0;
+        usage = {
+          promptTokens: p,
+          completionTokens: ccount,
+          totalTokens: Number(realUsage.totalTokens) || p + ccount,
+        };
+      } else {
+        const inputChars = messages.reduce((n, m) => n + (m?.content?.length || 0), 0);
+        const promptTokens = Math.ceil(inputChars / 4);
+        const completionTokens = Math.ceil(fullText.length / 4);
+        usage = { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens };
+      }
+      return { usage };
     } catch (error: any) {
       logger.error(`[AIPipeline] Streaming execution failed: ${error.message}`);
       onChunk({
         type: 'error',
         content: error.message,
       });
+      return {};
     }
   }
 
