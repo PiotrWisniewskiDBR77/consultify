@@ -16,7 +16,7 @@ Zasada: rollout VTS = **NO-GO** dopóki nie zamknięta Faza 1. Faza 2 = fast-fol
 ### FAZA 1 — Blokery rolloutu (twarda bramka GO/NO-GO)
 | # | Zadanie | Bug | Warstwa | Stan |
 |---|---------|-----|---------|------|
-| 1.1 | **Migracja schematu** na staging → weryfikacja logów „does not exist" znika → backup prod → migracja prod | drift DB / token-accounting AI | DB | skrypt gotowy, do uruchomienia |
+| 1.1 | **Migracja schematu** — STAGING ✅ ZROBIONE+ZWERYFIKOWANE (2026-06-09 ~02:55Z); PROD: czeka na backup | drift DB / token-accounting AI | DB | staging done; prod pending |
 | 1.2 | **Deploy fixu PII** (RBAC na `/manager/*`) | BUG-18 | server | kod gotowy (FIX-1) |
 | 1.3 | **Serwerowy fallback org** (przeciw 403) + deploy | BUG-02/15 | server | projekt niżej; implementacja w toku |
 | 1.4 | **Deploy fixu breakera** + ModelRouter + commandDock + web-vitals + i18n | BUG-14/22/21/16, AI | front+server | kod gotowy (FIX-2..9) |
