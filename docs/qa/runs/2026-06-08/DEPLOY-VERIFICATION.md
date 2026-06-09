@@ -24,8 +24,10 @@ Wymagają konta **USER** (nie-admin) lub sesji w przeglądarce — kod potwierdz
 | BUG-14 breaker | normalna nawigacja bez kaskady 429 |
 | 2. agent backlog #5/#6/#10/#11/#17/#21/#23/#24 | zakres Fazy 4 / 2. agenta |
 
-## ⚠️ OTWARTE — nowy follow-up (NIE pozycja audytu, ale ważne)
-**Liczniki tokenów = 0** w `ai_usage_logs` (wszystkie wiersze, też PO deployu FIX-3: `in=0 out=0`, `provider=deepseek`). Czyli: zapis działa, ale **wolumen tokenów nie jest liczony** → przy modelu AI Credits dla 131 userów śledzenie kosztów wciąż ślepe na zużycie. To osobny bug ekstrakcji usage (niezależny od schematu i ModelRoutera). **Rekomendacja: pilny follow-up przed skalowaniem.**
+## 🔧 Liczniki tokenów = 0 — FIX GOTOWY (commit `19a1b1fe11`), czeka na deploy
+**Root cause znaleziony i naprawiony:** ścieżka streamingu (`AIPipeline.processStream` → `executeStreamingWithProvider`) logowała `usage:undefined`, więc `ai_usage_logs.prompt_tokens/completion_tokens` = 0 dla czatów streamowanych (czyli większości ruchu) — niezależnie od schematu i ModelRoutera. Poprawka: strumień akumuluje wyjście, preferuje realne usage providera jeśli je oddaje, inaczej szacuje (~4 znaki/token, jak `preflightCostService.estimateTokens`), i przekazuje do logu. tsc-clean, zacommitowane+wpushowane.
+- **Status: na branchu, NIE na prodzie** — prod nadal loguje 0 do czasu kolejnego `railway up`.
+- **Weryfikacja po deployu:** czat → `ai_usage_logs` nowy wiersz z `prompt_tokens>0, completion_tokens>0`.
 
 ## 📌 Stan procesowy
 - Branch **nie zmergowany do `Londyn`** — prod działa z brancha `qa/remediation` (deploy `railway up`). Do uporządkowania: merge → `Londyn` jako źródło prawdy.
