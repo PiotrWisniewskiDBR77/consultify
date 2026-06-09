@@ -19,7 +19,7 @@ Zasada: rollout VTS = **NO-GO** dopóki nie zamknięta Faza 1. Faza 2 = fast-fol
 | 1.1 | **Migracja schematu** — STAGING ✅ ZROBIONE+ZWERYFIKOWANE (2026-06-09 ~02:55Z); PROD: czeka na backup | drift DB / token-accounting AI | DB | staging done; prod pending |
 | 1.2 | **Deploy fixu PII** (RBAC na `/manager/*`) | BUG-18 | server | kod gotowy (FIX-1) |
 | 1.3 | **Serwerowy fallback org** (przeciw 403) + deploy | BUG-02/15 | server | projekt niżej; implementacja w toku |
-| 1.4 | **Deploy fixu breakera** + ModelRouter + commandDock + web-vitals + i18n | BUG-14/22/21/16, AI | front+server | kod gotowy (FIX-2..9) |
+| 1.4 | **Deploy fixów** (breaker, ModelRouter, commandDock, web-vitals, i18n, 403-fallback) — STAGING ✅ ZROBIONE (railway up, deploy SUCCESS 03:07Z; health 200, web-vitals 401 nie 404, i18n keys live, boot czysty) | BUG-14/22/21/16/02-15, AI | front+server | staging done; prod pending |
 | 1.5 | **Re-test prod kontem VTS USER** (nie demo): czat, voice, Execution (PII), Settings (BUG-13), mobile | weryfikacja | QA | po deployu |
 | 1.6 | **Audyt RBAC/PII** z Test Charter Prio 1 (USER vs ADMIN, IDOR, eskalacja URL) | nowe ryzyka | QA | równolegle |
 
@@ -33,7 +33,8 @@ Zasada: rollout VTS = **NO-GO** dopóki nie zamknięta Faza 1. Faza 2 = fast-fol
 - BUG-13: jeśli to gating pilotażowy — doprecyzować komunikat „locked for pilot".
 
 ### FAZA 3 — Procesowe (tydzień–dwa, żeby się nie powtórzyło)
-- **Migracje uruchamiane automatycznie przy deployu** (root cause driftu na obu środowiskach).
+- **ROOT CAUSE driftu potwierdzony (2026-06-09):** runner „Table Platform migrations" przy boocie raportuje `0 applied, 245 already up to date` — czyli **oznacza migracje jako zaaplikowane, choć obiekty fizycznie nie powstały** (SQLite-izmy typu `TEXT DEFAULT CURRENT_TIMESTAMP` padają na PG, błędy są połykane, a tracker i tak zapisuje „applied"). Naprawa: (a) runner musi zatrzymywać deploy na błędzie migracji (nie połykać), (b) weryfikować istnienie obiektów po migracji, (c) wyczyścić SQLite-izmy w migracjach. To realne źródło, nie objaw.
+- **Migracje uruchamiane automatycznie przy deployu** (i faktycznie aplikowane, nie tylko „oznaczane").
 - **Polityka backupu prod** (automat przed każdą migracją).
 - **Staging = lustro prod** (ten sam build + zmigrowany schemat) → QA testuje na staging, nie na żywym prodzie z danymi VTS.
 - CI: `tsc --noCheck` maskuje 4644 błędów — wydzielić bramkę typów dla zmienianych plików.
