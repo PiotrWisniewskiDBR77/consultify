@@ -1530,7 +1530,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     [insight?.evidenceMap]
   );
   const materialQuality = useMemo<V8InsightMaterialQuality | null>(() => {
-    if (insight?.materialQuality) return insight.materialQuality;
+    if (insight?.materialQuality) {
+      // Backend can return a partial material_quality (older rows, imported/seeded
+      // insights). The panel below calls .length/.map/.join on these array fields,
+      // so coalesce every one to [] — a missing field must not white-screen the view.
+      const mq = insight.materialQuality;
+      return {
+        ...mq,
+        role_coverage: mq.role_coverage ?? [],
+        department_coverage: mq.department_coverage ?? [],
+        missing_voices: mq.missing_voices ?? [],
+        limitations: mq.limitations ?? [],
+        recommended_followups: mq.recommended_followups ?? [],
+      };
+    }
     if (!insight || insight.status === 'generating') return null;
     return {
       overall_material_score: Math.max(
