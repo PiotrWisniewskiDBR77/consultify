@@ -122,15 +122,23 @@ export class UserController {
 
       const rows = await queryHelpers.queryAll(sql, params);
 
+      // PII guard (#20): the full org directory exposes everyone's email +
+      // last-login. Pilot/survey USERs only need this list to populate assignee
+      // pickers (My Work tasks, decision/initiative owners), so non-privileged
+      // roles get name + avatar but NOT email/last-login. Admin-class roles keep
+      // the full record for the org-admin "Users" panel.
+      const requesterRole = String(req.user?.role || '').toUpperCase();
+      const isPrivileged = ['ADMIN', 'OWNER', 'SUPERADMIN', 'MANAGER'].includes(requesterRole);
+
       const users = rows.map((u: Record<string, unknown>) => ({
         id: u.id,
         firstName: u.first_name,
         lastName: u.last_name,
-        email: u.email,
+        email: isPrivileged ? u.email : null,
         role: u.role,
         status: u.status || 'active',
         avatarUrl: u.avatar_url,
-        lastLogin: u.last_login,
+        lastLogin: isPrivileged ? u.last_login : null,
         title: null, // title column doesn't exist in users table
         // Default values for columns that may not exist
         aiConfig: {},
