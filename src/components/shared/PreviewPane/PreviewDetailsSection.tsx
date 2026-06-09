@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import {
   KEBAB_BACKDROP,
@@ -209,13 +211,14 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
             <div
               className={[
                 compact
-                  ? 'text-xs text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap'
-                  : 'text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap',
+                  ? 'text-xs text-slate-700 dark:text-slate-200 leading-relaxed'
+                  : 'text-sm text-slate-700 dark:text-slate-200 leading-relaxed',
+                'prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0',
                 expanded === false ? 'line-clamp-6' : '',
               ].join(' ')}
               onClick={onToggleExpanded}
             >
-              {resolvedText}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{resolvedText}</ReactMarkdown>
             </div>
           ) : !children ? (
             <div

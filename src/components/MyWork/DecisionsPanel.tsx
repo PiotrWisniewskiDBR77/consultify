@@ -989,6 +989,10 @@ export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({
       });
     } catch (error) {
       console.error('Failed to fetch decisions:', error);
+      const message =
+        (error as { message?: string })?.message ||
+        t('decisions.loadError', 'Failed to load decisions. Please try again.');
+      toast.error(message);
     } finally {
       setLoading(false);
     }

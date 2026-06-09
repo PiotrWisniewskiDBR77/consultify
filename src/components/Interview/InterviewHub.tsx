@@ -1408,12 +1408,21 @@ export const InterviewHub: React.FC = () => {
         setInsights(unwrapApiList(insightsRes.value, 'insights'));
         setInsightsLoadError(null);
       } else {
-        console.error('[InterviewHub] Failed to load insights:', insightsRes.reason);
+        // Insights are an admin/consultant surface. A pilot/survey USER legitimately
+        // lacks the INTERVIEW_INSIGHTS_VIEW permission, so a 403 here is expected —
+        // treat it as "no insights for you" silently instead of a console error + banner.
+        const reason = insightsRes.reason as { status?: number; response?: { status?: number } };
+        const isForbidden = reason?.status === 403 || reason?.response?.status === 403;
+        if (!isForbidden) {
+          console.error('[InterviewHub] Failed to load insights:', insightsRes.reason);
+        }
         setInsights([]);
         setInsightsLoadError(
-          isPolish
-            ? 'Nie udalo sie pobrac wnioskow. Sprobuj odswiezyc.'
-            : 'Failed to load insights. Try refreshing.'
+          isForbidden
+            ? null
+            : isPolish
+              ? 'Nie udalo sie pobrac wnioskow. Sprobuj odswiezyc.'
+              : 'Failed to load insights. Try refreshing.'
         );
       }
 

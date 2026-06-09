@@ -180,6 +180,9 @@ function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 const TITLE_DEDUPE_WINDOW_MS = 5000;
 const TITLE_MAX_RETRIES = 3;
 const _lastTitleAttemptAt: Record<string, number> = {};
+// In-flight guard (#23): collapse rapid duplicate generateTitle calls for the
+// same conversation into a single HTTP request instead of firing 4x.
+const _titleGenerationInFlight: Record<string, Promise<void>> = {};
 
 function getAppLanguageFallback(): SupportedLanguage {
   try {
@@ -1369,6 +1372,11 @@ export const useConversationStore = create<ConversationState>()(
       // ==================== TITLE ====================
 
       generateTitle: async (id) => {
+        // If a title generation for this conversation is already running, reuse it
+        // rather than issuing a parallel duplicate request.
+        const inFlight = _titleGenerationInFlight[id];
+        if (inFlight) return inFlight;
+
         const attempt = async (tryNo: number) => {
           try {
             const result = await Api.generateConversationTitle(id);
@@ -1463,7 +1471,11 @@ export const useConversationStore = create<ConversationState>()(
         if (now - last < 1000) return;
         _lastTitleAttemptAt[id] = now;
 
-        await attempt(0);
+        const run = attempt(0).finally(() => {
+          delete _titleGenerationInFlight[id];
+        });
+        _titleGenerationInFlight[id] = run;
+        return run;
       },
 
       renameConversation: async (id, title) => {

@@ -45,7 +45,14 @@ export const CreateDecisionSchema = z.object({
   description: z.string().max(5000).optional(),
   pmoDomain: z.nativeEnum(PMODomain).optional(),
   decisionOwnerId: z.string().optional().nullable(),
-  relatedObjectType: z.enum(['task', 'initiative', 'project', 'gate', 'risk']).optional(),
+  // Accept case-insensitively: the UI sends e.g. 'PROJECT' while the canonical
+  // enum is lowercase. Normalize before validating to avoid spurious 400s (#10).
+  relatedObjectType: z
+    .preprocess(
+      (v) => (typeof v === 'string' ? v.toLowerCase() : v),
+      z.enum(['task', 'initiative', 'project', 'gate', 'risk'])
+    )
+    .optional(),
   relatedObjectId: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),

@@ -940,6 +940,21 @@ const kbStaticCandidates = [
 const kbStaticDir = kbStaticCandidates.find((d) => fs.existsSync(d)) || kbStaticCandidates[0];
 app.use('/kb', express.static(kbStaticDir, { maxAge: '7d', immutable: true }));
 
+// Brand logos (#21): the Vite build's dist/assets/logos/* are not reliably
+// packaged into the prod container, so /assets/logos/*.svg 404s on the login
+// screen. Serve them authoritatively from the backend's bundled public dir
+// (shipped via Dockerfile COPY server/public). fallthrough lets Vite's own
+// hashed /assets/*.js|css continue to be served by the frontend static layer.
+const brandLogoCandidates = [
+  path.join(__dirname, '../../public/assets/logos'),
+  path.join(__dirname, '../public/assets/logos'),
+  path.join(process.cwd(), 'public/assets/logos'),
+  path.join(process.cwd(), 'server/public/assets/logos'),
+];
+const brandLogoDir =
+  brandLogoCandidates.find((d) => fs.existsSync(d)) || brandLogoCandidates[0];
+app.use('/assets/logos', express.static(brandLogoDir, { maxAge: '7d' }));
+
 // ============================================================
 // INPUT SANITIZATION & CSRF PROTECTION (Security Hardening)
 // ============================================================

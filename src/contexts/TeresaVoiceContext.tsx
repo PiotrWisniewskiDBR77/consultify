@@ -207,16 +207,12 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     let cancelled = false;
 
-    if (!hasStoredAuthToken()) {
-      setVoiceConfig({
-        enabled: false,
-        apiKey: null,
-        unavailableReason: 'Voice requires an authenticated session.',
-      });
-      return () => {
-        cancelled = true;
-      };
-    }
+    // NOTE: do NOT pre-gate on localStorage('token'). Auth here is cookie-based
+    // (the fetch below uses credentials: 'include'), so a missing localStorage
+    // token is a false negative that wrongly disabled voice with
+    // "requires an authenticated session" for logged-in users. The server is the
+    // auth authority: the voice-config fetch returns 401/403 when unauthenticated,
+    // which the .catch() handles with backoff.
 
     if (Date.now() < voiceConfigBlockedUntil) {
       setVoiceConfig({
