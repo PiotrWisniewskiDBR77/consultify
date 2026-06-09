@@ -14,7 +14,7 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { AuthRequest, requireRole, verifyToken } from '../middleware/auth.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -127,11 +127,13 @@ router.get(
 
 /**
  * GET /api/users
- * Get all users (admin only or filtered by organization)
+ * Get all users in the org — ADMIN/OWNER only. A plain USER must not be able to
+ * dump the full directory (names + emails). USERs use GET /search for pickers.
  */
 router.get(
   '/',
   verifyToken,
+  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const organizationId = req.user?.organizationId;
 
