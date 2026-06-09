@@ -31,6 +31,13 @@
 | #13/#18/#19 | symptomy #12 / gating roli (nie bug) | — | ✅ zamknięte |
 | #5/#6/#7/#16/#17 (UI polish), #9 (N+1), #10 (decisions RBAC) | — | front/server | Faza 2 fast-follow / decyzja produktowa |
 
+## 3b. ✅ STAN KOŃCOWY KONSOLIDACJI (2026-06-09 ~06:50)
+- **Jedna gałąź prawdy:** `Londyn` = `qa/remediation-2026-06-08` = `origin` = **`8f4d8bbafb`** (fast-forward, oba pushnięte). Praca obu agentów scalona, nic lokalnie-tylko.
+- **Prod** biegnie na tym kodzie (deploy serii: #20-org/members, #22 i18n, #20-real UserController).
+- **#20 — KOREKTA root-cause:** pierwszy patch bramkował `server/src/routes/users.routes.ts`, ale zamontowany jest **`server/src/routes/user/users.routes.ts` → `UserController.getUsers`** (Gateway:283/425). Live test ujawnił: `/organizations/:id/members` = **403 ✅**, ale `/api/users` = **200 z 156 mailami 🔴**. Prawdziwy fix: **projekcja w `UserController.getUsers`** — role nie-admin (pilot USER) dostają pickery (id/imię/avatar) **bez `email`/`lastLogin`**; ADMIN/OWNER/MANAGER pełne dane. (Hard-403 odrzucony — `/api/users` zasila pickery My Work/Initiatives pilota.)
+- **Drift resztkowy (NIE blokuje VTS):** prod nadal bez `invitation_events` (#1) i `partner_organizations` (#3) — runner migracji połyka SQLite-izmy. `invitation_events` już non-fatal (logEvent try/catch); `partner_organizations` używane tylko przez program partnerski (poza ścieżką pilota). Do naprawy poprawionym runnerem (Faza 2). `ai_usage_logs`/`users.status`/`ilt_questions` ✅ obecne.
+- **#21 logo 404:** root-cause = kontener prod nie ma `dist/assets/logos/*` mimo poprawnego repo+lokalnego buildu (problem pipeline/cache Dockera, nie kod). Kosmetyczne, login działa. Odłożone do rebuildu `--no-cache`.
+
 ## 3. 🔴 LUKA, której program 2. agenta NIE pokrywa — #20 (do GO, Faza 1)
 FIX-1 bramkuje **Execution `/manager/*`**. Mój audyt znalazł **OSOBNY** wyciek — **katalog org**:
 - `GET /api/organizations/:id/members` → **200, 156 wierszy** (imię/nazwisko/email/rola) — handler: `server/src/routes/organization/organizations.routes.ts`.
