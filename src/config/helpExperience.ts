@@ -380,6 +380,22 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
           'Używaj Sessions jako głównego cockpit view do review, a Assigned tylko do administracji przypisaniami.'
         )
       ),
+      makeGuide(
+        'interview-to-insight-flow',
+        text('From interview to insight', 'Od wywiadu do wniosku'),
+        text(
+          'The flow is questions → assignment → insights → initiatives: collect answers, then synthesize them into Insight (Wniosek) cards that feed initiatives.',
+          'Przepływ to pytania → przypisanie → insighty → inicjatywy: zbierasz odpowiedzi, a potem syntetyzujesz je w karty Wniosku, które zasilają inicjatywy.'
+        )
+      ),
+      makeGuide(
+        'insight-card-anatomy',
+        text('Anatomy of an Insight (Wniosek) card', 'Anatomia karty Wniosku'),
+        text(
+          'A graded insight is answer-first and evidence-grounded: title, executive summary, ≥3 themes, ≥2 issues, an evidence map (lineage), missing data, and material quality — with an Observation → Mechanism → Evidence → Impact → Divergence → Recommendation write-up.',
+          'Oceniona karta Wniosku jest answer-first i ugruntowana w dowodach: tytuł, podsumowanie, ≥3 motywy, ≥2 problemy, mapa dowodów (lineage), braki danych i jakość materiału — z opisem Obserwacja → Mechanizm → Dowody → Wpływ → Rozjazdy → Rekomendacja.'
+        )
+      ),
       SHARED_GUIDES.kb,
     ],
     faqs: [
@@ -402,6 +418,26 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
           'Nie. AI przyspiesza syntezę i pomaga przygotować lepsze pytania, ale źródłem danych nadal są ludzie, dowody i obserwowana praca.'
         ),
         ['interview', 'ai']
+      ),
+      faq(
+        'journey-interview-insight-1',
+        'interview',
+        text('How is an insight from interviews documented?', 'Jak dokumentuje się wniosek z wywiadów?'),
+        text(
+          'Each Insight (Wniosek) card follows one standard: a conclusion-first summary, themes and issues, and an evidence map that links every claim back to its source (a session, document, or data point). Unsupported claims are marked as hypotheses with a confidence level.',
+          'Każda karta Wniosku trzyma jeden standard: podsumowanie zaczynające się od konkluzji, motywy i problemy oraz mapę dowodów, która wiąże każdą tezę z jej źródłem (sesją, dokumentem lub danymi). Tezy bez dowodu są oznaczone jako hipotezy z poziomem pewności.'
+        ),
+        ['interview', 'insight', 'wniosek', 'documentation']
+      ),
+      faq(
+        'journey-interview-insight-2',
+        'interview',
+        text('What makes a good insight card?', 'Co czyni kartę Wniosku dobrą?'),
+        text(
+          'It is answer-first (the first sentence carries the conclusion), grounded in evidence, concrete (numbers, roles, processes instead of generalities), honest about uncertainty and disagreements, and MECE — no overlaps and no gaps. Empty optional fields must carry a one-line reason.',
+          'Jest answer-first (pierwsze zdanie niesie konkluzję), ugruntowana w dowodach, konkretna (liczby, role, procesy zamiast ogólników), uczciwa wobec niepewności i rozjazdów oraz MECE — bez nakładania i luk. Puste pola opcjonalne muszą nosić jednozdaniowe uzasadnienie.'
+        ),
+        ['interview', 'insight', 'wniosek', 'quality']
       ),
     ],
     nextStepId: 'tools_assessments',
@@ -591,6 +627,22 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
           'Układaj prace według wpływu, wykonalności i zależności.'
         )
       ),
+      makeGuide(
+        'initiative-charter-anatomy',
+        text('Charter-lite vs full charter', 'Charter-lite vs pełny charter'),
+        text(
+          'An initiative starts as a charter-lite: a falsifiable thesis ("if X then Y because Z"), one owner, impact × effort, at least one KPI (baseline → target), and a source link. The full charter (scope, RACI, RAID, milestones, finance…) is filled in progressively as it passes gates — not in the wizard.',
+          'Inicjatywa startuje jako charter-lite: falsyfikowalna teza („jeśli X to Y bo Z"), jeden owner, impact × effort, co najmniej jeden KPI (baseline → target) i powiązanie ze źródłem. Pełny charter (zakres, RACI, RAID, kamienie milowe, finanse…) uzupełniasz progresywnie w miarę przechodzenia bramek — nie w kreatorze.'
+        )
+      ),
+      makeGuide(
+        'initiative-lineage-gates',
+        text('Lineage and gates', 'Lineage i bramki'),
+        text(
+          'Every initiative carries a lineage (source type + source id) so it is never an orphan, and moves through one funnel of gates: DRAFT → review → approved → executing → done → tracking → archived. A consultant can only submit for review; promotion is a deliberate gate.',
+          'Każda inicjatywa nosi lineage (typ + id źródła), więc nigdy nie jest sierotą, i przechodzi jednym lejkiem bramek: DRAFT → review → approved → executing → done → tracking → archived. Konsultant może tylko zgłosić do review; promocja to świadoma bramka.'
+        )
+      ),
       SHARED_GUIDES.askAi,
     ],
     faqs: [
@@ -616,6 +668,26 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
           'Gdy jej właściciel, zakres, oczekiwany wynik i kluczowe zależności są na tyle jasne, że można przekazać ją do aktywnej realizacji.'
         ),
         ['initiatives', 'execution']
+      ),
+      faq(
+        'journey-initiatives-doc-1',
+        'initiatives',
+        text('What must an initiative card contain?', 'Co musi zawierać karta inicjatywy?'),
+        text(
+          'At minimum (to exist as a draft): a falsifiable thesis, one owner, impact × effort, at least one KPI with baseline → target, and a source link. The full charter adds problem statement, business case, scope in/out, deliverables, success criteria, kill criteria, milestones, RAID, and RACI — completed progressively.',
+          'Minimum (żeby istnieć jako draft): falsyfikowalna teza, jeden owner, impact × effort, co najmniej jeden KPI z baseline → target i powiązanie ze źródłem. Pełny charter dokłada opis problemu, business case, zakres in/out, rezultaty, kryteria sukcesu, kryteria zatrzymania, kamienie milowe, RAID i RACI — uzupełniane progresywnie.'
+        ),
+        ['initiatives', 'charter', 'documentation']
+      ),
+      faq(
+        'journey-initiatives-doc-2',
+        'initiatives',
+        text('Where do initiatives come from (lineage)?', 'Skąd biorą się inicjatywy (lineage)?'),
+        text(
+          'From a traced source: an interview insight, a tool/assessment gap, a financial analysis, an idea, a note, or the AI canvas — each pre-fills the same wizard. Lineage (source type + id) is mandatory, or the initiative is explicitly marked manual with a reason. Generating a portfolio is a reconciliation with the live grid, so "zero new initiatives" is not a failure.',
+          'Z udokumentowanego źródła: wniosku z wywiadu, luki z tool/assessment, analizy finansowej, idei, notatki lub kanwy AI — każde pre-filluje ten sam kreator. Lineage (typ + id źródła) jest obowiązkowy, albo inicjatywa jest jawnie oznaczona jako manual z uzasadnieniem. Generacja portfela to rekoncyliacja z żywą siatką, więc „zero nowych inicjatyw" to nie porażka.'
+        ),
+        ['initiatives', 'lineage', 'source']
       ),
     ],
     nextStepId: 'execution',

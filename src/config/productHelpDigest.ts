@@ -34,6 +34,22 @@ const HEADING: Record<'en' | 'pl', string> = {
   pl: 'CONSULTIFY — MODUŁY PRODUKTU (używaj do odpowiedzi na pytania jak / co robi aplikacja)',
 };
 
+// How the two core deliverables are documented — so the assistants can answer
+// "how do we document an insight / an initiative". Mirrors the in-app Help docs
+// (CARD_CONTENT_FORMULA + INITIATIVE_FORMULA).
+const METHODS: Record<'en' | 'pl', string[]> = {
+  en: [
+    'HOW WE DOCUMENT INSIGHTS & INITIATIVES:',
+    '- Insight (Wniosek) from interviews: answer-first (first sentence = conclusion), evidence-grounded via an evidence map (every claim links to a session/document/data), ≥3 themes, ≥2 issues, missing data, material quality, honest about uncertainty, MECE. Flow: questions → assignment → insights → initiatives.',
+    '- Initiative: starts as a charter-lite — falsifiable thesis ("if X then Y because Z"), one owner, impact × effort, ≥1 KPI (baseline → target), and a mandatory source link (lineage). The full charter (scope, deliverables, success/kill criteria, milestones, RAID, RACI) is filled progressively through gates DRAFT → review → approved → executing → done → tracking → archived.',
+  ],
+  pl: [
+    'JAK DOKUMENTUJEMY WNIOSKI I INICJATYWY:',
+    '- Wniosek z wywiadów: answer-first (pierwsze zdanie = konkluzja), ugruntowany w dowodach przez mapę dowodów (każda teza wiąże się z sesją/dokumentem/danymi), ≥3 motywy, ≥2 problemy, braki danych, jakość materiału, uczciwa niepewność, MECE. Przepływ: pytania → przypisanie → insighty → inicjatywy.',
+    '- Inicjatywa: startuje jako charter-lite — falsyfikowalna teza („jeśli X to Y bo Z"), jeden owner, impact × effort, ≥1 KPI (baseline → target) i obowiązkowe powiązanie ze źródłem (lineage). Pełny charter (zakres, rezultaty, kryteria sukcesu/zatrzymania, kamienie milowe, RAID, RACI) uzupełniany progresywnie przez bramki DRAFT → review → approved → executing → done → tracking → archived.',
+  ],
+};
+
 const LABELS: Record<'en' | 'pl', { does: string; ai: string }> = {
   en: { does: 'What you do', ai: 'How AI helps' },
   pl: { does: 'Co robisz', ai: 'Jak pomaga AI' },
@@ -63,5 +79,5 @@ export function buildProductHelpDigest(language: SupportedHelpLanguage = 'en'): 
     return `- ${title}: ${summary} ${labels.does}: ${does} ${labels.ai}: ${ai}`;
   }).filter(Boolean);
 
-  return [HEADING[lang], ...lines].join('\n');
+  return [HEADING[lang], ...lines, '', ...METHODS[lang]].join('\n');
 }
