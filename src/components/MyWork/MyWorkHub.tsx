@@ -180,6 +180,14 @@ type ModuleTab =
   | 'tasks'
   | 'decisions'
   | 'manager';
+
+// Radar (the My Work "home" surface) is temporarily HIDDEN and PAUSED: it is
+// memory-heavy and still under active development. Flipping RADAR_ENABLED back to
+// true restores the sidebar tab, the default landing, and HomeView rendering — no
+// other change required. While disabled, the home tab is removed from the nav and
+// HomeView is never mounted (so its scanning hooks never run).
+const RADAR_ENABLED = false;
+const MY_WORK_FALLBACK_TAB: ModuleTab = 'inbox';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type IdeasViewMode = 'table' | 'grid';
@@ -414,7 +422,7 @@ function getInitialMyWorkTab(
   if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
   if (searchParams.get('notebook')) return 'notebook';
 
-  return 'home';
+  return RADAR_ENABLED ? 'home' : MY_WORK_FALLBACK_TAB;
 }
 
 function parseMyWorkPathIntent(
@@ -603,6 +611,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+
+  // Radar (home) is hidden/paused: coerce any 'home' state (deep-links, resets) to
+  // the fallback so the nav highlight stays consistent and HomeView never mounts.
+  useEffect(() => {
+    if (!RADAR_ENABLED && activeTab === 'home') {
+      setActiveTab(MY_WORK_FALLBACK_TAB);
+    }
+  }, [activeTab]);
 
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
@@ -1456,6 +1472,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     ];
 
     return allTabs.filter((tab) => {
+      if (tab.id === 'home' && !RADAR_ENABLED) return false;
       if (tab.requiresManagerAccess && !canViewManager) return false;
       return true;
     });
@@ -3118,7 +3135,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Render list content based on active tab
   const renderListContent = () => {
-    switch (activeTab) {
+    // Radar (home) is hidden/paused — never mount HomeView (its scanning hooks are
+    // memory-heavy); fall back to the inbox surface instead.
+    const tabToRender: ModuleTab =
+      !RADAR_ENABLED && activeTab === 'home' ? MY_WORK_FALLBACK_TAB : activeTab;
+    switch (tabToRender) {
       case 'home':
         return (
           <React.Suspense fallback={lazyFallback}>
