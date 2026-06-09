@@ -62,7 +62,7 @@ export const BottomNavigation: React.FC = () => {
     },
     {
       id: 'initiatives',
-      label: t('sidebar.module3_1', 'Inicjatywy'),
+      label: t('sidebar.module3_1', 'Initiatives'),
       icon: <Lightbulb size={22} />,
       view: AppView.PORTFOLIO_ROADMAP,
     },
@@ -74,7 +74,7 @@ export const BottomNavigation: React.FC = () => {
     },
     {
       id: 'more',
-      label: t('common.more', 'Więcej'),
+      label: t('common.more', 'More'),
       icon: <Menu size={22} />,
       action: 'openSidebar',
     },
