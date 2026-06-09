@@ -33,3 +33,11 @@ Dowodowo, nie deklaratywnie. Co zostało zweryfikowane jako stabilne.
 - Voice 403-fallback na żywym koncie ze stale org.
 - Live INSERT do `ai_usage_logs` (brak ruchu nocą).
 → To jest zakres **Fazy 4** (post-deploy GO-gate) — `PHASE-4-TEST-PLAN.md`.
+
+## LIVE PROOF on PROD (2026-06-09 ~04:06Z, ADMIN · VTS GROUP S.A.)
+Real QA chat sent as Piotr (admin, VTS) on consultify.ai:
+- `POST /api/conversations` → **201** (no 403) — conversation create works for a properly-membershipped user (partial BUG-02/15 evidence).
+- Teresa responded; `messages` 201, `title/generate` 200 — AI pipeline works.
+- **`ai_usage_logs` went 0 → 1 row** (`deepseek-chat`, org=vts, status=success) → **token-accounting INSERT fix CONFIRMED LIVE** (was always failing; first-ever usage row written).
+- FOLLOW-UP: row has `prompt_tokens=0, completion_tokens=0` (counts not captured) and `provider=deepseek` (ModelRouter on hardcoded fallback). Re-verify token counts AFTER FIX-3 (ModelRouter integer=boolean) deploys to prod.
+- Test conversation id 0c5e0693-… left in workspace (deletion is a user action).
