@@ -616,6 +616,7 @@ const attachUser = async (
   const normalizedEmail = readOptionalStringClaim(decodedClaims, 'email') || '';
 
   // Respect the UI-selected organization when the user is a valid active member.
+  let orgContextConfirmed = false;
   if (!isDemoHeader && requestedOrgContextId) {
     try {
       const membership = await dbGet<{ role?: string; status?: string }>(
@@ -627,6 +628,7 @@ const attachUser = async (
       );
       if (membership && String(membership.status || '').toUpperCase() === 'ACTIVE') {
         resolvedOrganizationId = requestedOrgContextId;
+        orgContextConfirmed = true;
         const membershipRole = normalizeRoleClaim(membership.role);
         if (membershipRole) {
           resolvedUserRole = membershipRole;
@@ -634,6 +636,48 @@ const attachUser = async (
       }
     } catch {
       // Fall back to the token organization if membership lookup is unavailable.
+    }
+  }
+
+  // QA-2026-06-08 (BUG-02/15): if the resolved org (the token org, or an unconfirmed
+  // x-org-context) is NOT an ACTIVE membership for this user, fall back to the user's
+  // actual current ACTIVE org instead of letting validateOrgMembership 403 with
+  // ORG_MEMBERSHIP_REVOKED. Without this, a stale token org (e.g. after leaving an org)
+  // blocked conversation creation — surfaced first by the voice path, which force-creates
+  // a conversation on click. Only runs when the org wasn't already confirmed above, and
+  // only issues the fallback query when the resolved org isn't a confirmed ACTIVE member.
+  if (!isDemoHeader && !orgContextConfirmed) {
+    try {
+      const resolvedMembership = resolvedOrganizationId
+        ? await dbGet<{ status?: string }>(
+            `SELECT status FROM organization_members
+             WHERE user_id = ? AND organization_id = ? LIMIT 1`,
+            [decodedUserId, resolvedOrganizationId]
+          )
+        : undefined;
+      const resolvedActive =
+        !!resolvedMembership &&
+        String(resolvedMembership.status || '').toUpperCase() === 'ACTIVE';
+      if (!resolvedActive) {
+        const fallback = await dbGet<{ organization_id?: string; role?: string }>(
+          `SELECT organization_id, role
+           FROM organization_members
+           WHERE user_id = ? AND UPPER(status) = 'ACTIVE'
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [decodedUserId]
+        );
+        const fallbackOrgId = normalizeBoundedOrgContextId(fallback?.organization_id);
+        if (fallbackOrgId) {
+          resolvedOrganizationId = fallbackOrgId;
+          const fallbackRole = normalizeRoleClaim(fallback?.role);
+          if (fallbackRole) {
+            resolvedUserRole = fallbackRole;
+          }
+        }
+      }
+    } catch {
+      // fail-open: keep the token org; validateOrgMembership will make the final call.
     }
   }
 
