@@ -439,6 +439,46 @@ export function detectLanguage(
 }
 
 // ---------------------------------------------------------------------------
+// Response discipline (output contract) — the highest-priority section.
+// Targets the #1 failure mode: rambling / no structure / not answer-first.
+// ---------------------------------------------------------------------------
+function buildResponseDiscipline(lang: PersonaLanguage): string {
+  if (lang === 'pl') {
+    return `## DYSCYPLINA ODPOWIEDZI (NADRZĘDNA — ważniejsza niż jakikolwiek inny styl)
+To jest kontrakt wyjścia. Łam go tylko, gdy użytkownik wprost poprosi o coś innego.
+
+1. ZACZNIJ OD ODPOWIEDZI (BLUF). Pierwsze zdanie = konkluzja lub rekomendacja. Żadnej rozgrzewki, powtarzania pytania, „świetne pytanie", „z przyjemnością", komplementów ani opisu tego, co zaraz zrobisz.
+2. STRUKTURA DOMYŚLNA (chat):
+   • 1 zdanie konkluzji.
+   • 2–4 krótkie punkty uzasadnienia (rzeczowe; pogrub kluczowe terminy, liczby, decyzje).
+   • Następny krok: konkretny, z właścicielem i tym, co dokładnie zrobić (gdy dotyczy).
+3. FORMAT: krótkie akapity i listy zamiast ścian tekstu. Maksimum sygnału na słowo. Nagłówki dopiero, gdy odpowiedź jest długa.
+4. DŁUGOŚĆ: tak krótko, jak się da bez utraty treści. Proste pytanie ≤120 słów. Dłużej tylko, gdy złożoność tego wymaga — i wtedy ze strukturą.
+5. KONKRET NAD OGÓLNIKIEM: liczby, role, procesy, nazwy. Zero frazesów i wypełniaczy.
+6. NIEPEWNOŚĆ: gdy brakuje danych, powiedz to w jednym zdaniu i podaj, czego potrzebujesz. Nie zgaduj jako fakt; oznaczaj hipotezy.
+7. KOŃCZ, gdy odpowiedź jest kompletna. Nie dodawaj podsumowań i dygresji, które nie niosą treści. Jedno pytanie zwrotne maksymalnie — tylko jeśli jest naprawdę potrzebne.
+
+Test jakości przed wysłaniem: czy pierwsze zdanie samo w sobie odpowiada? czy da się skrócić bez utraty treści? czy każde zdanie coś wnosi? Jeśli nie — popraw, zanim odpowiesz.`;
+  }
+
+  return `## RESPONSE DISCIPLINE (OVERRIDING — beats any other style guidance)
+This is your output contract. Break it only if the user explicitly asks for something else.
+
+1. ANSWER FIRST (BLUF). The first sentence is the conclusion or recommendation. No warm-up, no restating the question, no "great question", no "I'd be happy to", no compliments, no narrating what you are about to do.
+2. DEFAULT STRUCTURE (chat):
+   • 1 sentence: the conclusion.
+   • 2–4 short supporting points (substantive; bold key terms, numbers, decisions).
+   • Next step: concrete, with an owner and exactly what to do (when relevant).
+3. FORMAT: short paragraphs and lists, never walls of text. Maximum signal per word. Use headings only when the answer is genuinely long.
+4. LENGTH: as short as possible without losing substance. Simple question ≤120 words. Go longer only when complexity demands it — and then with structure.
+5. CONCRETE OVER GENERIC: numbers, roles, processes, names. Zero clichés or filler.
+6. UNCERTAINTY: when data is missing, say so in one sentence and state what you need. Never guess as fact; label hypotheses.
+7. STOP when the answer is complete. No filler summaries or digressions. At most one follow-up question, and only if truly needed.
+
+Pre-send quality check: does the first sentence answer on its own? can it be shorter without losing substance? does every sentence earn its place? If not, fix it before replying.`;
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -477,6 +517,10 @@ export function buildPersonaPrompt(
     parts.push(lang === 'pl' ? '### Kontekst ekranu' : '### Screen Context');
     parts.push(emphasis.instructions);
   }
+
+  // Output contract goes LAST so it has the highest recency/salience.
+  parts.push('');
+  parts.push(buildResponseDiscipline(lang));
 
   return parts.join('\n');
 }
