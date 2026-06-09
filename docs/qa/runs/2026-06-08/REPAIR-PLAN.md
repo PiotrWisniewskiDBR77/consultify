@@ -16,8 +16,8 @@ Zasada: rollout VTS = **NO-GO** dopóki nie zamknięta Faza 1. Faza 2 = fast-fol
 ### FAZA 1 — Blokery rolloutu (twarda bramka GO/NO-GO)
 | # | Zadanie | Bug | Warstwa | Stan |
 |---|---------|-----|---------|------|
-| 1.1 | **Migracja schematu** — STAGING ✅ ZROBIONE+ZWERYFIKOWANE (2026-06-09 ~02:55Z); PROD: czeka na backup | drift DB / token-accounting AI | DB | staging done; prod pending |
-| 1.2 | **Deploy fixu PII** (RBAC na `/manager/*`) | BUG-18 | server | kod gotowy (FIX-1) |
+| 1.1 | **Migracja schematu** — STAGING ✅ + **PROD ✅ ZROBIONE+ZWERYFIKOWANE** (2026-06-09 ~03:33Z; addytywna/odwracalna, snapshot przed zmianą, health 200 po). Prod naprawione: user_status, ai_usage_logs.error_message (token-accounting!), 7 kolumn ai_policies, ai_user_style_profiles, name→nullable | drift DB / token-accounting AI | DB | **DONE (staging+prod)** |
+| 1.2 | **Deploy fixu PII** (RBAC na `/manager/*`) — GOTOWE do deployu, **wstrzymane do rana** (deploy kodu na 131 żywych userów VTS = z człowiekiem w pętli; wyciek latentny, brak dowodów eksploatacji). Komenda: `railway up` na env=production | BUG-18 | server | ready; deploy w dzień |
 | 1.3 | **Serwerowy fallback org** (przeciw 403) + deploy | BUG-02/15 | server | projekt niżej; implementacja w toku |
 | 1.4 | **Deploy fixów** (breaker, ModelRouter, commandDock, web-vitals, i18n, 403-fallback) — STAGING ✅ ZROBIONE (railway up, deploy SUCCESS 03:07Z; health 200, web-vitals 401 nie 404, i18n keys live, boot czysty) | BUG-14/22/21/16/02-15, AI | front+server | staging done; prod pending |
 | 1.5 | **Re-test** — STAGING (demo/ADMIN) ✅ częściowo: My Work bez crasha (BUG-22, 18 sygnałów, 0 błędów konsoli), web-vitals 401 nie 404, i18n live, brak regresji RBAC. PII USER→403 i voice: wymaga org z v8 ON + konto USER (atelier ma v8 OFF) | weryfikacja | QA | staging partial; full needs USER+v8 |
