@@ -45,13 +45,19 @@ export type ResolveVoiceRuntimeOptions = {
   mintSession?: boolean;
   /**
    * Which config governs the enable decision:
-   *   - 'worker' (default): an ACTIVE DB virtual-worker record is authoritative.
-   *     A draft/disabled row never governs — it falls back to env (so a stale or
-   *     not-yet-activated worker can't silently disable a live assistant).
+   *   - 'worker' (default): the DB virtual-worker record is authoritative (status,
+   *     voice_enabled, surface all gate). Used by Anna (public).
    *   - 'env': the TERESA_VOICE_ENABLED flag is authoritative; the worker is only
    *     consulted for voice name / persona.
    */
   enableSource?: 'worker' | 'env';
+  /**
+   * Only meaningful with enableSource='worker'. When true, a NON-ACTIVE worker row
+   * (draft/disabled) does NOT disable the assistant — it falls back to env. Used by
+   * Teresa so a stale/not-yet-activated worker row can't silently kill workspace
+   * voice. Anna leaves this false: a disabled Anna worker must turn voice off.
+   */
+  fallbackToEnvWhenInactive?: boolean;
 };
 
 /**
@@ -67,6 +73,7 @@ export async function resolveVoiceRuntime(
     requirePublicSurface = false,
     mintSession = true,
     enableSource = 'worker',
+    fallbackToEnvWhenInactive = false,
   } = options;
 
   const hasServerKey = Boolean(resolveGeminiLiveServerKey());
@@ -90,19 +97,26 @@ export async function resolveVoiceRuntime(
       const configuredVoiceName = String(worker.voice_name || '').trim();
       if (configuredVoiceName) voiceName = configuredVoiceName;
 
-      // Only an ACTIVE, worker-managed record governs the runtime. A draft/disabled
-      // row falls back to env — this prevents a stale or not-yet-activated worker
-      // from silently disabling a live assistant.
-      if (enableSource === 'worker' && worker.status === 'active') {
-        source = 'worker';
-        const publicSurfaceOk =
-          !requirePublicSurface || worker.surface === 'landing_page' || worker.surface === 'both';
-        enabledByConfig = worker.voice_enabled !== false && publicSurfaceOk;
+      if (enableSource === 'worker') {
+        const isActive = worker.status === 'active';
+        if (isActive) {
+          // Active worker is authoritative: voice_enabled + surface gate, persona/tone apply.
+          source = 'worker';
+          const publicSurfaceOk =
+            !requirePublicSurface || worker.surface === 'landing_page' || worker.surface === 'both';
+          enabledByConfig = worker.voice_enabled !== false && publicSurfaceOk;
 
-        const profile = workerConfig?.profile;
-        if (profile) {
-          persona = String(profile.persona_description || '').trim() || null;
-          tone = String(profile.tone_description || '').trim() || null;
+          const profile = workerConfig?.profile;
+          if (profile) {
+            persona = String(profile.persona_description || '').trim() || null;
+            tone = String(profile.tone_description || '').trim() || null;
+          }
+        } else if (fallbackToEnvWhenInactive) {
+          // Lenient (Teresa): a stale/not-yet-activated row must not kill voice → keep env.
+        } else {
+          // Strict (Anna): a disabled/draft worker turns voice off.
+          source = 'worker';
+          enabledByConfig = false;
         }
       }
     }
@@ -122,11 +136,9 @@ export async function resolveVoiceRuntime(
 
   const unavailableReason = enabled
     ? null
-    : !enabledByConfig
-      ? 'server_disabled'
-      : hasServerKey
-        ? 'server_voice_proxy_required'
-        : 'server_missing_gemini_live_key';
+    : hasServerKey
+      ? 'server_voice_proxy_required'
+      : 'server_missing_gemini_live_key';
 
   return {
     enabled,

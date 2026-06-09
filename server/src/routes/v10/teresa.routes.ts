@@ -50,6 +50,9 @@ router.get(
     const runtime = await resolveVoiceRuntime({
       assistant: 'teresa',
       subjectKey: String(req.userId || req.user?.id || req.organizationId || 'unknown'),
+      // A stale/not-yet-activated 'teresa' worker row must never silently kill
+      // workspace voice — fall back to env (TERESA_VOICE_*) when it isn't active.
+      fallbackToEnvWhenInactive: true,
     });
     const enabled = runtime.enabled;
 
