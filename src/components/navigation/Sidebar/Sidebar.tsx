@@ -162,32 +162,11 @@ export const Sidebar: React.FC = () => {
   const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
   const superAdminMenuItem = React.useMemo(() => getSuperAdminMenuItem(t), [t]);
   const showInternalToolsMenu = canUseInternalTools(currentUser);
-  const shouldLockFooterAdminMenus = !isSuperAdminRole(currentUser?.role);
   const canAttemptPartnerPortal = React.useMemo(
     () => !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role),
     [currentUser?.role]
   );
   const [hasPartnerPortalAccess, setHasPartnerPortalAccess] = React.useState(false);
-  const lockedOrganizationMenuItem = React.useMemo<MenuItem>(() => {
-    if (!shouldLockFooterAdminMenus) return organizationMenuItem;
-    return {
-      ...organizationMenuItem,
-      isLocked: true,
-      lockedMessage:
-        'Organization is locked for today’s pilot session. Please use Chat and Interview during the meeting.',
-      lockedCtaHref: '/interview',
-    };
-  }, [organizationMenuItem, shouldLockFooterAdminMenus]);
-  const lockedAdminMenuItem = React.useMemo<MenuItem>(() => {
-    if (!shouldLockFooterAdminMenus) return adminMenuItem;
-    return {
-      ...adminMenuItem,
-      isLocked: true,
-      lockedMessage:
-        'Admin is locked for today’s pilot session. Please use Chat and Interview during the meeting.',
-      lockedCtaHref: '/interview',
-    };
-  }, [adminMenuItem, shouldLockFooterAdminMenus]);
 
   // Completed views
   const completedViews = React.useMemo(() => {
@@ -547,9 +526,8 @@ export const Sidebar: React.FC = () => {
           t={t as any}
           showPartnerPortal={canAttemptPartnerPortal && hasPartnerPortalAccess}
         >
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
-            renderNavItem(lockedOrganizationMenuItem)}
-          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedAdminMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(organizationMenuItem)}
+          {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(adminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
           {showInternalToolsMenu && renderNavItem(internalToolsMenuItem)}
           {renderNavItem(settingsMenuItem)}
