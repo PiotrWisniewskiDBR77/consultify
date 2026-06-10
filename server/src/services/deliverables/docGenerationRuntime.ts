@@ -54,7 +54,21 @@ interface DocRuntimeEntry {
   documentArtifactId?: string;
 }
 
-const docRuntimeState = new Map<string, DocRuntimeEntry>();
+const docRuntimeState = new Map<string, DocRuntimeEntry & { updatedAtMs?: number }>();
+
+// P2-1 (audyt): mapa nie może rosnąć do restartu — wpisy starsze niż TTL są
+// zbędne (SSOT stanu po czasie = treść draftu; statusDoc ma fallback z DB).
+const RUNTIME_ENTRY_TTL_MS = 6 * 60 * 60 * 1000;
+
+function setDocRuntime(id: string, entry: DocRuntimeEntry): void {
+  docRuntimeState.set(id, { ...entry, updatedAtMs: Date.now() });
+  if (docRuntimeState.size % 50 === 0) {
+    const cutoff = Date.now() - RUNTIME_ENTRY_TTL_MS;
+    for (const [key, value] of docRuntimeState) {
+      if ((value.updatedAtMs || 0) < cutoff) docRuntimeState.delete(key);
+    }
+  }
+}
 
 /** Setup kontraktu dla format='doc' (przychodzi z czatu / encji). */
 export interface DocGenerationSetup {
@@ -79,6 +93,18 @@ function parseSetup(setup: Record<string, unknown>): DocGenerationSetup {
       `setup dla 'doc' wymaga pola intent (treść prośby użytkownika)`
     );
   }
+  const conversationId =
+    typeof setup.conversationId === 'string' && setup.conversationId.trim()
+      ? setup.conversationId.trim()
+      : undefined;
+  // P2-4 (audyt): draft bez prawdziwej rozmowy = sierota z conversationId='chat'.
+  // Frontend zawsze bootstrapuje rozmowę przed wywołaniem — brak = błąd wołającego.
+  if (!conversationId) {
+    throw new DeliverablesGenerationError(
+      'invalid_setup',
+      `setup wymaga conversationId — artefakt musi być przypięty do rozmowy`
+    );
+  }
   return {
     intent,
     language: setup.language === 'en' ? 'en' : 'pl',
@@ -88,12 +114,22 @@ function parseSetup(setup: Record<string, unknown>): DocGenerationSetup {
     sourceRefs: Array.isArray(setup.sourceRefs)
       ? (setup.sourceRefs as DocumentSourceRef[])
       : undefined,
-    conversationId:
-      typeof setup.conversationId === 'string' && setup.conversationId
-        ? setup.conversationId
-        : undefined,
+    conversationId,
     audience: Array.isArray(setup.audience) ? (setup.audience as string[]) : undefined,
   };
+}
+
+/** P2-3 (audyt): nieudana generacja nie zostawia anonimowej sieroty na liście draftów. */
+function markDraftFailedBestEffort(organizationId: string, draftId: string, title: string): void {
+  const suffix = ' — generacja nieudana';
+  if (title.endsWith(suffix)) return;
+  void updateDraft({
+    organizationId,
+    draftId,
+    patch: { title: `${title.slice(0, 200 - suffix.length)}${suffix}` },
+  }).catch(() => {
+    /* best-effort — stan error i tak niesie komunikat */
+  });
 }
 
 function buildIntake(parsed: DocGenerationSetup): DocumentIntake {
@@ -234,7 +270,7 @@ export async function planSheet(params: {
     organizationId: params.organizationId,
     actorUserId: params.userId,
     input: {
-      conversationId: parsed.conversationId || 'chat',
+      conversationId: parsed.conversationId!,
       kind: 'table',
       title,
       content: sheetSkeletonMarkdown(title),
@@ -245,7 +281,7 @@ export async function planSheet(params: {
     },
   });
 
-  docRuntimeState.set(draft.id, { state: 'plan_ready', warnings: [] });
+  setDocRuntime(draft.id, { state: 'plan_ready', warnings: [] });
   logger.info(`${LOG_PREFIX} sheet plan ready: generation=${draft.id}`);
   return {
     generationId: draft.id,
@@ -288,7 +324,7 @@ export async function startSheet(params: {
     );
   }
 
-  docRuntimeState.set(draft.id, { state: 'generating', warnings: [] });
+  setDocRuntime(draft.id, { state: 'generating', warnings: [] });
 
   void (async () => {
     try {
@@ -308,7 +344,7 @@ export async function startSheet(params: {
         maxTokens: 2400,
       });
 
-      docRuntimeState.set(draft.id, { state: 'validating', warnings: [] });
+      setDocRuntime(draft.id, { state: 'validating', warnings: [] });
 
       const markdown = String(response.content || '')
         .replace(/^```(?:markdown)?\s*/i, '')
@@ -329,15 +365,38 @@ export async function startSheet(params: {
         draftId: draft.id,
         patch: { content },
       });
-      docRuntimeState.set(draft.id, {
+      setDocRuntime(draft.id, {
         state: 'draft',
         warnings: [],
         sectionCount: table.rowCount,
       });
+      // P1-4 (audyt): bez tego arkusze z czatu nie istnieją w Outputs Library.
+      try {
+        await registerArtifactOrigin({
+          organizationId: params.organizationId,
+          outputType: 'sheet',
+          artifactFamily: 'sheet',
+          originRuntime: 'native_artifact',
+          originRecordId: draft.id,
+          titleSnapshot: draft.title,
+          ownerUserId: params.userId,
+          createdBy: params.userId,
+          originSummary: {
+            sourceType: 'deliverables_sheet_generation',
+            generationId: draft.id,
+            sourceTable: 'work_canvas_drafts',
+          },
+        });
+      } catch (registryErr) {
+        logger.warn(
+          `${LOG_PREFIX} outputs registration failed (sheet still saved): generation=${draft.id} — ${registryErr instanceof Error ? registryErr.message : String(registryErr)}`
+        );
+      }
       logger.info(`${LOG_PREFIX} sheet ready: generation=${draft.id} rows=${table.rowCount}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      docRuntimeState.set(draft.id, { state: 'error', error: message, warnings: [] });
+      setDocRuntime(draft.id, { state: 'error', error: message, warnings: [] });
+      markDraftFailedBestEffort(params.organizationId, draft.id, draft.title);
       logger.error(`${LOG_PREFIX} sheet generation failed: generation=${draft.id} — ${message}`);
     }
   })();
@@ -412,7 +471,7 @@ export async function planDoc(params: {
     organizationId: params.organizationId,
     actorUserId: params.userId,
     input: {
-      conversationId: parsed.conversationId || 'chat',
+      conversationId: parsed.conversationId!,
       kind: 'document',
       title,
       content: outlineSkeletonMarkdown(title, outline),
@@ -423,7 +482,7 @@ export async function planDoc(params: {
     },
   });
 
-  docRuntimeState.set(draft.id, { state: 'plan_ready', warnings: [] });
+  setDocRuntime(draft.id, { state: 'plan_ready', warnings: [] });
   logger.info(
     `${LOG_PREFIX} plan ready: generation=${draft.id} sections=${outline.sections.length}`
   );
@@ -463,7 +522,7 @@ export async function startDoc(params: {
     ? applyPlanToOutline(stored.outline, params.plan)
     : stored.outline;
 
-  docRuntimeState.set(draft.id, { state: 'generating', warnings: [] });
+  setDocRuntime(draft.id, { state: 'generating', warnings: [] });
 
   // W tle (wzorzec Gamma, jak deck w L1). Stan przez status() (poll).
   void (async () => {
@@ -476,7 +535,7 @@ export async function startDoc(params: {
         sourceRefs: stored.intake.sourceHints,
         useLlm: true,
       });
-      docRuntimeState.set(draft.id, {
+      setDocRuntime(draft.id, {
         state: 'validating',
         warnings: [],
         sectionCount: outline.sections.length,
@@ -509,7 +568,7 @@ export async function startDoc(params: {
         generationDraftId: draft.id,
         sourceRefs: stored.intake.sourceHints,
       });
-      docRuntimeState.set(draft.id, {
+      setDocRuntime(draft.id, {
         state: 'draft',
         warnings: [],
         sectionCount: outline.sections.length,
@@ -520,7 +579,8 @@ export async function startDoc(params: {
       );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      docRuntimeState.set(draft.id, { state: 'error', error: message, warnings: [] });
+      setDocRuntime(draft.id, { state: 'error', error: message, warnings: [] });
+      markDraftFailedBestEffort(params.organizationId, draft.id, draft.title);
       logger.error(`${LOG_PREFIX} generation failed: generation=${draft.id} — ${message}`);
     }
   })();

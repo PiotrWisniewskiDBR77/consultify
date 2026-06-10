@@ -11,9 +11,11 @@
  */
 
 import { type Response, Router } from 'express';
+import { z } from 'zod';
 
 import { featureFlags } from '../config/FeatureFlags.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import {
   DeliverablesGenerationError,
@@ -66,6 +68,80 @@ function ensureGenerateCapability(req: any, res: Response): boolean {
 
 const VALID_FORMATS: DeliverableFormat[] = ['deck', 'doc', 'sheet'];
 
+// P1-2 (audyt): whitelist pól setupu — user-JSON nie płynie dalej bez schemy.
+// zod domyślnie wycina nieznane klucze (strip), więc nadmiarowe pola po prostu znikają.
+const SourceRefSchema = z.object({
+  sourceType: z.string().max(64),
+  sourceId: z.string().max(128),
+  sourceTitle: z.string().max(300).optional(),
+});
+
+const DocSheetSetupSchema = z.object({
+  intent: z.string().min(1).max(4000).optional(),
+  language: z.enum(['pl', 'en']).optional(),
+  title: z.string().max(200).optional(),
+  conversationContext: z.string().max(8000).optional(),
+  conversationId: z.string().max(128).optional(),
+  sourceRefs: z.array(SourceRefSchema).max(20).optional(),
+  audience: z.array(z.string().max(120)).max(10).optional(),
+});
+
+const DeckSetupSchema = z.object({
+  title: z.string().min(1).max(200),
+  templateId: z.string().max(128).optional(),
+  audience: z.enum(['sponsor', 'executive', 'investor', 'internal']),
+  goal: z.enum(['inform', 'decide', 'sell', 'align']),
+  language: z.enum(['pl', 'en']),
+  theme: z.enum(['corporate', 'minimal', 'modern']),
+  confidentiality: z.enum(['confidential', 'internal', 'public']),
+  brandColor: z.string().max(32).optional(),
+  sourceType: z.string().max(64).optional(),
+  sourceId: z.string().max(128).optional(),
+  sourceArtifacts: z
+    .array(
+      z.object({
+        type: z.string().max(64),
+        id: z.string().max(128).optional(),
+        artifactId: z.string().max(128).optional(),
+        label: z.string().max(300),
+        confidence: z.number().min(0).max(1).optional(),
+        readiness: z.string().max(64).optional(),
+      })
+    )
+    .max(20)
+    .default([]),
+  visuals: z
+    .object({
+      enabled: z.boolean().optional(),
+      priority: z.enum(['quality', 'cost']).optional(),
+      imageDensity: z.enum(['low', 'medium', 'high']).optional(),
+    })
+    .optional(),
+});
+
+function parseSetupOrRespond(
+  res: Response,
+  format: DeliverableFormat,
+  rawSetup: unknown
+): Record<string, unknown> | null {
+  const schema = format === 'deck' ? DeckSetupSchema : DocSheetSetupSchema;
+  const parsed = schema.safeParse(rawSetup ?? {});
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      error: `Invalid setup for '${format}': ${parsed.error.issues
+        .slice(0, 3)
+        .map((i) => `${i.path.join('.') || 'setup'} — ${i.message}`)
+        .join('; ')}`,
+      code: 'invalid_setup',
+    });
+    return null;
+  }
+  return parsed.data as Record<string, unknown>;
+}
+
+const IntentSchema = z.string().max(4000).optional();
+
 function handleServiceError(res: Response, err: unknown): void {
   if (err instanceof DeliverablesGenerationError) {
     const httpByCode = {
@@ -83,7 +159,8 @@ function handleServiceError(res: Response, err: unknown): void {
 }
 
 // POST / — krok PLAN
-router.post('/', async (req: any, res: Response) => {
+// P1-3 (audyt): każdy POST = wywołanie LLM — limit jak inne endpointy AI (30/min prod).
+router.post('/', aiRateLimiter, async (req: any, res: Response) => {
   if (!ensureGenerateCapability(req, res)) return;
   const body = (req.body || {}) as Partial<CreateGenerationRequest>;
   if (!body.format || !VALID_FORMATS.includes(body.format)) {
@@ -94,11 +171,14 @@ router.post('/', async (req: any, res: Response) => {
     });
     return;
   }
+  const setup = parseSetupOrRespond(res, body.format, body.setup);
+  if (!setup) return;
+  const intentParsed = IntentSchema.safeParse(body.intent);
   try {
     const result = await plan({
       format: body.format,
-      setup: body.setup || {},
-      intent: body.intent,
+      setup,
+      intent: intentParsed.success ? intentParsed.data : undefined,
       organizationId: getOrgId(req),
       userId: getUserId(req),
     });
@@ -109,16 +189,19 @@ router.post('/', async (req: any, res: Response) => {
 });
 
 // POST /:id/generate — krok GENERATE (async, 202 + poll)
-router.post('/:id/generate', async (req: any, res: Response) => {
+router.post('/:id/generate', aiRateLimiter, async (req: any, res: Response) => {
   if (!ensureGenerateCapability(req, res)) return;
   const body = (req.body || {}) as Partial<StartGenerationRequest> & {
     format?: DeliverableFormat;
   };
+  const format = body.format && VALID_FORMATS.includes(body.format) ? body.format : 'deck';
+  const setup = parseSetupOrRespond(res, format, body.setup);
+  if (!setup) return;
   try {
     const result = await start({
       generationId: String(req.params.id),
-      format: body.format || 'deck',
-      setup: body.setup || {},
+      format,
+      setup,
       plan: body.plan,
       organizationId: getOrgId(req),
       userId: getUserId(req),

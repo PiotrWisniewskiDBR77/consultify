@@ -158,7 +158,7 @@ describe('polishMarkdownForCanvas (Kimi-parity: czysty deliverable)', () => {
 describe('planDoc', () => {
   it('tworzy draft i zwraca plan_ready z sekcjami outline', async () => {
     const result = await planDoc({
-      setup: { intent: 'Napisz raport o transformacji', language: 'pl' },
+      setup: { intent: 'Napisz raport o transformacji', language: 'pl', conversationId: 'conv-1' },
       organizationId: ORG,
       userId: USER,
     });
@@ -235,7 +235,14 @@ describe('startDoc — bramka anty-placeholder (D-L2-3)', () => {
     await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
     await flushBackgroundWork();
 
-    expect(updateDraftMock).not.toHaveBeenCalled();
+    // P2-3: treść draftu nietknięta; jedyny zapis to oznaczenie tytułu jako nieudanej generacji.
+    const contentPatches = updateDraftMock.mock.calls.filter((c) => 'content' in c[0].patch);
+    expect(contentPatches).toHaveLength(0);
+    expect(updateDraftMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        patch: expect.objectContaining({ title: expect.stringContaining('generacja nieudana') }),
+      })
+    );
     const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
     expect(status.state).toBe('error');
     expect(status.error).toContain('nie został wypełniony');
@@ -300,7 +307,7 @@ describe('planSheet + startSheet (L3)', () => {
   it('planSheet tworzy draft kind=table i zwraca plan_ready format=sheet', async () => {
     createDraftMock.mockResolvedValue(sheetDraftRow());
     const result = await planSheet({
-      setup: { intent: 'Przygotuj budżet Q1', language: 'pl' },
+      setup: { intent: 'Przygotuj budżet Q1', language: 'pl', conversationId: 'conv-1' },
       organizationId: ORG,
       userId: USER,
     });
@@ -334,7 +341,9 @@ describe('planSheet + startSheet (L3)', () => {
     await startSheet({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
     await flushBackgroundWork();
 
-    expect(updateDraftMock).not.toHaveBeenCalled();
+    // P2-3: bez zapisu treści; tytuł oznaczony jako nieudana generacja.
+    const contentPatches = updateDraftMock.mock.calls.filter((c) => 'content' in c[0].patch);
+    expect(contentPatches).toHaveLength(0);
     const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
     expect(status.state).toBe('error');
   });

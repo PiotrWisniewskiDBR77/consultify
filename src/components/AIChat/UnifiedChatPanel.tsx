@@ -743,10 +743,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [requestedCanvasDraftId, setRequestedCanvasDraftId] = useState<string | null>(null);
   // Deliverables light (L1): deck montowany w prawym panelu (starter 'presentation').
   const [requestedCanvasDeckId, setRequestedCanvasDeckId] = useState<string | null>(null);
-  // Kimi-parity: remount panelu po zakończonej generacji — świeża hydratacja
-  // draftu (zewnętrzna synchronizacja treści edytora jest zawodna — patrz audyt
-  // canvas-streaming; event 'deliverables:draft-ready' zostaje jako szybka ścieżka).
-  const [canvasRemountNonce, setCanvasRemountNonce] = useState(0);
   const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
     null
   );
@@ -755,6 +751,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
   const lastKickoffSentRef = useRef<string | null>(null);
+  // P2-2 (audyt): poll generacji deliverables ginie razem z widokiem czatu.
+  const deliverablesPollAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    deliverablesPollAbortRef.current = controller;
+    return () => controller.abort();
+  }, []);
   const splitShellRef = useRef<HTMLDivElement | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
@@ -1181,12 +1184,28 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const liveActiveConversationId =
         useConversationStore.getState().activeConversationId || activeConversationId;
 
+      // Feedback #5d27c9be + #f9fba1e0 (Elkomtech, 2026-06-10) — persist the reply
+      // to the conversation the question was asked in, NOT whatever is active when
+      // the stream finishes. The server sets streamSessionId = origin conversation id
+      // (ai.routes.ts), so meta.sessionId is the authoritative target. Prod evidence:
+      // three concurrent runs' replies all landed in the newest conversation (their
+      // persisted streamSessionId pointed at three different origins), and replies
+      // were dropped entirely when activeConversationId was momentarily null during
+      // a new-chat transition.
+      const sessionOriginConversationId =
+        typeof meta?.sessionId === 'string' &&
+        meta.sessionId.trim().length > 0 &&
+        !meta.sessionId.startsWith('stream-')
+          ? meta.sessionId.trim()
+          : null;
+      const persistConversationId = sessionOriginConversationId || liveActiveConversationId;
+
       let savedAiMessageId: string | null = null;
       // Save AI response to conversation store
-      if (liveActiveConversationId) {
+      if (persistConversationId) {
         try {
           const saved = await addMessageToConversation({
-            conversationId: liveActiveConversationId,
+            conversationId: persistConversationId,
             role: 'ai',
             content: safeText,
             messageType: 'text',
@@ -1328,7 +1347,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (
         aiConfig?.deepResearch &&
         deepThinkingRunRef.current &&
-        deepThinkingRunRef.current.conversationId === liveActiveConversationId &&
+        // Compare origin-to-origin: the DT run started in the conversation the
+        // stream belongs to, which may no longer be the active one.
+        deepThinkingRunRef.current.conversationId === persistConversationId &&
         Array.isArray(deepThinkingRunRef.current.agentIds) &&
         deepThinkingRunRef.current.agentIds.length > 0
       ) {
@@ -2211,6 +2232,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
               const final = await pollDeckGenerationUntilDone({
                 generationId: planned.generationId,
+                signal: deliverablesPollAbortRef.current?.signal,
                 onUpdate: (status: DeliverableGenerationStatus) => {
                   if (status.state === 'validating') updateSheetChecklist('validating');
                 },
@@ -2227,7 +2249,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   })
                 );
                 announceDeliverableDraftReady(planned.generationId);
-                setCanvasRemountNonce((n) => n + 1);
               } else {
                 useConversationStore.getState().removeLocalMessage(progressMessageId);
                 persistSheetFinalNote(
@@ -2241,6 +2262,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 );
               }
             } catch (err: unknown) {
+              if (err instanceof DOMException && err.name === 'AbortError') return;
               updateSheetChecklist('error', {
                 error: err instanceof Error ? err.message : undefined,
               });
@@ -2398,6 +2420,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
               const final = await pollDeckGenerationUntilDone({
                 generationId: planned.generationId,
+                signal: deliverablesPollAbortRef.current?.signal,
                 onUpdate: (status: DeliverableGenerationStatus) => {
                   if (status.state === 'validating') {
                     updateDocChecklist('validating', { planCount: enabledCount });
@@ -2427,7 +2450,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 // B2: artefakt rozmowy (persisted) — przełącznik + aktywny artefakt.
                 registerChatDeliverable('doc', planned.generationId, docTitle);
                 announceDeliverableDraftReady(planned.generationId);
-                setCanvasRemountNonce((n) => n + 1);
               } else {
                 useConversationStore.getState().removeLocalMessage(progressMessageId);
                 persistDocFinalNote(
@@ -2441,6 +2463,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 );
               }
             } catch (err: unknown) {
+              if (err instanceof DOMException && err.name === 'AbortError') return;
               updateDocChecklist('error', {
                 error: err instanceof Error ? err.message : undefined,
               });
@@ -2582,6 +2605,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
               const final = await pollDeckGenerationUntilDone({
                 generationId: planned.generationId,
+                signal: deliverablesPollAbortRef.current?.signal,
                 onUpdate: (status: DeliverableGenerationStatus) => {
                   if (status.state === 'validating') {
                     updateChecklist('validating', { planCount: enabledCount });
@@ -2623,6 +2647,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 );
               }
             } catch (err: unknown) {
+              if (err instanceof DOMException && err.name === 'AbortError') return;
               updateChecklist('error', {
                 error: err instanceof Error ? err.message : undefined,
               });
@@ -5654,7 +5679,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           </div>
           <div className="min-h-0 flex-1">
             <WorkCanvasDocumentPanel
-              key={`${requestedCanvasStarterId || 'default'}:${requestedCanvasDraftId || requestedCanvasDeckId || 'none'}:${canvasRemountNonce}`}
+              key={`${requestedCanvasStarterId || 'default'}:${requestedCanvasDraftId || requestedCanvasDeckId || 'none'}`}
               conversationId={activeConversationId}
               initialStarterId={requestedCanvasStarterId}
               initialDeckId={requestedCanvasDeckId}

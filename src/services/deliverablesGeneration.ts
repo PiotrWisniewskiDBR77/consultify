@@ -46,14 +46,25 @@ export function isDeliverablesLightEnabled(): boolean {
   return import.meta.env.VITE_ENABLE_DELIVERABLES_LIGHT === 'true';
 }
 
-/** Tytuł roboczy decka z intencji czatu — pierwsza sensowna linia, przycięta. */
+/**
+ * Tytuł roboczy artefaktu z intencji czatu — pierwsza linia, bez czasownika
+ * komendy („Napisz raport: X" → „X"), z wielką literą, przycięta do 80 znaków.
+ */
 export function deckTitleFromIntent(intent: string, fallback: string): string {
-  const firstLine = String(intent || '')
+  let line = String(intent || '')
     .split('\n')[0]
     .replace(/^\/(prezentacja|presentation|deck)\s*/i, '')
     .trim();
-  if (!firstLine) return fallback;
-  return firstLine.length > 80 ? `${firstLine.slice(0, 77)}…` : firstLine;
+  // P3 (audyt): zdejmij frazę-komendę z początku — tytuł ma brzmieć jak tytuł.
+  line = line
+    .replace(
+      /^(napisz|przygotuj|stwórz|utwórz|zrób|wygeneruj|opracuj|create|write|make|prepare|generate|build)\s+(mi\s+|me\s+|a\s+|an\s+)?(raport|dokument|notatk\w*|prezentacj\w*|arkusz\w*|deck|tabel\w*|budżet|plik\s*excel|skoroszyt|report|document|memo|presentation|sheet|spreadsheet|table|budget)?\s*[:,-]?\s*/i,
+      ''
+    )
+    .trim();
+  if (!line) return fallback;
+  line = line.charAt(0).toUpperCase() + line.slice(1);
+  return line.length > 80 ? `${line.slice(0, 77)}…` : line;
 }
 
 interface DeckGenerationSetup {
@@ -238,6 +249,8 @@ export async function pollDeckGenerationUntilDone(params: {
   onUpdate: (status: DeliverableGenerationStatus) => void;
   intervalMs?: number;
   timeoutMs?: number;
+  /** P2-2 (audyt): abort przy odmontowaniu czatu — poll nie żyje po wyjściu z widoku. */
+  signal?: AbortSignal;
 }): Promise<DeliverableGenerationStatus> {
   const intervalMs = params.intervalMs ?? 2500;
   const timeoutMs = params.timeoutMs ?? 5 * 60 * 1000;
@@ -245,6 +258,9 @@ export async function pollDeckGenerationUntilDone(params: {
   let lastState: DeliverableGenerationState | null = null;
 
   for (;;) {
+    if (params.signal?.aborted) {
+      throw new DOMException('Generation poll aborted', 'AbortError');
+    }
     const status = await getDeckGenerationStatus(params.generationId);
     if (status.state !== lastState) {
       lastState = status.state;
