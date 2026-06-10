@@ -39,6 +39,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../types';
 import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
+import { ArtifactChip } from './ArtifactChip';
 import { ChatCodeBlock } from './ChatCodeBlock';
 import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
@@ -302,6 +303,17 @@ export interface MessageRendererProps {
   toggleArtifactsPanel: (open: boolean) => void;
   exportArtifact: (id: string, format: string) => void;
 
+  /**
+   * B2 (artifact lifecycle): opens the canvas split-view with a chat-generated
+   * deliverable (deck/doc) mounted. Fed by persisted `metadata.deliverable` on
+   * the message, so the chip survives reloads.
+   */
+  onOpenDeliverableArtifact?: (deliverable: {
+    kind: 'deck' | 'doc';
+    generationId: string;
+    title?: string;
+  }) => void;
+
   // Agent audit accept handler (from Api)
   handleAgentAuditAccept: (audit: any, msgId: string) => Promise<void>;
 
@@ -385,6 +397,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   addArtifact,
   toggleArtifactsPanel,
   exportArtifact,
+  onOpenDeliverableArtifact,
   handleAgentAuditAccept,
   onOptionSelect,
   onProposalApprove,
@@ -1617,6 +1630,25 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           </div>
         )}
       </div>
+
+      {/* B2 — Deliverable artifact chip (deck/doc generated in chat).
+          Reads the persisted message metadata, so it re-renders after reload;
+          clicking re-opens the canvas split-view with the artifact mounted. */}
+      {msg.role === 'ai' &&
+        !msg.isStreaming &&
+        onOpenDeliverableArtifact &&
+        (metadata as any)?.deliverable?.generationId && (
+          <div className="mt-1.5">
+            <ArtifactChip
+              kind={(metadata as any).deliverable.kind === 'doc' ? 'doc' : 'deck'}
+              title={String(
+                (metadata as any).deliverable.title ||
+                  ((metadata as any).deliverable.kind === 'doc' ? 'Document' : 'Presentation')
+              )}
+              onOpen={() => onOpenDeliverableArtifact((metadata as any).deliverable)}
+            />
+          </div>
+        )}
 
       {/* Enhanced Artifacts Badge */}
       {msg.role === 'ai' && hasArtifacts && (

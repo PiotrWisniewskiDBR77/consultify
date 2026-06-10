@@ -335,6 +335,16 @@ export interface ConversationMessage {
      * Useful for debugging stream failures without polluting message content.
      */
     error?: string;
+    /**
+     * B2 (deliverables light): chat-generated deliverable reference (deck/doc).
+     * Persisted server-side with the final generation note, so the ArtifactChip
+     * in the transcript survives reloads. `generationId` = deckId/draftId.
+     */
+    deliverable?: {
+      kind: 'deck' | 'doc';
+      generationId: string;
+      title?: string;
+    };
   };
   tokenCount?: number;
   modelUsed?: string;

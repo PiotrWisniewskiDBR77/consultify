@@ -50,6 +50,8 @@ const ARTIFACT_ICONS: Record<Artifact['type'], React.ReactNode> = {
   'pmo-document': <Folder size={16} />,
   pmo_document: <Folder size={16} />,
   document: <FileText size={16} />,
+  // Deliverables light (B2): chat-generated deck mounted in the canvas split-view.
+  deck: <BarChart3 size={16} />,
   json: <FileCode size={16} />,
   chart: <BarChart3 size={16} />,
   mermaid: <BarChart3 size={16} />,

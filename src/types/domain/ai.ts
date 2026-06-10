@@ -351,10 +351,23 @@ export type AIArtifactType =
   | 'pmo_document'
   | 'pmo-document' // keep explicit for readability
   | 'document'
+  // Deliverables light (B2): deck generated in chat, mounted in the canvas split-view.
+  | 'deck'
   | 'chart'
   | 'json'
   | 'mermaid'
   | 'latex';
+
+/**
+ * Deliverables light (B2): reference to a chat-generated deliverable
+ * (deck or doc draft). `generationId` doubles as deckId/draftId in the
+ * deliverables runtime, so the canvas panel can re-mount the artifact.
+ */
+export interface AIArtifactDeliverableRef {
+  kind: 'deck' | 'doc';
+  generationId: string;
+  title?: string;
+}
 
 export interface AIArtifactMetadata {
   filename?: string;
@@ -365,6 +378,8 @@ export interface AIArtifactMetadata {
   framework?: string;
   templateType?: string;
   exportFormats?: string[];
+  /** Deliverables light (B2): chat-generated deliverable this artifact points at. */
+  deliverable?: AIArtifactDeliverableRef;
 }
 
 /**

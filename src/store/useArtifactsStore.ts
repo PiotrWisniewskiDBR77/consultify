@@ -19,12 +19,25 @@ interface ArtifactsState {
   isPanelOpen: boolean;
   isFullscreen: boolean;
   conversationArtifacts: Record<string, Artifact[]>; // Keyed by conversationId
+  /**
+   * B2 (artifact lifecycle): persisted per-conversation active artifact, so the
+   * selection survives reloads the same way `conversationArtifacts` does.
+   * Keyed by conversationId.
+   */
+  conversationActiveArtifactIds: Record<string, string | null>;
 
   // Actions
   addArtifact: (artifact: Artifact, conversationId?: string) => void;
   updateArtifact: (id: string, content: string) => void;
   removeArtifact: (id: string) => void;
-  setActiveArtifact: (id: string | null) => void;
+  setActiveArtifact: (id: string | null, conversationId?: string) => void;
+  /**
+   * B2 (deliverables light): upsert a chat-generated deliverable reference
+   * (deck/doc) into a conversation's artifact list WITHOUT the side effects of
+   * `addArtifact` (no panel auto-open, no content normalization — content lives
+   * server-side, the artifact is only a mountable reference).
+   */
+  registerConversationDeliverable: (conversationId: string, artifact: Artifact) => void;
   togglePanel: (open?: boolean) => void;
   toggleFullscreen: (fullscreen?: boolean) => void;
   clearArtifacts: () => void;
@@ -99,6 +112,7 @@ export const useArtifactsStore = create<ArtifactsState>()(
       isPanelOpen: false,
       isFullscreen: false,
       conversationArtifacts: {},
+      conversationActiveArtifactIds: {},
 
       // Actions
       addArtifact: (artifact, conversationId) =>
@@ -108,17 +122,24 @@ export const useArtifactsStore = create<ArtifactsState>()(
 
           // Also store in conversation artifacts if conversationId provided
           let newConversationArtifacts = state.conversationArtifacts;
+          let newConversationActiveIds = state.conversationActiveArtifactIds;
           if (conversationId) {
             const existing = state.conversationArtifacts[conversationId] || [];
             newConversationArtifacts = {
               ...state.conversationArtifacts,
               [conversationId]: [...existing, normalizedArtifact],
             };
+            // B2: persist the active selection per conversation.
+            newConversationActiveIds = {
+              ...state.conversationActiveArtifactIds,
+              [conversationId]: normalizedArtifact.id,
+            };
           }
 
           return {
             artifacts: newArtifacts,
             conversationArtifacts: newConversationArtifacts,
+            conversationActiveArtifactIds: newConversationActiveIds,
             activeArtifactId: normalizedArtifact.id,
             isPanelOpen: true, // Auto-open panel when artifact is added
           };
@@ -184,15 +205,66 @@ export const useArtifactsStore = create<ArtifactsState>()(
                 : null
               : state.activeArtifactId;
 
+          // B2: drop persisted per-conversation selections pointing at the removed artifact.
+          const updatedConversationActiveIds = Object.fromEntries(
+            Object.entries(state.conversationActiveArtifactIds).map(([convId, activeId]) => [
+              convId,
+              activeId === id ? null : activeId,
+            ])
+          );
+
           return {
             artifacts: newArtifacts,
             conversationArtifacts: updatedConversationArtifacts,
+            conversationActiveArtifactIds: updatedConversationActiveIds,
             activeArtifactId: newActiveId,
             isPanelOpen: newArtifacts.length > 0,
           };
         }),
 
-      setActiveArtifact: (id) => set({ activeArtifactId: id }),
+      setActiveArtifact: (id, conversationId) =>
+        set((state) => ({
+          activeArtifactId: id,
+          ...(conversationId
+            ? {
+                conversationActiveArtifactIds: {
+                  ...state.conversationActiveArtifactIds,
+                  [conversationId]: id,
+                },
+              }
+            : {}),
+        })),
+
+      registerConversationDeliverable: (conversationId, artifact) =>
+        set((state) => {
+          const existing = state.conversationArtifacts[conversationId] || [];
+          const index = existing.findIndex((item) => item.id === artifact.id);
+          const merged =
+            index >= 0
+              ? existing.map((item, itemIndex) =>
+                  itemIndex === index
+                    ? ({
+                        ...item,
+                        ...artifact,
+                        metadata: {
+                          ...((item as any).metadata || {}),
+                          ...((artifact as any).metadata || {}),
+                        },
+                      } as Artifact)
+                    : item
+                )
+              : [...existing, artifact];
+          return {
+            conversationArtifacts: {
+              ...state.conversationArtifacts,
+              [conversationId]: merged,
+            },
+            conversationActiveArtifactIds: {
+              ...state.conversationActiveArtifactIds,
+              [conversationId]: artifact.id,
+            },
+          };
+        }),
 
       togglePanel: (open) =>
         set((state) => ({
@@ -215,10 +287,21 @@ export const useArtifactsStore = create<ArtifactsState>()(
       loadConversationArtifacts: (conversationId) =>
         set((state) => {
           const artifacts = state.conversationArtifacts[conversationId] || [];
+          // B2: restore the persisted per-conversation active artifact (falls back
+          // to the first artifact when the persisted id no longer exists).
+          const persistedActiveId = state.conversationActiveArtifactIds[conversationId];
+          const restoredActiveId =
+            persistedActiveId && artifacts.some((artifact) => artifact.id === persistedActiveId)
+              ? persistedActiveId
+              : artifacts.length > 0
+                ? artifacts[0].id
+                : null;
           return {
             artifacts,
-            activeArtifactId: artifacts.length > 0 ? artifacts[0].id : null,
-            isPanelOpen: artifacts.length > 0,
+            activeArtifactId: restoredActiveId,
+            // B2: don't force the panel open on conversation open — only close it
+            // when the conversation has nothing to show.
+            isPanelOpen: artifacts.length > 0 ? state.isPanelOpen : false,
           };
         }),
 
@@ -272,6 +355,8 @@ export const useArtifactsStore = create<ArtifactsState>()(
       partialize: (state) => ({
         // Only persist conversation artifacts, not current session
         conversationArtifacts: state.conversationArtifacts,
+        // B2: per-conversation active artifact survives reloads too.
+        conversationActiveArtifactIds: state.conversationActiveArtifactIds,
       }),
     }
   )

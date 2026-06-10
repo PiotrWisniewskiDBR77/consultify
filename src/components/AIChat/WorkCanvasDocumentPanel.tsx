@@ -52,6 +52,7 @@ import {
 import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErrorMessage';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
+import { CanvasArtifactSwitcher, type CanvasMountSelection } from './CanvasArtifactSwitcher';
 import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
 import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
@@ -606,15 +607,53 @@ function getWorkflowTerminalExecutionLabel(workflow: CanvasWorkflowRun): string 
 
 /**
  * Deliverables light (L1, krok 4): starter 'presentation' montuje żywy artefakt
- * decka (CardRenderer, read-mostly) zamiast dokumentu markdown. Wrapper jest
- * bez-hookowy, więc gałąź nie narusza rules-of-hooks i nie odpala efektów
- * draftowych panelu markdown (autosave/hydration) dla decka.
+ * decka (CardRenderer, read-mostly) zamiast dokumentu markdown. Gałęzie są w JSX
+ * (nie warunkowe hooki), więc panel markdown nie odpala efektów draftowych
+ * (autosave/hydration) dla decka.
+ *
+ * B2 (artifact lifecycle): wrapper trzyma lekki przełącznik artefaktów rozmowy
+ * (CanvasArtifactSwitcher) — null = montuj wg propsów (zachowanie L1/L2 bez zmian).
  */
 export function WorkCanvasDocumentPanel(props: WorkCanvasDocumentPanelProps) {
-  if (props.initialStarterId === 'presentation') {
-    return <CanvasPresentationView deckId={props.initialDeckId} onClose={props.onClose} />;
-  }
-  return <WorkCanvasMarkdownDocumentPanel {...props} />;
+  const [mountOverride, setMountOverride] = React.useState<CanvasMountSelection | null>(null);
+
+  // Nowe żądanie z czatu (inny deck/draft/starter lub inna rozmowa) wygrywa
+  // z ręcznym przełączeniem — wracamy do montażu props-driven.
+  React.useEffect(() => {
+    setMountOverride(null);
+  }, [props.conversationId, props.initialStarterId, props.initialDeckId, props.initialDraftId]);
+
+  const mounted: CanvasMountSelection =
+    mountOverride ||
+    (props.initialStarterId === 'presentation'
+      ? { kind: 'deck', deckId: props.initialDeckId || null }
+      : { kind: 'base' });
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <CanvasArtifactSwitcher
+        conversationId={props.conversationId}
+        mounted={mounted}
+        hasBaseDocument={props.initialStarterId !== 'presentation'}
+        baseDraftId={props.initialDraftId}
+        onSelect={setMountOverride}
+      />
+      <div className="min-h-0 flex-1">
+        {mounted.kind === 'deck' ? (
+          <CanvasPresentationView deckId={mounted.deckId} onClose={props.onClose} />
+        ) : mounted.kind === 'doc' ? (
+          <WorkCanvasMarkdownDocumentPanel
+            key={`switched-doc-${mounted.draftId}`}
+            {...props}
+            initialStarterId="document"
+            initialDraftId={mounted.draftId}
+          />
+        ) : (
+          <WorkCanvasMarkdownDocumentPanel {...props} />
+        )}
+      </div>
+    </div>
+  );
 }
 
 function WorkCanvasMarkdownDocumentPanel({

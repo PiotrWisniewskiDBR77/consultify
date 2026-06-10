@@ -453,6 +453,26 @@ const deckGenerationChecklist = (params: {
   return lines.join('\n');
 };
 
+/**
+ * B2 (artifact lifecycle): rejestruje chat-generated deliverable (deck/doc)
+ * jako artefakt rozmowy w useArtifactsStore (persisted w localStorage).
+ * Zasila przełącznik artefaktów w panelu canvas + przywracanie aktywnego
+ * artefaktu po reloadzie. Chip w transkrypcie idzie osobno, z server-side
+ * metadata wiadomości (metadata.deliverable).
+ */
+const registerChatDeliverable = (kind: 'deck' | 'doc', generationId: string, title: string) => {
+  const conversationId = useConversationStore.getState().activeConversationId;
+  if (!conversationId) return;
+  useArtifactsStore.getState().registerConversationDeliverable(conversationId, {
+    id: `deliverable-${generationId}`,
+    type: kind === 'doc' ? 'document' : 'deck',
+    title,
+    content: '',
+    createdAt: new Date(),
+    metadata: { deliverable: { kind, generationId, title } },
+  } as Artifact);
+};
+
 const parseChatCanvasIntent = (rawContent: string): ChatCanvasIntent | null => {
   const raw = String(rawContent || '').trim();
   if (!raw) return null;
@@ -861,6 +881,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   useEffect(() => {
     if (!activeConversationId) return;
     void useProposalLifecycleStore.getState().loadForConversation(activeConversationId);
+  }, [activeConversationId]);
+
+  // B2 (artifact lifecycle): on conversation open, restore the conversation's
+  // artifact list + persisted active artifact from localStorage.
+  useEffect(() => {
+    if (!activeConversationId) return;
+    useArtifactsStore.getState().loadConversationArtifacts(activeConversationId);
   }, [activeConversationId]);
 
   // Session hook: create new session when model/preset changes mid-conversation (§2.3.1)
@@ -2292,7 +2319,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             );
           };
 
-          const persistDocFinalNote = (note: string) => {
+          const persistDocFinalNote = (
+            note: string,
+            // B2: deliverable ref w metadata wiadomości — persystowane server-side,
+            // dzięki czemu ArtifactChip w transkrypcie przeżywa reload.
+            metadata?: { deliverable: { kind: 'deck' | 'doc'; generationId: string; title?: string } }
+          ) => {
             const conversationId = useConversationStore.getState().activeConversationId;
             if (!conversationId) return;
             void addMessageToConversation({
@@ -2300,6 +2332,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               role: 'ai',
               content: note,
               messageType: 'text',
+              ...(metadata ? { metadata } : {}),
             }).catch(() => {
               /* best-effort persist */
             });
@@ -2352,8 +2385,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     format: 'doc',
                     planCount: enabledCount,
                     unitCount: final.artifact?.unitCount,
-                  })
+                  }),
+                  // B2: chip artefaktu w transkrypcie (reload-safe, server-side).
+                  {
+                    deliverable: {
+                      kind: 'doc',
+                      generationId: planned.generationId,
+                      title: docTitle,
+                    },
+                  }
                 );
+                // B2: artefakt rozmowy (persisted) — przełącznik + aktywny artefakt.
+                registerChatDeliverable('doc', planned.generationId, docTitle);
                 // Montaż gotowego dokumentu w prawym panelu (hydration po draftId).
                 setRequestedCanvasDeckId(null);
                 setRequestedCanvasDraftId(planned.generationId);
@@ -2472,7 +2515,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               );
           };
 
-          const persistFinalNote = (note: string) => {
+          const persistFinalNote = (
+            note: string,
+            // B2: deliverable ref w metadata wiadomości — persystowane server-side,
+            // dzięki czemu ArtifactChip w transkrypcie przeżywa reload.
+            metadata?: { deliverable: { kind: 'deck' | 'doc'; generationId: string; title?: string } }
+          ) => {
             const conversationId = useConversationStore.getState().activeConversationId;
             if (!conversationId) return;
             void addMessageToConversation({
@@ -2480,6 +2528,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               role: 'ai',
               content: note,
               messageType: 'text',
+              ...(metadata ? { metadata } : {}),
             }).catch(() => {
               /* best-effort persist */
             });
@@ -2522,8 +2571,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     phase: 'draft',
                     planCount: enabledCount,
                     unitCount: final.artifact?.unitCount,
-                  })
+                  }),
+                  // B2: chip artefaktu w transkrypcie (reload-safe, server-side).
+                  {
+                    deliverable: {
+                      kind: 'deck',
+                      generationId: planned.generationId,
+                      title: deckTitle,
+                    },
+                  }
                 );
+                // B2: artefakt rozmowy (persisted) — przełącznik + aktywny artefakt.
+                registerChatDeliverable('deck', planned.generationId, deckTitle);
               } else {
                 useConversationStore.getState().removeLocalMessage(progressMessageId);
                 persistFinalNote(
@@ -4012,6 +4071,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [addArtifact, toggleArtifactsPanel]
   );
 
+  // B2 (artifact lifecycle): ArtifactChip in the transcript → (re)open the
+  // canvas split-view with the chat-generated deliverable mounted + mark it
+  // as the conversation's active artifact (persisted).
+  const handleOpenDeliverableArtifact = useCallback(
+    (deliverable: { kind: 'deck' | 'doc'; generationId: string; title?: string }) => {
+      if (deliverable.kind === 'doc') {
+        setRequestedCanvasDeckId(null);
+        setRequestedCanvasDraftId(deliverable.generationId);
+        setRequestedCanvasStarterId('document');
+      } else {
+        setRequestedCanvasDraftId(null);
+        setRequestedCanvasDeckId(deliverable.generationId);
+        setRequestedCanvasStarterId('presentation');
+      }
+      setIsWorkPanelOpen(true);
+      const conversationId = useConversationStore.getState().activeConversationId;
+      if (conversationId) {
+        useArtifactsStore
+          .getState()
+          .setActiveArtifact(`deliverable-${deliverable.generationId}`, conversationId);
+      }
+    },
+    []
+  );
+
   // Deep Thinking: Save output as Decision
   const handleSaveAsDecision = useCallback(
     async (messageId: string, content: string) => {
@@ -4636,6 +4720,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleCancelEditMessage={handleCancelEditMessage}
       handleCommitEditMessage={handleCommitEditMessage}
       handleViewArtifacts={handleViewArtifacts}
+      onOpenDeliverableArtifact={handleOpenDeliverableArtifact}
       handleFeedback={handleFeedback}
       handleSendMessage={handleSendMessage}
       handleEnableDeepThinking={handleEnableDeepThinking}
