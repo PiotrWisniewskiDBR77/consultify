@@ -22,16 +22,16 @@ import type {
 } from '../../types/deliverablesGeneration.js';
 import logger from '../../utils/Logger.js';
 import { isPlaceholderDocumentProse } from '../documentStudio/documentContentGenerator.js';
-import type {
-  DocumentIntake,
-  DocumentOutline,
-  DocumentSourceRef,
-} from '../documentStudio/documentStudioTypes.js';
 import { renderSchemaToMarkdown } from '../documentStudio/documentSchemaRenderer.js';
 import {
   materializeDocumentArtifact,
   planDocument,
 } from '../documentStudio/documentStudioService.js';
+import type {
+  DocumentIntake,
+  DocumentOutline,
+  DocumentSourceRef,
+} from '../documentStudio/documentStudioTypes.js';
 import {
   createDraft,
   getDraft,
