@@ -867,7 +867,8 @@ export class AIPipeline {
                 .join('\n')
                 .slice(0, 4000);
               if (snippets) {
-                customInstructions = `${customInstructions || ''}\n\n[Project knowledge]\n${snippets}`.trim();
+                customInstructions =
+                  `${customInstructions || ''}\n\n[Project knowledge]\n${snippets}`.trim();
               }
             } catch {
               // project_knowledge may not exist yet — skip silently.

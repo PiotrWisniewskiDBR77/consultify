@@ -7791,7 +7791,8 @@ ${JSON.stringify(questions || [], null, 2)}
   updateInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } = req.body;
+    const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } =
+      req.body;
 
     const updates: string[] = [];
     const values: any[] = [];

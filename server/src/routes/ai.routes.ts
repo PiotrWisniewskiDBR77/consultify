@@ -50,9 +50,9 @@ import {
   ActionTypeParamSchema,
   AIAuthoringAuditRequestSchema,
   AIContextQuerySchema,
+  AiGenerateRequestSchema,
   AIReadinessAnalysisRequestSchema,
   ApproveActionRequestSchema,
-  AiGenerateRequestSchema,
   AuditIdParamSchema,
   CalculateQualityRequestSchema,
   CanPerformActionQuerySchema,
@@ -5490,7 +5490,9 @@ router.post(
 
     const text = String(result?.content || result?.text || '').trim();
     if (!text) {
-      return res.status(502).json({ error: 'LLM returned empty response', code: 'EMPTY_LLM_RESPONSE' });
+      return res
+        .status(502)
+        .json({ error: 'LLM returned empty response', code: 'EMPTY_LLM_RESPONSE' });
     }
 
     return res.json({ text });

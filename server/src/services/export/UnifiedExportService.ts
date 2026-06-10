@@ -153,7 +153,10 @@ class UnifiedExportService {
     const tokens = tokenizeMarkdown(src.markdown);
     return this.renderPdf((doc) => {
       // Title block + lightweight metadata.
-      doc.fontSize(20).fillColor('#0f172a').text(src.title || 'Untitled', { underline: true });
+      doc
+        .fontSize(20)
+        .fillColor('#0f172a')
+        .text(src.title || 'Untitled', { underline: true });
       doc.moveDown(0.4);
       if (src.sourceLabel) {
         doc.fontSize(9).fillColor('#475569').text(src.sourceLabel);
@@ -237,12 +240,7 @@ class UnifiedExportService {
           break;
         case 'hr':
           doc.moveDown(0.2);
-          doc
-            .strokeColor('#e2e8f0')
-            .lineWidth(0.6)
-            .moveTo(48, doc.y)
-            .lineTo(540, doc.y)
-            .stroke();
+          doc.strokeColor('#e2e8f0').lineWidth(0.6).moveTo(48, doc.y).lineTo(540, doc.y).stroke();
           doc.moveDown(0.4);
           break;
         case 'table': {
@@ -636,7 +634,10 @@ class UnifiedExportService {
           // overflow the body region the caller laid out.
           flushRuns(tok.header, { bold: true, fontSize: 11 });
           for (const row of tok.rows) {
-            flushRuns(row.flatMap((cell) => cell), { fontSize: 11 });
+            flushRuns(
+              row.flatMap((cell) => cell),
+              { fontSize: 11 }
+            );
           }
           break;
         }

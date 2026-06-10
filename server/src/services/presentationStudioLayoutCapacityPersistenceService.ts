@@ -33,6 +33,8 @@
  * `fs.unlinkSync` plus `mkdirSync` for the parent dir).
  */
 
+import { createRequire } from 'module';
+
 import {
   applyOverrides,
   getAllTenantRegistrySnapshots,
@@ -45,7 +47,6 @@ import {
   setRegistryHooks,
   setRegistryLoadWarning,
 } from './presentationStudioLayoutCapacityRegistryService.js';
-import { createRequire } from 'module';
 
 // The ESM production build has no global require(); the lazy require('fs'|'path'|'crypto')
 // calls below would otherwise throw "require is not defined" and the layout-capacity

@@ -7,8 +7,8 @@ import {
   buildAnnaVoiceBootstrap,
 } from '../services/ai/annaKnowledgeService.js';
 import { resolveAnnaSiteConfig } from '../services/ai/annaSiteConfig.js';
-import { buildProductModuleCatalog } from '../services/ai/productModuleCatalog.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
+import { buildProductModuleCatalog } from '../services/ai/productModuleCatalog.js';
 import { buildConversationIntelligence } from '../services/ai/virtualWorkerConversationIntelligence.js';
 import {
   findOrCreateConversation,

@@ -15,8 +15,8 @@ import {
   projectCanvasArtifactBlockToMarkdown,
 } from '../services/artifacts/contentProjectionService.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { insertDynamic } from '../utils/dbDynamic.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
@@ -2097,9 +2097,8 @@ async function createWorkspaceResource(
   // W2-E6 — UUID-validate projectId so canonical services (TaskService /
   // decisionService) don't 500 on a slug-style draft.projectId.
   const validUuidProjectId =
-    draft.projectId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      draft.projectId
-    )
+    draft.projectId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(draft.projectId)
       ? draft.projectId
       : null;
 
@@ -4271,9 +4270,8 @@ router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest,
   const useLlm = req.body?.useLlm === true;
 
   try {
-    const { materializeDocumentArtifact } = await import(
-      '../services/documentStudio/documentStudioService.js'
-    );
+    const { materializeDocumentArtifact } =
+      await import('../services/documentStudio/documentStudioService.js');
     // DocumentStudio accepts `description` as the narrative seed. We pass the
     // full markdown so the planner sees the prose; `sourceHints` carries the
     // section list as structured context so the planner can preserve the
@@ -4342,7 +4340,11 @@ router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest,
           url: `/documents/${encodeURIComponent(String(result.artifactId))}`,
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        readBack: { target: 'document_studio', artifactId: result.artifactId, status: 'created' } as any,
+        readBack: {
+          target: 'document_studio',
+          artifactId: result.artifactId,
+          status: 'created',
+        } as any,
       })
     );
   } catch (error) {
@@ -4351,8 +4353,7 @@ router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest,
       error: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
-      error:
-        error instanceof Error ? error.message : 'Failed to send Canvas to Document Studio',
+      error: error instanceof Error ? error.message : 'Failed to send Canvas to Document Studio',
     });
   }
 });

@@ -166,7 +166,7 @@ export function tokenizeMarkdown(markdown: string): StructToken[] {
     switch (tok.type) {
       case 'heading': {
         const h = tok as Tokens.Heading;
-        const depth = (Math.max(1, Math.min(6, h.depth)) as 1 | 2 | 3 | 4 | 5 | 6);
+        const depth = Math.max(1, Math.min(6, h.depth)) as 1 | 2 | 3 | 4 | 5 | 6;
         out.push({ kind: 'heading', depth, runs: inlineWalk(h.tokens) });
         break;
       }

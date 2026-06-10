@@ -185,9 +185,7 @@ describe('initiatives additive routes — propose engine', () => {
 
   it('rejects unauthenticated requests (401)', async () => {
     mockUser = null;
-    const res = await request(createApp())
-      .post('/api/initiatives/propose')
-      .send({ text: 'hello' });
+    const res = await request(createApp()).post('/api/initiatives/propose').send({ text: 'hello' });
     expect(res.status).toBe(401);
   });
 });

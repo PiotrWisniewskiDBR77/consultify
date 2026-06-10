@@ -32,8 +32,8 @@ import {
 import { checkChatPermission } from '../services/chatPermissionService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { getTableColumns } from '../utils/dbSchema.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();

@@ -54,7 +54,9 @@ async function ensureProjectRbacSchema(): Promise<boolean> {
   if (_rbacReady !== null) return _rbacReady;
   try {
     const db = getDatabase();
-    await db.run("ALTER TABLE chat_projects ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'org'");
+    await db.run(
+      "ALTER TABLE chat_projects ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'org'"
+    );
     // F4c: nested folders.
     await db.run('ALTER TABLE chat_projects ADD COLUMN IF NOT EXISTS parent_id TEXT');
     await db.run(`CREATE TABLE IF NOT EXISTS chat_project_members (
@@ -484,7 +486,9 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
       const ok = await ensureCustomInstructionsColumn();
       if (ok) {
         fields.push('custom_instructions = ?');
-        values.push(updates.customInstructions ? String(updates.customInstructions).slice(0, 4000) : null);
+        values.push(
+          updates.customInstructions ? String(updates.customInstructions).slice(0, 4000) : null
+        );
       }
     }
     if (updates.visibility !== undefined) {
@@ -635,7 +639,8 @@ router.post('/:id/members', verifyToken, async (req: Request, res: Response) => 
     if (project.scope !== 'team') {
       return res.status(400).json({ error: 'Members apply to team projects only' });
     }
-    const myRole = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    const myRole =
+      (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
     if (myRole !== 'owner' && myRole !== 'editor') {
       return res.status(403).json({ error: 'Only owners or editors can add members' });
     }
@@ -683,7 +688,8 @@ router.patch('/:id/members/:memberUserId', verifyToken, async (req: Request, res
       id,
     ])) as any;
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    const myRole = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    const myRole =
+      (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
     if (myRole !== 'owner') {
       return res.status(403).json({ error: 'Only the owner can change roles' });
     }
@@ -712,7 +718,8 @@ router.delete('/:id/members/:memberUserId', verifyToken, async (req: Request, re
       id,
     ])) as any;
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    const myRole = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    const myRole =
+      (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
     const isSelf = memberUserId === userId;
     if (myRole !== 'owner' && !isSelf) {
       return res.status(403).json({ error: 'Only the owner can remove members' });
@@ -794,12 +801,15 @@ router.post('/:id/knowledge', verifyToken, async (req: Request, res: Response) =
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const db = getDatabase();
     await ensureProjectRbacSchema();
-    const project = (await dbGetOne(db, `SELECT id, user_id, scope FROM chat_projects WHERE id = ?`, [
-      id,
-    ])) as any;
+    const project = (await dbGetOne(
+      db,
+      `SELECT id, user_id, scope FROM chat_projects WHERE id = ?`,
+      [id]
+    )) as any;
     if (!project) return res.status(404).json({ error: 'Project not found' });
     // Owner/editor (team) or the personal-project owner may add knowledge.
-    const role = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    const role =
+      (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
     const canWrite = role === 'owner' || role === 'editor' || project.user_id === userId;
     if (!canWrite) return res.status(403).json({ error: 'No permission to add knowledge' });
 
@@ -826,9 +836,13 @@ router.post('/:id/knowledge', verifyToken, async (req: Request, res: Response) =
         now,
       ]
     );
-    return res
-      .status(201)
-      .json({ id: kid, kind: itemKind, title: title || null, doc_id: docId || null, added_at: now });
+    return res.status(201).json({
+      id: kid,
+      kind: itemKind,
+      title: title || null,
+      doc_id: docId || null,
+      added_at: now,
+    });
   } catch (error: any) {
     logger.error('[ChatProjects] Add knowledge error:', error?.message);
     return res.status(500).json({ error: 'Failed to add knowledge' });
@@ -846,10 +860,14 @@ router.delete('/:id/knowledge/:knowledgeId', verifyToken, async (req: Request, r
       id,
     ])) as any;
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    const role = (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
+    const role =
+      (await getProjectRole(db, id, userId)) || (project.user_id === userId ? 'owner' : null);
     const canWrite = role === 'owner' || role === 'editor' || project.user_id === userId;
     if (!canWrite) return res.status(403).json({ error: 'No permission' });
-    await db.run(`DELETE FROM project_knowledge WHERE id = ? AND project_id = ?`, [knowledgeId, id]);
+    await db.run(`DELETE FROM project_knowledge WHERE id = ? AND project_id = ?`, [
+      knowledgeId,
+      id,
+    ]);
     return res.json({ success: true });
   } catch (error: any) {
     logger.error('[ChatProjects] Delete knowledge error:', error?.message);

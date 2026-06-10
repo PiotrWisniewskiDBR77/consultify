@@ -899,9 +899,7 @@ export class InitiativeController {
 
       // Mark Complete — AI signal only; lazy ALTER + JSON persist
       if (body.sectionCompletions !== undefined && body.sectionCompletions !== null) {
-        const initiativeCols = getColumnNameSet(
-          await queryHelpers.getTableColumns('initiatives')
-        );
+        const initiativeCols = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
         if (!initiativeCols.has('section_completions')) {
           try {
             await queryHelpers.queryRun(

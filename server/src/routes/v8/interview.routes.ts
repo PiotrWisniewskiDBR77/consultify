@@ -560,7 +560,9 @@ router.patch(
         .json({ data: null, error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
     }
     if (String(insight.organizationId) !== String(organizationId)) {
-      return res.status(403).json({ data: null, error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+      return res
+        .status(403)
+        .json({ data: null, error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
     }
 
     const updates: string[] = [];
@@ -591,7 +593,9 @@ router.patch(
         await queryHelpers.queryRun(
           `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS archived_by TEXT`
         );
-      } catch { /* column already exists */ }
+      } catch {
+        /* column already exists */
+      }
       updates.push('archived_at = ?', 'archived_by = ?');
       values.push(
         archived ? new Date().toISOString() : null,
@@ -613,10 +617,14 @@ router.patch(
             `ALTER TABLE interview_insights ADD COLUMN section_completions TEXT`
           );
         }
-      } catch { /* best-effort */ }
+      } catch {
+        /* best-effort */
+      }
       updates.push('section_completions = ?');
       values.push(
-        typeof sectionCompletions === 'string' ? sectionCompletions : JSON.stringify(sectionCompletions)
+        typeof sectionCompletions === 'string'
+          ? sectionCompletions
+          : JSON.stringify(sectionCompletions)
       );
     }
 

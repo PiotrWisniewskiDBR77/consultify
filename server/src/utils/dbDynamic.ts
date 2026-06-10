@@ -9,8 +9,8 @@
  * dependency on the route module.
  */
 
-import { getTableColumns } from './dbSchema.js';
 import { run as dbRun } from './DbPromise.js';
+import { getTableColumns } from './dbSchema.js';
 
 export async function insertDynamic(
   table: string,

@@ -257,9 +257,7 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
     // a team conversation publicly.
     if (conversation.organization_id && userId) {
       try {
-        const { checkChatPermission } = await import(
-          '../services/chatPermissionService.js'
-        );
+        const { checkChatPermission } = await import('../services/chatPermissionService.js');
         const check = await checkChatPermission(
           userId,
           conversation.organization_id,
@@ -407,7 +405,8 @@ router.post('/share/:token/unlock', async (req: Request, res: Response) => {
     if (!share) return res.status(404).json({ error: 'Share not found' });
     if (!share.is_active) return res.status(410).json({ error: 'Share has been revoked' });
     const settings = JSON.parse(share.settings || '{}');
-    if (!settings.passwordHash) return res.status(400).json({ error: 'Share is not password-protected' });
+    if (!settings.passwordHash)
+      return res.status(400).json({ error: 'Share is not password-protected' });
     const verdict = await verifyPasscode(password, String(settings.passwordHash));
     if (!verdict.ok) {
       return res.status(401).json({ error: 'Incorrect password' });
@@ -483,7 +482,10 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
         if (!rateLimitConsume(token, ip)) {
           return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
         }
-        const verdict = await verifyPasscode(String(legacyQueryPassword), String(settings.passwordHash));
+        const verdict = await verifyPasscode(
+          String(legacyQueryPassword),
+          String(settings.passwordHash)
+        );
         if (!verdict.ok) {
           return res.status(401).json({ error: 'Incorrect password' });
         }

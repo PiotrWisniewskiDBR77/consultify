@@ -1104,7 +1104,10 @@ export async function getPartnerClients(
         projectCountByOrg.set(String(row.organization_id), Number(row.count) || 0);
       }
     } catch (err: any) {
-      logger.warn('[PartnerReferralService] getPartnerClients project counts failed:', err?.message);
+      logger.warn(
+        '[PartnerReferralService] getPartnerClients project counts failed:',
+        err?.message
+      );
     }
 
     try {

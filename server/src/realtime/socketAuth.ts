@@ -59,10 +59,7 @@ function extractToken(socket: Socket): string | null {
  * Namespace-level middleware: verifies the JWT and attaches the decoded
  * user to `socket.data.user`. Pass via `io.of('/foo').use(socketAuthMiddleware)`.
  */
-export const socketAuthMiddleware = (
-  socket: Socket,
-  next: (err?: Error) => void
-): void => {
+export const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void): void => {
   const secret = getJwtSecret();
   if (!secret) {
     logger.warn('[socketAuth] JWT_SECRET missing or too short; rejecting socket connection');
@@ -102,10 +99,7 @@ export const socketAuthMiddleware = (
  * is a member of the requested organization. Silent-on-failure so a probe
  * doesn't reveal org membership topology.
  */
-export async function validateJoinOrg(
-  socket: Socket,
-  organizationId: string
-): Promise<boolean> {
+export async function validateJoinOrg(socket: Socket, organizationId: string): Promise<boolean> {
   const user = socket.data?.user as DecodedSocketUser | undefined;
   if (!user?.id) return false;
   const trimmedOrg = String(organizationId || '').trim();

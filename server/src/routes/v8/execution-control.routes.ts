@@ -13,8 +13,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { requirePermission } from '../../middleware/permission.middleware.js';
+import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
   detectDelaySignals,

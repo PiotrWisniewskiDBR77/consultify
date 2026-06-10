@@ -969,9 +969,7 @@ router.get(
       : 'NULL as customFields';
     // Mirror the Initiatives/Decisions `?source` lineage filter (e.g.
     // ?source=interview_insight). No-ops when the source_type column is absent.
-    const tSourceTypeSelect = taskCols.has('source_type')
-      ? 't.source_type'
-      : 'NULL as source_type';
+    const tSourceTypeSelect = taskCols.has('source_type') ? 't.source_type' : 'NULL as source_type';
     const tSourceIdSelect = taskCols.has('source_id') ? 't.source_id' : 'NULL as source_id';
     const normalizedTaskSource = req.query.source
       ? String(req.query.source).trim().toLowerCase()

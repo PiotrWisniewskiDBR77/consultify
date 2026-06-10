@@ -656,8 +656,7 @@ const attachUser = async (
           )
         : undefined;
       const resolvedActive =
-        !!resolvedMembership &&
-        String(resolvedMembership.status || '').toUpperCase() === 'ACTIVE';
+        !!resolvedMembership && String(resolvedMembership.status || '').toUpperCase() === 'ACTIVE';
       if (!resolvedActive) {
         const fallback = await dbGet<{ organization_id?: string; role?: string }>(
           `SELECT organization_id, role

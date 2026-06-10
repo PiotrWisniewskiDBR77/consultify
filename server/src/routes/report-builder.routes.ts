@@ -559,7 +559,7 @@ router.get(
       // every insight that references this session and load its findings, so a
       // report built from an interview includes the confidence-rated,
       // readback-gated findings rather than just the keyword summary.
-      let p10Findings: Array<Record<string, unknown>> = [];
+      const p10Findings: Array<Record<string, unknown>> = [];
       try {
         const insightRows = await new Promise<any[]>((resolve) => {
           db.all(
@@ -576,9 +576,8 @@ router.get(
           })
           .map((row) => row.id);
         if (matchingInsightIds.length > 0) {
-          const { listFindings } = await import(
-            '../services/v8/interviewInsightFindingsService.js'
-          );
+          const { listFindings } =
+            await import('../services/v8/interviewInsightFindingsService.js');
           for (const insightId of matchingInsightIds) {
             const findings = await listFindings(insightId).catch(() => []);
             for (const f of findings) {

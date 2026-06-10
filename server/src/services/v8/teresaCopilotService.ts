@@ -1710,7 +1710,13 @@ async function performHandoff(params: {
     case 'initiatives':
       return handleInitiativesHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'calendar':
-      return handleCalendarHandoff(proposalId, organizationId, handoffContext, targetPayload, userId);
+      return handleCalendarHandoff(
+        proposalId,
+        organizationId,
+        handoffContext,
+        targetPayload,
+        userId
+      );
     case 'notebook':
       return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'interview':

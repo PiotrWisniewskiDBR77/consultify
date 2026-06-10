@@ -951,8 +951,7 @@ const brandLogoCandidates = [
   path.join(process.cwd(), 'public/assets/logos'),
   path.join(process.cwd(), 'server/public/assets/logos'),
 ];
-const brandLogoDir =
-  brandLogoCandidates.find((d) => fs.existsSync(d)) || brandLogoCandidates[0];
+const brandLogoDir = brandLogoCandidates.find((d) => fs.existsSync(d)) || brandLogoCandidates[0];
 app.use('/assets/logos', express.static(brandLogoDir, { maxAge: '7d' }));
 
 // ============================================================
@@ -1616,10 +1615,7 @@ const staticFrontendSmartCache = express.static(frontendDistPath, {
 // Short, branded redirect for the VTS wave-2 shared invitation link.
 // Keeps the e-mail clean: https://consultify.ai/vts -> full /invite/<token>.
 app.get('/vts', (_req: Request, res: Response) =>
-  res.redirect(
-    302,
-    '/invite/0728c1a701b9f5995810714921de5f6a3b201fd78d4665178e8c07bb6e69c7ea'
-  )
+  res.redirect(302, '/invite/0728c1a701b9f5995810714921de5f6a3b201fd78d4665178e8c07bb6e69c7ea')
 );
 
 app.use(staticFrontendSmartCache);

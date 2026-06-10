@@ -79,10 +79,8 @@ const MODULE_CATALOG: ModuleCatalogEntry[] = [
       'Turns diagnosis into prioritized initiatives, charters, and roadmap — the engine of the transformation.',
     summaryPl:
       'Zamienia diagnozę w priorytetyzowane inicjatywy, kartę projektu i roadmapę — silnik transformacji.',
-    useEn:
-      'Turn insights and gaps into prioritized initiatives with charters, owners, and KPIs.',
-    usePl:
-      'Zamieniaj wnioski i luki w priorytetyzowane inicjatywy z charterami, ownerami i KPI.',
+    useEn: 'Turn insights and gaps into prioritized initiatives with charters, owners, and KPIs.',
+    usePl: 'Zamieniaj wnioski i luki w priorytetyzowane inicjatywy z charterami, ownerami i KPI.',
   },
   {
     titleEn: 'Execution',
@@ -121,8 +119,7 @@ const MODULE_CATALOG: ModuleCatalogEntry[] = [
     titlePl: 'My Work',
     summaryEn:
       'Personal hub for tasks, inbox, and decisions — where assigned work and follow-ups land.',
-    summaryPl:
-      'Osobisty hub zadań, inboxa i decyzji — tu trafia przypisana praca i follow-upy.',
+    summaryPl: 'Osobisty hub zadań, inboxa i decyzji — tu trafia przypisana praca i follow-upy.',
     useEn: 'Manage personal tasks, inbox, and decisions; promote follow-ups into the right module.',
     usePl: 'Zarządzaj zadaniami, inboxem i decyzjami; przekazuj follow-upy do właściwego modułu.',
   },
@@ -135,8 +132,7 @@ const MODULE_CATALOG: ModuleCatalogEntry[] = [
       'Ideacja i przechwytywanie wiedzy — Mind Map, Process Flow, Tabela, Whiteboard i notatniki.',
     useEn:
       'Capture ideas and knowledge in Mind Map, Process Flow, Table, Whiteboard, and notebooks.',
-    usePl:
-      'Przechwytuj idee i wiedzę w Mind Map, Process Flow, Tabeli, Whiteboard i notatnikach.',
+    usePl: 'Przechwytuj idee i wiedzę w Mind Map, Process Flow, Tabeli, Whiteboard i notatnikach.',
   },
   {
     titleEn: 'Outputs / Presentations',
@@ -181,10 +177,8 @@ const MODULE_CATALOG: ModuleCatalogEntry[] = [
   {
     titleEn: 'Meeting',
     titlePl: 'Spotkanie',
-    summaryEn:
-      'Turns live conversations into structured notes, decisions, and follow-up tasks.',
-    summaryPl:
-      'Zamienia rozmowy na żywo w uporządkowane notatki, decyzje i zadania do wykonania.',
+    summaryEn: 'Turns live conversations into structured notes, decisions, and follow-up tasks.',
+    summaryPl: 'Zamienia rozmowy na żywo w uporządkowane notatki, decyzje i zadania do wykonania.',
     useEn:
       'Capture meetings into notes, decisions, and action items, then promote them to tasks or initiatives.',
     usePl:
@@ -217,7 +211,9 @@ const METHODS_PL = [
 ];
 
 export function buildProductModuleCatalog(language?: string): string {
-  const pl = String(language || '').toLowerCase().startsWith('pl');
+  const pl = String(language || '')
+    .toLowerCase()
+    .startsWith('pl');
   const heading = pl
     ? '## MODUŁY CONSULTIFY (używaj do pytań jak / co robi aplikacja)'
     : '## CONSULTIFY MODULES (use to answer how-to / what-is questions about the app)';
