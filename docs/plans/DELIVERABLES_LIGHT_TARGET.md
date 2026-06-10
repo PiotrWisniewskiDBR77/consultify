@@ -174,6 +174,31 @@ Mount = 1 linia additive w rejestracji routerów (flag-gated, behavior-neutral g
 > z kart encji) — kontrakt przyjmuje sourceRefs, brakuje TYLKO afordancji UI na kartach ⇒ następny plaster.
 > Testy: `deliverables/__tests__/docGenerationRuntime.test.ts` (11) + documentStudio 855 zielone.
 
+---
+
+## 12. L3 — plaster Sheet E2E (DONE + zweryfikowane live 2026-06-10)
+
+> **Status: DONE** (commity f2d3a73e + f2b64d2b; live E2E: „Przygotuj budżet…" → checklista →
+> realna tabela GFM z sensownymi danymi PL wyrenderowana jako edytowalna tabela w canvasie;
+> autosave round-trip bezstratny — dowód w DB).
+
+- **Doktryna §2.1 wprost:** Sheet = jeden blok `table`. Artefakt = canvas draft `kind='table'`
+  (markdown canonical) — **za darmo** dziedziczy edytor TipTap, eksport **XLSX/CSV/PDF/DOCX**
+  (`GET /work-canvas/drafts/:id/export` istniał) i bridge **„Send to Table Studio"** (istniał).
+- Gałąź `sheet` w runtime: `planSheet` (instant, draft ze szkieletem) + `startSheet`
+  (LLM tier `standard` → tabela GFM, twarda walidacja struktury — brak tabeli ⇒ uczciwy `error`).
+  Status współdzielony ze ścieżką doc (format po `draft.kind`). Testy: +4 (łącznie 15).
+- Intercept: `detectExceleIntent` (skoroszyt/budżet/model finansowy) za flagą zastępuje redirect
+  do `/tabele`; `detectTableIntent` → ChatToSchemaPanel zostaje bez zmian (działający flow platformy tabel).
+- **Naprawiony przy okazji destrukcyjny bug canvasa:** TipTap emituje tabele bez `<thead>` +
+  `<p>` w komórkach ⇒ turndown-gfm ich nie konwertował i autosave zapisywał wyescapowany HTML
+  (każda tabela w rich-edytorze była niszczona przy zapisie). Normalizacja w
+  `canvasMarkdownConversion.htmlToMarkdown` — round-trip bezstratny.
+
+**Triada deck/doc/sheet jest kompletna.** Następne plastry: afordancja „zrób z tego
+dokument/arkusz" na kartach encji (sourceRefs w kontrakcie czekają), per-sekcja akcje doc,
+L4 retire-list (§6).
+
 > Grounding decyzji: `docs/audit/2026-06-10/DOC_ENTRY_UX_AUDIT.md` (4 ścieżki wejścia przeklikane live —
 > formularz 8 pól, kontekst ginie, silnik produkuje placeholdery „MVP-1", canvas-streaming = cichy no-op).
 
