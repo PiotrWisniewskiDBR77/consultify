@@ -26,6 +26,7 @@ import logger from '../../utils/Logger.js';
 import type { DeckSetup, OutlineItem } from '../presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../presentationGeneratorService.js';
 import { getArtifactByOriginUnscoped } from '../v8/artifactRegistryService.js';
+import { trackDeliverableEvent } from './deliverablesTelemetryService.js';
 import { planDoc, planSheet, startDoc, startSheet, statusDoc } from './docGenerationRuntime.js';
 import { DeliverablesGenerationError } from './errors.js';
 
@@ -183,6 +184,15 @@ export async function plan(params: {
     setup,
     params.organizationId
   );
+  void trackDeliverableEvent({
+    organizationId: params.organizationId,
+    userId: params.userId,
+    generationId: deckId,
+    format: 'deck',
+    event: 'plan_ready',
+    language: setup.language,
+    groundingMode: setup.sourceArtifacts?.length ? 'source_refs' : 'conversation',
+  });
   logger.info(
     `${LOG_PREFIX} plan ready: generation=${deckId} format=deck items=${outline.length} warnings=${validationWarnings.length}` +
       (params.intent ? ` intent="${params.intent.slice(0, 120)}"` : '')
@@ -251,6 +261,7 @@ export async function start(params: {
 
   // Świadomie bez await — wzorzec Gamma (202 + poll). Błąd ląduje w mapie
   // ORAZ w presentation_decks.status='failed' (generateDeck robi to sam).
+  const generationStartedAt = Date.now();
   void generateDeck(row.id, outline, setup, params.organizationId)
     .then((result) => {
       runtimeState.set(row.id, {
@@ -258,11 +269,31 @@ export async function start(params: {
         warnings: [...warnings, ...(result.warnings || [])],
         slideCount: result.slideCount,
       });
+      void trackDeliverableEvent({
+        organizationId: params.organizationId,
+        userId: params.userId,
+        generationId: row.id,
+        format: 'deck',
+        event: 'completed',
+        durationMs: Date.now() - generationStartedAt,
+        unitCount: result.slideCount,
+        language: setup.language,
+        groundingMode: setup.sourceArtifacts?.length ? 'source_refs' : 'conversation',
+      });
       logger.info(`${LOG_PREFIX} draft ready: generation=${row.id} slides=${result.slideCount}`);
     })
     .catch((err: unknown) => {
       const message = err instanceof Error ? err.message : String(err);
       runtimeState.set(row.id, { state: 'error', error: message, warnings });
+      void trackDeliverableEvent({
+        organizationId: params.organizationId,
+        userId: params.userId,
+        generationId: row.id,
+        format: 'deck',
+        event: 'failed',
+        durationMs: Date.now() - generationStartedAt,
+        error: message,
+      });
       logger.error(`${LOG_PREFIX} generation failed: generation=${row.id} — ${message}`);
     });
 

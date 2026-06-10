@@ -45,6 +45,11 @@ vi.mock('../../documentStudio/documentSchemaRenderer.js', () => ({
   renderSchemaToMarkdown: (...args: unknown[]) => renderMarkdownMock(...args),
 }));
 
+const buildContextPackMock = vi.fn();
+vi.mock('../../contextPackBuilder.js', () => ({
+  buildContextPack: (...args: unknown[]) => buildContextPackMock(...args),
+}));
+
 const {
   planDoc,
   planSheet,
@@ -108,6 +113,7 @@ beforeEach(() => {
   getDraftMock.mockResolvedValue(draftRow());
   updateDraftMock.mockResolvedValue(draftRow());
   materializeMock.mockResolvedValue({ artifactId: 'doc-artifact-1', schema: {} });
+  buildContextPackMock.mockResolvedValue({ key_points: [], data_points: [] });
   renderMarkdownMock.mockReturnValue(
     '# Raport o transformacji\n\n## Synteza\n\nRealna treść konsultingowa oparta o kontekst.'
   );
@@ -352,6 +358,69 @@ describe('planSheet + startSheet (L3)', () => {
     getDraftMock.mockResolvedValue(sheetDraftRow({ content: GFM_TABLE }));
     const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
     expect(status.format).toBe('sheet');
+    expect(status.state).toBe('draft');
+  });
+});
+
+describe('B2 — grounding sourceRefs przez ContextPack', () => {
+  it('fakty z encji trafiają do intake.description silnika prozy', async () => {
+    getDraftMock.mockResolvedValue(
+      draftRow({
+        provenance: {
+          deliverablesGeneration: {
+            intake: {
+              description: 'Napisz raport',
+              language: 'pl',
+              title: 'Raport',
+              sourceHints: [
+                { sourceType: 'initiative', sourceId: 'init-7', sourceTitle: 'Automatyzacja' },
+              ],
+            },
+            outline,
+          },
+        },
+      })
+    );
+    buildContextPackMock.mockResolvedValue({
+      key_points: ['Inicjatywa Automatyzacja ma budżet 120 000 PLN'],
+      data_points: [{ label: 'ROI', value: 18, unit: '%' }],
+    });
+
+    await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+
+    expect(buildContextPackMock).toHaveBeenCalledWith(
+      ORG,
+      [{ artifact_id: 'init-7', artifact_type: 'initiative', artifact_name: 'Automatyzacja' }],
+      'pl'
+    );
+    const intakeArg = materializeMock.mock.calls[0][0].intake;
+    expect(intakeArg.description).toContain('budżet 120 000 PLN');
+    expect(intakeArg.description).toContain('ROI: 18 %');
+  });
+
+  it('awaria ContextPacka nie blokuje generacji (fallback na tryb rozmowy)', async () => {
+    getDraftMock.mockResolvedValue(
+      draftRow({
+        provenance: {
+          deliverablesGeneration: {
+            intake: {
+              description: 'Napisz raport',
+              language: 'pl',
+              title: 'Raport',
+              sourceHints: [{ sourceType: 'insight', sourceId: 'x', sourceTitle: 'X' }],
+            },
+            outline,
+          },
+        },
+      })
+    );
+    buildContextPackMock.mockRejectedValue(new Error('extractor missing'));
+
+    await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
     expect(status.state).toBe('draft');
   });
 });

@@ -39,6 +39,7 @@ import {
   updateDraft,
   type WorkCanvasDraftRecord,
 } from '../workCanvasService.js';
+import { trackDeliverableEvent } from './deliverablesTelemetryService.js';
 import { DeliverablesGenerationError } from './errors.js';
 
 const LOG_PREFIX = '[DeliverablesGen:doc]';
@@ -130,6 +131,48 @@ function markDraftFailedBestEffort(organizationId: string, draftId: string, titl
   }).catch(() => {
     /* best-effort — stan error i tak niesie komunikat */
   });
+}
+
+/**
+ * B2 (plan wykonawczy): grounding trybu source_refs — fakty z encji org
+ * (ContextPack) wstrzykiwane do promptu generatora. Best-effort: brak
+ * ekstraktora dla typu encji ⇒ pomijamy z warningiem, generacja biegnie dalej
+ * na trybie rozmowy (spec §4: dokument nigdy nie jest pusty przez braki źródeł).
+ */
+async function buildGroundingFacts(
+  organizationId: string,
+  sourceRefs: DocumentSourceRef[] | undefined,
+  language: 'pl' | 'en'
+): Promise<string | null> {
+  if (!sourceRefs?.length) return null;
+  try {
+    const { buildContextPack } = await import('../contextPackBuilder.js');
+    const pack = await buildContextPack(
+      organizationId,
+      sourceRefs.map((ref) => ({
+        artifact_id: ref.sourceId,
+        artifact_type: ref.sourceType,
+        artifact_name: ref.sourceTitle || ref.sourceId,
+      })),
+      language
+    );
+    const keyPoints = (pack.key_points || []).slice(0, 20);
+    const dataPoints = (pack.data_points || [])
+      .slice(0, 20)
+      .map((d) => `${d.label}: ${d.value}${d.unit ? ` ${d.unit}` : ''}`);
+    const lines = [...keyPoints, ...dataPoints].map((l) => String(l).trim()).filter(Boolean);
+    if (lines.length === 0) return null;
+    const header =
+      language === 'en'
+        ? 'Facts from organization sources (treat as the factual basis; do not contradict them):'
+        : 'Fakty ze źródeł organizacji (traktuj jako podstawę faktograficzną; nie zaprzeczaj im):';
+    return `${header}\n- ${lines.join('\n- ')}`.slice(0, 4000);
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} grounding facts unavailable (continuing conversation-grounded): ${err instanceof Error ? err.message : err}`
+    );
+    return null;
+  }
 }
 
 function buildIntake(parsed: DocGenerationSetup): DocumentIntake {
@@ -282,6 +325,15 @@ export async function planSheet(params: {
   });
 
   setDocRuntime(draft.id, { state: 'plan_ready', warnings: [] });
+  void trackDeliverableEvent({
+    organizationId: params.organizationId,
+    userId: params.userId,
+    generationId: draft.id,
+    format: 'sheet',
+    event: 'plan_ready',
+    language: parsed.language,
+    groundingMode: parsed.sourceRefs?.length ? 'source_refs' : 'conversation',
+  });
   logger.info(`${LOG_PREFIX} sheet plan ready: generation=${draft.id}`);
   return {
     generationId: draft.id,
@@ -325,6 +377,7 @@ export async function startSheet(params: {
   }
 
   setDocRuntime(draft.id, { state: 'generating', warnings: [] });
+  const generationStartedAt = Date.now();
 
   void (async () => {
     try {
@@ -332,9 +385,15 @@ export async function startSheet(params: {
       const systemPrompt = pl
         ? 'Jesteś analitykiem danych w Consultify. Tworzysz arkusz roboczy jako tabelę Markdown (GFM). Zwracasz WYŁĄCZNIE: linię tytułu "# <tytuł>" i jedną tabelę GFM (wiersz nagłówków, separator, wiersze danych). Maksymalnie 10 kolumn i 15 wierszy. Kolumny dobierz pod intencję użytkownika. Jeśli kontekst zawiera konkretne dane — użyj ich; w przeciwnym razie wypełnij realistycznymi wierszami startowymi (bez lorem ipsum). Bez komentarzy, bez bloków kodu.'
         : 'You are a data analyst at Consultify. You create a working sheet as a Markdown (GFM) table. Return ONLY: a title line "# <title>" and one GFM table (header row, separator, data rows). At most 10 columns and 15 rows. Choose columns to fit the user intent. If the context contains concrete data, use it; otherwise fill with realistic seed rows (no lorem ipsum). No commentary, no code fences.';
-      const userPrompt = stored.conversationContext
+      const sheetFacts = await buildGroundingFacts(
+        params.organizationId,
+        stored.sourceRefs,
+        pl ? 'pl' : 'en'
+      );
+      const userPromptBase = stored.conversationContext
         ? `${stored.intent}\n\n${pl ? 'Kontekst rozmowy' : 'Conversation context'}:\n${stored.conversationContext.slice(0, 3000)}`
         : stored.intent;
+      const userPrompt = sheetFacts ? `${userPromptBase}\n\n${sheetFacts}` : userPromptBase;
 
       const { generateChatResponse } = await import('../aiService.js');
       const response = await generateChatResponse({
@@ -392,11 +451,31 @@ export async function startSheet(params: {
           `${LOG_PREFIX} outputs registration failed (sheet still saved): generation=${draft.id} — ${registryErr instanceof Error ? registryErr.message : String(registryErr)}`
         );
       }
+      void trackDeliverableEvent({
+        organizationId: params.organizationId,
+        userId: params.userId,
+        generationId: draft.id,
+        format: 'sheet',
+        event: 'completed',
+        durationMs: Date.now() - generationStartedAt,
+        unitCount: table.rowCount,
+        language: stored.language,
+        groundingMode: stored.sourceRefs?.length ? 'source_refs' : 'conversation',
+      });
       logger.info(`${LOG_PREFIX} sheet ready: generation=${draft.id} rows=${table.rowCount}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setDocRuntime(draft.id, { state: 'error', error: message, warnings: [] });
       markDraftFailedBestEffort(params.organizationId, draft.id, draft.title);
+      void trackDeliverableEvent({
+        organizationId: params.organizationId,
+        userId: params.userId,
+        generationId: draft.id,
+        format: 'sheet',
+        event: 'failed',
+        durationMs: Date.now() - generationStartedAt,
+        error: message,
+      });
       logger.error(`${LOG_PREFIX} sheet generation failed: generation=${draft.id} — ${message}`);
     }
   })();
@@ -483,6 +562,15 @@ export async function planDoc(params: {
   });
 
   setDocRuntime(draft.id, { state: 'plan_ready', warnings: [] });
+  void trackDeliverableEvent({
+    organizationId: params.organizationId,
+    userId: params.userId,
+    generationId: draft.id,
+    format: 'doc',
+    event: 'plan_ready',
+    language: parsed.language,
+    groundingMode: parsed.sourceRefs?.length ? 'source_refs' : 'conversation',
+  });
   logger.info(
     `${LOG_PREFIX} plan ready: generation=${draft.id} sections=${outline.sections.length}`
   );
@@ -523,14 +611,24 @@ export async function startDoc(params: {
     : stored.outline;
 
   setDocRuntime(draft.id, { state: 'generating', warnings: [] });
+  const generationStartedAt = Date.now();
 
   // W tle (wzorzec Gamma, jak deck w L1). Stan przez status() (poll).
   void (async () => {
     try {
+      // B2: fakty z encji org (jeśli wskazane) wzbogacają opis dla silnika prozy.
+      const groundingFacts = await buildGroundingFacts(
+        params.organizationId,
+        stored.intake.sourceHints,
+        stored.intake.language === 'en' ? 'en' : 'pl'
+      );
+      const intake = groundingFacts
+        ? { ...stored.intake, description: `${stored.intake.description}\n\n${groundingFacts}` }
+        : stored.intake;
       const result = await materializeDocumentArtifact({
         organizationId: params.organizationId,
         userId: params.userId,
-        intake: stored.intake,
+        intake,
         outline,
         sourceRefs: stored.intake.sourceHints,
         useLlm: true,
@@ -574,6 +672,17 @@ export async function startDoc(params: {
         sectionCount: outline.sections.length,
         documentArtifactId: result.artifactId,
       });
+      void trackDeliverableEvent({
+        organizationId: params.organizationId,
+        userId: params.userId,
+        generationId: draft.id,
+        format: 'doc',
+        event: 'completed',
+        durationMs: Date.now() - generationStartedAt,
+        unitCount: outline.sections.length,
+        language: stored.intake.language,
+        groundingMode: stored.intake.sourceHints?.length ? 'source_refs' : 'conversation',
+      });
       logger.info(
         `${LOG_PREFIX} draft ready: generation=${draft.id} sections=${outline.sections.length} artifact=${result.artifactId}`
       );
@@ -581,6 +690,15 @@ export async function startDoc(params: {
       const message = err instanceof Error ? err.message : String(err);
       setDocRuntime(draft.id, { state: 'error', error: message, warnings: [] });
       markDraftFailedBestEffort(params.organizationId, draft.id, draft.title);
+      void trackDeliverableEvent({
+        organizationId: params.organizationId,
+        userId: params.userId,
+        generationId: draft.id,
+        format: 'doc',
+        event: 'failed',
+        durationMs: Date.now() - generationStartedAt,
+        error: message,
+      });
       logger.error(`${LOG_PREFIX} generation failed: generation=${draft.id} — ${message}`);
     }
   })();
