@@ -30,6 +30,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_TABLE_FORM_INTAKE_JWT: z.boolean().default(false),
   ENABLE_V8_GLOBAL: z.boolean().default(false),
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
+  ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -111,6 +112,11 @@ export function loadFeatureFlags(): FeatureFlags {
 
     // V8: shadow mode — run V8 logic alongside legacy without user-visible effects
     ENABLE_V8_SHADOW_MODE: process.env.ENABLE_V8_SHADOW_MODE === 'true',
+
+    // Deliverables light runtime (DELIVERABLES_LIGHT_TARGET.md): unified async
+    // generation contract /api/deliverables/generations. Opt-in; when off the
+    // router answers 404 and the legacy presentation flow is untouched.
+    ENABLE_DELIVERABLES_LIGHT: process.env.ENABLE_DELIVERABLES_LIGHT === 'true',
   };
 
   // Validate configuration
