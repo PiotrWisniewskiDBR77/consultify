@@ -781,222 +781,222 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       {/* Table Container - matching Decisions style; canon §7: table + side preview */}
       <div className="flex-1 min-h-0 flex gap-1.5 p-4">
         <div className="flex-1 min-w-0 overflow-y-auto">
-        {filteredTemplates.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl">
-            <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-4">
-              <FileText size={28} className="text-slate-500" />
+          {filteredTemplates.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl">
+              <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 inline-block mb-4">
+                <FileText size={28} className="text-slate-500" />
+              </div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {searchQuery ? 'No templates match your search' : 'No templates found'}
+              </p>
+              <p className="text-xs text-slate-500">
+                {searchQuery
+                  ? 'Try adjusting your search terms'
+                  : 'Create a new template to get started'}
+              </p>
             </div>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {searchQuery ? 'No templates match your search' : 'No templates found'}
-            </p>
-            <p className="text-xs text-slate-500">
-              {searchQuery
-                ? 'Try adjusting your search terms'
-                : 'Create a new template to get started'}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl overflow-x-auto">
-            <table className="w-full" style={{ minWidth: 900 }}>
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                  {/* Select All */}
-                  <th className="w-10 px-2 py-2">
-                    <button
-                      onClick={() => handleSelectAll(!allSelected)}
-                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                        allSelected
-                          ? 'bg-primary-500 border-primary-500 text-white'
-                          : someSelected
-                            ? 'bg-primary-500/50 border-primary-500 text-white'
-                            : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
-                      }`}
+          ) : (
+            <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700/50 rounded-xl overflow-x-auto">
+              <table className="w-full" style={{ minWidth: 900 }}>
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
+                    {/* Select All */}
+                    <th className="w-10 px-2 py-2">
+                      <button
+                        onClick={() => handleSelectAll(!allSelected)}
+                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                          allSelected
+                            ? 'bg-primary-500 border-primary-500 text-white'
+                            : someSelected
+                              ? 'bg-primary-500/50 border-primary-500 text-white'
+                              : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-500 dark:hover:text-slate-400'
+                        }`}
+                      >
+                        {allSelected ? (
+                          <CheckSquare size={14} />
+                        ) : someSelected ? (
+                          <Minus size={14} />
+                        ) : (
+                          <Square size={14} />
+                        )}
+                      </button>
+                    </th>
+
+                    {/* Type with Filter */}
+                    <th
+                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      style={{ width: columnWidths.type }}
                     >
-                      {allSelected ? (
-                        <CheckSquare size={14} />
-                      ) : someSelected ? (
-                        <Minus size={14} />
-                      ) : (
-                        <Square size={14} />
-                      )}
-                    </button>
-                  </th>
-
-                  {/* Type with Filter */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.type }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={
-                          (tableFilters.type as string[])?.length ? 'text-primary-500' : ''
-                        }
-                      >
-                        Type
-                      </span>
-                      <FilterDropdown
-                        column={TEMPLATE_COLUMNS.find((c) => c.id === 'type')!}
-                        value={tableFilters.type as string[]}
-                        onChange={(val) => handleFilterChange('type', val as string[])}
-                        isOpen={openFilterId === 'type'}
-                        onToggle={() => setOpenFilterId(openFilterId === 'type' ? null : 'type')}
-                        onClose={() => setOpenFilterId(null)}
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={
+                            (tableFilters.type as string[])?.length ? 'text-primary-500' : ''
+                          }
+                        >
+                          Type
+                        </span>
+                        <FilterDropdown
+                          column={TEMPLATE_COLUMNS.find((c) => c.id === 'type')!}
+                          value={tableFilters.type as string[]}
+                          onChange={(val) => handleFilterChange('type', val as string[])}
+                          isOpen={openFilterId === 'type'}
+                          onToggle={() => setOpenFilterId(openFilterId === 'type' ? null : 'type')}
+                          onClose={() => setOpenFilterId(null)}
+                        />
+                      </div>
+                      <ColumnResizer
+                        columnId="type"
+                        currentWidth={columnWidths.type}
+                        minWidth={80}
+                        maxWidth={140}
+                        onResize={handleColumnResize}
                       />
-                    </div>
-                    <ColumnResizer
-                      columnId="type"
-                      currentWidth={columnWidths.type}
-                      minWidth={80}
-                      maxWidth={140}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
+                    </th>
 
-                  {/* Indicator (dot) */}
-                  <th className="w-8 px-1 py-2"></th>
+                    {/* Indicator (dot) */}
+                    <th className="w-8 px-1 py-2"></th>
 
-                  {/* Template Name */}
-                  <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Template
-                  </th>
+                    {/* Template Name */}
+                    <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Template
+                    </th>
 
-                  {/* Module with Filter */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.sourceType }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={
-                          (tableFilters.sourceType as string[])?.length ? 'text-primary-500' : ''
-                        }
-                      >
-                        Module
-                      </span>
-                      <FilterDropdown
-                        column={TEMPLATE_COLUMNS.find((c) => c.id === 'sourceType')!}
-                        value={tableFilters.sourceType as string[]}
-                        onChange={(val) => handleFilterChange('sourceType', val as string[])}
-                        isOpen={openFilterId === 'sourceType'}
-                        onToggle={() =>
-                          setOpenFilterId(openFilterId === 'sourceType' ? null : 'sourceType')
-                        }
-                        onClose={() => setOpenFilterId(null)}
+                    {/* Module with Filter */}
+                    <th
+                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      style={{ width: columnWidths.sourceType }}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={
+                            (tableFilters.sourceType as string[])?.length ? 'text-primary-500' : ''
+                          }
+                        >
+                          Module
+                        </span>
+                        <FilterDropdown
+                          column={TEMPLATE_COLUMNS.find((c) => c.id === 'sourceType')!}
+                          value={tableFilters.sourceType as string[]}
+                          onChange={(val) => handleFilterChange('sourceType', val as string[])}
+                          isOpen={openFilterId === 'sourceType'}
+                          onToggle={() =>
+                            setOpenFilterId(openFilterId === 'sourceType' ? null : 'sourceType')
+                          }
+                          onClose={() => setOpenFilterId(null)}
+                        />
+                      </div>
+                      <ColumnResizer
+                        columnId="sourceType"
+                        currentWidth={columnWidths.sourceType}
+                        minWidth={100}
+                        maxWidth={180}
+                        onResize={handleColumnResize}
                       />
-                    </div>
-                    <ColumnResizer
-                      columnId="sourceType"
-                      currentWidth={columnWidths.sourceType}
-                      minWidth={100}
-                      maxWidth={180}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
+                    </th>
 
-                  {/* Audience with Filter */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.audience }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={
-                          (tableFilters.audience as string[])?.length ? 'text-primary-500' : ''
-                        }
-                      >
-                        Audience
-                      </span>
-                      <FilterDropdown
-                        column={TEMPLATE_COLUMNS.find((c) => c.id === 'audience')!}
-                        value={tableFilters.audience as string[]}
-                        onChange={(val) => handleFilterChange('audience', val as string[])}
-                        isOpen={openFilterId === 'audience'}
-                        onToggle={() =>
-                          setOpenFilterId(openFilterId === 'audience' ? null : 'audience')
-                        }
-                        onClose={() => setOpenFilterId(null)}
+                    {/* Audience with Filter */}
+                    <th
+                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      style={{ width: columnWidths.audience }}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={
+                            (tableFilters.audience as string[])?.length ? 'text-primary-500' : ''
+                          }
+                        >
+                          Audience
+                        </span>
+                        <FilterDropdown
+                          column={TEMPLATE_COLUMNS.find((c) => c.id === 'audience')!}
+                          value={tableFilters.audience as string[]}
+                          onChange={(val) => handleFilterChange('audience', val as string[])}
+                          isOpen={openFilterId === 'audience'}
+                          onToggle={() =>
+                            setOpenFilterId(openFilterId === 'audience' ? null : 'audience')
+                          }
+                          onClose={() => setOpenFilterId(null)}
+                        />
+                      </div>
+                      <ColumnResizer
+                        columnId="audience"
+                        currentWidth={columnWidths.audience}
+                        minWidth={80}
+                        maxWidth={130}
+                        onResize={handleColumnResize}
                       />
-                    </div>
-                    <ColumnResizer
-                      columnId="audience"
-                      currentWidth={columnWidths.audience}
-                      minWidth={80}
-                      maxWidth={130}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
+                    </th>
 
-                  {/* User */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.createdBy }}
-                  >
-                    <span>User</span>
-                    <ColumnResizer
-                      columnId="createdBy"
-                      currentWidth={columnWidths.createdBy}
-                      minWidth={100}
-                      maxWidth={160}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
+                    {/* User */}
+                    <th
+                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      style={{ width: columnWidths.createdBy }}
+                    >
+                      <span>User</span>
+                      <ColumnResizer
+                        columnId="createdBy"
+                        currentWidth={columnWidths.createdBy}
+                        minWidth={100}
+                        maxWidth={160}
+                        onResize={handleColumnResize}
+                      />
+                    </th>
 
-                  {/* Sections */}
-                  <th
-                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.sections }}
-                  >
-                    <span>Sections</span>
-                    <ColumnResizer
-                      columnId="sections"
-                      currentWidth={columnWidths.sections}
-                      minWidth={60}
-                      maxWidth={100}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
+                    {/* Sections */}
+                    <th
+                      className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      style={{ width: columnWidths.sections }}
+                    >
+                      <span>Sections</span>
+                      <ColumnResizer
+                        columnId="sections"
+                        currentWidth={columnWidths.sections}
+                        minWidth={60}
+                        maxWidth={100}
+                        onResize={handleColumnResize}
+                      />
+                    </th>
 
-                  {/* Updated */}
-                  <th
-                    className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
-                    style={{ width: columnWidths.updatedAt }}
-                  >
-                    <span>Updated</span>
-                    <ColumnResizer
-                      columnId="updatedAt"
-                      currentWidth={columnWidths.updatedAt}
-                      minWidth={80}
-                      maxWidth={130}
-                      onResize={handleColumnResize}
-                    />
-                  </th>
+                    {/* Updated */}
+                    <th
+                      className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+                      style={{ width: columnWidths.updatedAt }}
+                    >
+                      <span>Updated</span>
+                      <ColumnResizer
+                        columnId="updatedAt"
+                        currentWidth={columnWidths.updatedAt}
+                        minWidth={80}
+                        maxWidth={130}
+                        onResize={handleColumnResize}
+                      />
+                    </th>
 
-                  {/* Actions */}
-                  <th
-                    className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
-                    style={{ width: columnWidths.actions }}
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {filteredTemplates.map((template) => {
-                    const typeConfig = getTypeBadgeConfig(template.isSystem);
-                    const sourceConfig = getSourceTypeBadgeConfig(template.sourceType);
-                    const TypeIcon = typeConfig.icon;
+                    {/* Actions */}
+                    <th
+                      className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                      style={{ width: columnWidths.actions }}
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {filteredTemplates.map((template) => {
+                      const typeConfig = getTypeBadgeConfig(template.isSystem);
+                      const sourceConfig = getSourceTypeBadgeConfig(template.sourceType);
+                      const TypeIcon = typeConfig.icon;
 
-                    return (
-                      <motion.tr
-                        key={template.id}
-                        variants={rowVariants}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        onClick={() => setPreviewId(template.id)}
-                        className={`
+                      return (
+                        <motion.tr
+                          key={template.id}
+                          variants={rowVariants}
+                          initial="initial"
+                          animate="animate"
+                          exit="exit"
+                          onClick={() => setPreviewId(template.id)}
+                          className={`
                           group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
                           ${
                             previewId === template.id
@@ -1008,126 +1008,128 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
                           transition-colors duration-150
                           hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
                         `}
-                      >
-                        {/* Checkbox */}
-                        <td className="w-10 px-2 py-2.5">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleSelect(template.id);
-                            }}
-                            className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
-                              selectedIds.has(template.id)
-                                ? 'bg-primary-500 border-primary-500 text-white'
-                                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
-                            }`}
-                          >
-                            {selectedIds.has(template.id) && <CheckSquare size={12} />}
-                          </button>
-                        </td>
-
-                        {/* Type Badge */}
-                        <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
-                          <span className={`${NEUTRAL_CHIP} text-[11px] font-semibold uppercase`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${typeConfig.dot}`} />
-                            <TypeIcon size={11} className="text-slate-500 dark:text-slate-400" />
-                            {typeConfig.label}
-                          </span>
-                        </td>
-
-                        {/* Indicator Dot */}
-                        <td className="w-8 px-1 py-2.5">
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full ${typeConfig.dot}`}
-                            title={template.isSystem ? 'System template' : 'Organization template'}
-                          />
-                        </td>
-
-                        {/* Template Name */}
-                        <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-slate-900 dark:text-white">
-                              {template.name}
-                            </span>
-                            {template.description && (
-                              <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">
-                                {template.description}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Module */}
-                        <td className="px-3 py-2.5" style={{ width: columnWidths.sourceType }}>
-                          <span className={`${NEUTRAL_CHIP} text-xs font-medium`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${sourceConfig.dot}`} />
-                            {template.sourceType || '—'}
-                          </span>
-                        </td>
-
-                        {/* Audience */}
-                        <td className="px-3 py-2.5" style={{ width: columnWidths.audience }}>
-                          {(() => {
-                            const audienceConfig = getAudienceBadgeConfig(template.audience);
-                            return (
-                              <span className={`${NEUTRAL_CHIP} text-xs font-medium`}>
-                                <span
-                                  className={`h-1.5 w-1.5 rounded-full ${audienceConfig.dot}`}
-                                />
-                                {audienceConfig.label}
-                              </span>
-                            );
-                          })()}
-                        </td>
-
-                        {/* User */}
-                        <td className="px-3 py-2.5" style={{ width: columnWidths.createdBy }}>
-                          <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
-                            <User size={13} className="text-slate-600 dark:text-slate-500" />
-                            <span className="truncate">
-                              {template.createdByName || (template.isSystem ? 'System' : '—')}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Sections */}
-                        <td
-                          className="px-3 py-2.5 text-right"
-                          style={{ width: columnWidths.sections }}
                         >
-                          <span className="text-sm tabular-nums text-slate-700 dark:text-slate-400">
-                            {template.sections?.length || 0}
-                          </span>
-                        </td>
+                          {/* Checkbox */}
+                          <td className="w-10 px-2 py-2.5">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelect(template.id);
+                              }}
+                              className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                                selectedIds.has(template.id)
+                                  ? 'bg-primary-500 border-primary-500 text-white'
+                                  : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+                              }`}
+                            >
+                              {selectedIds.has(template.id) && <CheckSquare size={12} />}
+                            </button>
+                          </td>
 
-                        {/* Updated */}
-                        <td className="px-3 py-2.5" style={{ width: columnWidths.updatedAt }}>
-                          <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
-                            <Calendar size={12} className="text-slate-600 dark:text-slate-500" />
-                            {formatDate(template.updatedAt || template.createdAt)}
-                          </div>
-                        </td>
+                          {/* Type Badge */}
+                          <td className="px-3 py-2.5" style={{ width: columnWidths.type }}>
+                            <span className={`${NEUTRAL_CHIP} text-[11px] font-semibold uppercase`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${typeConfig.dot}`} />
+                              <TypeIcon size={11} className="text-slate-500 dark:text-slate-400" />
+                              {typeConfig.label}
+                            </span>
+                          </td>
 
-                        {/* Actions */}
-                        <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
-                          <div
-                            className="flex items-center justify-end"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <RowActionsMenu
-                              iconVariant="vertical"
-                              actions={getRowActions(template)}
+                          {/* Indicator Dot */}
+                          <td className="w-8 px-1 py-2.5">
+                            <div
+                              className={`w-2.5 h-2.5 rounded-full ${typeConfig.dot}`}
+                              title={
+                                template.isSystem ? 'System template' : 'Organization template'
+                              }
                             />
-                          </div>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
-        )}
+                          </td>
+
+                          {/* Template Name */}
+                          <td className="px-3 py-2.5" style={{ minWidth: 200 }}>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                {template.name}
+                              </span>
+                              {template.description && (
+                                <span className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                                  {template.description}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Module */}
+                          <td className="px-3 py-2.5" style={{ width: columnWidths.sourceType }}>
+                            <span className={`${NEUTRAL_CHIP} text-xs font-medium`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${sourceConfig.dot}`} />
+                              {template.sourceType || '—'}
+                            </span>
+                          </td>
+
+                          {/* Audience */}
+                          <td className="px-3 py-2.5" style={{ width: columnWidths.audience }}>
+                            {(() => {
+                              const audienceConfig = getAudienceBadgeConfig(template.audience);
+                              return (
+                                <span className={`${NEUTRAL_CHIP} text-xs font-medium`}>
+                                  <span
+                                    className={`h-1.5 w-1.5 rounded-full ${audienceConfig.dot}`}
+                                  />
+                                  {audienceConfig.label}
+                                </span>
+                              );
+                            })()}
+                          </td>
+
+                          {/* User */}
+                          <td className="px-3 py-2.5" style={{ width: columnWidths.createdBy }}>
+                            <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                              <User size={13} className="text-slate-600 dark:text-slate-500" />
+                              <span className="truncate">
+                                {template.createdByName || (template.isSystem ? 'System' : '—')}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Sections */}
+                          <td
+                            className="px-3 py-2.5 text-right"
+                            style={{ width: columnWidths.sections }}
+                          >
+                            <span className="text-sm tabular-nums text-slate-700 dark:text-slate-400">
+                              {template.sections?.length || 0}
+                            </span>
+                          </td>
+
+                          {/* Updated */}
+                          <td className="px-3 py-2.5" style={{ width: columnWidths.updatedAt }}>
+                            <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                              <Calendar size={12} className="text-slate-600 dark:text-slate-500" />
+                              {formatDate(template.updatedAt || template.createdAt)}
+                            </div>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-3 py-2.5" style={{ width: columnWidths.actions }}>
+                            <div
+                              className="flex items-center justify-end"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <RowActionsMenu
+                                iconVariant="vertical"
+                                actions={getRowActions(template)}
+                              />
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Side preview pane — canon §7 */}
@@ -1140,10 +1142,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
           const sourceConfig = getSourceTypeBadgeConfig(previewTpl.sourceType);
           const audienceConfig = getAudienceBadgeConfig(previewTpl.audience);
           return (
-            <div
-              className="shrink-0 overflow-y-auto"
-              style={{ width: 'clamp(340px, 28%, 480px)' }}
-            >
+            <div className="shrink-0 overflow-y-auto" style={{ width: 'clamp(340px, 28%, 480px)' }}>
               <div className="rounded-xl bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] backdrop-blur">
                 <div className="sticky top-0 z-10 flex items-center gap-2 px-4 py-3 border-b border-slate-200/60 dark:border-white/[0.05] bg-white/80 dark:bg-navy-900/80 backdrop-blur">
                   <h3 className="flex-1 min-w-0 truncate text-sm font-semibold text-slate-900 dark:text-white">

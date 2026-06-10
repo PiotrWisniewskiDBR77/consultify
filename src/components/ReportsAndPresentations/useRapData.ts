@@ -16,7 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders } from '../../services/api';
+import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
 import type {
   ArtifactGovernanceSummary,
   PresentationItem,
@@ -461,6 +461,10 @@ function mapArtifactReport(raw: any): ReportItem {
 }
 
 export function useReports() {
+  // Sample/demo R&P artifacts are gated behind explicit demo mode (shouldAllowDemoData);
+  // for real tenants only canonical artifacts are ever served. In demo mode an empty
+  // canonical load is expected (data arrives via the Atelier Toys seed), not an error.
+  const allowDemoData = shouldAllowDemoData();
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -483,10 +487,10 @@ export function useReports() {
       }
 
       setReports([]);
-      setError('Canonical artifact registry failed to load reports.');
+      setError(allowDemoData ? null : 'Canonical artifact registry failed to load reports.');
     } catch {
       setReports([]);
-      setError('Canonical artifact registry failed to load reports.');
+      setError(allowDemoData ? null : 'Canonical artifact registry failed to load reports.');
     } finally {
       setLoading(false);
     }

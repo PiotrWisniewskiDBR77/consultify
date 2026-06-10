@@ -675,7 +675,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
         title: row.name || 'Initiative',
       });
       const selectedBenefitRow = selectedBenefitId
-        ? filteredInitiatives.find((r) => r.id === selectedBenefitId) ?? null
+        ? (filteredInitiatives.find((r) => r.id === selectedBenefitId) ?? null)
         : null;
       const selectedBenefitItem: BenefitItemWithTitle | null = selectedBenefitRow
         ? toBenefitItem(selectedBenefitRow)
@@ -718,25 +718,33 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                   {initiative.axis && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">{t('benefits.axis', 'Axis')}</span>
-                      <span className="text-slate-700 dark:text-slate-200 font-medium">{initiative.axis}</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-medium">
+                        {initiative.axis}
+                      </span>
                     </div>
                   )}
                   {initiative.progress != null && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">{t('benefits.progress', 'Progress')}</span>
-                      <span className="text-slate-700 dark:text-slate-200 font-medium">{initiative.progress}%</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-medium">
+                        {initiative.progress}%
+                      </span>
                     </div>
                   )}
                   {initiative.expectedRoi != null && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">{t('benefits.roi', 'Expected ROI')}</span>
-                      <span className="text-slate-700 dark:text-slate-200 font-medium">{initiative.expectedRoi}%</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-medium">
+                        {initiative.expectedRoi}%
+                      </span>
                     </div>
                   )}
                   {initiative.projectName && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">{t('benefits.project', 'Project')}</span>
-                      <span className="text-slate-700 dark:text-slate-200 font-medium truncate max-w-[120px]">{initiative.projectName}</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-medium truncate max-w-[120px]">
+                        {initiative.projectName}
+                      </span>
                     </div>
                   )}
                 </div>

@@ -12267,9 +12267,7 @@ export const Api = {
         id: String(entry.id ?? ''),
         timestamp: entry.time ?? entry.created_at ?? '',
         status:
-          entry.status === 'failed' || entry.status === 'suspicious'
-            ? entry.status
-            : 'success',
+          entry.status === 'failed' || entry.status === 'suspicious' ? entry.status : 'success',
         location: entry.location ?? 'Unknown location',
         ip: entry.ip_address ?? entry.ip ?? '',
         device: entry.device ?? 'Unknown Device',

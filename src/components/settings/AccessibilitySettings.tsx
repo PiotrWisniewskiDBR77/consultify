@@ -17,12 +17,12 @@ import { Banner } from '@/components/shared/Banner';
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
-import { normalizeApiErrorMessage } from '../../utils/apiError';
 import {
   AccessibilityPreferences,
   applyAccessibilityPreferences,
   DEFAULT_ACCESSIBILITY_PREFERENCES as DEFAULT_PREFERENCES,
 } from '../../utils/accessibilityRuntime';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 import { SettingsButtonGroup, SettingsDivider, SettingsSection, SettingsToggle } from './shared';
 

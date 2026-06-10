@@ -1,6 +1,11 @@
 /**
  * MyTasksListContent - Professional task table for MyWorkHub
  * Interview-style design with hover animations and resizable columns
+ *
+ * Scope: personal tasks — renders the current user's personal tasks served by the
+ * canonical `/my-work/personal-tasks` endpoint (org + assignee scoped). By default
+ * the terminal statuses `done/completed/validated` are de-prioritised (sorted to the
+ * bottom and hidden from the active list) so the view surfaces actionable work.
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -33,6 +38,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
+  type TableSettingsColumn,
+  TableSettingsPopover,
+} from '@/components/shared/ModuleHub/TableSettingsPopover';
+import {
   type ActionRow,
   type ExtraCopyFormat,
   type MetaPill,
@@ -43,10 +52,6 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import {
-  type TableSettingsColumn,
-  TableSettingsPopover,
-} from '@/components/shared/ModuleHub/TableSettingsPopover';
 import {
   type RowAction,
   type RowActionSection,
@@ -943,11 +948,7 @@ const TaskTableRow: React.FC<{
                                     ? new Date(task.dueDate)
                                     : new Date();
                                 base.setDate(base.getDate() + d);
-                                onInlineEdit(
-                                  task.id,
-                                  'dueDate',
-                                  base.toISOString().split('T')[0]
-                                );
+                                onInlineEdit(task.id, 'dueDate', base.toISOString().split('T')[0]);
                               },
                             })),
                           } satisfies RowAction,

@@ -256,10 +256,7 @@ export const BecomePartnerView: React.FC = () => {
                       </h4>
                       <ul className="space-y-1.5">
                         {topBenefits.map((benefit, bIndex) => (
-                          <li
-                            key={bIndex}
-                            className="flex items-start gap-2 text-sm text-white/70"
-                          >
+                          <li key={bIndex} className="flex items-start gap-2 text-sm text-white/70">
                             <CheckCircle2
                               size={14}
                               className="mt-0.5 text-primary-400 flex-shrink-0"

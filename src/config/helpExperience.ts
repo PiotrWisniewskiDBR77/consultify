@@ -422,7 +422,10 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
       faq(
         'journey-interview-insight-1',
         'interview',
-        text('How is an insight from interviews documented?', 'Jak dokumentuje się wniosek z wywiadów?'),
+        text(
+          'How is an insight from interviews documented?',
+          'Jak dokumentuje się wniosek z wywiadów?'
+        ),
         text(
           'Each Insight (Wniosek) card follows one standard: a conclusion-first summary, themes and issues, and an evidence map that links every claim back to its source (a session, document, or data point). Unsupported claims are marked as hypotheses with a confidence level.',
           'Każda karta Wniosku trzyma jeden standard: podsumowanie zaczynające się od konkluzji, motywy i problemy oraz mapę dowodów, która wiąże każdą tezę z jej źródłem (sesją, dokumentem lub danymi). Tezy bez dowodu są oznaczone jako hipotezy z poziomem pewności.'
@@ -1627,7 +1630,10 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
       faq(
         'support-document-studio-1',
         'document_studio',
-        text('When do I use Document Studio vs Presentation Studio?', 'Kiedy używać Document Studio, a kiedy Presentation Studio?'),
+        text(
+          'When do I use Document Studio vs Presentation Studio?',
+          'Kiedy używać Document Studio, a kiedy Presentation Studio?'
+        ),
         text(
           'Use Document Studio for written, detailed deliverables. Use Presentation Studio when the output is a slide deck.',
           'Używaj Document Studio do pisanych, szczegółowych deliverables. Używaj Presentation Studio, gdy wynikiem jest prezentacja.'
@@ -1708,10 +1714,7 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
       makeGuide(
         'deck-one-message',
         text('One message per slide', 'Jeden komunikat na slajd'),
-        text(
-          'If a slide says two things, split it.',
-          'Jeśli slajd mówi dwie rzeczy, podziel go.'
-        )
+        text('If a slide says two things, split it.', 'Jeśli slajd mówi dwie rzeczy, podziel go.')
       ),
       SHARED_GUIDES.askAi,
     ],
@@ -1719,7 +1722,10 @@ export const HELP_DOCUMENTS: Record<string, HelpDocument> = {
       faq(
         'support-presentation-studio-1',
         'presentation_studio',
-        text('Can I start from an existing document?', 'Czy mogę zacząć od istniejącego dokumentu?'),
+        text(
+          'Can I start from an existing document?',
+          'Czy mogę zacząć od istniejącego dokumentu?'
+        ),
         text(
           'Yes — Presentation Studio can turn a Document Studio document or any content into a structured deck.',
           'Tak — Presentation Studio potrafi zamienić dokument z Document Studio lub dowolną treść w ustrukturyzowaną prezentację.'

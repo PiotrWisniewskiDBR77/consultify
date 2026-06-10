@@ -58,9 +58,9 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { AssessmentItemPreview, type AssessmentItem } from './AssessmentItemPreview';
-import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { type AssessmentItem, AssessmentItemPreview } from './AssessmentItemPreview';
+import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
@@ -1516,7 +1516,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         title: (row.name as string) || 'Assessment',
       });
       const selectedRow = selectedAssessmentId
-        ? currentData.find((r: any) => r.id === selectedAssessmentId) ?? null
+        ? (currentData.find((r: any) => r.id === selectedAssessmentId) ?? null)
         : null;
       const selectedItem: AssessmentItemWithTitle | null = selectedRow ? toItem(selectedRow) : null;
 

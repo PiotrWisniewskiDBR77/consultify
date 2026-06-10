@@ -35,7 +35,6 @@ export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export { NModeSectionWrapper } from './NModeSectionWrapper';
 export { NModeShell } from './NModeShell';
-export { SummaryCard } from './SummaryCard';
 export {
   NModeToolbar,
   ToolbarAISolidButton,
@@ -44,8 +43,10 @@ export {
   ToolbarIconButton,
   ToolbarSubtleButton,
 } from './NModeToolbar';
+export { SummaryCard } from './SummaryCard';
 
 // ── Types ───────────────────────────────────────────────────────────────────
+export type { NModeToolbarProps } from './NModeToolbar';
 export type { SummaryCardMetric, SummaryCardMetricTone, SummaryCardProps } from './SummaryCard';
 export type {
   ActionVariant,
@@ -58,4 +59,3 @@ export type {
   PropertyFieldOption,
   PropertyFieldType,
 } from './types';
-export type { NModeToolbarProps } from './NModeToolbar';

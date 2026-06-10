@@ -1190,7 +1190,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     );
     const csv = [headers.join(','), ...rows].join('\n');
     try {
-      const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([` ${csv}`], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -1200,7 +1200,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       toast.success(
-        t('initiatives.bulk.exported', { count: selected.length, defaultValue: 'Exported {{count}}' })
+        t('initiatives.bulk.exported', {
+          count: selected.length,
+          defaultValue: 'Exported {{count}}',
+        })
       );
     } catch {
       toast.error(t('initiatives.bulk.exportFailed', 'Export failed'));
@@ -1757,11 +1760,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           {t('initiatives.bulk.tag', 'Tag')}
         </button>
         {/* Assign / Reassign — wired via bulk modal (owner change) */}
-        <button
-          type="button"
-          onClick={() => setShowBulkModal(true)}
-          className={bulkButtonBase}
-        >
+        <button type="button" onClick={() => setShowBulkModal(true)} className={bulkButtonBase}>
           <UserPlus className="h-3.5 w-3.5" />
           {t('initiatives.bulk.assign', 'Assign')}
         </button>
@@ -1781,7 +1780,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             );
             if (eligible.length === 0) {
               toast.error(
-                t('initiatives.bulk.archiveIneligible', 'Tylko zakończone/anulowane można archiwizować')
+                t(
+                  'initiatives.bulk.archiveIneligible',
+                  'Tylko zakończone/anulowane można archiwizować'
+                )
               );
               return;
             }

@@ -7,8 +7,8 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
-import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
+import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
 import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 
 import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';

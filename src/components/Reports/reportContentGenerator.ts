@@ -133,9 +133,10 @@ function healthToRag(health?: string, status?: string): RagLevel {
 function computeOverallRag(ctx: ReportDataContext): RagLevel {
   const blocked = ctx.blocked.length;
   const overdue = ctx.overdueDecisions.length;
-  const criticalRisks = ctx.riskSignals.filter((r) =>
-    String(r.severity).toLowerCase().includes('crit') ||
-    String(r.severity).toLowerCase().includes('high')
+  const criticalRisks = ctx.riskSignals.filter(
+    (r) =>
+      String(r.severity).toLowerCase().includes('crit') ||
+      String(r.severity).toLowerCase().includes('high')
   ).length;
   if (blocked > 0 || criticalRisks > 0) return 'red';
   if (overdue > 0 || ctx.missingDates.length > 0 || ctx.delaySignals.length > 0) return 'amber';
@@ -224,7 +225,11 @@ function blockedItemsSection(ctx: ReportDataContext, pl: boolean): ReportSection
     heading: tr(pl, 'Blocked Items', 'Zablokowane elementy'),
     intro:
       ctx.blocked.length > 0
-        ? tr(pl, `${ctx.blocked.length} initiative(s) are blocked.`, `${ctx.blocked.length} inicjatyw jest zablokowanych.`)
+        ? tr(
+            pl,
+            `${ctx.blocked.length} initiative(s) are blocked.`,
+            `${ctx.blocked.length} inicjatyw jest zablokowanych.`
+          )
         : undefined,
     blocks: [
       {
@@ -244,7 +249,11 @@ function dueSoonSection(ctx: ReportDataContext, pl: boolean): ReportSection {
       cells: [
         t.title,
         t.assigneeName || '—',
-        d === null ? '—' : d < 0 ? tr(pl, `${Math.abs(d)}d overdue`, `${Math.abs(d)}d po terminie`) : `${d}d`,
+        d === null
+          ? '—'
+          : d < 0
+            ? tr(pl, `${Math.abs(d)}d overdue`, `${Math.abs(d)}d po terminie`)
+            : `${d}d`,
       ],
       tone: d !== null && d < 0 ? 'critical' : d !== null && d <= 2 ? 'warn' : 'default',
     };
@@ -255,7 +264,11 @@ function dueSoonSection(ctx: ReportDataContext, pl: boolean): ReportSection {
     blocks: [
       {
         kind: 'table',
-        columns: [tr(pl, 'Task', 'Zadanie'), tr(pl, 'Owner', 'Właściciel'), tr(pl, 'Due', 'Termin')],
+        columns: [
+          tr(pl, 'Task', 'Zadanie'),
+          tr(pl, 'Owner', 'Właściciel'),
+          tr(pl, 'Due', 'Termin'),
+        ],
         rows,
         emptyText: tr(pl, 'Nothing due in the near window.', 'Brak zadań z bliskim terminem.'),
       },
@@ -265,18 +278,22 @@ function dueSoonSection(ctx: ReportDataContext, pl: boolean): ReportSection {
 
 function recentChangesSection(ctx: ReportDataContext, pl: boolean): ReportSection {
   const items: string[] = [];
-  ctx.delaySignals.slice(0, 5).forEach((d) =>
-    items.push(
-      tr(
-        pl,
-        `${d.entityName}: ${d.deviationType} by ${d.daysDeviation}d (${d.severity})`,
-        `${d.entityName}: ${d.deviationType} o ${d.daysDeviation}d (${d.severity})`
+  ctx.delaySignals
+    .slice(0, 5)
+    .forEach((d) =>
+      items.push(
+        tr(
+          pl,
+          `${d.entityName}: ${d.deviationType} by ${d.daysDeviation}d (${d.severity})`,
+          `${d.entityName}: ${d.deviationType} o ${d.daysDeviation}d (${d.severity})`
+        )
       )
-    )
-  );
-  ctx.riskSignals.slice(0, 5).forEach((r) =>
-    items.push(`${r.initiativeName ? `${r.initiativeName} — ` : ''}${r.title} (${r.severity})`)
-  );
+    );
+  ctx.riskSignals
+    .slice(0, 5)
+    .forEach((r) =>
+      items.push(`${r.initiativeName ? `${r.initiativeName} — ` : ''}${r.title} (${r.severity})`)
+    );
   return {
     id: 'recent',
     heading: tr(pl, 'Recent Changes & Signals', 'Ostatnie zmiany i sygnały'),
@@ -286,7 +303,11 @@ function recentChangesSection(ctx: ReportDataContext, pl: boolean): ReportSectio
         : {
             kind: 'callout',
             tone: 'good',
-            text: tr(pl, 'No new delay or risk signals this period.', 'Brak nowych sygnałów opóźnień lub ryzyk w tym okresie.'),
+            text: tr(
+              pl,
+              'No new delay or risk signals this period.',
+              'Brak nowych sygnałów opóźnień lub ryzyk w tym okresie.'
+            ),
           },
     ],
   };
@@ -297,7 +318,11 @@ function decisionsNeededSection(ctx: ReportDataContext, pl: boolean): ReportSect
   const rows: ReportTableRow[] = pending.slice(0, 12).map((d) => {
     const days = daysUntil(d.dueDate);
     return {
-      cells: [d.title, d.ownerName || '—', days === null ? '—' : days < 0 ? tr(pl, 'overdue', 'po terminie') : `${days}d`],
+      cells: [
+        d.title,
+        d.ownerName || '—',
+        days === null ? '—' : days < 0 ? tr(pl, 'overdue', 'po terminie') : `${days}d`,
+      ],
       tone: days !== null && days < 0 ? 'critical' : 'default',
     };
   });
@@ -307,7 +332,11 @@ function decisionsNeededSection(ctx: ReportDataContext, pl: boolean): ReportSect
     blocks: [
       {
         kind: 'table',
-        columns: [tr(pl, 'Decision', 'Decyzja'), tr(pl, 'Owner', 'Właściciel'), tr(pl, 'Due', 'Termin')],
+        columns: [
+          tr(pl, 'Decision', 'Decyzja'),
+          tr(pl, 'Owner', 'Właściciel'),
+          tr(pl, 'Due', 'Termin'),
+        ],
         rows,
         emptyText: tr(pl, 'No pending decisions.', 'Brak oczekujących decyzji.'),
       },
@@ -361,7 +390,8 @@ function risksSection(ctx: ReportDataContext, pl: boolean): ReportSection {
   const rows: ReportTableRow[] = ctx.riskSignals.slice(0, 15).map((r) => ({
     cells: [r.initiativeName || '—', r.title, r.severity, r.suggestedAction || '—'],
     tone:
-      String(r.severity).toLowerCase().includes('crit') || String(r.severity).toLowerCase().includes('high')
+      String(r.severity).toLowerCase().includes('crit') ||
+      String(r.severity).toLowerCase().includes('high')
         ? 'critical'
         : 'warn',
   }));
@@ -425,7 +455,11 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
             : {
                 kind: 'callout',
                 tone: 'good',
-                text: tr(pl, 'No recovery actions required — nothing is blocked.', 'Brak wymaganych działań naprawczych — nic nie jest zablokowane.'),
+                text: tr(
+                  pl,
+                  'No recovery actions required — nothing is blocked.',
+                  'Brak wymaganych działań naprawczych — nic nie jest zablokowane.'
+                ),
               },
         ],
       };
@@ -439,12 +473,21 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
         blocks: [
           {
             kind: 'table',
-            columns: [tr(pl, 'Entity', 'Element'), tr(pl, 'Deviation', 'Odchylenie'), tr(pl, 'Days', 'Dni'), tr(pl, 'Severity', 'Istotność')],
+            columns: [
+              tr(pl, 'Entity', 'Element'),
+              tr(pl, 'Deviation', 'Odchylenie'),
+              tr(pl, 'Days', 'Dni'),
+              tr(pl, 'Severity', 'Istotność'),
+            ],
             rows: ctx.delaySignals.slice(0, 20).map((d) => ({
               cells: [d.entityName, d.deviationType, d.daysDeviation, d.severity],
               tone: Math.abs(d.daysDeviation) > 7 ? 'critical' : 'warn',
             })),
-            emptyText: tr(pl, 'No milestone slippage detected.', 'Nie wykryto poślizgów kamieni milowych.'),
+            emptyText: tr(
+              pl,
+              'No milestone slippage detected.',
+              'Nie wykryto poślizgów kamieni milowych.'
+            ),
           },
           {
             kind: 'table',
@@ -465,9 +508,17 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
           {
             kind: 'metrics',
             items: [
-              { label: tr(pl, 'Overload alerts', 'Alerty przeciążenia'), value: ctx.capacityAlerts.length, tone: ctx.capacityAlerts.length > 0 ? 'warn' : 'good' },
+              {
+                label: tr(pl, 'Overload alerts', 'Alerty przeciążenia'),
+                value: ctx.capacityAlerts.length,
+                tone: ctx.capacityAlerts.length > 0 ? 'warn' : 'good',
+              },
               { label: tr(pl, 'Open tasks', 'Otwarte zadania'), value: ctx.tasks.length },
-              { label: tr(pl, 'Unassigned', 'Nieprzypisane'), value: ctx.tasks.filter((t) => !t.assigneeName).length, tone: 'warn' },
+              {
+                label: tr(pl, 'Unassigned', 'Nieprzypisane'),
+                value: ctx.tasks.filter((t) => !t.assigneeName).length,
+                tone: 'warn',
+              },
             ],
           },
           {
@@ -489,7 +540,11 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
           {
             kind: 'metrics',
             items: [
-              { label: tr(pl, 'Overspend signals', 'Sygnały przekroczeń'), value: ctx.overspendSignals.length, tone: ctx.overspendSignals.length > 0 ? 'critical' : 'good' },
+              {
+                label: tr(pl, 'Overspend signals', 'Sygnały przekroczeń'),
+                value: ctx.overspendSignals.length,
+                tone: ctx.overspendSignals.length > 0 ? 'critical' : 'good',
+              },
               { label: tr(pl, 'Initiatives', 'Inicjatywy'), value: ctx.totalInitiatives },
             ],
           },
@@ -508,7 +563,11 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
             : {
                 kind: 'callout',
                 tone: 'good',
-                text: tr(pl, 'No budget overspend signals in the live data.', 'Brak sygnałów przekroczeń budżetu w danych na żywo.'),
+                text: tr(
+                  pl,
+                  'No budget overspend signals in the live data.',
+                  'Brak sygnałów przekroczeń budżetu w danych na żywo.'
+                ),
               },
         ],
       };
@@ -524,8 +583,16 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
           {
             kind: 'metrics',
             items: [
-              { label: tr(pl, 'Pending', 'Oczekujące'), value: pending.length, tone: pending.length > 0 ? 'warn' : 'good' },
-              { label: tr(pl, 'Overdue', 'Po terminie'), value: ctx.overdueDecisions.length, tone: ctx.overdueDecisions.length > 0 ? 'critical' : 'good' },
+              {
+                label: tr(pl, 'Pending', 'Oczekujące'),
+                value: pending.length,
+                tone: pending.length > 0 ? 'warn' : 'good',
+              },
+              {
+                label: tr(pl, 'Overdue', 'Po terminie'),
+                value: ctx.overdueDecisions.length,
+                tone: ctx.overdueDecisions.length > 0 ? 'critical' : 'good',
+              },
             ],
           },
         ],
@@ -561,9 +628,25 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
           {
             kind: 'metrics',
             items: [
-              { label: tr(pl, 'Program RAG', 'RAG programu'), value: ragLabelFor(overall, pl), tone: ragTone(overall) },
-              { label: tr(pl, 'Blockers', 'Blokady'), value: ctx.blocked.length, tone: ctx.blocked.length > 0 ? 'critical' : 'good' },
-              { label: tr(pl, 'Critical risks', 'Ryzyka krytyczne'), value: ctx.riskSignals.filter((r) => String(r.severity).toLowerCase().includes('crit') || String(r.severity).toLowerCase().includes('high')).length, tone: 'warn' },
+              {
+                label: tr(pl, 'Program RAG', 'RAG programu'),
+                value: ragLabelFor(overall, pl),
+                tone: ragTone(overall),
+              },
+              {
+                label: tr(pl, 'Blockers', 'Blokady'),
+                value: ctx.blocked.length,
+                tone: ctx.blocked.length > 0 ? 'critical' : 'good',
+              },
+              {
+                label: tr(pl, 'Critical risks', 'Ryzyka krytyczne'),
+                value: ctx.riskSignals.filter(
+                  (r) =>
+                    String(r.severity).toLowerCase().includes('crit') ||
+                    String(r.severity).toLowerCase().includes('high')
+                ).length,
+                tone: 'warn',
+              },
             ],
           },
         ],
@@ -581,7 +664,9 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
 
     case 'sponsor-onepager': {
       const overall = computeOverallRag(ctx);
-      const top3 = ctx.riskSignals.slice(0, 3).map((r) => `${r.initiativeName ? `${r.initiativeName}: ` : ''}${r.title} (${r.severity})`);
+      const top3 = ctx.riskSignals
+        .slice(0, 3)
+        .map((r) => `${r.initiativeName ? `${r.initiativeName}: ` : ''}${r.title} (${r.severity})`);
       const onePager: ReportSection = {
         id: 'onepager',
         heading: tr(pl, 'Executive Summary', 'Streszczenie wykonawcze'),
@@ -589,16 +674,37 @@ function sectionsForType(typeId: string, ctx: ReportDataContext, pl: boolean): R
           {
             kind: 'metrics',
             items: [
-              { label: tr(pl, 'Overall', 'Ogólnie'), value: ragLabelFor(overall, pl), tone: ragTone(overall) },
+              {
+                label: tr(pl, 'Overall', 'Ogólnie'),
+                value: ragLabelFor(overall, pl),
+                tone: ragTone(overall),
+              },
               { label: tr(pl, 'Initiatives', 'Inicjatywy'), value: ctx.totalInitiatives },
-              { label: tr(pl, 'Blockers', 'Blokady'), value: ctx.blocked.length, tone: ctx.blocked.length > 0 ? 'critical' : 'good' },
-              { label: tr(pl, 'Decisions for you', 'Decyzje dla Ciebie'), value: ctx.overdueDecisions.length, tone: ctx.overdueDecisions.length > 0 ? 'warn' : 'good' },
+              {
+                label: tr(pl, 'Blockers', 'Blokady'),
+                value: ctx.blocked.length,
+                tone: ctx.blocked.length > 0 ? 'critical' : 'good',
+              },
+              {
+                label: tr(pl, 'Decisions for you', 'Decyzje dla Ciebie'),
+                value: ctx.overdueDecisions.length,
+                tone: ctx.overdueDecisions.length > 0 ? 'warn' : 'good',
+              },
             ],
           },
           {
             kind: 'list',
             ordered: true,
-            items: top3.length > 0 ? top3 : [tr(pl, 'No top risks flagged this period.', 'Brak najważniejszych ryzyk w tym okresie.')],
+            items:
+              top3.length > 0
+                ? top3
+                : [
+                    tr(
+                      pl,
+                      'No top risks flagged this period.',
+                      'Brak najważniejszych ryzyk w tym okresie.'
+                    ),
+                  ],
           },
         ],
       };
@@ -684,7 +790,9 @@ export function reportDocumentToMarkdown(doc: ReportDocument): string {
         b.items.forEach((it, i) => out.push(b.ordered ? `${i + 1}. ${it}` : `- ${it}`));
         out.push('');
       } else if (b.kind === 'metrics') {
-        b.items.forEach((m) => out.push(`- **${m.label}:** ${m.value}${m.hint ? ` (${m.hint})` : ''}`));
+        b.items.forEach((m) =>
+          out.push(`- **${m.label}:** ${m.value}${m.hint ? ` (${m.hint})` : ''}`)
+        );
         out.push('');
       } else if (b.kind === 'table') {
         if (b.rows.length === 0) {

@@ -36,10 +36,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import {
-  type RowActionSection,
-  RowActionsMenu,
-} from '@/components/shared/RowActionsMenu';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
 import {

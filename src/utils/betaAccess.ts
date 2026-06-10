@@ -15,8 +15,8 @@
  * {@link BETA_MENU_STATUS} — no other change is required.
  */
 
-import { isAdminOwnerOrSuperAdminRole } from './roleGuards';
 import { MenuItem } from '../components/navigation/Sidebar/types';
+import { isAdminOwnerOrSuperAdminRole } from './roleGuards';
 
 export type BetaStatus = 'open' | 'closed';
 

@@ -138,63 +138,66 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
 
         <div className="flex items-center gap-2">
           {wordCount > 0 ? (
-            <span className="text-[10px] text-slate-400 dark:text-slate-500" aria-label={`${wordCount} ${isPolish ? 'słów' : 'words'}`}>
+            <span
+              className="text-[10px] text-slate-400 dark:text-slate-500"
+              aria-label={`${wordCount} ${isPolish ? 'słów' : 'words'}`}
+            >
               ~{wordCount} {isPolish ? 'słów' : 'words'}
             </span>
           ) : null}
-        {hasMenu ? (
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen((v) => !v);
-              }}
-              className={KEBAB_BUTTON}
-              aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
-              title={isPolish ? 'Opcje' : 'Options'}
-            >
-              <MoreVertical size={14} />
-            </button>
-            {menuOpen ? (
-              <>
-                <div className={KEBAB_BACKDROP} onClick={() => setMenuOpen(false)} />
-                <div className={KEBAB_MENU}>
-                  {actions.map((action, idx) => {
-                    const ActionIcon = action.icon;
-                    return (
-                      <React.Fragment key={action.id}>
-                        {action.id === 'copy' && idx > 0 ? (
-                          <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
-                        ) : null}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMenuOpen(false);
-                            action.onClick();
-                          }}
-                          disabled={action.disabled}
-                          className={`${KEBAB_ITEM}${action.disabled ? ' opacity-40' : ''}`}
-                        >
-                          {ActionIcon ? (
-                            <ActionIcon
-                              size={12}
-                              className={
-                                action.id === 'expand' || action.id === 'summarize'
-                                  ? 'text-primary-500'
-                                  : ''
-                              }
-                            />
+          {hasMenu ? (
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen((v) => !v);
+                }}
+                className={KEBAB_BUTTON}
+                aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
+                title={isPolish ? 'Opcje' : 'Options'}
+              >
+                <MoreVertical size={14} />
+              </button>
+              {menuOpen ? (
+                <>
+                  <div className={KEBAB_BACKDROP} onClick={() => setMenuOpen(false)} />
+                  <div className={KEBAB_MENU}>
+                    {actions.map((action, idx) => {
+                      const ActionIcon = action.icon;
+                      return (
+                        <React.Fragment key={action.id}>
+                          {action.id === 'copy' && idx > 0 ? (
+                            <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
                           ) : null}
-                          {action.label}
-                        </button>
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              </>
-            ) : null}
-          </div>
-        ) : null}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMenuOpen(false);
+                              action.onClick();
+                            }}
+                            disabled={action.disabled}
+                            className={`${KEBAB_ITEM}${action.disabled ? ' opacity-40' : ''}`}
+                          >
+                            {ActionIcon ? (
+                              <ActionIcon
+                                size={12}
+                                className={
+                                  action.id === 'expand' || action.id === 'summarize'
+                                    ? 'text-primary-500'
+                                    : ''
+                                }
+                              />
+                            ) : null}
+                            {action.label}
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
 

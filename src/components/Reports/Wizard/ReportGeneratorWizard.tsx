@@ -44,19 +44,19 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { type WizardStep, WizardModal } from '@/components/shared/WizardModal';
+import { WizardModal, type WizardStep } from '@/components/shared/WizardModal';
 
 import {
   type CadenceMode,
   type RecurrenceUnit,
+  REPORT_CREATED_EVENT,
+  REPORT_TYPES,
+  REPORT_WIZARD_OPEN_EVENT,
   type ReportConfig,
   type ReportDensity,
   type ReportIconName,
   type ReportTypeDef,
   type ReportTypeId,
-  REPORT_CREATED_EVENT,
-  REPORT_TYPES,
-  REPORT_WIZARD_OPEN_EVENT,
   resolveCadenceLabel,
 } from './reportWizardTypes';
 
@@ -503,9 +503,7 @@ export const ReportGeneratorWizard: React.FC = () => {
           type="text"
           value={titleOverride}
           onChange={(e) => setTitleOverride(e.target.value)}
-          placeholder={
-            selectedType ? (isPolish ? selectedType.titlePl : selectedType.title) : ''
-          }
+          placeholder={selectedType ? (isPolish ? selectedType.titlePl : selectedType.title) : ''}
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
       </div>

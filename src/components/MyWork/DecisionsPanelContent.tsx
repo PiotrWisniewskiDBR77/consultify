@@ -34,10 +34,7 @@ import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import {
-  type RowActionSection,
-  RowActionsMenu,
-} from '@/components/shared/RowActionsMenu';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
@@ -589,10 +586,7 @@ const DecisionTableRow: React.FC<{
       {/* Priority */}
       {!hiddenColumns?.has('priority') && (
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.priority }}>
-          <PriorityChip
-            level={level}
-            label={priorityLabel(decision.priority, !!isPolish)}
-          />
+          <PriorityChip level={level} label={priorityLabel(decision.priority, !!isPolish)} />
         </td>
       )}
 
@@ -600,11 +594,7 @@ const DecisionTableRow: React.FC<{
       {!hiddenColumns?.has('date') && (
         <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.date }}>
           {dueDate ? (
-            <DueChip
-              label={formatDate(dueDate)}
-              risk={overdue ? 'overdue' : 'none'}
-              showIcon
-            />
+            <DueChip label={formatDate(dueDate)} risk={overdue ? 'overdue' : 'none'} showIcon />
           ) : (
             <MetaChip
               icon={Clock}
@@ -2089,107 +2079,110 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                                   className="z-[60] flex flex-col overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
                                   onClick={(event) => event.stopPropagation()}
                                 >
-                              <div className="px-2 pb-2 pt-1">
-                                <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                                  {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                                </div>
-                                <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                                  {isPolish
-                                    ? 'Wybierz widoczne kolumny.'
-                                    : 'Choose visible columns.'}
-                                </div>
-                              </div>
-                              <div className="space-y-0.5">
-                                {DECISION_COLUMNS.filter(
-                                  (c) => c.id !== 'select'
-                                ).map((col) => {
-                                  const alwaysVisible = col.id === 'title' || col.id === 'actions';
-                                  const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                                  const label =
-                                    col.id === 'type'
-                                      ? isPolish
-                                        ? 'Typ'
-                                        : 'Type'
-                                      : col.id === 'project'
-                                        ? isPolish
-                                          ? 'Projekt / Właściciel'
-                                          : 'Project / Owner'
-                                        : col.id === 'priority'
-                                          ? isPolish
-                                            ? 'Priorytet'
-                                            : 'Priority'
-                                          : col.id === 'date'
+                                  <div className="px-2 pb-2 pt-1">
+                                    <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                                      {isPolish ? 'Ustawienia widoku' : 'View settings'}
+                                    </div>
+                                    <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                      {isPolish
+                                        ? 'Wybierz widoczne kolumny.'
+                                        : 'Choose visible columns.'}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    {DECISION_COLUMNS.filter((c) => c.id !== 'select').map(
+                                      (col) => {
+                                        const alwaysVisible =
+                                          col.id === 'title' || col.id === 'actions';
+                                        const checked = alwaysVisible
+                                          ? true
+                                          : !hiddenSet.has(col.id);
+                                        const label =
+                                          col.id === 'type'
                                             ? isPolish
-                                              ? 'Termin'
-                                              : 'Due date'
-                                            : col.id === 'status'
-                                              ? 'Status'
-                                              : col.id === 'actions'
+                                              ? 'Typ'
+                                              : 'Type'
+                                            : col.id === 'project'
+                                              ? isPolish
+                                                ? 'Projekt / Właściciel'
+                                                : 'Project / Owner'
+                                              : col.id === 'priority'
                                                 ? isPolish
-                                                  ? 'Akcje'
-                                                  : 'Actions'
-                                                : col.label;
+                                                  ? 'Priorytet'
+                                                  : 'Priority'
+                                                : col.id === 'date'
+                                                  ? isPolish
+                                                    ? 'Termin'
+                                                    : 'Due date'
+                                                  : col.id === 'status'
+                                                    ? 'Status'
+                                                    : col.id === 'actions'
+                                                      ? isPolish
+                                                        ? 'Akcje'
+                                                        : 'Actions'
+                                                      : col.label;
 
-                                  return (
-                                    <label
-                                      key={col.id}
-                                      className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                                        alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                                      }`}
-                                    >
+                                        return (
+                                          <label
+                                            key={col.id}
+                                            className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
+                                              alwaysVisible ? 'opacity-55' : 'cursor-pointer'
+                                            }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={checked}
+                                              disabled={alwaysVisible}
+                                              onChange={() => {
+                                                if (alwaysVisible) return;
+                                                setHiddenColumns((prev) => {
+                                                  const set = new Set(prev);
+                                                  if (set.has(col.id)) set.delete(col.id);
+                                                  else set.add(col.id);
+                                                  const next = Array.from(set);
+                                                  try {
+                                                    localStorage.setItem(
+                                                      DECISIONS_TABLE_VIEW_STORAGE_KEY,
+                                                      JSON.stringify(next)
+                                                    );
+                                                  } catch {
+                                                    /* ignore */
+                                                  }
+                                                  return next;
+                                                });
+                                              }}
+                                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                            />
+                                            <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                              {label}
+                                            </span>
+                                            {alwaysVisible ? (
+                                              <span className="text-[10px] font-medium text-slate-600">
+                                                {isPolish ? 'Wymagane' : 'Required'}
+                                              </span>
+                                            ) : null}
+                                          </label>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                  <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
+                                    <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
                                       <input
                                         type="checkbox"
-                                        checked={checked}
-                                        disabled={alwaysVisible}
-                                        onChange={() => {
-                                          if (alwaysVisible) return;
-                                          setHiddenColumns((prev) => {
-                                            const set = new Set(prev);
-                                            if (set.has(col.id)) set.delete(col.id);
-                                            else set.add(col.id);
-                                            const next = Array.from(set);
-                                            try {
-                                              localStorage.setItem(
-                                                DECISIONS_TABLE_VIEW_STORAGE_KEY,
-                                                JSON.stringify(next)
-                                              );
-                                            } catch {
-                                              /* ignore */
-                                            }
-                                            return next;
-                                          });
-                                        }}
+                                        checked={showRowDescription}
+                                        onChange={(event) =>
+                                          updateRowDescriptionSetting(event.target.checked)
+                                        }
                                         className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
                                       />
                                       <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                        {label}
+                                        {isPolish
+                                          ? 'Pokaż opis / uzasadnienie'
+                                          : 'Show row description'}
                                       </span>
-                                      {alwaysVisible ? (
-                                        <span className="text-[10px] font-medium text-slate-600">
-                                          {isPolish ? 'Wymagane' : 'Required'}
-                                        </span>
-                                      ) : null}
                                     </label>
-                                  );
-                                })}
-                              </div>
-                              <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                                  <input
-                                    type="checkbox"
-                                    checked={showRowDescription}
-                                    onChange={(event) =>
-                                      updateRowDescriptionSetting(event.target.checked)
-                                    }
-                                    className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                  />
-                                  <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                    {isPolish
-                                      ? 'Pokaż opis / uzasadnienie'
-                                      : 'Show row description'}
-                                  </span>
-                                </label>
-                              </div>
+                                  </div>
                                 </div>,
                                 document.body
                               )

@@ -135,14 +135,17 @@ interface Template {
 }
 
 type QuestionCategory = 'strategy' | 'operations' | 'digital' | 'people' | 'finance';
-const QUESTION_CATEGORIES: ReadonlyArray<{ id: QuestionCategory; labelEn: string; labelPl: string }> =
-  [
-    { id: 'strategy', labelEn: 'Strategy', labelPl: 'Strategia' },
-    { id: 'operations', labelEn: 'Operations', labelPl: 'Operacje' },
-    { id: 'digital', labelEn: 'Digital', labelPl: 'Cyfryzacja' },
-    { id: 'people', labelEn: 'People', labelPl: 'Ludzie' },
-    { id: 'finance', labelEn: 'Finance', labelPl: 'Finanse' },
-  ];
+const QUESTION_CATEGORIES: ReadonlyArray<{
+  id: QuestionCategory;
+  labelEn: string;
+  labelPl: string;
+}> = [
+  { id: 'strategy', labelEn: 'Strategy', labelPl: 'Strategia' },
+  { id: 'operations', labelEn: 'Operations', labelPl: 'Operacje' },
+  { id: 'digital', labelEn: 'Digital', labelPl: 'Cyfryzacja' },
+  { id: 'people', labelEn: 'People', labelPl: 'Ludzie' },
+  { id: 'finance', labelEn: 'Finance', labelPl: 'Finanse' },
+];
 type AnswerType = 'open' | 'select' | 'scale' | 'boolean' | 'number' | 'date' | 'dropdown';
 type TemplateCategory =
   | 'DIGITAL'
@@ -2155,7 +2158,11 @@ ${sourceText || '(none)'}`;
                     icon={<Eye />}
                     onClick={() => setShowRespondentPreview(true)}
                     disabled={orderedQuestions.length === 0}
-                    title={isPolish ? 'Zobacz formularz oczami respondenta' : 'See the form as a respondent would'}
+                    title={
+                      isPolish
+                        ? 'Zobacz formularz oczami respondenta'
+                        : 'See the form as a respondent would'
+                    }
                   >
                     {isPolish ? 'Podgląd' : 'Preview'}
                   </Button>

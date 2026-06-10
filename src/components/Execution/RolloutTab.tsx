@@ -120,8 +120,7 @@ type InitiativeHealth = 'on-track' | 'at-risk' | 'overdue';
 
 function isOverdue(init: FullInitiative): boolean {
   const end =
-    (init as { plannedEndDate?: string }).plannedEndDate ||
-    (init as { endDate?: string }).endDate;
+    (init as { plannedEndDate?: string }).plannedEndDate || (init as { endDate?: string }).endDate;
   if (!end) return false;
   const d = new Date(end);
   if (Number.isNaN(d.getTime())) return false;
@@ -351,9 +350,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
   // Fires on mount (initial 'kpi') and on every sub-tab switch. The sub-view ids
   // (plan | kpi | risks | change | closure) match what ExecutionHub.menuCta checks.
   useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent('rollout:subview-change', { detail: { subview } })
-    );
+    window.dispatchEvent(new CustomEvent('rollout:subview-change', { detail: { subview } }));
   }, [subview]);
 
   const [kpis, setKpis] = useState<RolloutKpi[]>([]);
@@ -886,7 +883,9 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
                       disabled={readOnly}
                       onChange={(v) => patchRisk(r.id, { status: v })}
                     >
-                      <option value="OPEN">{t('execution.rollout.risks.status.open', 'Open')}</option>
+                      <option value="OPEN">
+                        {t('execution.rollout.risks.status.open', 'Open')}
+                      </option>
                       <option value="MITIGATED">
                         {t('execution.rollout.risks.status.mitigated', 'Mitigated')}
                       </option>

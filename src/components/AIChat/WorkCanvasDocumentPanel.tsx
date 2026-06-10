@@ -1258,9 +1258,7 @@ export function WorkCanvasDocumentPanel({
         language: 'pl',
       });
       const url = result.data.linkedResource.url;
-      setStatusFeedback(
-        `Document created in Document Studio. [Open →](${url})`
-      );
+      setStatusFeedback(`Document created in Document Studio. [Open →](${url})`);
     } catch (error) {
       setCanvasErrorFeedback(error, 'Failed to send Canvas to Document Studio.');
     } finally {
@@ -2952,9 +2950,7 @@ export function WorkCanvasDocumentPanel({
                   <button
                     type="button"
                     onClick={() => void sendToTableStudio()}
-                    disabled={
-                      isSendingToTableStudio || documentState.kind !== 'table'
-                    }
+                    disabled={isSendingToTableStudio || documentState.kind !== 'table'}
                     title={
                       documentState.kind === 'table'
                         ? 'Send the current table to Table Studio'
@@ -2964,9 +2960,7 @@ export function WorkCanvasDocumentPanel({
                   >
                     <Table2 size={14} />
                     <span>
-                      {isSendingToTableStudio
-                        ? 'Sending to Table Studio…'
-                        : 'Send to Table Studio'}
+                      {isSendingToTableStudio ? 'Sending to Table Studio…' : 'Send to Table Studio'}
                     </span>
                   </button>
                   {/* C4.4 — exposes the existing backend exporters (exportDocxBuffer

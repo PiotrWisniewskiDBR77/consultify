@@ -50,7 +50,7 @@ import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowAc
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
-import { ChipBase, ChipDot, CHIP_TONE_VAR } from '@/components/ui/primitives/chips/chipBase';
+import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
@@ -1236,10 +1236,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             </div>
           ) : null}
         </PreviewMetaCard>
-        <PreviewDetailsSection
-          text={idea.body || ''}
-          label={isPolish ? 'Szczegóły' : 'Details'}
-        />
+        <PreviewDetailsSection text={idea.body || ''} label={isPolish ? 'Szczegóły' : 'Details'} />
       </div>
     );
   };

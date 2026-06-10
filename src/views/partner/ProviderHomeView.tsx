@@ -368,7 +368,10 @@ const TierProgressionSection: React.FC = () => {
       ? `${tier.requirements[0].label}: ${tier.requirements[0].value}`
       : '',
     badge: tierBadges[tier.id],
-    benefits: tier.features.filter((f) => f.included).slice(0, 3).map((f) => f.name),
+    benefits: tier.features
+      .filter((f) => f.included)
+      .slice(0, 3)
+      .map((f) => f.name),
   }));
 
   return (
@@ -683,15 +686,16 @@ const OnboardingChecklistSection: React.FC = () => {
                 <div className="flex items-start gap-1 text-sm text-slate-500 dark:text-slate-400 mb-3">
                   <HelpCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>
-                    <strong>{t('partner.home.onboarding.whyLabel', 'Dlaczego?')}</strong>{' '}
-                    {step.why}
+                    <strong>{t('partner.home.onboarding.whyLabel', 'Dlaczego?')}</strong> {step.why}
                   </span>
                 </div>
 
                 {step.bonus && (
                   <div className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 mb-3">
                     <Sparkles className="w-4 h-4" />
-                    <span>{t('partner.home.onboarding.bonusLabel', 'Bonus')}: {step.bonus}</span>
+                    <span>
+                      {t('partner.home.onboarding.bonusLabel', 'Bonus')}: {step.bonus}
+                    </span>
                   </div>
                 )}
 
@@ -875,7 +879,10 @@ const AcademyPreviewSection: React.FC = () => {
       expanded: true,
     },
     {
-      title: t('partner.home.academy.courses.selling.title', 'Jak sprzedawać transformację cyfrową'),
+      title: t(
+        'partner.home.academy.courses.selling.title',
+        'Jak sprzedawać transformację cyfrową'
+      ),
       description: t(
         'partner.home.academy.courses.selling.description',
         'Sprawdzona metodologia sprzedaży usług transformacyjnych.'
@@ -1172,10 +1179,7 @@ const FAQSection: React.FC = () => {
   // (top of file). The % range comes from the PARTNER_TIERS SSOT.
   const faqs = [
     {
-      question: t(
-        'partner.home.faq.earn.q',
-        'Jak zarabiam prowizje jako partner?'
-      ),
+      question: t('partner.home.faq.earn.q', 'Jak zarabiam prowizje jako partner?'),
       answer: t(
         'partner.home.faq.earn.a',
         'Zarabiasz prowizje, polecając nowych klientów Consultify. Gdy klient zarejestruje się za pomocą Twojego unikalnego kodu lub linku i zostanie płacącym klientem, otrzymujesz procent jego opłaty subskrypcyjnej. Stawki prowizji wynoszą od {{min}}% do {{max}}% w zależności od Twojego poziomu partnerskiego.',

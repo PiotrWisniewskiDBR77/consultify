@@ -64,6 +64,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
+  type TableSettingsColumn,
+  TableSettingsPopover,
+} from '@/components/shared/ModuleHub/TableSettingsPopover';
+import {
   actionPillClass,
   type ActionRow,
   type ExtraCopyFormat,
@@ -79,10 +83,6 @@ import {
   type RowActionSection,
   RowActionsMenu,
 } from '@/components/shared/RowActionsMenu';
-import {
-  type TableSettingsColumn,
-  TableSettingsPopover,
-} from '@/components/shared/ModuleHub/TableSettingsPopover';
 import { ErrorState } from '@/components/ui/primitives';
 import { DueChip } from '@/components/ui/primitives/chips/DueChip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
@@ -703,8 +703,7 @@ const slaPill = (
       : sla.level === 'L1'
         ? 'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent'
         : 'border border-slate-200 bg-white text-slate-700 dark:bg-rose-500/15 dark:text-rose-300 dark:border-transparent';
-  const dot =
-    sla.level === 'none' ? 'bg-slate-400' : isOverdue ? 'bg-rose-500' : 'bg-amber-500';
+  const dot = sla.level === 'none' ? 'bg-slate-400' : isOverdue ? 'bg-rose-500' : 'bg-amber-500';
   return { label, className, dot, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
 };
 
@@ -901,9 +900,7 @@ function compareInboxItems(a: InboxItem, b: InboxItem, field: InboxSortField): n
     case 'title':
       return (a.title || '').localeCompare(b.title || '');
     case 'status':
-      return (
-        (INBOX_STATUS_ORDER[a.itemStatus] ?? 99) - (INBOX_STATUS_ORDER[b.itemStatus] ?? 99)
-      );
+      return (INBOX_STATUS_ORDER[a.itemStatus] ?? 99) - (INBOX_STATUS_ORDER[b.itemStatus] ?? 99);
     case 'urgency':
       return INBOX_URGENCY_ORDER[a.urgency] - INBOX_URGENCY_ORDER[b.urgency];
     case 'type':
@@ -923,7 +920,8 @@ const InboxSortIcon: React.FC<{
   field: InboxSortField;
   sortConfig: { field: InboxSortField; direction: 'asc' | 'desc' } | null;
 }> = ({ field, sortConfig }) => {
-  if (sortConfig?.field !== field) return <ChevronsUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+  if (sortConfig?.field !== field)
+    return <ChevronsUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
   return sortConfig.direction === 'asc' ? (
     <ChevronUp size={12} className="text-primary-500" />
   ) : (
@@ -2823,7 +2821,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               className={`px-3 py-2 ${leftAligned ? 'text-left' : 'text-center'} text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header`}
               style={{ width: columnWidths[colId] }}
             >
-              <div className={`flex items-center gap-1 ${leftAligned ? 'justify-start' : 'justify-center'}`}>
+              <div
+                className={`flex items-center gap-1 ${leftAligned ? 'justify-start' : 'justify-center'}`}
+              >
                 {isSortable ? (
                   <button
                     type="button"
@@ -2877,7 +2877,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   id: col.id,
                   label: getColumnLabel(col.id),
                   required: col.id === 'title' || col.id === 'actions',
-                  visible: col.id === 'title' || col.id === 'actions' ? true : !hiddenSet.has(col.id),
+                  visible:
+                    col.id === 'title' || col.id === 'actions' ? true : !hiddenSet.has(col.id),
                 })
               )}
               onToggle={(columnId, visible) =>

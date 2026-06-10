@@ -599,7 +599,9 @@ export const PresentationsHub: React.FC = () => {
       );
     }
 
-    const selectedDeck = selectedId ? filteredDecks.find((d) => d.id === selectedId) ?? null : null;
+    const selectedDeck = selectedId
+      ? (filteredDecks.find((d) => d.id === selectedId) ?? null)
+      : null;
 
     return (
       <div className="h-full overflow-hidden">

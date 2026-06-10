@@ -630,7 +630,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       onChange={(e) => setDeletePassword(e.target.value)}
                       autoComplete="current-password"
                       className="w-full px-3 py-2 bg-navy-800 border border-rose-500/30 rounded-lg text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
-                      placeholder={t('settings.data.deletePasswordPlaceholder', 'Your account password')}
+                      placeholder={t(
+                        'settings.data.deletePasswordPlaceholder',
+                        'Your account password'
+                      )}
                     />
                     <div className="flex gap-2">
                       <button

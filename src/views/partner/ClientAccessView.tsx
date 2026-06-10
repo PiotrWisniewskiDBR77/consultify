@@ -482,8 +482,7 @@ export const ClientAccessView: React.FC = () => {
                               {employee.status === 'ACTIVE'
                                 ? t('partner.clientAccess.statusActive', 'Aktywny')
                                 : t('partner.clientAccess.statusDeactivated', 'Dezaktywowany')}{' '}
-                              |{' '}
-                              {employee.email}
+                              | {employee.email}
                             </p>
                           </div>
                         </div>

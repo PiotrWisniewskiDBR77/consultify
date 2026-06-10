@@ -6,10 +6,8 @@
  */
 export function formatTeresaAdminDiagnostic(err: unknown): string {
   const e = (err || {}) as Record<string, any>;
-  const status =
-    Number(e?.status ?? e?.statusCode ?? e?.httpStatus ?? e?.response?.status) || null;
-  const code =
-    typeof e?.code === 'string' && e.code.trim().length > 0 ? e.code.trim() : null;
+  const status = Number(e?.status ?? e?.statusCode ?? e?.httpStatus ?? e?.response?.status) || null;
+  const code = typeof e?.code === 'string' && e.code.trim().length > 0 ? e.code.trim() : null;
   const message =
     typeof e?.message === 'string' && e.message.trim().length > 0
       ? e.message.trim().slice(0, 200)

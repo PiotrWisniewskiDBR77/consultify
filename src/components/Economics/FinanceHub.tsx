@@ -37,6 +37,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { MetaChip } from '@/components/ui/primitives/chips';
 import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
@@ -67,7 +68,6 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
-import { MetaChip } from '@/components/ui/primitives/chips';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
@@ -1027,8 +1027,7 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.subtype', 'Subtype'),
           width: '130px',
           render: (row: FinanceRow) => {
-            if (row.kind !== 'prediction')
-              return <span className="text-sm text-slate-400">—</span>;
+            if (row.kind !== 'prediction') return <span className="text-sm text-slate-400">—</span>;
             const pRow = row as FinanceModelRow;
             const isBudget = pRow.predictionType === 'budget';
             return (

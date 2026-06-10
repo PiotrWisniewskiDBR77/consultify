@@ -1349,8 +1349,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         const name = String(att?.name || att?.title || att?.id || 'attachment');
                         const kind = String(att?.kind || att?.type || 'file').toLowerCase();
                         const url = typeof att?.url === 'string' ? att.url : null;
-                        const label =
-                          name.length > 40 ? `${name.slice(0, 38)}…` : name;
+                        const label = name.length > 40 ? `${name.slice(0, 38)}…` : name;
                         const icon = kind.startsWith('image')
                           ? '🖼️'
                           : kind.startsWith('link') || kind.startsWith('url')

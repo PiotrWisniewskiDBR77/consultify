@@ -530,7 +530,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     ];
 
     const selectedReport = selectedId
-      ? filteredReports.find((r) => r.id === selectedId) ?? null
+      ? (filteredReports.find((r) => r.id === selectedId) ?? null)
       : null;
 
     return (
@@ -545,8 +545,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
           }}
           itemIds={filteredReports.map((r) => r.id)}
           getItemById={(id) =>
-            (filteredReports.find((x) => x.id === id) as (BuilderReport & { title: string })) ??
-            null
+            (filteredReports.find((x) => x.id === id) as BuilderReport & { title: string }) ?? null
           }
           renderPreview={(item) => (
             <div className="space-y-3">

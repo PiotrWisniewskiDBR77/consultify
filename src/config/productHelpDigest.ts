@@ -1,4 +1,4 @@
-import { HELP_DOCUMENTS, getLocalizedText, type SupportedHelpLanguage } from './helpExperience';
+import { getLocalizedText, HELP_DOCUMENTS, type SupportedHelpLanguage } from './helpExperience';
 
 /**
  * Single source of truth digest of the in-app Help documentation, condensed for

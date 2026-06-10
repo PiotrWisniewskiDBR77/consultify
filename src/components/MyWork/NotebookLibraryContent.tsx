@@ -8,16 +8,7 @@
  * See docs/product/NOTEBOOK_STRUCTURE_SSOT.md.
  */
 
-import {
-  Archive,
-  BookOpen,
-  ChevronRight,
-  Globe,
-  Lock,
-  Pencil,
-  Trash2,
-  Users,
-} from 'lucide-react';
+import { Archive, BookOpen, ChevronRight, Globe, Lock, Pencil, Trash2, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';

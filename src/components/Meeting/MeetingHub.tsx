@@ -38,8 +38,8 @@ import {
 } from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { ErrorState, LoadingState, StatusChip } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';

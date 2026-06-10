@@ -1847,7 +1847,10 @@ const CertificationSection: React.FC<{
             {t('partner.certification.exams', 'Egzaminy certyfikacyjne')}
           </h2>
           <p className="text-slate-600">
-            {t('partner.certification.examsDesc', 'Zdaj egzaminy, aby zdobyć oficjalne certyfikaty')}
+            {t(
+              'partner.certification.examsDesc',
+              'Zdaj egzaminy, aby zdobyć oficjalne certyfikaty'
+            )}
           </p>
         </div>
         {hasExamsAvailable ? (
@@ -1899,7 +1902,10 @@ const CertificationSection: React.FC<{
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
             <FileText className="w-12 h-12 text-slate-600 mx-auto mb-4" />
             <p className="text-slate-600">
-              {t('partner.certification.examsEmpty', 'Ukończ ścieżkę nauki, aby odblokować egzaminy')}
+              {t(
+                'partner.certification.examsEmpty',
+                'Ukończ ścieżkę nauki, aby odblokować egzaminy'
+              )}
             </p>
           </div>
         )}
@@ -1911,9 +1917,7 @@ const CertificationSection: React.FC<{
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {(() => {
-                      const certName = certifications.find(
-                        (c) => c.id === examCertId
-                      )?.name;
+                      const certName = certifications.find((c) => c.id === examCertId)?.name;
                       return certName
                         ? `${certName} — ${t('partner.certification.examTitle', 'Egzamin certyfikacyjny')}`
                         : t('partner.certification.examTitle', 'Egzamin certyfikacyjny');
@@ -2015,7 +2019,10 @@ const CertificationSection: React.FC<{
             {t('partner.certification.certificates', 'Twoje certyfikaty')}
           </h2>
           <p className="text-slate-600">
-            {t('partner.certification.certificatesDesc', 'Pobieraj i udostępniaj swoje certyfikaty')}
+            {t(
+              'partner.certification.certificatesDesc',
+              'Pobieraj i udostępniaj swoje certyfikaty'
+            )}
           </p>
         </div>
         <button
@@ -2731,7 +2738,10 @@ const ProfileSection: React.FC<{
             {t('partner.profile.specializations', 'Specjalizacje')}
           </h2>
           <p className="text-slate-600">
-            {t('partner.profile.specializationsDesc', 'Wybierz frameworki, w których się specjalizujesz')}
+            {t(
+              'partner.profile.specializationsDesc',
+              'Wybierz frameworki, w których się specjalizujesz'
+            )}
           </p>
         </div>
 
@@ -2832,7 +2842,10 @@ const ProfileSection: React.FC<{
           {t('partner.profile.publicListing', 'Publiczna wizytówka')}
         </h2>
         <p className="text-slate-600">
-          {t('partner.profile.publicListingDesc', 'Zarządzaj swoją widocznością w katalogu partnerów')}
+          {t(
+            'partner.profile.publicListingDesc',
+            'Zarządzaj swoją widocznością w katalogu partnerów'
+          )}
         </p>
       </div>
 
@@ -3242,7 +3255,10 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
                     type="text"
                     value={connectName}
                     onChange={(e) => setConnectName(e.target.value)}
-                    placeholder={t('partner.connect.companyNamePlaceholder', 'np. DBR77 Consulting')}
+                    placeholder={t(
+                      'partner.connect.companyNamePlaceholder',
+                      'np. DBR77 Consulting'
+                    )}
                     className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </label>

@@ -40,7 +40,6 @@ import {
   ManagementReportStatus,
   ManagementReportType,
 } from '../../../types';
-import { EntityStatusChip, MetaChip } from '../../ui/primitives/chips';
 import {
   FilterableTable,
   FilterChip,
@@ -53,6 +52,7 @@ import {
 import { useModuleOpenDocuments } from '../../shared/ModuleHub/useModuleOpenDocuments';
 import { type RowAction } from '../../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../../shared/TableWithPreviewLayout';
+import { EntityStatusChip, MetaChip } from '../../ui/primitives/chips';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
 import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
@@ -308,7 +308,9 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           value,
           label: meta.label,
         })),
-        render: (row: ReportHistoryItem) => <MetaChip label={SCOPE_META[row.scope]?.label ?? '—'} />,
+        render: (row: ReportHistoryItem) => (
+          <MetaChip label={SCOPE_META[row.scope]?.label ?? '—'} />
+        ),
       },
       {
         id: 'status',
@@ -533,7 +535,11 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         render: (row: ReportSchedule) => (
           <EntityStatusChip
             status={row.isActive ? 'active' : 'archived'}
-            label={row.isActive ? t('reports.schedule.active', 'Active') : t('reports.schedule.paused', 'Paused')}
+            label={
+              row.isActive
+                ? t('reports.schedule.active', 'Active')
+                : t('reports.schedule.paused', 'Paused')
+            }
           />
         ),
       },
@@ -751,7 +757,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       }
 
       const selectedReport = selectedId
-        ? filteredReports.find((r) => r.id === selectedId) ?? null
+        ? (filteredReports.find((r) => r.id === selectedId) ?? null)
         : null;
 
       return (

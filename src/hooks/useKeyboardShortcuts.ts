@@ -27,25 +27,139 @@ export interface ShortcutDefinition {
 // Canonical catalog — mirrors DEFAULT_SHORTCUTS in
 // src/components/settings/KeyboardShortcutsSettings.tsx (ids + default keys).
 const DEFAULT_SHORTCUTS: ShortcutDefinition[] = [
-  { id: 'go_home', name: 'Go to Home', description: 'Navigate to dashboard', category: 'navigation', defaultKey: 'g h' },
-  { id: 'go_tasks', name: 'Go to Tasks', description: 'Navigate to my tasks', category: 'navigation', defaultKey: 'g t' },
-  { id: 'go_inbox', name: 'Go to Inbox', description: 'Navigate to inbox', category: 'navigation', defaultKey: 'g i' },
-  { id: 'go_settings', name: 'Go to Settings', description: 'Navigate to settings', category: 'navigation', defaultKey: 'g s' },
-  { id: 'search_global', name: 'Global Search', description: 'Open global search', category: 'search', defaultKey: 'Cmd+K' },
-  { id: 'search_tasks', name: 'Search Tasks', description: 'Search in tasks', category: 'search', defaultKey: 'Cmd+Shift+T' },
-  { id: 'new_task', name: 'New Task', description: 'Create a new task', category: 'task_management', defaultKey: 'n t' },
-  { id: 'complete_task', name: 'Complete Task', description: 'Mark selected task as done', category: 'task_management', defaultKey: 'c' },
-  { id: 'edit_task', name: 'Edit Task', description: 'Edit selected task', category: 'task_management', defaultKey: 'e' },
-  { id: 'delete_task', name: 'Delete Task', description: 'Delete selected task', category: 'task_management', defaultKey: 'Backspace' },
-  { id: 'assign_task', name: 'Assign Task', description: 'Assign selected task', category: 'task_management', defaultKey: 'a' },
-  { id: 'save', name: 'Save', description: 'Save current changes', category: 'editing', defaultKey: 'Cmd+S' },
-  { id: 'undo', name: 'Undo', description: 'Undo last action', category: 'editing', defaultKey: 'Cmd+Z' },
-  { id: 'redo', name: 'Redo', description: 'Redo last action', category: 'editing', defaultKey: 'Cmd+Shift+Z' },
-  { id: 'ai_assist', name: 'AI Assistant', description: 'Open AI assistant', category: 'ai', defaultKey: 'Cmd+J' },
-  { id: 'ai_summarize', name: 'AI Summarize', description: 'Summarize selected text', category: 'ai', defaultKey: 'Cmd+Shift+S' },
-  { id: 'toggle_sidebar', name: 'Toggle Sidebar', description: 'Show/hide sidebar', category: 'general', defaultKey: 'Cmd+\\' },
-  { id: 'notifications', name: 'Notifications', description: 'Open notifications', category: 'general', defaultKey: 'n n' },
-  { id: 'help', name: 'Help', description: 'Show keyboard shortcuts', category: 'general', defaultKey: '?' },
+  {
+    id: 'go_home',
+    name: 'Go to Home',
+    description: 'Navigate to dashboard',
+    category: 'navigation',
+    defaultKey: 'g h',
+  },
+  {
+    id: 'go_tasks',
+    name: 'Go to Tasks',
+    description: 'Navigate to my tasks',
+    category: 'navigation',
+    defaultKey: 'g t',
+  },
+  {
+    id: 'go_inbox',
+    name: 'Go to Inbox',
+    description: 'Navigate to inbox',
+    category: 'navigation',
+    defaultKey: 'g i',
+  },
+  {
+    id: 'go_settings',
+    name: 'Go to Settings',
+    description: 'Navigate to settings',
+    category: 'navigation',
+    defaultKey: 'g s',
+  },
+  {
+    id: 'search_global',
+    name: 'Global Search',
+    description: 'Open global search',
+    category: 'search',
+    defaultKey: 'Cmd+K',
+  },
+  {
+    id: 'search_tasks',
+    name: 'Search Tasks',
+    description: 'Search in tasks',
+    category: 'search',
+    defaultKey: 'Cmd+Shift+T',
+  },
+  {
+    id: 'new_task',
+    name: 'New Task',
+    description: 'Create a new task',
+    category: 'task_management',
+    defaultKey: 'n t',
+  },
+  {
+    id: 'complete_task',
+    name: 'Complete Task',
+    description: 'Mark selected task as done',
+    category: 'task_management',
+    defaultKey: 'c',
+  },
+  {
+    id: 'edit_task',
+    name: 'Edit Task',
+    description: 'Edit selected task',
+    category: 'task_management',
+    defaultKey: 'e',
+  },
+  {
+    id: 'delete_task',
+    name: 'Delete Task',
+    description: 'Delete selected task',
+    category: 'task_management',
+    defaultKey: 'Backspace',
+  },
+  {
+    id: 'assign_task',
+    name: 'Assign Task',
+    description: 'Assign selected task',
+    category: 'task_management',
+    defaultKey: 'a',
+  },
+  {
+    id: 'save',
+    name: 'Save',
+    description: 'Save current changes',
+    category: 'editing',
+    defaultKey: 'Cmd+S',
+  },
+  {
+    id: 'undo',
+    name: 'Undo',
+    description: 'Undo last action',
+    category: 'editing',
+    defaultKey: 'Cmd+Z',
+  },
+  {
+    id: 'redo',
+    name: 'Redo',
+    description: 'Redo last action',
+    category: 'editing',
+    defaultKey: 'Cmd+Shift+Z',
+  },
+  {
+    id: 'ai_assist',
+    name: 'AI Assistant',
+    description: 'Open AI assistant',
+    category: 'ai',
+    defaultKey: 'Cmd+J',
+  },
+  {
+    id: 'ai_summarize',
+    name: 'AI Summarize',
+    description: 'Summarize selected text',
+    category: 'ai',
+    defaultKey: 'Cmd+Shift+S',
+  },
+  {
+    id: 'toggle_sidebar',
+    name: 'Toggle Sidebar',
+    description: 'Show/hide sidebar',
+    category: 'general',
+    defaultKey: 'Cmd+\\',
+  },
+  {
+    id: 'notifications',
+    name: 'Notifications',
+    description: 'Open notifications',
+    category: 'general',
+    defaultKey: 'n n',
+  },
+  {
+    id: 'help',
+    name: 'Help',
+    description: 'Show keyboard shortcuts',
+    category: 'general',
+    defaultKey: '?',
+  },
 ];
 
 const DEFAULT_PREFS: KeyboardShortcuts = {
@@ -152,9 +266,7 @@ export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions = {}) 
       const target = e.target as HTMLElement | null;
       const isTyping =
         !!target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.isContentEditable);
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
       const hasModifier = e.metaKey || e.ctrlKey || e.altKey;
 
@@ -187,9 +299,8 @@ export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions = {}) 
       );
 
       // 3) Sequences ("g h", "n t"). Accumulate buffer.
-      const nextBuffer = (sequenceRef.current.buffer
-        ? `${sequenceRef.current.buffer} ${keyUpper}`
-        : keyUpper
+      const nextBuffer = (
+        sequenceRef.current.buffer ? `${sequenceRef.current.buffer} ${keyUpper}` : keyUpper
       ).toUpperCase();
 
       const seqMatch = activeShortcuts.find(
@@ -205,7 +316,8 @@ export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions = {}) 
 
       // Is this key a prefix of any sequence? If so, keep buffering.
       const seqPrefix = activeShortcuts.find(
-        (s) => isSequence(s.currentKey) && normalizeBinding(s.currentKey).startsWith(nextBuffer + ' ')
+        (s) =>
+          isSequence(s.currentKey) && normalizeBinding(s.currentKey).startsWith(nextBuffer + ' ')
       );
 
       if (seqPrefix) {

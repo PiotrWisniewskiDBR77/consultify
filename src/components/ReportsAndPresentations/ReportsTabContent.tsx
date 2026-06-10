@@ -4,7 +4,15 @@
  * Connected to /api/report-builder backend
  */
 
-import { Archive, ChevronRight, Download, ExternalLink, FileText, MessageCircle, Share2 } from 'lucide-react';
+import {
+  Archive,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  FileText,
+  MessageCircle,
+  Share2,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';

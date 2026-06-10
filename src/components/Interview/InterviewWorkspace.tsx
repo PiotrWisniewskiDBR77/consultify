@@ -58,8 +58,8 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
-import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { LoadingState } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';

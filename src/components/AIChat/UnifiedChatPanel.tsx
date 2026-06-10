@@ -1716,8 +1716,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     if (!el) return;
     const onScroll = () => {
       const threshold = 80;
-      isAtBottomRef.current =
-        el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+      isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);

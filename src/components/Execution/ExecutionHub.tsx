@@ -51,6 +51,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
+import {
+  generateReportDocument,
+  reportDocumentToMarkdown,
+} from '@/components/Reports/reportContentGenerator';
+import type { ReportConfig } from '@/components/Reports/Wizard';
+import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { LoadingState } from '@/components/ui/primitives';
@@ -99,7 +106,6 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import type { RowAction } from '../shared/RowActionsMenu';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -108,6 +114,7 @@ import {
   MENU_3_CHIP_INACTIVE,
   MENU_3_LEFT_CLASS,
 } from '../shared/ModuleMenu3';
+import type { RowAction } from '../shared/RowActionsMenu';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
@@ -124,13 +131,6 @@ import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './Execut
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
 import { RolloutTab } from './RolloutTab';
-import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
-import type { ReportConfig } from '@/components/Reports/Wizard';
-import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
-import {
-  generateReportDocument,
-  reportDocumentToMarkdown,
-} from '@/components/Reports/reportContentGenerator';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
@@ -1973,9 +1973,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         render: (row) => {
           const deadline = row.plannedEndDate || row.slaDeadline;
           if (!deadline) {
-            return (
-              <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
-            );
+            return <span className="text-xs text-slate-400 dark:text-slate-500">—</span>;
           }
           const terminal = row.status === InitiativeStatus.DONE;
           return (
@@ -2076,13 +2074,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
     ],
-    [
-      decisionsByInitiative,
-      handleInlineStatusChange,
-      isPilotParticipant,
-      t,
-      tasksByInitiative,
-    ]
+    [decisionsByInitiative, handleInlineStatusChange, isPilotParticipant, t, tasksByInitiative]
   );
 
   const scopeToggle = (
@@ -2160,11 +2152,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // Rollout/*, Reporting, Management).
 
     if (!showScope) {
-      return (
-        <div className="flex items-center gap-2">
-          {execChip}
-        </div>
-      );
+      return <div className="flex items-center gap-2">{execChip}</div>;
     }
 
     return (
@@ -3926,9 +3914,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
       followUpActions: [],
       icon: <Sparkles size={18} className="text-indigo-500" />,
-      highlights: [
-        { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
-      ],
+      highlights: [{ label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' }],
     }));
 
     return [...wizardEntries, ...base];
@@ -4199,190 +4185,190 @@ Please return:
 
   const renderReportPreviewBody = useCallback(
     (report: ReportDef) => {
-    const rag = computeRAG(report);
-    const ragConf = RAG_CONFIG[rag];
-    const RagIcon = ragConf.icon;
+      const rag = computeRAG(report);
+      const ragConf = RAG_CONFIG[rag];
+      const RagIcon = ragConf.icon;
 
-    // #20 — generate REAL report CONTENT from live data for this report type.
-    // Wizard-created reports carry a period via generatedReports; predefined
-    // catalog entries fall back to a live snapshot.
-    const wizardConfig = generatedReports.find((g) => g.id === report.id);
-    const generatedDoc = generateReportDocument({
-      typeId: (wizardConfig?.typeId as string) || report.id,
-      title: report.title,
-      audience: report.audience,
-      periodFrom: wizardConfig?.periodFrom,
-      periodTo: wizardConfig?.periodTo,
-      scopeNote: wizardConfig?.scopeNote,
-      ctx: reportDataContext,
-      isPolish,
-    });
+      // #20 — generate REAL report CONTENT from live data for this report type.
+      // Wizard-created reports carry a period via generatedReports; predefined
+      // catalog entries fall back to a live snapshot.
+      const wizardConfig = generatedReports.find((g) => g.id === report.id);
+      const generatedDoc = generateReportDocument({
+        typeId: (wizardConfig?.typeId as string) || report.id,
+        title: report.title,
+        audience: report.audience,
+        periodFrom: wizardConfig?.periodFrom,
+        periodTo: wizardConfig?.periodTo,
+        scopeNote: wizardConfig?.scopeNote,
+        ctx: reportDataContext,
+        isPolish,
+      });
 
-    return (
-      <div className="overflow-auto">
-        {/* Generated, data-backed report document */}
-        <GeneratedReportView doc={generatedDoc} />
+      return (
+        <div className="overflow-auto">
+          {/* Generated, data-backed report document */}
+          <GeneratedReportView doc={generatedDoc} />
 
-        {/* Configuration / methodology descriptor */}
-        <div className="px-4 pb-2 pt-1">
-          <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-500 font-medium border-t border-slate-100 dark:border-navy-800 pt-3">
-            {t('execution.reportPanel.methodology', 'Report configuration & methodology')}
-          </div>
-        </div>
-        <div className="p-4 pt-2 space-y-4">
-        {/* RAG badge + title */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div
-              className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}
-            >
-              <RagIcon size={10} className="inline mr-1 -mt-0.5" />
-              {ragConf.label}
+          {/* Configuration / methodology descriptor */}
+          <div className="px-4 pb-2 pt-1">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-500 font-medium border-t border-slate-100 dark:border-navy-800 pt-3">
+              {t('execution.reportPanel.methodology', 'Report configuration & methodology')}
             </div>
-            <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
-              {report.cadence}
-            </span>
           </div>
-          <div className="flex items-center gap-2.5">
-            <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
-              {report.icon}
-            </div>
+          <div className="p-4 pt-2 space-y-4">
+            {/* RAG badge + title */}
             <div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                {report.title}
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}
+                >
+                  <RagIcon size={10} className="inline mr-1 -mt-0.5" />
+                  {ragConf.label}
+                </div>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                  {report.cadence}
+                </span>
               </div>
-              <div className="text-[10px] text-slate-600 dark:text-slate-500">
-                {report.audience}
+              <div className="flex items-center gap-2.5">
+                <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
+                  {report.icon}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {report.title}
+                  </div>
+                  <div className="text-[10px] text-slate-600 dark:text-slate-500">
+                    {report.audience}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Live highlights */}
+            {report.highlights.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {report.highlights.map((h) => (
+                  <span
+                    key={h.label}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                      h.variant === 'critical'
+                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                        : h.variant === 'warn'
+                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {h.label}: {h.value}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Scope */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Scope
+              </div>
+              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                {report.scope}
+              </p>
+            </div>
+
+            {/* Data sources */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Data Sources
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {report.dataSources.map((ds) => (
+                  <span
+                    key={ds}
+                    className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
+                  >
+                    {ds}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                AI Executive Readout
+              </div>
+              <div className="space-y-1.5">
+                {report.aiExecutiveReadout.slice(0, 3).map((line) => (
+                  <div
+                    key={line}
+                    className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
+                  >
+                    {line}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mandatory sections */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Mandatory Sections
+              </div>
+              <ol className="space-y-0.5 list-decimal list-inside">
+                {report.sections.map((s) => (
+                  <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">
+                    {s}
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {/* RAG logic */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                RAG / Confidence Logic
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                {report.ragLogic}
+              </p>
+            </div>
+
+            {/* Follow-up actions */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Expected Follow-up Actions
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {report.followUpActions.map((a) => (
+                  <span
+                    key={a}
+                    className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
+                  >
+                    {a}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Data Quality
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
+                  {report.dataQuality.confidence}
+                </span>
+                {report.degradedFlags.map((flag) => (
+                  <span
+                    key={flag}
+                    className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
+                  >
+                    {flag}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         </div>
-
-        {/* Live highlights */}
-        {report.highlights.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {report.highlights.map((h) => (
-              <span
-                key={h.label}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
-                  h.variant === 'critical'
-                    ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
-                    : h.variant === 'warn'
-                      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                {h.label}: {h.value}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Scope */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
-            Scope
-          </div>
-          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-            {report.scope}
-          </p>
-        </div>
-
-        {/* Data sources */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
-            Data Sources
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {report.dataSources.map((ds) => (
-              <span
-                key={ds}
-                className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
-              >
-                {ds}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
-            AI Executive Readout
-          </div>
-          <div className="space-y-1.5">
-            {report.aiExecutiveReadout.slice(0, 3).map((line) => (
-              <div
-                key={line}
-                className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
-              >
-                {line}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Mandatory sections */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
-            Mandatory Sections
-          </div>
-          <ol className="space-y-0.5 list-decimal list-inside">
-            {report.sections.map((s) => (
-              <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">
-                {s}
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {/* RAG logic */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
-            RAG / Confidence Logic
-          </div>
-          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-            {report.ragLogic}
-          </p>
-        </div>
-
-        {/* Follow-up actions */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
-            Expected Follow-up Actions
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {report.followUpActions.map((a) => (
-              <span
-                key={a}
-                className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
-              >
-                {a}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
-            Data Quality
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
-              {report.dataQuality.confidence}
-            </span>
-            {report.degradedFlags.map((flag) => (
-              <span
-                key={flag}
-                className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
-              >
-                {flag}
-              </span>
-            ))}
-          </div>
-        </div>
-        </div>
-      </div>
-    );
+      );
     },
     [generatedReports, reportDataContext, isPolish, t]
   );

@@ -62,8 +62,7 @@ export function useV10TeresaRuntime(): V10TeresaRuntimeState {
         });
       } catch (err: any) {
         if (cancelled) return;
-        const httpStatus =
-          Number(err?.status || err?.response?.status || err?.statusCode) || null;
+        const httpStatus = Number(err?.status || err?.response?.status || err?.statusCode) || null;
         setState({
           loading: false,
           available: false,

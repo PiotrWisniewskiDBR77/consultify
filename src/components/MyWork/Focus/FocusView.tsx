@@ -68,7 +68,7 @@ import { useTranslation } from 'react-i18next';
 import { renderIconNode } from '@/components/shared/renderIconNode';
 import { LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
-import { ChipBase, ChipDot, CHIP_TONE_VAR } from '@/components/ui/primitives/chips/chipBase';
+import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -413,9 +413,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
                   size="sm"
                   leading={
                     <ChipDot
-                      colorVar={
-                        item.type === 'decision' ? CHIP_TONE_VAR.info : undefined
-                      }
+                      colorVar={item.type === 'decision' ? CHIP_TONE_VAR.info : undefined}
                       size="sm"
                     />
                   }
@@ -632,9 +630,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
 const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
   return (
     // Canon §8.2 — neutral surface; no colored border-l accent (parity with the card).
-    <div
-      className="bg-white dark:bg-navy-900 rounded-xl border border-brand shadow-2xl p-3 w-[300px] ring-2 ring-brand"
-    >
+    <div className="bg-white dark:bg-navy-900 rounded-xl border border-brand shadow-2xl p-3 w-[300px] ring-2 ring-brand">
       <div className="flex items-center gap-3">
         {item.type === 'decision' ? (
           <Zap size={20} className="text-blue-500" />

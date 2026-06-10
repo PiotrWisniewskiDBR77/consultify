@@ -27,6 +27,10 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
+  type TableSettingsColumn,
+  TableSettingsPopover,
+} from '@/components/shared/ModuleHub/TableSettingsPopover';
+import {
   type ActionRow,
   type MetaPill,
   PreviewActionBar,
@@ -36,14 +40,10 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import {
-  type TableSettingsColumn,
-  TableSettingsPopover,
-} from '@/components/shared/ModuleHub/TableSettingsPopover';
 import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
-import { ChipBase, ChipDot, CHIP_TONE_VAR } from '@/components/ui/primitives/chips/chipBase';
+import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type {
   ColumnDef,
   ColumnWidths,

@@ -31,9 +31,7 @@ export interface InterviewInitiativePreviewFooterProps {
   onCopyId: () => void;
 }
 
-export const InterviewInitiativePreviewFooter: React.FC<
-  InterviewInitiativePreviewFooterProps
-> = ({
+export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePreviewFooterProps> = ({
   isPolish,
   status,
   canReview,
@@ -111,7 +109,9 @@ export const InterviewInitiativePreviewFooter: React.FC<
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip
           hints={
-            isPolish ? ['Podsumuj', 'Ryzyka', 'Następne kroki'] : ['Summarize', 'Risks', 'Next steps']
+            isPolish
+              ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
+              : ['Summarize', 'Risks', 'Next steps']
           }
           onRunHint={() => {}}
           disabled

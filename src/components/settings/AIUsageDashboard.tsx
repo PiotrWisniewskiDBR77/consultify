@@ -319,57 +319,57 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
 
       {/* Usage Limit Progress — only when the backend reports a real limit */}
       {hasLimit && (
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">
-              {t('settings.aiUsage.usageLimit', 'Usage Limit')}
-            </CardTitle>
-            <span
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">
+                {t('settings.aiUsage.usageLimit', 'Usage Limit')}
+              </CardTitle>
+              <span
+                className={cn(
+                  'text-sm font-medium',
+                  isOverLimit
+                    ? 'text-rose-600'
+                    : isNearLimit
+                      ? 'text-amber-600'
+                      : 'text-slate-600 dark:text-slate-400'
+                )}
+              >
+                {formatNumber(periodStats?.used || 0)} / {formatNumber(periodStats?.limit || 0)}{' '}
+                tokens
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Progress
+              value={Math.min(usagePercentage, 100)}
               className={cn(
-                'text-sm font-medium',
+                'h-3',
                 isOverLimit
-                  ? 'text-rose-600'
+                  ? '[&>div]:bg-rose-500'
                   : isNearLimit
-                    ? 'text-amber-600'
-                    : 'text-slate-600 dark:text-slate-400'
+                    ? '[&>div]:bg-amber-500'
+                    : '[&>div]:bg-primary-500'
               )}
-            >
-              {formatNumber(periodStats?.used || 0)} / {formatNumber(periodStats?.limit || 0)}{' '}
-              tokens
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Progress
-            value={Math.min(usagePercentage, 100)}
-            className={cn(
-              'h-3',
-              isOverLimit
-                ? '[&>div]:bg-rose-500'
-                : isNearLimit
-                  ? '[&>div]:bg-amber-500'
-                  : '[&>div]:bg-primary-500'
+            />
+            {isNearLimit && !isOverLimit && (
+              <div className="flex items-center gap-2 mt-3 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">
+                  {t('settings.aiUsage.nearLimit', 'You are approaching your usage limit')}
+                </span>
+              </div>
             )}
-          />
-          {isNearLimit && !isOverLimit && (
-            <div className="flex items-center gap-2 mt-3 text-amber-600 dark:text-amber-400">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-sm">
-                {t('settings.aiUsage.nearLimit', 'You are approaching your usage limit')}
-              </span>
-            </div>
-          )}
-          {isOverLimit && (
-            <div className="flex items-center gap-2 mt-3 text-rose-600 dark:text-rose-400">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-sm">
-                {t('settings.aiUsage.overLimit', 'You have exceeded your usage limit')}
-              </span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {isOverLimit && (
+              <div className="flex items-center gap-2 mt-3 text-rose-600 dark:text-rose-400">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">
+                  {t('settings.aiUsage.overLimit', 'You have exceeded your usage limit')}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Usage by Feature */}

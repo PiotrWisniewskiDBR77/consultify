@@ -104,18 +104,16 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
       {/* ── Segment 2: Sticky toolbar ──────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40">
         <div className="max-w-6xl mx-auto px-6 py-2">
-          {renderActionBar ? (
-            renderActionBar()
-          ) : (
-            ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
-              <NModeActionBar
-                actions={actionsVisible ? actions : []}
-                aiContextActions={aiContextActions}
-                toolAIActions={toolAIActions}
-                activeSection={activeSection}
-              />
-            )
-          )}
+          {renderActionBar
+            ? renderActionBar()
+            : ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
+                <NModeActionBar
+                  actions={actionsVisible ? actions : []}
+                  aiContextActions={aiContextActions}
+                  toolAIActions={toolAIActions}
+                  activeSection={activeSection}
+                />
+              )}
         </div>
       </div>
 

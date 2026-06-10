@@ -27,9 +27,9 @@ export const AIOSWave0GateReport: React.FC = () => {
             Build milestones (static reference)
           </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Documentation of the AI OS build waves and their acceptance owners — <strong>not</strong>{' '}
-            a live health check. Each row records what was delivered and how it was accepted; the
-            gate values are fixed reference, not a real-time runtime probe.
+            Documentation of the AI OS build waves and their acceptance owners —{' '}
+            <strong>not</strong> a live health check. Each row records what was delivered and how it
+            was accepted; the gate values are fixed reference, not a real-time runtime probe.
           </p>
         </div>
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-300">
@@ -51,7 +51,9 @@ export const AIOSWave0GateReport: React.FC = () => {
               <tr key={wave}>
                 <td className="py-2 pr-4 font-medium text-slate-900 dark:text-white">{wave}</td>
                 <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{scope}</td>
-                <td className="py-2 pr-4 font-semibold text-slate-500 dark:text-slate-400">{gate}</td>
+                <td className="py-2 pr-4 font-semibold text-slate-500 dark:text-slate-400">
+                  {gate}
+                </td>
                 <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{evidence}</td>
               </tr>
             ))}

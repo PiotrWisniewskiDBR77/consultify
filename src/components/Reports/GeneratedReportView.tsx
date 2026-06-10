@@ -9,6 +9,7 @@
  */
 
 import React from 'react';
+
 import type {
   ReportBlock,
   ReportDocument,
@@ -24,15 +25,18 @@ const toneText: Record<string, string> = {
 };
 
 const ragBadge: Record<string, string> = {
-  green: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-  amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+  green:
+    'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+  amber:
+    'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
   red: 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800',
 };
 
 const calloutTone: Record<string, string> = {
   good: 'bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300',
   warn: 'bg-amber-50 dark:bg-amber-900/15 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300',
-  critical: 'bg-rose-50 dark:bg-rose-900/15 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300',
+  critical:
+    'bg-rose-50 dark:bg-rose-900/15 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300',
   info: 'bg-slate-50 dark:bg-navy-800/60 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300',
 };
 
@@ -81,10 +85,7 @@ function Table({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr
-              key={i}
-              className="border-t border-slate-100 dark:border-navy-800 align-top"
-            >
+            <tr key={i} className="border-t border-slate-100 dark:border-navy-800 align-top">
               {r.cells.map((cell, j) => (
                 <td
                   key={j}
@@ -175,9 +176,7 @@ export const GeneratedReportView: React.FC<GeneratedReportViewProps> = ({ doc, c
               {s.heading}
             </h3>
           </div>
-          {s.intro && (
-            <p className="text-[11px] text-slate-500 dark:text-slate-500">{s.intro}</p>
-          )}
+          {s.intro && <p className="text-[11px] text-slate-500 dark:text-slate-500">{s.intro}</p>}
           <div className="space-y-2.5">
             {s.blocks.map((b, i) => (
               <Block key={i} block={b} />
