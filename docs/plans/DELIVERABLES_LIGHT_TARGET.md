@@ -121,3 +121,35 @@ standardy shell/visual, baseline eksportu. **Mamy też** benchmark (Kimi/Gamma/A
 2. **Edytor Doc:** minimalny TipTap (już w repo przez DeckBuilder, lazy) vs jeszcze lżejszy blok-markdown. Rekomendacja: minimalny TipTap.
 3. **Pierwszy format na żywo w split-view:** Deck (backend najdojrzalszy) vs Doc (najwięcej braków, najwyższa widoczna wartość). Rekomendacja: Deck jako pierwszy E2E, potem Doc.
 4. **Sheet:** strip istniejącego gridu do „lekkiego renderera artefaktu" vs osobny minimalny grid. Rekomendacja: strip istniejącego.
+
+---
+
+## 10. L1 — plaster Deck E2E (zatwierdzone 2026-06-10: lekki runtime + start od Deck)
+
+> Mapa kodu potwierdziła: **klocki już istnieją**, plaster jest mały. Budujemy na nich, nie obok.
+
+### 10.1 Co REUSE (zero przepisywania)
+| Element | Lokalizacja | Uwaga |
+|---|---|---|
+| Model blokowy | `src/components/Presentations/wizard/types.ts` (`Deck`/`DeckCard`/`CardBlock{type,content,position}`) | = „jeden model bloków" §2.1 — już istnieje |
+| Generacja | `server/.../presentationGeneratorService.ts` — `generateOutline(setup,org)→{outline,deckId,warnings}` + `generateDeck(deckId,outline,setup,org)` | plan + generate; już aktualizuje `presentation_decks.status` (generating→ready) |
+| Rejestr artefaktów | `server/.../v8/artifactRegistryService.ts` (`ArtifactRecord`, `outputType:presentation`, `canonicalHome:outputs_library`) | = encja V8.1; deck rejestruje się sam w `generateDeck` |
+| Split-view (Kimi) | `src/components/AIChat/UnifiedChatPanel.tsx` (czat) + `WorkCanvasDocumentPanel.tsx` (`CanvasStarterId`) | obsługuje document/table/whiteboard/mindmap/processflow |
+| Eksport PPTX (lazy) | `server/.../report/pptx/PptxPipelineService.ts` (`require('pptxgenjs')`) + `src/services/presentationExport.ts` | już dynamiczny import |
+| Render karty | `src/components/Presentations/DeckBuilder/CardRenderer.tsx` | reuse do prawego panelu split-view |
+
+### 10.2 Co BUDUJEMY (izolowane, additive, za flagą `ff_deliverablesLight`)
+1. **Kontrakt generacji (typy)** — `server/src/types/deliverablesGeneration.ts` ✅ *(zrobione)* — async DTO: plan→generate→poll, format-param.
+2. **Serwis owijający** — `server/src/services/deliverables/deliverablesGenerationService.ts`:
+   - `plan({format,setup,org})` → deck: `generateOutline` → `{generationId:deckId, plan, warnings}`.
+   - `start({generationId,format,setup,plan,org})` → deck: `generateDeck` **w tle** (nie await); stan/błąd w `Map<genId,…>`.
+   - `status(genId,org)` → czyta `presentation_decks.status` + mapa → `GenerationState` + `artifact`.
+   - `doc`/`sheet` → `not_implemented` (L2/L3).
+3. **Router** — `server/src/routes/deliverablesGenerations.routes.ts`: `POST /api/deliverables/generations`, `POST /:id/generate`, `GET /:id`. Handlery za flagą (404 gdy off).
+4. **Split-view: gałąź `'presentation'`** — rozszerzyć `CanvasStarterId` + branch w `WorkCanvasDocumentPanel.tsx` montujący `CardRenderer` (read-mostly + edycja inline per karta). Bez ruszania innych starterów.
+5. **Narzędzie Teresy** — `generate_presentation` (tool-call) → `POST /api/deliverables/generations` → po `draft` montuje artefakt w prawym panelu. Reuse `detectPresentationIntent()` (dziś tylko nawiguje).
+6. **Checklista zadań** — strumień stanów `planning→generating→validating→draft` jako Task-Progress w czacie (wzorzec Kimi).
+
+### 10.3 Kolejność (każdy krok izolowany, type-check po każdym)
+`(1) typy ✅ → (2) serwis → (3) router + mount za flagą → (4) split-view branch → (5) tool Teresy → (6) checklista`.
+Mount = 1 linia additive w rejestracji routerów (flag-gated, behavior-neutral gdy off — wzorzec MELS).
