@@ -272,6 +272,51 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
     [editor, selection, effectiveProvenanceScope, ensureFallbackScope, isStreaming, hasPendingDiff]
   );
 
+  // E1 — "Wyjaśnij" handler: same /api/ai/chat/quick pipeline as
+  // handleAIRequest, but READ-ONLY — the response is rendered in the floating
+  // menu's explanation popover and never touches the document (no diff marks,
+  // no provenance event, no pending-diff state).
+  const handleAIExplain = useCallback(
+    async (prompt: string, selectedText: string): Promise<string | null> => {
+      if (!editor || !selection) return null;
+      // Same gating as handleAIRequest — never fire while Teresa is streaming
+      // or while an unresolved suggestion lives in the doc.
+      if (isStreaming) return null;
+      if (hasPendingDiff) return null;
+      setAiProcessing(true);
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/ai/chat/quick', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: `${prompt}\n\nText to explain:\n${selectedText}`,
+            context: { source: 'canvas_selection', selectedText },
+            // The explanation is for the reader, so hint the backend with the
+            // UI language; the prompt itself pins output to the text language.
+            language: i18n.language,
+          }),
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const raw = data?.response ?? data?.content ?? data?.text;
+        const text = typeof raw === 'string' ? raw.trim() : '';
+        return text || null;
+      } catch {
+        return null;
+      } finally {
+        setAiProcessing(false);
+      }
+    },
+    [editor, selection, isStreaming, hasPendingDiff, i18n.language]
+  );
+
   // Accept AI suggestion: delete the original (aiRemoved) text, keep the
   // inserted (aiAdded) text but strip its marker. Then persist.
   const handleAcceptDiff = useCallback(() => {
@@ -347,6 +392,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
             editor={editor}
             selection={selection}
             onAIRequest={handleAIRequest}
+            onExplainRequest={handleAIExplain}
             isProcessing={aiProcessing}
           />
         )}

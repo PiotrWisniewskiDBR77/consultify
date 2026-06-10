@@ -4,7 +4,17 @@
  */
 
 import type { Editor } from '@tiptap/react';
-import { Check, ChevronDown, Loader2, Sparkles, X } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  HelpCircle,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  SlidersHorizontal,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +24,12 @@ interface CanvasAIFloatingMenuProps {
   editor: Editor;
   selection: CanvasSelection | null;
   onAIRequest: (prompt: string, selectedText: string) => Promise<string | null>;
+  /**
+   * E1 — read-only AI request for the "Wyjaśnij" shortcut. Same /chat/quick
+   * pipeline as onAIRequest but the result is displayed in a popover instead
+   * of being applied to the document as a diff.
+   */
+  onExplainRequest?: (prompt: string, selectedText: string) => Promise<string | null>;
   isProcessing: boolean;
 }
 
@@ -100,10 +116,47 @@ const QUICK_ACTIONS = [
   },
 ] as const;
 
+// E1 — ChatGPT-Canvas-style shortcut actions surfaced directly in the toolbar
+// (no dropdown hop). All rewrite shortcuts reuse the exact same quick-action +
+// diff accept/reject pipeline as the dropdown actions; the prompts are written
+// in English (instruction language) but explicitly pin the OUTPUT language to
+// the selected text so they are bilingual-safe.
+const SHORTCUT_CONDENSE_PROMPT =
+  'Rewrite this text about 40% shorter. Keep every key fact and the meaning, preserve the markdown formatting and structure. Respond in the same language as the text.';
+
+const SHORTCUT_EXPAND_PROMPT =
+  'Expand this text with concrete, relevant detail in the same tone. Stay under roughly 2x the original length and do not invent facts. Preserve the markdown formatting. Respond in the same language as the text.';
+
+const TONE_OPTIONS = [
+  {
+    id: 'tone_formal',
+    labelEn: 'Formal',
+    labelPl: 'Formalny',
+    prompt:
+      'Rewrite this text in a formal, consulting-grade tone: precise, structured, McKinsey-style clarity and rigor. Keep the meaning and the markdown formatting. Respond in the same language as the text.',
+  },
+  {
+    id: 'tone_simple',
+    labelEn: 'Simpler',
+    labelPl: 'Prostszy',
+    prompt:
+      'Rewrite this text in plain, simple language: short sentences, everyday words, no jargon. Keep the meaning and the markdown formatting. Respond in the same language as the text.',
+  },
+] as const;
+
+const EXPLAIN_PROMPT =
+  'Do not rewrite or modify this text. Instead, return a brief explanation of it: what it means, the key terms, and the relevant context. Output only the explanation itself. Respond in the same language as the text.';
+
+type ExplainState =
+  | { status: 'loading' }
+  | { status: 'done'; text: string }
+  | { status: 'error' };
+
 export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
   editor,
   selection,
   onAIRequest,
+  onExplainRequest,
   isProcessing,
 }) => {
   const { i18n } = useTranslation();
@@ -112,6 +165,9 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
   const [showPromptInput, setShowPromptInput] = useState(false);
   const [customPrompt, setCustomPrompt] = useState('');
   const [showQuickActions, setShowQuickActions] = useState(false);
+  // E1 — tone flyout + explain popover state.
+  const [showToneMenu, setShowToneMenu] = useState(false);
+  const [explainState, setExplainState] = useState<ExplainState | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -121,6 +177,8 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
       setPosition(null);
       setShowPromptInput(false);
       setShowQuickActions(false);
+      setShowToneMenu(false);
+      setExplainState(null);
       return;
     }
 
@@ -137,11 +195,12 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
       return;
     }
 
-    // P1 — viewport-clamp. The menu is ~300px wide and 48px tall; if the
-    // selection is near a viewport edge, the unclamped position made it spill
-    // off-screen (especially on iPad / narrow laptop). Clamp horizontally
-    // with margin and flip below the selection when the top edge is too high.
-    const MENU_HALF_W = 160; // approx half the toolbar width
+    // P1 — viewport-clamp. The menu is ~460px wide (E1 shortcut buttons) and
+    // 48px tall; if the selection is near a viewport edge, the unclamped
+    // position made it spill off-screen (especially on iPad / narrow laptop).
+    // Clamp horizontally with margin and flip below the selection when the
+    // top edge is too high.
+    const MENU_HALF_W = 230; // approx half the toolbar width
     const MENU_H = 48;
     const MARGIN = 8;
     const vw = window.innerWidth;
@@ -174,10 +233,25 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
     async (prompt: string) => {
       if (!selection || isProcessing) return;
       setShowQuickActions(false);
+      setShowToneMenu(false);
+      setExplainState(null);
       await onAIRequest(prompt, selection.selectedText);
     },
     [selection, isProcessing, onAIRequest]
   );
+
+  // E1 — "Wyjaśnij": read-only request, result rendered in a scrollable
+  // popover above the toolbar (anchored to the selection like the rest of
+  // the menu). Never touches the document — no diff, no accept/reject.
+  const handleExplain = useCallback(async () => {
+    if (!selection || isProcessing || !onExplainRequest) return;
+    setShowPromptInput(false);
+    setShowQuickActions(false);
+    setShowToneMenu(false);
+    setExplainState({ status: 'loading' });
+    const text = await onExplainRequest(EXPLAIN_PROMPT, selection.selectedText);
+    setExplainState(text ? { status: 'done', text } : { status: 'error' });
+  }, [selection, isProcessing, onExplainRequest]);
 
   const handleCustomPrompt = useCallback(async () => {
     if (!selection || !customPrompt.trim() || isProcessing) return;
@@ -247,12 +321,70 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
         </div>
       )}
 
+      {/* E1 — Tone flyout (Zmień ton → Formalny / Prostszy) */}
+      {showToneMenu && (
+        <div className="mb-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 py-1 shadow-lg min-w-[140px]">
+          {TONE_OPTIONS.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => handleQuickAction(option.prompt)}
+              disabled={isProcessing}
+              className="w-full px-3 py-1.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] disabled:opacity-40"
+            >
+              {isPolish ? option.labelPl : option.labelEn}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* E1 — Explain popover: read-only AI answer, scrollable, never applied
+          to the document. */}
+      {explainState && (
+        <div className="mb-1 w-80 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 shadow-lg">
+          <div className="flex items-center gap-1.5 px-3 pt-2 pb-1">
+            <HelpCircle size={13} className="text-primary-500 shrink-0" />
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex-1">
+              {isPolish ? 'Wyjaśnienie' : 'Explanation'}
+            </span>
+            <button
+              onClick={() => setExplainState(null)}
+              className="p-0.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+              title={isPolish ? 'Zamknij' : 'Close'}
+            >
+              <X size={12} />
+            </button>
+          </div>
+          <div className="px-3 pb-2.5 max-h-56 overflow-y-auto">
+            {explainState.status === 'loading' && (
+              <div className="flex items-center gap-2 py-1 text-sm text-slate-500 dark:text-slate-400">
+                <Loader2 size={14} className="animate-spin text-primary-500" />
+                <span>{isPolish ? 'Teresa wyjaśnia...' : 'Teresa is explaining...'}</span>
+              </div>
+            )}
+            {explainState.status === 'error' && (
+              <p className="py-1 text-sm text-red-600 dark:text-red-400">
+                {isPolish
+                  ? 'Nie udało się pobrać wyjaśnienia. Spróbuj ponownie.'
+                  : 'Could not get an explanation. Please try again.'}
+              </p>
+            )}
+            {explainState.status === 'done' && (
+              <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                {explainState.text}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Main toolbar */}
       <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 px-1 py-0.5 shadow-lg">
         <button
           onClick={() => {
             setShowPromptInput(!showPromptInput);
             setShowQuickActions(false);
+            setShowToneMenu(false);
+            setExplainState(null);
           }}
           className="flex items-center gap-1 px-2 py-1 rounded text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-colors"
           title={isPolish ? 'Zapytaj Teresę' : 'Ask Teresa'}
@@ -261,10 +393,67 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
           <span>{isPolish ? 'Teresa' : 'Ask AI'}</span>
         </button>
         <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+        {/* E1 — shortcut actions (ChatGPT-Canvas pattern). Rewrites go through
+            the same diff accept/reject pipeline as the dropdown actions. */}
+        <button
+          onClick={() => handleQuickAction(SHORTCUT_CONDENSE_PROMPT)}
+          disabled={isProcessing}
+          className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40"
+          title={isPolish ? 'Skróć zaznaczenie ~40%' : 'Condense selection ~40%'}
+        >
+          <Minimize2 size={13} />
+          <span>{isPolish ? 'Skróć' : 'Condense'}</span>
+        </button>
+        <button
+          onClick={() => handleQuickAction(SHORTCUT_EXPAND_PROMPT)}
+          disabled={isProcessing}
+          className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40"
+          title={isPolish ? 'Rozwiń zaznaczenie (maks. 2x)' : 'Expand selection (max 2x)'}
+        >
+          <Maximize2 size={13} />
+          <span>{isPolish ? 'Rozwiń' : 'Expand'}</span>
+        </button>
+        <button
+          onClick={() => {
+            setShowToneMenu(!showToneMenu);
+            setShowPromptInput(false);
+            setShowQuickActions(false);
+            setExplainState(null);
+          }}
+          disabled={isProcessing}
+          className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40"
+          title={isPolish ? 'Zmień ton tekstu' : 'Change tone'}
+        >
+          <SlidersHorizontal size={13} />
+          <span>{isPolish ? 'Ton' : 'Tone'}</span>
+          <ChevronDown size={12} />
+        </button>
+        {onExplainRequest && (
+          <button
+            onClick={handleExplain}
+            disabled={isProcessing}
+            className="flex items-center gap-1 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-40"
+            title={
+              isPolish
+                ? 'Wyjaśnij zaznaczenie (nie zmienia dokumentu)'
+                : 'Explain selection (does not modify the document)'
+            }
+          >
+            {explainState?.status === 'loading' ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <HelpCircle size={13} />
+            )}
+            <span>{isPolish ? 'Wyjaśnij' : 'Explain'}</span>
+          </button>
+        )}
+        <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
         <button
           onClick={() => {
             setShowQuickActions(!showQuickActions);
             setShowPromptInput(false);
+            setShowToneMenu(false);
+            setExplainState(null);
           }}
           className="flex items-center gap-0.5 px-1.5 py-1 rounded text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
           title={isPolish ? 'Szybkie akcje' : 'Quick actions'}
