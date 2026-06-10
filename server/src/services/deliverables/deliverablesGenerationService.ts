@@ -1,0 +1,335 @@
+/**
+ * Deliverables — lekki runtime: SERWIS GENERACJI (L1, format `deck`)
+ *
+ * Cienki serwis owijający istniejące generateOutline()/generateDeck()
+ * z presentationGeneratorService w jeden async kontrakt generacji
+ * (`docs/plans/DELIVERABLES_LIGHT_TARGET.md` §2.2, §10.2 pkt 2).
+ *
+ * ZERO przepisywania generatora: plan = generateOutline, start = generateDeck
+ * odpalony w tle (nie await). SSOT stanu = wiersz `presentation_decks.status`
+ * (draft → generating → ready|failed); mapa in-memory dodaje jedynie stany
+ * przejściowe niewidoczne w DB (`validating`) i treść błędu po restarcie nieobecną.
+ *
+ * `doc` i `sheet` są w kontrakcie, ale do faz L2/L3 zwracają `not_implemented`.
+ */
+
+import type { DeckSetup, OutlineItem } from '../presentationGeneratorService.js';
+import { generateDeck, generateOutline } from '../presentationGeneratorService.js';
+import type {
+  CreateGenerationResponse,
+  DeliverableFormat,
+  GenerationArtifactRef,
+  GenerationPlanItem,
+  GenerationState,
+  GenerationStatusResponse,
+} from '../../types/deliverablesGeneration.js';
+import { getArtifactByOriginUnscoped } from '../v8/artifactRegistryService.js';
+import { get as dbGet } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
+
+const LOG_PREFIX = '[DeliverablesGen]';
+
+// ── Błędy domenowe (router mapuje code → HTTP) ──────────────────────────────
+
+export type DeliverablesGenerationErrorCode =
+  | 'not_implemented'
+  | 'not_found'
+  | 'invalid_state'
+  | 'invalid_setup';
+
+export class DeliverablesGenerationError extends Error {
+  constructor(
+    public readonly code: DeliverablesGenerationErrorCode,
+    message: string
+  ) {
+    super(message);
+    this.name = 'DeliverablesGenerationError';
+  }
+}
+
+function assertDeckFormat(format: DeliverableFormat): void {
+  if (format === 'deck') return;
+  throw new DeliverablesGenerationError(
+    'not_implemented',
+    `Format '${format}' jest w kontrakcie, ale runtime obsługuje go od fazy ${
+      format === 'doc' ? 'L2' : 'L3'
+    }. v1 = wyłącznie 'deck'.`
+  );
+}
+
+// ── Stan przejściowy generacji (uzupełnia DB, nie zastępuje) ────────────────
+
+interface RuntimeGenerationEntry {
+  state: Extract<GenerationState, 'generating' | 'validating' | 'draft' | 'error'>;
+  error?: string;
+  warnings: string[];
+  slideCount?: number;
+}
+
+const runtimeState = new Map<string, RuntimeGenerationEntry>();
+
+// ── Mapowania plan ↔ outline ────────────────────────────────────────────────
+
+function outlineToPlan(outline: OutlineItem[]): GenerationPlanItem[] {
+  return outline.map((item, index) => ({
+    // intent może się powtarzać między slajdami — klucz musi być unikalny w planie
+    key: `${index}:${item.intent}`,
+    title: item.title,
+    enabled: item.enabled,
+    sourceRef: item.sourceRef,
+    hint: item.keyMessage,
+  }));
+}
+
+/**
+ * Nakłada edycje użytkownika (tytuł/enabled) na pełny OutlineItem[] z DB.
+ * Dopasowanie po kluczu `index:intent`; nieznane klucze są ignorowane z warningiem —
+ * plan użytkownika nie może wstrzyknąć slajdów spoza wygenerowanego outline.
+ */
+function applyPlanEdits(
+  outline: OutlineItem[],
+  plan: GenerationPlanItem[]
+): { outline: OutlineItem[]; warnings: string[] } {
+  const warnings: string[] = [];
+  const byKey = new Map(plan.map((p) => [p.key, p]));
+  const merged = outline.map((item, index) => {
+    const edit = byKey.get(`${index}:${item.intent}`);
+    if (!edit) return item;
+    byKey.delete(`${index}:${item.intent}`);
+    return { ...item, title: edit.title || item.title, enabled: edit.enabled };
+  });
+  if (byKey.size > 0) {
+    warnings.push(
+      `Pominięto ${byKey.size} pozycji planu bez odpowiednika w outline (klucze: ${[...byKey.keys()].join(', ')})`
+    );
+  }
+  return { outline: merged, warnings };
+}
+
+// ── Odczyt decka (SSOT stanu po restarcie) ──────────────────────────────────
+
+interface DeckRow {
+  id: string;
+  organization_id: string;
+  status: string;
+  outline_json: string | null;
+  slide_count: number | null;
+  validation_warnings: string | null;
+  title: string;
+}
+
+async function getDeckRow(deckId: string, organizationId: string): Promise<DeckRow> {
+  const row = (await dbGet(
+    `SELECT id, organization_id, status, outline_json, slide_count, validation_warnings, title
+     FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+    [deckId, organizationId]
+  )) as DeckRow | undefined;
+  if (!row) {
+    throw new DeliverablesGenerationError('not_found', `Generacja ${deckId} nie istnieje`);
+  }
+  return row;
+}
+
+function parseStoredOutline(row: DeckRow): OutlineItem[] {
+  try {
+    const parsed = row.outline_json ? JSON.parse(row.outline_json) : null;
+    const outline = Array.isArray(parsed?.outline) ? parsed.outline : null;
+    if (outline) return outline as OutlineItem[];
+  } catch {
+    /* fallthrough */
+  }
+  throw new DeliverablesGenerationError(
+    'invalid_state',
+    `Generacja ${row.id} nie ma zapisanego planu (outline_json) — uruchom najpierw krok PLAN`
+  );
+}
+
+/**
+ * deck.status → GenerationState. Uwaga na kolizję nazw: status decka 'draft'
+ * = świeży outline (kontraktowo `plan_ready`), a stan kontraktu 'draft'
+ * = gotowy artefakt (deck.status 'ready').
+ */
+function deckStatusToState(status: string): GenerationState {
+  switch (status) {
+    case 'draft':
+      return 'plan_ready';
+    case 'generating':
+      return 'generating';
+    case 'ready':
+      return 'draft';
+    case 'failed':
+      return 'error';
+    default:
+      return 'plan_ready';
+  }
+}
+
+// ── API serwisu ─────────────────────────────────────────────────────────────
+
+/**
+ * Krok PLAN: buduje edytowalny outline i wiersz decka (status 'draft').
+ * `generationId` == `deckId` — celowo, żeby status() czytał DB bez tabeli mapującej.
+ */
+export async function plan(params: {
+  format: DeliverableFormat;
+  setup: Record<string, unknown>;
+  organizationId: string;
+  intent?: string;
+}): Promise<CreateGenerationResponse> {
+  assertDeckFormat(params.format);
+  const setup = params.setup as unknown as DeckSetup;
+  if (!setup?.title || !setup?.language) {
+    throw new DeliverablesGenerationError(
+      'invalid_setup',
+      `setup dla 'deck' wymaga co najmniej title i language (DeckSetup)`
+    );
+  }
+  const { outline, deckId, validationWarnings } = await generateOutline(
+    setup,
+    params.organizationId
+  );
+  logger.info(
+    `${LOG_PREFIX} plan ready: generation=${deckId} format=deck items=${outline.length} warnings=${validationWarnings.length}` +
+      (params.intent ? ` intent="${params.intent.slice(0, 120)}"` : '')
+  );
+  return {
+    generationId: deckId,
+    format: 'deck',
+    state: 'plan_ready',
+    plan: outlineToPlan(outline),
+    warnings: validationWarnings,
+  };
+}
+
+/**
+ * Krok GENERATE: nakłada ewentualne edycje planu i odpala generateDeck W TLE.
+ * Zwraca natychmiast stan 'generating'; postęp przez status() (poll).
+ */
+export async function start(params: {
+  generationId: string;
+  format: DeliverableFormat;
+  setup: Record<string, unknown>;
+  organizationId: string;
+  plan?: GenerationPlanItem[];
+}): Promise<GenerationStatusResponse> {
+  assertDeckFormat(params.format);
+  const row = await getDeckRow(params.generationId, params.organizationId);
+  if (row.status === 'generating' || runtimeState.get(row.id)?.state === 'generating') {
+    throw new DeliverablesGenerationError(
+      'invalid_state',
+      `Generacja ${row.id} już trwa — odpytuj status zamiast startować ponownie`
+    );
+  }
+
+  const stored = parseStoredOutline(row);
+  const { outline, warnings } = params.plan?.length
+    ? applyPlanEdits(stored, params.plan)
+    : { outline: stored, warnings: [] };
+  const enabledCount = outline.filter((o) => o.enabled).length;
+  if (enabledCount === 0) {
+    throw new DeliverablesGenerationError(
+      'invalid_state',
+      `Plan generacji ${row.id} nie ma żadnej włączonej pozycji`
+    );
+  }
+
+  const setup = params.setup as unknown as DeckSetup;
+  runtimeState.set(row.id, { state: 'generating', warnings });
+
+  // Świadomie bez await — wzorzec Gamma (202 + poll). Błąd ląduje w mapie
+  // ORAZ w presentation_decks.status='failed' (generateDeck robi to sam).
+  void generateDeck(row.id, outline, setup, params.organizationId)
+    .then((result) => {
+      runtimeState.set(row.id, {
+        state: 'draft',
+        warnings: [...warnings, ...(result.warnings || [])],
+        slideCount: result.slideCount,
+      });
+      logger.info(`${LOG_PREFIX} draft ready: generation=${row.id} slides=${result.slideCount}`);
+    })
+    .catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      runtimeState.set(row.id, { state: 'error', error: message, warnings });
+      logger.error(`${LOG_PREFIX} generation failed: generation=${row.id} — ${message}`);
+    });
+
+  return {
+    generationId: row.id,
+    format: 'deck',
+    state: 'generating',
+    plan: outlineToPlan(outline),
+  };
+}
+
+/**
+ * Poll stanu. DB (presentation_decks.status) jest źródłem prawdy — mapa
+ * in-memory dokłada tylko treść błędu i warningi bieżącego procesu.
+ * Przy state='draft' dokleja referencję artefaktu z kanonicznego rejestru.
+ */
+export async function status(params: {
+  generationId: string;
+  organizationId: string;
+}): Promise<GenerationStatusResponse> {
+  const row = await getDeckRow(params.generationId, params.organizationId);
+  const runtime = runtimeState.get(row.id);
+  const state = deckStatusToState(row.status);
+
+  const response: GenerationStatusResponse = {
+    generationId: row.id,
+    format: 'deck',
+    state,
+  };
+
+  if (state === 'plan_ready') {
+    try {
+      response.plan = outlineToPlan(parseStoredOutline(row));
+    } catch {
+      /* plan opcjonalny w odpowiedzi statusu */
+    }
+  }
+
+  if (state === 'error') {
+    let storedWarning: string | undefined;
+    try {
+      const parsed = row.validation_warnings ? JSON.parse(row.validation_warnings) : null;
+      if (Array.isArray(parsed) && parsed.length) storedWarning = String(parsed[parsed.length - 1]);
+    } catch {
+      /* brak szczegółów w DB */
+    }
+    response.error = runtime?.error || storedWarning || 'Generacja nie powiodła się';
+  }
+
+  if (state === 'draft') {
+    response.artifact = await resolveArtifactRef(row);
+  }
+
+  return response;
+}
+
+async function resolveArtifactRef(row: DeckRow): Promise<GenerationArtifactRef | undefined> {
+  try {
+    const artifact = await getArtifactByOriginUnscoped({
+      organizationId: row.organization_id,
+      originRuntime: 'presentation',
+      originRecordId: row.id,
+    });
+    if (!artifact) return undefined;
+    return {
+      artifactId: artifact.artifactId,
+      originRecordId: row.id,
+      format: 'deck',
+      title: artifact.resolvedTitle || row.title,
+      unitCount: artifact.slideCount ?? row.slide_count ?? runtimeState.get(row.id)?.slideCount ?? 0,
+    };
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} artifact ref unavailable for generation=${row.id}: ${err instanceof Error ? err.message : err}`
+    );
+    return undefined;
+  }
+}
+
+/** Wyłącznie do testów — czyści stan przejściowy między przypadkami. */
+export function __clearRuntimeStateForTests(): void {
+  runtimeState.clear();
+}
