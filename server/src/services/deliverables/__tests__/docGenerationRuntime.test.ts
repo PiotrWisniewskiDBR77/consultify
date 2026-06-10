@@ -24,6 +24,11 @@ const updateDraftMock = vi.fn();
 const planDocumentMock = vi.fn();
 const materializeMock = vi.fn();
 const renderMarkdownMock = vi.fn();
+const generateChatResponseMock = vi.fn();
+
+vi.mock('../../aiService.js', () => ({
+  generateChatResponse: (...args: unknown[]) => generateChatResponseMock(...args),
+}));
 
 vi.mock('../../workCanvasService.js', () => ({
   createDraft: (...args: unknown[]) => createDraftMock(...args),
@@ -40,7 +45,7 @@ vi.mock('../../documentStudio/documentSchemaRenderer.js', () => ({
   renderSchemaToMarkdown: (...args: unknown[]) => renderMarkdownMock(...args),
 }));
 
-const { planDoc, startDoc, statusDoc, __clearDocRuntimeStateForTests } =
+const { planDoc, planSheet, startDoc, startSheet, statusDoc, __clearDocRuntimeStateForTests } =
   await import('../docGenerationRuntime.js');
 const { isPlaceholderDocumentProse, SECTION_STUB_PREFIX } =
   await import('../../documentStudio/documentContentGenerator.js');
@@ -235,5 +240,76 @@ describe('statusDoc — wnioskowanie po restarcie (pusta mapa runtime)', () => {
     await expect(statusDoc({ generationId: 'ghost', organizationId: ORG })).rejects.toBeInstanceOf(
       DeliverablesGenerationError
     );
+  });
+});
+
+// ── Gałąź SHEET (L3) ────────────────────────────────────────────────────────
+
+const GFM_TABLE =
+  '# Budżet Q1\n\n| Pozycja | Kwota | Status |\n| --- | --- | --- |\n| Licencje | 12000 | planowane |\n| Szkolenia | 8000 | planowane |';
+
+function sheetDraftRow(overrides: Record<string, unknown> = {}) {
+  return draftRow({
+    kind: 'table',
+    title: 'Budżet Q1',
+    content:
+      '# Budżet Q1\n\n> Teresa buduje tabelę — struktura i dane pojawią się po zakończeniu generacji.',
+    provenance: {
+      deliverablesGeneration: {
+        sheetSetup: { intent: 'Przygotuj budżet Q1', language: 'pl', title: 'Budżet Q1' },
+      },
+    },
+    ...overrides,
+  });
+}
+
+describe('planSheet + startSheet (L3)', () => {
+  it('planSheet tworzy draft kind=table i zwraca plan_ready format=sheet', async () => {
+    createDraftMock.mockResolvedValue(sheetDraftRow());
+    const result = await planSheet({
+      setup: { intent: 'Przygotuj budżet Q1', language: 'pl' },
+      organizationId: ORG,
+      userId: USER,
+    });
+    expect(result.format).toBe('sheet');
+    expect(result.state).toBe('plan_ready');
+    expect(createDraftMock.mock.calls[0][0].input.kind).toBe('table');
+  });
+
+  it('startSheet: poprawna tabela GFM ⇒ draft z liczbą wierszy', async () => {
+    getDraftMock.mockResolvedValue(sheetDraftRow());
+    generateChatResponseMock.mockResolvedValue({ content: GFM_TABLE });
+
+    await startSheet({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+
+    expect(updateDraftMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        patch: expect.objectContaining({ content: expect.stringContaining('| Licencje |') }),
+      })
+    );
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
+    expect(status.state).toBe('draft');
+    expect(status.format).toBe('sheet');
+    expect(status.artifact?.unitCount).toBe(2);
+  });
+
+  it('startSheet: odpowiedź bez tabeli ⇒ error, draft nienaruszony', async () => {
+    getDraftMock.mockResolvedValue(sheetDraftRow());
+    generateChatResponseMock.mockResolvedValue({ content: 'Przepraszam, nie mogę.' });
+
+    await startSheet({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+
+    expect(updateDraftMock).not.toHaveBeenCalled();
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
+    expect(status.state).toBe('error');
+  });
+
+  it('statusDoc po restarcie: kind=table + tabela w treści ⇒ format sheet, stan draft', async () => {
+    getDraftMock.mockResolvedValue(sheetDraftRow({ content: GFM_TABLE }));
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
+    expect(status.format).toBe('sheet');
+    expect(status.state).toBe('draft');
   });
 });

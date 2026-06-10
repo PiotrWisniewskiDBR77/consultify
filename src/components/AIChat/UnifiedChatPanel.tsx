@@ -52,9 +52,11 @@ import {
   isDeliverablesLightEnabled,
   planDeckGeneration,
   planDocGeneration,
+  planSheetGeneration,
   pollDeckGenerationUntilDone,
   startDeckGeneration,
   startDocGeneration,
+  startSheetGeneration,
 } from '@/services/deliverablesGeneration';
 
 import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
@@ -346,6 +348,57 @@ const canvasStarterFromText = (input: string): CanvasStarterId => {
  * w czacie (wzorzec Kimi) — jedna wiadomość AI edytowana w miarę przechodzenia
  * stanów planning→generating→validating→draft.
  */
+type ChecklistFormat = 'deck' | 'doc' | 'sheet';
+
+/** Etykiety checklisty per format i język — jedna mapa zamiast zagnieżdżonych ternari. */
+const CHECKLIST_COPY: Record<
+  ChecklistFormat,
+  Record<'pl' | 'en', { noun: string; units: string; generating: string; doneHint: string }>
+> = {
+  deck: {
+    pl: {
+      noun: 'Prezentacja',
+      units: 'slajdów',
+      generating: 'Generowanie slajdów',
+      doneHint: 'Możesz ją tam przejrzeć albo otworzyć w Deck Builderze.',
+    },
+    en: {
+      noun: 'Presentation',
+      units: 'slides',
+      generating: 'Generating slides',
+      doneHint: 'Review it there or open it in Deck Builder.',
+    },
+  },
+  doc: {
+    pl: {
+      noun: 'Dokument',
+      units: 'sekcji',
+      generating: 'Pisanie treści',
+      doneHint: 'Możesz go tam edytować albo wyeksportować.',
+    },
+    en: {
+      noun: 'Document',
+      units: 'sections',
+      generating: 'Writing content',
+      doneHint: 'Edit it there or export it.',
+    },
+  },
+  sheet: {
+    pl: {
+      noun: 'Arkusz',
+      units: 'wierszy',
+      generating: 'Budowanie tabeli',
+      doneHint: 'Możesz go tam edytować, wysłać do Table Studio albo wyeksportować (XLSX/CSV).',
+    },
+    en: {
+      noun: 'Sheet',
+      units: 'rows',
+      generating: 'Building the table',
+      doneHint: 'Edit it there, send it to Table Studio or export it (XLSX/CSV).',
+    },
+  },
+};
+
 const deckGenerationChecklist = (params: {
   lang: string;
   title: string;
@@ -353,11 +406,11 @@ const deckGenerationChecklist = (params: {
   planCount?: number;
   unitCount?: number;
   error?: string;
-  /** L2: ta sama checklista obsługuje deck i doc — różnią się tylko etykiety. */
-  format?: 'deck' | 'doc';
+  /** L2/L3: jedna checklista dla deck/doc/sheet — różnią się tylko etykiety. */
+  format?: ChecklistFormat;
 }): string => {
   const pl = params.lang === 'pl';
-  const doc = params.format === 'doc';
+  const copy = CHECKLIST_COPY[params.format || 'deck'][pl ? 'pl' : 'en'];
   const order = ['plan_ready', 'generating', 'validating', 'draft'] as const;
   const reached = (step: (typeof order)[number]): boolean => {
     if (params.phase === 'error') return false;
@@ -365,44 +418,28 @@ const deckGenerationChecklist = (params: {
     return order.indexOf(step) <= order.indexOf(params.phase as (typeof order)[number]);
   };
   const mark = (step: (typeof order)[number]) => (reached(step) ? 'x' : ' ');
-  const unitsPl = doc ? 'sekcji' : 'slajdów';
-  const unitsEn = doc ? 'sections' : 'slides';
+  const planCountSuffix = params.planCount ? ` — ${params.planCount} ${copy.units}` : '';
   const planLabel = pl
-    ? `Plan ${doc ? 'dokumentu' : 'prezentacji'}${params.planCount ? ` — ${params.planCount} ${unitsPl}` : ''}`
-    : `${doc ? 'Document' : 'Presentation'} plan${params.planCount ? ` — ${params.planCount} ${unitsEn}` : ''}`;
+    ? `Plan: ${copy.noun.toLowerCase()}${planCountSuffix}`
+    : `${copy.noun} plan${planCountSuffix}`;
   const heading = pl
-    ? `**${doc ? 'Dokument' : 'Prezentacja'}: „${params.title}”**`
-    : `**${doc ? 'Document' : 'Presentation'}: "${params.title}"**`;
+    ? `**${copy.noun}: „${params.title}”**`
+    : `**${copy.noun}: "${params.title}"**`;
   const lines = [
     heading,
     '',
     `- [${mark('plan_ready')}] ${planLabel}`,
-    `- [${mark('generating')}] ${
-      pl
-        ? doc
-          ? 'Pisanie treści'
-          : 'Generowanie slajdów'
-        : doc
-          ? 'Writing content'
-          : 'Generating slides'
-    }`,
+    `- [${mark('generating')}] ${copy.generating}`,
     `- [${mark('validating')}] ${pl ? 'Walidacja treści' : 'Validating content'}`,
     `- [${mark('draft')}] ${pl ? 'Artefakt gotowy' : 'Artifact ready'}`,
   ];
   if (params.phase === 'draft') {
-    const unitsSuffixPl = params.unitCount ? ` (${params.unitCount} ${unitsPl})` : '';
-    const unitsSuffixEn = params.unitCount ? ` (${params.unitCount} ${unitsEn})` : '';
+    const unitsSuffix = params.unitCount ? ` (${params.unitCount} ${copy.units})` : '';
     lines.push(
       '',
       pl
-        ? `✅ Gotowe — ${doc ? 'dokument' : 'prezentacja'}${doc ? unitsSuffixPl : unitsSuffixPl} jest po prawej stronie. ${
-            doc
-              ? 'Możesz go tam edytować albo wyeksportować.'
-              : 'Możesz ją tam przejrzeć albo otworzyć w Deck Builderze.'
-          }`
-        : `✅ Done — the ${doc ? 'document' : 'presentation'}${unitsSuffixEn} is on the right. ${
-            doc ? 'Edit it there or export it.' : 'Review it there or open it in Deck Builder.'
-          }`
+        ? `✅ Gotowe — ${copy.noun.toLowerCase()}${unitsSuffix} jest po prawej stronie. ${copy.doneHint}`
+        : `✅ Done — the ${copy.noun.toLowerCase()}${unitsSuffix} is on the right. ${copy.doneHint}`
     );
   }
   if (params.phase === 'error') {
@@ -2035,6 +2072,135 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
 
         const uiLang = (i18n.language || 'en').split('-')[0];
+
+        // Deliverables light (L3): arkusz powstaje w miejscu — tabela GFM jako
+        // canvas draft kind='table' (edycja + XLSX/CSV + bridge do Table Studio),
+        // zamiast redirectu do /tabele. Za flagą; off ⇒ legacy.
+        if (isDeliverablesLightEnabled()) {
+          const sheetTitle = deckTitleFromIntent(
+            text,
+            uiLang === 'pl' ? 'Arkusz z czatu' : 'Sheet from chat'
+          );
+          if (!useConversationStore.getState().activeConversationId) {
+            try {
+              const conv = await createConversation();
+              await addMessageToConversation({
+                conversationId: conv.id,
+                role: 'user',
+                content,
+                messageType: 'text',
+              });
+            } catch (convErr) {
+              console.error('[UnifiedChatPanel] Failed to create conversation for sheet:', convErr);
+            }
+          }
+          const progressMessageId = useConversationStore.getState().appendLocalMessage({
+            role: 'ai',
+            content: deckGenerationChecklist({
+              lang: uiLang,
+              title: sheetTitle,
+              phase: 'planning',
+              format: 'sheet',
+            }),
+          });
+          onMessageSent?.(content);
+
+          const updateSheetChecklist = (
+            phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
+            extra?: { planCount?: number; unitCount?: number; error?: string }
+          ) => {
+            useConversationStore.getState().updateMessageContent(
+              progressMessageId,
+              deckGenerationChecklist({
+                lang: uiLang,
+                title: sheetTitle,
+                phase,
+                format: 'sheet',
+                ...extra,
+              })
+            );
+          };
+
+          const persistSheetFinalNote = (note: string) => {
+            const conversationId = useConversationStore.getState().activeConversationId;
+            if (!conversationId) return;
+            void addMessageToConversation({
+              conversationId,
+              role: 'ai',
+              content: note,
+              messageType: 'text',
+            }).catch(() => {
+              /* best-effort persist */
+            });
+          };
+
+          const conversationContext = useConversationStore
+            .getState()
+            .activeMessages.slice(-6)
+            .map(
+              (m) => `${m.role === 'ai' ? 'Teresa' : 'User'}: ${String(m.content).slice(0, 400)}`
+            )
+            .join('\n');
+
+          void (async () => {
+            try {
+              const planned = await planSheetGeneration({
+                intent: text,
+                title: sheetTitle,
+                language: effectiveChatLanguage === 'pl' ? 'pl' : 'en',
+                conversationId: useConversationStore.getState().activeConversationId,
+                conversationContext,
+              });
+              updateSheetChecklist('plan_ready', { planCount: undefined });
+
+              await startSheetGeneration({
+                generationId: planned.generationId,
+                setup: planned.setup,
+              });
+              updateSheetChecklist('generating');
+
+              const final = await pollDeckGenerationUntilDone({
+                generationId: planned.generationId,
+                onUpdate: (status: DeliverableGenerationStatus) => {
+                  if (status.state === 'validating') updateSheetChecklist('validating');
+                },
+              });
+              if (final.state === 'draft') {
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                persistSheetFinalNote(
+                  deckGenerationChecklist({
+                    lang: uiLang,
+                    title: sheetTitle,
+                    phase: 'draft',
+                    format: 'sheet',
+                    unitCount: final.artifact?.unitCount,
+                  })
+                );
+                setRequestedCanvasDeckId(null);
+                setRequestedCanvasDraftId(planned.generationId);
+                setRequestedCanvasStarterId('document');
+                setIsWorkPanelOpen(true);
+              } else {
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                persistSheetFinalNote(
+                  deckGenerationChecklist({
+                    lang: uiLang,
+                    title: sheetTitle,
+                    phase: 'error',
+                    format: 'sheet',
+                    error: final.error,
+                  })
+                );
+              }
+            } catch (err: unknown) {
+              updateSheetChecklist('error', {
+                error: err instanceof Error ? err.message : undefined,
+              });
+            }
+          })();
+          return;
+        }
+
         addChatMessage({
           id: `excele-redirect-${Date.now()}`,
           role: 'ai',

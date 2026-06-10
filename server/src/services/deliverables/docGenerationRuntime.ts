@@ -32,6 +32,7 @@ import type {
   DocumentOutline,
   DocumentSourceRef,
 } from '../documentStudio/documentStudioTypes.js';
+import { registerArtifactOrigin } from '../v8/artifactRegistryService.js';
 import {
   createDraft,
   getDraft,
@@ -41,6 +42,9 @@ import {
 import { DeliverablesGenerationError } from './errors.js';
 
 const LOG_PREFIX = '[DeliverablesGen:doc]';
+
+/** Marker szkieletu — obecny w treści draftu dopóki generacja nie skończy. */
+const GENERATION_PENDING_MARKER = 'po zakończeniu generacji';
 
 interface DocRuntimeEntry {
   state: 'plan_ready' | 'generating' | 'validating' | 'draft' | 'error';
@@ -105,6 +109,61 @@ function buildIntake(parsed: DocGenerationSetup): DocumentIntake {
   };
 }
 
+/**
+ * C7 — initiative linkage z sourceRefs groundingu (D-L2-2a): jeśli encje org
+ * przekazane z czatu zawierają ref inicjatywy, artefakt rejestruje się w
+ * kanonicznym rejestrze z sourceInitiativeId (sekcja „Artefakty" w widoku
+ * inicjatywy czyta to przez GET /api/artifacts?sourceInitiativeId=…).
+ */
+function extractInitiativeIdFromSourceRefs(refs?: DocumentSourceRef[]): string | null {
+  for (const ref of refs || []) {
+    if (!ref || typeof ref !== 'object') continue;
+    if (String(ref.sourceType || '').toLowerCase() !== 'initiative') continue;
+    if (typeof ref.sourceId === 'string' && ref.sourceId.trim()) return ref.sourceId.trim();
+  }
+  return null;
+}
+
+/**
+ * C7 — best-effort rejestracja gotowego dokumentu w kanonicznym rejestrze
+ * Outputs (ta sama konwencja co G5 w document-studio.routes.ts: dokumenty =
+ * outputType 'report' + family 'document' + runtime 'native_artifact').
+ * Gałąź doc omija router DocumentStudio (woła materializeDocumentArtifact
+ * bezpośrednio), więc bez tego kroku chatowe dokumenty nie istnieją w
+ * rejestrze. Błąd rejestru NIGDY nie psuje generacji — log + kontynuacja.
+ */
+async function registerDocArtifactBestEffort(params: {
+  organizationId: string;
+  userId: string;
+  documentArtifactId: string;
+  title: string;
+  generationDraftId: string;
+  sourceRefs?: DocumentSourceRef[];
+}): Promise<void> {
+  try {
+    await registerArtifactOrigin({
+      organizationId: params.organizationId,
+      outputType: 'report',
+      artifactFamily: 'document',
+      originRuntime: 'native_artifact',
+      originRecordId: params.documentArtifactId,
+      titleSnapshot: params.title,
+      ownerUserId: params.userId,
+      createdBy: params.userId,
+      sourceInitiativeId: extractInitiativeIdFromSourceRefs(params.sourceRefs),
+      originSummary: {
+        sourceType: 'deliverables_doc_generation',
+        generationId: params.generationDraftId,
+        sourceTable: 'document_studio_artifacts',
+      },
+    });
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} outputs registration failed (document still saved): generation=${params.generationDraftId} — ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
+
 function outlineToPlanItems(outline: DocumentOutline): GenerationPlanItem[] {
   return outline.sections.map((section, index) => ({
     key: `${index}:${section.title}`,
@@ -134,6 +193,160 @@ function outlineSkeletonMarkdown(title: string, outline: DocumentOutline): strin
   }
   lines.push('', '> Teresa pisze treść — sekcje wypełnią się po zakończeniu generacji.');
   return lines.join('\n');
+}
+
+// ── Gałąź SHEET (L3) ────────────────────────────────────────────────────────
+// Doktryna §2.1: Sheet = jeden blok `table` na całą powierzchnię. Artefakt to
+// canvas draft kind='table' (markdown canonical, tabela GFM) — dzięki temu za
+// darmo dostaje istniejący edytor, eksport XLSX/CSV i bridge „Send to Table
+// Studio". Status/poll współdzielony ze ścieżką doc (format po kind draftu).
+
+function sheetSkeletonMarkdown(title: string): string {
+  return [
+    `# ${title}`,
+    '',
+    `> Teresa buduje tabelę — struktura i dane pojawią się po zakończeniu generacji.`,
+  ].join('\n');
+}
+
+/** Walidacja: wynik MUSI zawierać tabelę GFM (nagłówek + separator + ≥1 wiersz). */
+function extractGfmTable(markdown: string): { ok: boolean; rowCount: number } {
+  const lines = markdown.split('\n').map((l) => l.trim());
+  const separatorIdx = lines.findIndex(
+    (l) => /^\|?[\s:-]*-{3,}[\s|:-]*\|?$/.test(l) && l.includes('-')
+  );
+  if (separatorIdx < 1) return { ok: false, rowCount: 0 };
+  const header = lines[separatorIdx - 1];
+  if (!header.includes('|')) return { ok: false, rowCount: 0 };
+  const rows = lines.slice(separatorIdx + 1).filter((l) => l.startsWith('|'));
+  return { ok: rows.length >= 1, rowCount: rows.length };
+}
+
+export async function planSheet(params: {
+  setup: Record<string, unknown>;
+  organizationId: string;
+  userId: string;
+}): Promise<CreateGenerationResponse> {
+  const parsed = parseSetup(params.setup);
+  const title = parsed.title || (parsed.language === 'en' ? 'Sheet from chat' : 'Arkusz z czatu');
+
+  const draft = await createDraft({
+    organizationId: params.organizationId,
+    actorUserId: params.userId,
+    input: {
+      conversationId: parsed.conversationId || 'chat',
+      kind: 'table',
+      title,
+      content: sheetSkeletonMarkdown(title),
+      sources: parsed.sourceRefs || [],
+      provenance: {
+        deliverablesGeneration: { sheetSetup: { ...parsed, title } },
+      },
+    },
+  });
+
+  docRuntimeState.set(draft.id, { state: 'plan_ready', warnings: [] });
+  logger.info(`${LOG_PREFIX} sheet plan ready: generation=${draft.id}`);
+  return {
+    generationId: draft.id,
+    format: 'sheet',
+    state: 'plan_ready',
+    plan: [
+      {
+        key: '0:sheet',
+        title,
+        enabled: true,
+        hint:
+          parsed.language === 'en'
+            ? 'Columns and rows generated by Teresa from your request'
+            : 'Kolumny i wiersze wygeneruje Teresa z Twojej prośby',
+      },
+    ],
+    warnings: [],
+  };
+}
+
+export async function startSheet(params: {
+  generationId: string;
+  setup: Record<string, unknown>;
+  organizationId: string;
+  userId: string;
+}): Promise<GenerationStatusResponse> {
+  const draft = await getDocDraft(params.generationId, params.organizationId);
+  if (docRuntimeState.get(draft.id)?.state === 'generating') {
+    throw new DeliverablesGenerationError(
+      'invalid_state',
+      `Generacja ${draft.id} już trwa — odpytuj status zamiast startować ponownie`
+    );
+  }
+  const provenance = (draft.provenance || {}) as Record<string, any>;
+  const stored = provenance.deliverablesGeneration?.sheetSetup as DocGenerationSetup | undefined;
+  if (!stored?.intent) {
+    throw new DeliverablesGenerationError(
+      'invalid_state',
+      `Generacja ${draft.id} nie ma zapisanego setupu — uruchom najpierw krok PLAN`
+    );
+  }
+
+  docRuntimeState.set(draft.id, { state: 'generating', warnings: [] });
+
+  void (async () => {
+    try {
+      const pl = stored.language !== 'en';
+      const systemPrompt = pl
+        ? 'Jesteś analitykiem danych w Consultify. Tworzysz arkusz roboczy jako tabelę Markdown (GFM). Zwracasz WYŁĄCZNIE: linię tytułu "# <tytuł>" i jedną tabelę GFM (wiersz nagłówków, separator, wiersze danych). Maksymalnie 10 kolumn i 15 wierszy. Kolumny dobierz pod intencję użytkownika. Jeśli kontekst zawiera konkretne dane — użyj ich; w przeciwnym razie wypełnij realistycznymi wierszami startowymi (bez lorem ipsum). Bez komentarzy, bez bloków kodu.'
+        : 'You are a data analyst at Consultify. You create a working sheet as a Markdown (GFM) table. Return ONLY: a title line "# <title>" and one GFM table (header row, separator, data rows). At most 10 columns and 15 rows. Choose columns to fit the user intent. If the context contains concrete data, use it; otherwise fill with realistic seed rows (no lorem ipsum). No commentary, no code fences.';
+      const userPrompt = stored.conversationContext
+        ? `${stored.intent}\n\n${pl ? 'Kontekst rozmowy' : 'Conversation context'}:\n${stored.conversationContext.slice(0, 3000)}`
+        : stored.intent;
+
+      const { generateChatResponse } = await import('../aiService.js');
+      const response = await generateChatResponse({
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        model: 'standard',
+        maxTokens: 2400,
+      });
+
+      docRuntimeState.set(draft.id, { state: 'validating', warnings: [] });
+
+      const markdown = String(response.content || '')
+        .replace(/^```(?:markdown)?\s*/i, '')
+        .replace(/\s*```\s*$/, '')
+        .trim();
+      const table = extractGfmTable(markdown);
+      if (!table.ok) {
+        throw new Error(
+          pl
+            ? 'Generacja tabeli nie powiodła się — odpowiedź nie zawiera poprawnej tabeli'
+            : 'Sheet generation failed — response does not contain a valid table'
+        );
+      }
+
+      const content = markdown.startsWith('#') ? markdown : `# ${draft.title}\n\n${markdown}`;
+      await updateDraft({
+        organizationId: params.organizationId,
+        draftId: draft.id,
+        patch: { content },
+      });
+      docRuntimeState.set(draft.id, {
+        state: 'draft',
+        warnings: [],
+        sectionCount: table.rowCount,
+      });
+      logger.info(`${LOG_PREFIX} sheet ready: generation=${draft.id} rows=${table.rowCount}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      docRuntimeState.set(draft.id, { state: 'error', error: message, warnings: [] });
+      logger.error(`${LOG_PREFIX} sheet generation failed: generation=${draft.id} — ${message}`);
+    }
+  })();
+
+  return {
+    generationId: draft.id,
+    format: 'sheet',
+    state: 'generating',
+  };
 }
 
 interface DraftProvenance {
@@ -255,6 +468,15 @@ export async function startDoc(params: {
         draftId: draft.id,
         patch: { content: markdown, artifactId: result.artifactId },
       });
+      // C7 — zarejestruj gotowy dokument w rejestrze Outputs (best-effort).
+      await registerDocArtifactBestEffort({
+        organizationId: params.organizationId,
+        userId: params.userId,
+        documentArtifactId: result.artifactId,
+        title: String(result.schema?.title || stored.intake.title || draft.title),
+        generationDraftId: draft.id,
+        sourceRefs: stored.intake.sourceHints,
+      });
       docRuntimeState.set(draft.id, {
         state: 'draft',
         warnings: [],
@@ -285,20 +507,20 @@ export async function statusDoc(params: {
 }): Promise<GenerationStatusResponse> {
   const draft = await getDocDraft(params.generationId, params.organizationId);
   const runtime = docRuntimeState.get(draft.id);
+  // L3: ta sama ścieżka statusu obsługuje doc i sheet — format po kind draftu.
+  const format = draft.kind === 'table' ? ('sheet' as const) : ('doc' as const);
 
   // Po restarcie serwera mapa jest pusta — wnioskujemy z draftu: wypełniona
   // treść bez markera szkieletu ⇒ draft gotowy; inaczej plan_ready.
   const content = typeof draft.content === 'string' ? draft.content : '';
-  const fallbackState: DocRuntimeEntry['state'] = content.includes(
-    'sekcje wypełnią się po zakończeniu generacji'
-  )
+  const fallbackState: DocRuntimeEntry['state'] = content.includes(GENERATION_PENDING_MARKER)
     ? 'plan_ready'
     : 'draft';
   const state = runtime?.state || fallbackState;
 
   const response: GenerationStatusResponse = {
     generationId: draft.id,
-    format: 'doc',
+    format,
     state,
   };
   if (state === 'error') {
@@ -308,9 +530,13 @@ export async function statusDoc(params: {
     response.artifact = {
       artifactId: runtime?.documentArtifactId || draft.artifactId || draft.id,
       originRecordId: draft.id,
-      format: 'doc',
+      format,
       title: draft.title,
-      unitCount: runtime?.sectionCount ?? (content.match(/^## /gm) || []).length,
+      unitCount:
+        runtime?.sectionCount ??
+        (format === 'sheet'
+          ? Math.max(0, (content.match(/^\|/gm) || []).length - 2)
+          : (content.match(/^## /gm) || []).length),
     };
   }
   return response;

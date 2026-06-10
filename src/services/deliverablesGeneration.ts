@@ -160,6 +160,55 @@ export async function startDocGeneration(params: {
   });
 }
 
+// ── Gałąź sheet (L3) ────────────────────────────────────────────────────────
+
+/** Krok PLAN dla arkusza — wejście jak doc; artefakt = canvas draft kind='table'. */
+export async function planSheetGeneration(params: {
+  intent: string;
+  title?: string;
+  language: 'pl' | 'en';
+  conversationId?: string | null;
+  conversationContext?: string;
+}): Promise<{
+  generationId: string;
+  plan: DeliverableGenerationPlanItem[];
+  warnings: string[];
+  setup: Record<string, unknown>;
+}> {
+  const setup: Record<string, unknown> = {
+    intent: params.intent,
+    title: params.title,
+    language: params.language,
+    conversationId: params.conversationId || undefined,
+    conversationContext: params.conversationContext,
+  };
+  const res = (await Api.post('/deliverables/generations', {
+    format: 'sheet',
+    setup,
+    intent: params.intent,
+  })) as any;
+  const data = res?.data?.data && typeof res.data.data === 'object' ? res.data.data : res?.data;
+  if (!data?.generationId) {
+    throw new Error(data?.error || 'Generation plan failed');
+  }
+  return {
+    generationId: String(data.generationId),
+    plan: Array.isArray(data.plan) ? data.plan : [],
+    warnings: Array.isArray(data.warnings) ? data.warnings : [],
+    setup,
+  };
+}
+
+export async function startSheetGeneration(params: {
+  generationId: string;
+  setup: Record<string, unknown>;
+}): Promise<void> {
+  await Api.post(`/deliverables/generations/${params.generationId}/generate`, {
+    format: 'sheet',
+    setup: params.setup,
+  });
+}
+
 export async function startDeckGeneration(params: {
   generationId: string;
   setup: Record<string, unknown>;

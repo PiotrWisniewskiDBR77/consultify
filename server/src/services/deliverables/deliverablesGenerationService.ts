@@ -26,7 +26,7 @@ import logger from '../../utils/Logger.js';
 import type { DeckSetup, OutlineItem } from '../presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../presentationGeneratorService.js';
 import { getArtifactByOriginUnscoped } from '../v8/artifactRegistryService.js';
-import { planDoc, startDoc, statusDoc } from './docGenerationRuntime.js';
+import { planDoc, planSheet, startDoc, startSheet, statusDoc } from './docGenerationRuntime.js';
 import { DeliverablesGenerationError } from './errors.js';
 
 const LOG_PREFIX = '[DeliverablesGen]';
@@ -35,10 +35,10 @@ const LOG_PREFIX = '[DeliverablesGen]';
 export { DeliverablesGenerationError, type DeliverablesGenerationErrorCode } from './errors.js';
 
 function assertImplementedFormat(format: DeliverableFormat): void {
-  if (format === 'deck' || format === 'doc') return;
+  if (format === 'deck' || format === 'doc' || format === 'sheet') return;
   throw new DeliverablesGenerationError(
     'not_implemented',
-    `Format '${format}' jest w kontrakcie, ale runtime obsługuje go od fazy L3. v1 = 'deck' i 'doc'.`
+    `Nieznany format '${format}' — kontrakt obsługuje deck, doc i sheet.`
   );
 }
 
@@ -164,8 +164,9 @@ export async function plan(params: {
   userId?: string;
 }): Promise<CreateGenerationResponse> {
   assertImplementedFormat(params.format);
-  if (params.format === 'doc') {
-    return planDoc({
+  if (params.format === 'doc' || params.format === 'sheet') {
+    const branch = params.format === 'doc' ? planDoc : planSheet;
+    return branch({
       setup: { intent: params.intent, ...params.setup },
       organizationId: params.organizationId,
       userId: params.userId || 'system',
@@ -215,6 +216,14 @@ export async function start(params: {
       organizationId: params.organizationId,
       userId: params.userId || 'system',
       plan: params.plan,
+    });
+  }
+  if (params.format === 'sheet') {
+    return startSheet({
+      generationId: params.generationId,
+      setup: params.setup,
+      organizationId: params.organizationId,
+      userId: params.userId || 'system',
     });
   }
   const row = await getDeckRow(params.generationId, params.organizationId);
