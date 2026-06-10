@@ -21,6 +21,7 @@ import { randomUUID } from 'node:crypto';
 
 import { getDatabase } from '../database/index.js';
 import { insertDynamic } from '../utils/dbDynamic.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 export type CanvasWorkspaceTarget = 'idea' | 'note' | 'initiative' | 'decision' | 'task';
@@ -62,6 +63,57 @@ export interface CanvasMaterializeResult {
 }
 
 /**
+ * C8 — org-scoping guard. The materializer only ever CREATES new rows, but the
+ * input can carry references to EXISTING entities: `projectId` (from
+ * draft.projectId on save-to-workspace, or proposal.payload.projectId on
+ * proposal approval) and `ownerId` / `taskAssigneeId` (proposal payload).
+ * Downstream canonical services do not all enforce org membership —
+ * decisionService / notebookService / initiativeService persist project_id
+ * verbatim, and decisionMakerId / owner_id / assignee_id are never checked —
+ * so the validation lives here: the single shared site for both writers.
+ */
+function crossOrgReferenceError(field: string, value: string): Error {
+  return Object.assign(
+    new Error(`Referenced ${field} does not exist or belongs to another organization`),
+    {
+      statusCode: 403,
+      code: 'CANVAS_CROSS_ORG_REFERENCE',
+      field,
+      value,
+    }
+  );
+}
+
+async function assertOrgScopedReferences(input: CanvasMaterializeInput): Promise<void> {
+  const { organizationId, actorUserId, projectId, ownerId, taskAssigneeId } = input;
+
+  if (projectId) {
+    const project = await dbGet<{ id: string }>(
+      'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
+      [projectId, organizationId],
+      { fallback: false }
+    );
+    if (!project) throw crossOrgReferenceError('projectId', projectId);
+  }
+
+  const userReferences: Array<{ field: string; userId: string }> = [];
+  if (ownerId && ownerId !== actorUserId) {
+    userReferences.push({ field: 'ownerId', userId: ownerId });
+  }
+  if (taskAssigneeId && taskAssigneeId !== actorUserId && taskAssigneeId !== ownerId) {
+    userReferences.push({ field: 'taskAssigneeId', userId: taskAssigneeId });
+  }
+  for (const reference of userReferences) {
+    const user = await dbGet<{ id: string }>(
+      'SELECT id FROM users WHERE id = ? AND organization_id = ?',
+      [reference.userId, organizationId],
+      { fallback: false }
+    );
+    if (!user) throw crossOrgReferenceError(reference.field, reference.userId);
+  }
+}
+
+/**
  * Materialize a Canvas promote into its canonical entity. Both
  * `createWorkspaceResource` and `commitProposalToDomain` reduce to this.
  */
@@ -85,6 +137,8 @@ export async function materializeWorkspaceTarget(
     taskDueDate,
     ownerId,
   } = input;
+  // C8 — refuse to mutate when any referenced entity is missing or cross-org.
+  await assertOrgScopedReferences(input);
   const now = new Date().toISOString();
 
   // ---- idea ----------------------------------------------------------------

@@ -3478,6 +3478,16 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
         target: proposal.target,
         error: error instanceof Error ? error.message : String(error),
       });
+      // C8 — surface the materializer's cross-org rejection as a real 403.
+      const errorRecord = error as { statusCode?: unknown; code?: unknown };
+      if (errorRecord?.statusCode === 403) {
+        return res.status(403).json({
+          error:
+            error instanceof Error ? error.message : 'Referenced entity is outside organization',
+          code: typeof errorRecord.code === 'string' ? errorRecord.code : 'CANVAS_FORBIDDEN',
+          recoverable: true,
+        });
+      }
       return res.status(500).json({
         error: 'Failed to create the approved workspace resource.',
         code: 'CANVAS_PROPOSAL_MATERIALIZE_FAILED',
@@ -3533,8 +3543,10 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
 router.get('/drafts/:draftId/versions', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  // B1 — cap the history payload: newest 50 snapshots are plenty for the
+  // version-history UI and keep full contentMd rows from ballooning responses.
   const rows = await dbAll<VersionRow>(
-    `SELECT * FROM work_canvas_versions WHERE draft_id = ? ORDER BY created_at DESC`,
+    `SELECT * FROM work_canvas_versions WHERE draft_id = ? ORDER BY created_at DESC LIMIT 50`,
     [draft.id],
     { fallback: false }
   );
@@ -3829,6 +3841,19 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
       target,
       error: error instanceof Error ? error.message : String(error),
     });
+    // C8 — the shared materializer throws statusCode 403 +
+    // CANVAS_CROSS_ORG_REFERENCE when a referenced entity (projectId / owner /
+    // assignee) is missing or belongs to another organization. Surface it
+    // instead of collapsing into a blanket 500.
+    const errorRecord = error as { statusCode?: unknown; code?: unknown };
+    if (errorRecord?.statusCode === 403) {
+      return res.status(403).json({
+        error:
+          error instanceof Error ? error.message : 'Referenced entity is outside organization',
+        code: typeof errorRecord.code === 'string' ? errorRecord.code : 'CANVAS_FORBIDDEN',
+        recoverable: true,
+      });
+    }
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to save Canvas to workspace',
     });
