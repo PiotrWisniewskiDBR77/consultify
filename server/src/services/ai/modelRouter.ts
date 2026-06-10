@@ -12,6 +12,14 @@ import { modelMeetsRequirements, type ModelRequirements } from './modelCapabilit
 import { modelRegistryService } from './modelRegistryService.js';
 import { routingRulesService } from './routingRulesService.js';
 
+/**
+ * Type-agnostic truthiness predicate: is_active/is_enabled columns are INTEGER
+ * in some tables and BOOLEAN in others (and the mix differs per environment),
+ * so a raw `= 1` or `= true` always breaks somewhere ("operator does not exist").
+ */
+const sqlTruthy = (expr: string): string =>
+  `COALESCE(NULLIF(LOWER(TRIM(CAST(${expr} AS TEXT))), ''), 'false') IN ('1','t','true','y','yes','on')`;
+
 export const TIER_HIERARCHY = ['BUDGET', 'STANDARD', 'PREMIUM', 'REASONING'] as const;
 export type Tier = (typeof TIER_HIERARCHY)[number] | 'VISION';
 
@@ -994,7 +1002,7 @@ export class ModelRouter {
           AND (apa.organization_id = ? OR apa.organization_id IS NULL)
           AND ${activeSql('apa.is_active')}
           AND ${activeSql('lp.is_active')}
-          AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
+          AND (ops.is_enabled IS NULL OR ${sqlTruthy('ops.is_enabled')})
           AND (lp.health_status IS NULL OR lp.health_status != 'unhealthy')
         ORDER BY
           CASE WHEN apa.organization_id = ? THEN 0 ELSE 1 END,
@@ -1050,9 +1058,9 @@ export class ModelRouter {
                 INNER JOIN llm_tier_assignments mta ON p.id = mta.provider_id
                 LEFT JOIN organization_provider_settings ops ON p.id = ops.provider_id AND ops.organization_id = ?
                 WHERE mta.tier = ?
-                  AND mta.is_active = 1
-                  AND p.is_active = 1
-                  AND (ops.is_enabled IS NULL OR ops.is_enabled = 1)
+                  AND ${sqlTruthy('mta.is_active')}
+                  AND ${sqlTruthy('p.is_active')}
+                  AND (ops.is_enabled IS NULL OR ${sqlTruthy('ops.is_enabled')})
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
                 ORDER BY COALESCE(ops.custom_priority, mta.priority), p.cost_per_1k, p.priority
             `;
@@ -1063,8 +1071,8 @@ export class ModelRouter {
                 FROM llm_providers p
                 INNER JOIN llm_tier_assignments mta ON p.id = mta.provider_id
                 WHERE mta.tier = ?
-                  AND mta.is_active = 1
-                  AND p.is_active = 1
+                  AND ${sqlTruthy('mta.is_active')}
+                  AND ${sqlTruthy('p.is_active')}
                   AND (p.health_status IS NULL OR p.health_status != 'unhealthy')
                 ORDER BY mta.priority, p.cost_per_1k, p.priority
             `;
@@ -1094,7 +1102,7 @@ export class ModelRouter {
                 p.health_status
             FROM llm_tier_assignments mta
             INNER JOIN llm_providers p ON mta.provider_id = p.id
-            WHERE p.is_active = 1
+            WHERE ${sqlTruthy('p.is_active')}
             ORDER BY mta.tier, mta.priority
         `;
 
@@ -1254,7 +1262,7 @@ export class ModelRouter {
 
     const row = await DbPromise.get<ProviderRow>(
       `SELECT * FROM llm_providers 
-             WHERE is_active = 1 AND api_key IS NOT NULL AND api_key != ''
+             WHERE ${sqlTruthy('is_active')} AND api_key IS NOT NULL AND api_key != ''
              ORDER BY is_default DESC, priority DESC LIMIT 1`,
       [],
       { fallback: true }
@@ -1346,7 +1354,7 @@ export class ModelRouter {
             FROM llm_providers p
             LEFT JOIN organization_provider_settings ops 
                 ON p.id = ops.provider_id AND ops.organization_id = ?
-            WHERE p.is_active = 1
+            WHERE ${sqlTruthy('p.is_active')}
             ORDER BY p.priority
         `;
     return DbPromise.all(query, [organizationId], { fallback: true });
@@ -1374,8 +1382,8 @@ export class ModelRouter {
 
     let provider = await DbPromise.get<ProviderRow>(
       `SELECT * FROM llm_providers 
-             WHERE provider = ? AND is_active = 1 
-             AND (model_id = ? OR model_id IS NULL OR model_id = '') 
+             WHERE provider = ? AND ${sqlTruthy('is_active')}
+             AND (model_id = ? OR model_id IS NULL OR model_id = '')
              LIMIT 1`,
       [providerName, requestedModelId],
       { fallback: true }
@@ -1383,7 +1391,7 @@ export class ModelRouter {
 
     if (!provider) {
       provider = await DbPromise.get<ProviderRow>(
-        `SELECT * FROM llm_providers WHERE provider = ? AND is_active = 1 LIMIT 1`,
+        `SELECT * FROM llm_providers WHERE provider = ? AND ${sqlTruthy('is_active')} LIMIT 1`,
         [providerName],
         { fallback: true }
       );
@@ -1433,7 +1441,7 @@ export class ModelRouter {
     }
 
     const row = await DbPromise.get<ProviderRow>(
-      'SELECT * FROM llm_providers WHERE is_default = 1 AND is_active = 1 LIMIT 1',
+      `SELECT * FROM llm_providers WHERE ${sqlTruthy('is_default')} AND ${sqlTruthy('is_active')} LIMIT 1`,
       [],
       { fallback: true }
     );
@@ -1714,7 +1722,7 @@ export class ModelRouter {
   async getConfiguredProviders(): Promise<ProviderRow[]> {
     return DbPromise.all(
       `SELECT * FROM llm_providers 
-             WHERE is_active = 1 AND api_key IS NOT NULL AND api_key != ''
+             WHERE ${sqlTruthy('is_active')} AND api_key IS NOT NULL AND api_key != ''
              ORDER BY priority DESC, is_default DESC`,
       [],
       { fallback: true }
