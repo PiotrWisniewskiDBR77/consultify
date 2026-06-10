@@ -2084,6 +2084,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             text,
             uiLangDoc === 'pl' ? 'Dokument z czatu' : 'Document from chat'
           );
+          // Bez aktywnej konwersacji wiadomości lokalne giną w resecie stanu —
+          // zapewniamy ją jak intercept Canvasa i dopiero wtedy piszemy.
+          if (!useConversationStore.getState().activeConversationId) {
+            try {
+              const conv = await createConversation();
+              await addMessageToConversation({
+                conversationId: conv.id,
+                role: 'user',
+                content,
+                messageType: 'text',
+              });
+            } catch (convErr) {
+              console.error('[UnifiedChatPanel] Failed to create conversation for doc:', convErr);
+            }
+          }
           const progressMessageId = useConversationStore.getState().appendLocalMessage({
             role: 'ai',
             content: deckGenerationChecklist({
@@ -2138,7 +2153,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               const planned = await planDocGeneration({
                 intent: text,
                 title: docTitle,
-                language: uiLangDoc === 'pl' ? 'pl' : 'en',
+                // Język ARTEFAKTU podąża za językiem wiadomości (nie UI) —
+                // "respond in the language I start speaking" dotyczy też dokumentu.
+                language: effectiveChatLanguage === 'pl' ? 'pl' : 'en',
                 conversationId: useConversationStore.getState().activeConversationId,
                 conversationContext,
               });
@@ -2246,6 +2263,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             text,
             uiLangPrez === 'pl' ? 'Prezentacja z czatu' : 'Presentation from chat'
           );
+          // Bez aktywnej konwersacji wiadomości lokalne giną w resecie stanu —
+          // zapewniamy ją jak intercept Canvasa i dopiero wtedy piszemy.
+          if (!useConversationStore.getState().activeConversationId) {
+            try {
+              const conv = await createConversation();
+              await addMessageToConversation({
+                conversationId: conv.id,
+                role: 'user',
+                content,
+                messageType: 'text',
+              });
+            } catch (convErr) {
+              console.error('[UnifiedChatPanel] Failed to create conversation for deck:', convErr);
+            }
+          }
           // Checklista jest ephemeral (local-only) — żywy postęp w activeMessages;
           // trwały wpis do rozmowy robimy raz, na stanie terminalnym.
           const progressMessageId = useConversationStore.getState().appendLocalMessage({
@@ -2292,7 +2324,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               const planned = await planDeckGeneration({
                 intent: text,
                 title: deckTitle,
-                language: uiLangPrez === 'pl' ? 'pl' : 'en',
+                // Język artefaktu = język wiadomości użytkownika, nie język UI.
+                language: effectiveChatLanguage === 'pl' ? 'pl' : 'en',
               });
               const enabledCount = planned.plan.filter((item) => item.enabled).length;
               updateChecklist('plan_ready', { planCount: enabledCount });

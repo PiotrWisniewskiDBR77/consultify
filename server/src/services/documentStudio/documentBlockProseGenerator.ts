@@ -30,7 +30,9 @@ import type { DocumentIntake, DocumentSchema, DocumentSourceRef } from './docume
 /** Block types whose prose we enrich. Structured blocks are left alone. */
 const PROSE_BLOCK_TYPES = new Set(['paragraph', 'callout', 'bullet_list', 'numbered_list']);
 
-const MODEL_DEFAULT = 'default';
+// 'standard' = tier rozwiązywany przez LLMConfigService (llmService.resolveModelConfig);
+// dawne 'default' nie jest tierem, więc call padał natychmiast bez providera.
+const MODEL_DEFAULT = 'standard';
 const MAX_TOKENS_DEFAULT = 2400;
 
 export interface GenerateBlockProseOptions {
@@ -182,7 +184,11 @@ export async function generateBlockProse(
       model: options.model || MODEL_DEFAULT,
       maxTokens: options.maxTokens ?? MAX_TOKENS_DEFAULT,
     });
-  } catch {
+  } catch (err) {
+    // Kontrakt: nigdy nie rzucamy — ale porażka nie może być niewidzialna w logach
+    // (silnik prozy padał po cichu i nikt tego nie zauważył).
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[DocumentBlockProse] LLM prose generation failed, returning stubs: ${message}`);
     return schema;
   }
 
