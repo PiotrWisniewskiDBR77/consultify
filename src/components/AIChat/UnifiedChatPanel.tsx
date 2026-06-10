@@ -46,6 +46,14 @@ import type {
 import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
+import {
+  deckTitleFromIntent,
+  type DeliverableGenerationStatus,
+  isDeliverablesLightEnabled,
+  planDeckGeneration,
+  pollDeckGenerationUntilDone,
+  startDeckGeneration,
+} from '@/services/deliverablesGeneration';
 
 import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useAIStream } from '../../hooks/useAIStream';
@@ -331,6 +339,57 @@ const canvasStarterFromText = (input: string): CanvasStarterId => {
   return 'document';
 };
 
+/**
+ * Deliverables light (L1, krok 6): checklista Task-Progress generacji decka
+ * w czacie (wzorzec Kimi) — jedna wiadomość AI edytowana w miarę przechodzenia
+ * stanów planning→generating→validating→draft.
+ */
+const deckGenerationChecklist = (params: {
+  lang: string;
+  title: string;
+  phase: 'planning' | 'plan_ready' | 'generating' | 'validating' | 'draft' | 'error';
+  planCount?: number;
+  unitCount?: number;
+  error?: string;
+}): string => {
+  const pl = params.lang === 'pl';
+  const order = ['plan_ready', 'generating', 'validating', 'draft'] as const;
+  const reached = (step: (typeof order)[number]): boolean => {
+    if (params.phase === 'error') return false;
+    if (params.phase === 'planning') return false;
+    return order.indexOf(step) <= order.indexOf(params.phase as (typeof order)[number]);
+  };
+  const mark = (step: (typeof order)[number]) => (reached(step) ? 'x' : ' ');
+  const planLabel = pl
+    ? `Plan prezentacji${params.planCount ? ` — ${params.planCount} slajdów` : ''}`
+    : `Presentation plan${params.planCount ? ` — ${params.planCount} slides` : ''}`;
+  const lines = [
+    pl ? `**Prezentacja: „${params.title}”**` : `**Presentation: "${params.title}"**`,
+    '',
+    `- [${mark('plan_ready')}] ${planLabel}`,
+    `- [${mark('generating')}] ${pl ? 'Generowanie slajdów' : 'Generating slides'}`,
+    `- [${mark('validating')}] ${pl ? 'Walidacja treści' : 'Validating content'}`,
+    `- [${mark('draft')}] ${pl ? 'Artefakt gotowy' : 'Artifact ready'}`,
+  ];
+  if (params.phase === 'draft') {
+    lines.push(
+      '',
+      pl
+        ? `✅ Gotowe — prezentacja${params.unitCount ? ` (${params.unitCount} slajdów)` : ''} jest po prawej stronie. Możesz ją tam przejrzeć albo otworzyć w Deck Builderze.`
+        : `✅ Done — the presentation${params.unitCount ? ` (${params.unitCount} slides)` : ''} is on the right. Review it there or open it in Deck Builder.`
+    );
+  }
+  if (params.phase === 'error') {
+    lines.push(
+      '',
+      pl
+        ? `❌ Generacja nie powiodła się${params.error ? `: ${params.error}` : '.'}`
+        : `❌ Generation failed${params.error ? `: ${params.error}` : '.'}`
+    );
+  }
+  return lines.join('\n');
+};
+
 const parseChatCanvasIntent = (rawContent: string): ChatCanvasIntent | null => {
   const raw = String(rawContent || '').trim();
   if (!raw) return null;
@@ -586,6 +645,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     null
   );
   const [requestedCanvasDraftId, setRequestedCanvasDraftId] = useState<string | null>(null);
+  // Deliverables light (L1): deck montowany w prawym panelu (starter 'presentation').
+  const [requestedCanvasDeckId, setRequestedCanvasDeckId] = useState<string | null>(null);
   const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
     null
   );
@@ -2028,6 +2089,86 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
 
         const uiLangPrez = (i18n.language || 'en').split('-')[0];
+
+        // Deliverables light (L1, kroki 5+6): generacja w miejscu — deck jako
+        // żywy artefakt w prawym panelu + checklista postępu w czacie,
+        // zamiast nawigacji do osobnego modułu. Za flagą; off ⇒ legacy.
+        if (isDeliverablesLightEnabled()) {
+          const deckTitle = deckTitleFromIntent(
+            text,
+            uiLangPrez === 'pl' ? 'Prezentacja z czatu' : 'Presentation from chat'
+          );
+          const progressMessageId = `deck-gen-${Date.now()}`;
+          addChatMessage({
+            id: progressMessageId,
+            role: 'ai',
+            content: deckGenerationChecklist({
+              lang: uiLangPrez,
+              title: deckTitle,
+              phase: 'planning',
+            }),
+            timestamp: new Date(),
+          });
+
+          setRequestedCanvasDeckId(null);
+          setRequestedCanvasStarterId('presentation');
+          setIsWorkPanelOpen(true);
+          onMessageSent?.(content);
+
+          const updateChecklist = (
+            phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
+            extra?: { planCount?: number; unitCount?: number; error?: string }
+          ) => {
+            useAppStore
+              .getState()
+              .editChatMessage(
+                progressMessageId,
+                deckGenerationChecklist({ lang: uiLangPrez, title: deckTitle, phase, ...extra })
+              );
+          };
+
+          void (async () => {
+            try {
+              const planned = await planDeckGeneration({
+                intent: text,
+                title: deckTitle,
+                language: uiLangPrez === 'pl' ? 'pl' : 'en',
+              });
+              const enabledCount = planned.plan.filter((item) => item.enabled).length;
+              updateChecklist('plan_ready', { planCount: enabledCount });
+
+              await startDeckGeneration({
+                generationId: planned.generationId,
+                setup: planned.setup,
+              });
+              setRequestedCanvasDeckId(planned.generationId);
+              updateChecklist('generating', { planCount: enabledCount });
+
+              const final = await pollDeckGenerationUntilDone({
+                generationId: planned.generationId,
+                onUpdate: (status: DeliverableGenerationStatus) => {
+                  if (status.state === 'validating') {
+                    updateChecklist('validating', { planCount: enabledCount });
+                  }
+                },
+              });
+              if (final.state === 'draft') {
+                updateChecklist('draft', {
+                  planCount: enabledCount,
+                  unitCount: final.artifact?.unitCount,
+                });
+              } else {
+                updateChecklist('error', { error: final.error });
+              }
+            } catch (err: unknown) {
+              updateChecklist('error', {
+                error: err instanceof Error ? err.message : undefined,
+              });
+            }
+          })();
+          return;
+        }
+
         addChatMessage({
           id: `prez-redirect-${Date.now()}`,
           role: 'ai',
@@ -5027,6 +5168,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <WorkCanvasDocumentPanel
               conversationId={activeConversationId}
               initialStarterId={requestedCanvasStarterId}
+              initialDeckId={requestedCanvasDeckId}
               initialDraftId={requestedCanvasDraftId}
               onActiveDocumentChange={setActiveCanvasDocument}
               onCanvasSelectionChange={setActiveCanvasSelection}
