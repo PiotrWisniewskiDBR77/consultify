@@ -48,6 +48,10 @@ function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
 }
 
+function getUserId(req: any): string {
+  return req.user?.id || req.userId || 'system';
+}
+
 function ensureGenerateCapability(req: any, res: Response): boolean {
   const role = req.user?.role || req.userRole || 'VIEWER';
   if (hasPresentationCapability(role, 'presentation_create')) return true;
@@ -96,6 +100,7 @@ router.post('/', async (req: any, res: Response) => {
       setup: body.setup || {},
       intent: body.intent,
       organizationId: getOrgId(req),
+      userId: getUserId(req),
     });
     res.status(200).json({ success: true, ...result });
   } catch (err) {
@@ -116,6 +121,7 @@ router.post('/:id/generate', async (req: any, res: Response) => {
       setup: body.setup || {},
       plan: body.plan,
       organizationId: getOrgId(req),
+      userId: getUserId(req),
     });
     res.status(202).json({ success: true, ...result });
   } catch (err) {

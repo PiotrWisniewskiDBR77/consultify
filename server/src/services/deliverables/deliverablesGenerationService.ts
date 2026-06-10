@@ -26,34 +26,19 @@ import logger from '../../utils/Logger.js';
 import type { DeckSetup, OutlineItem } from '../presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../presentationGeneratorService.js';
 import { getArtifactByOriginUnscoped } from '../v8/artifactRegistryService.js';
+import { planDoc, startDoc, statusDoc } from './docGenerationRuntime.js';
+import { DeliverablesGenerationError } from './errors.js';
 
 const LOG_PREFIX = '[DeliverablesGen]';
 
-// ── Błędy domenowe (router mapuje code → HTTP) ──────────────────────────────
+// Błędy domenowe re-eksportowane dla zgodności (router, testy).
+export { DeliverablesGenerationError, type DeliverablesGenerationErrorCode } from './errors.js';
 
-export type DeliverablesGenerationErrorCode =
-  | 'not_implemented'
-  | 'not_found'
-  | 'invalid_state'
-  | 'invalid_setup';
-
-export class DeliverablesGenerationError extends Error {
-  constructor(
-    public readonly code: DeliverablesGenerationErrorCode,
-    message: string
-  ) {
-    super(message);
-    this.name = 'DeliverablesGenerationError';
-  }
-}
-
-function assertDeckFormat(format: DeliverableFormat): void {
-  if (format === 'deck') return;
+function assertImplementedFormat(format: DeliverableFormat): void {
+  if (format === 'deck' || format === 'doc') return;
   throw new DeliverablesGenerationError(
     'not_implemented',
-    `Format '${format}' jest w kontrakcie, ale runtime obsługuje go od fazy ${
-      format === 'doc' ? 'L2' : 'L3'
-    }. v1 = wyłącznie 'deck'.`
+    `Format '${format}' jest w kontrakcie, ale runtime obsługuje go od fazy L3. v1 = 'deck' i 'doc'.`
   );
 }
 
@@ -175,8 +160,17 @@ export async function plan(params: {
   setup: Record<string, unknown>;
   organizationId: string;
   intent?: string;
+  /** Wymagane dla format='doc' (canvas draft ma created_by). */
+  userId?: string;
 }): Promise<CreateGenerationResponse> {
-  assertDeckFormat(params.format);
+  assertImplementedFormat(params.format);
+  if (params.format === 'doc') {
+    return planDoc({
+      setup: { intent: params.intent, ...params.setup },
+      organizationId: params.organizationId,
+      userId: params.userId || 'system',
+    });
+  }
   const setup = params.setup as unknown as DeckSetup;
   if (!setup?.title || !setup?.language) {
     throw new DeliverablesGenerationError(
@@ -211,8 +205,18 @@ export async function start(params: {
   setup: Record<string, unknown>;
   organizationId: string;
   plan?: GenerationPlanItem[];
+  userId?: string;
 }): Promise<GenerationStatusResponse> {
-  assertDeckFormat(params.format);
+  assertImplementedFormat(params.format);
+  if (params.format === 'doc') {
+    return startDoc({
+      generationId: params.generationId,
+      setup: params.setup,
+      organizationId: params.organizationId,
+      userId: params.userId || 'system',
+      plan: params.plan,
+    });
+  }
   const row = await getDeckRow(params.generationId, params.organizationId);
   if (row.status === 'generating' || runtimeState.get(row.id)?.state === 'generating') {
     throw new DeliverablesGenerationError(
@@ -270,7 +274,17 @@ export async function status(params: {
   generationId: string;
   organizationId: string;
 }): Promise<GenerationStatusResponse> {
-  const row = await getDeckRow(params.generationId, params.organizationId);
+  // GET nie niesie formatu — generationId to deckId (deck) albo draftId (doc).
+  // Najpierw deck (L1); brak wiersza ⇒ próbujemy gałęzi doc.
+  let row: DeckRow;
+  try {
+    row = await getDeckRow(params.generationId, params.organizationId);
+  } catch (err) {
+    if (err instanceof DeliverablesGenerationError && err.code === 'not_found') {
+      return statusDoc(params);
+    }
+    throw err;
+  }
   const runtime = runtimeState.get(row.id);
   const state = deckStatusToState(row.status);
 

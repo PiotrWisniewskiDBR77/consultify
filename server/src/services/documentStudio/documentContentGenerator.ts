@@ -69,7 +69,7 @@ function buildSectionBlocks(
       type: 'callout',
       content: {
         variant: 'key_message',
-        text: 'Key message and recommended next step go here. Replace with grounded synthesis.',
+        text: 'This section is awaiting content — key message and recommended next step. Add sources or use AI generation to fill it.',
       },
       isAssumption: true,
     });
@@ -128,7 +128,7 @@ function buildSectionBlocks(
       blockId: uuidv4(),
       type: 'paragraph',
       content: {
-        text: 'Reference materials and source list. Populated automatically from the source pack in MVP-1 finalization.',
+        text: 'Reference materials and source list for this document.',
       },
       isAssumption: false,
     });
@@ -140,7 +140,7 @@ function buildSectionBlocks(
     blockId: uuidv4(),
     type: 'paragraph',
     content: {
-      text: `Substantive content for "${sectionTitle}". MVP-1 ships this as a structured placeholder; MVP-1 finalization replaces it with AI-generated narrative grounded in the source pack.`,
+      text: sectionStubText(sectionTitle),
     },
     isAssumption: !hasSources,
   });
@@ -148,10 +148,35 @@ function buildSectionBlocks(
   return blocks;
 }
 
+/**
+ * D-L2-3 (DELIVERABLES_LIGHT_TARGET §11.1): stuby sekcji są pisane językiem
+ * użytkownika — żaden wewnętrzny żargon (dawniej „MVP-1 ships this as a
+ * structured placeholder…") nie może trafić do outputu. Stałe są eksportowane,
+ * żeby warstwy wyżej (lekki runtime) wykrywały stub jedną prawdą, bez
+ * duplikowania sygnatur.
+ */
+export const SECTION_STUB_PREFIX = 'This section is awaiting content';
+export const EXEC_SUMMARY_STUB =
+  'Add a short description of the document goal to generate the executive summary.';
+
+function sectionStubText(sectionTitle: string): string {
+  return `${SECTION_STUB_PREFIX} — "${sectionTitle}". Add sources or use AI generation to fill it.`;
+}
+
+/** Czy tekst to stub/placeholder silnika deterministycznego (nie realna treść)? */
+export function isPlaceholderDocumentProse(text: string): boolean {
+  return (
+    text.includes(SECTION_STUB_PREFIX) ||
+    text.includes(EXEC_SUMMARY_STUB) ||
+    text.includes('MVP-1') ||
+    text.includes('go here. Replace with grounded')
+  );
+}
+
 function shortenForExecutiveSummary(description: string): string {
   const trimmed = description.trim();
   if (trimmed.length === 0) {
-    return 'Executive summary placeholder. Provide a description in intake to ground the synthesis.';
+    return EXEC_SUMMARY_STUB;
   }
   if (trimmed.length <= 360) return trimmed;
   return `${trimmed.slice(0, 357)}...`;
