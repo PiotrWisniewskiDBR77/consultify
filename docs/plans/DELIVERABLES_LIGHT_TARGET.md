@@ -163,6 +163,17 @@ Mount = 1 linia additive w rejestracji routerów (flag-gated, behavior-neutral g
 
 ## 11. L2 — plaster Doc E2E (ratyfikowane 2026-06-10, po audycie + dyskusji z ownerem)
 
+> **Status L2: DONE + zweryfikowane live 2026-06-10** (commity e04e3c42…ca21b3e4; 2× pełny przebieg
+> w preview: intencja PL → checklista → realna polska proza w canvasie, `[Assumption]` inline,
+> typ dokumentu adaptacyjny). Kluczowe odkrycie: silnik prozy D11 (`generateBlockProse`) istniał,
+> ale był martwy — (a) nikt nie włączał `useLlm:true`, (b) `MODEL_DEFAULT='default'` nie jest tierem
+> (resolver zna budget/fast/standard/premium/reasoning) ⇒ padał natychmiast i po cichu. Naprawione:
+> tier `standard`, logowany catch, bramka anty-placeholder (uczciwy `error` zamiast wydmuszki),
+> bootstrap konwersacji w interceptach, język artefaktu = język wiadomości. §11.3 pkt 5 (per-sekcja
+> akcje) pokryty reuse'em edytora canvas (TipTap + AI floating menu); pkt 4 („zrób z tego dokument"
+> z kart encji) — kontrakt przyjmuje sourceRefs, brakuje TYLKO afordancji UI na kartach ⇒ następny plaster.
+> Testy: `deliverables/__tests__/docGenerationRuntime.test.ts` (11) + documentStudio 855 zielone.
+
 > Grounding decyzji: `docs/audit/2026-06-10/DOC_ENTRY_UX_AUDIT.md` (4 ścieżki wejścia przeklikane live —
 > formularz 8 pól, kontekst ginie, silnik produkuje placeholdery „MVP-1", canvas-streaming = cichy no-op).
 
