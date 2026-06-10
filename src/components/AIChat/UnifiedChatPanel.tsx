@@ -473,6 +473,19 @@ const registerChatDeliverable = (kind: 'deck' | 'doc', generationId: string, tit
   } as Artifact);
 };
 
+/**
+ * Kimi-parity: panel canvasa montuje się przed końcem generacji, więc pojedynczy
+ * event może wyścigać się z hydratacją draftu. Emitujemy z retry — listener w
+ * panelu jest idempotentny (odświeża tylko, dopóki widzi szkielet).
+ */
+const announceDeliverableDraftReady = (draftId: string): void => {
+  [0, 2000, 5000].forEach((delay) => {
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('deliverables:draft-ready', { detail: { draftId } }));
+    }, delay);
+  });
+};
+
 const parseChatCanvasIntent = (rawContent: string): ChatCanvasIntent | null => {
   const raw = String(rawContent || '').trim();
   if (!raw) return null;
@@ -730,6 +743,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [requestedCanvasDraftId, setRequestedCanvasDraftId] = useState<string | null>(null);
   // Deliverables light (L1): deck montowany w prawym panelu (starter 'presentation').
   const [requestedCanvasDeckId, setRequestedCanvasDeckId] = useState<string | null>(null);
+  // Kimi-parity: remount panelu po zakończonej generacji — świeża hydratacja
+  // draftu (zewnętrzna synchronizacja treści edytora jest zawodna — patrz audyt
+  // canvas-streaming; event 'deliverables:draft-ready' zostaje jako szybka ścieżka).
+  const [canvasRemountNonce, setCanvasRemountNonce] = useState(0);
   const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
     null
   );
@@ -2185,6 +2202,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 setup: planned.setup,
               });
               updateSheetChecklist('generating');
+              // Kimi-parity: artefakt widoczny od razu (szkielet), treść
+              // dociągnie event 'deliverables:draft-ready' po generacji.
+              setRequestedCanvasDeckId(null);
+              setRequestedCanvasDraftId(planned.generationId);
+              setRequestedCanvasStarterId('document');
+              setIsWorkPanelOpen(true);
 
               const final = await pollDeckGenerationUntilDone({
                 generationId: planned.generationId,
@@ -2203,10 +2226,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     unitCount: final.artifact?.unitCount,
                   })
                 );
-                setRequestedCanvasDeckId(null);
-                setRequestedCanvasDraftId(planned.generationId);
-                setRequestedCanvasStarterId('document');
-                setIsWorkPanelOpen(true);
+                announceDeliverableDraftReady(planned.generationId);
+                setCanvasRemountNonce((n) => n + 1);
               } else {
                 useConversationStore.getState().removeLocalMessage(progressMessageId);
                 persistSheetFinalNote(
@@ -2323,7 +2344,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             note: string,
             // B2: deliverable ref w metadata wiadomości — persystowane server-side,
             // dzięki czemu ArtifactChip w transkrypcie przeżywa reload.
-            metadata?: { deliverable: { kind: 'deck' | 'doc'; generationId: string; title?: string } }
+            metadata?: {
+              deliverable: { kind: 'deck' | 'doc'; generationId: string; title?: string };
+            }
           ) => {
             const conversationId = useConversationStore.getState().activeConversationId;
             if (!conversationId) return;
@@ -2366,6 +2389,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 setup: planned.setup,
               });
               updateDocChecklist('generating', { planCount: enabledCount });
+              // Kimi-parity: dokument widoczny od razu jako szkielet sekcji;
+              // gotową treść dociągnie event 'deliverables:draft-ready'.
+              setRequestedCanvasDeckId(null);
+              setRequestedCanvasDraftId(planned.generationId);
+              setRequestedCanvasStarterId('document');
+              setIsWorkPanelOpen(true);
 
               const final = await pollDeckGenerationUntilDone({
                 generationId: planned.generationId,
@@ -2397,11 +2426,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 );
                 // B2: artefakt rozmowy (persisted) — przełącznik + aktywny artefakt.
                 registerChatDeliverable('doc', planned.generationId, docTitle);
-                // Montaż gotowego dokumentu w prawym panelu (hydration po draftId).
-                setRequestedCanvasDeckId(null);
-                setRequestedCanvasDraftId(planned.generationId);
-                setRequestedCanvasStarterId('document');
-                setIsWorkPanelOpen(true);
+                announceDeliverableDraftReady(planned.generationId);
+                setCanvasRemountNonce((n) => n + 1);
               } else {
                 useConversationStore.getState().removeLocalMessage(progressMessageId);
                 persistDocFinalNote(
@@ -2519,7 +2545,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             note: string,
             // B2: deliverable ref w metadata wiadomości — persystowane server-side,
             // dzięki czemu ArtifactChip w transkrypcie przeżywa reload.
-            metadata?: { deliverable: { kind: 'deck' | 'doc'; generationId: string; title?: string } }
+            metadata?: {
+              deliverable: { kind: 'deck' | 'doc'; generationId: string; title?: string };
+            }
           ) => {
             const conversationId = useConversationStore.getState().activeConversationId;
             if (!conversationId) return;
@@ -5626,6 +5654,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           </div>
           <div className="min-h-0 flex-1">
             <WorkCanvasDocumentPanel
+              key={`${requestedCanvasStarterId || 'default'}:${requestedCanvasDraftId || requestedCanvasDeckId || 'none'}:${canvasRemountNonce}`}
               conversationId={activeConversationId}
               initialStarterId={requestedCanvasStarterId}
               initialDeckId={requestedCanvasDeckId}

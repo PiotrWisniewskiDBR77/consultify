@@ -368,6 +368,34 @@ async function getDocDraft(
   return draft;
 }
 
+/**
+ * Kimi-parity: deliverable w canvasie ma wyglądać jak dokument, nie jak zrzut
+ * wewnętrznego schematu. Renderer (renderSchemaToMarkdown) zostaje bez zmian
+ * dla eksportu/legacy — tu czyścimy jego output dla użytkownika:
+ *  - blok metadanych intake'u (Document type/Audience/Goal/…),
+ *  - notki `_Purpose: …_` per sekcja (scaffolding, nie treść),
+ *  - techniczne etykiety calloutów (`> **KEY_MESSAGE:**` → ludzka, w języku dokumentu).
+ */
+export function polishMarkdownForCanvas(markdown: string, language: 'pl' | 'en'): string {
+  let out = markdown;
+  out = out.replace(
+    /^- \*\*(Document type|Audience|Goal|Register|Density|Language style|Confidentiality):\*\*.*$\n?/gm,
+    ''
+  );
+  out = out.replace(/^_Purpose: .*_$\n?/gm, '');
+  const calloutLabels: Record<string, { pl: string; en: string }> = {
+    KEY_MESSAGE: { pl: 'Kluczowa myśl', en: 'Key message' },
+    NOTE: { pl: 'Uwaga', en: 'Note' },
+    WARNING: { pl: 'Ostrzeżenie', en: 'Warning' },
+  };
+  out = out.replace(/> \*\*([A-Z_]+):\*\*/g, (_match, raw: string) => {
+    const label = calloutLabels[raw]?.[language] || raw.replace(/_/g, ' ').toLowerCase();
+    return `> **${label}:**`;
+  });
+  // Zbite puste linie po usunięciach.
+  return out.replace(/\n{3,}/g, '\n\n').trim();
+}
+
 // ── API gałęzi doc ──────────────────────────────────────────────────────────
 
 export async function planDoc(params: {
@@ -454,14 +482,18 @@ export async function startDoc(params: {
         sectionCount: outline.sections.length,
       });
 
-      const markdown = renderSchemaToMarkdown(result.schema);
+      const rendered = renderSchemaToMarkdown(result.schema);
       // D-L2-3: silnik D11 przy błędzie LLM po cichu oddaje stuby —
       // tu zamieniamy cichą degradację na uczciwy błąd.
-      if (isPlaceholderDocumentProse(markdown)) {
+      if (isPlaceholderDocumentProse(rendered)) {
         throw new Error(
           'Generacja treści nie powiodła się (LLM niedostępny) — dokument nie został wypełniony'
         );
       }
+      const markdown = polishMarkdownForCanvas(
+        rendered,
+        stored.intake.language === 'en' ? 'en' : 'pl'
+      );
 
       await updateDraft({
         organizationId: params.organizationId,

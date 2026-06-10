@@ -45,8 +45,15 @@ vi.mock('../../documentStudio/documentSchemaRenderer.js', () => ({
   renderSchemaToMarkdown: (...args: unknown[]) => renderMarkdownMock(...args),
 }));
 
-const { planDoc, planSheet, startDoc, startSheet, statusDoc, __clearDocRuntimeStateForTests } =
-  await import('../docGenerationRuntime.js');
+const {
+  planDoc,
+  planSheet,
+  polishMarkdownForCanvas,
+  startDoc,
+  startSheet,
+  statusDoc,
+  __clearDocRuntimeStateForTests,
+} = await import('../docGenerationRuntime.js');
 const { isPlaceholderDocumentProse, SECTION_STUB_PREFIX } =
   await import('../../documentStudio/documentContentGenerator.js');
 const { DeliverablesGenerationError } = await import('../errors.js');
@@ -119,6 +126,32 @@ describe('isPlaceholderDocumentProse (D-L2-3)', () => {
     expect(isPlaceholderDocumentProse('Transformacja objęła 7 z 12 procesów produkcyjnych.')).toBe(
       false
     );
+  });
+});
+
+describe('polishMarkdownForCanvas (Kimi-parity: czysty deliverable)', () => {
+  it('usuwa blok metadanych, notki Purpose i tłumaczy etykiety calloutów', () => {
+    const raw = [
+      '# Tytuł',
+      '',
+      '- **Document type:** generic_document',
+      '- **Audience:** Unspecified',
+      '- **Confidentiality:** internal',
+      '',
+      '## Synteza',
+      '',
+      '_Purpose: Top-level synthesis with the decision._',
+      '',
+      'Realna treść.',
+      '',
+      '> **KEY_MESSAGE:** Najważniejszy wniosek.',
+    ].join('\n');
+    const polished = polishMarkdownForCanvas(raw, 'pl');
+    expect(polished).not.toContain('Document type');
+    expect(polished).not.toContain('_Purpose:');
+    expect(polished).not.toContain('KEY_MESSAGE');
+    expect(polished).toContain('> **Kluczowa myśl:** Najważniejszy wniosek.');
+    expect(polished).toContain('Realna treść.');
   });
 });
 
