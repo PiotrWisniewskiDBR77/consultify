@@ -1034,6 +1034,13 @@ export async function generateOutline(
   const resolvedSourceType =
     setup.sourceType || (sourceArtifacts[0]?.type === 'tool_session' ? 'tool' : 'manual');
   const resolvedSourceId = setup.sourceId || sourceArtifacts[0]?.id || null;
+  // C7 — initiative linkage: when the deck's canonical source is an initiative
+  // (sourceType 'INITIATIVE'/'initiative'), carry the id into the registry so
+  // the initiative detail view can list this deck under "Artefakty".
+  const resolvedSourceInitiativeId =
+    resolvedSourceId && String(resolvedSourceType).toLowerCase() === 'initiative'
+      ? String(resolvedSourceId)
+      : null;
   await dbRun(
     `INSERT INTO presentation_decks (id, organization_id, title, template_id, deck_type, audience, goal, language, confidentiality, theme, brand_kit_id, source_artifacts, outline_json, status, generated_by, source_type, source_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
@@ -1101,6 +1108,7 @@ export async function generateOutline(
         outputType: 'presentation',
         ownerUserId: null,
       }),
+      sourceInitiativeId: resolvedSourceInitiativeId,
       originSummary: {
         sourceType: resolvedSourceType,
         sourceId: resolvedSourceId,

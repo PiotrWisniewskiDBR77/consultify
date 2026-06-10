@@ -2196,6 +2196,70 @@ function buildPresentationSlides(draft: WorkCanvasDraft) {
   ];
 }
 
+/**
+ * C7 — pull an initiative id out of loosely-typed source refs (Canvas
+ * `draft.sources`, provenance sourceRefs, DocumentSourceRef-shaped hints).
+ * Tolerates the three shapes that exist across the codebase:
+ * `{ sourceType, sourceId }`, `{ type, id }`, `{ entityType, entityId }`.
+ */
+function extractInitiativeIdFromRefs(refs: unknown[]): string | null {
+  for (const ref of refs) {
+    if (!ref || typeof ref !== 'object') continue;
+    const candidate = ref as Record<string, unknown>;
+    const refType = String(
+      candidate.sourceType ?? candidate.type ?? candidate.entityType ?? ''
+    ).toLowerCase();
+    if (refType !== 'initiative') continue;
+    const id = candidate.sourceId ?? candidate.id ?? candidate.entityId;
+    if (typeof id === 'string' && id.trim()) return id.trim();
+  }
+  return null;
+}
+
+/**
+ * C7 — best-effort registration of a durable Canvas output in the canonical
+ * artifact registry (`v8_output_artifacts` + origin link), same path
+ * DocumentStudio's G5 fix uses. Output creation must NEVER fail because of a
+ * registry hiccup, so every error is swallowed and logged (the lazy
+ * `ensureBackfilledOutputsForOrg` pass will pick the row up later anyway —
+ * but without the sourceInitiativeId/draft linkage we attach here).
+ */
+async function registerCanvasOutputInRegistry(params: {
+  organizationId: string;
+  userId: string;
+  outputType: 'report' | 'presentation' | 'sheet';
+  artifactFamily: 'document' | 'presentation' | 'sheet';
+  originRuntime: 'report' | 'presentation' | 'sheet';
+  originRecordId: string;
+  titleSnapshot: string;
+  projectId: string | null;
+  sourceInitiativeId: string | null;
+  originSummary: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    const { registerArtifactOrigin } = await import('../services/v8/artifactRegistryService.js');
+    await registerArtifactOrigin({
+      organizationId: params.organizationId,
+      outputType: params.outputType,
+      artifactFamily: params.artifactFamily,
+      originRuntime: params.originRuntime,
+      originRecordId: params.originRecordId,
+      titleSnapshot: params.titleSnapshot,
+      ownerUserId: params.userId,
+      createdBy: params.userId,
+      projectId: params.projectId,
+      sourceInitiativeId: params.sourceInitiativeId,
+      originSummary: params.originSummary,
+    });
+  } catch (err) {
+    logger.warn('[work-canvas] canvas.output.registry_failed (output still created)', {
+      originRuntime: params.originRuntime,
+      originRecordId: params.originRecordId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 async function createOutputResource(
   draft: WorkCanvasDraft,
   outputType: OutputType,
@@ -2205,6 +2269,17 @@ async function createOutputResource(
 ) {
   const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas output');
   const now = new Date().toISOString();
+  // C7 — initiative linkage is determinable only when the draft's sources or
+  // provenance carry an explicit initiative ref; otherwise register without it.
+  const provenanceSourceRefs = Array.isArray(
+    (draft.provenance as Record<string, unknown> | null)?.sourceRefs
+  )
+    ? ((draft.provenance as Record<string, unknown>).sourceRefs as unknown[])
+    : [];
+  const sourceInitiativeId = extractInitiativeIdFromRefs([
+    ...(Array.isArray(draft.sources) ? draft.sources : []),
+    ...provenanceSourceRefs,
+  ]);
 
   if (outputType === 'presentation') {
     const deckId = randomUUID().replace(/-/g, '');
@@ -2271,6 +2346,26 @@ async function createOutputResource(
         ['id']
       );
     }
+    // C7 — register the deck in the canonical Outputs registry with its Canvas
+    // origin (and initiative linkage when the draft carries one). Best-effort.
+    await registerCanvasOutputInRegistry({
+      organizationId,
+      userId,
+      outputType: 'presentation',
+      artifactFamily: 'presentation',
+      originRuntime: 'presentation',
+      originRecordId: deckId,
+      titleSnapshot: `Presentation: ${title}`,
+      projectId: draft.projectId || null,
+      sourceInitiativeId,
+      originSummary: {
+        sourceType: 'work_canvas',
+        sourceDraftId: draft.id,
+        sourceVersionId: sourceVersionId || null,
+        nativeStatus: 'draft',
+        sourceTable: 'presentation_decks',
+      },
+    });
     return {
       type: 'presentation' as const,
       id: deckId,
@@ -2441,6 +2536,27 @@ async function createOutputResource(
         ],
         { fallback: false }
       );
+      // C7 — register the report in the canonical Outputs registry (same
+      // conventions as backfillReportsForOrg: report → family 'document').
+      await registerCanvasOutputInRegistry({
+        organizationId,
+        userId,
+        outputType: 'report',
+        artifactFamily: 'document',
+        originRuntime: 'report',
+        originRecordId: reportId,
+        titleSnapshot: `Report: ${title}`,
+        projectId: draft.projectId || null,
+        sourceInitiativeId,
+        originSummary: {
+          reportType: 'custom',
+          sourceType: 'work_canvas',
+          sourceDraftId: draft.id,
+          sourceVersionId: sourceVersionId || null,
+          nativeStatus: 'DRAFT',
+          sourceTable: 'report_builder_reports',
+        },
+      });
       return {
         type: outputType,
         id: reportId,

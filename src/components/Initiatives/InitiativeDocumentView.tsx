@@ -651,6 +651,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   >([]);
   const [initiativeBacklinksLoading, setInitiativeBacklinksLoading] = useState(false);
 
+  // C7: Outputs-registry artifacts linked to this initiative (sourceInitiativeId)
+  const [relatedArtifacts, setRelatedArtifacts] = useState<
+    Array<{
+      artifactId: string;
+      outputType: string;
+      title: string;
+      updatedAt: string | null;
+      openPath: string | null;
+    }>
+  >([]);
+  const [relatedArtifactsLoading, setRelatedArtifactsLoading] = useState(false);
+
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -2666,6 +2678,37 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       })
       .catch(() => setInitiativeBacklinks([]))
       .finally(() => setInitiativeBacklinksLoading(false));
+  }, [initiativeId]);
+
+  // C7: Fetch related artifacts from the canonical Outputs registry
+  // (GET /api/artifacts?sourceInitiativeId=…) for the "Artefakty" section.
+  useEffect(() => {
+    if (!initiativeId || isShowcaseInitiativeId(initiativeId)) return;
+    setRelatedArtifactsLoading(true);
+    Api.get(`/artifacts?sourceInitiativeId=${encodeURIComponent(initiativeId)}&limit=20`)
+      .then((res: any) => {
+        // Api.get is axios-like (`res.data` = payload) and the endpoint itself
+        // wraps the list as `{ data: [...] }` — unwrap both layers defensively.
+        const payload: any = res?.data ?? res;
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+        setRelatedArtifacts(
+          list
+            .map((item: any) => ({
+              artifactId: String(item?.artifactId || ''),
+              outputType: String(item?.outputType || ''),
+              title: String(item?.resolvedTitle || item?.titleSnapshot || '').trim(),
+              updatedAt: item?.lastTransitionAt ? String(item.lastTransitionAt) : null,
+              openPath: item?.openPath ? String(item.openPath) : null,
+            }))
+            .filter((item: { artifactId: string; title: string }) => item.artifactId && item.title)
+        );
+      })
+      .catch(() => setRelatedArtifacts([]))
+      .finally(() => setRelatedArtifactsLoading(false));
   }, [initiativeId]);
 
   // ==========================================
@@ -4700,8 +4743,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       gates: ['gates', 'suggested-changes'],
       comments: ['comments'],
       history: ['activity-log'],
-      attachments: ['attachments-links'],
-      linkedItems: ['attachments-links', 'used-in'],
+      // C7 — 'artifacts' rides with the attachments/linked-items canon keys so
+      // template-restricted views still surface registry outputs.
+      attachments: ['attachments-links', 'artifacts'],
+      linkedItems: ['attachments-links', 'used-in', 'artifacts'],
       kpis: ['kpi'],
     }),
     []
@@ -4861,6 +4906,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Used in (backlinks)', pl: 'Użyte w (powiązania)' },
         component: null,
       },
+      // C7 — Outputs-registry artifacts generated from this initiative
+      {
+        id: 'artifacts',
+        icon: Package,
+        label: { en: 'Artifacts', pl: 'Artefakty' },
+        badge: relatedArtifacts.length > 0 ? relatedArtifacts.length : undefined,
+        cHidden: relatedArtifacts.length === 0,
+        component: null,
+      },
       {
         id: 'comments',
         icon: MessageSquare,
@@ -4955,6 +5009,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       resources: 4,
       'attachments-links': 4,
       'used-in': 4,
+      artifacts: 4,
       'lessons-learned': 4,
       comments: 4,
       'activity-log': 4,
@@ -4984,6 +5039,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     history.length,
     attachments.length,
     linkedItems.length,
+    relatedArtifacts.length,
     enabledNModeSectionIds,
     pendingSuggestedChangesCount,
   ]);
@@ -8031,6 +8087,71 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
+        // ── C7: Artefakty — Outputs-registry artifacts linked via sourceInitiativeId ──
+        case 'artifacts': {
+          const artifactTypeLabel = (outputType: string): string => {
+            if (outputType === 'presentation') return isPolish ? 'Prezentacja' : 'Presentation';
+            if (outputType === 'sheet') return isPolish ? 'Arkusz' : 'Sheet';
+            return isPolish ? 'Dokument' : 'Document';
+          };
+          component = (
+            <EmbeddedView
+              title={isPolish ? 'Artefakty' : 'Artifacts'}
+              count={relatedArtifacts.length}
+              loading={relatedArtifactsLoading}
+              readOnly
+              viewModes={['list']}
+            >
+              {relatedArtifacts.length === 0 && !relatedArtifactsLoading ? (
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+                  {isPolish ? 'Brak artefaktów' : 'No artifacts yet'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {relatedArtifacts.slice(0, 10).map((artifact) => (
+                    <div
+                      key={artifact.artifactId}
+                      className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {artifact.title}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                          <span className="inline-flex items-center rounded px-1 py-px mr-1.5 border border-slate-200/60 dark:border-white/[0.06] uppercase tracking-wide">
+                            {artifactTypeLabel(artifact.outputType)}
+                          </span>
+                          {artifact.updatedAt
+                            ? new Date(artifact.updatedAt).toLocaleDateString(
+                                isPolish ? 'pl-PL' : 'en-US'
+                              )
+                            : ''}
+                        </div>
+                      </div>
+                      {artifact.openPath && (
+                        <button
+                          onClick={() =>
+                            window.open(
+                              artifact.openPath as string,
+                              '_blank',
+                              'noopener,noreferrer'
+                            )
+                          }
+                          className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+                          title={isPolish ? 'Otwórz w module' : 'Open in workspace'}
+                        >
+                          <ExternalLink size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </EmbeddedView>
+          );
+          break;
+        }
+
         // ── Phase C: Canon sections → 21/21 ───────────────────────────────
         case 'deliverables-milestones': {
           const persistDeliverables = (items: typeof deliverableItems) => {
@@ -8633,6 +8754,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     openLinkedItemTarget,
     initiativeBacklinks,
     initiativeBacklinksLoading,
+    relatedArtifacts,
+    relatedArtifactsLoading,
     // Phase C canon sections — reactive drafts/data + handlers
     canEditCards,
     changeLogItems,
