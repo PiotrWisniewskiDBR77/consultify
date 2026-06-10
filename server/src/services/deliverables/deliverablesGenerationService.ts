@@ -13,8 +13,6 @@
  * `doc` i `sheet` są w kontrakcie, ale do faz L2/L3 zwracają `not_implemented`.
  */
 
-import type { DeckSetup, OutlineItem } from '../presentationGeneratorService.js';
-import { generateDeck, generateOutline } from '../presentationGeneratorService.js';
 import type {
   CreateGenerationResponse,
   DeliverableFormat,
@@ -23,9 +21,11 @@ import type {
   GenerationState,
   GenerationStatusResponse,
 } from '../../types/deliverablesGeneration.js';
-import { getArtifactByOriginUnscoped } from '../v8/artifactRegistryService.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import type { DeckSetup, OutlineItem } from '../presentationGeneratorService.js';
+import { generateDeck, generateOutline } from '../presentationGeneratorService.js';
+import { getArtifactByOriginUnscoped } from '../v8/artifactRegistryService.js';
 
 const LOG_PREFIX = '[DeliverablesGen]';
 
@@ -319,7 +319,8 @@ async function resolveArtifactRef(row: DeckRow): Promise<GenerationArtifactRef |
       originRecordId: row.id,
       format: 'deck',
       title: artifact.resolvedTitle || row.title,
-      unitCount: artifact.slideCount ?? row.slide_count ?? runtimeState.get(row.id)?.slideCount ?? 0,
+      unitCount:
+        artifact.slideCount ?? row.slide_count ?? runtimeState.get(row.id)?.slideCount ?? 0,
     };
   } catch (err) {
     logger.warn(

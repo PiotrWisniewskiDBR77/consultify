@@ -1,6 +1,14 @@
 export type CanvasMode = 'rich' | 'document' | 'md';
 
-export type CanvasStarterId = 'thoughts' | 'document' | 'research' | 'decision' | 'plan';
+export type CanvasStarterId =
+  | 'thoughts'
+  | 'document'
+  | 'research'
+  | 'decision'
+  | 'plan'
+  // Deliverables light runtime (L1): prawy panel = żywy artefakt decka,
+  // nie dokument markdown — patrz docs/plans/DELIVERABLES_LIGHT_TARGET.md §10.2.
+  | 'presentation';
 
 export type CanvasSaveState = 'unsaved' | 'saving' | 'saved' | 'failed';
 

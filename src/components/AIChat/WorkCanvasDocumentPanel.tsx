@@ -55,6 +55,7 @@ import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
+import { CanvasPresentationView } from './CanvasPresentationView';
 
 export type { ActiveCanvasDocument } from '@/types/canvasWorkspace';
 
@@ -71,6 +72,8 @@ interface StarterTemplate {
 interface WorkCanvasDocumentPanelProps {
   conversationId?: string | null;
   initialStarterId?: CanvasStarterId | null;
+  /** Deliverables light (L1): deck montowany w gałęzi startera 'presentation'. */
+  initialDeckId?: string | null;
   initialDraftId?: string | null;
   initialProjectionStatus?: CanvasProjectionStatus;
   initialBlocks?: CanvasArtifactBlock[];
@@ -599,7 +602,20 @@ function getWorkflowTerminalExecutionLabel(workflow: CanvasWorkflowRun): string 
   return null;
 }
 
-export function WorkCanvasDocumentPanel({
+/**
+ * Deliverables light (L1, krok 4): starter 'presentation' montuje żywy artefakt
+ * decka (CardRenderer, read-mostly) zamiast dokumentu markdown. Wrapper jest
+ * bez-hookowy, więc gałąź nie narusza rules-of-hooks i nie odpala efektów
+ * draftowych panelu markdown (autosave/hydration) dla decka.
+ */
+export function WorkCanvasDocumentPanel(props: WorkCanvasDocumentPanelProps) {
+  if (props.initialStarterId === 'presentation') {
+    return <CanvasPresentationView deckId={props.initialDeckId} onClose={props.onClose} />;
+  }
+  return <WorkCanvasMarkdownDocumentPanel {...props} />;
+}
+
+function WorkCanvasMarkdownDocumentPanel({
   conversationId,
   initialStarterId,
   initialDraftId,

@@ -15,13 +15,13 @@ import { type Response, Router } from 'express';
 import { featureFlags } from '../config/FeatureFlags.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
-import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import {
   DeliverablesGenerationError,
   plan,
   start,
   status,
 } from '../services/deliverables/deliverablesGenerationService.js';
+import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import type {
   CreateGenerationRequest,
   DeliverableFormat,
@@ -70,9 +70,7 @@ function handleServiceError(res: Response, err: unknown): void {
       invalid_state: 409,
       invalid_setup: 400,
     } as const;
-    res
-      .status(httpByCode[err.code])
-      .json({ success: false, error: err.message, code: err.code });
+    res.status(httpByCode[err.code]).json({ success: false, error: err.message, code: err.code });
     return;
   }
   const message = err instanceof Error ? err.message : String(err);
