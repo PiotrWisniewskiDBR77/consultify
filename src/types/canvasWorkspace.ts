@@ -89,6 +89,19 @@ export interface ActiveCanvasDocument {
   linkedOutputs?: CanvasContextPacket['linkedOutputs'];
 }
 
+/**
+ * C4 — one append-only ledger entry per Canvas→workspace materialization.
+ * Written by the backend into `draft.provenance.materializedTo[]` by both
+ * writers (save-to-workspace route + proposal approval).
+ */
+export interface CanvasMaterializedLink {
+  target: 'idea' | 'note' | 'initiative' | 'decision' | 'task' | string;
+  entityId: string;
+  url: string;
+  title: string;
+  at: string;
+}
+
 export interface CanvasDocumentState extends ActiveCanvasDocument {
   contentMd: string;
   blocks?: CanvasArtifactBlock[];
@@ -101,6 +114,8 @@ export interface CanvasDocumentState extends ActiveCanvasDocument {
   linkedNoteId?: string | null;
   linkedInitiativeId?: string | null;
   workflowRuns?: CanvasWorkflowRun[];
+  /** C4 — entities materialized from this draft (provenance.materializedTo). */
+  materializedTo?: CanvasMaterializedLink[];
 }
 
 export interface CanvasSelection {

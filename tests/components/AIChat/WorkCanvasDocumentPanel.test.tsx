@@ -2399,10 +2399,12 @@ describe('WorkCanvasDocumentPanel', () => {
     await user.click(screen.getByRole('button', { name: /Send to idea/i }));
 
     // Workspace handoff feedback now links to the resource instead of echoing
-    // the raw id: "… saved to idea. [Open →](/my-work?ideaId=idea-1)".
-    expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
-      'Company Work Note saved to idea. [Open →](/my-work?ideaId=idea-1)'
-    );
+    // the raw id. C4 — the `[Open →](path)` Markdown renders as a real
+    // clickable anchor pointing at the backend-returned deep link.
+    const workspaceFeedback = await screen.findByTestId('canvas-action-feedback');
+    expect(workspaceFeedback).toHaveTextContent('Company Work Note saved to idea.');
+    const openLink = within(workspaceFeedback).getByRole('link', { name: 'Open →' });
+    expect(openLink).toHaveAttribute('href', '/my-work/ideas/idea-1');
 
     await user.click(screen.getByRole('button', { name: /Create presentation/i }));
 
@@ -2413,9 +2415,12 @@ describe('WorkCanvasDocumentPanel', () => {
       'data-action-status',
       'enabled'
     );
-    expect(
-      screen.queryByRole('button', { name: /Share Canvas document/i })
-    ).not.toBeInTheDocument();
+    // Share is a real toolbar action now (canvas.share capability); in the
+    // vitest runtime the capability defaults to false, so it renders gated.
+    expect(screen.getByRole('button', { name: /Share Canvas document/i })).toHaveAttribute(
+      'data-action-status',
+      'coming_soon'
+    );
     // The standalone "Open document folder" and "Upload files" toolbar buttons
     // were removed in the rich-editor rollout; dataset upload now lives behind
     // the Canvas menu ("Upload dataset") and the document folder action is gone.

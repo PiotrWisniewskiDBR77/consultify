@@ -2,6 +2,7 @@ import type {
   CanvasDocumentKind,
   CanvasDocumentState,
   CanvasLifecycleState,
+  CanvasMaterializedLink,
   CanvasProjectionStatus,
   CanvasSaveState,
   CanvasStarterId,
@@ -95,6 +96,28 @@ function workflowRunsFromDraft(draft: WorkCanvasDraftLike): CanvasWorkflowRun[] 
   return [];
 }
 
+/**
+ * C4 — provenance loop closure. Backend appends one entry per Canvas→workspace
+ * materialization to `provenance.materializedTo[]` (both writers: the
+ * /save-to-workspace route and proposal approval). Validate the shape so a
+ * malformed provenance blob can't break the panel.
+ */
+function materializedToFromDraft(draft: WorkCanvasDraftLike): CanvasMaterializedLink[] {
+  if (!draft.provenance || typeof draft.provenance !== 'object') return [];
+  const value = (draft.provenance as Record<string, unknown>).materializedTo;
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is CanvasMaterializedLink => {
+    if (!item || typeof item !== 'object') return false;
+    const record = item as Record<string, unknown>;
+    return (
+      typeof record.target === 'string' &&
+      typeof record.entityId === 'string' &&
+      typeof record.url === 'string' &&
+      typeof record.title === 'string'
+    );
+  });
+}
+
 export function mapDraftResponseToCanvasDocumentState(
   draft: WorkCanvasDraftLike | null | undefined,
   fallback: CanvasDocumentState
@@ -130,6 +153,10 @@ export function mapDraftResponseToCanvasDocumentState(
     linkedNoteId: asString(draft.linkedNoteId) || fallback.linkedNoteId,
     linkedInitiativeId: asString(draft.linkedInitiativeId) || fallback.linkedInitiativeId,
     workflowRuns: workflowRunsFromDraft(draft),
+    materializedTo: (() => {
+      const entries = materializedToFromDraft(draft);
+      return entries.length > 0 ? entries : fallback.materializedTo;
+    })(),
   };
 }
 

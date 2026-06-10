@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import decisionService from './decisionService.js';
 import initiativeService from './initiativeService.js';
 import { TaskService } from './TaskService.js';
@@ -877,6 +878,46 @@ async function createCanvasIdea(params: {
   };
 }
 
+/**
+ * C4 — provenance loop closure for the proposal-approval writer. The
+ * /save-to-workspace route records `provenance.materializedTo[]` on the draft
+ * via `updateDraftAfterOperation`; this is the equivalent for proposals, which
+ * live in a different code path (commitProposalToDomain) but share the same
+ * `work_canvas_drafts` table. Best-effort: a failed provenance write must not
+ * fail the approval — the entity already exists.
+ */
+async function appendDraftMaterializedTo(params: {
+  organizationId: string;
+  draft: WorkCanvasDraftRecord;
+  entry: { target: string; entityId: string; url: string; title: string; at: string };
+}): Promise<void> {
+  try {
+    const previous = Array.isArray(params.draft.provenance?.materializedTo)
+      ? (params.draft.provenance?.materializedTo as unknown[])
+      : [];
+    await dbRun(
+      `UPDATE work_canvas_drafts
+       SET provenance_json = ?, updated_at = ?
+       WHERE id = ? AND organization_id = ?`,
+      [
+        JSON.stringify({
+          ...(params.draft.provenance || {}),
+          materializedTo: [...previous, params.entry],
+        }),
+        nowIso(),
+        params.draft.id,
+        params.organizationId,
+      ]
+    );
+  } catch (error) {
+    logger.warn('[workCanvas] provenance.materializedTo append failed', {
+      draftId: params.draft.id,
+      target: params.entry.target,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 async function commitProposalToDomain(params: {
   organizationId: string;
   actorUserId: string;
@@ -938,6 +979,19 @@ async function commitProposalToDomain(params: {
       },
       { writer: 'proposal_approval' }
     );
+    // C4 — record the materialization on the source draft's provenance ledger
+    // (same shape as the /save-to-workspace writer).
+    await appendDraftMaterializedTo({
+      organizationId: params.organizationId,
+      draft: params.draft,
+      entry: {
+        target: params.proposal.target,
+        entityId: materialized.id,
+        url: materialized.url,
+        title: materialized.title,
+        at: nowIso(),
+      },
+    });
     return {
       status: 'created',
       entityStatus: 'created',

@@ -299,6 +299,38 @@ function starterTemplateById(starterId?: CanvasStarterId | null): StarterTemplat
 
 const LAST_DRAFT_ID_STORAGE_KEY = 'workCanvas.lastDraftId';
 
+type CanvasShareInfo = {
+  token: string;
+  url: string;
+  expiresAt?: string;
+};
+
+// Reads provenance.share from a raw draft API payload (share POST response or
+// draft hydration). Returns null when the draft has no active share.
+function extractShareFromDraft(rawDraft: unknown): CanvasShareInfo | null {
+  const provenance = (rawDraft as { provenance?: { share?: unknown } } | null)?.provenance;
+  const share = provenance?.share;
+  if (!share || typeof share !== 'object') return null;
+  const record = share as Record<string, unknown>;
+  const token = typeof record.token === 'string' ? record.token.trim() : '';
+  if (!token) return null;
+  return {
+    token,
+    url:
+      typeof record.url === 'string' && record.url.length > 0
+        ? record.url
+        : `/public/artifacts/${token}`,
+    expiresAt: typeof record.expiresAt === 'string' ? record.expiresAt : undefined,
+  };
+}
+
+// Share urls are stored as app-relative paths (/public/artifacts/:token);
+// recipients need the absolute origin-qualified form.
+function absoluteShareUrl(share: CanvasShareInfo): string {
+  if (/^https?:\/\//i.test(share.url)) return share.url;
+  return typeof window !== 'undefined' ? `${window.location.origin}${share.url}` : share.url;
+}
+
 const menuWorkspaceActionIds: CanvasActionId[] = [
   'send-to-idea',
   'save-as-note',
@@ -451,6 +483,56 @@ const actionIcons: Record<CanvasActionId, React.ComponentType<{ size?: number }>
   // C4.1 — Tasks bridge through TaskService.createTask.
   'create-task': CheckSquare,
 };
+
+// C4 — icons + labels for the "Utworzone z tego dokumentu" provenance ledger
+// (draft.provenance.materializedTo[]). Mirrors the workspace-action icon family.
+const materializedTargetIcons: Record<string, React.ComponentType<{ size?: number }>> = {
+  idea: Lightbulb,
+  note: StickyNote,
+  initiative: Rocket,
+  decision: Gavel,
+  task: CheckSquare,
+};
+
+function materializedTargetLabel(target: string): string {
+  if (target === 'idea') return 'Pomysł';
+  if (target === 'note') return 'Notatka';
+  if (target === 'initiative') return 'Inicjatywa';
+  if (target === 'decision') return 'Decyzja';
+  if (target === 'task') return 'Zadanie';
+  return target;
+}
+
+/**
+ * C4 — render inline `[label](path)` links in the action-feedback strip as
+ * clickable anchors. Several success messages (save-to-workspace, Table/
+ * Document Studio handoffs) already embed Markdown links that previously
+ * rendered as plain text.
+ */
+function renderFeedbackWithLinks(text: string): React.ReactNode {
+  const pattern = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+    parts.push(
+      <a
+        key={`feedback-link-${match.index}`}
+        href={match[2]}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-sky-600 hover:underline dark:text-sky-400"
+      >
+        {match[1]}
+      </a>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (parts.length === 0) return text;
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts;
+}
 
 const toolbarGroupClass =
   'flex items-center gap-1 rounded-full border border-slate-200 px-1 dark:border-white/10';
@@ -691,6 +773,9 @@ function WorkCanvasMarkdownDocumentPanel({
   const [actionFeedback, setActionFeedback] = React.useState<string | null>(null);
   const [actionFeedbackTone, setActionFeedbackTone] = React.useState<'status' | 'alert'>('status');
   const [activeActionId, setActiveActionId] = React.useState<CanvasActionId | null>(null);
+  // Active public share for the loaded draft (mirrors provenance.share).
+  const [shareInfo, setShareInfo] = React.useState<CanvasShareInfo | null>(null);
+  const [isRevokingShare, setIsRevokingShare] = React.useState(false);
   const [isSavingToOutputs, setIsSavingToOutputs] = React.useState(false);
   const [canvasSelection, setCanvasSelection] = React.useState<CanvasSelection | null>(null);
   // Live TipTap editor instance (rich mode), lifted so Teresa can stream into it.
@@ -801,6 +886,7 @@ function WorkCanvasMarkdownDocumentPanel({
               setDocumentState((current) =>
                 mapDraftResponseToCanvasDocumentState(draftById, current)
               );
+              setShareInfo(extractShareFromDraft(draftById));
               lastSavedContentRef.current =
                 typeof draftById.contentMd === 'string'
                   ? draftById.contentMd
@@ -851,6 +937,7 @@ function WorkCanvasMarkdownDocumentPanel({
             setDocumentState((current) =>
               mapDraftResponseToCanvasDocumentState(draftById, current)
             );
+            setShareInfo(extractShareFromDraft(draftById));
             lastSavedContentRef.current =
               typeof draftById.contentMd === 'string'
                 ? draftById.contentMd
@@ -867,6 +954,7 @@ function WorkCanvasMarkdownDocumentPanel({
           setDocumentState((current) =>
             mapDraftResponseToCanvasDocumentState(latestDraft, current)
           );
+          setShareInfo(extractShareFromDraft(latestDraft));
           lastSavedContentRef.current =
             typeof latestDraft.contentMd === 'string'
               ? latestDraft.contentMd
@@ -892,6 +980,48 @@ function WorkCanvasMarkdownDocumentPanel({
       cancelled = true;
     };
   }, [conversationId, initialDraftId]);
+
+  // Deliverables light (Kimi-parity): panel montuje się od razu po PLAN ze
+  // szkieletem („…po zakończeniu generacji”), a gdy generacja w tle skończy,
+  // czat emituje 'deliverables:draft-ready' i panel dociąga gotową treść.
+  // Bezpiecznik: odświeżamy TYLKO jeśli edytor nadal pokazuje szkielet —
+  // jeżeli użytkownik zdążył pisać, nie nadpisujemy jego pracy.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onDraftReady = (event: Event) => {
+      const readyDraftId = String((event as CustomEvent)?.detail?.draftId || '').trim();
+      if (!readyDraftId || readyDraftId !== String(documentState.draftId || '').trim()) return;
+      const stillSkeleton = String(documentState.contentMd || '').includes(
+        'po zakończeniu generacji'
+      );
+      if (!stillSkeleton) return;
+      void (async () => {
+        try {
+          const token = window.localStorage.getItem('token') || '';
+          const response = await fetch(
+            `/api/work-canvas/drafts/${encodeURIComponent(readyDraftId)}`,
+            { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+          );
+          const json = await response.json().catch(() => ({}));
+          const draft = json?.data?.draft || json?.data;
+          if (!response.ok || !draft) return;
+          setDocumentState((current) => mapDraftResponseToCanvasDocumentState(draft, current));
+          lastSavedContentRef.current =
+            typeof draft.contentMd === 'string'
+              ? draft.contentMd
+              : typeof draft.content === 'string'
+                ? draft.content
+                : lastSavedContentRef.current;
+          lastSavedTitleRef.current =
+            typeof draft.title === 'string' ? draft.title : lastSavedTitleRef.current;
+        } catch {
+          /* poll w czacie i finalna notka dalej prowadzą użytkownika */
+        }
+      })();
+    };
+    window.addEventListener('deliverables:draft-ready', onDraftReady);
+    return () => window.removeEventListener('deliverables:draft-ready', onDraftReady);
+  }, [documentState.draftId, documentState.contentMd]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1168,6 +1298,8 @@ function WorkCanvasMarkdownDocumentPanel({
   const selectTemplate = (template: StarterTemplate) => {
     const next = createDocumentState(template);
     setDocumentState(next);
+    // Fresh draft — any share strip from the previous draft is stale.
+    setShareInfo(null);
     setMode('document');
     void (async () => {
       const researchSessionId = await createResearchSessionForDraft(next);
@@ -1973,19 +2105,64 @@ function WorkCanvasMarkdownDocumentPanel({
       const draft = await ensurePersistedDraft();
       if (!draft?.draftId) throw new Error('Canvas draft could not be saved before sharing.');
       const result = await Api.workCanvasShare(draft.draftId);
-      const shareUrl = result.data.share.url;
+      const share: CanvasShareInfo = {
+        token: result.data.share.token,
+        url: result.data.share.url,
+        expiresAt: result.data.share.expiresAt,
+      };
+      const shareUrl = absoluteShareUrl(share);
       setDocumentState((current) =>
         mapDraftResponseToCanvasDocumentState(result.data.draft, {
           ...current,
           saveState: 'saved',
         })
       );
+      setShareInfo(share);
       await navigator.clipboard?.writeText(shareUrl);
       setStatusFeedback(`Share link ready and copied: ${shareUrl}`);
     } catch (error) {
       setCanvasErrorFeedback(error, 'Failed to share Canvas draft.');
     } finally {
       setActiveActionId(null);
+    }
+  };
+
+  const revokeShareAction = async () => {
+    if (isRevokingShare) return;
+    const draftId = documentState.draftId;
+    if (!draftId) {
+      setShareInfo(null);
+      return;
+    }
+    setIsRevokingShare(true);
+    setStatusFeedback('Cofanie udostępniania... / Revoking share link...');
+    try {
+      const result = await Api.workCanvasRevokeShare(draftId);
+      setDocumentState((current) =>
+        mapDraftResponseToCanvasDocumentState(result.data.draft, {
+          ...current,
+          saveState: 'saved',
+        })
+      );
+      setShareInfo(null);
+      setStatusFeedback(
+        'Udostępnianie cofnięte — link publiczny przestał działać. / Share revoked — the public link no longer works.'
+      );
+    } catch (error) {
+      setCanvasErrorFeedback(error, 'Failed to revoke Canvas share link.');
+    } finally {
+      setIsRevokingShare(false);
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (!shareInfo) return;
+    const shareUrl = absoluteShareUrl(shareInfo);
+    try {
+      await navigator.clipboard?.writeText(shareUrl);
+      setStatusFeedback(`Share link copied: ${shareUrl}`);
+    } catch {
+      setAlertFeedback(`Copy failed — share link: ${shareUrl}`);
     }
   };
 
@@ -2487,6 +2664,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
           <div className={toolbarGroupClass} data-testid="canvas-file-actions">
             {renderCommandButton('copy')}
+            {renderCommandButton('share')}
             {renderCommandButton('save')}
             {renderCommandButton('close')}
           </div>
@@ -2941,6 +3119,47 @@ function WorkCanvasMarkdownDocumentPanel({
                     </div>
                   ))}
                 </div>
+
+                {/* C4 — provenance loop closure: append-only ledger of entities
+                    materialized from this draft (provenance.materializedTo[],
+                    written by both backend writers). */}
+                {(documentState.materializedTo?.length || 0) > 0 ? (
+                  <div
+                    className="mt-3 space-y-1 border-b border-slate-200 pb-3 dark:border-white/10"
+                    data-testid="canvas-materialized-to"
+                  >
+                    <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                      Utworzone z tego dokumentu
+                    </div>
+                    {(documentState.materializedTo || []).map((entry, index) => {
+                      const EntryIcon = materializedTargetIcons[entry.target] || FileText;
+                      return (
+                        <div
+                          key={`${entry.entityId}-${index}`}
+                          className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300"
+                        >
+                          <span className="shrink-0 text-slate-400 dark:text-slate-500">
+                            <EntryIcon size={13} />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate" title={entry.title}>
+                            {entry.title}
+                          </span>
+                          <span className="shrink-0 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            {materializedTargetLabel(entry.target)}
+                          </span>
+                          <a
+                            href={entry.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 font-medium text-sky-600 hover:underline dark:text-sky-400"
+                          >
+                            Otwórz
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
 
                 {pendingDataset ? (
                   <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-white/[0.03]">
@@ -3646,7 +3865,53 @@ function WorkCanvasMarkdownDocumentPanel({
           role={actionFeedbackTone}
           data-testid="canvas-action-feedback"
         >
-          {actionFeedback}
+          {/* C4 — [Otwórz/Open →](path) deep-links render as clickable anchors. */}
+          {renderFeedbackWithLinks(actionFeedback)}
+        </div>
+      ) : null}
+
+      {shareInfo ? (
+        <div
+          className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200/70 bg-white/60 px-4 py-2 text-xs text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300"
+          data-testid="canvas-share-strip"
+        >
+          <Share2 size={12} className="shrink-0 text-slate-400" />
+          <span className="font-semibold">Link publiczny / Public link:</span>
+          <a
+            href={absoluteShareUrl(shareInfo)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="max-w-[280px] truncate font-mono text-[11px] text-primary-600 hover:underline dark:text-primary-300"
+            data-testid="canvas-share-url"
+          >
+            {absoluteShareUrl(shareInfo)}
+          </a>
+          <button
+            type="button"
+            onClick={() => void copyShareLink()}
+            className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 shadow-sm hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
+            title="Kopiuj link / Copy link"
+            data-testid="canvas-share-copy"
+          >
+            <Copy size={11} />
+            Kopiuj
+          </button>
+          <button
+            type="button"
+            onClick={() => void revokeShareAction()}
+            disabled={isRevokingShare}
+            className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-semibold text-rose-600 shadow-sm hover:text-rose-700 disabled:opacity-60 dark:bg-white/10 dark:text-rose-400 dark:hover:text-rose-300"
+            title="Cofnij udostępnianie / Revoke share"
+            data-testid="canvas-share-revoke"
+          >
+            {isRevokingShare ? <RefreshCw size={11} className="animate-spin" /> : <X size={11} />}
+            Cofnij udostępnianie
+          </button>
+          {shareInfo.expiresAt ? (
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              wygasa / expires {new Date(shareInfo.expiresAt).toLocaleDateString()}
+            </span>
+          ) : null}
         </div>
       ) : null}
 

@@ -657,6 +657,10 @@ export interface NotebookPage {
     fileMimetype?: string | null;
     storedSourceFile?: boolean;
     sourceFileSizeBytes?: number | null;
+    /** C4 — entity provenance written by canvasMaterialize ('work_canvas'). */
+    sourceType?: string | null;
+    /** C4 — source draft id accompanying sourceType. */
+    sourceId?: string | null;
   } | null;
   attachments?: NotebookAttachment[];
   wordCount?: number;

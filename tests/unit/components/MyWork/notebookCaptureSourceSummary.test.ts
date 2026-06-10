@@ -26,4 +26,32 @@ describe('getNotebookUploadSourceSummary', () => {
       title: 'Note created from a clipped page: https://example.com',
     });
   });
+
+  // C4 — Canvas provenance pilot: notes materialized from a Work Canvas draft
+  // carry capture_source='api_import' + metadata.sourceType='work_canvas'.
+  it('returns a Canvas badge when metadata.sourceType is work_canvas', () => {
+    expect(
+      getNotebookUploadSourceSummary(
+        'api_import',
+        { sourceType: 'work_canvas' },
+        true
+      )
+    ).toEqual({
+      label: 'Canvas',
+      title: 'Źródło: Canvas (rozmowa)',
+    });
+    expect(
+      getNotebookUploadSourceSummary('api_import', { sourceType: 'work_canvas' }, false)
+    ).toEqual({
+      label: 'Canvas',
+      title: 'Source: Canvas (conversation)',
+    });
+  });
+
+  it('keeps the generic API-import badge when sourceType is absent', () => {
+    expect(getNotebookUploadSourceSummary('api_import', {}, false)).toEqual({
+      label: 'API import',
+      title: 'Note created from an external import',
+    });
+  });
 });

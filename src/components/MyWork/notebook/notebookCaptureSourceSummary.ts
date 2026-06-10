@@ -3,6 +3,8 @@ export interface NotebookCaptureMetadata {
   fileMimetype?: string | null;
   url?: string | null;
   emailFrom?: string | null;
+  /** C4 — provenance written by canvasMaterialize (e.g. 'work_canvas'). */
+  sourceType?: string | null;
 }
 
 export interface NotebookCaptureSourceSummary {
@@ -18,6 +20,20 @@ export function getNotebookUploadSourceSummary(
   const normalizedSource = String(captureSource || '')
     .trim()
     .toLowerCase();
+
+  // C4 — Canvas provenance pilot. Notes materialized from a Work Canvas draft
+  // arrive with capture_source='api_import' + metadata.sourceType='work_canvas'
+  // (server/src/services/canvasMaterialize.ts). Surface the real origin instead
+  // of the generic API-import label.
+  const sourceType = String(captureMetadata?.sourceType || '')
+    .trim()
+    .toLowerCase();
+  if (sourceType === 'work_canvas') {
+    return {
+      label: 'Canvas',
+      title: isPolish ? 'Źródło: Canvas (rozmowa)' : 'Source: Canvas (conversation)',
+    };
+  }
 
   if (normalizedSource === 'web_clipper') {
     const sourceUrl = String(captureMetadata?.url || '').trim();
