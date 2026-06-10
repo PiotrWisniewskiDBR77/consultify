@@ -31,6 +31,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_GLOBAL: z.boolean().default(false),
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
+  ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -117,6 +118,12 @@ export function loadFeatureFlags(): FeatureFlags {
     // generation contract /api/deliverables/generations. Opt-in; when off the
     // router answers 404 and the legacy presentation flow is untouched.
     ENABLE_DELIVERABLES_LIGHT: process.env.ENABLE_DELIVERABLES_LIGHT === 'true',
+
+    // Teresa org-content retrieval (ff_teresaRetrieval): chat-side READ tools
+    // (search_org_notes / search_insights / get_initiative) that let Teresa
+    // locate notes, insights and initiatives the user references by topic.
+    // Opt-in; when off the chat stream and persona prompt are untouched.
+    ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
   };
 
   // Validate configuration

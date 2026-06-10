@@ -3104,6 +3104,119 @@ router.post(
       }
 
       // --------------------------------------------------------
+      // Org-content retrieval (ff_teresaRetrieval / ENABLE_TERESA_RETRIEVAL)
+      // --------------------------------------------------------
+      // Lets Teresa locate notes / insights / initiatives the user references
+      // by topic ("zrób dokument z notatki o spotkaniu z Elkomtech"). The chat
+      // stream has no model-driven tool loop (AIPipeline → llmService.callStream),
+      // so this mirrors the KB-docs pattern above: run the READ tools from the
+      // MCP registry server-side and inject their compact JSON results into the
+      // system instruction + context.external. Flag off ⇒ block is inert.
+      try {
+        const teresaRetrievalEnabled = process.env.ENABLE_TERESA_RETRIEVAL === 'true';
+        if (teresaRetrievalEnabled && req.organizationId && req.userId && message) {
+          const msg = String(message);
+          // PL stems cover inflected forms (notatka/notatki/notatce, wniosek/wniosków, inicjatywa/inicjatywie).
+          const wantsNotes = /notatk\w*|notatnik\w*|\bnotes?\b|notebook/i.test(msg);
+          const wantsInsights = /wniosk\w*|wniosek|insight\w*/i.test(msg);
+          const wantsInitiative = /inicjatyw\w*|initiative\w*/i.test(msg);
+          const initiativeIdMatch = wantsInitiative
+            ? msg.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)
+            : null;
+
+          if (wantsNotes || wantsInsights || initiativeIdMatch) {
+            emitSSE({
+              type: 'thought',
+              step: 'org_retrieval',
+              status: 'in_progress',
+              label: 'Searching organization content…',
+            });
+
+            const { mcpServer } = await import('../services/ai/mcpServer.js');
+            await import('../services/ai/tools/index.js').catch(() => {
+              /* handlers already registered */
+            });
+            const toolContext = {
+              organizationId: req.organizationId,
+              userId: req.userId,
+            };
+            const retrievalQuery = msg.slice(0, 300);
+            const toolResults: Record<string, unknown> = {};
+
+            if (wantsNotes) {
+              toolResults.search_org_notes = await mcpServer.execute(
+                'search_org_notes',
+                { query: retrievalQuery, limit: 5 },
+                toolContext
+              );
+            }
+            if (wantsInsights) {
+              toolResults.search_insights = await mcpServer.execute(
+                'search_insights',
+                { query: retrievalQuery, limit: 5 },
+                toolContext
+              );
+            }
+            if (initiativeIdMatch) {
+              toolResults.get_initiative = await mcpServer.execute(
+                'get_initiative',
+                { initiativeId: initiativeIdMatch[0] },
+                toolContext
+              );
+            }
+
+            // Each tool already caps its payload at ~4KB; this is a hard backstop.
+            const serialized = JSON.stringify(toolResults).slice(0, 13000);
+            const orgRetrievalAddon =
+              `[ORG CONTENT SEARCH — tool results]\n` +
+              `The user referenced organization content by topic. The retrieval tools ` +
+              `(search_org_notes / search_insights / get_initiative) ran with the user's message as the query. ` +
+              `Use ONLY these results to identify the item: name the best match (title + id) and confirm with the user ` +
+              `that it is the right one BEFORE acting on it. If several candidates fit, list up to 3 and ask the user to pick. ` +
+              `If results are empty, say so and ask for a more specific title or topic. Never invent note/insight/initiative content.\n` +
+              `${serialized}`;
+
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n${orgRetrievalAddon}\n`,
+              },
+              context: {
+                ...((pipelineRequest as any).context || {}),
+                external: {
+                  ...((pipelineRequest as any).context?.external || {}),
+                  orgRetrieval: {
+                    query: retrievalQuery,
+                    tools: toolResults,
+                  },
+                },
+              },
+            } as any;
+
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'org_retrieval', {
+                    tools: Object.keys(toolResults),
+                  })
+                )
+                .catch(() => {
+                  /* ignore */
+                });
+            }
+          }
+        }
+      } catch (orgRetrievalErr: any) {
+        logger.warn(
+          '[AI Stream] Org-content retrieval failed, continuing without it:',
+          orgRetrievalErr?.message
+        );
+      }
+
+      // --------------------------------------------------------
       // AI-suggested Deep Thinking activation (hint)
       // When DT is OFF, check if user's message looks strategic and suggest DT.
       // --------------------------------------------------------

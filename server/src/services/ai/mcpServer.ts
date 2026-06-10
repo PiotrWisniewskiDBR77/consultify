@@ -101,6 +101,76 @@ export const ToolSchemas: Record<string, Omit<ToolEntry, 'handler'>> = {
       message: z.string(),
     }),
   },
+  // ── Teresa org-content retrieval (ff_teresaRetrieval / ENABLE_TERESA_RETRIEVAL) ──
+  search_org_notes: {
+    name: 'search_org_notes',
+    description:
+      'Search the organization notebook (notes) by topic using hybrid FTS + semantic search. ' +
+      'Org-scoped and permission-safe. Use when the user references a note by subject, e.g. "notatka o spotkaniu z Elkomtech".',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      query: z.string().describe('Topic or phrase to search notes for (user language is fine)'),
+      limit: z.number().optional().default(5).describe('Max results to return (1-10)'),
+    }),
+    returns: z.object({
+      results: z.array(
+        z.object({
+          pageId: z.string(),
+          title: z.string(),
+          snippet: z.string(),
+          updatedAt: z.string().nullable(),
+        })
+      ),
+      truncated: z.boolean(),
+    }),
+  },
+  search_insights: {
+    name: 'search_insights',
+    description:
+      'Search interview insights (wnioski) of the organization by topic. ' +
+      'Org-scoped. Use when the user references an insight/analysis by subject.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      query: z.string().describe('Topic or phrase to search insights for (user language is fine)'),
+      limit: z.number().optional().default(5).describe('Max results to return (1-10)'),
+    }),
+    returns: z.object({
+      results: z.array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          snippet: z.string(),
+          type: z.string(),
+        })
+      ),
+      truncated: z.boolean(),
+    }),
+  },
+  get_initiative: {
+    name: 'get_initiative',
+    description:
+      'Fetch one initiative (core fields: title, summary, status) by id. ' +
+      'Org-scoped — returns a not-found result when the id belongs to another organization.',
+    type: TOOL_TYPE.READ,
+    parameters: z.object({
+      initiativeId: z.string().describe('The UUID of the initiative to retrieve'),
+    }),
+    returns: z.object({
+      results: z.array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          summary: z.string(),
+          status: z.string(),
+          axis: z.string().nullable(),
+          area: z.string().nullable(),
+          updatedAt: z.string().nullable(),
+        })
+      ),
+      truncated: z.boolean(),
+      notFound: z.boolean().optional(),
+    }),
+  },
   update_assessment_score: {
     name: 'update_assessment_score',
     description: 'Update a maturity assessment score. REQUIRES USER APPROVAL before execution.',

@@ -319,6 +319,32 @@ You think and propose; the user decides; the module executes. This overrides any
 }
 
 // ---------------------------------------------------------------------------
+// Org-content retrieval tools (ff_teresaRetrieval / ENABLE_TERESA_RETRIEVAL)
+// Included only when the flag is on. Describes the chat-side READ tools
+// (search_org_notes / search_insights / get_initiative) whose results the
+// stream route injects as an [ORG CONTENT SEARCH] block.
+// ---------------------------------------------------------------------------
+function isTeresaRetrievalEnabled(): boolean {
+  return process.env.ENABLE_TERESA_RETRIEVAL === 'true';
+}
+
+function buildOrgRetrievalGuidance(lang: PersonaLanguage): string {
+  if (lang === 'pl') {
+    return `## NARZĘDZIA TREŚCI ORGANIZACJI (search_org_notes, search_insights, get_initiative)
+Gdy użytkownik odwołuje się do treści organizacji po temacie (notatka, wniosek/insight, inicjatywa), narzędzia wyszukiwania lokalizują ją, a wyniki dostajesz w bloku [ORG CONTENT SEARCH].
+- Wskaż najlepsze dopasowanie (tytuł + identyfikator) i POTWIERDŹ z użytkownikiem, że o nie chodzi, ZANIM na nim oprzesz dalsze działanie.
+- Przy kilku kandydatach wymień maks. 3 i poproś o wybór; przy braku wyników powiedz to wprost i poproś o doprecyzowanie tematu lub tytułu.
+- Nie zmyślaj treści notatek, wniosków ani inicjatyw spoza wyników wyszukiwania.`;
+  }
+
+  return `## ORGANIZATION CONTENT TOOLS (search_org_notes, search_insights, get_initiative)
+When the user references organization content by topic (a note, an insight, an initiative), the search tools locate it and the results arrive in an [ORG CONTENT SEARCH] block.
+- Name the best match (title + id) and CONFIRM with the user that it is the right item BEFORE acting on it.
+- With several candidates, list up to 3 and ask the user to pick; with no results, say so and ask for a more specific topic or title.
+- Never invent note/insight/initiative content beyond the search results.`;
+}
+
+// ---------------------------------------------------------------------------
 // Screen-specific emphasis overlays
 // ---------------------------------------------------------------------------
 export interface PersonaEmphasis {
@@ -533,6 +559,7 @@ export function buildPersonaPrompt(
     '',
     buildAgencyModel(lang),
     '',
+    ...(isTeresaRetrievalEnabled() ? [buildOrgRetrievalGuidance(lang), ''] : []),
     lang === 'pl'
       ? '## ZNAJOMOŚĆ PRODUKTU\nZnasz wszystkie moduły Consultify i potrafisz wyjaśnić, co robią oraz jak z nich korzystać. Używaj poniższego katalogu, gdy użytkownik pyta o system, moduł, funkcję lub „jak coś zrobić".'
       : '## PRODUCT KNOWLEDGE\nYou know every Consultify module and can explain what it does and how to use it. Use the catalog below whenever the user asks about the system, a module, a feature, or "how to do" something.',
