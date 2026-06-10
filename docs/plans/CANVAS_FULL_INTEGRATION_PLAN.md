@@ -1,6 +1,17 @@
 # Canvas — plan pełnego wdrożenia i integracji ze strukturą komunikacji (2026-06-10)
 
-Status: PROPOZYCJA do ratyfikacji (decyzje ownera D-C-1..D-C-5 na końcu).
+Status: W REALIZACJI (owner: "buduj" 2026-06-10; decyzje D-C-1..D-C-5 wykonane wg rekomendacji).
+
+**Stan wykonania 2026-06-10 (commity na feat/deliverables-light):**
+- ✅ WS-A (L2 Doc + L3 Sheet) — wykonane przez agenta Kimi (e04e3c4296…9a0eb5e305); triada deck/doc/sheet DONE.
+- ✅ C8 org-scope guard (f84cdcc145) · B1 wersje UI (0d09843b4f) · D1 public viewer (5c585fe23a, **zweryfikowane live**)
+  · C6 retrieval Teresy za ENABLE_TERESA_RETRIEVAL (1124dffc78) · E1 skróty na zaznaczeniu (675a3501b2)
+  · B2 switcher+chip (70494ffb39) · C7 registry+panel inicjatywy (2656a9f603) · D1b share revoke+URL (7383ff9c38)
+  · C4 pętla provenance + share UI (1491465413).
+- ⏳ Pozostało z planu: C1/C2 (sourceRefs[] + akcje na encjach — częściowo w L2/L3 Kimi, do domknięcia),
+  C3 (notatka→Canvas), C5 (Ideas↔czat), B3 (patch-mode), B4 (auto-emisja), D2/D3, E2/E3.
+- ⚠️ Weryfikacja wizualna: D1 zweryfikowany w preview (screenshoty); B1/B2/E1/C4/C7 mają czysty type-check
+  + testy (36/36), ale czekają na smoke-test wizualny (RULE verify-before-claiming).
 Poprzednik: `docs/plans/CANVAS_VS_CLAUDE_ARTIFACTS_GAP_REVIEW.md` (przegląd luk vs Claude Artifacts)
 oraz ratyfikowany `docs/plans/DELIVERABLES_LIGHT_TARGET.md` §11 (L2 Doc, D-L2-1..4).
 Grunt: audyt kodu integracji (2026-06-10, branch `feat/deliverables-light`) — każdy krok poniżej
