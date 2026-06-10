@@ -2,6 +2,12 @@
 
 Stan wejściowy: triada deck/doc/sheet DONE (agent Kimi); fale 1–3 programu Canvas DONE
 (C8, B1, D1+D1b, C6, E1, B2, C7, C4) — patrz `CANVAS_FULL_INTEGRATION_PLAN.md` (status w nagłówku).
+
+**Dokumenty siostrzane (ten sam dzień, drugi wątek):** `DELIVERABLES_NEXT_STEPS_EXECUTION_PLAN.md`
++ `DELIVERABLES_TARGET_EXPERIENCE_SPEC.md` — plany są ZBIEŻNE: tamtejsze A1/A2 `[C]` = tutejszy
+KROK 1; tamtejsza FAZA dot. sourceRefs = tutejsze KROKI 4–5 `[D]`. Uwaga dla wykonawcy A1:
+sygnatura `setContent(html, {emitUpdate:false})` jest już ZWERYFIKOWANA jako poprawna dla
+TipTap 3.14 — punkt "sprawdzić sygnaturę" z planu deliverables można pominąć.
 Kolejność poniżej jest ZALEŻNOŚCIOWA — nie przestawiać kroków 1–3 przed dalsze.
 
 Zasady: additive, type-check po kroku, commit per krok, RULE verify-before-claiming
