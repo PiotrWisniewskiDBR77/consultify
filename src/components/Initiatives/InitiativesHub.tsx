@@ -1972,19 +1972,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        primaryCta={
-          isPilotParticipant ? undefined : (
-            <button
-              type="button"
-              disabled
-              title={comingSoonPrep}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>{t('initiatives.form.newInitiative')}</span>
-              <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
-            </button>
-          )
-        }
+        // Owner decision 2026-06-10: no "New initiative" primaryCta here — initiatives
+        // are born in the Interview flow (Interview → Initiatives → Add initiatives).
         filterActions={filterActions}
         rightControls={rightControls}
         commandRowContent={

@@ -11019,10 +11019,11 @@ Return ONLY the answer text (no markdown fences).`;
               })()}
               onSelect={setSelectedInterviewInitiativeId}
               onOpenFull={(id) => {
-                // Double-click / Enter / "Open" → full initiative doc view in the
-                // Initiatives module. Drafts open too (they exist in the DB and the
-                // module renders them fine); promotion only governs listing, not viewing.
-                navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
+                // Owner decision 2026-06-10: drafts live in the Interview flow until
+                // first approval — opening one must NOT yank the user into the
+                // Initiatives module. Open the in-place preview; the footer still
+                // offers an explicit "Open in module" action.
+                setSelectedInterviewInitiativeId(id);
               }}
               renderPreview={(item) => renderInitiativePreview(item)}
               renderPreviewFooter={(item) => {
