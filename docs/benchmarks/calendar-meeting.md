@@ -3,7 +3,7 @@ brief: calendar-meeting
 module: Meeting / Kalendarz
 sources: [CalDAV RFC corpus (4791/5545/6638/6764/7953 — scrape 2026-03), Google Calendar API (developers.google.com mirror), Microsoft Graph (learn.microsoft.com — shell only), OneCal, Morgen (docs.morgen.so — SPA, pusty)]
 status: done
-updated: 2026-06-09
+updated: 2026-06-10
 ---
 
 # Benchmark: Meeting / Kalendarz
@@ -99,3 +99,5 @@ Stan źródeł:
 - **ONECAL** — zawiera tylko mirror `developers.google.com` (m.in. czytelna strona-overview Calendar API), brak własnych stron onecal.io. OneCal opisany z wiedzy.
 - **MICROSOFT OUTLOOK : GRAPH / GRAPH 2** — wyłącznie shelle `learn.microsoft.com` + `support.microsoft.com` (JS-render, `textutil` zwraca pusto). **Nieużyteczne tekstowo**; Graph opisany z wiedzy.
 - **morgan (Morgen)** — `docs.morgen.so` to SPA (Mintlify); pliki istnieją (events.html ~410 KB) ale renderują się JS-em, ekstrakcja pusta. **Nieużyteczne**; Morgen opisany z wiedzy.
+
+Powtórna kontrola zasobów (2026-06-10, best-effort po przywróceniu dostępu do FS): potwierdzono brak realnych zrzutów UI produktowego (kalendarz/booking) w którymkolwiek źródle — GOOGLE CALENDAR pusty (0 plików), ONECAL zawiera wyłącznie mirrory hostów `developers.google.com`/`gstatic` (marketing dev-site, nie OneCal ani calendar-grid), morgan ma tylko favicon, Graph/Outlook to JS-shelle. Brak plików skopiowanych do `assets/calendar-meeting/`.

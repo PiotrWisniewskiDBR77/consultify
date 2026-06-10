@@ -1,11 +1,11 @@
 ---
 brief: financial-analysis
 module: Analiza finansowa (SPEKULATYWNY — brak w obecnym roadmapie produktu)
-sources: [Anaplan (z wiedzy własnej; scrape anaplan.zip NIEDOSTĘPNY w środowisku), Apiary (scrape Apiary.zip NIEDOSTĘPNY — patrz §6)]
+sources: [Anaplan Anapedia (scrape anaplan.zip ~2,3 GB, marzec 2026), Anaplan Integration API V2 (scrape Apiary.zip = anaplan.docs.apiary.io)]
 status: done
-updated: 2026-06-09
+updated: 2026-06-10
 speculative: true
-sources_unusable: true
+grounding: scrape/partial
 ---
 
 # Benchmark: Analiza finansowa
@@ -15,87 +15,102 @@ sources_unusable: true
 > na bazie danych z audytów i inicjatyw. Moduł jest na dziś SPEKULATYWNY (nie ma go
 > w roadmapie) — ten brief to rozpoznanie, nie specyfikacja.
 
-> ⚠️ **UCZCIWOŚĆ O ŹRÓDŁACH:** oba zip-y (`anaplan.zip` ~2,3 GB, `Apiary.zip`) okazały się
-> NIEDOSTĘPNE do odczytu w tym środowisku — system blokuje dostęp powłoki (cp/unzip/ditto/
-> python) do całego drzewa `Documents` z błędem „Operation not permitted" (macOS TCC/Full-Disk-
-> Access), a narzędzie czytające nie rozpakowuje binarnych archiwów tej wielkości.
-> Poniższy brief opiera się więc na **wiedzy własnej o produktach**, nie na scrapie.
-> Każde twarde twierdzenie z konkretnego scrape'u należy potwierdzić, gdy archiwa będą czytelne.
+> ✅ **STATUS ŹRÓDEŁ (zaktualizowano 2026-06-10):** dostęp do `Documents` przywrócony,
+> oba archiwa rozpakowane i przeczytane. `anaplan.zip` zawiera realny scrape Anapedia
+> (`help.anaplan.com`) — strony Versions, Line items, Modeling, Dashboards itd.
+> `Apiary.zip` NIE jest generycznym Apiary.io — to **dokumentacja Anaplan Integration API V2**
+> hostowana na `anaplan.docs.apiary.io` (patrz §6, korekta poprzedniego werdyktu).
+> Twierdzenia w §3–§4 są teraz potwierdzone cytatami ze scrape'u. Moduł pozostaje
+> SPEKULATYWNY z powodu niepewności roadmapowej, nie braku źródeł.
 
 ## 1. Krajobraz konkurencji
 
 | Narzędzie | Pozycjonowanie | Killer feature | Czy do TEGO modułu? |
 |---|---|---|---|
-| **Anaplan** | Enterprise „connected planning" / FP&A, sprzedaż, supply chain, workforce | Silnik **Hyperblock** — wielowymiarowe modele in-memory + scenariusze/wersje | ✅ TAK — rdzeń tego briefu |
-| **Apiary** (Apiary.io / API Blueprint) | Narzędzie do **projektowania i dokumentacji API** (Oracle, przejęte 2017, w zaniku) | API Blueprint + mock server + dokumentacja | ❌ NIE — to nie finanse (patrz §6) |
+| **Anaplan** | Enterprise „connected planning" / FP&A, sprzedaż, supply chain, workforce | Silnik **Hyperblock** — wielowymiarowe modele in-memory + **Versions** (scenariusze) | ✅ TAK — rdzeń tego briefu |
+| **Anaplan Integration API V2** (folder `Apiary.zip`) | REST API Anaplana (Bulk + Transactional) udokumentowane na Apiary | Workspaces/Models/Line Items/Versions/Users + import-export cell data | ✅ TAK — to Anaplan, nie obcy produkt (§6) |
 
-Wniosek strategiczny: **tylko Anaplan jest relewantny** dla „Analizy finansowej".
-Apiary trafił do tego folderu prawdopodobnie omyłkowo — należy do tematyki API/integracji,
-nie do finansów.
+Wniosek strategiczny: **oba archiwa dotyczą Anaplana** — jedno to dokumentacja produktu
+(Anapedia), drugie to dokumentacja jego API integracyjnego. Poprzednia identyfikacja
+„Apiary = Apiary.io / API Blueprint, poza zakresem" była **błędna** — patrz §6.
 
-## 2. Feature-surface Anaplan (siatka kontrolna dla ewentualnej warstwy finansowej)
-Z wiedzy o produkcie (scrape niepotwierdzony) — to mapa kompletności „connected planning":
+## 2. Feature-surface Anaplan (siatka kontrolna — potwierdzona ze scrape'u Anapedia)
+Z nawigacji Anapedia (`Modeling` + `Anaplan User Experience` + `Integrations`):
 
-**Model danych:** Modules · Line Items · Lists (hierarchie) · Dimensions · Time · Versions
-**Logika:** Formulas (Anaplan formula language) · Drivers (driver-based planning) · Allocations
-**Scenariusze:** Versions/What-if · Scenario planning · Sensitivity · Rolling forecast
-**Współpraca/proces:** Workflow, role-based access, audit trail, „one source of truth"
-**Integracje:** Connectors (HyperConnect/CloudWorks, ETL), Excel/CSV in-out, API
-**Wizualizacja:** Dashboards (UX/Boards) · Grids · Charts · KPI cards
+**Model danych:** Modules · Line Items · Lists (hierarchie, subsets) · Dimensions · Time (Time ranges) · **Versions**
+**Logika:** Formulas (edytor z autocomplete + syntax highlighting) · Calculation functions (np. `CURRENTVERSION`) · Line item subsets jako wymiar
+**Scenariusze:** **Versions** (Actual/Forecast + własne) · switchover dates · **rolling forecast** · variance reports (z/bez wersji)
+**Współpraca/proces:** Model roles + per-list/module/version permissions · Workflow · History (cell history, audit trail) · ALM (Application Lifecycle Management)
+**Integracje:** Bulk + Transactional API (Apiary, §6) · konektory (Informatica, Salesforce, Excel Add-in) · Data Orchestrator · import/export modułów i list
+**Wizualizacja:** **Apps/Pages (User Experience)** — nowy standard · klasyczne dashboardy (grid/chart/KPI/hierarchy cards) — **deprecated dla nowych klientów**
 
-→ Dla nas kluczowe są trzy warstwy: **wielowymiarowy model**, **drivery** i **scenariusze/wersje**.
+→ Dla nas kluczowe trzy warstwy: **wielowymiarowy model**, **drivery** i **Versions/scenariusze** — wszystkie potwierdzone w scrape'ie.
 
-> Screenshoty: **POMINIĘTE** — nie udało się rozpakować scrape'u, więc brak realnych ujęć UI.
-> Folder `assets/financial-analysis/` nie został utworzony (brak materiału). Do uzupełnienia,
-> gdy archiwum Anaplan będzie czytelne.
+> Screenshoty: **2 realne ujęcia UI** dograne do `assets/financial-analysis/` (patrz §3–§4).
 
-## 3. Model danych / architektura (wzorzec Anaplan)
-- **Wielowymiarowość:** dane = przecięcie wymiarów (np. czas × jednostka × pozycja kosztowa),
-  a nie płaska tabela. „Module" to wielowymiarowy blok, „Line Item" to mierzalna wielkość.
-- **Hyperblock** = in-memory engine liczący cały model na bieżąco (zmiana założenia → natychmiastowy
-  re-kalkulacja w dół całego łańcucha).
-- **Versions** = pierwszorzędny obywatel: Actual / Budget / Forecast / scenariusze jako osobny wymiar.
-- **Drivers** = założenia biznesowe (np. liczba etatów, cena, churn) sterujące pochodnymi wielkościami.
+## 3. Model danych / architektura (wzorzec Anaplan — cytaty ze scrape'u)
+- **Line items = nośnik logiki.** Anapedia (Line items, zmod. 2023-05-31): *„Model builders create line items to measure data in a module. Use line items to input data, hold formulas, and run calculations."* Worked example to wprost **model finansowy**: moduły `REV01 Price Book`, `REV02 Volume Inputs`, `REV03 Margin Calculation` z formułą:
+  `'REV02 Volume Inputs'.Volumes * 'REV01 Price Book'.Unit Price * (1 + Unit Price Growth %)`
+  oraz moduł `Employee expenses` z line itemami Headcount / Salary / Bonus.
+- **Wielowymiarowość:** dane = przecięcie wymiarów (Time × Versions × pozycja), line item należy do jednego modułu, ale może być referencjonowany w formułach innych modułów tego samego modelu.
+- **Drivery jako drzewo wartości.** Realny ekran „Value Driver" (poniżej) pokazuje rozkład **Net income → Taxes / EBIT → Gross profit → Cost of goods sold / R&D / S&M costs** jako graf węzłów — dokładnie driver-based planning.
+- **Versions = pierwszorzędny obywatel:** osobny wymiar Actual/Forecast/scenariusze.
+
+![Anaplan — Value Driver tree (Net income → EBIT → koszty)](assets/financial-analysis/anaplan-value-driver.png)
 
 → Dla Consultify: gdybyśmy budowali warstwę finansową, model powinien być **driver-based i wersjonowany**,
-nie arkuszem płaskim — żeby scenariusze i what-if były tanie i porównywalne.
+nie arkuszem płaskim. Dodatkowo: drzewo driverów Anaplana to **kanwa węzłów** — spina się z naszym
+modelem bindingów z `whiteboard.md` (jeden model węzeł↔krawędź dla Ideas + ewentualnego modelu finansowego).
 
-## 4. Scenariusze / what-if (najmocniejsza koncepcja do „kradzieży")
-- Scenariusz = zestaw założeń (driverów) → przeliczany model → porównywalne wyniki.
-- Wartość: **porównanie wariantów** (base / optimistic / pessimistic), wrażliwość na pojedynczy driver,
-  rolling forecast.
-- To dokładnie ten język, którego brakuje wynikom audytu/inicjatyw w Consultify:
-  inicjatywa ma „impact", ale nie ma **modelu finansowego scenariusza**, który by ten impact policzył.
+## 4. Scenariusze / what-if (potwierdzone — to najmocniejsza koncepcja do „kradzieży")
+Anapedia (Versions, zmod. 2023-07-06) — cytaty:
+- *„You can use versions to compare different scenarios in a model."* — wersje = osobne scenariusze.
+- Domyślnie model ma **Actual** i **Forecast**; admin tworzy kolejne, by „explore further scenarios".
+- **Switchover date:** do wybranej daty wersja = Actual (read-only), po niej edytowalna — mechanizm rozdziału realizacji od planu.
+- **Rolling forecast** wprost: *„select a new switchover date at the end of each period to create a rolling forecast."*
+- **Variance reports** porównują wariancję między wersjami (z wymiarem Versions lub bez).
+- `CURRENTVERSION` zwraca wartość line itemu dla bieżącej wersji — formuły świadome scenariusza.
+
+Realny **CFO Dashboard** (mobile, App/Page UX) — Volumes & Margin Forecast + Demand Forecast,
+filtry scenariusza (selektor `Forecast`), KPI/chart cards:
+
+![Anaplan — CFO Dashboard (Volumes & Margin / Demand Forecast, selektor Forecast)](assets/financial-analysis/anaplan-cfo-dashboard.jpg)
+
+→ To dokładnie ten język, którego brakuje wynikom audytu/inicjatyw w Consultify:
+inicjatywa ma „impact", ale nie ma **wersjonowanego modelu scenariusza**, który ten impact policzy.
 
 ## 5. Decyzje dla Consultify
-- ✅ **Kradniemy koncepcyjnie:** **driver-based, wersjonowany model scenariuszy** jako sposób
-  kwantyfikacji efektu inicjatyw (oszczędność/przychód/ROI per scenariusz) — spina się z
-  `project_initiative_formula` (inicjatywa jako „silnik transformacji" z mierzalnym efektem).
-- ✅ **Kradniemy UX:** dashboard wyników scenariusza (KPI cards + grid + wykres wrażliwości).
+- ✅ **Kradniemy koncepcyjnie:** **driver-based, wersjonowany model scenariuszy** (wzorzec Versions:
+  base/forecast + switchover + variance) jako sposób kwantyfikacji efektu inicjatyw
+  (oszczędność/przychód/ROI per scenariusz) — spina się z `project_initiative_formula`.
+- ✅ **Kradniemy UX:** dashboard wyników scenariusza w stylu CFO Dashboard (KPI/chart cards + selektor wersji + forecast).
+- ✅ **Kradniemy wzorzec drzewa driverów** (Value Driver) — rozkład efektu na sterowniki jako graf węzłów,
+  wspólny model bindingów z Ideas/Whiteboard (`whiteboard.md`).
 - ⚠️ **Adaptujemy lekko:** nie budujemy drugiego Anaplana. Realny zakres v1 = **mini-model
   scenariuszowy inicjatywy** (3–5 driverów, base/upside/downside), nie pełna platforma FP&A.
-- ❌ **Unikamy:** wielowymiarowego silnika in-memory typu Hyperblock — to lata pracy i zła
-  altituda dla nas; wystarczy prosty kalkulator scenariuszy spięty z danymi inicjatyw.
-- ❌ **Unikamy:** traktowania Apiary jako konkurenta finansowego — to inny temat (§6).
+- ❌ **Unikamy:** wielowymiarowego silnika in-memory typu Hyperblock — to lata pracy i zła altituda.
+- ❌ **Unikamy:** klasycznych dashboardów Anaplana (i tak deprecated) — wzorujemy się na Apps/Pages, nie na „classic".
 
-## 6. Apiary — co to NAPRAWDĘ jest (i gdzie należy)
-- **Apiary = Apiary.io / API Blueprint** — platforma do **projektowania, mockowania i dokumentacji API**
-  (przejęta przez Oracle w 2017, dziś w dużej mierze wygaszona). Nie ma nic wspólnego z analizą finansową.
-- **Werdykt:** Apiary **NIE należy do tego briefu.** Tematycznie pasuje do ewentualnego modułu
-  „API / integracje / developer tooling" (jeśli taki w ogóle powstanie), nie do „Analizy finansowej".
-- Uwaga: scrape'u Apiary i tak nie udało się otworzyć, więc powyższe to identyfikacja z wiedzy o produkcie,
-  nie weryfikacja zawartości archiwum. Przy okazji czytelnego archiwum — potwierdzić i przenieść do
-  właściwego folderu źródeł.
+## 6. Apiary.zip — KOREKTA: to dokumentacja API Anaplana, nie obcy produkt
+- Poprzedni brief twierdził, że `Apiary.zip` = Apiary.io / API Blueprint i jest poza zakresem. **To błąd.**
+- Realna zawartość archiwum: `anaplan.docs.apiary.io` → strona tytułowa *„Anaplan Integration API V2 Guide and Reference"*.
+  Apiary to tylko **hosting dokumentacji**; treść to REST API Anaplana.
+- Spis referencji obejmuje: **Workspaces, Models, Line Items, Model versions, Model Calendar, Users,
+  Other Model Metadata, Read/Update module cell data, Upload Files for Actions**, oraz sekcje
+  Bulk API / Transactional API, Authentication, Pagination, rate limits.
+- **Werdykt (nowy):** Apiary **należy do tego briefu** — to warstwa integracyjna Anaplana, relewantna,
+  jeśli kiedyś chcielibyśmy programowo zasilać/odpytywać model finansowy. Nic nie przenosimy.
 
 ## 7. Otwarte pytania
-- Czy „Analiza finansowa" w ogóle wchodzi do roadmapy, czy zostaje jako **scenariusz finansowy inicjatywy**
+- Czy „Analiza finansowa" wchodzi do roadmapy, czy zostaje jako **scenariusz finansowy inicjatywy**
   wbudowany w moduł Inicjatyw (rekomendacja: to drugie)?
-- Jaki minimalny zestaw driverów pokrywa 80% naszych przypadków (FTE, stawka, czas wdrożenia, oszczędność/szt.)?
+- Jaki minimalny zestaw driverów pokrywa 80% przypadków (FTE, stawka, czas wdrożenia, oszczędność/szt.)?
+  Anaplan sugeruje kanon: Volumes × Unit Price × Growth %, Headcount × Salary × Bonus.
 - Skąd dane wejściowe — ręcznie czy z audytu/wywiadu (re-use grounded data)?
+- Czy model finansowy dzieli kanwę węzłów (bindingi) z Ideas/Whiteboard, czy to osobny edytor?
 
 ## Załączniki / status źródeł
-- `Softs/0 Analiza finansowa/anaplan.zip` (~2,3 GB) — **NIEODCZYTANE** (blokada dostępu powłoki, TCC/FDA).
-- `Softs/0 Analiza finansowa/Apiary.zip` — **NIEODCZYTANE** (ta sama blokada) + i tak poza zakresem (§6).
-- Do zrobienia, gdy archiwa będą czytelne: rozpakować Anaplan, potwierdzić §2–§4 ze scrape'u,
-  dograć ≤2 realne screenshoty UI do `assets/financial-analysis/` i podlinkować w §2.
-- Wiedza referencyjna online: `anaplan.com` (Connected Planning, Hyperblock), dokumentacja modeli/wersji.
+- `Softs/0 Analiza finansowa/anaplan.zip` (~2,3 GB) — **ODCZYTANE**; scrape Anapedia (`help.anaplan.com`).
+- `Softs/0 Analiza finansowa/Apiary.zip` — **ODCZYTANE**; to `anaplan.docs.apiary.io` = Anaplan Integration API V2 (§6).
+- Screenshoty (2, realne UI): `assets/financial-analysis/anaplan-value-driver.png`, `assets/financial-analysis/anaplan-cfo-dashboard.jpg`.
+- Wiedza referencyjna online: `anaplan.com` (Connected Planning, Hyperblock), Anapedia (Versions, Line items, Modeling).

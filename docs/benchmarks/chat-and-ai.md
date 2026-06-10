@@ -2,8 +2,9 @@
 brief: chat-and-ai
 module: Chat + Canvas + asystent AI (Teresa / Anna)
 sources: [Kimi (scrape 2026-03, sitemap + 5 screenów UI), Anthropic docs + Claude help (scrape 2026-03), OpenAI docs + help + function calling + model selection (2026-03), Google / Google dev (Gemini, 2026-03), CrewAI + CrewAI 2 (2026-03), LangChain / LangChain dev (2026-03), Replit Agent (2026-03), LlamaIndex (2026-03), Perplexity (2026-03), Promptguide (2026-03)]
+grounding: scrape (Kimi) / partial
 status: done
-updated: 2026-06-09
+updated: 2026-06-10
 ---
 
 # Benchmark: Chat + Canvas + asystent AI (Teresa / Anna)
@@ -37,8 +38,20 @@ cytowań — krytyczny dla Anny (grounding w help-docs) i Teresy (grounding w da
 
 ## 2. Wzorce UX / IA (co działa)
 
-Zrzuty z Kimi (zaobserwowane bezpośrednio; pliki w `Softs/KIMI/Screens/`, kopiowanie do
-`assets/` zablokowane przez uprawnienia systemu — patrz Załączniki):
+Zrzuty z Kimi (zaobserwowane bezpośrednio, skopiowane do `assets/chat-and-ai/`):
+
+![Kimi — split-view: czat + żywy arkusz](assets/chat-and-ai/01-kimi-split-canvas.png)
+*Split-view: lewy rail trybów + czat (środek) + żywy artefakt-arkusz po prawej (zakładki Cover / Color Database / Film Summary / Color Analysis), pasek „Task Progress 6/6" u dołu.*
+
+![Kimi — checklista zadań + ślad narzędzi](assets/chat-and-ai/02-kimi-task-checklist.png)
+*Checklista agenta na żywo (Create Task List → Gather data → Build Excel → Validate and deliver) ze zwijalnymi krokami narzędzi „Read File" / „Write File" w strumieniu; po prawej artefakt z sekcją Key Metrics.*
+
+![Kimi — żywy dokument-artefakt](assets/chat-and-ai/03-kimi-artifact-doc.png)
+*Artefakt jako żywy dokument (review article „Microbial Endocrinology") z własną stroną tytułową i strukturą — czat staje się sterownikiem dokumentu, nie tylko transkryptem.*
+
+![Kimi — split-view z arkuszem i śladem narzędzi](assets/chat-and-ai/04-kimi-tool-trace.png)
+*Inny etap tego samego zlecenia: czat z rozwijalnymi krokami narzędzi po lewej i edytowalnym arkuszem (Blue Title / Year / Primary Palette) po prawej — artefakt aktualizowany w trakcie odpowiedzi.*
+
 
 - **Split-view czat ↔ artefakt (Canvas).** Lewa kolumna = rozmowa, prawa = żywy artefakt
   (dokument / arkusz / slajdy) budowany w trakcie odpowiedzi. → *dlaczego działa:* użytkownik
@@ -139,18 +152,12 @@ Zrzuty z Kimi (zaobserwowane bezpośrednio; pliki w `Softs/KIMI/Screens/`, kopio
 Surowe źródła (do usunięcia po akceptacji briefu): `Softs/0 Czat/*`, `Softs/0 Prompty/*`,
 `Softs/0 Agenci/*`, `Softs/KIMI/`.
 
-Zrzuty: planowane `assets/chat-and-ai/01-kimi-split-canvas.png` (czat+artefakt),
-`02-kimi-task-checklist.png` (checklista zadań), `03-kimi-artifact-doc.png` (żywy dokument),
-`04-kimi-tool-trace.png` (ślad narzędzi). **Kopiowanie zrzutów z `Softs/KIMI/Screens/` do
-`assets/` zablokowane przez uprawnienia systemu plików (TCC) na katalogu `Softs/`** — pliki
-zaobserwowane bezpośrednio, do ręcznego skopiowania przez ownera:
-`Softs/KIMI/Screens/Screenshot 2026-03-24 at 08.13.51.png`,
-`...08.14.07.png`, `...08.16.37.png`, `...08.15.16.png`.
+Zrzuty Kimi skopiowane do `assets/chat-and-ai/` (źródło: `Softs/KIMI/Screens/`):
+`01-kimi-split-canvas.png` (czat+arkusz), `02-kimi-task-checklist.png` (checklista + ślad narzędzi),
+`03-kimi-artifact-doc.png` (żywy dokument), `04-kimi-tool-trace.png` (arkusz + kroki narzędzi).
 
-Uwaga metodyczna: archiwa `.zip` w `Softs/0 Czat|0 Prompty|0 Agenci` były **niedostępne dla
-narzędzi** (uprawnienia systemu na `Softs/`), więc dystylacja Anthropic/OpenAI/Gemini/CrewAI/
-LangChain/LlamaIndex/Perplexity/Promptguide/Replit oparta jest na sitemapie + zrzutach Kimi
-(jedyne dostępne, rozpakowane pliki) oraz na ustalonej wiedzy o tych dobrze znanych produktach.
-Przy implementacji dociągnąć online: `docs.anthropic.com` (tool use, MCP, prompt caching),
-`platform.openai.com` (function calling, structured outputs), `docs.crewai.com`,
-`langchain-ai.github.io/langgraph`.
+Uwaga metodyczna: dystylacja Anthropic/OpenAI/Gemini/CrewAI/LangChain/LlamaIndex/Perplexity/
+Promptguide/Replit oparta jest na sitemapie + bezpośrednio zaobserwowanych zrzutach Kimi oraz na
+ustalonej wiedzy o tych dobrze znanych produktach (grounding: częściowy). Przy implementacji
+dociągnąć online: `docs.anthropic.com` (tool use, MCP, prompt caching), `platform.openai.com`
+(function calling, structured outputs), `docs.crewai.com`, `langchain-ai.github.io/langgraph`.

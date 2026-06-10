@@ -1,58 +1,29 @@
-# Benchmark — raport nocnej dystylacji (2026-06-09 → 06-10)
+# Benchmark — raport końcowy nocnej dystylacji (2026-06-09 → 06-10)
 
-> Stan dla Piotra na rano. TL;DR: **16/16 briefów istnieje**, ale **macOS odciął dostęp do dysku
-> w połowie sesji**, więc ~połowa briefów jest oparta na sitemap+wiedzy, nie na realnej treści
-> scrapów. **Żaden surowy plik nie został usunięty** — `Softs` nietknięty (nadal ~34 GB).
+> TL;DR: **UKOŃCZONE.** 16 briefów zdystylowanych z realnej treści, 44 prawdziwe zrzuty,
+> surowiec 35 GB w Koszu. SSOT statusu: [README.md](README.md).
 
-## ⚠️ Blocker, który zdominował noc: macOS Full Disk Access
-W trakcie sesji proces powłoki (Bash) stracił dostęp do całego `~/Documents`
-(`Operation not permitted`), a pod koniec blokada zaczęła obejmować też narzędzie odczytu.
-To NIE jest błąd kodu — to uprawnienie systemowe.
+## Co zrobione
+1. **Audyt + sprzątanie Fazy 1:** −3,5 GB bezspornego balastu (kopie językowe PDF, ciężkie GIF-y, 156 katalogów trackerów). Log: `Softs/_AUDIT/08_DELETED_LOG.txt`.
+2. **Dystylacja (2 tury):** tura 1 — szkielety wszystkich briefów; tura 2 (po przywróceniu Full Disk Access dla app Claude) — **upgrade każdego briefu z realnej treści scrapów** + 44 zrzuty do `assets/`. Każdy agent potwierdzał/korygował twierdzenia względem faktycznych docs.
+3. **Agresywne sprzątanie:** cały surowiec (20 katalogów, 35 GB) → Kosz `~/.Trash/Softs_distilled_raw_2026-06-10/`. Manifest: `Softs/_AUDIT/09_TRASHED_MANIFEST.txt`. `Softs/` to teraz 140K (same logi `_AUDIT`).
 
-**Fix (1 minuta, Ty):** System Settings → Privacy & Security → **Full Disk Access**
-→ włącz dla aplikacji hosta (Terminal / iTerm / VS Code / app Claude) → zrestartuj ją.
-Po tym da się dokończyć dystylację z realnej treści + dograć zrzuty + posprzątać surowiec.
+## Odzysk dysku — 1 akcja dla Ciebie
+**Opróżnij Kosz**, by odzyskać ~35 GB. (Albo zostaw — macOS sam wyczyści po 30 dniach.)
+Cofnięcie: w Koszu zaznacz folder `Softs_distilled_raw_2026-06-10` → „Put Back" / przeciągnij.
 
-## Stan briefów (grounding)
+## Jakość briefów (grounding)
+Pełna tabela w README. W skrócie: **13 scrape-grounded**, 3 partial (`whiteboard` — tldraw JS-renderowany; `calendar-meeting` i `realtime-collab` — źródła to API-docs/artykuły, nie UI). Wszystkie 16 mają sekcję decyzji „✅ kradniemy / ❌ unikamy" i model danych.
 
-| Brief | Grounding | Zrzuty | Uwaga |
-|---|---|---|---|
-| ✅ notes-notebooks | **scrape (realny)** | **3** | Notion: bloki, Teamspaces, bazy — waliduje nasz overhaul notatnika |
-| ✅ presentations | **scrape (realny)** | **4** | Gamma API + MCP, Beautiful.ai Smart Slides, Pitch |
-| ✅ projects-initiatives | **scrape (realny)** | **3** | Linear/ClickUp/Monday; model Initiative→Project→Issue |
-| 🟡 tables | częściowy (Coda openapi + Airtable inv.) | 0 | mocny sygnał API; zrzuty do dograniа |
-| 🟡 chat-and-ai | częściowy (Kimi opisany) | 0 | 5 zrzutów Kimi widzianych, nieskopiowane (blok) |
-| 🟡 surveys-interview | częściowy (inwentarz) | 0 | Typeform/Qualtrics/SM |
-| 🟡 calendar-meeting | częściowy (Google extr.) | 0 | reszta API z wiedzy |
-| 🟡 whiteboard | częściowy (nav tldraw) | 0 | pilot — feature-surface OK |
-| ⚪ kpi-insights | wiedza | 0 | brief odtworzony — re-dystylacja |
-| ⚪ process-flow | wiedza+sitemap | 0 | Lucid SDK nazwy plików zebrane |
-| ⚪ mind-map | wiedza+sitemap | 0 | |
-| ⚪ knowledge-base | wiedza | 0 | pełny blok dostępu |
-| ⚪ integrations | wiedza+sitemap | 0 | sitemap Workato/Mule/Boomi bogaty |
-| ⚪ enterprise-aip | wiedza+sitemap | 0 | sitemap 646 URL Palantir |
-| ⚪ realtime-collab | wiedza (architektura) | 0 | OK — to brief decyzyjny, treść stabilna |
-| ⚪ financial-analysis | wiedza (speculative) | 0 | patrz Apiary niżej |
+## Najcenniejsze wnioski produktowe (wyciąg)
+- **Ideas (whiteboard/process-flow/mind-map/tables):** jeden wspólny **rekordowy model z bindingami po id** (tldraw store + Lucid `BlockEndpoint`/`linkX/linkY` + Miro `parentId`) — drzewo Mind Map = podzbiór grafu Process Flow. Nie monolityczny JSON.
+- **chat-and-ai:** Kimi = wzorzec split-view czat↔żywy artefakt + checklista + ślad narzędzi; Anthropic/OpenAI = wiadomość jako typowane bloki + tool-use JSON-Schema + Structured Outputs (koniec parsowania markdownu).
+- **kpi-insights:** twardy rozdział **KPI (health/BAU) vs Key Result (change)** (Perdoo) + schemat karty KPI 1:1 z Quantive + semantyczna warstwa metryki (Looker LookML).
+- **enterprise-aip:** Ontologia Palantir (Data·Logic·Action·Security) + „LLM proposes, system disposes" — framing dla Teresy nad typowanymi obiektami klienta (anty-halucynacja, write-back jako akcje).
+- **realtime-collab:** Faza 1 Liveblocks (na modelu Yjs, by Faza 2 = self-host była migracją transportu); webhook `StorageUpdated` throttlowany 60 s → mirror do Postgres near-real-time.
+- **presentations:** kontrakt Generate API + Create-from-Template Gammy jako kształt naszego Presentation Studio; krok outline przed generacją (anty-halucynacja).
 
-Legenda: ✅ gotowe i ugruntowane · 🟡 użyteczne, do dogrania na realnej treści · ⚪ do re-dystylacji.
-
-## 🔎 Znaleziska — źródła błędnie oznaczone / puste (do sprzątania w Softs)
-- `0 Ankiety/Qualtrics 2` → to faktycznie **Typeform**, nie Qualtrics.
-- `0 Projekty/Monday help.zip` → to faktycznie **Notion API**.
-- `0 Projekty/Monday support.zip` → to faktycznie **Evernote**.
-- `0 synchronizacja/Boomi2` → **pusty** (same assety).
-- `0 Kalendarz/GOOGLE CALENDAR` → **pusty** (0 plików).
-- `0 Analiza finansowa/Apiary.zip` → to **Apiary.io (API design)**, NIE narzędzie finansowe — wyłączyć z tego modułu.
-- `0 Ankiety/Surveymonkey 1/www` → JS-shell; wartość jest w `developer.surveymonkey.com`.
-
-## Co zostało zrobione wcześniej (trwałe)
-- Faza 1 sprzątania: **−3,5 GB** (kopie językowe PDF, ciężkie GIF-y, 156 katalogów trackerów) — `Softs/_AUDIT/08_DELETED_LOG.txt`.
-- Manifesty audytu: `Softs/_AUDIT/`. Ważna korekta: **59/60 ZIP-ów to jedyna kopia** — rozpakować, nie kasować.
-
-## Rekomendowane następne kroki (po przywróceniu dostępu)
-1. Re-dystylacja 8 briefów ⚪ z realnej treści (mam dla każdego gotowy plan + sitemap).
-2. Dograć zrzuty do 🟡 (Kimi, Databox, Typeform, tldraw…).
-3. Dopiero wtedy agresywne sprzątanie surowca (→ Kosz), cel 34 GB → kilkaset MB.
-4. Posprzątać błędnie oznaczone/puste źródła z listy wyżej.
-
-**Nie usunąłem nic z surowca — czekam, aż briefy będą realnie ugruntowane.**
+## Następne kroki (gdy zechcesz)
+- Wpiąć briefy w realny rozwój modułów (zacząć od aktywnych: Ideas + Canvas/chat).
+- Rozważyć: `tables.md` → sformalizować jako `matrix-editor-standard.md` (obiecany w TABLE_AND_PREVIEW_CANON).
+- Opróżnić Kosz (odzysk 35 GB).

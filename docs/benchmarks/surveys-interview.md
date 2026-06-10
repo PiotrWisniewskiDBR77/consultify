@@ -3,7 +3,8 @@ brief: surveys-interview
 module: Ankiety + Wywiad (Interview)
 sources: [Qualtrics (api.qualtrics.com + product, scrape 2026-03), SurveyMonkey (www + developer.surveymonkey.com v3, scrape 2026-03), Typeform (www.typeform.com + help.typeform.com, scrape 2026-03)]
 status: done
-updated: 2026-06-09
+grounding: scrape/partial
+updated: 2026-06-10
 ---
 
 # Benchmark: Ankiety + Wywiad (Interview)
@@ -29,8 +30,19 @@ z Teresą/Anną i z resztą systemu (Insights → Initiatives).
 
 ## 2. Wzorce UX / IA (co działa)
 
-Zrzuty: **brak** — patrz uwaga w Załącznikach (źródło `Softs/0 Ankiety` było w tej sesji
-zablokowane przez macOS TCC; opis oparty na inwentarzu scrapa + wiedzy o produktach).
+Zrzuty (realne UI produktów, wyciągnięte ze scrapów `Softs/0 Ankiety`):
+
+![Typeform — builder konwersacyjny: lista pytań po lewej, jedno pytanie na kanwie, panel konfiguracji po prawej](assets/surveys-interview/typeform-builder-conversational.png)
+*Typeform — builder „jedno pytanie na ekran": lewa kolumna = sekwencja pytań, środek = pełnoekranowa kanwa pytania, prawa = konfiguracja (typ odpowiedzi, wymagalność). To wzorzec naszego **Wywiadu**.*
+
+![Typeform — biblioteka typów pytań z pozycją „Clarify with AI"](assets/surveys-interview/typeform-question-library-clarify-ai.png)
+*Typeform — biblioteka typów pytań (Choice, Rating & ranking, Text & Video, …) z osobnym typem **Clarify with AI** (strzałka) jako natywnym elementem formularza.*
+
+![Qualtrics — builder ankiety z zakładkami Survey/Workflows/Distributions/Data&Analysis/Results/Reports](assets/surveys-interview/qualtrics-survey-builder.png)
+*Qualtrics — research-grade builder: górne zakładki (Survey → Workflows → Distributions → Data & Analysis → Results → Reports) rozdzielają tworzenie, logikę, dystrybucję i analitykę; lewy panel = edycja pytania, środek = bloki pytań.*
+
+![SurveyMonkey — zakładka Advanced Branching Logic z regułami if→then](assets/surveys-interview/surveymonkey-advanced-branching-logic.png)
+*SurveyMonkey — **Advanced Branching Logic** jako osobna zakładka: reguły `Q1 = C3 ⇒ HIDE Q8`, `Q2 IN [C1,C2] ⇒ END SURVEY` trzymane jako lista reguł, nie inline w pytaniu — dokładnie nasz wzorzec „osobna tabela reguł".*
 
 - **Typeform — jedno pytanie na ekran (conversational):** pełnoekranowe pytanie, duży krok-po-kroku,
   klawiatura (Enter = dalej, 1/2/3 = wybór), płynne przejścia, pasek postępu. *Dlaczego działa:*
@@ -42,9 +54,11 @@ zablokowane przez macOS TCC; opis oparty na inwentarzu scrapa + wiedzy o produkt
   (np. „Co najbardziej frustruje Cię w {{process_name}}?"). *Jak u nas:* personalizacja pytań
   per-proces (Apator AiR ICT) i per-respondent bez powtarzania pytań — to nasza zasada
   „grounded, no-repeat-questions".
-- **Typeform — AI Clarify / Qualify:** AI dopytuje („clarify with AI"), gdy odpowiedź otwarta jest
-  zbyt płytka — dogłębia w locie. *Jak u nas:* core Wywiadu = Teresa generuje follow-up na podstawie
-  odpowiedzi, zamiast statycznego skryptu. To nasza przewaga nad statycznym Typeformem.
+- **Typeform — Clarify with AI:** osobny **typ pytania** (nie globalny tryb) — generatywne AI tworzy
+  **do dwóch** spersonalizowanych pytań dopytujących na bazie odpowiedzi otwartej, gdy jest zbyt płytka
+  (potwierdzone w help.typeform.com/Clarify-with-AI). *Jak u nas:* core Wywiadu = Teresa generuje
+  follow-up na podstawie odpowiedzi, bez sztywnego limitu „do dwóch" i bez statycznego skryptu —
+  to nasza przewaga nad Typeformem.
 - **Qualtrics — Survey Flow (wizualny graf przebiegu):** osobny ekran „Flow" = bloki pytań +
   branch logic + randomizery + embedded data + end-of-survey, jako drzewo. *Dlaczego działa:*
   oddziela *strukturę przebiegu* od *edycji treści pytań*. *Jak u nas:* w Ankietach rozdzielić
@@ -129,12 +143,16 @@ Surowe źródło: `Softs/0 Ankiety/{Qualtrics 1, Qualtrics 2, Surveymonkey 1, Su
 typerform 1, typerform 2}` (do usunięcia po akceptacji).
 
 Uwagi do źródła (ważne dla następnego, kto dotknie tych scrapów):
-- **Brak zrzutów ekranowych** w tym briefie — cały podkatalog `0 Ankiety` był w tej sesji
-  zablokowany przez macOS TCC („Operation not permitted") po pierwszym listingu; nie udało się
-  odczytać HTML ani skopiować obrazów. Inwentarz struktury i nazwy artykułów pomocy zostały
-  uchwycone z pierwszego (jednorazowo dozwolonego) listingu i są wiarygodne.
-- **Mislabel:** folder **`Qualtrics 2`** zawiera de facto scrap **Typeform** (`help.typeform.com`,
-  `www.typeform.com`), nie Qualtrics — przy sprzątaniu nie pomylić.
+- **Zrzuty ekranowe dodane** (sesja 2026-06-10, dostęp do `~/Documents` przywrócony) — 4 realne UI
+  produktów skopiowane do `assets/surveys-interview/` (Typeform builder + biblioteka Clarify-with-AI,
+  Qualtrics survey builder, SurveyMonkey advanced branching logic). Każdy zweryfikowany wzrokowo
+  jako genuine product UI.
+- **Mislabel #1 (POTWIERDZONY):** folder **`Qualtrics 2`** zawiera de facto scrap **Typeform**
+  (`help.typeform.com`, `www.typeform.com`, `renderer-assets.typeform.com`, `status.typeform.com` —
+  zero domen qualtrics.com), nie Qualtrics — przy sprzątaniu nie pomylić.
+- **Mislabel #2 (NOWY, POTWIERDZONY):** folder **`typerform 2`** zawiera de facto scrap **Qualtrics**
+  (`www.qualtrics.com`, `qualtrics-www.s3.amazonaws.com`) — etykiety Qualtrics↔Typeform są zamienione
+  dla obu „drugich" folderów. Realny Typeform-2 = `Qualtrics 2`; realny Qualtrics-2 = `typerform 2`.
 - **`Surveymonkey 1/www.surveymonkey.com`** = w praktyce JS-shell (głównie `fides.js`/skrypty),
   treść produktu cienka; wartościowy jest **`developer.surveymonkey.com/api/v3`**.
 - Najbogatsze realne treści: artykuły pomocy Typeform (Logic, Hidden fields, Recall, Clarify-with-AI,

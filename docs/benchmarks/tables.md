@@ -2,8 +2,9 @@
 brief: tables
 module: Ideas → Table + Table Studio
 sources: [Airtable (screen-scrape 2026-03), Coda (web scrape 2026-03 + apis/v1 OpenAPI)]
+grounding: scrape
 status: done
-updated: 2026-06-09
+updated: 2026-06-10
 ---
 
 # Benchmark: Table + Table Studio (Ideas)
@@ -40,9 +41,15 @@ dokleja, my możemy mieć to jako rdzeń (patrz §2, screeny „4.a thinking - L
 Źródło wizualne: scrape Airtable (`Softs/0 tabele/AirTable/Screen/` — m.in. serie „11 Field type 1–56",
 „13 Data dependecies 1–6", „14 Interfaces 1–16", „15 Forms", „9 tools - manage fields/extensions",
 „12 creat template", oraz sekwencja AI-buildu „4.a thinking - LLM zbiera dane" → „5d. tabela zbudowana").
-**Uwaga (empties/unusable):** w tej sesji katalog `Softs/` jest zablokowany przez macOS (TCC, „Operation not
-permitted") — zrzutów NIE udało się skopiować do `assets/tables/`. Sekcja §2 odwołuje się do nazw plików;
-zrzuty dociągnąć przy implementacji, gdy `Softs/` znów czytelne.
+Cztery reprezentatywne zrzuty skopiowane do `assets/tables/` (realny produkt, baza demo „Budżet Rozwoju
+Chmury Prywatnej DBR77"):
+
+| Zrzut | Co pokazuje |
+|---|---|
+| ![Field types](assets/tables/airtable-field-types.png) | Panel zarządzania polami — każda kolumna ma **typ** (Single line text, Date, Link to another record, Currency, Long text, Single select) + per-pole uprawnienia i licznik zależności. |
+| ![Linked records / dependencies](assets/tables/airtable-linked-records.png) | Grid view + dialog „Date dependencies" — rekordy współzależne, auto-reschedule, podgląd na osi Gantta. To zachowanie „bazy" (relacje sterują przeliczeniem), nie arkusza. |
+| ![AI buduje tabelę](assets/tables/airtable-ai-build-grid.png) | Sekwencja AI-buildu (split-view): po lewej asystent „Omni" streszcza, co zbudował z rozmowy; po prawej gotowy grid (kategorie, kwoty, daty) + prompt „Generate reports with Omni". |
+| ![Interfaces](assets/tables/airtable-interfaces.png) | Interfaces / app-builder — warstwa prezentacji nad tabelą (wykres „Planowane vs rzeczywiste wydatki w czasie" + lista rekordów), bez kodu. |
 
 - **Wybór typu pola jako bogate menu z grupami** (Airtable „Field type 1–56"): typy pogrupowane (tekst,
   liczba/waluta/procent, select/multiselect, data, użytkownik, załącznik, checkbox, rating, link do rekordu,
@@ -119,9 +126,12 @@ Kanoniczny model „bazy" (Airtable + potwierdzony kształtem API Coda, §4):
 - Realtime: ten sam transport co Whiteboard (Liveblocks) czy lżejszy dla tabel? (rozstrzygnąć w `realtime-collab.md`).
 
 ## Załączniki
-Zrzuty: **NIEDOSTĘPNE w tej sesji** — `Softs/` zablokowane przez macOS TCC („Operation not permitted"),
-`assets/tables/` nie utworzone. Dociągnąć przy implementacji z `Softs/0 tabele/AirTable/Screen/` (serie:
-„11 Field type 1–56", „13 Data dependecies 1–6", „14 Interfaces 1–16", „15 Forms", sekwencja AI-buildu
-„4.a … LLM zbiera dane"→„5d. tabela zbudowana”).
+Zrzuty (realny produkt Airtable, w repo): `assets/tables/airtable-field-types.png` (typy pól + uprawnienia),
+`assets/tables/airtable-linked-records.png` (grid + date dependencies/relacje),
+`assets/tables/airtable-ai-build-grid.png` (AI „Omni" buduje tabelę z rozmowy → gotowy grid),
+`assets/tables/airtable-interfaces.png` (Interfaces/app-builder nad tabelą). Pełne serie (m.in. „11 Field
+type 1–56", „13 Data dependecies 1–6", „14 Interfaces 1–16", „15 Forms") w `Softs/0 tabele/AirTable/Screen/`.
 Surowe źródło (do usunięcia po akceptacji): `Softs/0 tabele/AirTable/` (unpacked), `Softs/0 tabele/Coda.zip`.
-Coda: tekst marketingowy cienki (nav-heavy); wartość = `apis/v1/openapi.json` (model docs→tables→rows, 90 ścieżek).
+Coda: tekst marketingowy cienki (nav-heavy); wartość = `apis/v1/openapi.json` — **zweryfikowano 2026-06-10**:
+dokładnie 90 ścieżek, model `docs→tables→rows` (list/insert/upsert/update/delete), `/rows/{r}/buttons/{col}`,
+`/formulas`, `/controls`, `/hooks/automation/{ruleId}`, `/analytics/docs`.

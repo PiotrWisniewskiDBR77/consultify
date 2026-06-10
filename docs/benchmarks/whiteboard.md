@@ -3,7 +3,8 @@ brief: whiteboard
 module: Ideas → Whiteboard
 sources: [tldraw.dev (scrape 2026-03), Excalidraw docs (2026-03), Miro]
 status: done
-updated: 2026-06-09
+grounding: partial
+updated: 2026-06-10
 ---
 
 # Benchmark: Whiteboard (Ideas)
@@ -32,6 +33,8 @@ Z nawigacji docs (`Learn tldraw` + `SDK features`) — to jest siatka kontrolna 
 
 → Mapuje się 1:1 na nasz `realtime-collab.md` (Liveblocks) i na integrację z Teresą (AI integrations).
 
+> Zrzuty referencyjne (realne UI, nie mockup): `assets/whiteboard/tldraw-node-bindings.png` (kanwa tldraw: node-shapes + porty + connection-bindings — żywa ilustracja §3), `assets/whiteboard/tldraw-chat-canvas.png` (AI-on-canvas: szkic + anotacja obrazu = wzorzec „Teresa jako narzędzie na kanwie"), `assets/whiteboard/excalidraw-welcome-canvas.png` (toolbar + pusta kanwa + welcome-screen = wzorzec onboardingu „pusta kanwa w 1 klik").
+
 ## 3. Model danych / architektura
 - tldraw: dokument = **store rekordów** (shapes, bindings, assets, pages, camera) z reaktywnym sygnałem.
 - **Bindings** = relacje między kształtami (np. strzałka „przyklejona" do node'a) — to czego brakuje prostym whiteboardom; krytyczne dla naszego Process Flow / Mind Map.
@@ -59,3 +62,4 @@ Z nawigacji docs (`Learn tldraw` + `SDK features`) — to jest siatka kontrolna 
 ## Załączniki
 Surowe źródło (do usunięcia po akceptacji briefu): `Softs/0 Whiteboard/Tldraw.zip`, `Softs/0 Miro/Excalidraw.zip`.
 Uwaga: scrapy tldraw.dev są częściowo JS-renderowane (body cienkie); najwartościowsza jest mapa nawigacji = feature-surface. Pełny tekst: tldraw.dev/llms.txt (LLM documentation) — dociągnąć online przy implementacji.
+Dodane realne zrzuty UI (2026-06-10) w `assets/whiteboard/`: 2× tldraw (`tldraw-node-bindings.png`, `tldraw-chat-canvas.png`) + 1× Excalidraw (`excalidraw-welcome-canvas.png`). Reszta obrazów w zipach to mockupy 3D / diagramy dev-doc (JSON↔shape, state-machine) — pominięte jako nie-produktowe.
