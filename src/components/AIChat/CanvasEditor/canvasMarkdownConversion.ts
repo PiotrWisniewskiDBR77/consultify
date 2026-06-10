@@ -149,8 +149,43 @@ export function markdownToHtml(md: string): string {
   return rehydrateCanvasExtensions(html);
 }
 
+/**
+ * L3 (deliverables sheet) — normalizacja tabel TipTapa przed Turndownem.
+ * TipTap emituje `<table><tbody><tr><th>…` (bez `<thead>`) i owija treść komórek
+ * w `<p>`. Plugin gfm Turndowna rozpoznaje tylko tabele z `<thead>`, a `<p>`
+ * w komórce wstrzykuje puste linie łamiące wiersz pipe-tabeli. Bez tej
+ * normalizacji KAŻDA tabela w rich-edytorze była przy autosave zapisywana jako
+ * wyescapowany HTML — destrukcyjny round-trip treści.
+ */
+function normalizeTablesForTurndown(html: string): string {
+  if (!html.includes('<table')) return html;
+  if (typeof DOMParser === 'undefined') return html;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  doc.querySelectorAll('table').forEach((table) => {
+    // Komórki: <p>a</p><p>b</p> → "a<br>b" (inline, bez bloków).
+    table.querySelectorAll('th, td').forEach((cell) => {
+      const paragraphs = Array.from(cell.querySelectorAll(':scope > p'));
+      if (paragraphs.length > 0) {
+        cell.innerHTML = paragraphs.map((p) => p.innerHTML).join('<br>');
+      }
+    });
+    // Wiersz nagłówkowy z <th> w <tbody> → przenosimy do <thead>.
+    if (!table.querySelector('thead')) {
+      const firstRow = table.querySelector('tr');
+      if (firstRow && firstRow.querySelector('th')) {
+        const thead = doc.createElement('thead');
+        thead.appendChild(firstRow);
+        table.insertBefore(thead, table.firstChild);
+      }
+    }
+  });
+
+  return doc.body.innerHTML;
+}
+
 export function htmlToMarkdown(html: string): string {
   if (!html?.trim()) return '';
   const td = getTurndown();
-  return td.turndown(html).trim();
+  return td.turndown(normalizeTablesForTurndown(html)).trim();
 }
