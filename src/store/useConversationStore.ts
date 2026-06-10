@@ -527,6 +527,21 @@ interface ConversationState {
   ) => Promise<ConversationMessage>;
   updateLastMessage: (content: string) => void;
   /**
+   * Deliverables light (L1): ephemeral, local-only AI message (np. checklista
+   * Task-Progress generacji). NIE jest persystowana na serwerze — znika po
+   * przeładowaniu rozmowy; trwały zapis końcowy idzie przez addMessage.
+   * Zwraca id wiadomości do późniejszych updateMessageContent().
+   */
+  appendLocalMessage: (message: {
+    role: 'user' | 'ai';
+    content: string;
+    messageType?: ConversationMessage['messageType'];
+  }) => string;
+  /** Aktualizuje treść wiadomości po id (lokalnie, bez serwera). */
+  updateMessageContent: (messageId: string, content: string) => void;
+  /** Usuwa wiadomość ephemeral po id (tylko lokalne, oznaczone metadata.ephemeral). */
+  removeLocalMessage: (messageId: string) => void;
+  /**
    * Truncate conversation after a message (inclusive) and optionally edit it.
    * Used for "edit & regenerate" UX.
    */
@@ -1234,6 +1249,41 @@ export const useConversationStore = create<ConversationState>()(
           }
           return { activeMessages: messages };
         });
+      },
+
+      appendLocalMessage: (message) => {
+        const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        set((state) => ({
+          activeMessages: [
+            ...state.activeMessages,
+            {
+              id,
+              conversationId: state.activeConversationId || 'local',
+              role: message.role,
+              content: message.content,
+              messageType: message.messageType || 'text',
+              metadata: { local: true, ephemeral: true } as any,
+              createdAt: new Date(),
+            } as ConversationMessage,
+          ],
+        }));
+        return id;
+      },
+
+      updateMessageContent: (messageId, content) => {
+        set((state) => ({
+          activeMessages: state.activeMessages.map((m) =>
+            m.id === messageId ? { ...m, content } : m
+          ),
+        }));
+      },
+
+      removeLocalMessage: (messageId) => {
+        set((state) => ({
+          activeMessages: state.activeMessages.filter(
+            (m) => m.id !== messageId || !(m.metadata as any)?.ephemeral
+          ),
+        }));
       },
 
       truncateFromMessage: async (messageId: string, editedContent?: string) => {

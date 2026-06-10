@@ -15,7 +15,9 @@ const DOCUMENT_INTENT_PATTERNS = [
   /\brisk\s+assessment\s+(report|document)\b/i,
   /\bbenefits?\s+track(ing|er)\s+(report)?\b/i,
   // PL — raport/brief/artykuł/dokument
-  /\b(napisz|stwórz|przygotuj|wygeneruj|opracuj)\s+(mi\s+)?(raport|brief|artykuł|dokument|analizę|memo|notatkę)\b/i,
+  // Uwaga: JS \b nie działa po polskich znakach (ę/ł nie są word-charami),
+  // więc po odmienionych formach NIE dajemy \b — dopasowujemy rdzeń.
+  /\b(napisz|stwórz|przygotuj|wygeneruj|opracuj)\s+(mi\s+)?(raport|brief|artykuł|dokument|analiz|memo|notatk)/i,
   /\b(tygodniowy|miesięczny|kwartalny|roczny)\s+(raport|przegląd|podsumowanie)\b/i,
   /\braport\s+(z\s+)?(due\s+diligence|oceny\s+ryzyk|analizy\s+rynku)\b/i,
   /\bdokument\s+(startu|kickoff)\s+(projektu)?\b/i,
@@ -31,9 +33,11 @@ const PRESENTATION_INTENT_PATTERNS = [
   /\bworkshop\s+(deck|presentation|slides|facilitation)\b/i,
   /\bstrategy\s+roadmap\s+(presentation|deck)?\b/i,
   // PL — prezentacja/deck/slajdy
-  /\b(stwórz|przygotuj|wygeneruj|zbuduj)\s+(mi\s+)?(prezentację|prezentacja|deck|slajdy)\b/i,
+  // Uwaga: JS \b nie działa po polskich znakach (ę nie jest word-charem) —
+  // "prezentację\b" nigdy nie matchowało; dopasowujemy rdzeń bez \b.
+  /\b(stwórz|przygotuj|wygeneruj|zbuduj|zrób)\s+(mi\s+)?(prezentacj|deck|slajd)/i,
   /\bpitch\s*deck\b/i,
-  /\b(status\s+update|przegląd\s+kwartalny)\s+(prezentacj[aęi])?\b/i,
+  /\b(status\s+update|przegląd\s+kwartalny)\s+(prezentacj[aęi])?/i,
   /\bdeck\s+(zarządczy|warsztatowy|inwestycyjny)\b/i,
 ];
 

@@ -2098,16 +2098,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             text,
             uiLangPrez === 'pl' ? 'Prezentacja z czatu' : 'Presentation from chat'
           );
-          const progressMessageId = `deck-gen-${Date.now()}`;
-          addChatMessage({
-            id: progressMessageId,
+          // Checklista jest ephemeral (local-only) — żywy postęp w activeMessages;
+          // trwały wpis do rozmowy robimy raz, na stanie terminalnym.
+          const progressMessageId = useConversationStore.getState().appendLocalMessage({
             role: 'ai',
             content: deckGenerationChecklist({
               lang: uiLangPrez,
               title: deckTitle,
               phase: 'planning',
             }),
-            timestamp: new Date(),
           });
 
           setRequestedCanvasDeckId(null);
@@ -2119,12 +2118,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
             extra?: { planCount?: number; unitCount?: number; error?: string }
           ) => {
-            useAppStore
+            useConversationStore
               .getState()
-              .editChatMessage(
+              .updateMessageContent(
                 progressMessageId,
                 deckGenerationChecklist({ lang: uiLangPrez, title: deckTitle, phase, ...extra })
               );
+          };
+
+          const persistFinalNote = (note: string) => {
+            const conversationId = useConversationStore.getState().activeConversationId;
+            if (!conversationId) return;
+            void addMessageToConversation({
+              conversationId,
+              role: 'ai',
+              content: note,
+              messageType: 'text',
+            }).catch(() => {
+              /* best-effort persist */
+            });
           };
 
           void (async () => {
@@ -2153,12 +2165,28 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 },
               });
               if (final.state === 'draft') {
-                updateChecklist('draft', {
-                  planCount: enabledCount,
-                  unitCount: final.artifact?.unitCount,
-                });
+                // Stan terminalny: ephemeral checklistę zastępujemy trwałym wpisem
+                // (przeżywa reload rozmowy); checklista znika.
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                persistFinalNote(
+                  deckGenerationChecklist({
+                    lang: uiLangPrez,
+                    title: deckTitle,
+                    phase: 'draft',
+                    planCount: enabledCount,
+                    unitCount: final.artifact?.unitCount,
+                  })
+                );
               } else {
-                updateChecklist('error', { error: final.error });
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                persistFinalNote(
+                  deckGenerationChecklist({
+                    lang: uiLangPrez,
+                    title: deckTitle,
+                    phase: 'error',
+                    error: final.error,
+                  })
+                );
               }
             } catch (err: unknown) {
               updateChecklist('error', {
