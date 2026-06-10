@@ -225,6 +225,13 @@ async function ensureSchema(): Promise<void> {
         )`,
         []
       );
+      // content_md normally arrives via the routes-layer ALTER; updateDraft now
+      // writes it directly, so the column must exist even when this service
+      // boots before any work-canvas route ran.
+      await dbRun(
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT',
+        []
+      );
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_proposals (
           id TEXT PRIMARY KEY,
@@ -446,16 +453,26 @@ export async function updateDraft(params: {
   const existing = await getDraft(params);
   if (!existing) throw Object.assign(new Error('Canvas draft not found'), { statusCode: 404 });
   const now = nowIso();
+  const nextContent = params.patch.content ?? existing.content;
+  // The draft GET mapper prefers content_md over content_json, and the editor's
+  // PUT route writes both columns. A service-side update that touches only
+  // content_json leaves its markdown permanently shadowed by whatever stale
+  // content_md a client autosave froze earlier (audit P0-1/D2 — generated
+  // documents were lost to the skeleton). String content therefore must land
+  // in content_md too; non-string content leaves the projection untouched.
+  const nextContentMd = typeof nextContent === 'string' ? nextContent : null;
   await dbRun(
     `UPDATE work_canvas_drafts
-     SET kind = ?, title = ?, content_json = ?, sources_json = ?, provenance_json = ?,
+     SET kind = ?, title = ?, content_json = ?, content_md = COALESCE(?, content_md),
+         sources_json = ?, provenance_json = ?,
          client_id = ?, project_id = ?, owner_id = ?, research_session_id = ?,
          artifact_run_id = ?, artifact_id = ?, dirty_state = ?, updated_at = ?
      WHERE id = ? AND organization_id = ?`,
     [
       params.patch.kind || existing.kind,
       params.patch.title || existing.title,
-      JSON.stringify(params.patch.content ?? existing.content),
+      JSON.stringify(nextContent),
+      nextContentMd,
       JSON.stringify(params.patch.sources || existing.sources || []),
       JSON.stringify(params.patch.provenance || existing.provenance || {}),
       params.patch.clientId ?? existing.clientId ?? null,

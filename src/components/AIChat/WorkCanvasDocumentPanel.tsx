@@ -705,6 +705,20 @@ export function WorkCanvasDocumentPanel(props: WorkCanvasDocumentPanelProps) {
     setMountOverride(null);
   }, [props.conversationId, props.initialStarterId, props.initialDeckId, props.initialDraftId]);
 
+  // A1 (Kimi-parity): zakończona generacja doc/sheet przełącza panel na keyed
+  // mount tego draftu (`switched-doc-…`) — świeży panel hydratuje finalną treść
+  // deterministycznie, bez polegania na synchronizacji in-place otwartego edytora.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onDraftReady = (event: Event) => {
+      const draftId = String((event as CustomEvent)?.detail?.draftId || '').trim();
+      if (!draftId) return;
+      setMountOverride({ kind: 'doc', draftId });
+    };
+    window.addEventListener('deliverables:draft-ready', onDraftReady);
+    return () => window.removeEventListener('deliverables:draft-ready', onDraftReady);
+  }, []);
+
   const mounted: CanvasMountSelection =
     mountOverride ||
     (props.initialStarterId === 'presentation'
@@ -1125,6 +1139,14 @@ function WorkCanvasMarkdownDocumentPanel({
         title: titleInputRef.current?.value ?? latestTitleRef.current,
         contentMd: markdownEditorRef.current?.value ?? latestContentRef.current,
       };
+      // Guard (wzorzec W2-T2): szkielet generacji deliverables NIGDY nie jest
+      // wart zapisu — serwer ma go od kroku PLAN, a zapis może NADPISAĆ finalną
+      // treść dopisaną w tle przez generator (udokumentowany incydent: stale
+      // panel autosave'ował szkielet po ukończonej generacji).
+      if (String(draftToPersist.contentMd || '').includes('po zakończeniu generacji')) {
+        setDocumentState((current) => ({ ...current, saveState: 'saved' }));
+        return null;
+      }
       const effectiveConversationId = conversationId || `canvas-${Date.now()}`;
 
       setDocumentState((current) => ({ ...current, saveState: 'saving' }));
@@ -1267,11 +1289,25 @@ function WorkCanvasMarkdownDocumentPanel({
   };
 
   React.useEffect(() => {
+    // P0-1/D1: hydration is async — `!documentState.draftId` is true for a
+    // moment even when this mount was given a concrete draft to load
+    // (generation flows, reopen-from-chip). Persisting the starter template in
+    // that window mints a competing boilerplate draft that steals
+    // documentState.draftId from the hydrated one (orphan "Company Work Note"
+    // drafts, draft-ready refresh rejected by its draftId guard). When any
+    // hydration source exists, the draft already lives server-side — never
+    // create another one here.
+    const hydrationSourceDraftId =
+      initialDraftId ||
+      (typeof window !== 'undefined'
+        ? window.localStorage.getItem(LAST_DRAFT_ID_STORAGE_KEY)
+        : null);
     if (
       initialStarterId &&
       !initialStarterPersistedRef.current &&
       documentState.activeStarterId === initialStarterId &&
-      !documentState.draftId
+      !documentState.draftId &&
+      !hydrationSourceDraftId
     ) {
       initialStarterPersistedRef.current = true;
       const snapshot = documentState;
