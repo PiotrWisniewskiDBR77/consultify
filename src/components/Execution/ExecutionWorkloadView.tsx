@@ -270,7 +270,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
           </div>
           <div>
             <h3 className="font-semibold text-slate-900 dark:text-white">{person.userName}</h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-600">
               {periodLabel} — <span className={textColor}>{totalPercentage}% allocated</span>
             </p>
           </div>
@@ -303,7 +303,7 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
                         ? 'bg-blue-500/20 text-blue-400'
                         : allocation.status === InitiativeStatus.BLOCKED
                           ? 'bg-rose-500/20 text-rose-400'
-                          : 'bg-slate-500/20 text-slate-400'
+                          : 'bg-slate-500/20 text-slate-600'
                     }`}
                   >
                     {allocation.status}
@@ -496,7 +496,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigateTimeline('prev')}
-              className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
+              className="p-1.5 text-slate-600 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
             >
               <ChevronLeft size={18} />
             </button>
@@ -505,7 +505,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             </span>
             <button
               onClick={() => navigateTimeline('next')}
-              className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
+              className="p-1.5 text-slate-600 hover:text-slate-200 hover:bg-white/10 rounded transition-colors"
             >
               <ChevronRight size={18} />
             </button>
@@ -520,7 +520,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'weekly'
                     ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-200'
                 }`}
               >
                 <LayoutGrid size={12} />
@@ -531,7 +531,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                 className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'monthly'
                     ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-600 hover:text-slate-200'
                 }`}
               >
                 <CalendarDays size={12} />
@@ -551,7 +551,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                       className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                         weekCount === w
                           ? 'bg-primary-500/20 text-primary-400'
-                          : 'text-slate-400 hover:text-slate-200'
+                          : 'text-slate-600 hover:text-slate-200'
                       }`}
                     >
                       {w}W
@@ -564,7 +564,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
                       className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                         monthCount === m
                           ? 'bg-primary-500/20 text-primary-400'
-                          : 'text-slate-400 hover:text-slate-200'
+                          : 'text-slate-600 hover:text-slate-200'
                       }`}
                     >
                       {m}M
@@ -666,7 +666,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
             {/* Totals Row */}
             <div className="flex bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700">
               <div className="w-52 shrink-0 px-4 py-3 border-r border-slate-200 dark:border-navy-700">
-                <span className="text-sm font-semibold text-slate-400">Team Average</span>
+                <span className="text-sm font-semibold text-slate-600">Team Average</span>
               </div>
               {periods.map((period) => {
                 const avgAllocation = periodTotals.get(period.key) || 0;
@@ -689,7 +689,7 @@ export const ExecutionWorkloadView: React.FC<ExecutionWorkloadViewProps> = ({
       {/* D5.2: Enhanced Legend with heatmap scale */}
       <div className="shrink-0 px-4 py-2 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
         <div className="flex items-center gap-4 text-xs flex-wrap">
-          <span className="text-slate-400 font-medium">Load:</span>
+          <span className="text-slate-600 font-medium">Load:</span>
           <div className="flex items-center gap-1">
             <div className="flex items-center gap-0.5">
               {[

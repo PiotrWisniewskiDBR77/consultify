@@ -280,7 +280,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
               {isPolish ? 'Spis treści' : 'Contents'}
             </div>
             <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50/80 dark:bg-navy-800/70 border border-slate-200/70 dark:border-navy-700/60">
-              <Search size={14} className="text-slate-400" />
+              <Search size={14} className="text-slate-600" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -307,7 +307,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
                 >
                   <span className="w-5 text-base leading-none">{getGroupIcon(group.id)}</span>
                   <span className="truncate">{group.label}</span>
-                  <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+                  <span className="ml-auto text-xs text-slate-600 dark:text-slate-500">
                     {group.sections.length}
                   </span>
                 </button>
@@ -325,7 +325,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
             <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
               <div className="flex items-center gap-1.5 mb-1">
                 <Target size={11} className="text-blue-500" />
-                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                <span className="text-[9px] font-semibold text-slate-600 uppercase">
                   {isPolish ? 'Cel' : 'Goal'}
                 </span>
               </div>
@@ -336,7 +336,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
             <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
               <div className="flex items-center gap-1.5 mb-1">
                 <CheckSquare size={11} className="text-emerald-500" />
-                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                <span className="text-[9px] font-semibold text-slate-600 uppercase">
                   {isPolish ? 'Zadania' : 'Tasks'}
                 </span>
               </div>
@@ -347,7 +347,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
             <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
               <div className="flex items-center gap-1.5 mb-1">
                 <Users size={11} className="text-primary-500" />
-                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                <span className="text-[9px] font-semibold text-slate-600 uppercase">
                   {isPolish ? 'Zespół' : 'Team'}
                 </span>
               </div>
@@ -358,7 +358,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
             <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
               <div className="flex items-center gap-1.5 mb-1">
                 <Calendar size={11} className="text-blue-500" />
-                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                <span className="text-[9px] font-semibold text-slate-600 uppercase">
                   {isPolish ? 'Zasoby' : 'Resources'}
                 </span>
               </div>
@@ -381,7 +381,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
             <div className="p-2 rounded-lg bg-white/60 dark:bg-navy-900/40 border border-slate-200/60 dark:border-navy-700/60">
               <div className="flex items-center gap-1.5 mb-1">
                 <DollarSign size={11} className="text-amber-500" />
-                <span className="text-[9px] font-semibold text-slate-400 uppercase">
+                <span className="text-[9px] font-semibold text-slate-600 uppercase">
                   {isPolish ? 'Finanse' : 'Finance'}
                 </span>
               </div>
@@ -402,7 +402,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
                         : `$${ctx.initiative.costCapex}`}
                   </span>
                 ) : (
-                  <span className="text-[11px] text-slate-400">—</span>
+                  <span className="text-[11px] text-slate-600">—</span>
                 )}
               </div>
             </div>
@@ -415,7 +415,7 @@ export const InitiativeNotionView: React.FC<InitiativeNotionViewProps> = ({
               <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 {selectedGroup.label}
               </div>
-              <div className="text-xs text-slate-400 dark:text-slate-500">
+              <div className="text-xs text-slate-600 dark:text-slate-500">
                 {selectedGroup.sections.length} {isPolish ? 'sekcji' : 'sections'}
               </div>
               {/* Quick chips to jump to a single section */}

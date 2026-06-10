@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionsList - Minimalist decision management
  * Clean, clickable cards that open detail modal for actions
@@ -12,7 +11,6 @@ import {
   ChevronRight,
   Clock,
   Hourglass,
-  Loader2,
   Plus,
   Scale,
   Target,
@@ -20,6 +18,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -134,7 +134,7 @@ const DecisionCard: React.FC<{
         </div>
         <ChevronRight
           size={14}
-          className="text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
+          className="text-slate-600 dark:text-slate-400 group-hover:text-primary-500 transition-colors"
         />
       </div>
 
@@ -152,7 +152,7 @@ const DecisionCard: React.FC<{
 
       {/* Related object link */}
       {decision.relatedObjectType && (
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 mb-2">
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-500 mb-2">
           {getRelatedIcon(decision.relatedObjectType)}
           <span className="truncate">
             {decision.relatedObjectName ||
@@ -162,8 +162,8 @@ const DecisionCard: React.FC<{
       )}
 
       {/* Bottom: Meta info + action hint */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-navy-700">
-        <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+      <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-navy-700">
+        <div className="flex items-center gap-3 text-[11px] text-slate-600 dark:text-slate-500">
           <div className="flex items-center gap-1">
             <User size={11} />
             <span className="truncate max-w-[80px]">
@@ -255,7 +255,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -266,7 +266,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
       data-testid="mywork-decisions-list"
     >
       {/* View Toggle */}
-      <div className="shrink-0 px-4 py-2 border-b border-slate-100 dark:border-navy-700">
+      <div className="shrink-0 px-4 py-2 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center gap-1 p-1 bg-slate-100 dark:bg-navy-800 rounded-lg">
             <button
@@ -339,7 +339,7 @@ export const DecisionsList: React.FC<DecisionsListProps> = ({
                 ? t('decisions.noMyDecisions', 'No decisions awaiting your action')
                 : t('decisions.noAwaitingOthers', 'No decisions pending from others')}
             </h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               {t('decisions.allCaughtUp', 'All caught up!')}
             </p>
             {onCreateDecision && (

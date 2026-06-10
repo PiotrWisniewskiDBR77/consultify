@@ -298,12 +298,12 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
               <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {[...(activeLaneRun?.auditTrail || [])].reverse().map((entry, i) => (
                   <div key={i} className="flex items-start gap-2 text-[11px]">
-                    <span className="text-slate-400 dark:text-slate-500 whitespace-nowrap font-mono">
+                    <span className="text-slate-600 dark:text-slate-500 whitespace-nowrap font-mono">
                       {new Date(entry.at).toLocaleTimeString()}
                     </span>
                     <span className="text-slate-600 dark:text-slate-300">
                       <span className="font-medium">{entry.step}</span> → {entry.outcome}
-                      {entry.detail && <span className="text-slate-400"> — {entry.detail}</span>}
+                      {entry.detail && <span className="text-slate-600"> — {entry.detail}</span>}
                     </span>
                   </div>
                 ))}
@@ -316,7 +316,7 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                   </p>
                   {mutationAudits.map((a) => (
                     <div key={a.auditId} className="flex items-start gap-2 text-[11px]">
-                      <span className="text-slate-400 dark:text-slate-500 whitespace-nowrap font-mono">
+                      <span className="text-slate-600 dark:text-slate-500 whitespace-nowrap font-mono">
                         {new Date(a.createdAt).toLocaleTimeString()}
                       </span>
                       <span className="text-slate-600 dark:text-slate-300">

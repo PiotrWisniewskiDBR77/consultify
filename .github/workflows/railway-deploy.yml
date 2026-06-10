@@ -89,7 +89,7 @@ jobs:
           DEPLOY_MESSAGE="staging app ${GITHUB_SHA}"
           railway up --project "$PROJECT_ID" --environment "$TARGET_ENVIRONMENT" --service "$APP_SERVICE" --detach -m "$DEPLOY_MESSAGE"
           attempt=0
-          while [ "$attempt" -lt 60 ]; do
+          while [ "$attempt" -lt 120 ]; do
             deployment_json="$(railway deployment list --service "$APP_SERVICE" --environment "$TARGET_ENVIRONMENT" --limit 1 --json | tr -d '\n')"
             if ! printf '%s' "$deployment_json" | grep -F "$DEPLOY_MESSAGE" >/dev/null 2>&1; then
               attempt=$((attempt + 1))
@@ -108,7 +108,7 @@ jobs:
             attempt=$((attempt + 1))
             sleep 5
           done
-          [ "$attempt" -lt 60 ] || (echo "Timed out waiting for staging app deployment" >&2; exit 1)
+          [ "$attempt" -lt 120 ] || (echo "Timed out waiting for staging app deployment" >&2; exit 1)
 
       - name: Deploy secondary service to staging
         if: env.SECONDARY_SERVICE != ''

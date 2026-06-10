@@ -101,7 +101,7 @@ export function TabeleRelationChip({
         className="inline-flex items-center gap-2 rounded-hig-full border border-slate-300/80 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-800 transition-colors hover:border-sky-300 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-500/30 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100 dark:hover:border-sky-300/[0.35] dark:hover:bg-sky-300/[0.10]"
       >
         <span className="font-mono">{relation.fieldName}</span>
-        <span aria-hidden="true" className="text-slate-400 dark:text-slate-500">
+        <span aria-hidden="true" className="text-slate-600 dark:text-slate-500">
           {'->'}
         </span>
         <span>{relation.targetTableName}</span>

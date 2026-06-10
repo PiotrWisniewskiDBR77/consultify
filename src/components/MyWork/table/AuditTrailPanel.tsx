@@ -84,7 +84,7 @@ const FieldDiff = React.memo(function FieldDiff({ change }: { change: FieldChang
         <span className="inline-block px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 line-through max-w-[45%] truncate">
           {formatValue(change.oldValue)}
         </span>
-        <span className="text-slate-400 dark:text-slate-500 mt-0.5">→</span>
+        <span className="text-slate-600 dark:text-slate-500 mt-0.5">→</span>
         <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 max-w-[45%] truncate">
           {formatValue(change.newValue)}
         </span>
@@ -104,7 +104,7 @@ const RevisionItem = React.memo(function RevisionItem({
   const hasChanges = revision.changes.length > 0;
 
   return (
-    <div className="px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.04] last:border-0">
+    <div className="px-3 py-2.5 border-b border-slate-200 dark:border-white/[0.04] last:border-0">
       <div
         className={`flex items-start gap-2.5 ${hasChanges ? 'cursor-pointer' : ''}`}
         onClick={() => hasChanges && setExpanded((p) => !p)}
@@ -123,11 +123,11 @@ const RevisionItem = React.memo(function RevisionItem({
               {revision.action}
             </span>
           </div>
-          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
             <Clock size={10} />
             {relativeTime(revision.timestamp, isPl)}
             {hasChanges && (
-              <span className="ml-1 text-slate-400">
+              <span className="ml-1 text-slate-600">
                 ({revision.changes.length} {isPl ? 'zmian' : 'changes'})
               </span>
             )}
@@ -229,13 +229,13 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
         </span>
         <button
           onClick={() => setShowFilters((p) => !p)}
-          className={`p-1 rounded transition-colors ${showFilters ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+          className={`p-1 rounded transition-colors ${showFilters ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
         >
           <Filter size={12} />
         </button>
         <button
           onClick={onClose}
-          className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          className="p-1 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
         >
           <X size={14} />
         </button>
@@ -243,7 +243,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
 
       {/* Filters */}
       {showFilters && (
-        <div className="px-3 py-2 border-b border-slate-100 dark:border-white/[0.04] space-y-2">
+        <div className="px-3 py-2 border-b border-slate-200 dark:border-white/[0.04] space-y-2">
           <input
             value={filterUser}
             onChange={(e) => setFilterUser(e.target.value)}
@@ -258,7 +258,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
                 className={`text-[9px] font-bold uppercase px-2 py-1 rounded-full transition-colors ${
                   filterAction === a
                     ? ACTION_STYLES[a]
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-400'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600'
                 }`}
               >
                 {a}
@@ -271,7 +271,7 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {!recordId ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 px-4 text-center">
+          <div className="flex flex-col items-center justify-center h-full text-slate-600 dark:text-slate-500 px-4 text-center">
             <Clock size={24} className="mb-2 opacity-40" />
             <span className="text-xs">
               {isPl ? 'Wybierz rekord, aby zobaczyć historię' : 'Select a record to view history'}
@@ -279,10 +279,10 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
           </div>
         ) : loading && revisions.length === 0 ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-400" />
+            <Loader2 size={20} className="animate-spin text-slate-600" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500 px-4 text-center">
+          <div className="flex flex-col items-center justify-center py-12 text-slate-600 dark:text-slate-500 px-4 text-center">
             <Clock size={20} className="mb-2 opacity-40" />
             <span className="text-[11px]">
               {isPl ? 'Brak historii zmian' : 'No revision history'}

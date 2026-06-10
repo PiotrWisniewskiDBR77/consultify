@@ -16,6 +16,7 @@ export interface MenuItem {
   isLocked?: boolean;
   lockedMessage?: string;
   lockedCtaHref?: string;
+  lockedCode?: string; // access:blocked code (e.g. BETA_LOCKED) used to pick the locked plate
 }
 
 export interface FloatingMenuPosition {

@@ -229,7 +229,7 @@ const KanbanCardContent: React.FC<{
       `}
     >
       <div className="flex items-start gap-1.5">
-        <div className="mt-0.5 text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
+        <div className="mt-0.5 text-slate-700 dark:text-slate-300 dark:text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical size={14} />
         </div>
         <h4
@@ -761,7 +761,7 @@ export const NotificationsKanbanBoard: React.FC<NotificationsKanbanBoardProps> =
           <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl">
             <Bell
               size={48}
-              className="text-slate-500 dark:text-slate-400 dark:text-slate-600 mb-4"
+              className="text-slate-500 dark:text-slate-400 dark:text-slate-400 mb-4"
             />
             <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
               {t('myWork.notifications.emptyTitle', 'No notifications')}

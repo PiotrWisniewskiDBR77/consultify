@@ -710,7 +710,7 @@ export const RAID_TYPE_CONFIG = {
 };
 
 export const SEVERITY_CONFIG = {
-  LOW: { label: 'Low', labelPl: 'Niski', color: 'bg-slate-500/20 text-slate-400' },
+  LOW: { label: 'Low', labelPl: 'Niski', color: 'bg-slate-500/20 text-slate-600' },
   MEDIUM: { label: 'Medium', labelPl: 'Średni', color: 'bg-amber-500/20 text-amber-400' },
   HIGH: { label: 'High', labelPl: 'Wysoki', color: 'bg-amber-500/20 text-amber-400' },
   CRITICAL: { label: 'Critical', labelPl: 'Krytyczny', color: 'bg-rose-500/20 text-rose-400' },

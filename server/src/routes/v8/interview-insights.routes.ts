@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { EmbeddingService } from '../../services/ai/embeddingService.js';
 import type { InsightStatus } from '../../services/InterviewInsightService.js';
 import { getById as getInsightById } from '../../services/InterviewInsightService.js';
 import notificationService from '../../services/notificationService.js';
@@ -49,6 +50,117 @@ function insightsMeta() {
   return { version: 'v8' as const, contract: V8_INTERVIEW_INSIGHTS_CONTRACT };
 }
 
+// ---------------------------------------------------------------------------
+// #28e — Insight similarity scoring (server-backed duplicate detection)
+//
+// Mirrors initiativeSimilarityService: primary semantic cosine similarity over
+// OpenAI embeddings, deterministic token-Jaccard fallback when embeddings are
+// unavailable / fail. The initiative service loads from the `initiatives` table
+// directly so it cannot be reused as-is for insights; we replicate the same
+// scoring primitives and verdict thresholds inline here.
+// ---------------------------------------------------------------------------
+
+const insightEmbeddingService = new EmbeddingService();
+
+// Cap comparison set to keep embedding cost / latency bounded.
+const MAX_EXISTING_INSIGHTS = 200;
+
+// Verdict thresholds (cosine similarity or normalized Jaccard, both 0..1).
+const SIMILARITY_DUPLICATE_THRESHOLD = 0.7;
+const SIMILARITY_SIMILAR_THRESHOLD = 0.5;
+const SIMILARITY_RELATED_THRESHOLD = 0.3;
+const SIMILARITY_MAX_MATCHES = 5;
+
+type SimilarityVerdict = 'duplicate' | 'similar' | 'related' | 'new';
+
+function similarityVerdictForScore(score: number): SimilarityVerdict {
+  if (score >= SIMILARITY_DUPLICATE_THRESHOLD) return 'duplicate';
+  if (score >= SIMILARITY_SIMILAR_THRESHOLD) return 'similar';
+  if (score >= SIMILARITY_RELATED_THRESHOLD) return 'related';
+  return 'new';
+}
+
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (!a.length || !b.length || a.length !== b.length) return 0;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  const sim = dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  if (sim < 0) return 0;
+  if (sim > 1) return 1;
+  return sim;
+}
+
+const SIMILARITY_STOPWORDS = new Set<string>([
+  // PL
+  'i',
+  'oraz',
+  'lub',
+  'w',
+  'na',
+  'do',
+  'dla',
+  'z',
+  'ze',
+  'o',
+  'aby',
+  'jako',
+  'przez',
+  'po',
+  'od',
+  'analiza',
+  'analizy',
+  'raport',
+  'wnioski',
+  'wniosek',
+  // EN
+  'the',
+  'this',
+  'and',
+  'or',
+  'of',
+  'to',
+  'for',
+  'with',
+  'in',
+  'on',
+  'an',
+  'by',
+  'as',
+  'at',
+  'analysis',
+  'insight',
+  'report',
+]);
+
+function similarityTokenize(text: string): Set<string> {
+  const tokens = text
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '') // strip diacritics so combining marks are removed
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((tok) => tok.length > 2 && !SIMILARITY_STOPWORDS.has(tok));
+  return new Set(tokens);
+}
+
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  for (const tok of a) {
+    if (b.has(tok)) intersection++;
+  }
+  const union = a.size + b.size - intersection;
+  if (union === 0) return 0;
+  return intersection / union;
+}
+
 const LIFECYCLE_ACTIONS: InsightLifecycleAction[] = [
   'submit_for_review',
   'approve',
@@ -68,6 +180,31 @@ async function getOrgAdminUserIds(organizationId: string): Promise<string[]> {
       return role === 'owner' || role === 'admin' || role === 'administrator';
     });
     return admins.map((r: any) => String(r.user_id));
+  } catch {
+    return [];
+  }
+}
+
+// #26b — managers + owners/admins. "Submit for Information" sends an insight
+// to the org's management circle as a notification. It does NOT change the
+// insight's lifecycle status and does NOT require any approval gate.
+async function getOrgManagerUserIds(organizationId: string): Promise<string[]> {
+  try {
+    const rows = await queryHelpers.queryAll(
+      `SELECT user_id, role FROM organization_members WHERE organization_id = ?`,
+      [organizationId]
+    );
+    const recipients = (rows || []).filter((r: any) => {
+      const role = String(r.role || '').toLowerCase();
+      return (
+        role === 'owner' ||
+        role === 'admin' ||
+        role === 'administrator' ||
+        role === 'manager' ||
+        role === 'lead'
+      );
+    });
+    return recipients.map((r: any) => String(r.user_id));
   } catch {
     return [];
   }
@@ -265,6 +402,85 @@ router.post(
         newStatus: transition.targetStatus,
         action: typedAction,
         updatedAt: now,
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+// #26b — POST /v8/interview/insights/:insightId/submit-for-information
+// Org-scoped + auth. Sends the insight to the org's managers/owners (or a
+// single recipient passed in the body) as a notification. This is purely
+// informational: it does NOT lock the insight, change its status, or require
+// review/approval. Available to anyone who can view the insight.
+router.post(
+  '/insights/:insightId/submit-for-information',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+    const { recipientUserId, note } = req.body as {
+      recipientUserId?: string;
+      note?: string;
+    };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    // Resolve recipients: an explicit recipient (validated to be in the org) or
+    // all managers/owners/admins. The actor never notifies themselves.
+    let recipients: string[];
+    if (recipientUserId) {
+      const member = await queryHelpers.queryOne(
+        `SELECT user_id FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+        [organizationId, recipientUserId]
+      );
+      if (!member) {
+        return res.status(400).json({
+          error: 'Recipient is not a member of this organization',
+          code: 'P10_INVALID_RECIPIENT',
+        });
+      }
+      recipients = [recipientUserId];
+    } else {
+      recipients = await getOrgManagerUserIds(organizationId);
+    }
+    recipients = Array.from(new Set(recipients.filter((uid) => uid && uid !== userId)));
+
+    const trimmedNote = typeof note === 'string' ? note.trim().slice(0, 500) : '';
+
+    if (recipients.length > 0) {
+      const fire = async () => {
+        await Promise.allSettled(
+          recipients.map((uid) =>
+            notificationService.send({
+              userId: uid,
+              organizationId,
+              type: 'insight_shared_for_information',
+              title: 'Insight shared for your information',
+              body: trimmedNote
+                ? `Insight "${insight.title}" was shared with you for information: ${trimmedNote}`
+                : `Insight "${insight.title}" was shared with you for information.`,
+              entityType: 'interview_insight',
+              entityId: insightId,
+              actionUrl: `/interview?artifact=insight:${insightId}`,
+              priority: 'normal',
+              actorId: userId,
+              isActionable: false,
+            })
+          )
+        );
+      };
+      fireAndForget(fire(), 'InsightSubmitForInformation notification');
+    }
+
+    return res.json({
+      data: {
+        insightId,
+        recipientCount: recipients.length,
+        recipients,
       },
       meta: insightsMeta(),
     });
@@ -644,7 +860,20 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { insightId, findingId } = req.params as { insightId: string; findingId: string };
-    const { target_initiative_id } = req.body as { target_initiative_id?: string };
+    const {
+      target_initiative_id,
+      target_type: rawTargetType,
+      project_id: bodyProjectId,
+    } = req.body as {
+      target_initiative_id?: string;
+      target_type?: string;
+      project_id?: string;
+    };
+    // D5 — when no existing target is linked, create a REAL canonical entity
+    // (initiative | decision | task) from the finding instead of minting an
+    // orphan `handoff_req_<uuid>` placeholder that nothing materialized.
+    const targetType: 'initiative' | 'decision' | 'task' =
+      rawTargetType === 'decision' || rawTargetType === 'task' ? rawTargetType : 'initiative';
 
     const insight = await getInsightById(insightId);
     if (!insight || insight.organizationId !== organizationId) {
@@ -689,7 +918,12 @@ router.post(
     }
 
     const payload = handoffResult.payload;
-    let initiativeRef: { id: string; type: 'linked' | 'handoff_request' };
+    let initiativeRef: {
+      id: string;
+      type: 'linked' | 'created';
+      targetType?: 'initiative' | 'decision' | 'task';
+      url?: string;
+    };
 
     if (target_initiative_id) {
       const existing = await queryHelpers.queryOne(
@@ -702,16 +936,170 @@ router.post(
           code: 'P10_TARGET_INITIATIVE_NOT_FOUND',
         });
       }
-      initiativeRef = { id: target_initiative_id, type: 'linked' };
+      initiativeRef = { id: target_initiative_id, type: 'linked', targetType: 'initiative' };
     } else {
-      initiativeRef = { id: `handoff_req_${uuidv4()}`, type: 'handoff_request' };
+      // D5 — materialize a real canonical entity from the finding. Title =
+      // finding statement; body = limits + next action + evidence summary.
+      const title = String(finding.finding_statement || 'Interview finding').slice(0, 200);
+      const activeEvidence = finding.evidence_pointers.filter((p) => !p.isTombstone);
+      const summary = [
+        finding.finding_statement,
+        finding.limits ? `\n\nLimits: ${finding.limits}` : '',
+        finding.next_action ? `\n\nRecommended next action: ${finding.next_action}` : '',
+        activeEvidence.length
+          ? `\n\nEvidence (${activeEvidence.length}):\n${activeEvidence
+              .slice(0, 8)
+              .map((p) => `- ${String(p.excerpt || p.source_id || '').slice(0, 240)}`)
+              .join('\n')}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('');
+      const validProjectId =
+        bodyProjectId &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bodyProjectId)
+          ? bodyProjectId
+          : null;
+
+      try {
+        if (targetType === 'decision') {
+          const { default: decisionService } = await import('../../services/decisionService.js');
+          const decision = await decisionService.createDecision({
+            organizationId,
+            projectId: validProjectId || undefined,
+            title,
+            description: summary,
+            type: 'APPROVAL',
+            decisionMakerId: userId,
+            createdBy: userId,
+          });
+
+          // V-A S3 — mirror the initiative branch: tag the decision with its
+          // interview-insight source so the Interview hub can surface it. The
+          // canonical createDecision INSERT doesn't write source_type/source_id,
+          // so set them in a column-aware follow-up UPDATE (the columns are
+          // optional — guard on their existence; failure must not break create).
+          try {
+            const { getTableColumns } = await import('../../utils/dbSchema.js');
+            const cols = await getTableColumns('decisions');
+            if (cols.has('source_type') && cols.has('source_id')) {
+              await queryHelpers.queryRun(
+                `UPDATE decisions SET source_type = ?, source_id = ? WHERE id = ?`,
+                ['interview_insight', findingId, decision.id]
+              );
+            }
+          } catch (tagErr) {
+            logger.warn('[InsightHandoff] source-tag UPDATE skipped', tagErr);
+          }
+
+          initiativeRef = {
+            id: decision.id,
+            type: 'created',
+            targetType: 'decision',
+            url: `/my-work/decisions/${decision.id}`,
+          };
+        } else if (targetType === 'task') {
+          const { TaskService } = await import('../../services/TaskService.js');
+          const { getDatabase } = await import('../../database/index.js');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const taskService = new TaskService(getDatabase() as any);
+          const task = await taskService.createTask(
+            {
+              projectId: validProjectId,
+              title,
+              description: summary,
+              status: 'todo',
+              priority: 'medium',
+              tags: ['interview', 'finding'],
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any,
+            userId
+          );
+
+          // V-A S3 — mirror the initiative branch: tag the task with its
+          // interview-insight source so the Interview hub can surface it. The
+          // canonical createTask INSERT doesn't write source_type/source_id, so
+          // set them in a column-aware follow-up UPDATE (the columns are
+          // optional — guard on their existence; failure must not break create).
+          try {
+            const { getTableColumns } = await import('../../utils/dbSchema.js');
+            const cols = await getTableColumns('tasks');
+            if (cols.has('source_type') && cols.has('source_id')) {
+              await queryHelpers.queryRun(
+                `UPDATE tasks SET source_type = ?, source_id = ? WHERE id = ?`,
+                ['interview_insight', findingId, task.id]
+              );
+            }
+          } catch (tagErr) {
+            logger.warn('[InsightHandoff] source-tag UPDATE skipped', tagErr);
+          }
+
+          initiativeRef = {
+            id: task.id,
+            type: 'created',
+            targetType: 'task',
+            url: `/my-work?taskId=${encodeURIComponent(task.id)}`,
+          };
+        } else {
+          const { default: initiativeService } =
+            await import('../../services/initiativeService.js');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const initiative = await initiativeService.createInitiative({
+            organization_id: organizationId,
+            project_id: validProjectId || undefined,
+            title,
+            summary,
+            status: 'DRAFT',
+            owner_id: userId,
+            market_context: `Created from interview finding ${findingId}`,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any);
+
+          // V-A S3 — tag the initiative with its interview-insight source so it
+          // appears in the Interview > Initiatives tab (which filters on
+          // source_type='interview_insight'). The canonical createInitiative
+          // INSERT doesn't write source_type/source_id, so set them in a
+          // column-aware follow-up UPDATE (the columns are optional — added by
+          // a later migration — so guard on their existence). Without this the
+          // handoff created a real-but-untraceable initiative invisible in the
+          // tab that's supposed to show it.
+          try {
+            const { getTableColumns } = await import('../../utils/dbSchema.js');
+            const cols = await getTableColumns('initiatives');
+            if (cols.has('source_type') && cols.has('source_id')) {
+              await queryHelpers.queryRun(
+                `UPDATE initiatives SET source_type = ?, source_id = ? WHERE id = ?`,
+                ['interview_insight', findingId, initiative.id]
+              );
+            }
+          } catch (tagErr) {
+            logger.warn('[InsightHandoff] source-tag UPDATE skipped', tagErr);
+          }
+
+          initiativeRef = {
+            id: initiative.id,
+            type: 'created',
+            targetType: 'initiative',
+            url: `/my-work?initiativeId=${encodeURIComponent(initiative.id)}`,
+          };
+        }
+      } catch (createErr) {
+        logger.error('[InsightHandoff] entity creation failed', createErr);
+        return res.status(500).json({
+          error: 'Failed to create target entity from finding',
+          code: 'P10_HANDOFF_CREATE_FAILED',
+        });
+      }
     }
 
-    await recordHandoff(insightId, findingId, payload, target_initiative_id, {
+    // D5 — record the real target (linked existing OR newly created entity),
+    // not an orphan placeholder. The handoff is now 'linked' in both branches
+    // because a real row always exists downstream.
+    await recordHandoff(insightId, findingId, payload, initiativeRef.id, {
       organizationId,
       actorUserId: userId,
-      targetRefType: target_initiative_id ? 'linked' : 'handoff_request',
-      status: target_initiative_id ? 'linked' : 'pending',
+      targetRefType: 'linked',
+      status: 'linked',
     });
 
     organizationContextService
@@ -729,8 +1117,9 @@ router.post(
           confidenceLevel: finding.confidence_level,
           limits: finding.limits,
           nextAction: finding.next_action,
-          targetInitiativeId: target_initiative_id || null,
+          targetInitiativeId: target_initiative_id || initiativeRef.id,
           initiativeRefType: initiativeRef.type,
+          targetEntityType: initiativeRef.targetType || 'initiative',
         },
         isExplicit: true,
         claims: [
@@ -762,6 +1151,150 @@ router.post(
         initiative: initiativeRef,
         findingId,
         insightId,
+      },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+// #28e — POST /v8/interview/insights/similarity-check
+// Org-scoped + auth. Given a prospective insight (title + optional summary +
+// themes), returns whether an existing insight in the org already duplicates /
+// closely resembles it. Informational only — never mutates state or blocks the
+// insight generator. Mirrors POST /initiatives/similarity-check.
+router.post(
+  '/insights/similarity-check',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { title, summary, themes } = req.body as {
+      title?: string;
+      summary?: string;
+      themes?: string[];
+    };
+
+    const candidateTitle = typeof title === 'string' ? title.trim() : '';
+    if (!candidateTitle) {
+      return res.status(400).json({
+        error: 'title is required',
+        code: 'P10_SIMILARITY_TITLE_REQUIRED',
+      });
+    }
+
+    const candidateText = [
+      candidateTitle,
+      typeof summary === 'string' ? summary.trim() : '',
+      Array.isArray(themes) ? themes.filter((t) => typeof t === 'string').join(' ') : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    // Load the org's existing insights (title + content snippet). Robust to a
+    // missing/odd schema: fall back to title-only on any query error.
+    interface ExistingInsightRow {
+      id?: string | null;
+      title?: string | null;
+      content?: string | null;
+    }
+    let rows: ExistingInsightRow[] = [];
+    try {
+      rows = await queryHelpers.queryAll<ExistingInsightRow>(
+        `SELECT id, title, content
+           FROM interview_insights
+          WHERE organization_id = ?
+            AND COALESCE(status, '') != 'failed'
+          ORDER BY updated_at DESC
+          LIMIT ?`,
+        [organizationId, MAX_EXISTING_INSIGHTS + 1]
+      );
+    } catch (err) {
+      logger.warn('[InsightSimilarity] content-select failed, retrying title-only', err);
+      try {
+        rows = await queryHelpers.queryAll<ExistingInsightRow>(
+          `SELECT id, title FROM interview_insights WHERE organization_id = ? LIMIT ?`,
+          [organizationId, MAX_EXISTING_INSIGHTS + 1]
+        );
+      } catch (err2) {
+        logger.warn('[InsightSimilarity] title-only select failed', err2);
+        rows = [];
+      }
+    }
+
+    const existing = rows
+      .map((row) => ({
+        id: String(row.id || ''),
+        title: String(row.title || 'Insight'),
+        text: [String(row.title || ''), String(row.content || '').slice(0, 2000)].join(' ').trim(),
+      }))
+      .filter((item) => item.id && item.text.length > 0);
+
+    const truncated = existing.length > MAX_EXISTING_INSIGHTS;
+    const comparison = truncated ? existing.slice(0, MAX_EXISTING_INSIGHTS) : existing;
+
+    // No existing insights → everything is "new" by definition.
+    if (comparison.length === 0) {
+      return res.json({
+        data: {
+          verdict: 'new' as SimilarityVerdict,
+          topScore: 0,
+          matches: [] as Array<{
+            id: string;
+            title: string;
+            score: number;
+            verdict: SimilarityVerdict;
+          }>,
+          method: 'token-overlap' as const,
+          comparedCount: 0,
+          truncated: false,
+        },
+        meta: insightsMeta(),
+      });
+    }
+
+    // Primary: embeddings cosine. Fallback: token Jaccard overlap.
+    let method: 'embeddings' | 'token-overlap';
+    let scoreFor: (existingIndex: number) => number;
+
+    try {
+      const [candidateEmbedding, existingEmbeddings] = await Promise.all([
+        insightEmbeddingService.generateEmbedding(candidateText),
+        Promise.all(comparison.map((item) => insightEmbeddingService.generateEmbedding(item.text))),
+      ]);
+      method = 'embeddings';
+      scoreFor = (ei) => cosineSimilarity(candidateEmbedding, existingEmbeddings[ei]);
+    } catch (embErr) {
+      logger.warn(
+        '[InsightSimilarity] embeddings unavailable, falling back to token overlap',
+        (embErr as Error)?.message
+      );
+      const candidateTokens = similarityTokenize(candidateText);
+      const existingTokens = comparison.map((item) => similarityTokenize(item.text));
+      method = 'token-overlap';
+      scoreFor = (ei) => jaccardSimilarity(candidateTokens, existingTokens[ei]);
+    }
+
+    const matches = comparison
+      .map((item, index) => ({
+        id: item.id,
+        title: item.title,
+        score: Number(scoreFor(index).toFixed(4)),
+      }))
+      .filter((match) => match.score >= SIMILARITY_RELATED_THRESHOLD)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, SIMILARITY_MAX_MATCHES)
+      .map((match) => ({ ...match, verdict: similarityVerdictForScore(match.score) }));
+
+    const topScore = matches.length > 0 ? matches[0].score : 0;
+
+    return res.json({
+      data: {
+        verdict: similarityVerdictForScore(topScore),
+        topScore,
+        matches,
+        method,
+        comparedCount: comparison.length,
+        truncated,
       },
       meta: insightsMeta(),
     });

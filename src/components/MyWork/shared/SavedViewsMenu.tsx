@@ -135,7 +135,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
             transition={{ duration: 0.12 }}
             className="absolute top-full left-0 mt-1 z-50 w-64 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl shadow-xl overflow-hidden"
           >
-            <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between">
+            <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {t('myWork.savedViews.title', 'Saved Views')}
               </p>
@@ -152,7 +152,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
 
             {/* Save new */}
             {isNaming && (
-              <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-700">
+              <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
                 <div className="flex items-center gap-2">
                   <input
                     ref={inputRef}
@@ -174,7 +174,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
                   </button>
                   <button
                     onClick={() => setIsNaming(false)}
-                    className="h-7 px-1 rounded-lg text-slate-400 hover:text-slate-600"
+                    className="h-7 px-1 rounded-lg text-slate-600 hover:text-slate-600"
                   >
                     <X size={12} />
                   </button>
@@ -185,7 +185,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
             {/* Presets list */}
             <div className="max-h-48 overflow-y-auto">
               {presets.length === 0 ? (
-                <div className="px-3 py-4 text-center text-xs text-slate-400 dark:text-slate-500">
+                <div className="px-3 py-4 text-center text-xs text-slate-600 dark:text-slate-500">
                   {t('myWork.savedViews.empty', 'No saved views yet')}
                 </div>
               ) : (
@@ -202,7 +202,7 @@ export const SavedViewsMenu: React.FC<SavedViewsMenuProps> = ({ currentState, on
                     </button>
                     <button
                       onClick={() => handleDelete(preset.id)}
-                      className="p-1 rounded text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-1 rounded text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 size={12} />
                     </button>

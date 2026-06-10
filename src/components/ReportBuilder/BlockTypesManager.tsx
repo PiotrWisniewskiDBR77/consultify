@@ -92,7 +92,7 @@ const getCategoryBadgeConfig = (category?: string) => {
     case 'visual':
       return { color: 'text-primary-400', bg: 'bg-primary-500/20', label: 'Visual' };
     default:
-      return { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'Other' };
+      return { color: 'text-slate-600', bg: 'bg-slate-500/20', label: 'Other' };
   }
 };
 
@@ -111,7 +111,7 @@ const getRenderBadgeConfig = (renderKind: string) => {
     case 'json':
       return { color: 'text-blue-400', bg: 'bg-blue-500/20' };
     default:
-      return { color: 'text-slate-400', bg: 'bg-slate-500/20' };
+      return { color: 'text-slate-600', bg: 'bg-slate-500/20' };
   }
 };
 
@@ -692,7 +692,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                         {/* Updated */}
                         <td className="px-3 py-2.5 w-[100px]">
                           <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
-                            <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+                            <Calendar size={12} className="text-slate-600 dark:text-slate-500" />
                             {formatDate(block.updatedAt || block.createdAt)}
                           </div>
                         </td>
@@ -756,7 +756,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               >
                 <X size={18} />
               </button>

@@ -30,6 +30,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
@@ -52,6 +54,7 @@ interface VisualSettings {
 }
 
 const accentColors = [
+  { id: 'crimson', color: '#A51C30', name: 'Crimson' },
   { id: 'violet', color: '#6366F1', name: 'Violet' },
   { id: 'purple', color: '#A855F7', name: 'Purple' },
   { id: 'indigo', color: '#6366F1', name: 'Indigo' },
@@ -79,7 +82,7 @@ const fontFamilies = [
 
 const defaultSettings: VisualSettings = {
   theme: 'system',
-  accentColor: '#6366F1',
+  accentColor: '#A51C30',
   fontSize: 'medium',
   fontFamily: 'system-ui, -apple-system, sans-serif',
   density: 'comfortable',
@@ -159,11 +162,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-primary-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -228,7 +227,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   className={
                     settings.theme === theme.id
                       ? 'text-primary-600 mx-auto'
-                      : 'text-slate-400 dark:text-slate-500 mx-auto'
+                      : 'text-slate-600 dark:text-slate-500 mx-auto'
                   }
                 />
                 <p className="font-medium text-slate-900 dark:text-white mt-2">{theme.label}</p>
@@ -387,7 +386,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   className={
                     settings.density === density.id
                       ? 'text-green-600 mx-auto'
-                      : 'text-slate-400 dark:text-slate-500 mx-auto'
+                      : 'text-slate-600 dark:text-slate-500 mx-auto'
                   }
                 />
                 <p className="font-medium text-slate-900 dark:text-white mt-2">{density.label}</p>

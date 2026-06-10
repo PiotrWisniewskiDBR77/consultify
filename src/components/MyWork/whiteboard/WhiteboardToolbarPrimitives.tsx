@@ -78,7 +78,7 @@ export const ToolbarDropdown: React.FC<{
           type="button"
           onClick={() => setOpen(!open)}
           disabled={disabled}
-          className="inline-flex items-center rounded-r-lg px-0.5 py-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
+          className="inline-flex items-center rounded-r-lg px-0.5 py-1.5 text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
           aria-haspopup="true"
           aria-expanded={open}
           aria-label={`${label} options`}

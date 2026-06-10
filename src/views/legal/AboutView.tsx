@@ -61,7 +61,7 @@ export const AboutView: React.FC = () => {
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-navy-950 dark:text-white mb-6 tracking-tight">
               AI-Powered Strategic Consulting for the{' '}
-              <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-crimson-600 bg-clip-text text-transparent">
                 Modern Executive
               </span>
             </h1>
@@ -176,7 +176,7 @@ export const AboutView: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-primary-600 to-indigo-700">
+      <section className="py-20 px-6 bg-gradient-to-br from-primary-600 to-crimson-700">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-6">Ready to Transform Your Strategy?</h2>
           <p className="text-lg text-primary-100 mb-8 max-w-2xl mx-auto">

@@ -286,7 +286,7 @@ const MetricCell: React.FC<{
   value: string;
   valueColor?: string;
 }> = ({ icon, label, value, valueColor = 'text-slate-800 dark:text-slate-200' }) => (
-  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2.5 border border-slate-100 dark:border-slate-700">
+  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2.5 border border-slate-200 dark:border-slate-700">
     <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-1">
       {icon}
       <span className="text-[9px] uppercase font-bold tracking-wide">{label}</span>
@@ -352,7 +352,7 @@ const InitiativeCardItem: React.FC<{
       `}
     >
       {/* Top color accent bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-primary-500 to-indigo-500 opacity-60" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-primary-500 to-crimson-500 opacity-60" />
 
       {/* Index badge */}
       <div
@@ -392,12 +392,12 @@ const InitiativeCardItem: React.FC<{
             </span>
           )}
           {(item.relatedAxis || item.axis) && (
-            <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 dark:bg-slate-700 dark:text-slate-400">
+            <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-600 dark:bg-slate-700 dark:text-slate-400">
               {item.relatedAxis || item.axis}
             </span>
           )}
           {confidenceInfo.label && (
-            <span className="flex items-center gap-1 text-[9px] text-slate-400">
+            <span className="flex items-center gap-1 text-[9px] text-slate-600">
               <span className={`w-1.5 h-1.5 rounded-full ${confidenceInfo.color}`} />
               AI: {confidenceInfo.label}
             </span>
@@ -485,8 +485,8 @@ const InitiativeCardItem: React.FC<{
 
         {/* Effort Profile */}
         {showEffortBars && item.effortProfile && (
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1.5 block">
+          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+            <span className="text-[9px] font-bold text-slate-600 dark:text-slate-500 uppercase mb-1.5 block">
               Effort Profile
             </span>
             <EffortBars profile={item.effortProfile} />
@@ -525,7 +525,7 @@ export const InitiativeCards: React.FC<InitiativeCardsProps> = ({
 
   if (!data || !data.items || data.items.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 text-slate-400">
+      <div className="flex items-center justify-center py-8 text-slate-600">
         <p className="text-sm">No initiative data available</p>
       </div>
     );
@@ -571,10 +571,10 @@ export const InitiativeCards: React.FC<InitiativeCardsProps> = ({
 
       {/* Summary footer */}
       <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-        <span className="text-[10px] text-slate-400 font-medium">
+        <span className="text-[10px] text-slate-600 font-medium">
           {data.items.length} initiative{data.items.length !== 1 ? 's' : ''}
         </span>
-        <div className="flex items-center gap-3 text-[10px] text-slate-400">
+        <div className="flex items-center gap-3 text-[10px] text-slate-600">
           {data.items.filter((i) => i.priority === 'high' || i.priority === 'critical').length >
             0 && (
             <span className="flex items-center gap-1 text-rose-500">

@@ -36,7 +36,7 @@ export const AchievementsList: React.FC = () => {
 
         return (
           <div key={category}>
-            <h4 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
+            <h4 className="text-sm font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">
               {category}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -60,7 +60,7 @@ export const AchievementsList: React.FC = () => {
                       <div
                         className={`
                                                     w-10 h-10 rounded-lg flex items-center justify-center shrink-0
-                                                    ${isUnlocked ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-slate-200 dark:bg-navy-900 text-slate-400'}
+                                                    ${isUnlocked ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-slate-200 dark:bg-navy-900 text-slate-600'}
                                                 `}
                       >
                         {isUnlocked ? <Icon size={20} /> : <Lock size={18} />}

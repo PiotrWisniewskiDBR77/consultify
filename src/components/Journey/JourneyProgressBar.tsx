@@ -36,7 +36,7 @@ const PhaseNode: React.FC<PhaseNodeProps> = ({ phase, isCurrent, isLast }) => {
     }
     return {
       ring: 'bg-slate-300 dark:bg-slate-600',
-      text: 'text-slate-400 dark:text-slate-500',
+      text: 'text-slate-600 dark:text-slate-500',
       line: 'bg-slate-200 dark:bg-slate-700',
     };
   };
@@ -159,7 +159,7 @@ export const JourneyProgressBar: React.FC<JourneyProgressBarProps> = ({
 
       {/* Next action */}
       {showNextAction && progress.nextAction && (
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <Circle size={8} className="text-primary-500 fill-primary-500" />
             <span className="text-xs text-slate-500 dark:text-slate-400">Następny krok:</span>

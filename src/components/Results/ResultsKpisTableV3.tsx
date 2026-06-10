@@ -1,6 +1,7 @@
 import {
   Bell,
   BellOff,
+  ChevronRight,
   Copy,
   ExternalLink,
   Link2,
@@ -25,6 +26,7 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
+import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips';
 import { useOrganizationContext } from '@/hooks/discovery/useOrganizationContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -41,7 +43,7 @@ import type { KpiDrawerSection, KPIStatus, KPITrend, ResultsKPI } from './kpiDom
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
   below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
-  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
+  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };
 
 const TREND_LABELS: Record<KPITrend, string> = {
@@ -68,15 +70,17 @@ const formatDefinitionSource = (
     ? t?.('results.kpi.source.linked', 'Linked KPI') || 'Linked KPI'
     : t?.('results.kpi.source.manual', 'Manual KPI') || 'Manual KPI';
 
-const StatusPill: React.FC<{ status: KPIStatus; label: string }> = ({ status, label }) => {
-  const s = STATUS_STYLES[status] || STATUS_STYLES['no-data'];
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full ${s.bg}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      <span className={`text-xs font-medium ${s.text}`}>{label}</span>
-    </span>
-  );
+// Canon §4.1/§4.0: KPI domain status → semantic chip tone.
+// `below` is an at-risk signal → warning (red/danger is reserved for true alarm).
+const KPI_STATUS_TONE: Record<KPIStatus, StatusTone> = {
+  'on-target': 'success',
+  below: 'warning',
+  'no-data': 'neutral',
 };
+
+const StatusPill: React.FC<{ status: KPIStatus; label: string }> = ({ status, label }) => (
+  <StatusChip tone={KPI_STATUS_TONE[status] ?? 'neutral'} label={label} size="sm" />
+);
 
 const DeviationPill: React.FC<{ severity: 'AMBER' | 'RED'; label: string }> = ({
   severity,
@@ -217,7 +221,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         label: t('common.type', 'Type'),
         width: '8%',
         render: () => (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-600">
             KPI
           </span>
         ),
@@ -312,7 +316,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         render: (row: TableRow) => {
           const k = row._raw as ResultsKPI;
           return (
-            <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-400">
+            <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-600">
               {TREND_LABELS[k.trend] || '—'}
             </span>
           );
@@ -346,7 +350,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         filterable: true,
         filterOptions: freqFilterOptions,
         render: (row: TableRow) => (
-          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-400">
+          <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-600">
             {String(row.measurementFrequency || '—')
               .toLowerCase()
               .replace(/^\w/, (c) => c.toUpperCase())}
@@ -723,6 +727,12 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         onRowClick={(row) => setSelectedId(row.id)}
         onRowDoubleClick={(row) => onOpenKpi(row.id, 'summary')}
         getRowActions={(row) => [
+          {
+            id: 'preview',
+            label: t('common.preview', 'Open preview'),
+            icon: ChevronRight,
+            onClick: () => setSelectedId(row.id),
+          },
           {
             id: 'open',
             label: t('common.open', 'Open'),

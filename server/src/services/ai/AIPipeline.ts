@@ -531,8 +531,13 @@ export class AIPipeline {
         model: modelConfig?.model || null,
       };
 
-      // 7. Execute streaming
-      await this.executeStreamingWithProvider(prompt, modelConfig, request.options, onChunk);
+      // 7. Execute streaming (capture usage so the usage log isn't zeroed out)
+      const streamResult = await this.executeStreamingWithProvider(
+        prompt,
+        modelConfig,
+        request.options,
+        onChunk
+      );
 
       // 8. Send done signal
       onChunk({
@@ -545,10 +550,10 @@ export class AIPipeline {
         },
       });
 
-      // 9. Best-effort usage log (streaming typically has no token usage here)
+      // 9. Best-effort usage log — now with usage captured from the stream (QA-2026-06-09).
       await this.logRequest(
         request,
-        { content: '', usage: undefined },
+        { content: '', usage: streamResult?.usage },
         Date.now() - startTime,
         traceId
       );
@@ -812,6 +817,67 @@ export class AIPipeline {
           }
         }
 
+        // Per-project brief (composer #5): if this conversation belongs to a chat
+        // project with custom instructions, append them to Teresa's system prompt.
+        // Applied regardless of private mode — it's task framing the user explicitly
+        // set on the project, not inferred personal memory.
+        try {
+          const convIdForProject =
+            (request.context as any)?.conversationId ||
+            (request as any)?.conversationId ||
+            (request.options as any)?.conversationId ||
+            null;
+          if (convIdForProject) {
+            const { get: dbGet } = await import('../../utils/DbPromise.js');
+            const row = (await dbGet(
+              `SELECT p.custom_instructions AS ci
+               FROM conversations c
+               JOIN chat_projects p ON p.id = c.chat_project_id
+               WHERE c.id = ?`,
+              [convIdForProject]
+            )) as { ci?: string } | null;
+            const projectCi = row?.ci ? String(row.ci).trim().slice(0, 2000) : '';
+            if (projectCi) {
+              customInstructions = customInstructions
+                ? `${customInstructions}\n\n[Project brief] ${projectCi}`
+                : `[Project brief] ${projectCi}`;
+            }
+
+            // F3: append the project's TEXT knowledge snippets (file knowledge is
+            // handled as RAG scope in the chat route). Capped so the prompt stays sane.
+            try {
+              const { all: dbAll } = await import('../../utils/DbPromise.js');
+              const kRows = (await dbAll(
+                `SELECT k.title, k.content
+                 FROM conversations c
+                 JOIN project_knowledge k ON k.project_id = c.chat_project_id
+                 WHERE c.id = ? AND k.kind = 'text' AND k.content IS NOT NULL
+                 ORDER BY k.added_at DESC
+                 LIMIT 12`,
+                [convIdForProject]
+              )) as Array<{ title?: string; content?: string }>;
+              const snippets = (kRows || [])
+                .map((r) => {
+                  const body = String(r.content || '').trim();
+                  if (!body) return '';
+                  const ttl = r.title ? `${String(r.title).trim()}: ` : '';
+                  return `- ${ttl}${body}`;
+                })
+                .filter(Boolean)
+                .join('\n')
+                .slice(0, 4000);
+              if (snippets) {
+                customInstructions =
+                  `${customInstructions || ''}\n\n[Project knowledge]\n${snippets}`.trim();
+              }
+            } catch {
+              // project_knowledge may not exist yet — skip silently.
+            }
+          }
+        } catch {
+          // chat_projects.custom_instructions may not exist yet — skip silently.
+        }
+
         // Resolve authoritative UI language for this request.
         // Order of precedence (i18n-teresa fix 2026-04-18):
         //   1. request.options.language / request.context.language    (explicit UI locale)
@@ -1011,7 +1077,48 @@ export class AIPipeline {
     });
 
     // Add conversation history if provided (can come as 'history' or 'messages')
-    const history = request.history || (request as any).messages || [];
+    let history = request.history || (request as any).messages || [];
+
+    // A0 memory fix — server-side history rehydration.
+    // When the client sends no history but we have a conversationId, load the recent
+    // turns from conversation_messages so Teresa keeps in-conversation memory even on
+    // fresh page loads / API clients that don't replay history.
+    if (!history || history.length === 0) {
+      const conversationId =
+        (request.context as any)?.conversationId ||
+        (request as any)?.conversationId ||
+        (request.options as any)?.conversationId ||
+        null;
+      if (conversationId) {
+        try {
+          const dbMod = await import('../../utils/DbPromise.js');
+          const rows = (await (dbMod as any).all(
+            `SELECT content, role FROM conversation_messages
+             WHERE conversation_id = ?
+             ORDER BY created_at DESC LIMIT 12`,
+            [conversationId]
+          )) as Array<{ content?: string; role?: string }>;
+          if (Array.isArray(rows) && rows.length > 0) {
+            // rows are newest-first; reverse to chronological order for the prompt
+            history = rows
+              .reverse()
+              .filter((r) => r?.content)
+              .map((r) => ({
+                role: r.role === 'ai' || r.role === 'model' ? 'assistant' : 'user',
+                content: String(r.content),
+              }));
+            logger.debug(
+              `[AIPipeline] Rehydrated ${history.length} history turns from conversation ${conversationId}`
+            );
+          }
+        } catch (rehydrateErr: any) {
+          logger.debug(
+            `[AIPipeline] History rehydration skipped: ${rehydrateErr?.message || rehydrateErr}`
+          );
+        }
+      }
+    }
+
     if (history.length > 0) {
       for (const msg of history) {
         messages.push({
@@ -1182,6 +1289,30 @@ export class AIPipeline {
     // 4.5b. Custom instructions (user-defined via AI preferences UI)
     if (ctx?.customInstructions) {
       parts.push(`## INSTRUKCJE UŻYTKOWNIKA (Custom Instructions)\n${ctx.customInstructions}`);
+    }
+
+    // 4.5c. User AI Settings → shape Teresa's behavior (response style, tone, proactivity)
+    // These are persisted via /api/ai-settings/user and loaded by AIContextBuilder.
+    if (ctx?.aiSettings) {
+      const s = ctx.aiSettings;
+      const settingsParts: string[] = [];
+      if (s.response_style || s.responseStyle) {
+        settingsParts.push(`- Response style: ${s.response_style || s.responseStyle}`);
+      }
+      if (s.writing_tone || s.writingTone) {
+        settingsParts.push(`- Writing tone: ${s.writing_tone || s.writingTone}`);
+      }
+      if (s.proactivity_mode || s.proactivityMode) {
+        settingsParts.push(`- Proactivity: ${s.proactivity_mode || s.proactivityMode}`);
+      }
+      if (s.custom_instructions || s.customInstructions) {
+        settingsParts.push(
+          `- Additional instructions: ${s.custom_instructions || s.customInstructions}`
+        );
+      }
+      if (settingsParts.length > 0) {
+        parts.push(`## PREFERENCJE AI UŻYTKOWNIKA (from Settings)\n${settingsParts.join('\n')}`);
+      }
     }
 
     // 4.6. Organization memory (terminology, patterns)
@@ -2288,7 +2419,7 @@ export class AIPipeline {
     },
     options: AIOptions | undefined,
     onChunk: StreamCallback
-  ): Promise<void> {
+  ): Promise<{ usage?: TokenUsage }> {
     try {
       const systemMessage = messages.find((m) => m.role === 'system');
       const nonSystemMessages = messages.filter((m) => m.role !== 'system');
@@ -2312,20 +2443,49 @@ export class AIPipeline {
       });
 
       const stream = (response as { stream?: AsyncIterable<string> }).stream;
+      let fullText = '';
       if (stream) {
         for await (const chunk of stream) {
+          fullText += typeof chunk === 'string' ? chunk : '';
           onChunk({
             type: 'text',
             content: chunk,
           });
         }
       }
+
+      // QA-2026-06-09: streaming used to log usage:undefined → ai_usage_logs got
+      // prompt_tokens=0/completion_tokens=0 (AI cost tracking was blind on streamed
+      // chats, which is most chat traffic). Prefer the provider's real usage if it
+      // surfaces one; otherwise estimate from input+streamed output (~4 chars/token,
+      // same heuristic as preflightCostService.estimateTokens).
+      const realUsage = (response as { usage?: Partial<TokenUsage> }).usage;
+      let usage: TokenUsage;
+      if (
+        realUsage &&
+        (Number(realUsage.promptTokens) > 0 || Number(realUsage.completionTokens) > 0)
+      ) {
+        const p = Number(realUsage.promptTokens) || 0;
+        const ccount = Number(realUsage.completionTokens) || 0;
+        usage = {
+          promptTokens: p,
+          completionTokens: ccount,
+          totalTokens: Number(realUsage.totalTokens) || p + ccount,
+        };
+      } else {
+        const inputChars = messages.reduce((n, m) => n + (m?.content?.length || 0), 0);
+        const promptTokens = Math.ceil(inputChars / 4);
+        const completionTokens = Math.ceil(fullText.length / 4);
+        usage = { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens };
+      }
+      return { usage };
     } catch (error: any) {
       logger.error(`[AIPipeline] Streaming execution failed: ${error.message}`);
       onChunk({
         type: 'error',
         content: error.message,
       });
+      return {};
     }
   }
 

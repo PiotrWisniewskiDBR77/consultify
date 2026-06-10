@@ -283,6 +283,25 @@ export interface CuratedColorSet {
 }
 
 export const CURATED_COLOR_SETS: CuratedColorSet[] = [
+  // Harvard — canonical brand-default theme. Crimson + HBS complementary.
+  // Spec: docs/audit/2026-06-03/HARVARD_COLOR_REMAP_AUDIT.md
+  {
+    id: 'harvard',
+    name: 'Harvard',
+    colors: {
+      primary: '#A51C30', // Harvard Crimson
+      secondary: '#3B2883', // HBS Blue 1 (dark)
+      accent: '#6578B4', // HBS Blue 2
+      background: '#FAFAF9',
+      surface: '#FFFFFF',
+      textPrimary: '#0F172A',
+      textSecondary: '#475569',
+      heading: '#A51C30',
+    },
+    // Harvard categorical chart palette — crimson-anchored, HBS complementary.
+    chartPalette: ['#A51C30', '#6578B4', '#52A52E', '#E87D1E', '#00979D', '#80408D'],
+    styleTags: ['brand', 'professional', 'executive'],
+  },
   {
     id: 'ocean',
     name: 'Ocean',

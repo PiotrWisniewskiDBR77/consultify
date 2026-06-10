@@ -338,9 +338,9 @@ export const FinancialImpact: React.FC<FinancialImpactProps> = ({
             {isPolish ? 'Podział Inwestycji' : 'Investment Breakdown'}
           </h4>
           {showDetails ? (
-            <ChevronUp className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronUp className="w-5 h-5 text-slate-600 dark:text-slate-500" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-500" />
           )}
         </button>
 

@@ -345,7 +345,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
       label: 'Divider',
       labelPl: 'Separator',
       action: () => editor?.chain().focus().setHorizontalRule().run(),
-      iconColor: 'text-slate-400 dark:text-slate-500',
+      iconColor: 'text-slate-600 dark:text-slate-500',
     },
   ];
 
@@ -483,7 +483,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                     {isPl ? labelPl : labelEn}
                   </div>
                   {disabled && isDeliverable && convertBlockedReason ? (
-                    <div className="mt-0.5 text-[9px] text-slate-400 dark:text-slate-500 line-clamp-2">
+                    <div className="mt-0.5 text-[9px] text-slate-600 dark:text-slate-500 line-clamp-2">
                       {convertBlockedReason}
                     </div>
                   ) : null}
@@ -526,7 +526,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                   </select>
                   <ChevronDown
                     size={9}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none"
                   />
                 </div>
               )}
@@ -537,12 +537,12 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
               </div>
             )}
             <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 tabular-nums font-medium">
+              <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500 tabular-nums font-medium">
                 <Type size={11} className="opacity-60" />
                 {page.wordCount} {isPl ? 'słów' : 'words'}
               </span>
               {page.updatedAt && getRelativeTime && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 tabular-nums font-medium">
+                <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500 tabular-nums font-medium">
                   <Clock size={11} className="opacity-60" />
                   {getRelativeTime(page.updatedAt)}
                 </span>
@@ -595,7 +595,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                 <div className="mt-2.5 shrink-0 flex flex-col items-center gap-0.5">
                   <GripVertical
                     size={14}
-                    className="text-slate-400/60 group-hover:text-slate-500 transition-colors"
+                    className="text-slate-600/60 group-hover:text-slate-500 transition-colors"
                   />
                   <div className="w-0.5 h-4 rounded-full bg-gradient-to-b from-slate-400/40 to-transparent" />
                 </div>
@@ -611,7 +611,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                   <button
                     onClick={toggleMic}
-                    className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-rose-500/15 text-rose-500 shadow-sm shadow-rose-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08]'}`}
+                    className={`relative p-2 rounded-xl transition-all duration-200 ${isRecording ? 'bg-rose-500/15 text-rose-500 shadow-sm shadow-rose-500/10' : 'bg-slate-100/80 dark:bg-white/[0.06] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/[0.08]'}`}
                     title={isPl ? 'Mikrofon' : 'Microphone'}
                   >
                     {isRecording && (
@@ -631,7 +631,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
                           </span>
                         </>
                       ) : (
-                        <span className="text-slate-400/70 dark:text-slate-500/70">
+                        <span className="text-slate-600/70 dark:text-slate-500/70">
                           {isPl ? '← Przeciągnij' : '← Drag'}
                         </span>
                       )}

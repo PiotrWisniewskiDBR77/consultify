@@ -383,7 +383,7 @@ export const PricingRegistryTab: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Plus size={16} className="text-slate-400" />
+          <Plus size={16} className="text-slate-600" />
           <input
             value={form.notes}
             onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}

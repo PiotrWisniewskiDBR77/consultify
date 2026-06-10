@@ -125,7 +125,7 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
             <Flag size={16} className="text-primary-400" />
             <span className="font-medium text-white text-sm">Feature Flags</span>
           </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500 leading-snug">
+          <p className="text-xs text-slate-600 dark:text-slate-500 leading-snug">
             Toggle experimental features locally. Changes persist in localStorage. Only tested flags
             are shown.
           </p>
@@ -134,21 +134,21 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
           <button
             onClick={refresh}
             disabled={isLoading}
-            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors disabled:opacity-50"
+            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors disabled:opacity-50"
             title="Refresh flags"
           >
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
           </button>
           <button
             onClick={clearAllOverrides}
-            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-danger-400 hover:bg-danger-400/10 rounded-lg transition-colors"
+            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-danger-400 hover:bg-danger-400/10 rounded-lg transition-colors"
             title="Clear all overrides"
           >
             <Trash2 size={14} />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
+            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded-lg transition-colors"
           >
             <X size={14} />
           </button>
@@ -168,7 +168,7 @@ const DevToolsPanel: React.FC<DevToolsPanelProps> = ({ featureFlags, onClose }) 
                 <span className={`p-1 rounded ${categoryColors[category]}`}>
                   {categoryIcons[category]}
                 </span>
-                <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">
                   {category}
                 </span>
                 <span className="text-xs text-slate-500 dark:text-slate-400">

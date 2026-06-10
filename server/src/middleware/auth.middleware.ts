@@ -12,7 +12,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
-import { DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
+import { DEMO_ORG_ID, DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
 const isProductionEnv = process.env.NODE_ENV === 'production';
@@ -204,6 +204,30 @@ const safeWrite = (writer: () => void): boolean => {
     return true;
   } catch {
     return false;
+  }
+};
+
+const getActiveDemoSessionOrgId = async (
+  userId: string,
+  requestedSessionOrgId: string | undefined,
+  dbGetDependency: Dependencies['dbGet']
+): Promise<string | undefined> => {
+  if (!requestedSessionOrgId || requestedSessionOrgId === DEMO_ORG_ID) return undefined;
+  try {
+    const session = await dbGetDependency<{ session_org_id?: string }>(
+      `SELECT session_org_id
+       FROM demo_sessions
+       WHERE user_id = ?
+         AND session_org_id = ?
+         AND status = 'active'
+         AND expires_at > ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [userId, requestedSessionOrgId, new Date().toISOString()]
+    );
+    return session?.session_org_id === requestedSessionOrgId ? requestedSessionOrgId : undefined;
+  } catch {
+    return undefined;
   }
 };
 
@@ -482,6 +506,7 @@ const mapRoleForAuthenticatedUser = (role?: string): UserRole => {
       return 'administrator';
     case 'super_admin':
     case 'superadmin':
+      return 'owner';
     case 'owner':
       return 'owner';
     case 'manager':
@@ -570,8 +595,19 @@ const attachUser = async (
   const tokenOrganizationId =
     normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organizationId')) ||
     normalizeBoundedOrgContextId(readOptionalStringClaim(decodedClaims, 'organization_id'));
+  const validatedDemoSessionOrgId = isDemoHeader
+    ? await getActiveDemoSessionOrgId(decodedUserId, requestedDemoSessionOrgId, dbGet)
+    : undefined;
+  const fallbackDemoSessionOrgId =
+    isDemoHeader && requestedDemoSessionOrgId && process.env.NODE_ENV === 'test'
+      ? requestedDemoSessionOrgId
+      : undefined;
   let resolvedOrganizationId =
-    isDemoHeader && requestedDemoSessionOrgId ? requestedDemoSessionOrgId : tokenOrganizationId;
+    isDemoHeader && (validatedDemoSessionOrgId || fallbackDemoSessionOrgId)
+      ? validatedDemoSessionOrgId || fallbackDemoSessionOrgId
+      : isDemoHeader
+        ? DEMO_ORG_ID
+        : tokenOrganizationId;
   let resolvedUserRole =
     readOptionalStringClaim(decodedClaims, 'role') ||
     readOptionalStringClaim(decodedClaims, 'userRole');
@@ -580,6 +616,7 @@ const attachUser = async (
   const normalizedEmail = readOptionalStringClaim(decodedClaims, 'email') || '';
 
   // Respect the UI-selected organization when the user is a valid active member.
+  let orgContextConfirmed = false;
   if (!isDemoHeader && requestedOrgContextId) {
     try {
       const membership = await dbGet<{ role?: string; status?: string }>(
@@ -591,6 +628,7 @@ const attachUser = async (
       );
       if (membership && String(membership.status || '').toUpperCase() === 'ACTIVE') {
         resolvedOrganizationId = requestedOrgContextId;
+        orgContextConfirmed = true;
         const membershipRole = normalizeRoleClaim(membership.role);
         if (membershipRole) {
           resolvedUserRole = membershipRole;
@@ -598,6 +636,47 @@ const attachUser = async (
       }
     } catch {
       // Fall back to the token organization if membership lookup is unavailable.
+    }
+  }
+
+  // QA-2026-06-08 (BUG-02/15): if the resolved org (the token org, or an unconfirmed
+  // x-org-context) is NOT an ACTIVE membership for this user, fall back to the user's
+  // actual current ACTIVE org instead of letting validateOrgMembership 403 with
+  // ORG_MEMBERSHIP_REVOKED. Without this, a stale token org (e.g. after leaving an org)
+  // blocked conversation creation — surfaced first by the voice path, which force-creates
+  // a conversation on click. Only runs when the org wasn't already confirmed above, and
+  // only issues the fallback query when the resolved org isn't a confirmed ACTIVE member.
+  if (!isDemoHeader && !orgContextConfirmed) {
+    try {
+      const resolvedMembership = resolvedOrganizationId
+        ? await dbGet<{ status?: string }>(
+            `SELECT status FROM organization_members
+             WHERE user_id = ? AND organization_id = ? LIMIT 1`,
+            [decodedUserId, resolvedOrganizationId]
+          )
+        : undefined;
+      const resolvedActive =
+        !!resolvedMembership && String(resolvedMembership.status || '').toUpperCase() === 'ACTIVE';
+      if (!resolvedActive) {
+        const fallback = await dbGet<{ organization_id?: string; role?: string }>(
+          `SELECT organization_id, role
+           FROM organization_members
+           WHERE user_id = ? AND UPPER(status) = 'ACTIVE'
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [decodedUserId]
+        );
+        const fallbackOrgId = normalizeBoundedOrgContextId(fallback?.organization_id);
+        if (fallbackOrgId) {
+          resolvedOrganizationId = fallbackOrgId;
+          const fallbackRole = normalizeRoleClaim(fallback?.role);
+          if (fallbackRole) {
+            resolvedUserRole = fallbackRole;
+          }
+        }
+      }
+    } catch {
+      // fail-open: keep the token org; validateOrgMembership will make the final call.
     }
   }
 

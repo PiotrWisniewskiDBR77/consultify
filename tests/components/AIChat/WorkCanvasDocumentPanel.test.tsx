@@ -4,10 +4,35 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { WorkCanvasDocumentPanel } from '../../../src/components/AIChat/WorkCanvasDocumentPanel';
 
+// The Dock/Markdown view toggle moved into the Canvas menu (the
+// "Canvas menu" / MoreHorizontal control) after the rich-editor rollout.
+// These helpers open that menu (if needed) before flipping the view mode so
+// the tests interact with the current UI rather than a stale top-level toggle.
+async function switchView(
+  user: ReturnType<typeof userEvent.setup>,
+  mode: 'Markdown view' | 'Dock view'
+) {
+  if (!screen.queryByRole('button', { name: mode })) {
+    await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
+  }
+  await user.click(await screen.findByRole('button', { name: mode }));
+}
+
+function switchViewFireEvent(mode: 'Markdown view' | 'Dock view') {
+  if (!screen.queryByRole('button', { name: mode })) {
+    fireEvent.click(screen.getByRole('button', { name: /Canvas menu/i }));
+  }
+  fireEvent.click(screen.getByRole('button', { name: mode }));
+}
+
 describe('WorkCanvasDocumentPanel', () => {
   beforeEach(() => {
     vi.useRealTimers();
     window.localStorage.clear();
+    // The rich TipTap editor became the default Canvas view mode. These tests
+    // assert against the document/MD views, so pin the persisted mode to
+    // 'document' to render the document UI the tests query.
+    window.localStorage.setItem('workCanvas.viewMode.v2', 'document');
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     Object.defineProperty(navigator, 'clipboard', {
@@ -36,17 +61,17 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.getByLabelText('Canvas document title')).toHaveValue('Company Work Note');
     expect(screen.getByTestId('canvas-workspace-actions')).toBeInTheDocument();
     expect(screen.getByTestId('canvas-output-actions')).toBeInTheDocument();
-    expect(screen.getByTestId('canvas-view-actions')).toBeInTheDocument();
     expect(screen.getByTestId('canvas-file-actions')).toBeInTheDocument();
     expect(screen.queryByText('Start pracy')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Open Canvas templates/i }));
-    expect(await screen.findByText('DBR77 work templates')).toBeInTheDocument();
-    expect(screen.getByText(/decision, initiative, report, or presentation/i)).toBeInTheDocument();
+    // The view toggle, capability badges and starter templates now live inside
+    // the Canvas menu (the "Canvas menu" / MoreHorizontal control).
+    await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
+    expect(await screen.findByTestId('canvas-view-actions')).toBeInTheDocument();
     expect(screen.getByTestId('canvas-template-capability-document')).toHaveTextContent('Real');
     expect(screen.getByTestId('canvas-template-capability-research')).toHaveTextContent('Partial');
 
-    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+    await switchView(user, 'Markdown view');
 
     const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
     expect(mdView.value).toContain('# Company Work Note');
@@ -58,7 +83,7 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
 
     expect(await screen.findByTestId('canvas-capability-status')).toHaveTextContent('Real');
     expect(screen.getByTestId('canvas-capability-note')).toHaveTextContent(
@@ -127,14 +152,14 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: /Open Canvas templates/i }));
+    await user.click(screen.getByRole('button', { name: /New Canvas/i }));
     await user.click(screen.getByRole('button', { name: /Zrób research/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/research/sessions', expect.any(Object)));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object))
     );
-    await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
     expect(await screen.findByTestId('canvas-research-session-id')).toHaveTextContent('rs-canvas-1');
   });
 
@@ -169,14 +194,16 @@ describe('WorkCanvasDocumentPanel', () => {
 
     render(<WorkCanvasDocumentPanel />);
 
-    await user.click(await screen.findByRole('button', { name: 'Export Markdown' }));
+    // Export actions now live inside the Canvas menu, renamed to "Download …".
+    await user.click(await screen.findByRole('button', { name: /Canvas menu/i }));
+    await user.click(await screen.findByRole('button', { name: 'Download Markdown' }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/work-canvas/drafts/draft-1/export?format=markdown',
         expect.any(Object)
       )
     );
-    await user.click(screen.getByRole('button', { name: 'Export CSV' }));
+    await user.click(screen.getByRole('button', { name: 'Download CSV' }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/work-canvas/drafts/draft-1/export?format=csv',
@@ -201,9 +228,8 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(await screen.findByText('Define the business question.')).toBeInTheDocument();
     expect(screen.getAllByRole('checkbox').length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole('button', { name: /Open Canvas templates/i }));
-    expect(await screen.findByTestId('canvas-templates-menu')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Zrób research/i }));
+    await user.click(screen.getByRole('button', { name: /New Canvas/i }));
+    await user.click(await screen.findByRole('button', { name: /Zrób research/i }));
 
     expect(await screen.findByRole('columnheader', { name: 'Dimension' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Definition' })).toBeInTheDocument();
@@ -446,7 +472,7 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
     await user.click(screen.getByRole('button', { name: 'Finalize research report' }));
     expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
       'Research final report recorded (report-draft-1) with 1 evidence block.'
@@ -584,7 +610,7 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+    await switchView(user, 'Markdown view');
 
     const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
     const selected = 'Define the business question.';
@@ -609,7 +635,7 @@ describe('WorkCanvasDocumentPanel', () => {
     await user.click(await screen.findByRole('button', { name: /Apply Research from selection/i }));
     await user.click(within(blockActions).getByRole('button', { name: 'Create decision' }));
     await user.click(await screen.findByRole('button', { name: /Apply Decision from selection/i }));
-    await user.click(screen.getByRole('button', { name: 'Dock view' }));
+    await switchView(user, 'Dock view');
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/work-canvas/drafts/draft-1/operations',
@@ -707,7 +733,7 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+    await switchView(user, 'Markdown view');
 
     const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
     const selected = 'Define the business question.';
@@ -809,7 +835,7 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+    await switchView(user, 'Markdown view');
 
     const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
     const selected = 'Define the business question.';
@@ -1591,7 +1617,7 @@ describe('WorkCanvasDocumentPanel', () => {
 
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Canvas menu' }));
     await user.selectOptions(screen.getByLabelText('Workflow template'), 'client_proposal_to_deck');
     expect(
       screen.getByText('Proposal storyline, deck outline and presentation output.')
@@ -1680,19 +1706,21 @@ describe('WorkCanvasDocumentPanel', () => {
     };
     let resolveCreateWorkflow: ((response: Response) => void) | null = null;
     const fetchMock = vi.fn(async (url: string) => {
-      if (url === '/api/work-canvas/drafts') {
+      if (url === '/api/work-canvas/drafts?conversationId=conv-1') {
         return {
           ok: true,
           json: async () => ({
-            data: {
-              id: 'draft-1',
-              title: 'Company Work Note',
-              contentMd: '# Company Work Note',
-              blocks: [],
-              saveState: 'saved',
-              lifecycleState: 'draft',
-              markdownProjectionStatus: 'synced',
-            },
+            data: [
+              {
+                id: 'draft-1',
+                title: 'Company Work Note',
+                contentMd: '# Company Work Note',
+                blocks: [],
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+              },
+            ],
           }),
         } as Response;
       }
@@ -1707,7 +1735,7 @@ describe('WorkCanvasDocumentPanel', () => {
 
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Canvas menu' }));
     await user.click(screen.getByRole('button', { name: 'Start workflow' }));
 
     const startingButton = await screen.findByRole('button', { name: 'Starting...' });
@@ -1779,7 +1807,7 @@ describe('WorkCanvasDocumentPanel', () => {
 
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Canvas menu' }));
     await user.click(screen.getByRole('button', { name: 'Start workflow' }));
 
     expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
@@ -1893,7 +1921,7 @@ describe('WorkCanvasDocumentPanel', () => {
 
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Canvas menu' }));
     await user.click(screen.getByRole('button', { name: 'Start workflow' }));
     const reviewerInput = await screen.findByLabelText('Reviewer for Market research to report');
     expect(reviewerInput).toHaveValue('reviewer-1');
@@ -1988,19 +2016,21 @@ describe('WorkCanvasDocumentPanel', () => {
     };
     let resolveRunNext: ((response: Response) => void) | null = null;
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url === '/api/work-canvas/drafts') {
+      if (url === '/api/work-canvas/drafts?conversationId=conv-1') {
         return {
           ok: true,
           json: async () => ({
-            data: {
-              id: 'draft-1',
-              title: 'Company Work Note',
-              contentMd: '# Company Work Note',
-              blocks: [],
-              saveState: 'saved',
-              lifecycleState: 'draft',
-              markdownProjectionStatus: 'synced',
-            },
+            data: [
+              {
+                id: 'draft-1',
+                title: 'Company Work Note',
+                contentMd: '# Company Work Note',
+                blocks: [],
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                markdownProjectionStatus: 'synced',
+              },
+            ],
           }),
         } as Response;
       }
@@ -2038,7 +2068,7 @@ describe('WorkCanvasDocumentPanel', () => {
 
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Canvas diagnostics' }));
+    await user.click(screen.getByRole('button', { name: 'Canvas menu' }));
     await user.click(screen.getByRole('button', { name: 'Start workflow' }));
 
     await user.click(await screen.findByRole('button', { name: 'Approve and run' }));
@@ -2123,7 +2153,7 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel onActiveDocumentChange={onActiveDocumentChange} />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: /Open Canvas templates/i }));
+    await user.click(screen.getByRole('button', { name: /New Canvas/i }));
     await user.click(screen.getByRole('button', { name: /Przygotuj decyzję/i }));
 
     expect(await screen.findByTestId('canvas-active-title')).toHaveValue('Decision Memo');
@@ -2147,7 +2177,10 @@ describe('WorkCanvasDocumentPanel', () => {
       'unsaved'
     );
 
-    await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
+    // Save/projection/action diagnostics now live under the collapsible
+    // "Właściwości pliku MD" section inside the Canvas menu.
+    await user.click(screen.getByRole('button', { name: /Właściwości pliku MD/i }));
     expect(screen.getByTestId('canvas-diagnostics-save-state')).toHaveTextContent(
       'Unsaved changes'
     );
@@ -2170,7 +2203,7 @@ describe('WorkCanvasDocumentPanel', () => {
 
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+    await switchView(user, 'Markdown view');
     await user.type(screen.getByTestId('canvas-md-view'), '\nNew note');
 
     expect(screen.getByRole('button', { name: /Save Canvas document/i })).toHaveAttribute(
@@ -2196,7 +2229,7 @@ describe('WorkCanvasDocumentPanel', () => {
     const { unmount } = render(<WorkCanvasDocumentPanel />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+    await switchView(user, 'Markdown view');
     expect(await screen.findByTestId('canvas-md-view')).toBeInTheDocument();
 
     unmount();
@@ -2276,7 +2309,9 @@ describe('WorkCanvasDocumentPanel', () => {
     );
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
+    // Projection status lives under the collapsible "Właściwości pliku MD" section.
+    await user.click(screen.getByRole('button', { name: /Właściwości pliku MD/i }));
     expect(await screen.findByTestId('canvas-projection-status')).toHaveTextContent(
       'Projection failed'
     );
@@ -2363,8 +2398,10 @@ describe('WorkCanvasDocumentPanel', () => {
     await screen.findByTestId('canvas-document-view');
     await user.click(screen.getByRole('button', { name: /Send to idea/i }));
 
+    // Workspace handoff feedback now links to the resource instead of echoing
+    // the raw id: "… saved to idea. [Open →](/my-work?ideaId=idea-1)".
     expect(await screen.findByTestId('canvas-action-feedback')).toHaveTextContent(
-      'Company Work Note saved to idea. idea-1'
+      'Company Work Note saved to idea. [Open →](/my-work?ideaId=idea-1)'
     );
 
     await user.click(screen.getByRole('button', { name: /Create presentation/i }));
@@ -2379,8 +2416,13 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(
       screen.queryByRole('button', { name: /Share Canvas document/i })
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Open document folder/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Upload files/i })).toBeInTheDocument();
+    // The standalone "Open document folder" and "Upload files" toolbar buttons
+    // were removed in the rich-editor rollout; dataset upload now lives behind
+    // the Canvas menu ("Upload dataset") and the document folder action is gone.
+    expect(
+      screen.queryByRole('button', { name: /Open document folder/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Upload files/i })).not.toBeInTheDocument();
   });
 
   it('renders Canvas action failures as safe alerts without backend details', async () => {
@@ -2425,7 +2467,7 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel onCanvasSelectionChange={onCanvasSelectionChange} />);
 
     await screen.findByTestId('canvas-document-view');
-    await user.click(screen.getByRole('button', { name: 'Markdown view' }));
+    await switchView(user, 'Markdown view');
     const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
     const selected = 'Operating workspace';
     const start = mdView.value.indexOf(selected);
@@ -2462,11 +2504,17 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
 
     await screen.findByTestId('canvas-document-view');
-    fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
+    switchViewFireEvent('Markdown view');
     fireEvent.click(screen.getByRole('button', { name: /Save Canvas document/i }));
+    // Wait for the manual save to settle so the draft id is hydrated before the
+    // autosave path (which only fires once a draftId exists) is exercised.
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object))
+      expect(screen.getByRole('button', { name: /Save Canvas document/i })).toHaveAttribute(
+        'data-save-state',
+        'saved'
+      )
     );
+    expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object));
 
     const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
     fireEvent.change(mdView, { target: { value: `${mdView.value}\nAutosaved` } });
@@ -2521,11 +2569,17 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
 
     await screen.findByTestId('canvas-document-view');
-    fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
+    switchViewFireEvent('Markdown view');
     fireEvent.click(screen.getByRole('button', { name: /Save Canvas document/i }));
+    // Let the initial save settle so the draft id is hydrated before the
+    // autosave conflict path runs.
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object))
+      expect(screen.getByRole('button', { name: /Save Canvas document/i })).toHaveAttribute(
+        'data-save-state',
+        'saved'
+      )
     );
+    expect(fetchMock).toHaveBeenCalledWith('/api/work-canvas/drafts', expect.any(Object));
 
     const mdView = screen.getByTestId('canvas-md-view') as HTMLTextAreaElement;
     fireEvent.change(mdView, { target: { value: '# Company Work Note\nLocal conflict edit' } });
@@ -2587,7 +2641,7 @@ describe('WorkCanvasDocumentPanel', () => {
 
     await screen.findByTestId('canvas-document-view');
 
-    fireEvent.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Canvas menu/i }));
     fireEvent.click(await screen.findByRole('button', { name: 'Versions' }));
 
     expect(await screen.findByText('replace_selection')).toBeInTheDocument();
@@ -2656,9 +2710,12 @@ describe('WorkCanvasDocumentPanel', () => {
     render(<WorkCanvasDocumentPanel conversationId="conv-1" />);
 
     await screen.findByTestId('canvas-document-view');
-    fireEvent.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Canvas menu/i }));
     fireEvent.click(await screen.findByRole('button', { name: 'Versions' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Restore' }));
+    // The version timeline now renders a stepper Restore plus a per-version
+    // Restore; both target the single version-1, so use the first match.
+    await screen.findAllByRole('button', { name: 'Restore' });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Restore' })[0]);
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
@@ -2668,7 +2725,7 @@ describe('WorkCanvasDocumentPanel', () => {
     );
     expect(await screen.findByText(/Restored Canvas version/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
+    switchViewFireEvent('Markdown view');
     expect(((await screen.findByTestId('canvas-md-view')) as HTMLTextAreaElement).value).toContain(
       'Restored content'
     );

@@ -203,14 +203,9 @@ describe('P01 §2.3.4 — Operator surfaces', () => {
     expect(content.length).toBeGreaterThan(200);
   });
 
-  it('UnifiedSyncHub frontend component exists', async () => {
-    const fs = await import('fs');
-    const content = fs.readFileSync(
-      'src/components/Admin/UnifiedSyncHub.tsx', 'utf-8'
-    );
-    expect(content).toContain('Sync');
-    expect(content.length).toBeGreaterThan(200);
-  });
+  // NOTE: UnifiedSyncHub was removed as a dead-code orphan (admin "to-100" cleanup,
+  // commit 64dd0036c6). It was never rendered from the live /admin/* shell
+  // (AdminSettingsModule, 5 panels). The "component exists" assertion is obsolete.
 
   it('RunHistoryPanel exists in table platform connectors', async () => {
     const fs = await import('fs');

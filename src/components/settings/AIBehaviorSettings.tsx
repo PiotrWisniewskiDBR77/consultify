@@ -16,6 +16,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
@@ -236,14 +238,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
 
   return (
     <div className={className}>
-      {actionError && (
-        <div
-          role="alert"
-          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} className="mb-4" />}
 
       <SettingsSection
         icon={MessageSquare}
@@ -261,7 +256,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
         <div className="space-y-6">
           {/* Quick Templates */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-3">
+            <label className="block text-sm font-medium text-slate-600 mb-3">
               {t('settings.ai.quickTemplates', 'Quick Templates')}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -270,7 +265,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                   key={tpl.id}
                   onClick={() => applyTemplate(tpl)}
                   className="flex items-center gap-2 px-3 py-1.5 bg-navy-700/50 hover:bg-navy-700
-                    border border-white/10 rounded-lg text-sm text-slate-300
+                    border border-white/10 rounded-lg text-sm text-slate-600
                     hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />

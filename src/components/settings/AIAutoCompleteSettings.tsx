@@ -15,6 +15,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
@@ -114,14 +116,7 @@ export const AIAutoCompleteSettings: React.FC<{ className?: string }> = ({ class
 
   return (
     <div className={className}>
-      {actionError && (
-        <div
-          role="alert"
-          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} className="mb-4" />}
 
       <SettingsSection
         icon={Zap}

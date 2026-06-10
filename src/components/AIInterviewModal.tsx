@@ -1,10 +1,10 @@
-import { Bot, CheckCircle, Send, User, X } from 'lucide-react';
+import { CheckCircle, Send, User, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Agent } from '@/services/ai/agent';
 
 import { useAppStore } from '../store/useAppStore';
-
+import TeresaMark from './shared/TeresaMark';
 interface AIInterviewModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -100,7 +100,7 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
         {/* Header */}
         <div className="p-4 bg-indigo-600 flex justify-between items-center text-white">
           <div className="flex items-center gap-2">
-            <Bot size={20} />
+            <TeresaMark size={20} />
             <h3 className="font-bold">AI Auditor: {axisLabel}</h3>
           </div>
           <button onClick={onClose} className="hover:bg-indigo-500 p-1 rounded transition">
@@ -115,7 +115,7 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.role === 'user' ? 'bg-slate-300 text-slate-600 dark:text-slate-400' : 'bg-indigo-600 text-white'}`}
               >
-                {m.role === 'user' ? <User size={14} /> : <Bot size={14} />}
+                {m.role === 'user' ? <User size={14} /> : <TeresaMark size={14} />}
               </div>
               <div
                 className={`p-3 rounded-xl max-w-[80%] text-sm ${m.role === 'user' ? 'bg-white border border-slate-200 dark:border-navy-700 text-slate-800 dark:text-slate-200 rounded-tr-none' : 'bg-indigo-600 text-white rounded-tl-none'}`}
@@ -127,7 +127,7 @@ export const AIInterviewModal: React.FC<AIInterviewModalProps> = ({
           {isLoading && (
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
-                <Bot size={14} className="text-white" />
+                <TeresaMark size={14} className="text-white" />
               </div>
               <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl rounded-tl-none">
                 <div className="flex gap-1">

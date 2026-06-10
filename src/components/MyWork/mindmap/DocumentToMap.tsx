@@ -99,7 +99,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -108,7 +108,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
         <div className="px-5 py-4">
           {/* File upload */}
           <label className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-slate-300/60 dark:border-navy-600/60 hover:border-blue-400/60 transition-colors cursor-pointer mb-3">
-            <Upload size={16} className="text-slate-400" />
+            <Upload size={16} className="text-slate-600" />
             <span className="text-[11px] text-slate-500 dark:text-slate-400">
               {isPl ? 'Załaduj plik .txt lub .md' : 'Upload .txt or .md file'}
             </span>
@@ -145,7 +145,7 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           {/* Extracted ideas */}
           {extractedIdeas.length > 0 && (
             <div>
-              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+              <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
                 {isPl ? 'Wyodrębnione pomysły' : 'Extracted ideas'} ({extractedIdeas.length})
               </div>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">

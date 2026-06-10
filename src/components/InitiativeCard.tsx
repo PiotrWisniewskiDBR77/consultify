@@ -56,7 +56,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
   const getStatusColor = (status: InitiativeStatus) => {
     switch (status) {
       case InitiativeStatus.DRAFT:
-        return 'bg-slate-500/10 text-slate-400 dark:text-slate-500 border-slate-500/20';
+        return 'bg-slate-500/10 text-slate-600 dark:text-slate-500 border-slate-500/20';
       case InitiativeStatus.PLANNING:
         return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
       case InitiativeStatus.REVIEW:
@@ -70,11 +70,11 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case InitiativeStatus.DONE:
         return 'bg-green-500/10 text-green-400 border-green-500/20';
       case InitiativeStatus.CANCELLED:
-        return 'bg-slate-300/10 text-slate-400 dark:text-slate-500 border-slate-300 dark:border-navy-700/20';
+        return 'bg-slate-300/10 text-slate-600 dark:text-slate-500 border-slate-300 dark:border-navy-700/20';
       case InitiativeStatus.ARCHIVED:
         return 'bg-slate-200/10 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-navy-700/20';
       default:
-        return 'bg-slate-500/10 text-slate-400 dark:text-slate-500';
+        return 'bg-slate-500/10 text-slate-600 dark:text-slate-500';
     }
   };
 
@@ -107,7 +107,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       case 'Build Capability':
         return 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20';
       default:
-        return 'bg-slate-500/10 text-slate-400 dark:text-slate-500 border-slate-500/20';
+        return 'bg-slate-500/10 text-slate-600 dark:text-slate-500 border-slate-500/20';
     }
   };
 
@@ -232,7 +232,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             )}
 
             {initiative.axis && (
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-white dark:bg-navy-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-white/10">
+              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-500 border-slate-200 dark:border-white/10">
                 Axis{' '}
                 {typeof initiative.axis === 'object'
                   ? `${initiative.axis.x}, ${initiative.axis.y}`
@@ -254,8 +254,8 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       {/* Hover Preview: Effort & Reason (Expanded) */}
       <div className="max-h-0 overflow-hidden group-hover:max-h-60 transition-all duration-500 ease-in-out">
         {/* Footer / Metrics */}
-        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-navy-700 flex justify-between items-center relative z-20">
-          <div className="flex gap-2 text-[10px] text-slate-400 dark:text-slate-500">
+        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700 flex justify-between items-center relative z-20">
+          <div className="flex gap-2 text-[10px] text-slate-600 dark:text-slate-500">
             <span>
               {initiative.effortProfile
                 ? `${(initiative.effortProfile.analytical || 0) + (initiative.effortProfile.operational || 0) + (initiative.effortProfile.change || 0)}pts`
@@ -281,11 +281,11 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             </button>
           </div>
         </div>
-        <div className="pb-4 space-y-3 border-t border-slate-100 dark:border-navy-700 pt-3 mt-2">
+        <div className="pb-4 space-y-3 border-t border-slate-200 dark:border-navy-700 pt-3 mt-2">
           {/* PRO MAX: Effort Profile Bars */}
           {initiative.effortProfile && (
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase">
                 Effort Profile
               </span>
               <div className="grid grid-cols-3 gap-2">
@@ -383,7 +383,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-2 border border-slate-100 dark:border-navy-700">
+        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-2 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-0.5">
             <DollarSign size={10} />
             <span className="text-[9px] uppercase font-bold tracking-wide">Budget</span>
@@ -395,7 +395,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-2 border border-slate-100 dark:border-navy-700">
+        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-2 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-0.5">
             <TrendingUp size={10} />
             <span className="text-[9px] uppercase font-bold tracking-wide">ROI</span>
@@ -405,7 +405,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           </div>
         </div>
 
-        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-2 border border-slate-100 dark:border-navy-700">
+        <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-2 border border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 mb-0.5">
             <Users size={10} />
             <span className="text-[9px] uppercase font-bold tracking-wide">Team</span>
@@ -423,7 +423,7 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       </div>
 
       {/* Progress Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-navy-700">
+      <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
           <div
             className={`flex items-center gap-1 ${initiative.status !== InitiativeStatus.PLANNING && initiative.status !== InitiativeStatus.DRAFT ? 'text-blue-500' : ''}`}
@@ -492,13 +492,13 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
             <button
               onClick={handleEnrich}
               disabled={isEnriching}
-              className={`text-[10px] px-2 py-1 rounded border transition-colors flex items-center gap-1 ${isEnriching ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`text-[10px] px-2 py-1 rounded border transition-colors flex items-center gap-1 ${isEnriching ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-500 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-navy-800/40 hover:text-slate-900 dark:hover:text-white'}`}
             >
               {isEnriching ? <span className="animate-spin">⟳</span> : <Globe size={10} />}
               {isEnriching ? 'AI Analyzing...' : 'Analyze'}
             </button>
           )}
-          <button className="text-slate-400 dark:text-slate-500 hover:text-blue-400 transition-colors">
+          <button className="text-slate-600 dark:text-slate-500 hover:text-blue-400 transition-colors">
             <ChevronRight size={16} />
           </button>
         </div>

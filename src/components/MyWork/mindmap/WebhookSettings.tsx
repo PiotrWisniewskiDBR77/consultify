@@ -131,7 +131,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -140,8 +140,8 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto space-y-4">
           {webhooks.length === 0 && (
             <div className="text-center py-6">
-              <Bell size={28} className="text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-              <p className="text-[10px] text-slate-400 mb-3">
+              <Bell size={28} className="text-slate-600 dark:text-slate-400 mx-auto mb-2" />
+              <p className="text-[10px] text-slate-600 mb-3">
                 {isPl ? 'Brak skonfigurowanych webhooków.' : 'No webhooks configured.'}
               </p>
             </div>
@@ -166,7 +166,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                     onChange={(e) => updateWebhook(wh.id, { enabled: e.target.checked })}
                     className="w-3 h-3 rounded"
                   />
-                  <span className="text-[9px] text-slate-400">{isPl ? 'Aktywny' : 'Active'}</span>
+                  <span className="text-[9px] text-slate-600">{isPl ? 'Aktywny' : 'Active'}</span>
                 </label>
                 <button
                   onClick={() => removeWebhook(wh.id)}
@@ -186,7 +186,7 @@ export const WebhookSettings: React.FC<WebhookSettingsProps> = ({ open, onClose,
                   <button
                     key={evt}
                     onClick={() => toggleEvent(wh.id, evt)}
-                    className={`px-2 py-0.5 rounded-md text-[8px] font-bold transition-colors ${wh.events.includes(evt) ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'bg-slate-100 dark:bg-navy-800 text-slate-400'}`}
+                    className={`px-2 py-0.5 rounded-md text-[8px] font-bold transition-colors ${wh.events.includes(evt) ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'bg-slate-100 dark:bg-navy-800 text-slate-600'}`}
                   >
                     {evt.replace(/_/g, ' ')}
                   </button>

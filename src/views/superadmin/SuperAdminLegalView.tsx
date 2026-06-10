@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { LegalDocType } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -256,11 +257,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

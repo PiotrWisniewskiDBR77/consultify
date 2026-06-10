@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
+import { BillingFeaturePending } from '../../../components/billing/BillingFeaturePending';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
+import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 
 interface SubscriptionChange {
   id: string;
@@ -33,16 +36,23 @@ interface SubscriptionChangeStats {
 }
 
 export const SubscriptionChangesView: React.FC = () => {
+  // Decision D8: subscription-changes endpoints return 503 until built out.
+  const billingAnalyticsEnabled = isBillingSelfServeEnabled();
   const [changes, setChanges] = useState<SubscriptionChange[]>([]);
   const [stats, setStats] = useState<SubscriptionChangeStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(billingAnalyticsEnabled);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
   useEffect(() => {
+    if (!billingAnalyticsEnabled) return;
     fetchData();
-  }, [statusFilter, typeFilter]);
+  }, [statusFilter, typeFilter, billingAnalyticsEnabled]);
+
+  if (!billingAnalyticsEnabled) {
+    return <BillingFeaturePending />;
+  }
 
   const fetchData = async () => {
     try {
@@ -90,7 +100,7 @@ export const SubscriptionChangesView: React.FC = () => {
       cancel: { bg: 'bg-rose-500/20', text: 'text-rose-400' },
       reactivate: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
     };
-    const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-400' };
+    const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-600' };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
         {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -107,7 +117,7 @@ export const SubscriptionChangesView: React.FC = () => {
     };
     const badge = badges[status] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
     };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
@@ -124,11 +134,7 @@ export const SubscriptionChangesView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -313,7 +319,7 @@ export const SubscriptionChangesView: React.FC = () => {
           </div>
 
           {changes.length === 0 && (
-            <div className="text-center py-8 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-gray-600 dark:text-gray-500 dark:text-gray-400">
               No subscription changes found
             </div>
           )}

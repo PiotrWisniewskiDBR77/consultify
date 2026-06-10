@@ -198,7 +198,7 @@ export const DecisionReviewNext: React.FC<DecisionReviewNextProps> = ({
                   <button
                     key={String(it.id)}
                     onClick={() => setSelectedIdx(idx)}
-                    className={`w-full text-left px-3 py-2 border-b border-slate-100 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-900 ${
+                    className={`w-full text-left px-3 py-2 border-b border-slate-200 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-900 ${
                       idx === selectedIdx ? 'bg-primary-50 dark:bg-primary-500/10' : ''
                     }`}
                   >

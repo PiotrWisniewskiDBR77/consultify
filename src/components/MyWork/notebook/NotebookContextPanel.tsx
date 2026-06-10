@@ -546,13 +546,13 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
             </div>
           ) : null}
           {badge ? (
-            <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 capitalize">
+            <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-500 capitalize">
               {badge}
             </div>
           ) : null}
         </div>
         <button
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
           title={pl ? 'Akcje' : 'Actions'}
           onClick={onInsert}
         >
@@ -599,7 +599,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       <div className="flex-1 overflow-y-auto nb-scroll">
         {loading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 size={18} className="animate-spin text-slate-400" />
+            <Loader2 size={18} className="animate-spin text-slate-600" />
           </div>
         ) : (
           <>
@@ -633,11 +633,11 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                 {chip?.snippet || x.sourceId}
                               </div>
                               {chip?.status ? (
-                                <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                <div className="mt-1 text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                                   {chip.status}
                                 </div>
                               ) : null}
-                              <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                              <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-500 truncate">
                                 {x.sourceType} · {x.sourceId}
                               </div>
                             </div>

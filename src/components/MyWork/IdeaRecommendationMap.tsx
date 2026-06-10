@@ -3,7 +3,6 @@ import './mindmap/mindmap-effects.css';
 
 import {
   AlertTriangle,
-  Bot,
   ChevronDown,
   ChevronRight,
   ExternalLink,
@@ -52,7 +51,9 @@ import {
   getArtifactPath,
 } from '@/utils/artifactLinks';
 
+import TeresaMark from '../shared/TeresaMark';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   IDEA_STAGE_COLORS,
   IDEA_STAGE_LABELS,
@@ -146,7 +147,6 @@ import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
-
 type IdeaNodeData = NodeDetailData & {
   _depth?: number;
 };
@@ -1097,14 +1097,13 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     );
   }, [data.label, id]);
 
-  const handleDoubleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setEditValue(String(data.label || ''));
-      setEditing(true);
-    },
-    [data.label]
-  );
+  const labelRef = useRef(data.label);
+  labelRef.current = data.label;
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditValue(String(labelRef.current || ''));
+    setEditing(true);
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -1397,19 +1396,19 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               <div className="flex items-start gap-1.5">
                 <div className="flex-shrink-0 mt-0.5">
                   {isAI ? (
-                    <Bot size={10} className="text-primary-500" />
+                    <TeresaMark size={10} className="text-primary-500" />
                   ) : (
                     <Lightbulb size={10} className="text-amber-500" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div
-                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-400 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
+                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-600 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
                   >
                     {data.label || (isPl ? 'Kliknij, aby wpisać…' : 'Click to type…')}
                   </div>
                   {data.nodeType && (
-                    <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
+                    <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
                       {String(data.nodeType).replace(/_/g, ' ')}
                     </div>
                   )}
@@ -1434,7 +1433,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                           </span>
                         ))}
                       {Array.isArray(data.tags) && data.tags.length > 2 && (
-                        <span className="rounded-full bg-slate-200/80 dark:bg-white/[0.06] px-1.5 py-0.5 text-[7px] font-bold text-slate-400 dark:text-slate-500">
+                        <span className="rounded-full bg-slate-200/80 dark:bg-white/[0.06] px-1.5 py-0.5 text-[7px] font-bold text-slate-600 dark:text-slate-500">
                           +{data.tags.length - 2}
                         </span>
                       )}
@@ -1458,7 +1457,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                       new CustomEvent('mm-toggle-collapse', { detail: { nodeId: id } })
                     );
                   }}
-                  className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
+                  className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-600 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
                   title={
                     data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : isPl ? 'Zwiń' : 'Collapse'
                   }
@@ -1471,7 +1470,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               )}
               {/* Depth context snippet */}
               {(data.context || data.goal) && (
-                <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1 italic">
+                <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5 line-clamp-1 italic">
                   {data.goal ? `🎯 ${data.goal}` : data.context}
                 </div>
               )}
@@ -1511,7 +1510,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 )}
                 {depth > 0 && (
                   <div
-                    className="text-[8px] text-slate-400 dark:text-slate-500 ml-auto"
+                    className="text-[8px] text-slate-600 dark:text-slate-500 ml-auto"
                     title={`Depth ${depth}`}
                   >
                     L{depth}
@@ -1631,7 +1630,7 @@ function MindMapInner({
   const debugEnabled = false;
   const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } =
     useReactFlow();
-  const { autoLayout } = useAutoLayout();
+  const { autoLayout, partialLayoutSubtree } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
   const { exportAsPdf } = useMapExportPdf();
   const interactionMode = externalInteractionMode;
@@ -2456,12 +2455,16 @@ function MindMapInner({
   });
 
   const debouncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  nodesRef.current = nodes;
+  edgesRef.current = edges;
   const debouncedSave = useCallback(() => {
     if (debouncedSaveTimerRef.current) clearTimeout(debouncedSaveTimerRef.current);
     debouncedSaveTimerRef.current = setTimeout(() => {
-      scheduleSave(nodes as any, edges as any);
+      scheduleSave(nodesRef.current as any, edgesRef.current as any);
     }, 500);
-  }, [scheduleSave, nodes, edges]);
+  }, [scheduleSave]);
 
   useEffect(() => {
     return () => {
@@ -2509,6 +2512,7 @@ function MindMapInner({
     fitView,
     remoteLockedNodeIds,
     autoLayout,
+    partialLayoutSubtree,
   });
 
   // ── AI Sidekick context detection ──────────────────────────────────────
@@ -3087,6 +3091,22 @@ function MindMapInner({
           void externalRuntime.flushGraph({ reason: 'manual' });
         }
         return;
+      }
+      // A6: Shift+1 = zoom to fit (shared cross-tool shortcut, FigJam-style).
+      // e.code is layout-independent (Shift+1 yields "!" as e.key on most layouts).
+      if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        const t = e.target as HTMLElement | null;
+        const typing =
+          !!t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
+        if (!typing) {
+          e.preventDefault();
+          try {
+            fitView({ padding: 0.3, duration: 300 });
+          } catch {
+            /* */
+          }
+          return;
+        }
       }
       if ((e.metaKey || e.ctrlKey) && e.key === '0') {
         e.preventDefault();
@@ -5009,7 +5029,7 @@ function MindMapInner({
           {showClose && (
             <button
               onClick={onClose}
-              className="p-0.5 rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
+              className="p-0.5 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
               title={isPolish ? 'Zamknij mapę' : 'Close map'}
             >
               <X size={12} />
@@ -5021,7 +5041,7 @@ function MindMapInner({
           <span className="hidden sm:inline-flex rounded-full border border-slate-200/80 dark:border-navy-700 px-2 py-0.5 text-[9px] text-slate-500 dark:text-slate-400 shrink-0">
             {interactionModeLabel}
           </span>
-          <span className="text-[9px] text-slate-400 dark:text-slate-500 shrink-0">
+          <span className="text-[9px] text-slate-600 dark:text-slate-500 shrink-0">
             {savedLabel}
           </span>
         </div>
@@ -5080,23 +5100,12 @@ function MindMapInner({
               onNodeDragStop={onNodeDragStop}
               nodeTypes={reactFlowNodeTypes}
               edgeTypes={reactFlowEdgeTypes}
-              nodesConnectable={!locked && interactionMode === 'connect'}
-              nodesDraggable={!locked && interactionMode === 'select'}
-              panOnDrag={interactionMode === 'pan'}
-              selectionOnDrag={interactionMode === 'select'}
-              nodesFocusable
-              edgesFocusable
-              connectionMode={ConnectionMode.Loose}
-              fitViewOptions={reactFlowFitViewOptions}
-              minZoom={0.1}
-              maxZoom={3}
-              proOptions={reactFlowProOptions}
+              {...getIdeasToolInteractionProps('mindmap', {
+                locked,
+                connectMode: interactionMode === 'connect',
+              })}
               className={`bg-slate-50 dark:bg-navy-950 ${
-                interactionMode === 'pan'
-                  ? 'cursor-grab active:cursor-grabbing'
-                  : interactionMode === 'connect'
-                    ? 'cursor-crosshair'
-                    : 'cursor-default'
+                interactionMode === 'connect' ? 'cursor-crosshair' : 'cursor-default'
               }`}
               aria-label={
                 isPolish
@@ -6029,7 +6038,7 @@ function MindMapInner({
             className="w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl dark:border-navy-700 dark:bg-navy-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-600">
               {isPolish ? 'Format eksportu' : 'Export format'}
             </div>
             {[
@@ -6243,7 +6252,7 @@ function MindMapInner({
                 </button>
               </div>
             </div>
-            <div className="mt-2 space-y-1 text-[9px] text-slate-300">
+            <div className="mt-2 space-y-1 text-[9px] text-slate-600">
               <div>last input: {lastInputSummaryRef.current}</div>
               <div>last handler: {lastHandlerSummaryRef.current}</div>
               {debugPaused && (
@@ -6255,7 +6264,7 @@ function MindMapInner({
           {debugOverlayExpanded && (
             <div className="max-h-[38vh] overflow-y-auto px-2 py-2">
               {debugEntries.length === 0 ? (
-                <div className="px-2 py-3 text-slate-400">No events yet.</div>
+                <div className="px-2 py-3 text-slate-600">No events yet.</div>
               ) : (
                 debugEntries.map((entry) => {
                   const lineClass =
@@ -6287,7 +6296,7 @@ function MindMapInner({
                         <span className="break-words">{entry.message}</span>
                       </div>
                       {entry.detail && (
-                        <div className="mt-0.5 pl-[88px] text-slate-400 break-words">
+                        <div className="mt-0.5 pl-[88px] text-slate-600 break-words">
                           {entry.detail}
                         </div>
                       )}

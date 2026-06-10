@@ -25,11 +25,11 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
       <div className="grid gap-2.5">
         <div className="rounded-lg border border-white/10 bg-white/[0.04] p-2.5">
           <div className="flex items-center gap-1.5 font-mono text-[8px] uppercase tracking-wider text-white/40">
-            <Users size={10} className="text-slate-300" />
+            <Users size={10} className="text-slate-600" />
             {t('myWork.radar.teamReadout')}
           </div>
           <div className="mt-1 text-sm font-semibold text-white">{payload.headline}</div>
-          <div className="mt-0.5 text-[11px] leading-relaxed text-slate-300/75">
+          <div className="mt-0.5 text-[11px] leading-relaxed text-slate-600/75">
             {payload.summary}
           </div>
         </div>
@@ -59,7 +59,7 @@ export const TeamSignalBlock: React.FC<TeamSignalBlockProps> = ({ block, onActio
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-white">{signal.title}</div>
-                <div className="mt-1 text-xs leading-6 text-slate-300/70">{signal.detail}</div>
+                <div className="mt-1 text-xs leading-6 text-slate-600/70">{signal.detail}</div>
               </div>
               <ArrowRight size={16} className="text-white/30" />
             </button>

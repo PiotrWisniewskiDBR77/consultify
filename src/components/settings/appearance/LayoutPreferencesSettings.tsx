@@ -27,6 +27,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
@@ -144,11 +146,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -244,7 +242,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                       className={
                         settings.sidebarPosition === pos.id
                           ? 'text-blue-600 mx-auto'
-                          : 'text-slate-400 dark:text-slate-500 mx-auto'
+                          : 'text-slate-600 dark:text-slate-500 mx-auto'
                       }
                     />
                     <p className="font-medium text-slate-900 dark:text-white mt-2">{pos.label}</p>
@@ -294,7 +292,7 @@ export const LayoutPreferencesSettings: React.FC<LayoutPreferencesSettingsProps>
                 className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg"
               >
                 <div className="flex items-center gap-3">
-                  <Icon size={18} className="text-slate-400 dark:text-slate-500" />
+                  <Icon size={18} className="text-slate-600 dark:text-slate-500" />
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">{item.label}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{item.desc}</p>

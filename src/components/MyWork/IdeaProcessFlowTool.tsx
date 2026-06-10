@@ -21,7 +21,6 @@ import 'reactflow/dist/style.css';
 import * as dagre from 'dagre';
 import {
   AlertTriangle,
-  Bot,
   CheckCircle,
   GitMerge,
   Lightbulb,
@@ -59,6 +58,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
+import TeresaMark from '../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import {
@@ -66,6 +66,7 @@ import {
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
@@ -120,6 +121,7 @@ import {
 import { ProcessFlowToolbar } from './processflow/ProcessFlowToolbar';
 import { ReadbackPanel } from './processflow/ReadbackPanel';
 import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
+import { useProcessFlowCRUD } from './processflow/useProcessFlowCRUD';
 import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
@@ -551,7 +553,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     isValidating: isBackendValidating,
     validate: runBackendValidation,
     issuesForObject,
-  } = useProcessFlowValidation({ processId, nodes, edges, autoValidate: false });
+  } = useProcessFlowValidation({
+    processId,
+    nodes,
+    edges,
+    autoValidate: false,
+    onError: (message) =>
+      toast.error(isPl ? 'Walidacja przepływu nie powiodła się. Spróbuj ponownie.' : message),
+  });
   const {
     activeProposal,
     isGenerating: isAIGenerating,
@@ -574,6 +583,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     activeScenarios: degradedScenarios,
     checkHealth,
   } = useProcessFlowDegraded({ processId });
+
+  // Structural V8 CRUD — persists semantic nodes/edges to the dedicated
+  // v8_process_flow_* tables alongside the shared map-sync blob. Fire-and-forget;
+  // never blocks the canvas. Enabled (was dead code before WS-02 unification).
+  const pfCrud = useProcessFlowCRUD({ processId, enabled: !locked });
 
   // ── New UI state: panels, context menu, export dialog ─────────────────
   const [showValidationPanel, setShowValidationPanel] = useState(false);
@@ -989,8 +1003,12 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           eds
         )
       );
+      // Persist the structural edge to the V8 tables (fire-and-forget).
+      if (connection.source && connection.target) {
+        void pfCrud.createEdge({ source: connection.source, target: connection.target });
+      }
     },
-    [locked, pushUndo, setEdges]
+    [locked, pfCrud, pushUndo, setEdges]
   );
 
   // ── Add node ───────────────────────────────────────────────────────────
@@ -1037,6 +1055,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         },
       };
       setNodes((prev: Node[]) => [...prev, newNode]);
+
+      // Persist the structural node to the V8 tables (fire-and-forget).
+      void pfCrud.createNode({
+        shape,
+        label: String(newNode.data?.label ?? ''),
+        position: newNode.position,
+        laneId: lane.id,
+      });
 
       // Ghost nodes: AI suggests next steps
       if (!locked && shape !== 'end') {
@@ -1091,6 +1117,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       locked,
       nodes,
       onNodeDetail,
+      pfCrud,
       pushUndo,
       semanticKit,
       setNodes,
@@ -1353,6 +1380,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     isPl,
     pushUndo,
     onNodeDetail,
+    onNodesDeleted: (ids: string[]) => ids.forEach((id) => void pfCrud.deleteNode(id)),
   });
 
   // ── Quick action listener (extracted to useProcessFlowQuickActions) ─────
@@ -1641,6 +1669,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       }
 
       if (isInput) return;
+
+      // A6: Shift+1 = zoom to fit (shared cross-tool shortcut). e.code is
+      // layout-independent (Shift+1 yields "!" on most layouts).
+      if (e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        e.preventDefault();
+        reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 300 });
+        return;
+      }
 
       if (e.key === 'F2') {
         e.preventDefault();
@@ -1950,13 +1986,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         <div className="mx-3 mb-2 rounded-xl border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/50 dark:bg-indigo-950/20 p-3 max-h-48 overflow-y-auto">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
-              <Bot size={14} />
+              <TeresaMark size={14} />
               {isPl ? 'AI Coach — Analiza procesu' : 'AI Coach — Process Analysis'}
             </div>
             <button
               type="button"
               onClick={() => setShowCoach(false)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
             >
               <X size={14} />
             </button>
@@ -2081,7 +2117,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             <button
               type="button"
               onClick={() => setShowSummary(false)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
             >
               <X size={14} />
             </button>
@@ -2168,7 +2204,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       {/* Canvas */}
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="animate-spin text-slate-400" size={24} />
+          <Loader2 className="animate-spin text-slate-600" size={24} />
         </div>
       ) : (
         <div ref={flowContainerRef} className="flex-1 relative">
@@ -2195,7 +2231,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
                   {isPl ? 'Pusty przepływ' : 'Empty process flow'}
                 </div>
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-3 max-w-[220px]">
+                <div className="text-[11px] text-slate-600 dark:text-slate-500 mb-3 max-w-[220px]">
                   {isPl
                     ? 'Dodaj kroki z paska narzędzi lub naciśnij Enter'
                     : 'Add steps from the toolbar or press Enter'}
@@ -2249,11 +2285,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   y: event.clientY,
                 });
               }}
+              {...getIdeasToolInteractionProps('processflow', { locked })}
               onInit={(instance: ReactFlowInstance) => {
                 reactFlowInstanceRef.current = instance;
               }}
               fitView
-              deleteKeyCode={locked ? null : 'Delete'}
               className="bg-transparent"
               defaultEdgeOptions={{ type: 'flowEdge', animated: false }}
             >
@@ -2347,7 +2383,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onClick={() => setShowValidationPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ValidationResultsPanel
@@ -2373,7 +2409,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onClick={() => setShowAIPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <AIProposalPanel
@@ -2403,7 +2439,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onClick={() => setShowReadbackPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ReadbackPanel
@@ -2428,7 +2464,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               onClick={() => setShowPropertiesPanel(false)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <ProcessFlowPropertiesPanel
@@ -2554,7 +2590,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               <button
                 type="button"
                 onClick={() => setMetricsEditorNodeId(null)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-navy-800 dark:hover:text-slate-200"
+                className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-navy-800 dark:hover:text-slate-200"
               >
                 <X size={14} />
               </button>

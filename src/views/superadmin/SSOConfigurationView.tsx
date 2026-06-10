@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SSOConfigurationView - Super Admin SSO/SAML Configuration
  *
@@ -384,7 +383,7 @@ export const SSOConfigurationView: React.FC = () => {
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             size={18}
           />
           <input
@@ -550,7 +549,7 @@ export const SSOConfigurationView: React.FC = () => {
                         onClick={() => setEditingConfig(config)}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                       >
-                        <MoreVertical size={16} className="text-slate-400 dark:text-slate-500" />
+                        <MoreVertical size={16} className="text-slate-600 dark:text-slate-500" />
                       </button>
                     </div>
                   </td>
@@ -772,7 +771,7 @@ export const SSOConfigurationView: React.FC = () => {
                   }
                   className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
                 >
-                  <Copy size={14} className="text-slate-400 dark:text-slate-500" />
+                  <Copy size={14} className="text-slate-600 dark:text-slate-500" />
                 </button>
               </div>
             </div>
@@ -792,7 +791,7 @@ export const SSOConfigurationView: React.FC = () => {
                   }
                   className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded"
                 >
-                  <Copy size={14} className="text-slate-400 dark:text-slate-500" />
+                  <Copy size={14} className="text-slate-600 dark:text-slate-500" />
                 </button>
               </div>
             </div>
@@ -1160,7 +1159,7 @@ export const SSOConfigurationView: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
         </div>

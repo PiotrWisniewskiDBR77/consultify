@@ -190,7 +190,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           onClick={onClose}
           className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
-          <ChevronLeft size={16} className="text-slate-400" />
+          <ChevronLeft size={16} className="text-slate-600" />
         </button>
         <Shield size={18} className="text-primary-500" />
         <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
@@ -226,7 +226,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           {sharedViews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="rounded-2xl bg-slate-100 dark:bg-navy-800 p-4 mb-4">
-                <Globe size={28} className="text-slate-400 dark:text-slate-500" />
+                <Globe size={28} className="text-slate-600 dark:text-slate-500" />
               </div>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 {isPl ? 'Brak udostępnionych widoków' : 'No shared views'}
@@ -249,7 +249,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     <span className="text-sm font-medium text-slate-800 dark:text-white truncate block">
                       {view.name}
                     </span>
-                    <span className="text-[10px] text-slate-400 truncate block">
+                    <span className="text-[10px] text-slate-600 truncate block">
                       {isPl ? 'Publiczny link' : 'Public link'}
                     </span>
                   </div>
@@ -344,13 +344,13 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
           {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 size={20} className="animate-spin text-slate-400" />
+              <Loader2 size={20} className="animate-spin text-slate-600" />
             </div>
           )}
 
           {/* Collaborators list */}
           {!loading && collaborators.length === 0 && (
-            <div className="text-center py-8 text-xs text-slate-400">
+            <div className="text-center py-8 text-xs text-slate-600">
               {isPl ? 'Brak współpracowników' : 'No collaborators yet'}
             </div>
           )}
@@ -378,7 +378,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                         {collab.name ?? collab.email}
                       </span>
                       {collab.name && (
-                        <span className="text-[10px] text-slate-400 truncate block">
+                        <span className="text-[10px] text-slate-600 truncate block">
                           {collab.email}
                         </span>
                       )}
@@ -469,7 +469,7 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
                     navigator.clipboard.writeText(baseId);
                     toast.success(isPl ? 'Skopiowano' : 'Copied');
                   }}
-                  className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 >
                   <Copy size={14} />
                 </button>

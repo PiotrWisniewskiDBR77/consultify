@@ -1,9 +1,11 @@
+import { Lock } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../routes/routeConfig';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { BETA_LOCKED_CODE } from '../../utils/betaAccess';
 
 type AccessBlockedCTA = {
   label: string;
@@ -39,6 +41,13 @@ const ERROR_CODE_CTA_MAP: Record<string, { labelKey: string; href: string }> = {
   STORAGE_LIMIT_REACHED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
   SUBSCRIPTION_PAST_DUE: { labelKey: 'access.cta.fixPayment', href: '/settings?tab=billing' },
   SUBSCRIPTION_CANCELLED: { labelKey: 'access.cta.upgradePlan', href: '/settings?tab=billing' },
+  TRIAL_ENTRY_RESTRICTION: { labelKey: 'access.cta.completeSetup', href: '/trial/create-org' },
+  TRIAL_INVITES_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_UPLOAD_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_EXPORT_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  PUBLIC_SHARE_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  TRIAL_AI_MEMORY_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
+  AI_AUTOPILOT_DISABLED: { labelKey: 'access.cta.contactSales', href: '/contact' },
 };
 
 export const AccessBlockedModal: React.FC = () => {
@@ -71,6 +80,13 @@ export const AccessBlockedModal: React.FC = () => {
     const isOrgError = code === 'ORG_NOT_FOUND' || code === 'ORG_INACTIVE';
     const isTrialBlock =
       code === 'TRIAL_EXPIRED' ||
+      code === 'TRIAL_ENTRY_RESTRICTION' ||
+      code === 'TRIAL_INVITES_DISABLED' ||
+      code === 'TRIAL_UPLOAD_DISABLED' ||
+      code === 'TRIAL_EXPORT_DISABLED' ||
+      code === 'PUBLIC_SHARE_DISABLED' ||
+      code === 'TRIAL_AI_MEMORY_DISABLED' ||
+      code === 'AI_AUTOPILOT_DISABLED' ||
       code === 'AI_LIMIT_REACHED' ||
       code === 'AI_TOKEN_BUDGET_EXCEEDED' ||
       code === 'INSUFFICIENT_TOKENS';
@@ -127,12 +143,57 @@ export const AccessBlockedModal: React.FC = () => {
 
   if (!open) return null;
 
+  // Beta gating — polished, brand-coloured "access restricted" plate.
+  if (resolved.code === BETA_LOCKED_CODE) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div
+          className="absolute inset-0 bg-navy-950/60 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        />
+
+        <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-navy-700 dark:bg-navy-900">
+          <div className="h-1 w-full bg-gradient-to-r from-primary-600 via-primary-400 to-amber-400" />
+
+          <div className="p-7 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 ring-1 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20">
+              <Lock className="h-6 w-6 text-primary-600 dark:text-primary-400" strokeWidth={1.75} />
+            </div>
+
+            <div className="mt-4 inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium tracking-wide text-amber-500">
+              BETA
+            </div>
+
+            <h2 className="mt-3 text-lg font-semibold text-navy-900 dark:text-white">
+              {t('access.beta.title')}
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {resolved.message}
+            </p>
+
+            <button
+              onClick={() => setOpen(false)}
+              className="mt-6 w-full rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+            >
+              {t('access.beta.cta')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
 
       <div className="relative w-[92vw] max-w-lg rounded-2xl bg-white dark:bg-navy-900 shadow-2xl border border-slate-200 dark:border-navy-700 p-6">
-        <div className="text-xs font-mono text-slate-500 dark:text-slate-400">{resolved.code}</div>
+        {import.meta.env?.DEV && (
+          <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
+            {resolved.code}
+          </div>
+        )}
         <div className="mt-2 text-lg font-semibold text-navy-900 dark:text-white">
           {t('access.modal.title')}
         </div>

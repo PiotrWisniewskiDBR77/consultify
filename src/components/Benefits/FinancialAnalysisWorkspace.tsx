@@ -327,7 +327,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
             </div>
             <button
               onClick={() => setShowCreate(true)}
-              className="rounded-lg bg-white/[0.04] p-2 text-slate-300 transition hover:bg-white/[0.08]"
+              className="rounded-lg bg-white/[0.04] p-2 text-slate-600 transition hover:bg-white/[0.08]"
               title={t('finance.analysis.createTitle', 'New Financial Analysis') as string}
             >
               <Plus size={16} />
@@ -346,7 +346,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                   className={`w-full rounded-xl px-3 py-3 text-left transition ${
                     selected?.id === analysis.id
                       ? 'bg-white/[0.08] text-slate-100'
-                      : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
+                      : 'text-slate-600 hover:bg-white/[0.04] hover:text-slate-200'
                   }`}
                 >
                   <div className="truncate text-sm font-medium">{analysis.title}</div>
@@ -374,14 +374,14 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                     {t('finance.analysis.headerLabel', 'Ratio Analysis')}
                   </p>
                   <h2 className="mt-1 text-xl font-semibold text-slate-50">{selected.title}</h2>
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-slate-600">
                     {t(
                       'finance.analysis.headerDescription',
                       'Only the 18 core KPI blocks are shown: profitability, cost structure, cash, working capital and leverage.'
                     )}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+                <div className="flex flex-wrap gap-2 text-xs text-slate-600">
                   <span className="rounded-full bg-white/[0.04] px-3 py-1.5">
                     {selected.status}
                   </span>
@@ -435,7 +435,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowCreate(false)}
-                className="rounded-xl px-4 py-2 text-sm text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200"
+                className="rounded-xl px-4 py-2 text-sm text-slate-600 transition hover:bg-white/[0.04] hover:text-slate-200"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -502,7 +502,7 @@ const RatioBlocksTable: React.FC<{
                         </div>
                         <div className="mt-1 text-xs text-slate-500">{meta.formula}</div>
                       </td>
-                      <td className="px-5 py-4 text-slate-300">
+                      <td className="px-5 py-4 text-slate-600">
                         {ratio.interpretation || 'Brak automatycznej interpretacji dla tego KPI.'}
                       </td>
                       <td className="px-5 py-4">

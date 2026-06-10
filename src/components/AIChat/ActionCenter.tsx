@@ -160,7 +160,7 @@ export const ActionCenter: React.FC = () => {
               Refresh
             </button>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-navy-800">
+          <div className="divide-y divide-slate-200 dark:divide-navy-800">
             {loading ? (
               <div className="p-6 text-sm text-slate-500">Loading AI actions...</div>
             ) : actions.length === 0 ? (
@@ -255,7 +255,7 @@ export const ActionCenter: React.FC = () => {
                     key={run.runId || run.id}
                     type="button"
                     onClick={() => inspect(run.id)}
-                    className="w-full text-left rounded-lg border border-slate-100 dark:border-navy-800 px-3 py-2"
+                    className="w-full text-left rounded-lg border border-slate-200 dark:border-navy-800 px-3 py-2"
                   >
                     <div className="text-xs font-medium text-slate-800 dark:text-slate-100">
                       {run.runId || run.id}

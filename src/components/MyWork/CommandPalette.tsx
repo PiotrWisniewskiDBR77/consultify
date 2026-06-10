@@ -47,12 +47,12 @@ import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 
-interface CommandItem {
+export interface CommandItem {
   id: string;
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
-  category: 'navigation' | 'action' | 'recent' | 'search';
+  category: 'workspace' | 'navigation' | 'action' | 'recent' | 'search';
   shortcut?: string;
   action: () => void | Promise<void>;
   keywords?: string[];
@@ -62,6 +62,11 @@ interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate?: (path: string) => void;
+  /**
+   * Context-specific commands injected by the host (e.g. the Ideas workspace
+   * surfaces "Switch tool", "Export", "Search this idea"). Rendered first.
+   */
+  extraCommands?: CommandItem[];
 }
 
 // Fuzzy search function
@@ -82,7 +87,12 @@ const fuzzyMatch = (query: string, text: string): boolean => {
   return false;
 };
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({
+  isOpen,
+  onClose,
+  onNavigate,
+  extraCommands = [],
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -360,10 +370,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     [t, pendingDecisions, onClose, onNavigate, navigate]
   );
 
-  // Combined items
+  // Combined items — host-injected workspace commands first.
   const allItems = useMemo(() => {
-    return [...navigationItems, ...actionItems, ...recentItems];
-  }, [navigationItems, actionItems, recentItems]);
+    return [...extraCommands, ...navigationItems, ...actionItems, ...recentItems];
+  }, [extraCommands, navigationItems, actionItems, recentItems]);
 
   // Filtered items based on query
   const filteredItems = useMemo(() => {
@@ -381,6 +391,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   // Group items by category
   const groupedItems = useMemo(() => {
     const groups: { [key: string]: CommandItem[] } = {
+      workspace: [],
       navigation: [],
       action: [],
       recent: [],
@@ -459,7 +470,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
 
     return (
       <div key={categoryKey} className="mb-2">
-        <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+        <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
           {title}
         </div>
         {items.map((item, idx) => {
@@ -519,7 +530,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               <ArrowRight
                 size={14}
                 className={`shrink-0 ${
-                  isSelected ? 'text-primary-500' : 'text-slate-300 dark:text-slate-600'
+                  isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-400'
                 }`}
               />
             </motion.button>
@@ -554,7 +565,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
             <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
               {/* Search Input */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-navy-700">
-                <Search size={20} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                <Search size={20} className="text-slate-600 dark:text-slate-500 shrink-0" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -574,6 +585,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                 {filteredItems.length > 0 ? (
                   <>
                     {renderGroup(
+                      t('command.category.workspace', 'This idea'),
+                      groupedItems.workspace,
+                      'workspace'
+                    )}
+                    {renderGroup(
                       t('command.category.navigation', 'Navigate'),
                       groupedItems.navigation,
                       'navigation'
@@ -591,11 +607,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                   </>
                 ) : (
                   <div className="py-8 text-center">
-                    <Search size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                    <Search size={32} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                       {t('command.noResults', 'No results found')}
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                       {t('command.tryDifferent', 'Try a different search term')}
                     </p>
                   </div>
@@ -603,8 +619,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-white/5">
-                <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center justify-between px-4 py-2 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-white/5">
+                <div className="flex items-center gap-3 text-[10px] text-slate-600 dark:text-slate-500">
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-white/10 rounded">↑↓</kbd>
                     {t('command.hint.navigate', 'Navigate')}
@@ -618,7 +634,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                     {t('command.hint.close', 'Close')}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-500">
                   <Zap size={10} />
                   {t('command.hint.powered', 'Quick Actions')}
                 </div>

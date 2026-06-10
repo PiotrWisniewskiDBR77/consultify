@@ -323,7 +323,7 @@ export const ProjectTeamPanel: React.FC<ProjectTeamPanelProps> = ({
 
         {members.length === 0 && (
           <div className="px-6 py-12 text-center">
-            <Users className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <Users className="w-12 h-12 mx-auto text-gray-600 dark:text-gray-600 mb-4" />
             <p className="text-gray-500 dark:text-gray-400">
               {t('pmo.noMembers', 'No team members yet')}
             </p>
@@ -467,7 +467,7 @@ const MemberRow: React.FC<MemberRowProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
+              className="p-1.5 text-gray-600 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
             >
               <ChevronDown className="w-4 h-4" />
             </button>
@@ -504,7 +504,7 @@ const MemberRow: React.FC<MemberRowProps> = ({
         {canManage && (
           <button
             onClick={onRemove}
-            className="p-1.5 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500"
+            className="p-1.5 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500"
           >
             <X className="w-4 h-4" />
           </button>
@@ -663,7 +663,7 @@ const SteeringBoardPanel: React.FC<{ projectId: string; canManage: boolean }> = 
                   {canManage && (
                     <button
                       onClick={() => removeMember(m.userId)}
-                      className="p-1.5 text-slate-400 hover:text-rose-500"
+                      className="p-1.5 text-slate-600 hover:text-rose-500"
                       title={t('common.remove', 'Remove')}
                     >
                       <X className="w-4 h-4" />
@@ -696,7 +696,7 @@ const SteeringBoardPanel: React.FC<{ projectId: string; canManage: boolean }> = 
               </h3>
               <button
                 onClick={() => setShowAdd(false)}
-                className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
+                className="text-gray-600 hover:text-gray-600 dark:text-gray-400"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -827,7 +827,7 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({ projectId, onClose, onA
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
+            className="text-gray-600 hover:text-gray-600 dark:text-gray-400"
           >
             <X className="w-5 h-5" />
           </button>

@@ -171,7 +171,7 @@ export const AdminLLMMultipliers = () => {
                         />
                       </div>
                     ) : (
-                      <span className="font-mono text-slate-400 dark:text-slate-500">
+                      <span className="font-mono text-slate-600 dark:text-slate-500">
                         ${p.cost_per_1k}
                       </span>
                     )}

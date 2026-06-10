@@ -138,7 +138,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+          className="p-1 rounded text-slate-600 hover:text-slate-600 dark:hover:text-white transition-colors"
         >
           <X size={14} />
         </button>
@@ -153,7 +153,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <Zap size={20} className="text-slate-300 dark:text-slate-600" />
+            <Zap size={20} className="text-slate-600 dark:text-slate-400" />
             <span className="text-xs text-slate-500 dark:text-slate-400">
               {isPl ? 'Brak akcji do wyodrębnienia' : 'No action items found'}
             </span>
@@ -183,7 +183,7 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
                         {item.priority}
                       </span>
                       {item.suggestedDue && (
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500">
+                        <span className="text-[9px] text-slate-600 dark:text-slate-500">
                           {item.suggestedDue}
                         </span>
                       )}

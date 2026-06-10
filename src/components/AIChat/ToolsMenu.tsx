@@ -38,6 +38,7 @@ interface ToolsMenuProps {
   onToolSelect: (tool: string) => void;
   disabled?: boolean;
   icon?: React.ElementType;
+  hasActiveConversation?: boolean;
 }
 
 interface ToolMode {
@@ -120,6 +121,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   onToolSelect,
   disabled = false,
   icon: IconComponent = Brain,
+  hasActiveConversation = true,
 }) => {
   const { t } = useTranslation();
   const { aiConfig, setAIConfig } = useAppStore();
@@ -256,7 +258,6 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     const currentValue = aiConfig[modeId as keyof typeof aiConfig];
     const newValue = !currentValue;
     setAIConfig({ [modeId]: newValue });
-    if (modeId === 'showReasoning') setAIConfig({ maxMode: newValue });
 
     const label = t(`aiChat.menu.modes.${modeId}.label`, modeId);
     const icon = modeId === 'textToSpeech' ? '🔊' : '✓';
@@ -280,7 +281,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           ${
             activeModeCount > 0
               ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/30'
-              : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+              : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
           }
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
         `}
@@ -300,7 +301,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           className="
             absolute left-0 bottom-full mb-2 z-50
             w-[250px] py-1.5
-            bg-white/95 dark:bg-[#1a1d2e]/95 backdrop-blur-xl
+            bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
             animate-in fade-in-0 slide-in-from-bottom-2 duration-150
@@ -310,7 +311,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         >
           {/* Section header */}
           <div className="px-3.5 pt-1.5 pb-1 flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
               {t('aiChat.menu.aiModes', 'AI MODES')}
             </span>
             {activeModeCount > 0 && (
@@ -335,7 +336,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               >
                 <Icon
                   size={16}
-                  className={`shrink-0 ${isEnabled ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}`}
+                  className={`shrink-0 ${isEnabled ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'}`}
                 />
                 <span
                   className={`flex-1 text-[13px] ${isEnabled ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-slate-700 dark:text-slate-200'}`}
@@ -348,7 +349,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           })}
 
           {/* Divider */}
-          <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+          <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
 
           {/* Response style — opens Grok-style modal */}
           <button
@@ -358,22 +359,33 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             }}
             className="w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
           >
-            <Pen size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <Pen size={16} className="shrink-0 text-slate-600 dark:text-slate-500" />
             <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">
               {t('aiChat.menu.responseStyle', 'Response style')}
             </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 mr-1">
+            <span className="text-[11px] text-slate-600 dark:text-slate-500 mr-1">
               {t(`aiChat.menu.styles.${responseStyle || 'normal'}`, 'Normal')}
             </span>
-            <ChevronRight size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <ChevronRight size={13} className="shrink-0 text-slate-600 dark:text-slate-500" />
           </button>
 
           {/* Divider */}
-          <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+          <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
 
           {/* Add to project */}
           <button
             onClick={() => {
+              if (!hasActiveConversation) {
+                toast.error(
+                  t(
+                    'aiChat.conversation.addToProjectRequiresConversation',
+                    'Najpierw wyślij pierwszą wiadomość, aby dodać rozmowę do projektu.'
+                  )
+                );
+                onToolSelect('addToProject');
+                setIsOpen(false);
+                return;
+              }
               onToolSelect('addToProject');
               setIsOpen(false);
               toast(t('aiChat.conversation.addToProject', 'Add to project'), {
@@ -383,18 +395,19 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               });
             }}
             className="w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
+            aria-disabled={!hasActiveConversation}
           >
-            <FolderPlus size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <FolderPlus size={16} className="shrink-0 text-slate-600 dark:text-slate-500" />
             <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">
               {t('aiChat.conversation.addToProject', 'Add to project')}
             </span>
-            <ChevronRight size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+            <ChevronRight size={13} className="shrink-0 text-slate-600 dark:text-slate-500" />
           </button>
 
           {/* TTS Settings — only when TTS is enabled */}
           {textToSpeech && (
             <>
-              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
               <TTSSettings
                 ttsRate={ttsRate}
                 ttsVoice={ttsVoice}
@@ -419,7 +432,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           {/* Panel */}
           <div
             className="relative w-full max-w-[540px] max-h-[85vh] overflow-y-auto
-            bg-white dark:bg-[#1a1d2e]
+            bg-white dark:bg-navy-900
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.2)] dark:shadow-[0_24px_64px_rgba(0,0,0,0.6)]
             animate-in fade-in-0 zoom-in-95 duration-200"
@@ -427,7 +440,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             {/* Close button */}
             <button
               onClick={() => setIsStyleModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors z-10"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors z-10"
             >
               <X size={18} />
             </button>
@@ -472,7 +485,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                       >
                         {t(style.labelKey)}
                       </div>
-                      <div className="text-[11px] leading-snug text-slate-400 dark:text-slate-500 pr-4">
+                      <div className="text-[11px] leading-snug text-slate-600 dark:text-slate-500 pr-4">
                         {t(style.descKey)}
                       </div>
                       {isSelected && (
@@ -486,7 +499,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               </div>
 
               {/* Divider */}
-              <div className="border-t border-slate-100 dark:border-white/[0.06] mb-5" />
+              <div className="border-t border-slate-200 dark:border-white/[0.06] mb-5" />
 
               {/* Custom Instructions */}
               <div>
@@ -511,14 +524,14 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 />
 
                 <div className="mt-1.5 text-right">
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                  <span className="text-[11px] text-slate-600 dark:text-slate-500">
                     {customInstructions.length}/1000
                   </span>
                 </div>
               </div>
 
               {/* Footer — Reset + Save */}
-              <div className="flex items-center justify-end gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-white/[0.06]">
+              <div className="flex items-center justify-end gap-3 mt-6 pt-5 border-t border-slate-200 dark:border-white/[0.06]">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -567,14 +580,14 @@ const TTSSettings: React.FC<{
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
       >
-        <Volume2 size={16} className="shrink-0 text-slate-400 dark:text-slate-500" />
+        <Volume2 size={16} className="shrink-0 text-slate-600 dark:text-slate-500" />
         <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">
           {t('aiChat.menu.ttsSettings', 'Voice settings')}
         </span>
-        <span className="text-[11px] text-slate-400 dark:text-slate-500">{ttsRate}x</span>
+        <span className="text-[11px] text-slate-600 dark:text-slate-500">{ttsRate}x</span>
         <ChevronRight
           size={13}
-          className={`shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
+          className={`shrink-0 text-slate-600 dark:text-slate-500 transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}
         />
       </button>
 
@@ -593,7 +606,7 @@ const TTSSettings: React.FC<{
               onChange={(e) => setAIConfig({ ttsRate: parseFloat(e.target.value) })}
               className="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary-500"
             />
-            <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+            <div className="flex justify-between text-[10px] text-slate-600 mt-0.5">
               <span>0.5x</span>
               <span>1x</span>
               <span>2x</span>

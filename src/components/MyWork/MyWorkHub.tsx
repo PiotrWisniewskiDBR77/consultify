@@ -89,6 +89,11 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
 import { buildMyWorkSheetTableOpenPath, getArtifactPath } from '@/utils/artifactLinks';
+import {
+  dispatchBetaAccessBlocked,
+  isBetaLockedForRole,
+  isBetaSubareaClosed,
+} from '@/utils/betaAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import {
   dispatchPilotAccessBlocked,
@@ -101,6 +106,7 @@ import {
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
 
+import { CalendarView } from './Calendar/CalendarView';
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
 import type { HomeScreenAction } from './Home/homeV2Types';
@@ -124,6 +130,8 @@ import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './Inbo
 import { MyIdeasListContent } from './MyIdeasListContent';
 import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
+import { NotebookContent } from './NotebookContent';
+import { NotebookLibraryContent } from './NotebookLibraryContent';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -146,14 +154,8 @@ const ExecutiveDashboard = lazyWithRetry(() =>
 const HomeView = lazyWithRetry(() =>
   import('./Home/HomeView').then((m) => ({ default: m.HomeView }))
 );
-const CalendarView = lazyWithRetry(() =>
-  import('./Calendar/CalendarView').then((m) => ({ default: m.CalendarView }))
-);
 const FocusView = lazyWithRetry(() =>
   import('./Focus/FocusView').then((m) => ({ default: m.FocusView }))
-);
-const NotebookContent = lazyWithRetry(() =>
-  import('./NotebookContent').then((m) => ({ default: m.NotebookContent }))
 );
 const TasksKanbanBoard = lazyWithRetry(() =>
   import('./TasksKanbanBoard').then((m) => ({ default: m.TasksKanbanBoard }))
@@ -178,6 +180,14 @@ type ModuleTab =
   | 'tasks'
   | 'decisions'
   | 'manager';
+
+// Radar (the My Work "home" surface) is temporarily HIDDEN and PAUSED: it is
+// memory-heavy and still under active development. Flipping RADAR_ENABLED back to
+// true restores the sidebar tab, the default landing, and HomeView rendering — no
+// other change required. While disabled, the home tab is removed from the nav and
+// HomeView is never mounted (so its scanning hooks never run).
+const RADAR_ENABLED = false;
+const MY_WORK_FALLBACK_TAB: ModuleTab = 'inbox';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type IdeasViewMode = 'table' | 'grid';
@@ -410,8 +420,9 @@ function getInitialMyWorkTab(
   if (allowIdeas && (searchParams.get('ideaId') || searchParams.get('idea'))) return 'ideas';
   if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
   if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
+  if (searchParams.get('notebook')) return 'notebook';
 
-  return 'home';
+  return RADAR_ENABLED ? 'home' : MY_WORK_FALLBACK_TAB;
 }
 
 function parseMyWorkPathIntent(
@@ -581,6 +592,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
   const canViewManager = isAdmin || isManager || isSuperAdmin;
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
+  // Beta gating: Ideas is a closed beta — blocked for non-admins, who see the
+  // branded "access restricted" plate. Admins keep access to keep building.
+  const ideasBetaLocked =
+    isBetaSubareaClosed('MYWORK_IDEAS') && isBetaLockedForRole(currentUser?.role);
 
   const restoredDocumentState = useMemo(() => readStoredMyWorkDocuments(), []);
   // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
@@ -596,6 +611,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+
+  // Radar (home) is hidden/paused: coerce any 'home' state (deep-links, resets) to
+  // the fallback so the nav highlight stays consistent and HomeView never mounts.
+  useEffect(() => {
+    if (!RADAR_ENABLED && activeTab === 'home') {
+      setActiveTab(MY_WORK_FALLBACK_TAB);
+    }
+  }, [activeTab]);
 
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
@@ -659,6 +682,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
   const [notebookOpenPageId, setNotebookOpenPageId] = useState<string | null>(null);
+  // L1 container (Notatnik) currently open. null => show the notebook library list.
+  const [notebookOpenId, setNotebookOpenId] = useState<string | null>(null);
+  const [notebookOpenTitle, setNotebookOpenTitle] = useState<string>('');
+  // Menu 2 "New notebook" CTA → opens the create-notebook modal inside the library (L1).
+  const [notebookCreateNotebookReqId, setNotebookCreateNotebookReqId] = useState(0);
+  // Menu 3 (Command Row) scope presets for the notebook library (L1).
+  const [notebookScopeFilter, setNotebookScopeFilter] = useState<'all' | 'personal' | 'team'>(
+    'all'
+  );
+  const [notebookScopeCounts, setNotebookScopeCounts] = useState({
+    all: 0,
+    personal: 0,
+    team: 0,
+  });
   const notebookActivePanel: WorkspacePanelKey = notebookChatOpen
     ? 'tools'
     : notebookLinkedIdeasOpen
@@ -760,6 +797,27 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       navigate('/my-work', { replace: true });
     }
   }, [activeTab, isPilotParticipant, location.pathname, navigate, openDocuments, searchParams]);
+  // Beta gating: keep non-admins out of the Ideas tab (incl. deep links / initial
+  // tab restore) and surface the branded access plate instead.
+  useEffect(() => {
+    if (!ideasBetaLocked) return;
+    const onIdeas =
+      activeTab === 'ideas' ||
+      location.pathname.startsWith('/my-work/ideas') ||
+      Boolean(searchParams.get('ideaId')) ||
+      Boolean(searchParams.get('idea'));
+    if (!onIdeas) return;
+    setActiveDocumentId((current) => {
+      if (!current) return current;
+      const activeDoc = openDocuments.find((doc) => doc.id === current);
+      return activeDoc?.type === 'idea' ? null : current;
+    });
+    setActiveTab('home');
+    dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
+    if (location.pathname.startsWith('/my-work/ideas')) {
+      navigate('/my-work', { replace: true });
+    }
+  }, [activeTab, ideasBetaLocked, location.pathname, navigate, openDocuments, searchParams, t]);
   useEffect(() => {
     try {
       window.sessionStorage.setItem(
@@ -1284,6 +1342,38 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [activeTab, handleOpenDocument, searchParams, isPolish]);
 
+  // Notebook container deep-link: ?notebook=<id> persists in the URL so a notebook
+  // is shareable and survives refresh (unlike the transient task/idea deep-links
+  // above). Reconcile URL -> state; covers cold load and browser back/forward.
+  // Page-level open (notebookOpenPageId) stays owned by the legacy intent/action
+  // flows and is intentionally not reconciled here.
+  useEffect(() => {
+    const nbId = searchParams.get('notebook');
+    if ((nbId || null) === (notebookOpenId || null)) return;
+    if (!nbId) {
+      setNotebookOpenId(null);
+      setNotebookOpenTitle('');
+      return;
+    }
+    setActiveTab('notebook');
+    setNotebookOpenId(nbId);
+    setNotebookOpenTitle('');
+    setNotebookOpenPageId(null);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { Api } = await import('@/services/api');
+        const nb = await Api.getNotebook(nbId);
+        if (!cancelled && nb?.title) setNotebookOpenTitle(String(nb.title));
+      } catch {
+        /* title is best-effort; header falls back to the default label */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, notebookOpenId]);
+
   useEffect(() => {
     const intent = parseMyWorkPathIntent(location.pathname, isPolish);
     if (!intent) return;
@@ -1328,7 +1418,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.ideas,
         color: 'bg-amber-500',
         requiresManagerAccess: false,
-        isLocked: isPilotParticipant,
+        isLocked: isPilotParticipant || ideasBetaLocked,
+        betaLocked: ideasBetaLocked,
       },
       {
         id: 'notebook' as ModuleTab,
@@ -1381,10 +1472,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     ];
 
     return allTabs.filter((tab) => {
+      if (tab.id === 'home' && !RADAR_ENABLED) return false;
       if (tab.requiresManagerAccess && !canViewManager) return false;
       return true;
     });
-  }, [isPilotParticipant, isPolish, tabCounts, canViewManager]);
+  }, [isPilotParticipant, ideasBetaLocked, isPolish, tabCounts, canViewManager]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -2034,15 +2126,29 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           const result = await executeTriageHandoff(action.signalId);
           if (result) {
             const mod = action.targetModule;
-            if (mod === 'Inicjatywy') {
+            if (mod === 'initiatives' || mod === 'Inicjatywy') {
               setActiveTab('ideas');
-            } else if (mod === 'Wdrożenia') {
+            } else if (mod === 'execution' || mod === 'Wdrożenia') {
               setActiveTab('tasks');
-            } else if (mod === 'Notatki') {
+            } else if (mod === 'notebook' || mod === 'Notatki') {
               setActiveTab('notebook');
               setNotebookCreateReqId((value) => value + 1);
             }
           }
+          return;
+        }
+        case 'radar_feedback': {
+          const actionType = action.feedback === 'watch' ? 'add_to_watchlist' : 'less_like_this';
+          const payload = {
+            ...(action.topic ? { topic: action.topic } : {}),
+            ...(action.source ? { source: action.source } : {}),
+          };
+          const Api = (await import('@/services/api')).default;
+          await Api.post('/my-work/radar/actions', {
+            signalId: action.signalId,
+            actionType,
+            payload,
+          }).catch(() => null);
           return;
         }
         default:
@@ -2103,12 +2209,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           variant: 'primary' as const,
         };
       case 'notebook':
-        return {
-          label: isPolish ? 'Nowa notatka' : 'New note',
-          onClick: () => setNotebookCreateReqId((v) => v + 1),
-          tone: 'indigo' as const,
-          variant: 'primary' as const,
-        };
+        // Inside a notebook (L2) → create a note. On the library list (L1) → create a notebook.
+        return notebookOpenId
+          ? {
+              label: isPolish ? 'Nowa notatka' : 'New note',
+              onClick: () => setNotebookCreateReqId((v) => v + 1),
+              tone: 'indigo' as const,
+              variant: 'primary' as const,
+            }
+          : {
+              label: isPolish ? 'Nowy notatnik' : 'New notebook',
+              onClick: () => setNotebookCreateNotebookReqId((v) => v + 1),
+              tone: 'indigo' as const,
+              variant: 'primary' as const,
+            };
       default:
         return null;
     }
@@ -2119,6 +2233,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     handleCreateIdea,
     handleCreateDecision,
     setNotebookCreateReqId,
+    setNotebookCreateNotebookReqId,
+    notebookOpenId,
     setCalendarCreateReqId,
     activeDocumentId,
   ]);
@@ -2324,6 +2440,52 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // 3) Context counters row (list view default)
     if (activeDocumentId) return null;
+
+    // Notebook library (L1): scope presets in the single Command Row.
+    if (activeTab === 'notebook' && !notebookOpenId) {
+      const presets: Array<{ id: 'all' | 'personal' | 'team'; label: string; count: number }> = [
+        { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: notebookScopeCounts.all },
+        {
+          id: 'personal',
+          label: isPolish ? 'Osobiste' : 'Personal',
+          count: notebookScopeCounts.personal,
+        },
+        { id: 'team', label: isPolish ? 'Zespołowe' : 'Team', count: notebookScopeCounts.team },
+      ];
+      return (
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
+            <div className={MENU_3_LEFT_CLASS}>
+              {presets.map((p) => {
+                const isActive = notebookScopeFilter === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setNotebookScopeFilter(p.id)}
+                    className={`${MENU_3_CHIP_BASE} ${isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}`}
+                    title={p.label}
+                  >
+                    {p.id === 'all' ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
+                    ) : p.id === 'personal' ? (
+                      <Lock size={12} />
+                    ) : (
+                      <Users size={12} />
+                    )}
+                    {p.label}
+                    <span
+                      className={`${MENU_3_BADGE_BASE} ${isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}`}
+                    >
+                      {p.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     // Tasks: filters as a single Command Row (no extra toolbars/strips).
     if (activeTab === 'tasks') {
@@ -2973,7 +3135,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   // Render list content based on active tab
   const renderListContent = () => {
-    switch (activeTab) {
+    // Radar (home) is hidden/paused — never mount HomeView (its scanning hooks are
+    // memory-heavy); fall back to the inbox surface instead.
+    const tabToRender: ModuleTab =
+      !RADAR_ENABLED && activeTab === 'home' ? MY_WORK_FALLBACK_TAB : activeTab;
+    switch (tabToRender) {
       case 'home':
         return (
           <React.Suspense fallback={lazyFallback}>
@@ -3102,10 +3268,44 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           />
         );
       case 'notebook':
+        // Show the L1 library only when neither a notebook nor a specific page
+        // is targeted. A deep-linked page (e.g. "open source note" from a task)
+        // bypasses the library and opens the editor directly.
+        if (!notebookOpenId && !notebookOpenPageId) {
+          return (
+            <NotebookLibraryContent
+              searchQuery={searchQuery}
+              refreshTrigger={refreshTrigger}
+              createRequestId={notebookCreateNotebookReqId}
+              scopeFilter={notebookScopeFilter}
+              onScopeCountsChange={setNotebookScopeCounts}
+              onOpenNotebook={(nb) => {
+                setNotebookOpenId(nb.id);
+                setNotebookOpenTitle(nb.title);
+                setNotebookOpenPageId(null);
+                const next = new URLSearchParams(searchParams);
+                next.set('notebook', nb.id);
+                next.delete('note');
+                setSearchParams(next, { replace: false });
+              }}
+            />
+          );
+        }
         return (
           <React.Suspense fallback={lazyFallback}>
             <NotebookContent
               projectId={null}
+              notebookId={notebookOpenId}
+              notebookTitle={notebookOpenTitle}
+              onBackToLibrary={() => {
+                setNotebookOpenId(null);
+                setNotebookOpenTitle('');
+                setNotebookOpenPageId(null);
+                const next = new URLSearchParams(searchParams);
+                next.delete('notebook');
+                next.delete('note');
+                setSearchParams(next, { replace: false });
+              }}
               searchQuery={searchQuery}
               openPageId={notebookOpenPageId}
               linkedIdeasOpen={notebookLinkedIdeasOpen}
@@ -3139,19 +3339,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </React.Suspense>
         );
       case 'decisions':
-        if (decisionsViewMode === 'timeline') {
-          return (
-            <React.Suspense fallback={lazyFallback}>
-              <DecisionsTimelineContainer
-                viewMode={decisionFilter}
-                searchQuery={searchQuery}
-                onDecisionClick={handleDecisionClick}
-                onCountsChange={handleDecisionCountsChange}
-                refreshTrigger={refreshTrigger}
-              />
-            </React.Suspense>
-          );
-        }
+        // Timeline view is intentionally disabled for Decisions — it is not exposed in the
+        // view switcher and must never render even if a stale 'timeline' value is present;
+        // fall through to the default list (table) view below.
         if (decisionsViewMode === 'kanban') {
           return (
             <React.Suspense fallback={lazyFallback}>
@@ -3220,7 +3410,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
-      <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+      <div className="bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]">
         {/* Main Navigation Row */}
         <div className="flex items-center justify-between gap-4 px-4 py-3">
           {/* Left: Search + Main Tabs */}
@@ -3247,11 +3437,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     key={tab.id}
                     onClick={() => {
                       if (tab.isLocked) {
-                        const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
-                        dispatchPilotAccessBlocked({
-                          message: detail.message,
-                          href: detail.href,
-                        });
+                        if (tab.betaLocked) {
+                          dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
+                        } else {
+                          const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
+                          dispatchPilotAccessBlocked({
+                            message: detail.message,
+                            href: detail.href,
+                          });
+                        }
                         return;
                       }
                       setActiveTab(tab.id);
@@ -3262,7 +3456,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     data-testid={`mywork-tab-${tab.id}`}
                     title={
                       tab.isLocked
-                        ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                        ? tab.betaLocked
+                          ? t('access.blocked.BETA_LOCKED')
+                          : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
                         : undefined
                     }
                   >
@@ -3426,12 +3622,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         titlePl: 'Kanban',
                         titleEn: 'Kanban',
                       },
-                      {
-                        id: 'timeline' as DecisionsViewMode,
-                        icon: GanttChart,
-                        titlePl: 'Timeline',
-                        titleEn: 'Timeline',
-                      },
+                      // Timeline (Day/Week/Month/Quarter) view intentionally hidden — not a
+                      // sensible view for Decisions. Component retained but unselectable.
                     ] as const
                   ).map(({ id, icon: Icon, titlePl, titleEn }) => {
                     const isActive = decisionsViewMode === id;
@@ -3543,17 +3735,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </div>
               )}
 
-              {/* Workspace 3-tools strip — Notebook only */}
-              {activeTab === 'notebook' && !activeDocumentId && (
-                <WorkspacePanelStrip
-                  value={notebookActivePanel}
-                  onChange={(next) => {
-                    setNotebookChatOpen(next === 'tools');
-                    setNotebookLinkedIdeasOpen(next === 'context');
-                    setNotebookTopicsOpen(next === 'ai_suggestions');
-                  }}
-                />
-              )}
+              {/* Workspace 3-tools strip — Notebook only (when the editor is shown,
+                  i.e. inside an open notebook or on a deep-linked page) */}
+              {activeTab === 'notebook' &&
+                !activeDocumentId &&
+                (notebookOpenId || notebookOpenPageId) && (
+                  <WorkspacePanelStrip
+                    value={notebookActivePanel}
+                    onChange={(next) => {
+                      setNotebookChatOpen(next === 'tools');
+                      setNotebookLinkedIdeasOpen(next === 'context');
+                      setNotebookTopicsOpen(next === 'ai_suggestions');
+                    }}
+                  />
+                )}
             </div>
 
             {/* Primary Action Button (New Task/Decision/Notification) */}

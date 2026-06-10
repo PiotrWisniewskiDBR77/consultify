@@ -122,7 +122,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
       <div className="space-y-2">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('settings.profile.bio.bio', 'Bio')}
-          <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -137,7 +137,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
           maxLength={500}
           className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950/50 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500/50 outline-none resize-none"
         />
-        <p className="text-xs text-slate-400 dark:text-slate-500">
+        <p className="text-xs text-slate-600 dark:text-slate-500">
           {bio.length}/500 {t('common.characters', 'characters')}
         </p>
       </div>
@@ -146,7 +146,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
       <div className="space-y-2">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('settings.profile.bio.pronouns', 'Pronouns')}
-          <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -169,7 +169,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
           <Calendar size={16} />
           {t('settings.profile.bio.birthday', 'Birthday')}
-          <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -186,7 +186,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
           <MapPin size={16} />
           {t('settings.profile.bio.location', 'Location')}
-          <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>
@@ -204,7 +204,7 @@ export const ProfileBioSettings: React.FC<ProfileBioSettingsProps> = ({
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
           <Tag size={16} />
           {t('settings.profile.bio.skills', 'Skills')}
-          <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+          <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
             ({t('common.optional', 'Optional')})
           </span>
         </label>

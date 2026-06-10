@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-nocheck
 /**
  * FocusBoard - Daily focus task management
  * Part of My Work Module PMO Upgrade
@@ -37,6 +35,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import type { FocusBoardProps, FocusSuggestion, FocusTask, TimeBlock } from '../../../types/myWork';
@@ -93,7 +93,7 @@ const DailyStatCard: React.FC<{
           <p className="text-2xl font-bold text-navy-900 dark:text-white">
             {value}
             {suffix && (
-              <span className="text-sm font-normal text-slate-400 dark:text-slate-500 ml-1">
+              <span className="text-sm font-normal text-slate-600 dark:text-slate-500 ml-1">
                 {suffix}
               </span>
             )}
@@ -193,7 +193,7 @@ const FocusTaskCard: React.FC<{
       <div className="flex items-start gap-3 p-4">
         {/* Drag Handle */}
         <div className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-          <GripVertical size={16} className="text-slate-300 dark:text-slate-600" />
+          <GripVertical size={16} className="text-slate-600 dark:text-slate-400" />
         </div>
 
         {/* Completion Toggle */}
@@ -207,7 +207,7 @@ const FocusTaskCard: React.FC<{
           {task.isCompleted ? (
             <CheckCircle size={22} className="text-green-500" />
           ) : (
-            <Circle size={22} className="text-slate-300 hover:text-brand transition-colors" />
+            <Circle size={22} className="text-slate-600 hover:text-brand transition-colors" />
           )}
         </button>
 
@@ -225,7 +225,7 @@ const FocusTaskCard: React.FC<{
               {/* Title */}
               <h4
                 className={`text-sm font-semibold truncate ${
-                  task.isCompleted ? 'text-slate-400 line-through' : 'text-navy-900 dark:text-white'
+                  task.isCompleted ? 'text-slate-600 line-through' : 'text-navy-900 dark:text-white'
                 }`}
               >
                 {task.title}
@@ -238,7 +238,7 @@ const FocusTaskCard: React.FC<{
                 e.stopPropagation();
                 onRemove(task.taskId);
               }}
-              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-all"
+              className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-all"
             >
               <X size={14} />
             </button>
@@ -256,7 +256,7 @@ const FocusTaskCard: React.FC<{
               />
             )}
             {task.estimatedMinutes && (
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500 flex items-center gap-1">
                 <Clock size={10} />
                 {task.estimatedMinutes} min
               </span>
@@ -299,7 +299,7 @@ const TimeBlockSection: React.FC<{
           <span className="font-semibold text-navy-900 dark:text-white">
             {t(`myWork.focus.timeBlock.${block}`, config.label)}
           </span>
-          <span className="text-xs text-slate-400 dark:text-slate-500">{config.time}</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">{config.time}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -333,7 +333,7 @@ const TimeBlockSection: React.FC<{
                   ))}
                 </Reorder.Group>
               ) : (
-                <div className="text-center py-4 text-sm text-slate-400 dark:text-slate-500">
+                <div className="text-center py-4 text-sm text-slate-600 dark:text-slate-500">
                   {t('myWork.focus.noTasksInBlock', 'No tasks in this block')}
                 </div>
               )}
@@ -534,11 +534,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 size={32} className="animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-12" />;
   }
 
   return (
@@ -582,7 +578,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <button
             onClick={handleAISuggestion}
             disabled={aiSuggesting || tasks.length >= MAX_FOCUS_TASKS}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white text-sm font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white text-sm font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {aiSuggesting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             <span className="hidden sm:inline">{t('myWork.focus.aiSuggest', 'AI Suggest')}</span>
@@ -650,9 +646,9 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200/50 dark:border-primary-800/30 p-8 text-center"
+            className="bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200/50 dark:border-primary-800/30 p-8 text-center"
           >
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-primary-500 to-crimson-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
               <Target size={32} className="text-white" />
             </div>
             <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
@@ -670,7 +666,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               <button
                 onClick={handleAISuggestion}
                 disabled={aiSuggesting}
-                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 p-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-medium shadow-lg shadow-primary-500/25 transition-all disabled:opacity-50"
               >
                 {aiSuggesting ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -777,7 +773,7 @@ export const FocusBoard: React.FC<ExtendedFocusBoardProps> = ({
               <span className="text-3xl font-bold text-navy-900 dark:text-white">
                 {executionScore}
               </span>
-              <span className="text-sm text-slate-400 dark:text-slate-500">/ 100</span>
+              <span className="text-sm text-slate-600 dark:text-slate-500">/ 100</span>
             </div>
           </div>
           <div

@@ -65,7 +65,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
               {idx > 0 && (
                 <ChevronRight
                   size={10}
-                  className={`shrink-0 ${idx <= currentIdx ? 'text-primary-500' : 'text-slate-300 dark:text-slate-600'}`}
+                  className={`shrink-0 ${idx <= currentIdx ? 'text-primary-500' : 'text-slate-600 dark:text-slate-400'}`}
                 />
               )}
               <button
@@ -98,7 +98,7 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
           );
         })}
       </div>
-      <div className="text-[9px] text-slate-400 dark:text-slate-500 italic">
+      <div className="text-[9px] text-slate-600 dark:text-slate-500 italic">
         {t(`myWork.whiteboard.phaseBar.hint_${currentPhase}`, {
           defaultValue: PHASE_HINTS[currentPhase].hintEn,
         })}

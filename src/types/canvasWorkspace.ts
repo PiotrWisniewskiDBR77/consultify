@@ -1,4 +1,4 @@
-export type CanvasMode = 'document' | 'md';
+export type CanvasMode = 'rich' | 'document' | 'md';
 
 export type CanvasStarterId = 'thoughts' | 'document' | 'research' | 'decision' | 'plan';
 
@@ -376,7 +376,12 @@ export type CanvasActionId =
   | 'create-report'
   | 'send-to-idea'
   | 'save-as-note'
-  | 'create-initiative';
+  | 'create-initiative'
+  // C3 — actions whose backend exists today but the chat-shell never exposed
+  // them (ecosystem audit). Wired through the canonical createWorkspaceResource
+  // path so both shells produce the same real DB rows.
+  | 'create-decision'
+  | 'create-task';
 
 export type CanvasActionAvailabilityStatus =
   | 'enabled'
@@ -403,4 +408,7 @@ export interface CanvasRuntimeCapabilities {
   canSendToIdea?: boolean;
   canSaveAsNote?: boolean;
   canCreateInitiative?: boolean;
+  // C3 — newly surfaced actions (the backends already existed).
+  canCreateDecision?: boolean;
+  canCreateTask?: boolean;
 }

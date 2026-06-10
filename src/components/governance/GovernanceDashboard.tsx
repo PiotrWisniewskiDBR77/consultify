@@ -33,7 +33,7 @@ export const GovernanceDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 dark:text-white flex items-center gap-2">
             <History className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             Recent Audit Log
@@ -58,9 +58,9 @@ export const GovernanceDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4 dark:text-white">Security Alerts</h3>
-          <div className="h-48 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-gray-400">
+          <div className="h-48 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-gray-600">
             No critical alerts detected
           </div>
         </div>
@@ -78,7 +78,7 @@ interface GovStatCardProps {
 
 const GovStatCard: React.FC<GovStatCardProps> = ({ title, value, icon, status }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="flex items-center gap-3 mb-3">
         <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
           {icon}

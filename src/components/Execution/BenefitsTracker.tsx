@@ -24,6 +24,9 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+
 export type BenefitStatus = 'PLANNED' | 'PARTIALLY_REALIZED' | 'FULLY_REALIZED' | 'NOT_ACHIEVED';
 export type BenefitType = 'FINANCIAL' | 'EFFICIENCY' | 'QUALITY' | 'STRATEGIC' | 'COMPLIANCE';
 
@@ -149,9 +152,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
             Loading benefits data...
           </p>
         </div>
-        <div className="flex items-center justify-center h-48">
-          <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full" />
-        </div>
+        <LoadingState variant="spinner" label="Loading benefits data..." />
       </div>
     );
   }
@@ -165,15 +166,7 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
             Benefits Realization
           </h3>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <p className="text-sm text-rose-500 dark:text-rose-400">{fetchError}</p>
-          <button
-            onClick={fetchBenefits}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-500 rounded-lg transition-colors"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorState message={fetchError} retry={fetchBenefits} />
       </div>
     );
   }
@@ -190,15 +183,11 @@ export const BenefitsTracker: React.FC<BenefitsTrackerProps> = ({ projectId, ben
             Track transformation benefits and ROI
           </p>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 text-slate-500">
-          <TrendingUp size={48} className="mb-4 opacity-50" />
-          <p className="text-lg font-medium text-slate-900 dark:text-white">
-            No benefits tracked yet
-          </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Define expected benefits to track realization progress
-          </p>
-        </div>
+        <EmptyState
+          icon={<TrendingUp />}
+          title="No benefits tracked yet"
+          description="Define expected benefits to track realization progress"
+        />
       </div>
     );
   }

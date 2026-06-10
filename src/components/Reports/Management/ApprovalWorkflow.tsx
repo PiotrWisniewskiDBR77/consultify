@@ -67,9 +67,9 @@ const getStatusColor = (status: string) => {
     case 'PENDING':
       return 'text-amber-500 bg-amber-500/10';
     case 'SKIPPED':
-      return 'text-slate-400 dark:text-slate-500 bg-slate-400/10';
+      return 'text-slate-600 dark:text-slate-500 bg-slate-400/10';
     default:
-      return 'text-slate-400 dark:text-slate-500 bg-slate-400/10';
+      return 'text-slate-600 dark:text-slate-500 bg-slate-400/10';
   }
 };
 
@@ -145,7 +145,7 @@ const ApprovalStep: React.FC<{
           <div className="flex items-center gap-2">
             <RoleIcon
               role={approval.requiredRole}
-              className="w-4 h-4 text-slate-400 dark:text-slate-500"
+              className="w-4 h-4 text-slate-600 dark:text-slate-500"
             />
             <span className="font-semibold text-navy-900 dark:text-white">
               Level {approval.approvalLevel}: {getRoleLabel(approval.requiredRole)}
@@ -179,7 +179,7 @@ const ApprovalStep: React.FC<{
         {approval.decisionComment && (
           <div className="mt-2 p-2 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
             <p className="text-sm text-slate-600 dark:text-slate-300 flex items-start gap-2">
-              <MessageSquare size={14} className="mt-0.5 text-slate-400 dark:text-slate-500" />
+              <MessageSquare size={14} className="mt-0.5 text-slate-600 dark:text-slate-500" />
               {approval.decisionComment}
             </p>
           </div>
@@ -271,7 +271,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-              <Send size={20} className="text-slate-400 dark:text-slate-500" />
+              <Send size={20} className="text-slate-600 dark:text-slate-500" />
             </div>
             <div>
               <h3 className="font-semibold text-navy-900 dark:text-white">Approval Workflow</h3>
@@ -322,16 +322,16 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
             </span>
           )}
           {expanded ? (
-            <ChevronUp size={20} className="text-slate-400 dark:text-slate-500" />
+            <ChevronUp size={20} className="text-slate-600 dark:text-slate-500" />
           ) : (
-            <ChevronDown size={20} className="text-slate-400 dark:text-slate-500" />
+            <ChevronDown size={20} className="text-slate-600 dark:text-slate-500" />
           )}
         </div>
       </button>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-slate-100 dark:border-navy-700">
+        <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700">
           {/* Approval chain */}
           <div className="mt-4">
             {approvalStatus.levels.map((level, index: number) => (
@@ -346,7 +346,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
 
           {/* Action buttons */}
           {(approvalStatus.canApprove || approvalStatus.canReject) && (
-            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
               {approvalStatus.canApprove && (
                 <button
                   onClick={() => setShowDecisionModal('approve')}

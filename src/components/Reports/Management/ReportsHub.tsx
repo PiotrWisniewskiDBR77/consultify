@@ -7,26 +7,24 @@
 
 import {
   AlertTriangle,
+  Archive,
   Briefcase,
   Building2,
   Calendar,
   CalendarClock,
-  Clock,
+  ChevronRight,
   Download,
   Eye,
   FileBarChart2,
   FileText,
-  History,
   Loader2,
   Lock,
   MessageSquare,
-  Plus,
+  Pencil,
   Share2,
   Sparkles,
-  User,
   Users,
   Wand2,
-  X,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -52,7 +50,9 @@ import {
   ViewMode,
 } from '../../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../../shared/ModuleHub/useModuleOpenDocuments';
-import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
+import { type RowAction } from '../../shared/RowActionsMenu';
+import { TableWithPreviewLayout } from '../../shared/TableWithPreviewLayout';
+import { EntityStatusChip, MetaChip } from '../../ui/primitives/chips';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
 import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
@@ -60,53 +60,38 @@ import { ReportingAutomationWorkspace } from './ReportingAutomationWorkspace';
 import { SteeringCommitteeReport } from './SteeringCommitteeReport';
 import { TeamMeetingReport } from './TeamMeetingReport';
 
-// Report type metadata
+// Report type metadata. Identity (type) is carried by a muted icon + short
+// label — color is NOT a status signal here (canon §4.0a), so we keep the icon
+// monochrome (text-slate-500) and let EntityStatusChip own the colored signals.
 const REPORT_TYPE_META: Record<
   ManagementReportType,
-  { label: string; shortLabel: string; icon: React.ReactNode; color: string }
+  { label: string; shortLabel: string; icon: React.ReactNode }
 > = {
-  TEAM_MEETING: {
-    label: 'Team Meeting',
-    shortLabel: 'TM',
-    icon: <Users size={14} />,
-    color: 'text-blue-400',
-  },
-  TEAM_WEEKLY: {
-    label: 'Team Weekly',
-    shortLabel: 'TW',
-    icon: <Users size={14} />,
-    color: 'text-sky-400',
-  },
+  TEAM_MEETING: { label: 'Team Meeting', shortLabel: 'TM', icon: <Users size={14} /> },
+  TEAM_WEEKLY: { label: 'Team Weekly', shortLabel: 'TW', icon: <Users size={14} /> },
   STEERING_COMMITTEE: {
     label: 'Steering Committee',
     shortLabel: 'SC',
     icon: <Building2 size={14} />,
-    color: 'text-primary-400',
   },
   PORTFOLIO_HEALTH: {
     label: 'Portfolio Health',
     shortLabel: 'PH',
     icon: <Briefcase size={14} />,
-    color: 'text-emerald-400',
   },
-  RAID: {
-    label: 'RAID',
-    shortLabel: 'RAID',
-    icon: <AlertTriangle size={14} />,
-    color: 'text-amber-400',
-  },
+  RAID: { label: 'RAID', shortLabel: 'RAID', icon: <AlertTriangle size={14} /> },
 };
 
-const SCOPE_META: Record<ManagementReportScope, { label: string; color: string }> = {
-  PROJECT: { label: 'Project', color: 'bg-slate-600' },
-  PORTFOLIO: { label: 'Portfolio', color: 'bg-emerald-600' },
+const SCOPE_META: Record<ManagementReportScope, { label: string }> = {
+  PROJECT: { label: 'Project' },
+  PORTFOLIO: { label: 'Portfolio' },
 };
 
-const STATUS_META: Record<ManagementReportStatus, { label: string; dotColor: string }> = {
-  DRAFT: { label: 'Draft', dotColor: 'bg-amber-400' },
-  FINAL: { label: 'Final', dotColor: 'bg-emerald-400' },
-  APPROVED: { label: 'Approved', dotColor: 'bg-primary-400' },
-  ARCHIVED: { label: 'Archived', dotColor: 'bg-slate-400' },
+const STATUS_META: Record<ManagementReportStatus, { label: string }> = {
+  DRAFT: { label: 'Draft' },
+  FINAL: { label: 'Final' },
+  APPROVED: { label: 'Approved' },
+  ARCHIVED: { label: 'Archived' },
 };
 
 interface ReportHistoryItem {
@@ -178,8 +163,8 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
   const [isLoading, setIsLoading] = useState(true);
   const [showGeneratorDrawer, setShowGeneratorDrawer] = useState(false);
   const [currentReport, setCurrentReport] = useState<ManagementReport | null>(null);
-  // Quick preview panel state (B5.2)
-  const [previewReportId, setPreviewReportId] = useState<string | null>(null);
+  // Side preview pane selection (canon §7 — single-click selects + opens preview)
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Fetch data
   useEffect(() => {
@@ -279,132 +264,150 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     [filteredReports.length, templates.length, schedules]
   );
 
-  // Table columns for Reports
+  // Table columns for Reports (canon §3.3: title left · identity chips left ·
+  // counts right · status chip left · actions right).
   const reportColumns: TableColumn[] = useMemo(
     () => [
       {
         id: 'type',
-        label: 'Type',
-        width: '100px',
+        label: t('reports.col.type', 'Type'),
+        width: '110px',
+        filterable: true,
+        filterOptions: Object.entries(REPORT_TYPE_META).map(([value, meta]) => ({
+          value,
+          label: meta.label,
+        })),
         render: (row: ReportHistoryItem) => {
           const meta = REPORT_TYPE_META[row.reportType];
           return (
-            <div className="flex items-center gap-2">
-              <span className={meta.color}>{meta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-300">{meta.shortLabel}</span>
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <span className="text-slate-400 dark:text-slate-500">{meta?.icon}</span>
+              <span className="font-mono text-xs font-bold">{meta?.shortLabel ?? '—'}</span>
             </div>
           );
         },
       },
       {
         id: 'title',
-        label: 'Title',
+        label: t('reports.col.title', 'Title'),
         render: (row: ReportHistoryItem) => (
           <div>
             <span className="text-sm text-slate-900 dark:text-white font-medium">{row.title}</span>
-            {row.projectName && <p className="text-xs text-slate-400 mt-0.5">{row.projectName}</p>}
+            {row.projectName && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{row.projectName}</p>
+            )}
           </div>
         ),
       },
       {
-        id: 'version',
-        label: 'Ver.',
-        width: '60px',
+        id: 'scope',
+        label: t('reports.col.scope', 'Scope'),
+        width: '120px',
+        filterable: true,
+        filterOptions: Object.entries(SCOPE_META).map(([value, meta]) => ({
+          value,
+          label: meta.label,
+        })),
         render: (row: ReportHistoryItem) => (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono font-medium bg-white/5 text-slate-300 rounded">
+          <MetaChip label={SCOPE_META[row.scope]?.label ?? '—'} />
+        ),
+      },
+      {
+        id: 'status',
+        label: t('reports.col.status', 'Status'),
+        width: '120px',
+        filterable: true,
+        filterOptions: Object.entries(STATUS_META).map(([value, meta]) => ({
+          value,
+          label: meta.label,
+        })),
+        render: (row: ReportHistoryItem) => <EntityStatusChip status={row.status} />,
+      },
+      {
+        id: 'version',
+        label: t('reports.col.version', 'Ver.'),
+        width: '70px',
+        render: (row: ReportHistoryItem) => (
+          <span className="block text-right font-mono text-xs text-slate-500 dark:text-slate-400">
             v{row.versionLabel || row.versionNumber || '1.0'}
           </span>
         ),
       },
       {
-        id: 'scope',
-        label: 'Scope',
-        width: '100px',
-        render: (row: ReportHistoryItem) => {
-          const meta = SCOPE_META[row.scope];
-          return (
-            <span className={`px-2 py-1 text-xs font-medium rounded ${meta.color} text-white`}>
-              {meta.label}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'status',
-        label: 'Status',
-        width: '100px',
-        filterable: true,
-        filterOptions: Object.entries(STATUS_META).map(([value, meta]) => ({
-          value,
-          label: meta.label,
-          color: meta.dotColor,
-        })),
-        render: (row: ReportHistoryItem) => {
-          const meta = STATUS_META[row.status];
-          return (
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-              <span className="text-sm text-slate-300">{meta.label}</span>
-            </div>
-          );
-        },
-      },
-      {
         id: 'createdAt',
-        label: 'Generated',
-        width: '140px',
+        label: t('reports.col.generated', 'Generated'),
+        width: '150px',
         sortable: true,
         render: (row: ReportHistoryItem) => (
           <div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
-              <Calendar size={14} className="text-slate-500" />
+            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              <Calendar size={14} className="text-slate-400 dark:text-slate-500" />
               {new Date(row.createdAt).toLocaleDateString()}
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">{row.generatedByName}</p>
-          </div>
-        ),
-      },
-      {
-        id: 'actions',
-        label: 'Actions',
-        width: '120px',
-        render: (row: ReportHistoryItem) => (
-          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-            <RowActionsMenu
-              iconVariant="vertical"
-              actions={
-                [
-                  {
-                    id: 'open',
-                    label: t('common.open', 'Open'),
-                    icon: Eye,
-                    variant: 'primary',
-                    onClick: () => handleViewReport(row.id),
-                  },
-                  ...(row.pdfPath
-                    ? ([
-                        {
-                          id: 'pdf',
-                          label: t('reports.actions.downloadPdf', 'Download PDF'),
-                          icon: FileText,
-                          onClick: () => handleDownloadPDF(row.id),
-                        },
-                      ] as RowAction[])
-                    : []),
-                  {
-                    id: 'share',
-                    label: t('reports.actions.share', 'Share link'),
-                    icon: Share2,
-                    divider: true,
-                    onClick: () => handleShare(row.id),
-                  },
-                ] as RowAction[]
-              }
-            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {row.generatedByName || '—'}
+            </p>
           </div>
         ),
       },
     ],
+    [t]
+  );
+
+  // Row actions menu — canon §9 (context top → fixed-bottom manifest → danger).
+  const getReportRowActions = useCallback(
+    (row: ReportHistoryItem): RowAction[] => {
+      const actions: RowAction[] = [
+        // GÓRA — kontekst
+        {
+          id: 'open',
+          label: t('common.open', 'Open'),
+          icon: Eye,
+          variant: 'primary',
+          onClick: () => handleViewReport(row.id),
+        },
+      ];
+      if (row.pdfPath) {
+        actions.push({
+          id: 'pdf',
+          label: t('reports.actions.downloadPdf', 'Download PDF'),
+          icon: FileText,
+          onClick: () => handleDownloadPDF(row.id),
+        });
+      }
+      actions.push({
+        id: 'share',
+        label: t('reports.actions.share', 'Share link'),
+        icon: Share2,
+        onClick: () => handleShare(row.id),
+      });
+      // DÓŁ — FIXED BOTTOM MANIFEST (reports have no due date → no Delay)
+      actions.push(
+        {
+          id: 'open_preview',
+          label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+          icon: ChevronRight,
+          divider: true,
+          onClick: () => setSelectedId(row.id),
+        },
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edytuj'),
+          icon: Pencil,
+          onClick: () => handleViewReport(row.id),
+        },
+        {
+          // canon §14 + §9.2: Archive slot (soft-delete backend TBD)
+          id: 'archive',
+          label: t('rap.actions.archive', 'Archiwizuj'),
+          icon: Archive,
+          disabled: true,
+          description: t('common.comingSoon', 'Wkrótce'),
+          onClick: () => {},
+        }
+      );
+      return actions;
+    },
     [t]
   );
 
@@ -413,46 +416,52 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     () => [
       {
         id: 'type',
-        label: 'Type',
-        width: '100px',
+        label: t('reports.col.type', 'Type'),
+        width: '110px',
         render: (row: ReportTemplate) => {
           const meta = REPORT_TYPE_META[row.reportType];
           return (
-            <div className="flex items-center gap-2">
-              <span className={meta.color}>{meta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-300">{meta.shortLabel}</span>
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <span className="text-slate-400 dark:text-slate-500">{meta?.icon}</span>
+              <span className="font-mono text-xs font-bold">{meta?.shortLabel ?? '—'}</span>
             </div>
           );
         },
       },
       {
         id: 'name',
-        label: 'Name',
+        label: t('reports.col.name', 'Name'),
         render: (row: ReportTemplate) => (
           <div>
             <span className="text-sm text-slate-900 dark:text-white font-medium">{row.name}</span>
-            {row.description && <p className="text-xs text-slate-400 mt-0.5">{row.description}</p>}
+            {row.description && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{row.description}</p>
+            )}
           </div>
         ),
       },
       {
         id: 'sections',
-        label: 'Sections',
+        label: t('reports.col.sections', 'Sections'),
         width: '100px',
         render: (row: ReportTemplate) => (
-          <span className="text-sm text-slate-300">{row.sections.length} sections</span>
+          <span className="block text-right text-sm text-slate-600 dark:text-slate-300">
+            {row.sections.length}
+          </span>
         ),
       },
       {
         id: 'createdAt',
-        label: 'Created',
-        width: '140px',
+        label: t('reports.col.created', 'Created'),
+        width: '150px',
         render: (row: ReportTemplate) => (
           <div>
-            <div className="text-sm text-slate-300">
+            <div className="text-sm text-slate-600 dark:text-slate-300">
               {new Date(row.createdAt).toLocaleDateString()}
             </div>
-            {row.createdByName && <p className="text-xs text-slate-500">{row.createdByName}</p>}
+            {row.createdByName && (
+              <p className="text-xs text-slate-500 dark:text-slate-400">{row.createdByName}</p>
+            )}
           </div>
         ),
       },
@@ -465,21 +474,21 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     () => [
       {
         id: 'type',
-        label: 'Type',
-        width: '100px',
+        label: t('reports.col.type', 'Type'),
+        width: '110px',
         render: (row: ReportSchedule) => {
           const meta = REPORT_TYPE_META[row.reportType];
           return (
-            <div className="flex items-center gap-2">
-              <span className={meta.color}>{meta.icon}</span>
-              <span className="font-mono text-xs font-bold text-slate-300">{meta.shortLabel}</span>
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+              <span className="text-slate-400 dark:text-slate-500">{meta?.icon}</span>
+              <span className="font-mono text-xs font-bold">{meta?.shortLabel ?? '—'}</span>
             </div>
           );
         },
       },
       {
         id: 'scope',
-        label: 'Scope',
+        label: t('reports.col.scope', 'Scope'),
         render: (row: ReportSchedule) => (
           <div>
             <span className="text-sm text-slate-900 dark:text-white font-medium">
@@ -490,50 +499,48 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       },
       {
         id: 'frequency',
-        label: 'Frequency',
+        label: t('reports.col.frequency', 'Frequency'),
         width: '120px',
         render: (row: ReportSchedule) => (
-          <span className="text-sm text-slate-300">{row.frequency}</span>
+          <span className="text-sm text-slate-600 dark:text-slate-300">{row.frequency}</span>
         ),
       },
       {
         id: 'schedule',
-        label: 'Schedule',
-        width: '140px',
+        label: t('reports.col.schedule', 'Schedule'),
+        width: '150px',
         render: (row: ReportSchedule) => (
-          <div className="text-sm text-slate-300">
+          <div className="text-sm text-slate-600 dark:text-slate-300">
             {row.timeOfDay} {row.timezone}
           </div>
         ),
       },
       {
         id: 'next',
-        label: 'Next Run',
-        width: '140px',
-        render: (row: ReportSchedule) => (
-          <div>
-            {row.nextScheduledAt ? (
-              <div className="text-sm text-slate-300">
-                {new Date(row.nextScheduledAt).toLocaleDateString()}
-              </div>
-            ) : (
-              <span className="text-sm text-slate-500">Not scheduled</span>
-            )}
-          </div>
-        ),
+        label: t('reports.col.nextRun', 'Next Run'),
+        width: '150px',
+        render: (row: ReportSchedule) =>
+          row.nextScheduledAt ? (
+            <div className="text-sm text-slate-600 dark:text-slate-300">
+              {new Date(row.nextScheduledAt).toLocaleDateString()}
+            </div>
+          ) : (
+            <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
+          ),
       },
       {
         id: 'status',
-        label: 'Status',
-        width: '80px',
+        label: t('reports.col.status', 'Status'),
+        width: '110px',
         render: (row: ReportSchedule) => (
-          <span
-            className={`px-2 py-1 text-xs font-medium rounded ${
-              row.isActive ? 'bg-emerald-600 text-white' : 'bg-slate-600 text-slate-300'
-            }`}
-          >
-            {row.isActive ? 'Active' : 'Paused'}
-          </span>
+          <EntityStatusChip
+            status={row.isActive ? 'active' : 'archived'}
+            label={
+              row.isActive
+                ? t('reports.schedule.active', 'Active')
+                : t('reports.schedule.paused', 'Paused')
+            }
+          />
         ),
       },
     ],
@@ -706,7 +713,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       case 'RAID':
         return <RaidReport report={currentReport} />;
       default:
-        return <div className="p-6 text-slate-400">Unknown report type</div>;
+        return <div className="p-6 text-slate-600">Unknown report type</div>;
     }
   };
 
@@ -749,180 +756,158 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         );
       }
 
-      const previewReport = previewReportId
-        ? filteredReports.find((r) => r.id === previewReportId)
+      const selectedReport = selectedId
+        ? (filteredReports.find((r) => r.id === selectedId) ?? null)
         : null;
 
       return (
-        <div className="flex h-full">
-          {/* Reports Table */}
-          <div className={`flex-1 min-w-0 ${previewReport ? 'border-r border-white/5' : ''}`}>
-            <FilterableTable
-              columns={reportColumns}
-              data={filteredReports}
-              onRowClick={(row: any) => {
-                const r = row as ReportHistoryItem;
-                setPreviewReportId(r.id === previewReportId ? null : r.id);
-              }}
-              activeFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              emptyMessage="No reports found."
-            />
-          </div>
-
-          {/* Quick Version Preview Panel (B5.2) */}
-          {previewReport && (
-            <div className="w-80 shrink-0 bg-slate-50 dark:bg-navy-950/50 overflow-y-auto">
-              <div className="p-4">
-                {/* Panel Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <History size={14} className="text-primary-400" />
-                    Quick Preview
-                  </h4>
-                  <button
-                    onClick={() => setPreviewReportId(null)}
-                    className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <X size={14} className="text-slate-500 dark:text-slate-400" />
-                  </button>
-                </div>
-
-                {/* Report Info Card */}
-                <div className="bg-white dark:bg-navy-900/80 rounded-xl border border-slate-200 dark:border-navy-700 p-4 space-y-3">
-                  {/* Title */}
-                  <div>
-                    <h5 className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
-                      {previewReport.title}
-                    </h5>
-                    {previewReport.projectName && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {previewReport.projectName}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Metadata */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className={`${REPORT_TYPE_META[previewReport.reportType].color}`}>
-                        {REPORT_TYPE_META[previewReport.reportType].icon}
-                      </span>
-                      <span className="text-slate-700 dark:text-slate-300">
-                        {REPORT_TYPE_META[previewReport.reportType].label}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <Calendar size={12} />
-                      <span>{new Date(previewReport.createdAt).toLocaleString()}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <User size={12} />
-                      <span>{previewReport.generatedByName}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs">
-                      <span
-                        className={`w-2 h-2 rounded-full ${STATUS_META[previewReport.status].dotColor}`}
-                      />
-                      <span className="text-slate-700 dark:text-slate-300">
-                        {STATUS_META[previewReport.status].label}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-medium ${SCOPE_META[previewReport.scope].color} text-white`}
-                      >
-                        {SCOPE_META[previewReport.scope].label}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Immutable Version Badge */}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary-500/10 border border-primary-500/20 rounded-lg">
-                    <Lock size={12} className="text-primary-400" />
-                    <span className="text-[11px] text-primary-300 font-medium">
-                      Immutable Version
+        <TableWithPreviewLayout<ReportHistoryItem>
+          selectedId={selectedId}
+          selectedItem={selectedReport}
+          onSelect={setSelectedId}
+          onOpenFull={(id) => handleViewReport(id)}
+          itemIds={filteredReports.map((r) => r.id)}
+          getItemById={(id) => filteredReports.find((r) => r.id === id) ?? null}
+          renderPreview={(item) => (
+            <div className="space-y-3">
+              {/* Meta bar — state, not content (canon §7.3-2) */}
+              <div className="rounded-lg bg-slate-100/60 dark:bg-white/[0.03] p-4 space-y-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <EntityStatusChip status={item.status} />
+                  <MetaChip label={SCOPE_META[item.scope]?.label ?? '—'} />
+                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-slate-400 dark:text-slate-500">
+                      {REPORT_TYPE_META[item.reportType]?.icon}
                     </span>
-                  </div>
-
-                  {/* Period */}
-                  {previewReport.periodStart && previewReport.periodEnd && (
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      <span className="text-slate-500">Period:</span> {previewReport.periodStart} –{' '}
-                      {previewReport.periodEnd}
+                    {REPORT_TYPE_META[item.reportType]?.label ?? '—'}
+                  </span>
+                </div>
+                <dl className="text-sm space-y-1.5">
+                  {item.projectName && (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-slate-500 dark:text-slate-400">
+                        {t('reports.preview.project', 'Project')}
+                      </dt>
+                      <dd className="text-slate-700 dark:text-slate-200 text-right">
+                        {item.projectName}
+                      </dd>
                     </div>
                   )}
-                </div>
-
-                {/* Actions */}
-                <div className="mt-4 space-y-2">
-                  <button
-                    onClick={() => handleViewReport(previewReport.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    <Eye size={14} />
-                    Open Full Report
-                  </button>
-
-                  {previewReport.pdfPath && (
-                    <button
-                      onClick={() => handleDownloadPDF(previewReport.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 border border-slate-300 dark:border-navy-700 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
-                    >
-                      <Download size={14} />
-                      Download PDF
-                    </button>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-500 dark:text-slate-400">
+                      {t('reports.col.generated', 'Generated')}
+                    </dt>
+                    <dd className="text-slate-700 dark:text-slate-200 text-right">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-500 dark:text-slate-400">
+                      {t('reports.preview.author', 'Author')}
+                    </dt>
+                    <dd className="text-slate-700 dark:text-slate-200 text-right">
+                      {item.generatedByName || '—'}
+                    </dd>
+                  </div>
+                  {item.periodStart && item.periodEnd && (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-slate-500 dark:text-slate-400">
+                        {t('reports.preview.period', 'Period')}
+                      </dt>
+                      <dd className="text-slate-700 dark:text-slate-200 text-right">
+                        {item.periodStart} – {item.periodEnd}
+                      </dd>
+                    </div>
                   )}
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-500 dark:text-slate-400">
+                      {t('reports.preview.version', 'Version')}
+                    </dt>
+                    <dd className="text-slate-700 dark:text-slate-200 text-right font-mono">
+                      v{item.versionLabel || item.versionNumber || '1.0'}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
 
-                  <button
-                    onClick={() => handleShare(previewReport.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 border border-slate-300 dark:border-navy-700 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
-                  >
-                    <Share2 size={14} />
-                    Share Link
-                  </button>
-
-                  {/* B9.1: Chat about this report */}
-                  <button
-                    onClick={async () => {
-                      try {
-                        await openChatWithContext({
-                          entityType: 'report',
-                          entityId: previewReport.id,
-                          entityName: previewReport.title,
-                          contextData: {
-                            reportType: previewReport.reportType,
-                            reportScope: previewReport.scope,
-                            reportStatus: previewReport.status,
-                            periodStart: previewReport.periodStart,
-                            periodEnd: previewReport.periodEnd,
-                          },
-                        });
-                        toast.success(
-                          t('reports.toast.chatOpened', 'Otwarto czat dla tego raportu'),
-                          { duration: 1500, icon: '💬' }
-                        );
-                      } catch (err) {
-                        console.error('[ReportsHub] Failed to open chat:', err);
-                        toast.error(
-                          t('reports.toast.chatOpenError', 'Nie udało się otworzyć czatu')
-                        );
-                      }
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    <MessageSquare size={14} />
-                    Chat about this Report
-                  </button>
-                </div>
+              {/* Immutable version note */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+                <Lock size={12} className="text-primary-500" />
+                <span className="text-[11px] text-primary-600 dark:text-primary-300 font-medium">
+                  {t('reports.preview.immutable', 'Immutable version')}
+                </span>
               </div>
             </div>
           )}
-        </div>
+          renderPreviewFooter={(item) => (
+            <div className="space-y-2.5">
+              {/* AI (canon §7.3.4-1) */}
+              <button
+                onClick={async () => {
+                  try {
+                    await openChatWithContext({
+                      entityType: 'report',
+                      entityId: item.id,
+                      entityName: item.title,
+                      contextData: {
+                        reportType: item.reportType,
+                        reportScope: item.scope,
+                        reportStatus: item.status,
+                        periodStart: item.periodStart,
+                        periodEnd: item.periodEnd,
+                      },
+                    });
+                    toast.success(t('reports.toast.chatOpened', 'Otwarto czat dla tego raportu'), {
+                      duration: 1500,
+                      icon: '💬',
+                    });
+                  } catch (err) {
+                    console.error('[ReportsHub] Failed to open chat:', err);
+                    toast.error(t('reports.toast.chatOpenError', 'Nie udało się otworzyć czatu'));
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 h-9 rounded-full border border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] text-xs font-medium transition-colors"
+              >
+                <MessageSquare size={14} />
+                {t('reports.actions.chat', 'Chat about this report')}
+              </button>
+
+              {/* Actions (canon §7.3.4-4) — Open lives in the header, not here */}
+              <div className="flex items-center gap-2">
+                {item.pdfPath && (
+                  <button
+                    onClick={() => handleDownloadPDF(item.id)}
+                    className="flex-1 flex items-center justify-center gap-2 h-9 rounded-full border border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] text-xs font-medium transition-colors"
+                  >
+                    <Download size={14} />
+                    {t('reports.actions.downloadPdf', 'Download PDF')}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleShare(item.id)}
+                  className="flex-1 flex items-center justify-center gap-2 h-9 rounded-full border border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] text-xs font-medium transition-colors"
+                >
+                  <Share2 size={14} />
+                  {t('reports.actions.share', 'Share link')}
+                </button>
+              </div>
+            </div>
+          )}
+        >
+          <FilterableTable
+            columns={reportColumns}
+            data={filteredReports}
+            selectedRowId={selectedId}
+            onRowClick={(row) => setSelectedId((row as ReportHistoryItem).id)}
+            onRowDoubleClick={(row) => handleViewReport((row as ReportHistoryItem).id)}
+            getRowActions={(row) => getReportRowActions(row as ReportHistoryItem)}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            emptyMessage={t('reports.empty.noResults', 'No reports found.')}
+            enableColumnSettings
+            persistKey="reports.list"
+          />
+        </TableWithPreviewLayout>
       );
     }
 

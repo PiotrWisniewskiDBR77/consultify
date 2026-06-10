@@ -188,7 +188,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
-          <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -239,7 +239,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
               {t('feedback.backlog.empty', 'No feedback backlog tasks found.')}
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-navy-800">
+            <div className="divide-y divide-slate-200 dark:divide-navy-800">
               {filtered.map((item) => {
                 const env = envFromTags(item.tags);
                 const isExpanded = expandedId === item.id;
@@ -281,7 +281,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                             )}
                           </div>
                         </div>
-                        <div className="shrink-0 text-slate-400 dark:text-slate-500">
+                        <div className="shrink-0 text-slate-600 dark:text-slate-500">
                           {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         </div>
                       </div>
@@ -293,7 +293,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                             {item.description}
                           </div>
                         ) : (
-                          <div className="italic text-slate-400">
+                          <div className="italic text-slate-600">
                             {t('feedback.backlog.noDescription', 'No description recorded.')}
                           </div>
                         )}

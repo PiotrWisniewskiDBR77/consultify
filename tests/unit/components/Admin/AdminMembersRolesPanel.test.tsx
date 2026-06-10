@@ -42,16 +42,18 @@ describe('AdminMembersRolesPanel', () => {
     vi.clearAllMocks();
   });
 
-  it('generates tenant access codes through the P32 admin endpoint', async () => {
+  it('generates tenant access codes through the access-codes generate endpoint', async () => {
     render(<AdminMembersRolesPanel />);
 
     fireEvent.click(await screen.findByRole('button', { name: /Generate code/i }));
 
     await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/admin/access-codes', {
-        role: 'MEMBER',
+      expect(Api.post).toHaveBeenCalledWith('/access-codes/generate', {
+        type: 'INVITE',
+        organizationId: 'org-1',
         maxUses: 50,
         expiresInDays: 7,
+        metadata: { invitedRole: 'MEMBER' },
       });
     });
     expect(await screen.findByText('TENANT-CODE-123')).toBeInTheDocument();

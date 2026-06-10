@@ -53,7 +53,7 @@ export const Step3Workspace: React.FC<Step3WorkspaceProps> = ({
                   className="p-3 bg-slate-50/30 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-white/5 flex flex-col gap-2"
                 >
                   <div className="flex justify-between">
-                    <span className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                    <span className="text-xs text-slate-600 dark:text-slate-500 font-bold uppercase tracking-wider">
                       {challenge.area}
                     </span>
                     <div className="flex gap-2">

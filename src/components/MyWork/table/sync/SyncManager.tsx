@@ -189,7 +189,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
             onClick={resetWizard}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <ChevronLeft size={16} className="text-slate-400" />
+            <ChevronLeft size={16} className="text-slate-600" />
           </button>
           <RefreshCw size={16} className="text-blue-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
@@ -198,10 +198,10 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 border-b border-slate-100 px-5 py-3 dark:border-navy-800">
+        <div className="flex items-center gap-1 border-b border-slate-200 px-5 py-3 dark:border-navy-800">
           {WIZARD_STEPS.map((step, idx) => (
             <React.Fragment key={step.key}>
-              {idx > 0 && <ArrowRight size={10} className="text-slate-300" />}
+              {idx > 0 && <ArrowRight size={10} className="text-slate-600" />}
               <button
                 onClick={() => idx <= stepIndex && setWizardStep(step.key)}
                 className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
@@ -209,7 +209,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                     ? 'bg-blue-500 text-white'
                     : idx < stepIndex
                       ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                      : 'text-slate-400'
+                      : 'text-slate-600'
                 }`}
               >
                 {isPl ? step.pl : step.en}
@@ -317,7 +317,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   </option>
                 ))}
               </select>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-600">
                 {isPl
                   ? 'Dane ze źródła zostaną zsynchronizowane do tej tabeli.'
                   : 'Data from the source will be synced to this table.'}
@@ -330,7 +330,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
               <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 {isPl ? 'Mapowanie pól' : 'Field Mapping'}
               </h4>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-600">
                 {isPl
                   ? 'Mapuj pola źródłowe na docelowe. Puste = automatyczne dopasowanie.'
                   : 'Map source fields to target fields. Leave empty for auto-matching.'}
@@ -342,7 +342,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                       <span className="w-1/3 truncate text-xs text-slate-600 dark:text-slate-300">
                         {f.name}
                       </span>
-                      <ArrowRight size={12} className="text-slate-300" />
+                      <ArrowRight size={12} className="text-slate-600" />
                       <input
                         type="text"
                         value={fieldMapping[f.id] ?? ''}
@@ -359,7 +359,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   ))}
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed border-slate-300 p-4 text-center text-xs text-slate-400 dark:border-navy-600">
+                <div className="rounded-lg border border-dashed border-slate-300 p-4 text-center text-xs text-slate-600 dark:border-navy-600">
                   {isPl
                     ? 'Pola zostaną automatycznie dopasowane po nazwie.'
                     : 'Fields will be auto-matched by name.'}
@@ -480,13 +480,13 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
             onClick={onClose}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <ChevronLeft size={16} className="text-slate-400" />
+            <ChevronLeft size={16} className="text-slate-600" />
           </button>
           <RefreshCw size={18} className="text-blue-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Synchronizacja' : 'Data Sync'}
             {syncs.length > 0 && (
-              <span className="ml-1 font-normal text-slate-400">({syncs.length})</span>
+              <span className="ml-1 font-normal text-slate-600">({syncs.length})</span>
             )}
           </h3>
         </div>
@@ -503,12 +503,12 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
       <div className="flex-1 overflow-y-auto p-5">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-400" />
+            <Loader2 size={20} className="animate-spin text-slate-600" />
           </div>
         ) : syncs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-4 rounded-2xl bg-slate-100 p-4 dark:bg-navy-800">
-              <RefreshCw size={28} className="text-slate-400 dark:text-slate-500" />
+              <RefreshCw size={28} className="text-slate-600 dark:text-slate-500" />
             </div>
             <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
               {isPl ? 'Brak synchronizacji' : 'No syncs configured'}
@@ -546,7 +546,7 @@ export const SyncManager: React.FC<SyncManagerProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 text-sm font-medium text-slate-800 dark:text-white">
                       <span className="truncate">{getTableName(sync.source_table_id)}</span>
-                      <ArrowRight size={10} className="flex-shrink-0 text-slate-300" />
+                      <ArrowRight size={10} className="flex-shrink-0 text-slate-600" />
                       <span className="truncate">{getTableName(sync.target_table_id)}</span>
                     </div>
                     <div className="mt-0.5 flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">

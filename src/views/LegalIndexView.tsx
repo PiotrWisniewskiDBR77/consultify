@@ -1,7 +1,6 @@
 import {
   ArrowLeft,
   ArrowRight,
-  Bot,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -24,8 +23,8 @@ import {
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import TeresaMark from '../components/shared/TeresaMark';
 import { ROUTES } from '../routes/routeConfig';
-
 interface LegalDocumentCard {
   slug: string;
   title: string;
@@ -42,7 +41,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Terms of Service',
     description: 'The main agreement governing your use of the Consultify platform.',
     icon: <Scale className="w-5 h-5" />,
-    iconBg: 'from-primary-500 to-indigo-600',
+    iconBg: 'from-primary-500 to-crimson-600',
     required: true,
     category: 'core',
   },
@@ -77,7 +76,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     slug: 'ai-policy',
     title: 'AI Usage Policy',
     description: 'Transparency about our AI features, BYOK, data handling, and your controls.',
-    icon: <Bot className="w-5 h-5" />,
+    icon: <TeresaMark className="w-5 h-5" />,
     iconBg: 'from-primary-500 to-primary-600',
     required: false,
     category: 'core',
@@ -132,7 +131,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Customer Data Security',
     description: 'How we protect your data: encryption, isolation, and incident response.',
     icon: <ShieldCheck className="w-5 h-5" />,
-    iconBg: 'from-indigo-500 to-primary-600',
+    iconBg: 'from-crimson-500 to-primary-600',
     required: false,
     category: 'reference',
   },
@@ -141,7 +140,7 @@ const LEGAL_DOCUMENTS: LegalDocumentCard[] = [
     title: 'Sub-processor List',
     description: 'Third-party services that process data on our behalf.',
     icon: <Users className="w-5 h-5" />,
-    iconBg: 'from-fuchsia-500 to-pink-600',
+    iconBg: 'from-hbs-magenta-500 to-hbs-magenta-700',
     required: false,
     category: 'reference',
   },
@@ -180,7 +179,7 @@ const DocumentCard: React.FC<{ doc: LegalDocumentCard }> = ({ doc }) => (
           {doc.description}
         </p>
       </div>
-      <ArrowRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+      <ArrowRight className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
     </div>
   </Link>
 );
@@ -229,7 +228,7 @@ export const LegalIndexView: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <header className="relative bg-gradient-to-br from-slate-900 via-primary-900/90 to-indigo-900 text-white overflow-hidden">
+      <header className="relative bg-gradient-to-br from-slate-900 via-primary-900/90 to-crimson-900 text-white overflow-hidden">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div
@@ -251,7 +250,7 @@ export const LegalIndexView: React.FC = () => {
               <p className="text-primary-200 text-lg mt-1">Consultify by DBR77 Robotics</p>
             </div>
           </div>
-          <p className="text-lg sm:text-xl text-slate-300 max-w-2xl leading-relaxed">
+          <p className="text-lg sm:text-xl text-slate-600 max-w-2xl leading-relaxed">
             Transparency is fundamental to our relationship with you. Here you'll find all the legal
             documents that govern the use of Consultify, how we handle your data, and which
             commercial terms support procurement, pricing, and enterprise review.
@@ -323,7 +322,7 @@ export const LegalIndexView: React.FC = () => {
             title="Core Agreements"
             description="Fundamental documents for all users of Consultify."
             icon={<FileText className="w-6 h-6" />}
-            gradient="from-primary-500 to-indigo-600"
+            gradient="from-primary-500 to-crimson-600"
           />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {coreDocuments.map((doc) => (
@@ -383,7 +382,7 @@ export const LegalIndexView: React.FC = () => {
             <ContactCard
               label="Legal Inquiries"
               email="legal@dbr77.com"
-              gradient="from-primary-500 to-indigo-600"
+              gradient="from-primary-500 to-crimson-600"
             />
             <ContactCard
               label="Privacy Matters"

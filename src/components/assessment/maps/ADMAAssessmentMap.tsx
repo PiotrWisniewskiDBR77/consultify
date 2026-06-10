@@ -234,7 +234,7 @@ const ADMAPillarCard: React.FC<{
               >
                 {pillarScore.current.toFixed(1)}
               </span>
-              <span className="text-slate-400 dark:text-slate-500">/</span>
+              <span className="text-slate-600 dark:text-slate-500">/</span>
               <span className="text-sm text-slate-500 dark:text-slate-400">
                 {pillarScore.target.toFixed(1)}
               </span>

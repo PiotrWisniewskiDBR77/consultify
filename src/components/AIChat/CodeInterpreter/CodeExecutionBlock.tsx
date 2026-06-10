@@ -123,7 +123,7 @@ const OutputRenderer: React.FC<{ output: ExecutionOutput }> = ({ output }) => {
             </tbody>
           </table>
           {output.data.rows?.length > 10 && (
-            <p className="text-xs text-slate-400 px-3 py-2">
+            <p className="text-xs text-slate-600 px-3 py-2">
               Showing 10 of {output.data.rows.length} rows
             </p>
           )}
@@ -248,7 +248,7 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
                 flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors
                 ${
                   isExecuting
-                    ? 'bg-slate-200 dark:bg-navy-700 text-slate-400 cursor-wait'
+                    ? 'bg-slate-200 dark:bg-navy-700 text-slate-600 cursor-wait'
                     : 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400'
                 }
               `}
@@ -309,7 +309,7 @@ export const CodeExecutionBlock: React.FC<CodeExecutionBlockProps> = ({
                 {t('code.output', 'Output')}
               </span>
               {result && result.outputs.length > 0 && (
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-600">
                   ({result.outputs.length} {result.outputs.length === 1 ? 'item' : 'items'})
                 </span>
               )}

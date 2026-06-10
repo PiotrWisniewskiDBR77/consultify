@@ -77,7 +77,7 @@ export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({ data, isPolish, onItemCl
             {config.icon}
           </span>
           <h4 className={`font-medium ${config.textClass}`}>{config.label[lang]}</h4>
-          <span className="text-xs text-slate-400">({items.length})</span>
+          <span className="text-xs text-slate-600">({items.length})</span>
         </div>
 
         {/* Items */}
@@ -116,7 +116,7 @@ export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({ data, isPolish, onItemCl
               </div>
             ))
           ) : (
-            <div className="text-sm text-slate-400 italic">
+            <div className="text-sm text-slate-600 italic">
               {isPolish ? 'Brak elementów' : 'No items'}
             </div>
           )}
@@ -128,14 +128,14 @@ export const SWOTMatrix: React.FC<SWOTMatrixProps> = ({ data, isPolish, onItemCl
   return (
     <div className="grid grid-cols-2 gap-4">
       {/* Internal factors (top row) */}
-      <div className="col-span-2 text-center text-xs text-slate-400 uppercase tracking-wide">
+      <div className="col-span-2 text-center text-xs text-slate-600 uppercase tracking-wide">
         {isPolish ? 'Czynniki wewnętrzne' : 'Internal Factors'}
       </div>
       {renderQuadrant('strengths')}
       {renderQuadrant('weaknesses')}
 
       {/* External factors (bottom row) */}
-      <div className="col-span-2 text-center text-xs text-slate-400 uppercase tracking-wide mt-2">
+      <div className="col-span-2 text-center text-xs text-slate-600 uppercase tracking-wide mt-2">
         {isPolish ? 'Czynniki zewnętrzne' : 'External Factors'}
       </div>
       {renderQuadrant('opportunities')}

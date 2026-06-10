@@ -89,7 +89,7 @@ const KanbanCard: React.FC<{
         </span>
         <div className="flex items-center gap-1">
           <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">{health.label}</span>
+          <span className="text-[10px] text-slate-600 dark:text-slate-500">{health.label}</span>
         </div>
       </div>
 
@@ -107,22 +107,22 @@ const KanbanCard: React.FC<{
           </span>
         </div>
       ) : (
-        <div className="flex items-center gap-1.5 mb-2 text-[11px] text-slate-400">
+        <div className="flex items-center gap-1.5 mb-2 text-[11px] text-slate-600">
           <User size={12} />
           <span>{t('initiatives.kanban.noOwner', 'Unassigned')}</span>
         </div>
       )}
 
       {nextStep && (
-        <div className="pt-2 border-t border-slate-100/70 dark:border-white/[0.03]">
-          <div className="text-[10px] text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-wider font-medium">
+        <div className="pt-2 border-t border-slate-200/70 dark:border-white/[0.03]">
+          <div className="text-[10px] text-slate-600 dark:text-slate-500 mb-1 uppercase tracking-wider font-medium">
             {t('initiatives.kanban.nextGate', 'Next gate')}
           </div>
           <div className="text-xs text-slate-600 dark:text-slate-300 font-medium truncate">
             {nextStep.label}
           </div>
           {nextStep.role && (
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+            <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
               {nextStep.role}
             </div>
           )}
@@ -207,7 +207,7 @@ const KanbanColumn: React.FC<{
           ))}
         </SortableContext>
         {initiatives.length === 0 && (
-          <div className="p-3 text-center text-slate-400 dark:text-slate-500 text-xs">
+          <div className="p-3 text-center text-slate-600 dark:text-slate-500 text-xs">
             Drop initiatives here
           </div>
         )}

@@ -19,17 +19,6 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { PresenceIndicators } from './PresenceIndicators';
-
-interface CollabUser {
-  userId: string;
-  name: string;
-  color: string;
-  avatarUrl?: string;
-  activeCardIndex?: number;
-  isOnline: boolean;
-}
-
 interface DeckBuilderTopBarProps {
   title: string;
   onTitleChange: (title: string) => void;
@@ -45,9 +34,6 @@ interface DeckBuilderTopBarProps {
   onVersionHistory?: () => void;
   onToggleAnimations?: () => void;
   animationsEnabled?: boolean;
-  collaborators?: CollabUser[];
-  isConnected?: boolean;
-  connectionStatus?: 'connecting' | 'connected' | 'disconnected' | 'error';
   onQualityGates?: () => void;
   onAnalytics?: () => void;
   onAuditLog?: () => void;
@@ -120,9 +106,6 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
   onVersionHistory,
   onToggleAnimations,
   animationsEnabled = true,
-  collaborators = [],
-  isConnected = false,
-  connectionStatus = 'disconnected',
   onQualityGates,
   onAnalytics,
   onAuditLog,
@@ -177,13 +160,6 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
         )}
       </div>
 
-      {/* Presence Indicators */}
-      <PresenceIndicators
-        users={collaborators}
-        isConnected={isConnected}
-        connectionStatus={connectionStatus}
-      />
-
       {/* Undo / Redo + Animation toggle */}
       <div className="flex items-center gap-1 border-r border-slate-200 dark:border-navy-700 pr-3 mr-1">
         <button
@@ -208,7 +184,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
             className={`p-1.5 rounded-lg transition-colors ${
               animationsEnabled
                 ? 'text-primary-500 bg-primary-50 dark:bg-primary-500/10'
-                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
             }`}
             title={t(
               animationsEnabled

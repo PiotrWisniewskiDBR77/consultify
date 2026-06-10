@@ -192,7 +192,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             ${
               isComplete
                 ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30'
-                : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10'
+                : 'text-slate-600 hover:text-emerald-500 hover:bg-emerald-500/10'
             }
           `}
           title={
@@ -293,7 +293,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               ${!assigneeId ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
             `}
           >
-            <User size={14} className="text-slate-400" />
+            <User size={14} className="text-slate-600" />
             <span className="text-slate-700 dark:text-slate-300">
               {isPolish ? 'Nieprzypisane' : 'Unassigned'}
             </span>
@@ -341,7 +341,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             className={`
               flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium
               transition-all hover:bg-slate-100 dark:hover:bg-navy-700
-              ${dueDate ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}
+              ${dueDate ? 'text-slate-700 dark:text-slate-300' : 'text-slate-600 dark:text-slate-500'}
             `}
             title={isPolish ? 'Ustaw termin' : 'Set due date'}
           >
@@ -362,7 +362,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       {showTimer && onStartTimer && (
         <button
           onClick={onStartTimer}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-all"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-all"
           title={isPolish ? 'Uruchom timer' : 'Start timer'}
         >
           <Play size={14} />
@@ -373,7 +373,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowMoreMenu(!showMoreMenu)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-all"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-all"
           title={isPolish ? 'Więcej akcji' : 'More actions'}
         >
           <MoreHorizontal size={16} />

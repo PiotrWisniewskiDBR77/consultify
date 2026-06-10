@@ -143,7 +143,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
       {tab === 'style' && (
         <div className="space-y-3">
           {!selectedNodeId ? (
-            <div className="text-[11px] text-slate-400 dark:text-slate-500 italic py-4 text-center">
+            <div className="text-[11px] text-slate-600 dark:text-slate-500 italic py-4 text-center">
               {isPl ? 'Zaznacz węzeł, aby edytować styl' : 'Select a node to edit its style'}
             </div>
           ) : (
@@ -178,7 +178,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   }
                   className="flex-1 h-1.5 accent-primary-500"
                 />
-                <span className="text-[10px] text-slate-400 w-8 text-right">
+                <span className="text-[10px] text-slate-600 w-8 text-right">
                   {nodeStyle.width || 200}
                 </span>
               </div>
@@ -243,7 +243,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
                   }
                   className="flex-1 h-1.5 accent-primary-500"
                 />
-                <span className="text-[10px] text-slate-400 w-8 text-right">
+                <span className="text-[10px] text-slate-600 w-8 text-right">
                   {nodeStyle.fillOpacity ?? 100}%
                 </span>
               </div>
@@ -257,7 +257,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
         <div className="space-y-3">
           {/* Structure type */}
           <div>
-            <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wide">
+            <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wide">
               {isPl ? 'Typ struktury' : 'Structure type'}
             </div>
             <div className="flex gap-1.5 flex-wrap">
@@ -275,7 +275,7 @@ export const MindmapInspector: React.FC<MindmapInspectorProps> = ({
 
           {/* Layout mode */}
           <div>
-            <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wide">
+            <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wide">
               {isPl ? 'Tryb układu' : 'Layout mode'}
             </div>
             <div className="flex gap-1.5">

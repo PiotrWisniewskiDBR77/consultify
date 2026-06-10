@@ -82,10 +82,10 @@ export const MilestoneBadge: React.FC<MilestoneBadgeProps> = ({
                         opacity-40
                     `}
         >
-          <Icon size={sizeClasses.icon} className="text-slate-400 dark:text-slate-500" />
+          <Icon size={sizeClasses.icon} className="text-slate-600 dark:text-slate-500" />
         </div>
         {showLabel && (
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center max-w-[60px]">
+          <span className="text-[10px] text-slate-600 dark:text-slate-500 text-center max-w-[60px]">
             {label}
           </span>
         )}

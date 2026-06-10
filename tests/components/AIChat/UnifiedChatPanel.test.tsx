@@ -270,6 +270,22 @@ vi.doMock('../../../src/components/AIChat/EnhancedChatInput', () => ({
       >
         send-unsupported
       </button>
+      <button
+        data-testid="send-url"
+        disabled={disabled}
+        onClick={() =>
+          onSend('with url', [
+            {
+              kind: 'url',
+              url: 'https://example.com/report',
+              title: 'Example report',
+              name: 'example.com/report',
+            },
+          ])
+        }
+      >
+        send-url
+      </button>
       <button data-testid="stop-button" onClick={onStopGenerating}>
         stop
       </button>
@@ -519,9 +535,11 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('chat-work-panel')).toHaveAttribute('aria-label', 'Canvas work area');
     expect(screen.queryByText('Active document:')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Canvas document title')).toHaveValue('Company Work Note');
+    // The view toggle and diagnostics now live inside the Canvas menu dropdown.
+    fireEvent.click(screen.getByRole('button', { name: 'Canvas menu' }));
     expect(screen.getByRole('button', { name: 'Dock view' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Markdown view' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Właściwości pliku MD/i }));
     expect(screen.getByText('Markdown canonical')).toBeInTheDocument();
     expect(screen.queryByTestId('chat-full-welcome')).not.toBeInTheDocument();
     expect(screen.getByTestId('chat-work-panel-empty-state')).toBeInTheDocument();
@@ -533,6 +551,7 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel mode="full" />);
 
     fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Canvas menu' }));
     fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
     const mdView = await screen.findByTestId('canvas-md-view');
     const textarea = mdView as HTMLTextAreaElement;
@@ -604,6 +623,7 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel mode="full" />);
 
     fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Canvas menu' }));
     fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
     const mdView = (await screen.findByTestId('canvas-md-view')) as HTMLTextAreaElement;
     const selected = 'Operating workspace';
@@ -1135,6 +1155,39 @@ describe('UnifiedChatPanel (L2)', () => {
 
     fireEvent.click(screen.getByTestId('send-unsupported'));
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
+  });
+
+  it('ingests URL attachments and persists them in message metadata', async () => {
+    createConversationMock.mockResolvedValue({ id: 'conv-1' });
+    h.apiMock.ingestChatUrlAttachment = vi.fn().mockResolvedValue({
+      success: true,
+      docId: 'url-doc-1',
+      filename: 'Example page',
+      mimeType: 'text/html',
+      sourceUrl: 'https://example.com/report',
+    });
+
+    renderWithRouter(<UnifiedChatPanel />);
+
+    fireEvent.click(screen.getByTestId('send-url'));
+
+    await waitFor(() => expect(h.apiMock.ingestChatUrlAttachment).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(addMessageToConversationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'user',
+          metadata: expect.objectContaining({
+            attachments: [
+              expect.objectContaining({
+                docId: 'url-doc-1',
+                kind: 'url',
+                sourceUrl: 'https://example.com/report',
+              }),
+            ],
+          }),
+        })
+      )
+    );
   });
 
   it('renders error retry UI when lastError is set and wires actions', () => {

@@ -553,6 +553,53 @@ router.get(
         }
       };
 
+      // D-P1.6 — surface the governed P10 findings layer to the report builder.
+      // Previously the report source read only the legacy summary_* model + raw
+      // Q&A, silently bypassing the flagship evidence-bounded findings. We find
+      // every insight that references this session and load its findings, so a
+      // report built from an interview includes the confidence-rated,
+      // readback-gated findings rather than just the keyword summary.
+      const p10Findings: Array<Record<string, unknown>> = [];
+      try {
+        const insightRows = await new Promise<any[]>((resolve) => {
+          db.all(
+            `SELECT id, source_session_ids FROM interview_insights
+             WHERE organization_id = ? AND source_session_ids LIKE ?`,
+            [organizationId, `%${sourceId}%`],
+            (err: Error | null, rows: any[]) => resolve(err ? [] : rows || [])
+          );
+        });
+        const matchingInsightIds = insightRows
+          .filter((row) => {
+            const ids = safeJsonParse(row.source_session_ids, []);
+            return Array.isArray(ids) && ids.includes(sourceId);
+          })
+          .map((row) => row.id);
+        if (matchingInsightIds.length > 0) {
+          const { listFindings } =
+            await import('../services/v8/interviewInsightFindingsService.js');
+          for (const insightId of matchingInsightIds) {
+            const findings = await listFindings(insightId).catch(() => []);
+            for (const f of findings) {
+              p10Findings.push({
+                insightId,
+                findingStatement: f.finding_statement,
+                confidenceLevel: f.confidence_level,
+                limits: f.limits,
+                nextAction: f.next_action,
+                readbackStatus: f.readback_status,
+                evidence: (f.evidence_pointers || [])
+                  .filter((p: any) => !p.isTombstone)
+                  .slice(0, 6)
+                  .map((p: any) => String(p.excerpt || p.source_id || '').slice(0, 280)),
+              });
+            }
+          }
+        }
+      } catch (findingsErr) {
+        logger.warn('[ReportBuilder] P10 findings load failed (degrading)', findingsErr);
+      }
+
       res.json({
         id: session.id,
         sourceType: 'INTERVIEW',
@@ -565,6 +612,9 @@ router.get(
         summaryGaps: safeJsonParse(session.summary_gaps, []),
         summaryConstraints: safeJsonParse(session.summary_constraints, []),
         summaryPainPoints: safeJsonParse(session.summary_pain_points, []),
+        // D-P1.6 — governed evidence-bounded findings (empty array when the
+        // session has no published insights/findings yet).
+        p10Findings,
         questions: questions.map((q) => ({
           id: q.id,
           category: q.category,

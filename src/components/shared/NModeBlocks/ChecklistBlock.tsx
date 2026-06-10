@@ -77,7 +77,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
               style={{ width: `${pct}%` }}
             />
           </div>
-          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+          <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 tabular-nums">
             {completed}/{total}
           </span>
         </div>
@@ -86,7 +86,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
       {/* Items */}
       {items.length === 0 ? (
         <div className="py-6 text-center">
-          <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+          <p className="text-xs text-slate-600 dark:text-slate-500 mb-2">
             {isPolish ? 'Brak elementów na liście.' : 'No items in the checklist.'}
           </p>
           <button
@@ -107,7 +107,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
               onMouseLeave={() => setHoveredId(null)}
             >
               {/* Number */}
-              <span className="w-5 text-right text-[10px] font-mono text-slate-300 dark:text-slate-600 flex-shrink-0">
+              <span className="w-5 text-right text-[10px] font-mono text-slate-600 dark:text-slate-400 flex-shrink-0">
                 {idx + 1}.
               </span>
               {/* Checkbox */}
@@ -129,7 +129,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
                 readOnly={locked}
                 className={`flex-1 text-sm bg-transparent focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 ${
                   item.completed
-                    ? 'text-slate-400 dark:text-slate-500 line-through'
+                    ? 'text-slate-600 dark:text-slate-500 line-through'
                     : 'text-slate-700 dark:text-slate-200'
                 }`}
                 placeholder={isPolish ? 'Element listy...' : 'Checklist item...'}
@@ -138,7 +138,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
               {hoveredId === item.id && !locked && (
                 <button
                   onClick={() => onRemove(item.id)}
-                  className="p-0.5 text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"
+                  className="p-0.5 text-slate-600 hover:text-rose-500 transition-colors flex-shrink-0"
                 >
                   <Trash2 size={11} />
                 </button>
@@ -153,7 +153,7 @@ export const ChecklistBlock: React.FC<ChecklistBlockProps> = ({
         <button
           onClick={onAdd}
           disabled={locked}
-          className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors disabled:opacity-40"
+          className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 transition-colors disabled:opacity-40"
         >
           <Plus size={12} />
           {isPolish ? 'Dodaj element' : 'Add item'}

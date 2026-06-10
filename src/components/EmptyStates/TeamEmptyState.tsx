@@ -92,7 +92,7 @@ export const TeamEmptyState: React.FC<TeamEmptyStateProps> = ({ onInvite, onLear
       </div>
 
       {/* Trust note */}
-      <div className="flex items-center gap-2 mt-6 text-xs text-slate-400 dark:text-slate-500">
+      <div className="flex items-center gap-2 mt-6 text-xs text-slate-600 dark:text-slate-500">
         <CheckCircle2 size={14} />
         <span>Każda osoba dostaje indywidualne zaproszenie z własnym dostępem</span>
       </div>

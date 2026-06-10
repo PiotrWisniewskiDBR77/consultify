@@ -19,12 +19,13 @@
  */
 
 import {
-  Bot,
   Briefcase,
   Calculator,
   CheckCircle2,
   History,
+  Loader2,
   MessageSquare,
+  Mic,
   PanelRight,
   Plus,
   Search,
@@ -46,7 +47,6 @@ import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
-// import { useOrgMemory } from '../../hooks/useOrgMemory'; // removed — panel disabled
 import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useChatActions } from '../../hooks/useChatActions';
@@ -75,24 +75,34 @@ import type {
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { notifyBargeIn } from '../../utils/bargeInToast';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
+import { detectMessageLanguage } from '../../utils/detectMessageLanguage';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
+import TeresaMark from '../shared/TeresaMark';
+import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import {
   isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
+import { pushRecentAttachment } from './chatRecentAttachments';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
 import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
-// import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
+import { detectMindmapIntent } from './mindmapIntentDetector';
 import { OutputToolSelector } from './OutputToolSelector';
 import { PrivateModeDetails } from './PrivateModeDetails';
+import { detectProcessFlowIntent } from './processFlowIntentDetector';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
-import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
+import {
+  formatTeresaAdminDiagnostic,
+  getTeresaEmptyResponseMessage,
+  getTeresaStartFailureMessage,
+} from './teresaRuntimeCopy';
+import { TeresaTTSPlayer } from './TeresaTTSPlayer';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
@@ -638,9 +648,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     consumeAIInteraction,
   } = useDemoSession();
 
-  // Organization Memory — disabled (panel removed)
-  // const orgMemory = useOrgMemory();
-
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [contextSaveBusyMessageId, setContextSaveBusyMessageId] = useState<string | null>(null);
@@ -973,6 +980,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     clearLastError,
     isStreaming,
     streamedContent,
+    reasoning: streamedReasoning,
     policyDecision,
     policyNotices,
     memoryCandidate,
@@ -1025,7 +1033,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 meta?.policyDecision ||
                 (meta?.policyNotices && meta.policyNotices.length) ||
                 meta?.trustBundle ||
-                meta?.proposal
+                meta?.proposal ||
+                meta?.reasoning
                   ? {
                       ...(aiConfig?.deepResearch || (aiConfig as any)?.marketResearch
                         ? {
@@ -1055,6 +1064,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       // depending on a refetch for live hydration.
                       ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
                       ...(meta?.proposal ? { proposal: meta.proposal } : {}),
+                      // Persist the model's chain-of-thought so the per-message
+                      // "Tok rozumowania" trace survives reload.
+                      ...(meta?.reasoning ? { reasoning: meta.reasoning } : {}),
                     }
                   : undefined,
             }),
@@ -1288,7 +1300,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
       // Make failures visible in the conversation UI (otherwise user only sees their own messages).
-      const friendly = getTeresaStartFailureMessage(i18n.language);
+      // Admins/owners also get the real cause (HTTP status / code / message) inline.
+      const roleLowerErr =
+        typeof currentUser?.role === 'string' ? currentUser.role.trim().toLowerCase() : '';
+      const isPrivilegedErr = ['admin', 'owner', 'superadmin'].includes(roleLowerErr);
+      const friendly = getTeresaStartFailureMessage(
+        i18n.language,
+        isPrivilegedErr ? formatTeresaAdminDiagnostic(err) : null
+      );
 
       try {
         if (activeConversationId) {
@@ -1492,6 +1511,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             policyNotices,
             memoryCandidate,
             ...(teresaProposal ? { proposal: teresaProposal } : {}),
+            ...(streamedReasoning ? { reasoning: streamedReasoning } : {}),
           },
         },
       ];
@@ -1503,6 +1523,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     customMessages,
     isStreaming,
     streamedContent,
+    streamedReasoning,
     thinkingSteps,
     deepThinkingState,
     researchProgress,
@@ -1631,19 +1652,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       );
     }
 
-    items.push({
-      id: 'open-tools',
-      label: t('chat.suggestions.openTools', 'Open Tools hub'),
-      type: 'tool',
-      action: { type: 'NAVIGATE', targetModule: 'tools' },
-    });
-
-    items.push({
-      id: 'go-results',
-      label: t('chat.suggestions.goResults', 'View Results'),
-      type: 'results',
-      action: { type: 'NAVIGATE', targetModule: 'results' },
-    });
+    // Removed always-on "Open Tools hub" / "View Results" nav chips (declutter —
+    // those destinations live in the sidebar). Suggestions now show only when
+    // contextually relevant (initiative/insight/artifact).
 
     const lastContent = String(
       (displayMessages[displayMessages.length - 1] as any)?.content || ''
@@ -1690,10 +1701,29 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   }, [activeConversationId]);
 
   // ========================================================================
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages (P1-1, P1-10)
   // ========================================================================
 
+  // Track whether the user is pinned to the bottom of the scroller. The
+  // ChatGPT / Claude pattern: only auto-scroll when the user is already
+  // scrolled to (or very near) the bottom. The instant they scroll up to
+  // re-read earlier content, auto-scroll pauses so the view doesn't yank
+  // back to the latest token every render. Threshold of 80px tolerates
+  // small mouse-wheel jitter without snapping back unexpectedly.
+  const isAtBottomRef = useRef(true);
   useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const threshold = 80;
+      isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!isAtBottomRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [displayMessages, isStreaming]);
 
@@ -1705,12 +1735,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     async (content: string, attachments?: any[]) => {
       if (!content.trim() || isDisabled) return;
 
+      // ──────────────────────────────────────────────────────────────────────
+      // Language follows the message: reply in the language the user writes in.
+      // Detection wins ONLY when confident; otherwise we keep the existing
+      // chatLanguage resolution (explicit selector / conversation / UI). This is
+      // the "respond in the language I start speaking to the chat" rule.
+      // ──────────────────────────────────────────────────────────────────────
+      const detectedMessageLanguage = detectMessageLanguage(content);
+      const effectiveChatLanguage = detectedMessageLanguage || chatLanguage;
+
       // M2: Chat commands for MyWork actions
       const text = content.trim();
       if (text.startsWith('/task ') || text.startsWith('/decision ')) {
         const isTask = text.startsWith('/task ');
         const title = text.replace(/^\/(task|decision)\s+/, '').trim();
         if (title) {
+          // FIX-001: guard the slash-command action fetch with an AbortController +
+          // 20s timeout so a hung server can't freeze the composer indefinitely.
+          const actionController = new AbortController();
+          const actionTimeout = setTimeout(() => actionController.abort(), 20000);
           try {
             const token = localStorage.getItem('token');
             const resp = await fetch('/api/my-work/chat-actions', {
@@ -1720,6 +1763,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 action: isTask ? 'create_task' : 'create_decision',
                 payload: { title },
               }),
+              signal: actionController.signal,
             });
             if (resp.ok) {
               const confirmMsg: ChatMessage = {
@@ -1745,7 +1789,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               return;
             }
           } catch {
-            /* fall through to normal send */
+            /* timeout/abort or network error — fall through to normal send */
+          } finally {
+            clearTimeout(actionTimeout);
           }
         }
       }
@@ -2040,7 +2086,116 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         return;
       }
 
+      // Mind Map: intercept mind map / idea map intents
+      const mmAction = detectMindmapIntent(text);
+      if (mmAction) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `mm-intent-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Pracuję nad mapą myśli…' : 'Working on mind map…',
+          timestamp: new Date(),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: mmAction },
+          })
+        );
+
+        onMessageSent?.(content);
+        return;
+      }
+
+      // Process Flow: intercept process/workflow intents
+      const pfAction = detectProcessFlowIntent(text);
+      if (pfAction) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `pf-intent-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Buduję przepływ procesu…' : 'Building process flow…',
+          timestamp: new Date(),
+        });
+
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: pfAction },
+          })
+        );
+
+        onMessageSent?.(content);
+        return;
+      }
+
       // Whiteboard: intercept brainstorm/whiteboard/workshop intents
+      // Canvas streaming: when a canvas doc is open and the user asks Teresa to
+      // write INTO it, stream into the rich editor instead of replying in chat.
+      // Bridged via a CustomEvent the WorkCanvasDocumentPanel listens for — no
+      // direct coupling to the editor instance.
+      const canvasStreamMode = activeCanvasDocument ? detectCanvasWriteIntent(text) : null;
+      if (canvasStreamMode) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `canvas-stream-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl' ? 'Piszę w dokumencie…' : 'Writing in the document…',
+          timestamp: new Date(),
+        });
+
+        // Give Teresa document + conversation awareness while streaming (same
+        // canvasContextPacket shape /chat/stream reads, plus chat history/lang).
+        const canvasStreamPacket = buildCanvasContextPacket(
+          activeCanvasDocument,
+          activeCanvasSelection
+        );
+        const canvasStreamHistory = (customMessages || messages || []).map(
+          (m: { role: string; content: string }) => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }],
+          })
+        );
+
+        window.dispatchEvent(
+          new CustomEvent('canvas-stream-request', {
+            detail: {
+              prompt: content,
+              mode: canvasStreamMode,
+              language: effectiveChatLanguage,
+              canvasContextPacket: canvasStreamPacket,
+              history: canvasStreamHistory,
+            },
+          })
+        );
+
+        onMessageSent?.(content);
+        return;
+      }
+
       const wbAction = detectWhiteboardIntent(text);
       if (wbAction) {
         const userMessage: ChatMessage = {
@@ -2116,13 +2271,26 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           return;
         }
       }
-      const liveConversationMessages =
-        useConversationStore.getState().activeConversationId === conversationId
-          ? useConversationStore.getState().activeMessages
-          : [];
-      const sourceMessages =
-        customMessages ||
-        (activeConversationId === conversationId ? messages : liveConversationMessages);
+      // BUG 1b/2 fix: align the conversation store to THIS resolved id before building
+      // history or appending the user bubble. Eliminates stale-render-closure bleed
+      // (old thread sent as history) and guarantees the optimistic user message appends
+      // (store guard: shouldAppend = activeConversationId === conversationId).
+      if (useConversationStore.getState().activeConversationId !== conversationId) {
+        setActiveConversation(conversationId);
+      }
+      // Persist the detected language onto the conversation so the whole thread
+      // (and the chatLanguage memo on subsequent renders) follows the language
+      // the user opened the conversation in.
+      if (detectedMessageLanguage && conversationId) {
+        const storedLang =
+          useConversationStore.getState().chatLanguageByConversationId[conversationId];
+        if (storedLang !== detectedMessageLanguage) {
+          useConversationStore
+            .getState()
+            .setConversationChatLanguage(conversationId, detectedMessageLanguage);
+        }
+      }
+      const sourceMessages = customMessages || useConversationStore.getState().activeMessages;
 
       // Conversation-scoped attachments: upload supported files to Knowledge Base and
       // pass doc filters to the backend so RAG only searches within these attachments.
@@ -2155,6 +2323,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 name: a.name ? String(a.name) : undefined,
               }))
           : [];
+
+      // Re-attached docs from the Recent flyout (A5): already uploaded, so they
+      // carry an existing docId and skip the upload loop — just add to RAG scope.
+      const reattachedDocIds: string[] = Array.isArray(attachments)
+        ? attachments
+            .filter((a: any) => a && a.kind === 'doc' && a.docId)
+            .map((a: any) => String(a.docId))
+        : [];
 
       const uploadedAttachments: Array<{
         docId: string;
@@ -2232,6 +2408,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             size: file.size,
             kind: 'file',
           });
+          // A5: upgrade the Recent entry with the real docId so it can be
+          // re-attached later without re-uploading.
+          pushRecentAttachment({ name: file.name, docId, mimeType: file.type || undefined });
           toast.success(
             t('aiChat.attachments.uploadSuccess', 'Załącznik "{{name}}" przetworzony.', {
               name: file.name,
@@ -2369,7 +2548,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       const attachmentDocIds = Array.from(
-        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
+        new Set([
+          ...existingAttachmentDocIds,
+          ...reattachedDocIds,
+          ...uploadedAttachments.map((a) => a.docId),
+        ])
       );
 
       const canvasContextPacket = buildCanvasContextPacket(
@@ -2381,10 +2564,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       if (conversationId) {
         try {
           const userMessageMetadata =
-            uploadedAttachments.length > 0 || failedAttachments.length > 0 || canvasContextPacket
+            uploadedAttachments.length > 0 ||
+            failedAttachments.length > 0 ||
+            attachmentDocIds.length > 0 ||
+            canvasContextPacket
               ? {
                   ...(uploadedAttachments.length > 0 ? { attachments: uploadedAttachments } : {}),
                   ...(failedAttachments.length > 0 ? { failedAttachments } : {}),
+                  // Persist the KB doc ids attached to this turn so the RAG scope can be
+                  // reconstructed after a page reload (previously only sent to the live AI call).
+                  ...(attachmentDocIds.length > 0 ? { attachmentDocIds } : {}),
                   ...(canvasContextPacket
                     ? {
                         canvasContext: {
@@ -2410,7 +2599,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             metadata: userMessageMetadata as any,
           });
         } catch (err) {
+          // Don't silently swallow: the store keeps the optimistic bubble flagged with
+          // localError and retries in the background (idempotent via clientMessageId), but
+          // surface a non-blocking warning so the user knows this turn may not be persisted.
           console.error('[UnifiedChatPanel] Failed to save user message:', err);
+          toast.error(
+            t(
+              'aiChat.errors.messageSaveFailed',
+              "Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds."
+            )
+          );
         }
       }
 
@@ -2514,6 +2712,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               title: activeCanvasDocument?.title || null,
               mode: activeCanvasSelection.mode,
               selectedText: activeCanvasSelection.selectedText,
+              startOffset: activeCanvasSelection.startOffset ?? null,
+              endOffset: activeCanvasSelection.endOffset ?? null,
               packetSchemaVersion: canvasContextPacket?.schemaVersion || null,
             }
           : activeCanvasDocument
@@ -2524,7 +2724,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               }
             : null,
         conversationId,
-        conversationLanguage: chatLanguage,
+        conversationLanguage: effectiveChatLanguage,
         virtualWorkerSlug: 'teresa',
       };
 
@@ -2582,7 +2782,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           },
           focusMode,
           roleName,
-          chatLanguage
+          effectiveChatLanguage
         );
 
         onMessageSent?.(content);
@@ -2600,7 +2800,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             systemPrompt,
             context,
             roleName,
-            chatLanguage,
+            effectiveChatLanguage,
             {
               deepResearch: aiConfig?.deepResearch,
               webSearch: aiConfig?.webSearch,
@@ -2630,7 +2830,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             const suggestRes = await Api.agentAuditSuggest({
               decisionContext,
               userIntent: 'validate',
-              language: chatLanguage,
+              language: effectiveChatLanguage,
               maxAgents: 3,
             });
             suggestedAgentsSet = (suggestRes as any)?.suggested || null;
@@ -2740,7 +2940,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         context,
         focusMode,
         roleName,
-        chatLanguage
+        effectiveChatLanguage
       );
 
       // Callback
@@ -3204,6 +3404,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const handleNewChat = useCallback(async () => {
     clearActiveChat();
+    // BUG 1a fix: also clear the legacy global chat store (useAppStore.activeChatMessages).
+    // clearActiveChat() only resets the conversation store; without this, embedded views
+    // rendering customMessages={activeChatMessages} leak the entire previous thread.
+    try {
+      useAppStore.getState().clearChat();
+    } catch {
+      /* non-critical */
+    }
     try {
       const conv = await createConversation();
       setActiveConversation(conv.id);
@@ -3218,6 +3426,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setActiveConversation(id);
     },
     [setActiveConversation]
+  );
+
+  // Welcome "mode" tiles (composer audit #6): a tile is a real mode, not just a
+  // prompt prefill. It atomically (1) applies the matching aiConfig preset
+  // (marketResearch+webSearch / analyst style / consultant persona / deep
+  // thinking) and (2) seeds the composer with the kickoff prompt. The user then
+  // sends — so the freshly-applied flags are live on that send (config flows to
+  // the send via React closures, which only refresh after this state update).
+  const handleModeTile = useCallback(
+    (preset: Record<string, unknown> | undefined, prompt: string) => {
+      if (preset && Object.keys(preset).length > 0) {
+        setAIConfig(preset as any);
+      }
+      try {
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(
+            'consultify.teresa.pendingPrompt',
+            JSON.stringify({ prompt, ts: Date.now() })
+          );
+          window.dispatchEvent(new Event('consultify:teresa-pending-prompt'));
+        }
+      } catch {
+        /* non-critical: prefill is best-effort */
+      }
+    },
+    [setAIConfig]
   );
 
   const handleCopyMessage = useCallback(
@@ -3421,6 +3655,33 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     setEditingMessageId(null);
     setEditingText('');
   }, []);
+
+  // Branch/Fork (composer #4): copy this conversation up to a given message into
+  // a fresh conversation and switch to it — explore a "what-if" without losing
+  // the original thread (ChatGPT "Branch in new chat" / Claude edit-branch).
+  const handleBranchFromMessage = useCallback(
+    async (messageId: string) => {
+      const sourceId = useConversationStore.getState().activeConversationId;
+      if (!sourceId || !messageId || String(messageId).startsWith('local-')) {
+        toast.error(t('aiChat.branch.unavailable', 'Send the message first, then branch.'));
+        return;
+      }
+      const tid = toast.loading(t('aiChat.branch.working', 'Creating a branch…'));
+      try {
+        const res: any = await Api.branchConversation(sourceId, messageId);
+        const newId = res?.conversation?.id;
+        if (!newId) throw new Error('No conversation id returned');
+        const store = useConversationStore.getState();
+        await store.fetchConversations?.();
+        await store.setActiveConversation(newId);
+        toast.success(t('aiChat.branch.done', 'Branched into a new conversation'), { id: tid });
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Branch failed:', err);
+        toast.error(t('aiChat.branch.failed', 'Could not create a branch.'), { id: tid });
+      }
+    },
+    [t]
+  );
 
   const handleCommitEditMessage = useCallback(async () => {
     if (!editingMessageId) return;
@@ -3855,6 +4116,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       voiceState={voiceState}
       handleCopyMessage={handleCopyMessage}
       handleStartEditMessage={handleStartEditMessage}
+      handleBranchFromMessage={handleBranchFromMessage}
       handleCancelEditMessage={handleCancelEditMessage}
       handleCommitEditMessage={handleCommitEditMessage}
       handleViewArtifacts={handleViewArtifacts}
@@ -3902,6 +4164,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isRehydratingConversation =
     !hasRenderableMessages && activeConversationId && isConversationLoading;
   const isWelcomeEmptyState = !hasRenderableMessages && !isRehydratingConversation;
+
+  // Latest completed AI reply — fed to TeresaTTSPlayer for "talking Teresa" read-aloud.
+  const latestAiMessageText = useMemo(() => {
+    if (isStreaming) return '';
+    for (let i = displayMessages.length - 1; i >= 0; i -= 1) {
+      const m = displayMessages[i] as any;
+      if (m?.role === 'ai' && !m?.isStreaming) {
+        const content = String(m?.content || '').trim();
+        if (content) return content;
+      }
+    }
+    return '';
+  }, [displayMessages, isStreaming]);
+
   const canUseWorkPanel = mode === 'full';
   const showWorkPanel = isWorkPanelMode;
 
@@ -4032,7 +4308,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       style={rootStyle}
     >
       <div
-        className={`flex min-w-0 flex-col h-full transition-[width] duration-200 ${
+        className={`group/composer flex min-w-0 flex-col h-full transition-[width] duration-200 ${
           showWorkPanel ? 'w-full lg:w-[calc(100%_-_var(--work-canvas-width))]' : 'w-full'
         }`}
       >
@@ -4213,8 +4489,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {/* Organization Memory panel removed — unused / WIP feature */}
 
         {/* Messages Area */}
+        {/* Chat P1-6 — a11y: role=log + aria-live=polite so screen readers
+            announce streaming AI responses as they arrive. aria-relevant
+            additions keeps the announcement to new content rather than
+            re-reading the whole thread on every update. */}
         <div
           ref={messagesContainerRef}
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions text"
+          aria-label="Conversation"
           className={`flex-1 ${showWorkPanelEmptyState ? 'overflow-hidden' : 'overflow-y-auto'} ${
             isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'
           }`}
@@ -4224,7 +4508,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-3" />
               <p
-                className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-400 dark:text-slate-500`}
+                className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400`}
               >
                 {t('aiChat.loadingConversation', 'Loading conversation…')}
               </p>
@@ -4248,13 +4532,38 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 )}
               </h3>
               <p
-                className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-slate-500 dark:text-slate-400`}
+                className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-slate-600 dark:text-slate-300`}
               >
                 {t(
                   'aiChat.teresaWelcomeSubtitle',
                   'Work through decisions, notes, and next steps with your internal AI partner'
                 )}
               </p>
+
+              {teresaVoice.voiceAvailable && (
+                <button
+                  type="button"
+                  onClick={() => void teresaVoice.handleVoiceToggle()}
+                  data-testid="welcome-voice-cta"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-crimson-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-crimson-600/20 transition-all hover:bg-crimson-700 hover:shadow-lg hover:shadow-crimson-600/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-crimson-500/40 active:scale-95"
+                >
+                  {teresaVoice.voiceStatus === 'connecting' ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <span className="relative flex h-4 w-4 items-center justify-center">
+                      {teresaVoice.voiceStatus === 'live' && (
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/50" />
+                      )}
+                      <Mic size={16} />
+                    </span>
+                  )}
+                  {teresaVoice.voiceStatus === 'live'
+                    ? t('aiChat.voice.stopVoice', 'End voice')
+                    : teresaVoice.voiceStatus === 'connecting'
+                      ? t('aiChat.voice.voiceConnecting', 'Connecting…')
+                      : t('aiChat.voice.startVoice', 'Talk to Teresa')}
+                </button>
+              )}
 
               <div id="chat-input" className="mt-8 w-full max-w-5xl text-left">
                 {!!lastError && !isStreaming && (
@@ -4281,6 +4590,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 <OutputToolSelector />
                 <EnhancedChatInput
                   onSend={handleSendMessage}
+                  onNewChat={handleNewChat}
                   onStopGenerating={() => {
                     const hadPartial = abortStream();
                     setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
@@ -4339,7 +4649,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     key={item.label}
                     type="button"
                     onClick={() => handleSendMessage(item.prompt)}
-                    className="rounded-full border border-slate-200/70 bg-white/60 px-3 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 dark:hover:border-primary-700/60 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
+                    className="rounded-full border border-slate-200/70 bg-white/60 px-3 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:border-primary-700/60 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
                   >
                     {item.label}
                   </button>
@@ -4359,6 +4669,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.market.kickoff',
                       'Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań.'
                     ),
+                    // Market analysis = web-backed market research mode.
+                    preset: { marketResearch: true, webSearch: true },
                     color: 'text-primary-500',
                     bg: 'bg-primary-50 dark:bg-primary-900/20',
                   },
@@ -4370,6 +4682,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.finance.kickoff',
                       'Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy.'
                     ),
+                    // Financial analysis = data/metrics/tables-first answer style.
+                    preset: { responseStyle: 'analyst' },
                     color: 'text-emerald-500',
                     bg: 'bg-emerald-50 dark:bg-emerald-900/20',
                   },
@@ -4381,6 +4695,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.consulting.kickoff',
                       'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
                     ),
+                    // Classic consulting = multi-consultant persona system prompt.
+                    preset: { coThinkerMode: 'multi_consultant' },
                     color: 'text-amber-500',
                     bg: 'bg-amber-50 dark:bg-amber-900/20',
                   },
@@ -4395,6 +4711,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'aiChat.homeCards.digital.kickoff',
                       'Chcę ocenić gotowość do transformacji cyfrowej. Jakie obszary mamy ocenić i jakie są kryteria? Zadaj mi 5 pytań i zaproponuj szybki plan diagnozy.'
                     ),
+                    // Digital transformation = multi-step deep-thinking diagnosis.
+                    preset: { deepResearch: true },
                     color: 'text-blue-500',
                     bg: 'bg-blue-50 dark:bg-blue-900/20',
                   },
@@ -4402,7 +4720,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   <button
                     key={cap.label}
                     type="button"
-                    onClick={() => handleSendMessage(cap.prompt)}
+                    onClick={() => handleModeTile(cap.preset, cap.prompt)}
                     className="group flex flex-col items-start gap-1.5 rounded-lg border border-slate-200/60 bg-white/60 p-2.5 text-left transition-all duration-200 hover:border-slate-300 hover:bg-white dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/10 dark:hover:bg-white/5"
                   >
                     <div className={`rounded-md p-1.5 ${cap.bg}`}>
@@ -4412,7 +4730,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       <div className="text-[11px] font-semibold text-navy-900 transition-colors group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
                         {cap.label}
                       </div>
-                      <div className="mt-0.5 text-[9px] leading-tight text-slate-400 dark:text-slate-500">
+                      <div className="mt-0.5 text-[9px] leading-tight text-slate-700 dark:text-slate-400">
                         {cap.desc}
                       </div>
                     </div>
@@ -4420,7 +4738,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 ))}
               </div>
 
-              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-600">
+              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400">
                 <Sparkles size={11} />
                 {t(
                   'aiChat.onboarding.hint',
@@ -4438,10 +4756,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 <img
                   src="/assets/logos/logo-light.svg?v=20260319"
                   alt="Consultify"
-                  className="h-20 w-auto opacity-35 dark:hidden sm:h-24 md:h-28"
+                  className="h-20 w-auto opacity-50 dark:hidden sm:h-24 md:h-28"
                   draggable={false}
                 />
-                <p className="-mt-0.5 text-center text-[11px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-600">
+                <p className="-mt-0.5 text-center text-[11px] uppercase tracking-[0.25em] text-slate-600 dark:text-slate-400">
                   <span className="text-primary-600 dark:text-primary-400">DBR77</span>{' '}
                   <span>Industrial Intelligence</span>
                 </p>
@@ -4458,7 +4776,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 <div className="inline-flex items-center rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-300">
                   Teresa
                 </div>
-                <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">
                   {t(
                     'aiChat.sidebarEmptyHint',
                     'Ask Teresa from this side panel when you need quick context or next-step help.'
@@ -4564,13 +4882,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             </>
           )}
 
-          {/* Typing indicator */}
-          {isBotTyping && !streamedContent && (
-            <div className="flex gap-2 justify-start">
+          {/* Typing indicator — only for non-streaming flows (e.g. file analysis).
+              During a normal stream the AI bubble already shows the "Thinking…"
+              state inline, so this would otherwise render a duplicate avatar/row. */}
+          {isBotTyping && !streamedContent && !isStreaming && (
+            <div className="mx-auto w-full max-w-5xl flex gap-2 justify-start">
               <div
                 className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5`}
               >
-                <Bot
+                <TeresaMark
                   size={isCompact ? 12 : 14}
                   className="text-primary-600 dark:text-primary-400"
                 />
@@ -4590,79 +4910,86 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         {!showFullWelcomeEmptyState && (
           <div
             id="chat-input"
-            className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} border-t border-slate-200 bg-slate-50 dark:border-navy-800 dark:bg-navy-950`}
+            className={`${isCompact ? 'p-2' : 'px-3 pb-1.5 pt-3'} bg-slate-50 dark:bg-navy-950`}
           >
-            {!!lastError && !isStreaming && (
-              <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
-                <div className="text-xs text-amber-800 dark:text-amber-200">
-                  {t('aiChat.streamError', 'Last request failed. You can retry.')}
+            <div className="mx-auto w-full max-w-5xl">
+              {!!lastError && !isStreaming && (
+                <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                  <div className="text-xs text-amber-800 dark:text-amber-200">
+                    {t('aiChat.streamError', 'Last request failed. You can retry.')}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => retryLastStream()}
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
+                    >
+                      {t('common.tryAgain', 'Try again')}
+                    </button>
+                    <button
+                      onClick={() => clearLastError()}
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+                    >
+                      {t('common.dismiss', 'Dismiss')}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => retryLastStream()}
-                    className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
-                  >
-                    {t('common.tryAgain', 'Try again')}
-                  </button>
-                  <button
-                    onClick={() => clearLastError()}
-                    className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
-                  >
-                    {t('common.dismiss', 'Dismiss')}
-                  </button>
+              )}
+              {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
+                <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+                  {quickPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      onClick={() => handleSendMessage(prompt)}
+                      className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
                 </div>
-              </div>
-            )}
-            {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
-              <div className="flex flex-wrap gap-1.5 px-3 pb-2">
-                {quickPrompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => handleSendMessage(prompt)}
-                    className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-300 dark:hover:border-primary-700 hover:text-primary-700 dark:hover:text-primary-300 transition-all"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            )}
-            <EnhancedChatInput
-              onSend={handleSendMessage}
-              onStopGenerating={() => {
-                const hadPartial = abortStream();
-                setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
-                setTimeout(() => setAbortFeedback(null), 3000);
-              }}
-              onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
-              teresaVoiceStatus={teresaVoice.voiceStatus}
-              teresaVoiceAvailable={teresaVoice.voiceAvailable}
-              teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
-              teresaVoiceMuted={teresaVoice.isMuted}
-              onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
-              isStreaming={isStreaming}
-              disabled={isDisabled}
-              placeholder={
-                workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
-                  ? t('aiChat.teresaContextPlaceholder', {
-                      defaultValue: 'How can Teresa help with {{context}}?',
-                      context: workspaceContext.entityName,
-                    })
-                  : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
-              }
-              voiceModeEnabled={voiceModeEnabled}
-              onVoiceModeChange={setVoiceModeEnabled}
-              chatLanguage={chatLanguage}
-              voiceState={voiceState}
-              startVoiceListening={startListening}
-              stopVoiceListening={stopListening}
-            />
-            {chatSuggestions.length > 0 && (
-              <ChatSmartSuggestions
-                suggestions={chatSuggestions}
-                onSuggestionClick={handleSuggestionClick}
-                className="pt-2"
+              )}
+              {/* "Read aloud" pill removed (declutter) — per-message Speak lives in the
+                  response action row. */}
+              <EnhancedChatInput
+                onSend={handleSendMessage}
+                onNewChat={handleNewChat}
+                onStopGenerating={() => {
+                  const hadPartial = abortStream();
+                  setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
+                  setTimeout(() => setAbortFeedback(null), 3000);
+                }}
+                onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
+                teresaVoiceStatus={teresaVoice.voiceStatus}
+                teresaVoiceAvailable={teresaVoice.voiceAvailable}
+                teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
+                teresaVoiceMuted={teresaVoice.isMuted}
+                onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
+                isStreaming={isStreaming}
+                disabled={isDisabled}
+                placeholder={
+                  workspaceContext &&
+                  workspaceContext.type !== 'empty' &&
+                  workspaceContext.entityName
+                    ? t('aiChat.teresaContextPlaceholder', {
+                        defaultValue: 'How can Teresa help with {{context}}?',
+                        context: workspaceContext.entityName,
+                      })
+                    : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
+                }
+                voiceModeEnabled={voiceModeEnabled}
+                onVoiceModeChange={setVoiceModeEnabled}
+                chatLanguage={chatLanguage}
+                voiceState={voiceState}
+                startVoiceListening={startListening}
+                stopVoiceListening={stopListening}
               />
-            )}
+              {chatSuggestions.length > 0 && (
+                <ChatSmartSuggestions
+                  suggestions={chatSuggestions}
+                  onSuggestionClick={handleSuggestionClick}
+                  className="pt-2"
+                />
+              )}
+            </div>
           </div>
         )}
 

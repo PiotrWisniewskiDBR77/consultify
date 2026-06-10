@@ -158,3 +158,6 @@ agent-transcripts/
 server/dist-temp/
 .tmp/
 .tmp/**
+
+# VTS credentials (never ship)
+vts-wave2-credentials*.csv

@@ -83,7 +83,7 @@ const DIM_ORDER: Record<DimColor, number> = { red: 0, amber: 1, green: 2 };
 /* ------------------------------------------------------------------ */
 
 const SortIcon: React.FC<{ col: SortCol; cur: SortCol; dir: SortDir }> = ({ col, cur, dir }) => {
-  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-300 dark:text-slate-600" />;
+  if (col !== cur) return <ArrowUpDown size={11} className="text-slate-600 dark:text-slate-400" />;
   return dir === 'asc' ? (
     <ArrowUp size={11} className="text-primary-500" />
   ) : (
@@ -491,7 +491,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                 {f.initiativeName}
               </span>
               {f.ownerName && (
-                <span className="text-xs text-slate-400 dark:text-slate-500">{f.ownerName}</span>
+                <span className="text-xs text-slate-600 dark:text-slate-500">{f.ownerName}</span>
               )}
             </div>
             <div className="flex items-center gap-1.5">
@@ -750,12 +750,12 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
               return (
                 <React.Fragment key={f.initiativeId}>
                   <tr
-                    className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
+                    className={`border-b border-slate-200 dark:border-navy-800/50 cursor-pointer
                       hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
                       ${f.overallScore < 50 ? 'bg-rose-500/5 dark:bg-rose-500/10' : ''}`}
                     onClick={() => toggleExpand(f)}
                   >
-                    <td className="px-4 py-3 text-slate-400">
+                    <td className="px-4 py-3 text-slate-600">
                       {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </td>
                     <td className="px-4 py-3">
@@ -763,7 +763,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                         {f.initiativeName}
                       </div>
                       {f.ownerName && (
-                        <div className="text-xs text-slate-400 dark:text-slate-500">
+                        <div className="text-xs text-slate-600 dark:text-slate-500">
                           {f.ownerName}
                         </div>
                       )}
@@ -805,7 +805,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                         className={`p-1 rounded transition-colors ${
                           isExplaining
                             ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
-                            : 'text-slate-400 hover:text-primary-500 hover:bg-primary-500/10'
+                            : 'text-slate-600 hover:text-primary-500 hover:bg-primary-500/10'
                         }`}
                         title="AI Score Explainer"
                       >

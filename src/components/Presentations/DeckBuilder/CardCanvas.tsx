@@ -49,14 +49,14 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
               <div className="flex items-center justify-center gap-2 py-1 opacity-0 hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => onAddCard(index)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-600 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
                 >
                   <Plus size={10} />
                   {t('presentations.builder.addBlank', 'Blank')}
                 </button>
                 <button
                   onClick={() => onAddCard(index)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-slate-600 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
                 >
                   <Sparkles size={10} />
                   {t('presentations.builder.addAi', 'AI')}
@@ -87,7 +87,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
       {/* Speaker Notes */}
       {showNotes && (
         <div className="h-32 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 overflow-y-auto">
-          <p className="text-[10px] font-medium text-slate-400 uppercase mb-1">
+          <p className="text-[10px] font-medium text-slate-600 uppercase mb-1">
             {t('presentations.builder.bottomBar.notes', 'Speaker Notes')}
           </p>
           <textarea

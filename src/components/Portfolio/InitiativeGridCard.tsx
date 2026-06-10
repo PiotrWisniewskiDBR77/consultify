@@ -9,75 +9,195 @@
  * Tech Sexy v2.0: invisible borders, subtle hover, monochromatic chrome
  */
 
-import { AlertCircle, Calendar, User } from 'lucide-react';
+import { Archive, ChevronRight, Clock, Edit2, RotateCcw, Trash2, User } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
+import {
+  DueChip,
+  EntityStatusChip,
+  PriorityChip,
+  type PriorityLevel,
+} from '@/components/ui/primitives/chips';
+
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
 import { InitiativeStatus, PortfolioInitiative } from '../../types';
 import { formatShortDate, getHealthInfo, getNextStep } from '../../utils/initiativeHelpers';
+import { RowActionSection, RowActionsMenu } from '../shared/RowActionsMenu';
+
+/** Map raw initiative priority → PriorityChip level (canon §4.2). */
+const PRIORITY_LEVEL: Record<string, PriorityLevel> = {
+  CRITICAL: 'urgent',
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+};
 
 interface InitiativeGridCardProps {
   initiative: PortfolioInitiative;
   onClick: () => void;
+  onArchive?: (initiative: PortfolioInitiative) => void;
+  onOpenFull?: (initiative: PortfolioInitiative) => void;
 }
 
-export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiative, onClick }) => {
-  const { t } = useTranslation();
-  const statusStyle = getStatusStyle(initiative.status);
-  const priorityStyle = getPriorityStyle(initiative.priority);
+export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
+  initiative,
+  onClick,
+  onArchive,
+  onOpenFull,
+}) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
+  const terminal =
+    initiative.status === InitiativeStatus.CANCELLED ||
+    initiative.status === InitiativeStatus.ARCHIVED;
+  const priorityLevel = PRIORITY_LEVEL[initiative.priority];
   const health = getHealthInfo(initiative);
   const nextStep = getNextStep(initiative.status);
   const owner = initiative.ownerBusiness;
   const sponsor = initiative.ownerExecution;
-  const statusLabel =
-    STATUS_METADATA[initiative.status as InitiativeStatus]?.label || initiative.status;
+  const description = initiative.summary || initiative.description;
+
+  const archiveable = ([InitiativeStatus.DONE, InitiativeStatus.CANCELLED] as string[]).includes(
+    initiative.status
+  );
+
+  // Kebab — canon §8.0: IDENTICAL sections/positions to the table row (PortfolioListView).
+  const comingSoonBackend = isPolish ? 'Wkrótce (backend)' : 'Soon (backend)';
+  const sections: RowActionSection[] = [
+    { id: 'context', kind: 'context', actions: [] },
+    {
+      id: 'fixed',
+      kind: 'manage',
+      actions: [
+        {
+          id: 'open-preview',
+          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          icon: ChevronRight,
+          onClick,
+        },
+        ...(onOpenFull
+          ? [
+              {
+                id: 'open-full',
+                label: isPolish ? 'Otwórz pełny widok' : 'Open full view',
+                icon: ChevronRight,
+                onClick: () => onOpenFull(initiative),
+              },
+            ]
+          : []),
+        {
+          id: 'edit',
+          label: isPolish ? 'Edytuj' : 'Edit',
+          icon: Edit2,
+          onClick,
+        },
+        initiative.status === InitiativeStatus.ARCHIVED
+          ? {
+              id: 'restore',
+              label: isPolish ? 'Przywróć' : 'Restore',
+              icon: RotateCcw,
+              disabled: true,
+              description: comingSoonBackend,
+              onClick: () => {},
+            }
+          : {
+              id: 'archive',
+              label: isPolish ? 'Archiwizuj' : 'Archive',
+              icon: Archive,
+              disabled: !onArchive || !archiveable,
+              description:
+                !onArchive || !archiveable
+                  ? isPolish
+                    ? 'Zakończ lub anuluj najpierw'
+                    : 'Finish or cancel first'
+                  : undefined,
+              onClick: () => onArchive?.(initiative),
+            },
+        // 4 — Delay (slot present because initiative has a due date; §9.2)
+        ...(initiative.plannedEndDate
+          ? [
+              {
+                id: 'delay',
+                label: isPolish ? 'Przesuń termin' : 'Delay',
+                icon: Clock,
+                disabled: true,
+                description: comingSoonBackend,
+                onClick: () => {},
+              },
+            ]
+          : []),
+      ],
+    },
+    {
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'delete',
+          label: isPolish ? 'Usuń' : 'Delete',
+          icon: Trash2,
+          variant: 'danger' as const,
+          disabled: true,
+          description: comingSoonBackend,
+          onClick: () => {},
+        },
+      ],
+    },
+  ];
 
   return (
     <div
       onClick={onClick}
+      onDoubleClick={() => onOpenFull?.(initiative)}
       className={[
-        'group cursor-pointer rounded-xl overflow-hidden',
-        'border-l-[3px] border border-slate-200/60 dark:border-white/[0.06]',
-        'border-l-blue-500 dark:border-l-blue-400', // Initiative identity (blue)
-        'bg-slate-50/80 dark:bg-navy-800/60',
-        'hover:bg-white dark:hover:bg-navy-800/80 transition-colors duration-150',
-        'p-4',
+        'group relative cursor-pointer rounded-xl p-4',
+        'border border-slate-200/60 dark:border-white/[0.06]',
+        // canon §8.1 — neutral card surface; status color lives in the badge, not the card
+        'bg-white dark:bg-navy-900',
+        'hover:shadow-md hover:-translate-y-px transition-all duration-150',
+        terminal ? 'opacity-60' : '',
       ].join(' ')}
     >
-      {/* Top row: Priority + Status + Health */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          {/* Priority */}
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
-            {initiative.priority || '—'}
-          </span>
-          {/* Status */}
-          <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full ${statusStyle.bg} ${statusStyle.text}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`} />
-            {statusLabel}
+      {/* Zone 1 — Badge row (status · priority · health) + kebab */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <EntityStatusChip
+            status={initiative.status}
+            label={STATUS_METADATA[initiative.status as InitiativeStatus]?.label}
+          />
+          {priorityLevel && <PriorityChip level={priorityLevel} label={initiative.priority} />}
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+            <span className={`w-1.5 h-1.5 rounded-full ${health.dotClass}`} />
+            {health.label}
           </span>
         </div>
-        {/* Health */}
-        <div className="flex items-center gap-1.5">
-          <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
-          <span className="text-[10px] text-slate-400 dark:text-slate-500">{health.label}</span>
+        {/* Kebab — same RowActionsMenu/sections as the table row (§8.0) */}
+        <div
+          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <RowActionsMenu sections={sections} />
         </div>
       </div>
 
-      {/* Name */}
-      <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug mb-3">
+      {/* Zone 2 — Title */}
+      <h4
+        className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug"
+        title={initiative.name}
+      >
         {initiative.name}
       </h4>
 
+      {/* Zone 3 — Description (when available) */}
+      {description && (
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+          {description}
+        </p>
+      )}
+
       {/* Owner + Sponsor */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3 mt-3">
         {owner ? (
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
@@ -92,13 +212,13 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-            <User size={12} /> Unassigned
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+            <User size={12} /> {isPolish ? 'Nieprzypisane' : 'Unassigned'}
           </div>
         )}
         {sponsor && (
           <>
-            <span className="text-slate-300 dark:text-slate-600 text-[10px]">/</span>
+            <span className="text-slate-400 dark:text-slate-500 text-[10px]">/</span>
             <div className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[9px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
                 {sponsor.avatarUrl ? (
@@ -115,28 +235,32 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({ initiati
         )}
       </div>
 
-      {/* Target date */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-3">
-        <Calendar size={12} className="flex-shrink-0" />
-        <span>{formatShortDate(initiative.plannedEndDate)}</span>
-      </div>
-
-      {/* Next step */}
-      {nextStep && (
-        <div className="pt-2.5 border-t border-slate-100/70 dark:border-white/[0.03]">
-          <div className="text-[10px] text-slate-400 dark:text-slate-500 mb-0.5 uppercase tracking-wider font-medium">
-            {t('initiatives.card.nextStep', 'Next step')}
-          </div>
-          <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-            {nextStep.label}
-          </div>
-          {nextStep.role && (
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-              {nextStep.role}
-            </div>
+      {/* Zone 4 — Stats footer: next step · due (3 values) */}
+      <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-white/[0.05] mt-3 pt-3">
+        <span className="truncate" title={nextStep?.label}>
+          {nextStep ? (
+            <>
+              <span className="text-slate-400 dark:text-slate-500">
+                {t('initiatives.card.nextStep', 'Next step')}:{' '}
+              </span>
+              <span className="text-slate-700 dark:text-slate-300 font-medium">
+                {nextStep.label}
+              </span>
+            </>
+          ) : (
+            '—'
           )}
-        </div>
-      )}
+        </span>
+        {initiative.plannedEndDate ? (
+          <DueChip
+            label={formatShortDate(initiative.plannedEndDate)}
+            due={terminal ? null : initiative.plannedEndDate}
+            showIcon
+          />
+        ) : (
+          <span className="text-slate-400 dark:text-slate-500 shrink-0">—</span>
+        )}
+      </div>
     </div>
   );
 };

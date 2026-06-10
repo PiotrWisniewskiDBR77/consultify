@@ -196,7 +196,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
                   ) : (
                     <Circle
                       size={16}
-                      className="text-slate-300 dark:text-slate-600 flex-shrink-0"
+                      className="text-slate-600 dark:text-slate-400 flex-shrink-0"
                     />
                   )}
                   <span className="text-xs text-slate-700 dark:text-slate-200 truncate">
@@ -248,7 +248,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
               )}
               {Number(currentStep.expectedTimeMinutes || 0) > 0 && (
                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                  <Clock size={14} className="text-slate-400" />
+                  <Clock size={14} className="text-slate-600" />
                   <span>
                     {t('help.onboarding.expectedTime', 'Expected time')}:{' '}
                     {formatMinutes(Number(currentStep.expectedTimeMinutes))}
@@ -347,7 +347,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
             title={t('help.onboarding.dismiss', 'Dismiss')}
             aria-label={t('help.onboarding.dismiss', 'Dismiss')}
           >
-            <XCircle size={16} className="text-slate-400 hover:text-rose-500" />
+            <XCircle size={16} className="text-slate-600 hover:text-rose-500" />
           </button>
         )}
       </div>
@@ -385,7 +385,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
       {others.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-            <Clock size={14} className="text-slate-400" />
+            <Clock size={14} className="text-slate-600" />
             {t('help.onboarding.morePaths', 'More paths')}
           </div>
           <div className="space-y-3">
@@ -411,7 +411,7 @@ export const OnboardingPlaybooksPanel: React.FC<{ onClose?: () => void }> = ({ o
 
       {published.length === 0 && (
         <div className="text-center py-8">
-          <Rocket size={28} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+          <Rocket size={28} className="mx-auto text-slate-600 dark:text-slate-400 mb-2" />
           <div className="text-sm text-slate-600 dark:text-slate-300">
             {t('help.onboarding.empty', 'No onboarding playbooks available yet.')}
           </div>

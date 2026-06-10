@@ -17,7 +17,6 @@ import {
   FileCheck,
   FileText,
   Filter,
-  Loader2,
   MoreVertical,
   Plus,
   RefreshCw,
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import { useAppStore } from '../../store/useAppStore';
@@ -251,11 +251,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -297,7 +293,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
       <div className="flex flex-wrap items-center gap-4">
         {/* Search */}
         <div className="relative flex-1 min-w-[300px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
           <input
             type="text"
             value={searchQuery}
@@ -394,7 +390,7 @@ export const MyAssessmentsList: React.FC<MyAssessmentsListProps> = ({
       {/* Assessments List */}
       {filteredAssessments.length === 0 ? (
         <div className="text-center py-12">
-          <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-4" />
           <p className="text-slate-500 dark:text-slate-400">
             {searchQuery || statusFilter !== 'ALL' || typeFilter !== 'ALL'
               ? 'No assessments match your criteria'

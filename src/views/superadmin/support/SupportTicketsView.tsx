@@ -272,7 +272,7 @@ export const SupportTicketsView: React.FC = () => {
       case 'low':
         return 'bg-blue-500/20 text-blue-400';
       default:
-        return 'bg-slate-500/20 text-slate-400 dark:text-slate-500';
+        return 'bg-slate-500/20 text-slate-600 dark:text-slate-500';
     }
   };
 
@@ -285,9 +285,9 @@ export const SupportTicketsView: React.FC = () => {
       case 'resolved':
         return 'bg-green-500/20 text-green-400';
       case 'closed':
-        return 'bg-slate-500/20 text-slate-400 dark:text-slate-500';
+        return 'bg-slate-500/20 text-slate-600 dark:text-slate-500';
       default:
-        return 'bg-slate-500/20 text-slate-400 dark:text-slate-500';
+        return 'bg-slate-500/20 text-slate-600 dark:text-slate-500';
     }
   };
 

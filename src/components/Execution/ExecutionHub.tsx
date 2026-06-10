@@ -23,6 +23,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import {
   AlertTriangle,
+  Archive,
   Calendar,
   CalendarDays,
   CheckCircle2,
@@ -34,10 +35,14 @@ import {
   LayoutDashboard,
   Loader2,
   MessageSquare,
+  Pencil,
+  RefreshCw,
+  Rocket,
   Scale,
   Shield,
   Sparkles,
   Target,
+  Trash2,
   TrendingUp,
   Users,
 } from 'lucide-react';
@@ -46,11 +51,26 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
+import {
+  generateReportDocument,
+  reportDocumentToMarkdown,
+} from '@/components/Reports/reportContentGenerator';
+import type { ReportConfig } from '@/components/Reports/Wizard';
+import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
 import { Callout } from '@/components/shared/NModeBlocks';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { LoadingState } from '@/components/ui/primitives';
+import { DueChip, EntityStatusChip } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
-import { Api, API_URL, getHeaders } from '@/services/api';
+import {
+  Api,
+  API_URL,
+  clearGlobalTransportFailure,
+  getHeaders,
+  resetAuthLoopGuard,
+} from '@/services/api';
 import {
   shouldFallbackToLegacyExecutionControl,
   V8ExecutionControlApi,
@@ -94,6 +114,7 @@ import {
   MENU_3_CHIP_INACTIVE,
   MENU_3_LEFT_CLASS,
 } from '../shared/ModuleMenu3';
+import type { RowAction } from '../shared/RowActionsMenu';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
@@ -109,6 +130,7 @@ import {
 import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ReportDocumentView } from './ReportDocumentView';
+import { RolloutTab } from './RolloutTab';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
   import('../Initiatives/InitiativeDocumentView').then((module) => ({
@@ -538,7 +560,8 @@ interface ExecutionHubProps {
 }
 
 export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const openChatWithContext = useOpenChatWithContext();
@@ -566,14 +589,25 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [managerCommandRowContent, setManagerCommandRowContent] = useState<React.ReactNode>(null);
   const [managerCommandRowRightContent, setManagerCommandRowRightContent] =
     useState<React.ReactNode>(null);
+  const [rolloutCommandRowContent, setRolloutCommandRowContent] = useState<React.ReactNode>(null);
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
+  // #12 — bulk selection for the Execution Summary table (left checkbox column).
+  const [summarySelectedIds, setSummarySelectedIds] = useState<Set<string>>(new Set());
+  // #19 — active Rollout sub-view, so the Menu-2 CTA can vary per sub-view.
+  // The Rollout tab (lane L8) owns the sub-view state and broadcasts it via a
+  // 'rollout:subview-change' CustomEvent (detail.subview). We listen here.
+  const [rolloutSubview, setRolloutSubview] = useState<string>('kpi');
   const [reportFilters, setReportFilters] = useState<FilterChip[]>([]);
   const [reportPreviewId, setReportPreviewId] = useState<string | null>(null);
   const [reportPreset, setReportPreset] = useState<
     'all' | 'weekly' | 'monthly' | 'bi-weekly' | 'on-demand' | 'sponsor'
   >('all');
+  // #20 — reports produced by the Report Generator Wizard. The wizard mounts near
+  // this surface (below) and emits 'reporting:report-created' (detail=ReportConfig)
+  // on Complete; we append the entry here so it shows up in the Reporting list.
+  const [generatedReports, setGeneratedReports] = useState<ReportConfig[]>([]);
 
   // Data state
   const initRetryRef = React.useRef(0);
@@ -688,6 +722,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       return;
     }
 
+    // Rollout consolidation: /rollout redirects to /execution?tab=rollout
+    if (targetTab === 'rollout') {
+      setActiveTab('rollout' as ModuleTab);
+      setDeepLinkHandled(true);
+      return;
+    }
+
     if (openId && (mode === 'doc' || mode === 'initiative')) {
       setActiveTab('list');
       setViewMode('table');
@@ -701,16 +742,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (!deepLinkHandled) return;
     const next = new URLSearchParams(searchParams);
     let changed = false;
+    // Only strip the *transient* deep-link triggers here. `view` is persistent UI
+    // state owned by the tab/view-sync effect below — deleting it here made the two
+    // effects ping-pong (this one removes `view`, the other re-adds it), which is an
+    // infinite setSearchParams loop ("Maximum update depth exceeded").
     if (next.has('open')) {
       next.delete('open');
       changed = true;
     }
     if (next.has('mode')) {
       next.delete('mode');
-      changed = true;
-    }
-    if (next.has('view')) {
-      next.delete('view');
       changed = true;
     }
     if (changed) {
@@ -1531,6 +1572,75 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return result;
   }, [dashboardBaseInitiatives, activeStatusFilter]);
 
+  // #12 — bulk selection helpers for the Execution Summary table.
+  const summaryVisibleIds = useMemo(
+    () => summaryInitiatives.map((i) => String(i.id)),
+    [summaryInitiatives]
+  );
+  const summaryAllSelected =
+    summaryVisibleIds.length > 0 && summaryVisibleIds.every((id) => summarySelectedIds.has(id));
+
+  const toggleSummaryRow = useCallback((id: string) => {
+    setSummarySelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSummarySelectAll = useCallback(() => {
+    setSummarySelectedIds((prev) => {
+      const allSelected =
+        summaryVisibleIds.length > 0 && summaryVisibleIds.every((id) => prev.has(id));
+      return allSelected ? new Set<string>() : new Set(summaryVisibleIds);
+    });
+  }, [summaryVisibleIds]);
+
+  const clearSummarySelection = useCallback(() => setSummarySelectedIds(new Set()), []);
+
+  // Drop selections for rows that are no longer visible (filter/scope changes).
+  useEffect(() => {
+    setSummarySelectedIds((prev) => {
+      if (prev.size === 0) return prev;
+      const visible = new Set(summaryVisibleIds);
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (visible.has(id)) next.add(id);
+      });
+      return next.size === prev.size ? prev : next;
+    });
+  }, [summaryVisibleIds]);
+
+  // #19 — listen for the Rollout sub-view broadcast from lane L8.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const sv = detail?.subview;
+      if (typeof sv === 'string' && sv) setRolloutSubview(sv);
+    };
+    window.addEventListener('rollout:subview-change', handler as EventListener);
+    return () => window.removeEventListener('rollout:subview-change', handler as EventListener);
+  }, []);
+
+  // #20 — listen for reports created by the Report Generator Wizard and append
+  // them to the Reporting list. Switch to the Reporting tab so the new entry is
+  // visible, and preview-select it.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const config = (e as CustomEvent).detail as ReportConfig | undefined;
+      if (!config || !config.id) return;
+      setGeneratedReports((prev) =>
+        prev.some((r) => r.id === config.id) ? prev : [config, ...prev]
+      );
+      setActiveTab('reports');
+      setReportPreset('all');
+      setReportPreviewId(config.id);
+    };
+    window.addEventListener('reporting:report-created', handler as EventListener);
+    return () => window.removeEventListener('reporting:report-created', handler as EventListener);
+  }, []);
+
   const mapToPreviewModel = useCallback((i: FullInitiative): InitiativePreviewV3Model => {
     return {
       id: i.id,
@@ -1580,6 +1690,45 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [addChatMessage, isChatCollapsed, openChatWithContext, t, toggleChatCollapse]
   );
 
+  const openRolloutRiskChat = useCallback(
+    async (topSignal: string) => {
+      try {
+        const convId = await openChatWithContext({
+          entityType: 'execution-rollout-risk',
+          entityId: currentProjectId || 'rollout',
+          entityName: t('execution.rollout.tabLabel', 'Rollout'),
+          contextData: {
+            topSignal,
+            riskSignals,
+            delaySignals,
+            p11Handoff: { source: 'execution_hub', lane: 'execution_rollout_risk' },
+          },
+        });
+        await addChatMessage({
+          conversationId: convId,
+          role: 'user',
+          content: t(
+            'execution.rollout.teresaPrompt',
+            'Review the active rollout risk and delay signals and propose mitigations.'
+          ),
+        } as any);
+        if (isChatCollapsed) toggleChatCollapse();
+      } catch {
+        toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
+      }
+    },
+    [
+      addChatMessage,
+      currentProjectId,
+      delaySignals,
+      isChatCollapsed,
+      openChatWithContext,
+      riskSignals,
+      t,
+      toggleChatCollapse,
+    ]
+  );
+
   const copyExecutionLink = useCallback(
     async (id: string) => {
       try {
@@ -1611,6 +1760,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           decisions.filter(
             (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
           ).length,
+      },
+      {
+        id: 'rollout' as ModuleTab,
+        label: t('execution.rollout.tabLabel', 'Rollout'),
+        icon: <Rocket size={16} />,
       },
       {
         id: 'reports' as ModuleTab,
@@ -1666,6 +1820,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const columns: TableColumn[] = useMemo(
     () => [
       {
+        // #12 — leading bulk-select column. Per canon §3.5, BOTH the select-all
+        // (header) and the per-row checkboxes are now rendered by FilterableTable
+        // itself, driven by the `selection` prop below. We only declare the column
+        // slot here; no per-row render needed.
+        id: 'select',
+        label: '',
+        type: 'select',
+        width: '44px',
+      },
+      {
+        // #12 — NAME is the first content column (title left). Relabeled to
+        // "Initiative".
+        id: 'name',
+        label: t('execution.table.initiative', 'Initiative'),
+        render: (row) => (
+          <span
+            className="text-sm text-slate-900 dark:text-white font-medium truncate block"
+            title={String(row.name || '')}
+          >
+            {row.name}
+          </span>
+        ),
+      },
+      {
+        // #12 — TYPE moved AFTER the NAME column.
         id: 'type',
         label: t('execution.table.type'),
         width: '80px',
@@ -1682,41 +1861,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
       {
-        id: 'name',
-        label: t('execution.table.name'),
-        render: (row) => (
-          <span
-            className="text-sm text-slate-900 dark:text-white font-medium truncate block max-w-[420px]"
-            title={String(row.name || '')}
-          >
-            {row.name}
-          </span>
-        ),
-      },
-      {
         id: 'status',
         label: t('execution.table.status'),
         width: '160px',
         filterable: true,
-        filterOptions: EXECUTION_STATUSES.map((status) => ({
-          value: status,
-          label: STATUS_METADATA[status].label,
-          color: STATUS_METADATA[status].dotColor,
-        })),
+        filterOptions: EXECUTION_STATUSES.map((status) => {
+          // Guard: EXECUTION_STATUSES is partly config-driven; never assume a
+          // metadata entry exists for every status (a missing one would throw
+          // synchronously during render and crash the whole module).
+          const meta = STATUS_METADATA[status];
+          return {
+            value: status,
+            label: meta?.label || String(status),
+            color: meta?.dotColor || 'bg-slate-400',
+          };
+        }),
         render: (row) => {
           const meta = STATUS_METADATA[row.status as InitiativeStatus];
           const actions = getStatusActions(row.status as InitiativeStatus);
           const canMutateStatus = !isPilotParticipant && actions.length > 0;
           return (
             <div className="relative group">
-              <div
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${meta?.bgColor || ''} ${meta?.color || ''}`}
-              >
-                <div
-                  className={`w-2 h-2 rounded-full flex-shrink-0 ${meta?.dotColor || 'bg-slate-400'}`}
-                />
-                {meta?.label || row.status}
-              </div>
+              <EntityStatusChip
+                status={String(row.status)}
+                label={meta?.label || String(row.status)}
+              />
               {canMutateStatus && (
                 <select
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -1751,7 +1920,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             );
           return (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-400 dark:text-white">
+              <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-600 dark:text-white">
                 {owner.firstName?.[0]}
                 {owner.lastName?.[0]}
               </div>
@@ -1768,18 +1937,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         width: '140px',
         render: (row) => {
           const progress = row.progress || 0;
-          const isBlocked = row.status === InitiativeStatus.BLOCKED;
+          // §4.3/§4.0: progress fill is NEVER danger/crimson. info (in-progress)
+          // → success @100%; amber only for the explicit "at-risk" (overdue) signal.
           const isOverdue =
             row.plannedEndDate &&
             new Date(row.plannedEndDate) < new Date() &&
             row.status !== InitiativeStatus.DONE;
-          const color = isBlocked
-            ? 'bg-rose-500'
-            : isOverdue
-              ? 'bg-amber-500'
-              : progress >= 100
-                ? 'bg-emerald-500'
-                : 'bg-blue-500';
+          const color = isOverdue
+            ? 'bg-amber-500'
+            : progress >= 100
+              ? 'bg-emerald-500'
+              : 'bg-blue-500';
           return (
             <div className="flex items-center gap-2">
               <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
@@ -1796,64 +1964,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
       {
-        id: 'timeRemaining',
-        label: t('execution.table.timeLeft'),
-        width: '120px',
+        // Canon §4.4 — ONE DueChip column (was split across timeRemaining +
+        // alerts overdue badge + deadline). DueChip renders relative time +
+        // overdue/soon state itself; falls back to SLA deadline.
+        id: 'due',
+        label: t('execution.table.deadline'),
+        width: '130px',
         render: (row) => {
-          if (!row.plannedEndDate) {
-            return (
-              <span className="text-xs text-slate-500">{t('execution.table.noDeadline')}</span>
-            );
+          const deadline = row.plannedEndDate || row.slaDeadline;
+          if (!deadline) {
+            return <span className="text-xs text-slate-400 dark:text-slate-500">—</span>;
           }
-          const now = new Date();
-          const end = new Date(row.plannedEndDate);
-          const diffMs = end.getTime() - now.getTime();
-          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-          if (row.status === InitiativeStatus.DONE) {
-            return (
-              <span className="text-xs text-emerald-400 flex items-center gap-1">
-                <CheckCircle2 size={12} />
-                {t('execution.badges.done')}
-              </span>
-            );
-          }
-
-          if (diffDays < 0) {
-            return (
-              <span className="text-xs text-rose-400 font-medium flex items-center gap-1">
-                <AlertTriangle size={12} />
-                {Math.abs(diffDays)}
-                {t('execution.time.daysOverdue')}
-              </span>
-            );
-          }
-
-          if (diffDays <= 7) {
-            return (
-              <span className="text-xs text-amber-400 flex items-center gap-1">
-                <Clock size={12} />
-                {diffDays}
-                {t('execution.time.daysLeft')}
-              </span>
-            );
-          }
-
-          if (diffDays <= 30) {
-            return (
-              <span className="text-xs text-slate-700 dark:text-slate-300">
-                {diffDays}
-                {t('execution.time.daysLeft')}
-              </span>
-            );
-          }
-
-          const weeks = Math.ceil(diffDays / 7);
+          const terminal = row.status === InitiativeStatus.DONE;
           return (
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {weeks}
-              {t('execution.time.weeksLeft')}
-            </span>
+            <DueChip
+              label={new Date(deadline).toLocaleDateString()}
+              due={terminal ? null : deadline}
+              showIcon
+            />
           );
         },
       },
@@ -1872,40 +2000,31 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
           ).length;
 
+          // #12 — signal-tone system (danger/warning/success) with a leading
+          // signal dot, readable in light mode. Hard-coded rose/amber/emerald
+          // tints replaced with the c.* tokens.
           if (row.status === InitiativeStatus.BLOCKED) {
             badges.push(
               <span
                 key="blocked"
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/20 text-rose-400"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-c-danger"
               >
-                <AlertTriangle size={10} />
+                <span className="h-1.5 w-1.5 rounded-full bg-c-danger" aria-hidden="true" />
                 {t('execution.badges.blocked')}
               </span>
             );
           }
 
-          if (
-            row.plannedEndDate &&
-            new Date(row.plannedEndDate) < new Date() &&
-            row.status !== InitiativeStatus.DONE
-          ) {
-            badges.push(
-              <span
-                key="overdue"
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-400"
-              >
-                <Clock size={10} />
-                {t('execution.badges.overdue')}
-              </span>
-            );
-          }
+          // Overdue signal lives in the single DueChip column (canon §4.4) —
+          // not duplicated here.
 
           if (blockedTasks > 0) {
             badges.push(
               <span
                 key="btasks"
-                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/15 text-rose-400"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-c-danger"
               >
+                <span className="h-1.5 w-1.5 rounded-full bg-c-danger" aria-hidden="true" />
                 {blockedTasks} {t('execution.badges.blocked')}
               </span>
             );
@@ -1915,8 +2034,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             badges.push(
               <span
                 key="odecisions"
-                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-400"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-warning/10 text-c-warning"
               >
+                <span className="h-1.5 w-1.5 rounded-full bg-c-warning" aria-hidden="true" />
                 {overdueDecisions} {t('execution.badges.decision')}
               </span>
             );
@@ -1924,8 +2044,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
           if (badges.length === 0) {
             return (
-              <span className="text-xs text-emerald-400/70 flex items-center gap-1">
-                <CheckCircle2 size={12} />
+              <span className="inline-flex items-center gap-1 text-xs text-c-success">
+                <span className="h-1.5 w-1.5 rounded-full bg-c-success" aria-hidden="true" />
                 {t('execution.badges.ok')}
               </span>
             );
@@ -1949,25 +2069,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           return (
             <span className="text-xs text-slate-700 dark:text-slate-300">
               {doneCount}/{initiativeTasks.length}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'deadline',
-        label: t('execution.table.deadline'),
-        width: '100px',
-        render: (row) => {
-          if (!row.plannedEndDate && !row.slaDeadline) {
-            return <span className="text-slate-500 text-sm">-</span>;
-          }
-          const deadline = row.slaDeadline || row.plannedEndDate;
-          const isOverdue = new Date(deadline) < new Date() && row.status !== InitiativeStatus.DONE;
-          return (
-            <span
-              className={`text-sm ${isOverdue ? 'text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}
-            >
-              {new Date(deadline).toLocaleDateString()}
             </span>
           );
         },
@@ -2045,6 +2146,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           </span>
         </button>
       ) : null;
+
+    // #22/#13/#15/#21a — the "Results" button was removed at its single source
+    // here, so it no longer appears on ANY Implementation sub-tab (Summary,
+    // Rollout/*, Reporting, Management).
 
     if (!showScope) {
       return <div className="flex items-center gap-2">{execChip}</div>;
@@ -2256,6 +2361,62 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [handleOpenSidePanel, handleOpenDocument]
   );
 
+  // Canon §9.2 — Fixed Bottom Manifest kebab for initiative rows.
+  // Order: Otwórz podgląd · Edytuj · Archiwizuj · (Delay ▸ only if due date).
+  // Archive has no execution-side endpoint yet → disabled slot ("Wkrótce (backend)"),
+  // never silently omitted.
+  const buildInitiativeRowActions = useCallback(
+    (init: FullInitiative): RowAction[] => {
+      const hasDue = Boolean(init.plannedEndDate || init.slaDeadline);
+      const actions: RowAction[] = [
+        {
+          id: 'open_preview',
+          label: t('common.openPreview', 'Otwórz podgląd'),
+          icon: ChevronRight,
+          onClick: () => setSummaryPreviewInitiativeId(init.id),
+        },
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edytuj'),
+          icon: Pencil,
+          disabled: isPilotParticipant,
+          onClick: () => handleOpenDocument(init),
+        },
+        {
+          id: 'archive',
+          label: t('common.archive', 'Archiwizuj'),
+          icon: Archive,
+          disabled: true,
+          description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+          onClick: () => undefined,
+        },
+      ];
+      if (hasDue) {
+        actions.push({
+          id: 'delay',
+          label: t('common.delay', 'Opóźnij'),
+          icon: Clock,
+          disabled: true,
+          description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+          onClick: () => undefined,
+        });
+      }
+      // Canon §9.1/§9.2 — danger Usuń always present (last), never silently
+      // omitted. No delete endpoint exists → disabled "Wkrótce (backend)".
+      actions.push({
+        id: 'delete',
+        label: t('common.delete', 'Usuń'),
+        icon: Trash2,
+        variant: 'danger',
+        disabled: true,
+        description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+        onClick: () => undefined,
+      });
+      return actions;
+    },
+    [handleOpenDocument, isPilotParticipant, t]
+  );
+
   const portfolioInitiatives = useMemo(
     () => filteredInitiatives.map((i) => toPortfolioInitiative(i)),
     [filteredInitiatives]
@@ -2377,7 +2538,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+          <LoadingState variant="spinner" />
         </div>
       );
     }
@@ -2387,7 +2548,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {
           id: 'todo',
           label: t('execution.kanban.toDo'),
-          accent: 'text-slate-300',
+          accent: 'text-slate-600',
           icon: <ClipboardList size={14} />,
         },
         {
@@ -2453,7 +2614,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 </div>
               </div>
               {activeTask.initiativeName && (
-                <div className="text-xs text-slate-400 mb-2 ml-6">{activeTask.initiativeName}</div>
+                <div className="text-xs text-slate-600 mb-2 ml-6">{activeTask.initiativeName}</div>
               )}
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 ml-6">
                 <span className="capitalize">{activeTask.priority}</span>
@@ -2846,7 +3007,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+          <LoadingState variant="spinner" />
         </div>
       );
     }
@@ -3022,7 +3183,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingDecisions) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+          <LoadingState variant="spinner" />
         </div>
       );
     }
@@ -3122,7 +3283,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           />
           <Bucket
             title={t('execution.decisionsBuckets.more', '30d+ / No date')}
-            accent="text-slate-400"
+            accent="text-slate-600"
             items={decisionBuckets.more}
           />
         </div>
@@ -3422,7 +3583,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const totalInitiatives = dashboardBaseInitiatives.length;
     const progressPct = execSnapshot?.overview?.progressPercent ?? null;
 
-    return [
+    type CatalogEntry = Omit<
+      ReportDef,
+      | 'aiExecutiveReadout'
+      | 'aiRecommendedActions'
+      | 'dataQuality'
+      | 'degradedFlags'
+      | 'lastRefreshAt'
+      | 'scenarioNotes'
+    >;
+
+    const base: CatalogEntry[] = [
       {
         id: 'weekly-exec',
         title: 'Weekly Execution Pack',
@@ -3728,7 +3899,33 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         highlights: [{ label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' }],
       },
     ];
-  }, [actionCenter, tasks.length, decisions, dashboardBaseInitiatives.length, execSnapshot]);
+
+    // #20 — prepend reports produced by the Report Generator Wizard so they show
+    // up at the top of the Reporting list. They flow through enrichExecutionReport
+    // like the predefined catalog entries.
+    const wizardEntries: CatalogEntry[] = generatedReports.map((config) => ({
+      id: config.id,
+      title: config.title,
+      audience: config.audience,
+      cadence: config.cadenceLabel,
+      scope: config.scopeNote || config.goal || 'Generated report',
+      dataSources: ['Initiatives', 'Tasks', 'Decisions', 'Risk signals', 'Milestones'],
+      sections: config.sections,
+      ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
+      followUpActions: [],
+      icon: <Sparkles size={18} className="text-indigo-500" />,
+      highlights: [{ label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' }],
+    }));
+
+    return [...wizardEntries, ...base];
+  }, [
+    actionCenter,
+    tasks.length,
+    decisions,
+    dashboardBaseInitiatives.length,
+    execSnapshot,
+    generatedReports,
+  ]);
 
   const reportDataContext = useMemo(
     (): ReportDataContext => ({
@@ -3852,125 +4049,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return result;
   }, [enrichedReportCatalog, reportPreset, searchQuery]);
 
-  // MANAGER — operator cockpit
-  // ---------------------------------------------------------------------------
-  const managerMetrics = useMemo(() => {
-    const kpiAlerts = actionQueueItems.filter(
-      (item) => item.type === 'kpi_deviation_no_plan'
-    ).length;
-    const overdueItems = actionQueueItems.filter(
-      (item) => item.type === 'decision_overdue' || item.type === 'comm_overdue'
-    ).length;
-    const blockedCount = actionCenter.blocked.length;
-    const missingDatesCount = actionCenter.missingDates.length;
-    return { kpiAlerts, overdueItems, blockedCount, missingDatesCount };
-  }, [actionQueueItems, actionCenter]);
-
-  const interventionSuggestions = useMemo(() => {
-    const suggestions: {
-      id: string;
-      action: string;
-      reason: string;
-      expected: string;
-      icon: React.ReactNode;
-      severity: 'high' | 'medium' | 'low';
-    }[] = [];
-
-    if (managerMetrics.blockedCount > 0) {
-      suggestions.push({
-        id: 'unblock',
-        action: t('execution.manager.suggestions.unblock', 'Resolve blockers'),
-        reason: t(
-          'execution.manager.suggestions.unblockReason',
-          '{{count}} initiative(s) blocked — delivery stalled.',
-          { count: managerMetrics.blockedCount }
-        ),
-        expected: t(
-          'execution.manager.suggestions.unblockExpected',
-          'Unblocked initiatives resume delivery.'
-        ),
-        icon: <AlertTriangle size={14} className="text-rose-500" />,
-        severity: 'high',
-      });
-    }
-
-    if (managerMetrics.overdueItems > 0) {
-      suggestions.push({
-        id: 'escalate-decisions',
-        action: t('execution.manager.suggestions.escalate', 'Escalate overdue decisions'),
-        reason: t(
-          'execution.manager.suggestions.escalateReason',
-          '{{count}} approval(s) past due — blocking downstream work.',
-          { count: managerMetrics.overdueItems }
-        ),
-        expected: t(
-          'execution.manager.suggestions.escalateExpected',
-          'Decision queue clears, dependent tasks unblock.'
-        ),
-        icon: <Scale size={14} className="text-amber-500" />,
-        severity: 'high',
-      });
-    }
-
-    if (managerMetrics.missingDatesCount > 0) {
-      suggestions.push({
-        id: 'fill-dates',
-        action: t('execution.manager.suggestions.replan', 'Fill missing dates'),
-        reason: t(
-          'execution.manager.suggestions.replanReason',
-          '{{count}} initiative(s) have no target date — timeline invisible.',
-          { count: managerMetrics.missingDatesCount }
-        ),
-        expected: t(
-          'execution.manager.suggestions.replanExpected',
-          'Timeline becomes credible; slippage detection activates.'
-        ),
-        icon: <Clock size={14} className="text-blue-500" />,
-        severity: 'medium',
-      });
-    }
-
-    if (managerMetrics.kpiAlerts > 0) {
-      suggestions.push({
-        id: 'address-kpi',
-        action: t(
-          'execution.manager.suggestions.addressKpi',
-          'Create recovery plans for KPI deviations'
-        ),
-        reason: t(
-          'execution.manager.suggestions.addressKpiReason',
-          '{{count}} KPI deviation(s) without a plan.',
-          { count: managerMetrics.kpiAlerts }
-        ),
-        expected: t(
-          'execution.manager.suggestions.addressKpiExpected',
-          'Deviations get action plans, confidence improves.'
-        ),
-        icon: <Target size={14} className="text-fuchsia-500" />,
-        severity: 'medium',
-      });
-    }
-
-    if (actionCenter.dueSoonTasks.length > 3) {
-      suggestions.push({
-        id: 'smooth-workload',
-        action: t('execution.manager.suggestions.smooth', 'Rebalance upcoming workload'),
-        reason: t(
-          'execution.manager.suggestions.smoothReason',
-          '{{count}} tasks due soon — potential resource crunch.',
-          { count: actionCenter.dueSoonTasks.length }
-        ),
-        expected: t(
-          'execution.manager.suggestions.smoothExpected',
-          'Workload spread evenly; no single-point overload.'
-        ),
-        icon: <Users size={14} className="text-primary-500" />,
-        severity: 'low',
-      });
-    }
-
-    return suggestions;
-  }, [t, managerMetrics, actionCenter.dueSoonTasks.length]);
+  // MANAGER — operator cockpit metrics/suggestions removed (dead remnants);
+  // ManagerModuleView now fetches its own data via API.
 
   // managerDataContext removed — ManagerModuleView now fetches its own data via API
 
@@ -4038,7 +4118,7 @@ Please return:
                 <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
                   {r.title}
                 </div>
-                <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                <div className="text-[10px] text-slate-600 dark:text-slate-500 truncate">
                   {r.audience}
                 </div>
               </div>
@@ -4050,6 +4130,13 @@ Please return:
         id: 'cadence',
         label: t('execution.reportCatalog.col.cadence', 'Cadence'),
         width: '100px',
+        filterable: true,
+        filterOptions: [
+          { value: 'Weekly', label: t('execution.reportCatalog.cadence.weekly', 'Weekly') },
+          { value: 'Bi-weekly', label: t('execution.reportCatalog.cadence.biweekly', 'Bi-weekly') },
+          { value: 'Monthly', label: t('execution.reportCatalog.cadence.monthly', 'Monthly') },
+          { value: 'On demand', label: t('execution.reportCatalog.cadence.onDemand', 'On demand') },
+        ],
         render: (row: any) => (
           <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {(row as ReportDef).cadence}
@@ -4096,165 +4183,195 @@ Please return:
     [t]
   );
 
-  const renderReportPreviewBody = useCallback((report: ReportDef) => {
-    const rag = computeRAG(report);
-    const ragConf = RAG_CONFIG[rag];
-    const RagIcon = ragConf.icon;
-    return (
-      <div className="p-4 space-y-4 overflow-auto">
-        {/* RAG badge + title */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div
-              className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}
-            >
-              <RagIcon size={10} className="inline mr-1 -mt-0.5" />
-              {ragConf.label}
+  const renderReportPreviewBody = useCallback(
+    (report: ReportDef) => {
+      const rag = computeRAG(report);
+      const ragConf = RAG_CONFIG[rag];
+      const RagIcon = ragConf.icon;
+
+      // #20 — generate REAL report CONTENT from live data for this report type.
+      // Wizard-created reports carry a period via generatedReports; predefined
+      // catalog entries fall back to a live snapshot.
+      const wizardConfig = generatedReports.find((g) => g.id === report.id);
+      const generatedDoc = generateReportDocument({
+        typeId: (wizardConfig?.typeId as string) || report.id,
+        title: report.title,
+        audience: report.audience,
+        periodFrom: wizardConfig?.periodFrom,
+        periodTo: wizardConfig?.periodTo,
+        scopeNote: wizardConfig?.scopeNote,
+        ctx: reportDataContext,
+        isPolish,
+      });
+
+      return (
+        <div className="overflow-auto">
+          {/* Generated, data-backed report document */}
+          <GeneratedReportView doc={generatedDoc} />
+
+          {/* Configuration / methodology descriptor */}
+          <div className="px-4 pb-2 pt-1">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-500 font-medium border-t border-slate-100 dark:border-navy-800 pt-3">
+              {t('execution.reportPanel.methodology', 'Report configuration & methodology')}
             </div>
-            <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-              {report.cadence}
-            </span>
           </div>
-          <div className="flex items-center gap-2.5">
-            <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
-              {report.icon}
-            </div>
+          <div className="p-4 pt-2 space-y-4">
+            {/* RAG badge + title */}
             <div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                {report.title}
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${ragConf.bg} ${ragConf.text} ${ragConf.border} border`}
+                >
+                  <RagIcon size={10} className="inline mr-1 -mt-0.5" />
+                  {ragConf.label}
+                </div>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
+                  {report.cadence}
+                </span>
               </div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500">
-                {report.audience}
+              <div className="flex items-center gap-2.5">
+                <div className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800">
+                  {report.icon}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {report.title}
+                  </div>
+                  <div className="text-[10px] text-slate-600 dark:text-slate-500">
+                    {report.audience}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Live highlights */}
+            {report.highlights.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {report.highlights.map((h) => (
+                  <span
+                    key={h.label}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                      h.variant === 'critical'
+                        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                        : h.variant === 'warn'
+                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                          : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {h.label}: {h.value}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Scope */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Scope
+              </div>
+              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                {report.scope}
+              </p>
+            </div>
+
+            {/* Data sources */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Data Sources
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {report.dataSources.map((ds) => (
+                  <span
+                    key={ds}
+                    className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
+                  >
+                    {ds}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                AI Executive Readout
+              </div>
+              <div className="space-y-1.5">
+                {report.aiExecutiveReadout.slice(0, 3).map((line) => (
+                  <div
+                    key={line}
+                    className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
+                  >
+                    {line}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mandatory sections */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Mandatory Sections
+              </div>
+              <ol className="space-y-0.5 list-decimal list-inside">
+                {report.sections.map((s) => (
+                  <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">
+                    {s}
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {/* RAG logic */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                RAG / Confidence Logic
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                {report.ragLogic}
+              </p>
+            </div>
+
+            {/* Follow-up actions */}
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Expected Follow-up Actions
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {report.followUpActions.map((a) => (
+                  <span
+                    key={a}
+                    className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
+                  >
+                    {a}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1 font-medium">
+                Data Quality
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
+                  {report.dataQuality.confidence}
+                </span>
+                {report.degradedFlags.map((flag) => (
+                  <span
+                    key={flag}
+                    className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
+                  >
+                    {flag}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
         </div>
-
-        {/* Live highlights */}
-        {report.highlights.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {report.highlights.map((h) => (
-              <span
-                key={h.label}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
-                  h.variant === 'critical'
-                    ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
-                    : h.variant === 'warn'
-                      ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                {h.label}: {h.value}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Scope */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
-            Scope
-          </div>
-          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-            {report.scope}
-          </p>
-        </div>
-
-        {/* Data sources */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
-            Data Sources
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {report.dataSources.map((ds) => (
-              <span
-                key={ds}
-                className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400"
-              >
-                {ds}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
-            AI Executive Readout
-          </div>
-          <div className="space-y-1.5">
-            {report.aiExecutiveReadout.slice(0, 3).map((line) => (
-              <div
-                key={line}
-                className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
-              >
-                {line}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Mandatory sections */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
-            Mandatory Sections
-          </div>
-          <ol className="space-y-0.5 list-decimal list-inside">
-            {report.sections.map((s) => (
-              <li key={s} className="text-[11px] text-slate-600 dark:text-slate-400">
-                {s}
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {/* RAG logic */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
-            RAG / Confidence Logic
-          </div>
-          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-            {report.ragLogic}
-          </p>
-        </div>
-
-        {/* Follow-up actions */}
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
-            Expected Follow-up Actions
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {report.followUpActions.map((a) => (
-              <span
-                key={a}
-                className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
-              >
-                {a}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1 font-medium">
-            Data Quality
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-400">
-              {report.dataQuality.confidence}
-            </span>
-            {report.degradedFlags.map((flag) => (
-              <span
-                key={flag}
-                className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
-              >
-                {flag}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }, []);
+      );
+    },
+    [generatedReports, reportDataContext, isPolish, t]
+  );
 
   const handleGenerateInWordy = useCallback(
     (report: ReportDef) => {
@@ -4267,7 +4384,7 @@ Please return:
     (report: ReportDef) => {
       const rag = computeRAG(report);
       return (
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-100 dark:border-navy-800">
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-slate-200 dark:border-navy-800">
           <button
             type="button"
             onClick={() => handleGenerateReport(report)}
@@ -4295,7 +4412,19 @@ Please return:
           <button
             type="button"
             onClick={() => {
-              const md = buildReportMarkdown(report, rag);
+              // #20 — copy the REAL generated content; fall back to descriptor.
+              const wizardConfig = generatedReports.find((g) => g.id === report.id);
+              const doc = generateReportDocument({
+                typeId: (wizardConfig?.typeId as string) || report.id,
+                title: report.title,
+                audience: report.audience,
+                periodFrom: wizardConfig?.periodFrom,
+                periodTo: wizardConfig?.periodTo,
+                scopeNote: wizardConfig?.scopeNote,
+                ctx: reportDataContext,
+                isPolish,
+              });
+              const md = `${reportDocumentToMarkdown(doc)}\n\n---\n\n${buildReportMarkdown(report, rag)}`;
               navigator.clipboard.writeText(md).then(
                 () => toast.success(t('execution.reportPanel.copied', 'Copied')),
                 () => toast.error(t('execution.reportPanel.copyFailed', 'Copy failed'))
@@ -4308,7 +4437,7 @@ Please return:
         </div>
       );
     },
-    [handleGenerateReport, handleGenerateInWordy, t]
+    [handleGenerateReport, handleGenerateInWordy, t, generatedReports, reportDataContext, isPolish]
   );
 
   const renderReportsCatalog = () => {
@@ -4359,10 +4488,48 @@ Please return:
               columns={reportColumns}
               data={filteredReportCatalog as any[]}
               selectedRowId={selectedReportPreviewId}
+              persistKey="execution-reports"
               onRowClick={(row) => setReportPreviewId(String(row.id))}
               onRowDoubleClick={(row) => {
                 const r = filteredReportCatalog.find((x) => x.id === row.id);
                 if (r) handleOpenReport(r);
+              }}
+              getRowActions={(row) => {
+                const r = filteredReportCatalog.find((x) => x.id === row.id);
+                if (!r) return [];
+                return [
+                  {
+                    id: 'open_preview',
+                    label: t('common.openPreview', 'Otwórz podgląd'),
+                    icon: ChevronRight,
+                    onClick: () => setReportPreviewId(String(r.id)),
+                  },
+                  {
+                    id: 'open_full',
+                    label: t('common.openFull', 'Otwórz pełny widok'),
+                    icon: FileText,
+                    onClick: () => handleOpenReport(r),
+                  },
+                  // §9.2 Fixed Bottom Manifest — report catalog rows are generated
+                  // definitions (no per-row edit/archive backend); slots stay visible
+                  // and disabled rather than silently omitted.
+                  {
+                    id: 'edit',
+                    label: t('common.edit', 'Edytuj'),
+                    icon: Pencil,
+                    disabled: true,
+                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+                    onClick: () => undefined,
+                  },
+                  {
+                    id: 'archive',
+                    label: t('common.archive', 'Archiwizuj'),
+                    icon: Archive,
+                    disabled: true,
+                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+                    onClick: () => undefined,
+                  },
+                ];
               }}
               activeFilters={reportFilters}
               onFilterChange={setReportFilters}
@@ -4434,11 +4601,11 @@ Please return:
                           {report.title}
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
                             {report.cadence}
                           </span>
-                          <span className="text-[10px] text-slate-300 dark:text-slate-600">·</span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] text-slate-600 dark:text-slate-400">·</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-500">
                             {report.audience}
                           </span>
                         </div>
@@ -4446,7 +4613,7 @@ Please return:
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-primary-500"
+                      className="text-slate-600 dark:text-slate-400 transition-transform group-hover:text-primary-500"
                     />
                   </div>
 
@@ -4484,10 +4651,60 @@ Please return:
 
   // Render content
   const renderContent = () => {
-    if (initiativesLoadError) {
+    // Rollout tab manages its own data + loading/error states independently of
+    // the portfolio fetch, so resolve it before the portfolio loading guards.
+    if (activeTab === ('rollout' as ModuleTab)) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <RolloutTab
+          projectId={currentProjectId || undefined}
+          initiatives={
+            (summaryInitiatives.length ? summaryInitiatives : initiatives) as FullInitiative[]
+          }
+          riskSignals={riskSignals}
+          delaySignals={delaySignals}
+          readOnly={isPilotParticipant}
+          onRegisterCommandRowContent={setRolloutCommandRowContent}
+          onOpenChat={openRolloutRiskChat}
+        />
+      );
+    }
+
+    if (initiativesLoadError) {
+      // IMPACT-TR-002 / BUG-2: previously this rendered an infinite spinner on a
+      // load failure (the "stuck spinner" the user saw). Degrade gracefully with a
+      // localized error + a retry that also clears any latched transport/auth-loop
+      // guard so a transient block (429 storm, refresh race) can recover.
+      const isTransportBlock =
+        initiativesLoadErrorCode === 'CLIENT_AUTH_LOOP_GUARD_OPEN' ||
+        initiativesLoadErrorCode === 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN' ||
+        /transport safeguard|auth loop guard/i.test(initiativesLoadError || '');
+      return (
+        <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+          <AlertTriangle className="mb-4 h-12 w-12 text-rose-500" />
+          <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+            {isTransportBlock
+              ? t('execution.hub.transportBlockedTitle', 'Requests temporarily blocked')
+              : t('execution.hub.loadErrorTitle', 'Failed to load implementation data')}
+          </h3>
+          <p className="mb-6 max-w-md text-sm text-slate-500 dark:text-slate-400">
+            {initiativesLoadError}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              clearGlobalTransportFailure();
+              resetAuthLoopGuard();
+              initRetryRef.current = 0;
+              setInitiativesLoadError(null);
+              setInitiativesLoadErrorCode(null);
+              setIsLoading(true);
+              queueExecutionTruthRefresh();
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-600"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {t('common.retry', 'Retry')}
+          </button>
         </div>
       );
     }
@@ -4630,32 +4847,59 @@ Please return:
               />
             )}
           >
-            <FilterableTable
-              columns={columns}
-              data={summaryInitiatives as any[]}
-              selectedRowId={summaryPreviewInitiativeId}
-              onRowClick={(row) => setSummaryPreviewInitiativeId(String(row.id))}
-              onRowDoubleClick={(row) => {
-                const init = summaryInitiatives.find((x) => x.id === row.id);
-                if (init) handleOpenDocument(init);
-              }}
-              onRowAction={(action, row) => {
-                const init = summaryInitiatives.find((x) => x.id === row.id);
-                if (!init) return;
-                if (action === 'preview') {
-                  setSummaryPreviewInitiativeId(init.id);
-                  return;
-                }
-                if (action === 'edit') {
-                  handleOpenDocument(init);
-                }
-              }}
-              activeFilters={summaryFilters}
-              onFilterChange={setSummaryFilters}
-              emptyMessage={t('execution.empty.noInExecution')}
-              canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
-              density="compact"
-            />
+            <div className="flex h-full min-h-0 flex-col">
+              {/* #12 — bulk action bar. The select-all checkbox + indeterminate
+                  now live in the FilterableTable header (canon §3.5); this bar
+                  only surfaces the selected-count + bulk actions when a selection
+                  exists. */}
+              {summarySelectedIds.size > 0 && (
+                <div className="flex items-center gap-3 px-4 pt-2">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 select-none">
+                    {t('execution.table.selectedCount', '{{count}} selected', {
+                      count: summarySelectedIds.size,
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearSummarySelection}
+                    className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {t('common.clear', 'Clear')}
+                  </button>
+                </div>
+              )}
+              <div className="min-h-0 flex-1">
+                <FilterableTable
+                  columns={columns}
+                  data={summaryInitiatives as any[]}
+                  selectedRowId={summaryPreviewInitiativeId}
+                  persistKey="execution-summary"
+                  selection={{
+                    selectedIds: summarySelectedIds,
+                    onToggleRow: toggleSummaryRow,
+                    onToggleAll: toggleSummarySelectAll,
+                    isAllSelected: summaryAllSelected,
+                    isIndeterminate: summarySelectedIds.size > 0 && !summaryAllSelected,
+                    selectRowLabel: t('execution.table.selectRow', 'Select row'),
+                    selectAllLabel: t('execution.table.selectAll', 'Select all'),
+                  }}
+                  onRowClick={(row) => setSummaryPreviewInitiativeId(String(row.id))}
+                  onRowDoubleClick={(row) => {
+                    const init = summaryInitiatives.find((x) => x.id === row.id);
+                    if (init) handleOpenDocument(init);
+                  }}
+                  getRowActions={(row) => {
+                    const init = summaryInitiatives.find((x) => x.id === row.id);
+                    return init ? buildInitiativeRowActions(init) : [];
+                  }}
+                  activeFilters={summaryFilters}
+                  onFilterChange={setSummaryFilters}
+                  emptyMessage={t('execution.empty.noInExecution')}
+                  canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+                  density="compact"
+                />
+              </div>
+            </div>
           </TableWithPreviewLayout>
         </div>
       );
@@ -4678,6 +4922,57 @@ Please return:
     [activeTab]
   );
 
+  // Tabs that render their own full-bleed surface (no document tabs / filters / new-item).
+  const isChromelessTab =
+    activeTab === ('people_change' as ModuleTab) || activeTab === ('rollout' as ModuleTab);
+
+  // #19 — per-view Menu-2 CTA. The right-side primary action depends on the
+  // active sub-view. Rollout sub-actions are fired as CustomEvents (the contract
+  // with lane L8, which builds the tab tables and listens for them).
+  const menuCta = useMemo((): { onNewItem?: () => void; newItemLabel: string } => {
+    const defaultLabel = t('initiatives.form.newInitiative', 'New Initiative');
+    if (isPilotParticipant) return { onNewItem: undefined, newItemLabel: defaultLabel };
+
+    const dispatch = (name: string) => () => window.dispatchEvent(new CustomEvent(name));
+
+    if (activeTab === 'reports') {
+      return {
+        onNewItem: dispatch('reporting:new-report'),
+        newItemLabel: t('execution.reports.newReport', 'New Report'),
+      };
+    }
+
+    if (activeTab === ('rollout' as ModuleTab)) {
+      switch (rolloutSubview) {
+        case 'kpi':
+          return {
+            onNewItem: dispatch('execution:add-kpi'),
+            newItemLabel: t('execution.rollout.addKpi', 'Add KPI'),
+          };
+        case 'risks':
+          return {
+            onNewItem: dispatch('execution:add-risk'),
+            newItemLabel: t('execution.rollout.addRisk', 'Add Risk'),
+          };
+        case 'closure':
+          return {
+            onNewItem: dispatch('execution:add-closure-item'),
+            newItemLabel: t('execution.rollout.addClosureItem', 'Add Item'),
+          };
+        // 'plan' (Master Rollout Plan) and 'change' (Change Log) -> NO CTA.
+        default:
+          return { onNewItem: undefined, newItemLabel: defaultLabel };
+      }
+    }
+
+    if (activeTab === ('people_change' as ModuleTab)) {
+      return { onNewItem: undefined, newItemLabel: defaultLabel };
+    }
+
+    // Summary ('list') -> keep "New initiative".
+    return { onNewItem: handleCreateInitiative, newItemLabel: defaultLabel };
+  }, [activeTab, handleCreateInitiative, isPilotParticipant, rolloutSubview, t]);
+
   return (
     <>
       <ModuleHub
@@ -4687,13 +4982,13 @@ Please return:
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         onSearch={setSearchQuery}
-        openDocuments={activeTab === ('people_change' as ModuleTab) ? [] : openDocuments}
-        activeDocumentId={activeTab === ('people_change' as ModuleTab) ? null : activeDocumentId}
+        openDocuments={isChromelessTab ? [] : openDocuments}
+        activeDocumentId={isChromelessTab ? null : activeDocumentId}
         onSelectDocument={setActiveDocumentId}
         onCloseDocument={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={
-          activeTab === ('people_change' as ModuleTab)
+          isChromelessTab
             ? []
             : activeTab === 'list'
               ? summaryFilters
@@ -4703,8 +4998,8 @@ Please return:
         }
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={isPilotParticipant ? undefined : handleCreateInitiative}
-        newItemLabel={t('initiatives.form.newInitiative', 'New Initiative')}
+        onNewItem={menuCta.onNewItem}
+        newItemLabel={menuCta.newItemLabel}
         activeStatusFilter={activeStatusFilter}
         onStatusFilterChange={setActiveStatusFilter}
         rightControls={rightControls}
@@ -4712,7 +5007,9 @@ Please return:
         commandRowContent={
           activeTab === ('people_change' as ModuleTab)
             ? managerCommandRowContent
-            : commandRowContent
+            : activeTab === ('rollout' as ModuleTab)
+              ? rolloutCommandRowContent
+              : commandRowContent
         }
         commandRowRightContent={
           activeTab === ('people_change' as ModuleTab) ? managerCommandRowRightContent : undefined
@@ -4740,6 +5037,10 @@ Please return:
             : null
         }
       />
+      {/* #20 — Report Generator Wizard. Self-mounts here so it can catch the
+          'reporting:new-report' CustomEvent dispatched by the Reporting Menu-2 CTA
+          and emit 'reporting:report-created' on Complete (handled above). */}
+      <ReportGeneratorWizard />
     </>
   );
 };

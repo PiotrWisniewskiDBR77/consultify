@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Status Page View
  *
@@ -271,7 +270,7 @@ export const StatusPageView: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <ServiceIcon size={20} className="text-slate-400 dark:text-slate-500" />
+                      <ServiceIcon size={20} className="text-slate-600 dark:text-slate-500" />
                       <span className="font-medium text-slate-900 dark:text-white">
                         {SERVICE_NAMES[key]?.[lang] || key}
                       </span>
@@ -388,9 +387,9 @@ export const StatusPageView: React.FC = () => {
                       </p>
                     </div>
                     {expandedIncident === incident.id ? (
-                      <ChevronUp size={20} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronUp size={20} className="text-slate-600 dark:text-slate-500" />
                     ) : (
-                      <ChevronDown size={20} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronDown size={20} className="text-slate-600 dark:text-slate-500" />
                     )}
                   </button>
                   {expandedIncident === incident.id && (
@@ -401,7 +400,7 @@ export const StatusPageView: React.FC = () => {
                       <div className="space-y-2">
                         {incident.updates.map((update, i) => (
                           <div key={i} className="flex gap-3 text-sm">
-                            <span className="text-slate-400 dark:text-slate-500">
+                            <span className="text-slate-600 dark:text-slate-500">
                               {new Date(update.timestamp).toLocaleTimeString()}
                             </span>
                             <span className="text-slate-600 dark:text-slate-300">

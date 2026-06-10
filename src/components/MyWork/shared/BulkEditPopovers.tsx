@@ -79,7 +79,7 @@ export const BulkPriorityPicker: React.FC<BulkPriorityPickerProps> = ({
             transition={{ duration: 0.15 }}
             className="absolute bottom-full left-0 mb-2 z-50 w-56 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl shadow-xl overflow-hidden"
           >
-            <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? `Ustaw priorytet (${selectedCount} zad.)`
@@ -211,7 +211,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
             transition={{ duration: 0.15 }}
             className="absolute bottom-full left-0 mb-2 z-50 w-64 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl shadow-xl overflow-hidden"
           >
-            <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? `Ustaw termin (${selectedCount} zad.)`
@@ -231,7 +231,7 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
                   className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
                 >
                   <span className="text-slate-700 dark:text-slate-200">{preset.label}</span>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     {formatShortDate(preset.date, isPolish)}
                   </span>
                 </button>
@@ -239,9 +239,9 @@ export const BulkDatePicker: React.FC<BulkDatePickerProps> = ({
             </div>
 
             {/* Custom date */}
-            <div className="px-3 py-2 border-t border-slate-100 dark:border-navy-700">
+            <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-2">
-                <Calendar size={14} className="text-slate-400 shrink-0" />
+                <Calendar size={14} className="text-slate-600 shrink-0" />
                 <input
                   type="date"
                   value={customDate}

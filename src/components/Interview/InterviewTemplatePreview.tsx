@@ -164,7 +164,7 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
         </div>
         <div className="space-y-1.5">
           {questionsLoading ? (
-            <div className="text-xs text-slate-400 dark:text-slate-500">
+            <div className="text-xs text-slate-600 dark:text-slate-500">
               {isPolish ? 'Ładowanie…' : 'Loading…'}
             </div>
           ) : questionItems.length > 0 ? (
@@ -177,13 +177,13 @@ export const InterviewTemplatePreviewBody: React.FC<InterviewTemplatePreviewBody
                   key={`${template.id}:q:${idx}`}
                   className="text-xs text-slate-700 dark:text-slate-200"
                 >
-                  <span className="text-slate-400 dark:text-slate-500 mr-2">{idx + 1}.</span>
+                  <span className="text-slate-600 dark:text-slate-500 mr-2">{idx + 1}.</span>
                   <span className="line-clamp-2">{text}</span>
                 </div>
               );
             })
           ) : (
-            <div className="text-xs text-slate-400 dark:text-slate-500">
+            <div className="text-xs text-slate-600 dark:text-slate-500">
               {isPolish ? 'Brak pytań do podglądu.' : 'No questions to preview.'}
             </div>
           )}
@@ -279,16 +279,13 @@ export const InterviewTemplatePreviewFooter: React.FC<InterviewTemplatePreviewFo
   ];
 
   return (
-    <div className="space-y-0">
+    // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
+    <div className="space-y-2.5">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip hints={aiHints} onRunHint={onRunAiHint} />
       </div>
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
       <PreviewRelations items={relationItems} />
-
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
       <PreviewActionBar rows={actionRows} />
     </div>

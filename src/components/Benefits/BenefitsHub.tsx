@@ -43,6 +43,7 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { BudgetWorkspace } from './BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from './FinancialAnalysisWorkspace';
 import { FinancialMappingPanel } from './FinancialMappingPanel';
@@ -179,6 +180,8 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
   const [isLoading, setIsLoading] = useState(true);
   const [showKpiModal, setShowKpiModal] = useState(false);
   const [selectedInitiative, setSelectedInitiative] = useState<BenefitsInitiative | null>(null);
+  // canon §7.1: selected row id for side-preview (Benefits 'list' tab)
+  const [selectedBenefitId, setSelectedBenefitId] = useState<string | null>(null);
 
   // Fetch data
   useEffect(() => {
@@ -326,7 +329,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
           return (
             <div className="flex items-center gap-2">
               <Target size={14} className="text-green-400" />
-              <span className="font-mono text-xs font-bold text-slate-300">{code}</span>
+              <span className="font-mono text-xs font-bold text-slate-600">{code}</span>
             </div>
           );
         },
@@ -379,7 +382,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
               : row.costCapex >= 1000
                 ? `${(row.costCapex / 1000).toFixed(0)}k`
                 : row.costCapex;
-          return <span className="text-slate-300 text-sm">{formatted} PLN</span>;
+          return <span className="text-slate-600 text-sm">{formatted} PLN</span>;
         },
       },
       {
@@ -497,7 +500,7 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
                 <TrendingUp className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-600">
                   {t('benefits.kpiCards.onTarget', 'On Target')}
                 </p>
                 <p className="text-2xl font-bold text-green-400">{kpiStats.onTarget}</p>
@@ -665,18 +668,105 @@ export const BenefitsHub: React.FC<BenefitsHubProps> = ({ initialTab = 'list' })
           />
         );
       }
+      // canon §2+§7.1: wrap in TableWithPreviewLayout; single-click → preview, double → full view
+      type BenefitItemWithTitle = BenefitsInitiative & { title: string };
+      const toBenefitItem = (row: BenefitsInitiative): BenefitItemWithTitle => ({
+        ...row,
+        title: row.name || 'Initiative',
+      });
+      const selectedBenefitRow = selectedBenefitId
+        ? (filteredInitiatives.find((r) => r.id === selectedBenefitId) ?? null)
+        : null;
+      const selectedBenefitItem: BenefitItemWithTitle | null = selectedBenefitRow
+        ? toBenefitItem(selectedBenefitRow)
+        : null;
+
       return (
-        <FilterableTable
-          columns={columns}
-          data={filteredInitiatives}
-          onRowClick={(row: any) => handleOpenDocument(row as BenefitsInitiative)}
-          onRowAction={(action: string, row: any) =>
-            handleRowAction(action, row as BenefitsInitiative)
-          }
-          activeFilters={activeFilters}
-          onFilterChange={setActiveFilters}
-          emptyMessage={t('benefits.empty.noCompleted', 'No completed initiatives yet.')}
-        />
+        <TableWithPreviewLayout<BenefitItemWithTitle>
+          selectedId={selectedBenefitId}
+          selectedItem={selectedBenefitItem}
+          onSelect={setSelectedBenefitId}
+          onOpenFull={(id) => {
+            const row = filteredInitiatives.find((r) => r.id === id);
+            if (row) handleOpenDocument(row);
+          }}
+          itemIds={filteredInitiatives.map((r) => r.id)}
+          getItemById={(id) => {
+            const r = filteredInitiatives.find((x) => x.id === id);
+            return r ? toBenefitItem(r) : null;
+          }}
+          renderPreview={(item) => {
+            const initiative = item as BenefitsInitiative;
+            const meta = STATUS_META[initiative.status];
+            return (
+              <div className="space-y-4 px-4 pt-2">
+                {/* Status pill */}
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${meta?.dotColor ?? 'bg-slate-400'}`} />
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {meta?.label ?? initiative.status}
+                  </span>
+                </div>
+                {/* Summary */}
+                {initiative.summary && (
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {initiative.summary}
+                  </p>
+                )}
+                {/* Key metrics */}
+                <div className="space-y-1.5">
+                  {initiative.axis && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">{t('benefits.axis', 'Axis')}</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-medium">
+                        {initiative.axis}
+                      </span>
+                    </div>
+                  )}
+                  {initiative.progress != null && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">{t('benefits.progress', 'Progress')}</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-medium">
+                        {initiative.progress}%
+                      </span>
+                    </div>
+                  )}
+                  {initiative.expectedRoi != null && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">{t('benefits.roi', 'Expected ROI')}</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-medium">
+                        {initiative.expectedRoi}%
+                      </span>
+                    </div>
+                  )}
+                  {initiative.projectName && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">{t('benefits.project', 'Project')}</span>
+                      <span className="text-slate-700 dark:text-slate-200 font-medium truncate max-w-[120px]">
+                        {initiative.projectName}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }}
+        >
+          <div className="pl-4 pr-1.5 pt-3 pb-4">
+            <FilterableTable
+              columns={columns}
+              data={filteredInitiatives}
+              onRowClick={(row: any) => setSelectedBenefitId((row as BenefitsInitiative).id)}
+              onRowDoubleClick={(row: any) => handleOpenDocument(row as BenefitsInitiative)}
+              onRowAction={(action: string, row: any) =>
+                handleRowAction(action, row as BenefitsInitiative)
+              }
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              emptyMessage={t('benefits.empty.noCompleted', 'No completed initiatives yet.')}
+            />
+          </div>
+        </TableWithPreviewLayout>
       );
     }
 

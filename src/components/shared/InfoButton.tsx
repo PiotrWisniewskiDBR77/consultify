@@ -23,12 +23,12 @@ import { getCardDocumentation } from '../../config/cardDocumentation';
 const infoAnimationStyle = `
 @keyframes infoColorPulse {
     0%, 100% {
-        background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
-        box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+        background: linear-gradient(135deg, #A51C30 0%, #651120 100%);
+        box-shadow: 0 0 8px rgba(165, 28, 48, 0.3);
     }
     50% {
-        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-        box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+        background: linear-gradient(135deg, #D42B3D 0%, #851627 100%);
+        box-shadow: 0 0 12px rgba(165, 28, 48, 0.4);
     }
 }
 
@@ -144,7 +144,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                 `}
         style={{
           animation: isOpen ? 'none' : 'infoColorPulse 5s ease-in-out infinite',
-          background: isOpen ? 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)' : undefined,
+          background: isOpen ? 'linear-gradient(135deg, #851627 0%, #651120 100%)' : undefined,
         }}
         title="View documentation"
         aria-label="View documentation"
@@ -213,7 +213,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                       >
                         <ChevronRight
                           size={14}
-                          className="text-slate-400 dark:text-slate-500 mt-0.5 shrink-0"
+                          className="text-slate-600 dark:text-slate-500 mt-0.5 shrink-0"
                         />
                         {feature}
                       </li>
@@ -287,7 +287,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                           </span>
                           <ExternalLink
                             size={14}
-                            className="text-slate-400 dark:text-slate-500 group-hover:text-blue-500 ml-auto"
+                            className="text-slate-600 dark:text-slate-500 group-hover:text-blue-500 ml-auto"
                           />
                         </a>
                       );

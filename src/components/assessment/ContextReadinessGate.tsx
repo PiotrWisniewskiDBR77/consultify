@@ -260,7 +260,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
               style={{ width: `${readiness.score}%` }}
             />
           </div>
-          <div className="flex justify-between mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <div className="flex justify-between mt-1 text-xs text-slate-600 dark:text-slate-500">
             <span>0%</span>
             <span className={readiness.score >= 40 ? 'text-amber-500' : ''}>40% Minimal</span>
             <span className={readiness.score >= 70 ? 'text-blue-500' : ''}>70% Standard</span>
@@ -309,7 +309,7 @@ export const ContextReadinessGate: React.FC<ContextReadinessGateProps> = ({
                     {scores.score}/{scores.total}pts
                   </span>
                   <ChevronRight
-                    className={`w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`w-4 h-4 text-slate-600 dark:text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                   />
                 </div>
               </button>

@@ -138,7 +138,7 @@ export const OnboardingWizard = () => {
               </label>
               <div className="relative">
                 <Users
-                  className="absolute left-3 top-3 text-slate-400 dark:text-slate-500"
+                  className="absolute left-3 top-3 text-slate-600 dark:text-slate-500"
                   size={18}
                 />
                 <input
@@ -156,7 +156,7 @@ export const OnboardingWizard = () => {
               </label>
               <div className="relative">
                 <Briefcase
-                  className="absolute left-3 top-3 text-slate-400 dark:text-slate-500"
+                  className="absolute left-3 top-3 text-slate-600 dark:text-slate-500"
                   size={18}
                 />
                 <input
@@ -174,7 +174,7 @@ export const OnboardingWizard = () => {
               </label>
               <div className="relative">
                 <Zap
-                  className="absolute left-3 top-3 text-slate-400 dark:text-slate-500"
+                  className="absolute left-3 top-3 text-slate-600 dark:text-slate-500"
                   size={18}
                 />
                 <textarea
@@ -207,7 +207,7 @@ export const OnboardingWizard = () => {
               </label>
               <div className="relative">
                 <Target
-                  className="absolute left-3 top-3 text-slate-400 dark:text-slate-500"
+                  className="absolute left-3 top-3 text-slate-600 dark:text-slate-500"
                   size={18}
                 />
                 <input
@@ -300,7 +300,7 @@ export const OnboardingWizard = () => {
                         <h4 className="font-bold text-lg text-navy-900 dark:text-white">
                           {step.title}
                         </h4>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-white/5 px-2 py-1 rounded">
                           {step.action_type}
                         </span>
                       </div>
@@ -374,7 +374,7 @@ export const OnboardingWizard = () => {
                   {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
                   {isConsultant ? 'Read-Only Mode' : 'Accept & Start Execution'}
                 </button>
-                <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-3">
+                <p className="text-center text-xs text-slate-600 dark:text-slate-500 mt-3">
                   {isConsultant
                     ? 'Viewing as Consultant — cannot create initiatives.'
                     : `Adds ${selectedInitiativeIds.length} initiatives to your workspace.`}

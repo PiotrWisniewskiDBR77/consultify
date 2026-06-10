@@ -159,7 +159,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
         >
           {/* Search Input */}
           <div className="flex items-center gap-3 p-4 py-4 border-b border-slate-200 dark:border-slate-700">
-            <Search size={20} className="text-slate-400 dark:text-slate-500 flex-shrink-0" />
+            <Search size={20} className="text-slate-600 dark:text-slate-500 flex-shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -173,7 +173,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
             {query && (
               <button
                 onClick={clearQuery}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
               >
                 <X size={18} />
               </button>
@@ -287,11 +287,11 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
             {!isLoading && query.length >= 2 && results.length === 0 && (
               <div className="py-8 px-6">
                 <div className="text-center mb-6">
-                  <Search size={36} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                  <Search size={36} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
                   <p className="text-slate-500 dark:text-slate-400">
                     {t('help.search.noResults', 'No results for')} <strong>"{query}"</strong>
                   </p>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                  <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
                     {t(
                       'help.search.tryDifferentKeywords',
                       'Try different keywords or browse categories below'
@@ -302,7 +302,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                 {/* Suggested alternative queries */}
                 {suggestions.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase mb-2">
+                    <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-500 uppercase mb-2">
                       {t('help.search.didYouMean', 'Did you mean?')}
                     </h4>
                     <div className="flex flex-wrap gap-2">
@@ -321,7 +321,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
 
                 {/* Browse categories */}
                 <div className="mb-4">
-                  <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase mb-2">
+                  <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-500 uppercase mb-2">
                     {t('help.search.browseCategories', 'Browse categories')}
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -358,7 +358,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                 {/* Suggestions */}
                 {suggestions.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="px-5 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <h4 className="px-5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                       {t('help.search.suggestions')}
                     </h4>
                     {suggestions.map((suggestion: string, index: number) => (
@@ -367,7 +367,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                         onClick={() => handleQuickSearch(suggestion)}
                         className="w-full flex items-center gap-3 p-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       >
-                        <Hash size={14} className="text-slate-400 dark:text-slate-500" />
+                        <Hash size={14} className="text-slate-600 dark:text-slate-500" />
                         <span className="text-slate-700 dark:text-slate-300">{suggestion}</span>
                       </button>
                     ))}
@@ -378,12 +378,12 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                 {recentSearches.length > 0 && (
                   <div className="mb-4">
                     <div className="flex items-center justify-between p-4 py-2">
-                      <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                         {t('help.search.recentSearches')}
                       </h4>
                       <button
                         onClick={clearRecent}
-                        className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                        className="text-xs text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
                       >
                         {t('help.search.clear')}
                       </button>
@@ -394,7 +394,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                         onClick={() => handleQuickSearch(term)}
                         className="w-full flex items-center gap-3 p-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       >
-                        <Clock size={14} className="text-slate-400 dark:text-slate-500" />
+                        <Clock size={14} className="text-slate-600 dark:text-slate-500" />
                         <span className="text-slate-700 dark:text-slate-300">{term}</span>
                       </button>
                     ))}
@@ -403,7 +403,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
 
                 {/* Popular Searches */}
                 <div>
-                  <h4 className="px-5 py-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <h4 className="px-5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                     {t('help.search.popular')}
                   </h4>
                   {popularSearches.slice(0, 5).map((term: string, index: number) => (
@@ -412,7 +412,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                       onClick={() => handleQuickSearch(term)}
                       className="w-full flex items-center gap-3 p-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     >
-                      <TrendingUp size={14} className="text-slate-400 dark:text-slate-500" />
+                      <TrendingUp size={14} className="text-slate-600 dark:text-slate-500" />
                       <span className="text-slate-700 dark:text-slate-300">{term}</span>
                     </button>
                   ))}
@@ -437,7 +437,7 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                 {t('help.search.footer.close')}
               </span>
             </div>
-            <span className="text-slate-400 dark:text-slate-500">
+            <span className="text-slate-600 dark:text-slate-500">
               {results.length > 0 && (
                 <>
                   {results.length} {t('help.search.footer.results')}

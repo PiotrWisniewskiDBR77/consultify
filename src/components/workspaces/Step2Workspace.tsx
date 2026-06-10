@@ -68,7 +68,7 @@ export const Step2Workspace: React.FC<Step2WorkspaceProps> = ({
                   </div>
                   <h4 className="text-slate-900 dark:text-white font-medium">{goal.title}</h4>
                   {goal.description && (
-                    <p className="text-sm text-slate-400 dark:text-slate-500">{goal.description}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-500">{goal.description}</p>
                   )}
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] bg-slate-200 dark:bg-white/10 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">

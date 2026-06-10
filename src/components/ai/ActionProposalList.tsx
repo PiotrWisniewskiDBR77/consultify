@@ -71,7 +71,7 @@ export const ActionProposalList: React.FC<ActionProposalListProps> = ({
     <div className="space-y-3">
       {proposals.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-navy-900 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
-          <div className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400 dark:text-slate-500">
+          <div className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-600 dark:text-slate-500">
             <Sparkles size={24} />
           </div>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -111,7 +111,7 @@ export const ActionProposalList: React.FC<ActionProposalListProps> = ({
                     className={`text-[10px] font-bold uppercase tracking-wider ${
                       selectedId === proposal.proposal_id
                         ? 'text-indigo-200'
-                        : 'text-slate-400 dark:text-slate-500'
+                        : 'text-slate-600 dark:text-slate-500'
                     }`}
                   >
                     {proposal.action_type.replace('_', ' ')}
@@ -152,7 +152,7 @@ export const ActionProposalList: React.FC<ActionProposalListProps> = ({
                 className={`shrink-0 transition-transform ${
                   selectedId === proposal.proposal_id
                     ? 'text-white'
-                    : 'text-slate-300 group-hover:translate-x-1'
+                    : 'text-slate-600 group-hover:translate-x-1'
                 }`}
               >
                 <ChevronRight size={18} />

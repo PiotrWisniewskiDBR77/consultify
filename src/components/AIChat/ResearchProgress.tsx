@@ -104,7 +104,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
   const isFollowUp = query.round === 'followup';
 
   return (
-    <div className="py-2 border-b border-slate-100 dark:border-navy-700 last:border-b-0">
+    <div className="py-2 border-b border-slate-200 dark:border-navy-700 last:border-b-0">
       <div className="flex items-start gap-2">
         <div className="flex-shrink-0 mt-0.5">{statusIcon[query.status]}</div>
         <div className="flex-1 min-w-0">
@@ -121,7 +121,7 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
               {query.query}
             </span>
           </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{query.purpose}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">{query.purpose}</p>
 
           {query.status === 'done' && query.results && query.results.length > 0 && (
             <button
@@ -145,13 +145,13 @@ const QueryItem: React.FC<{ query: ResearchQuery; index: number }> = ({ query, i
                 >
                   <ExternalLink
                     size={10}
-                    className="flex-shrink-0 mt-0.5 text-slate-400 group-hover:text-primary-500"
+                    className="flex-shrink-0 mt-0.5 text-slate-600 group-hover:text-primary-500"
                   />
                   <div className="min-w-0">
                     <p className="text-slate-600 dark:text-slate-300 truncate">{result.title}</p>
-                    <p className="text-slate-400 text-[10px]">{result.source}</p>
+                    <p className="text-slate-600 text-[10px]">{result.source}</p>
                   </div>
-                  <span className="flex-shrink-0 text-[10px] text-slate-400">
+                  <span className="flex-shrink-0 text-[10px] text-slate-600">
                     {Math.round(result.relevanceScore * 100)}%
                   </span>
                 </a>
@@ -193,7 +193,7 @@ const SourceItem: React.FC<{ source: Source; index: number }> = ({ source, index
       <p className="text-sm text-slate-700 dark:text-slate-200 truncate group-hover:text-primary-600">
         {source.title}
       </p>
-      <p className="text-xs text-slate-400 dark:text-slate-500">{source.domain}</p>
+      <p className="text-xs text-slate-600 dark:text-slate-500">{source.domain}</p>
     </div>
     <div className="flex items-center gap-1">
       <div
@@ -205,7 +205,7 @@ const SourceItem: React.FC<{ source: Source; index: number }> = ({ source, index
           style={{ width: `${source.relevanceScore * 100}%` }}
         />
       </div>
-      <ExternalLink size={12} className="text-slate-400 group-hover:text-primary-500" />
+      <ExternalLink size={12} className="text-slate-600 group-hover:text-primary-500" />
     </div>
   </a>
 );
@@ -224,7 +224,7 @@ const ActivityItem: React.FC<{
     <div className="min-w-0">
       <p className="text-xs text-slate-600 dark:text-slate-300">{text}</p>
       {detail && (
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{detail}</p>
+        <p className="text-[10px] text-slate-600 dark:text-slate-500 truncate">{detail}</p>
       )}
     </div>
   </div>
@@ -343,14 +343,14 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
 
   return (
     <div
-      className={`bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-800 dark:to-indigo-900/20 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
+      className={`bg-gradient-to-br from-slate-50 to-primary-50 dark:from-navy-800 dark:to-primary-900/20 rounded-xl border border-slate-200 dark:border-navy-700 ${className}`}
     >
       {/* Header */}
       <button
         onClick={toggleExpand}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/50 dark:hover:bg-navy-700/50 transition-colors"
       >
-        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
+        <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400">
           <Search size={18} />
         </div>
 
@@ -360,7 +360,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
               {t('research.deepResearch', 'Deep Research')}
             </h4>
             {researchType && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium capitalize">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium capitalize">
                 {researchType.replace(/_/g, ' ')}
               </span>
             )}
@@ -397,11 +397,11 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
               {completedQueries}/{totalQueries}
             </span>
-            <p className="text-xs text-slate-400">{t('research.queries', 'queries')}</p>
+            <p className="text-xs text-slate-600">{t('research.queries', 'queries')}</p>
           </div>
           <div className="w-20 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-primary-500 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-crimson-500 to-primary-500 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -420,7 +420,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
                   activeTab === tab
-                    ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500'
+                    ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
@@ -435,7 +435,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
           {activeTab === 'activity' && (
             <div className="p-4 max-h-64 overflow-y-auto">
               {activityItems.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-4">
+                <p className="text-xs text-slate-600 text-center py-4">
                   {t('research.waitingForActivity', 'Starting research...')}
                 </p>
               ) : (
@@ -500,7 +500,7 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
                   </div>
                 </>
               ) : (
-                <p className="text-xs text-slate-400 text-center py-4">
+                <p className="text-xs text-slate-600 text-center py-4">
                   {t('research.noSourcesYet', 'No sources found yet...')}
                 </p>
               )}
@@ -530,11 +530,11 @@ export const ResearchStatusBadge: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/70 transition-colors"
+      className="flex items-center gap-2 px-3 py-1.5 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium hover:bg-primary-200 dark:hover:bg-primary-900/70 transition-colors"
     >
       <Search size={12} className="animate-pulse" />
       <span>{t('research.researching', 'Researching')}</span>
-      <span className="text-indigo-500">
+      <span className="text-primary-500">
         {queriesCompleted}/{totalQueries}
       </span>
       {sourcesCount && sourcesCount > 0 && (

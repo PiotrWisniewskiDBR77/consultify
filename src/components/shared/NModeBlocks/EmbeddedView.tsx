@@ -119,7 +119,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
                 className={`p-1 rounded-md transition-colors ${
                   activeViewMode === mode
                     ? 'bg-white dark:bg-navy-700 text-slate-700 dark:text-slate-200 shadow-sm'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                    : 'text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
                 title={mode}
               >
@@ -136,7 +136,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
             className={`p-1 rounded-md transition-colors ${
               searchOpen
                 ? 'text-primary-500 bg-primary-500/10'
-                : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'
+                : 'text-slate-600 dark:text-slate-500 hover:text-slate-600'
             }`}
           >
             <Search size={13} />
@@ -147,7 +147,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
         {onFilter && (
           <button
             onClick={onFilter}
-            className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:text-slate-600 transition-colors"
+            className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:text-slate-600 transition-colors"
           >
             <Filter size={13} />
           </button>
@@ -157,7 +157,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
         {onSort && (
           <button
             onClick={onSort}
-            className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:text-slate-600 transition-colors"
+            className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:text-slate-600 transition-colors"
           >
             <SortAsc size={13} />
           </button>
@@ -176,7 +176,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
         {!readOnly && onLink && (
           <button
             onClick={onLink}
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             {isPolish ? 'Połącz' : 'Link'}
           </button>
@@ -186,7 +186,7 @@ export const EmbeddedView: React.FC<EmbeddedViewProps> = ({
         {onOpenFull && (
           <button
             onClick={onOpenFull}
-            className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:text-slate-600 transition-colors"
+            className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:text-slate-600 transition-colors"
             title={isPolish ? 'Otwórz pełny widok' : 'Open full view'}
           >
             <ExternalLink size={13} />

@@ -65,7 +65,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
               <Lightbulb size={16} /> {t('intelligence.learnedTitle')}
             </label>
             <textarea
-              className="w-full bg-transparent text-slate-300 text-sm focus:outline-none resize-none min-h-[100px]"
+              className="w-full bg-transparent text-slate-600 text-sm focus:outline-none resize-none min-h-[100px]"
               placeholder={t('intelligence.learnedPlaceholder')}
               value={initiative.lessonsLearned || ''}
               onChange={(e) => onChange({ lessonsLearned: e.target.value })}
@@ -77,7 +77,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
               <AlertOctagon size={16} /> {t('intelligence.surprisedTitle')}
             </label>
             <textarea
-              className="w-full bg-transparent text-slate-300 text-sm focus:outline-none resize-none min-h-[100px]"
+              className="w-full bg-transparent text-slate-600 text-sm focus:outline-none resize-none min-h-[100px]"
               placeholder={t('intelligence.surprisedPlaceholder')}
               value={initiative.strategicSurprises || ''}
               onChange={(e) => onChange({ strategicSurprises: e.target.value })}
@@ -89,7 +89,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
               <GitBranch size={16} /> {t('intelligence.differentlyTitle')}
             </label>
             <textarea
-              className="w-full bg-transparent text-slate-300 text-sm focus:outline-none resize-none min-h-[100px]"
+              className="w-full bg-transparent text-slate-600 text-sm focus:outline-none resize-none min-h-[100px]"
               placeholder={t('intelligence.differentlyPlaceholder')}
               value={initiative.nextTimeAvoid || ''}
               onChange={(e) => onChange({ nextTimeAvoid: e.target.value })}
@@ -120,7 +120,7 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">
+                <p className="text-xs text-slate-600 dark:text-slate-500 uppercase font-bold tracking-wider">
                   {t('intelligence.detectedPatternsLabel')}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -138,11 +138,11 @@ export const InitiativeIntelligenceTab: React.FC<Props> = ({ initiative, onChang
                   <h4 className="text-xs font-bold text-blue-400 mb-2 uppercase">
                     {t('intelligence.knowledgeGraphTitle')}
                   </h4>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 leading-relaxed">
                     {t('intelligence.knowledgeGraphSharing')}{' '}
                     <span className="text-white font-bold">85%</span>{' '}
                     {t('intelligence.knowledgeGraphSimilarity')}{' '}
-                    <span className="italic text-slate-300">Project Alpha (2024)</span>. Consider
+                    <span className="italic text-slate-600">Project Alpha (2024)</span>. Consider
                     reviewing their " stakeholder engagement plan".
                   </p>
                   <button className="mt-3 text-xs text-blue-400 hover:text-blue-300 underline">

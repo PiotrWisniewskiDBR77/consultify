@@ -41,7 +41,7 @@ export const ImageStyleSelector: React.FC<ImageStyleSelectorProps> = ({ value, o
               }`}
             >
               <Icon
-                className={`w-5 h-5 mx-auto mb-1.5 ${selected ? 'text-primary-500' : 'text-slate-400'}`}
+                className={`w-5 h-5 mx-auto mb-1.5 ${selected ? 'text-primary-500' : 'text-slate-600'}`}
               />
               <p className="text-[11px] font-medium text-slate-700 dark:text-slate-300 leading-tight">
                 {t(style.labelKey, style.id.replace(/_/g, ' '))}

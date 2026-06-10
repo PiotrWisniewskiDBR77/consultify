@@ -899,7 +899,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
             ? 'text-rose-400'
             : kpi.status === 'on-target'
               ? 'text-emerald-400'
-              : 'text-slate-400',
+              : 'text-slate-600',
         icon: <AlertTriangle size={14} className="text-rose-400" />,
       },
       {
@@ -1000,7 +1000,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
       : openCase?.severity === 'AMBER'
         ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-        : 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+        : 'bg-slate-500/10 text-slate-600 border-slate-500/30';
 
   const handleAcknowledge = useCallback(async () => {
     if (!openCase?.id) return;
@@ -1149,7 +1149,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         ? 'bg-emerald-500/10 text-emerald-400'
                         : kpi.latestValue != null
                           ? 'bg-rose-500/10 text-rose-400'
-                          : 'bg-slate-500/10 text-slate-400'
+                          : 'bg-slate-500/10 text-slate-600'
                     }`}
                   >
                     <span
@@ -1189,7 +1189,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-16 text-slate-400">
+            <div className="flex items-center justify-center py-16 text-slate-600">
               <Target size={20} className="animate-pulse mr-2" />
               {t('common.loading', 'Loading...')}
             </div>
@@ -1434,7 +1434,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                                   className={`inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border text-[10px] ${
                                     a.status === 'DONE'
                                       ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
-                                      : 'border-slate-300 dark:border-navy-600 text-slate-400'
+                                      : 'border-slate-300 dark:border-navy-600 text-slate-600'
                                   }`}
                                 >
                                   {a.status === 'DONE' ? '✓' : ''}
@@ -1697,7 +1697,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         <tbody className="divide-y divide-slate-200 dark:divide-navy-700/50">
                           {measurements.map((m) => (
                             <tr key={m.id} className="hover:bg-white/5 transition-colors">
-                              <td className="px-3 py-2 text-slate-400">
+                              <td className="px-3 py-2 text-slate-600">
                                 <div className="flex items-center gap-1.5">
                                   <Calendar size={12} className="text-slate-500" />
                                   {measurementDate(m)
@@ -1710,7 +1710,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                                   ) : null}
                                 </div>
                               </td>
-                              <td className="px-3 py-2 text-right font-medium text-slate-300">
+                              <td className="px-3 py-2 text-right font-medium text-slate-600">
                                 {m.value.toLocaleString()}
                                 {kpi?.unit && (
                                   <span className="ml-0.5 text-xs text-slate-500">{kpi.unit}</span>
@@ -2172,7 +2172,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {t('results.drawer.lineageTitle', 'Lineage')}
                     </div>
-                    <GitBranch size={16} className="text-slate-400" />
+                    <GitBranch size={16} className="text-slate-600" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -2230,7 +2230,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                               type="button"
                               disabled={mappingBusy}
                               onClick={() => void handleUnlinkMapping(m.id)}
-                              className="text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-60"
+                              className="text-slate-600 hover:text-rose-400 transition-colors disabled:opacity-60"
                               title={t('common.remove', 'Remove')}
                             >
                               <X size={12} />

@@ -35,7 +35,7 @@ function severityStyles(severity: ConflictSeverity) {
     case 'low':
     default:
       return {
-        pill: 'bg-slate-500/15 text-slate-300 border border-slate-500/25',
+        pill: 'bg-slate-500/15 text-slate-600 border border-slate-500/25',
         dot: 'bg-slate-400',
       };
   }
@@ -44,12 +44,12 @@ function severityStyles(severity: ConflictSeverity) {
 function typeMeta(type: ConflictType) {
   switch (type) {
     case 'dependency':
-      return { label: 'Dependency', icon: <Link2 size={14} className="text-slate-300" /> };
+      return { label: 'Dependency', icon: <Link2 size={14} className="text-slate-600" /> };
     case 'resource':
-      return { label: 'Resource', icon: <Users size={14} className="text-slate-300" /> };
+      return { label: 'Resource', icon: <Users size={14} className="text-slate-600" /> };
     case 'timeline':
     default:
-      return { label: 'Timeline', icon: <AlertTriangle size={14} className="text-slate-300" /> };
+      return { label: 'Timeline', icon: <AlertTriangle size={14} className="text-slate-600" /> };
   }
 }
 
@@ -83,8 +83,8 @@ export const InitiativeConflictsPanel: React.FC<InitiativeConflictsPanelProps> =
     <div className="mt-3 rounded-xl border border-navy-700 bg-navy-950/40 p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase text-slate-300">{title}</span>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs font-semibold uppercase text-slate-600">{title}</span>
+          <span className="text-xs text-slate-600">
             {total} total{highCount ? ` • ${highCount} high` : ''}
           </span>
         </div>
@@ -104,7 +104,7 @@ export const InitiativeConflictsPanel: React.FC<InitiativeConflictsPanelProps> =
                   <span className={`w-2 h-2 rounded-full ${sevStyle.dot}`} />
                   {sev.toUpperCase()}
                 </span>
-                <span className="text-xs text-slate-400">{list.length}</span>
+                <span className="text-xs text-slate-600">{list.length}</span>
               </div>
 
               <div className="space-y-2">
@@ -127,17 +127,17 @@ export const InitiativeConflictsPanel: React.FC<InitiativeConflictsPanelProps> =
                               {c.source === 'ai' ? 'AI' : 'Local'}
                             </span>
                           </div>
-                          <div className="mt-1 text-xs text-slate-300 truncate" title={names}>
+                          <div className="mt-1 text-xs text-slate-600 truncate" title={names}>
                             {names}
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-2 text-xs text-slate-400 whitespace-pre-wrap">
+                      <div className="mt-2 text-xs text-slate-600 whitespace-pre-wrap">
                         {c.description}
                       </div>
                       {c.recommendation && (
-                        <div className="mt-2 text-xs text-slate-300">
+                        <div className="mt-2 text-xs text-slate-600">
                           <span className="text-slate-500">Recommendation:</span> {c.recommendation}
                         </div>
                       )}

@@ -121,7 +121,7 @@ export function ThinkingStatusLine({
           {step.status === 'in_progress' && (
             <Loader2
               size={compact ? 10 : 12}
-              className="text-slate-400 dark:text-slate-500 flex-shrink-0 animate-spin"
+              className="text-slate-600 dark:text-slate-500 flex-shrink-0 animate-spin"
             />
           )}
           {step.status === 'pending' && (
@@ -129,7 +129,7 @@ export function ThinkingStatusLine({
           )}
 
           {/* Step label */}
-          <span className="text-slate-400 dark:text-slate-500">{step.label}</span>
+          <span className="text-slate-600 dark:text-slate-500">{step.label}</span>
         </div>
       ))}
     </div>

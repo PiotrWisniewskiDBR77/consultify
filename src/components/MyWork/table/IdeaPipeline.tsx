@@ -208,7 +208,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
@@ -249,7 +249,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                   {idx < funnelData.length - 1 && (
                     <ChevronRight
                       size={14}
-                      className="text-slate-300 dark:text-slate-600 flex-shrink-0"
+                      className="text-slate-600 dark:text-slate-400 flex-shrink-0"
                     />
                   )}
                 </React.Fragment>
@@ -296,7 +296,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
 
                   {/* Items */}
                   {stageNodes.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-4">
+                    <p className="text-xs text-slate-600 text-center py-4">
                       {isPl ? 'Brak pomysłów na tym etapie' : 'No ideas at this stage'}
                     </p>
                   ) : (
@@ -342,7 +342,7 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                               <button
                                 onClick={() => handlePromote(node.id, selectedStage)}
                                 disabled={!canPromote || promotingId === node.id}
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${canPromote ? 'text-white hover:opacity-90' : 'text-slate-400 bg-slate-100 dark:bg-navy-800 cursor-not-allowed'}`}
+                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${canPromote ? 'text-white hover:opacity-90' : 'text-slate-600 bg-slate-100 dark:bg-navy-800 cursor-not-allowed'}`}
                                 style={
                                   canPromote ? { backgroundColor: nextStage.color } : undefined
                                 }
@@ -374,8 +374,8 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
             })()
           ) : (
             <div className="text-center py-8">
-              <Target size={24} className="text-slate-300 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">
+              <Target size={24} className="text-slate-600 mx-auto mb-2" />
+              <p className="text-xs text-slate-600">
                 {isPl
                   ? 'Kliknij etap aby zobaczyć pomysły i kryteria'
                   : 'Click a stage to see ideas and criteria'}

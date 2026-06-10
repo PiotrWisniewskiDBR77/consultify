@@ -121,7 +121,7 @@ export default function SystemHealthDashboard() {
           </div>
           <div className="flex items-center gap-4">
             {lastCheck && (
-              <span className="text-sm text-gray-400 dark:text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-gray-600 dark:text-gray-500 dark:text-gray-400">
                 Last check: {lastCheck.toLocaleTimeString()}
               </span>
             )}
@@ -179,7 +179,7 @@ export default function SystemHealthDashboard() {
         {loading && !health ? (
           <div className="text-center py-12">
             <RefreshCw className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-500" />
-            <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+            <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
               Running health checks...
             </p>
           </div>
@@ -224,7 +224,7 @@ export default function SystemHealthDashboard() {
         ) : null}
 
         {/* Footer */}
-        <div className="mt-8 text-center text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm">
+        <div className="mt-8 text-center text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm">
           <p>System Health Dashboard • Auto-refresh every 30 seconds</p>
           <p className="mt-2">Press ESC to close</p>
         </div>

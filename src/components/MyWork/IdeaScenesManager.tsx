@@ -153,7 +153,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                 {isPl ? 'Widoki' : 'Scenes'}
               </span>
-              <span className="text-[9px] text-slate-400 font-semibold">{scenes.length}</span>
+              <span className="text-[9px] text-slate-600 font-semibold">{scenes.length}</span>
             </div>
             <div className="flex items-center gap-0.5">
               {scenes.length >= 2 && (
@@ -167,13 +167,13 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
               )}
               <button
                 onClick={handleAddScene}
-                className="p-1 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <Plus size={12} />
               </button>
               <button
                 onClick={() => setExpanded(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1 rounded-lg text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <X size={12} />
               </button>
@@ -187,7 +187,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group cursor-pointer"
                 onClick={() => onNavigateToScene(scene.viewport)}
               >
-                <span className="text-[9px] font-bold text-slate-400 w-3">{i + 1}</span>
+                <span className="text-[9px] font-bold text-slate-600 w-3">{i + 1}</span>
                 {editingId === scene.id ? (
                   <input
                     autoFocus
@@ -212,7 +212,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleMoveScene(scene.id, 'up');
                     }}
-                    className="p-0.5 text-slate-400 hover:text-slate-600"
+                    className="p-0.5 text-slate-600 hover:text-slate-600"
                   >
                     <ChevronUp size={10} />
                   </button>
@@ -221,7 +221,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleMoveScene(scene.id, 'down');
                     }}
-                    className="p-0.5 text-slate-400 hover:text-slate-600"
+                    className="p-0.5 text-slate-600 hover:text-slate-600"
                   >
                     <ChevronDown size={10} />
                   </button>
@@ -231,7 +231,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       setEditingId(scene.id);
                       setEditName(scene.name);
                     }}
-                    className="p-0.5 text-slate-400 hover:text-primary-500"
+                    className="p-0.5 text-slate-600 hover:text-primary-500"
                   >
                     <Edit3 size={10} />
                   </button>
@@ -240,7 +240,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                       e.stopPropagation();
                       handleDeleteScene(scene.id);
                     }}
-                    className="p-0.5 text-slate-400 hover:text-rose-500"
+                    className="p-0.5 text-slate-600 hover:text-rose-500"
                   >
                     <Trash2 size={10} />
                   </button>

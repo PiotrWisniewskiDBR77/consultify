@@ -199,7 +199,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
           {onDismiss && (
             <button
               onClick={onDismiss}
-              className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
+              className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
             >
               <X size={16} />
             </button>
@@ -212,7 +212,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-navy-900 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-navy-900 border-t border-slate-200 dark:border-slate-800">
           {/* Step indicator */}
           {step && (
             <span className="text-xs text-slate-500 dark:text-slate-400">

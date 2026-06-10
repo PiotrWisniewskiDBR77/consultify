@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
@@ -235,6 +235,37 @@ export function getCurrentThinkingLabel(steps: ThinkingStep[]): string {
   );
 }
 
+/**
+ * Split a raw streamed buffer into the visible answer and the model's reasoning.
+ *
+ * The model emits its chain-of-thought inside `<thinking>…</thinking>` blocks
+ * intermixed with the answer. We:
+ *  - collect the text of every COMPLETE block into `reasoning`,
+ *  - remove those blocks from `visible`,
+ *  - and, if a block is still OPEN at the end of the buffer (mid-stream), hide
+ *    its partial tail from the answer while surfacing it live in `reasoning`.
+ *
+ * Operating on the full accumulated buffer (not per-chunk) makes this robust to
+ * `<thinking>` tags that are split across SSE chunks.
+ */
+export function splitThinking(raw: string): { visible: string; reasoning: string } {
+  const parts: string[] = [];
+  const completeRe = /<thinking>([\s\S]*?)<\/thinking>/g;
+  let m: RegExpExecArray | null;
+  while ((m = completeRe.exec(raw)) !== null) {
+    const t = m[1].trim();
+    if (t) parts.push(t);
+  }
+  let visible = raw.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
+  const openIdx = visible.indexOf('<thinking>');
+  if (openIdx !== -1) {
+    const partial = visible.slice(openIdx + '<thinking>'.length).trim();
+    if (partial) parts.push(partial);
+    visible = visible.slice(0, openIdx);
+  }
+  return { visible, reasoning: parts.join('\n\n') };
+}
+
 type StreamOptions = {
   onStreamDone?: (
     fullText: string,
@@ -248,10 +279,15 @@ type StreamOptions = {
       sourceLedger?: any;
       trustBundle?: any;
       proposal?: TeresaChatProposal | null;
+      /** Model's extracted chain-of-thought (from <thinking> blocks), for the
+       *  per-message collapsible reasoning trace. Empty string when none. */
+      reasoning?: string;
     }
   ) => void;
   onStreamError?: (error: Error) => void;
   onThinkingUpdate?: (steps: ThinkingStep[]) => void;
+  /** Live reasoning text as it streams (for the expandable "Tok rozumowania" panel). */
+  onReasoningUpdate?: (reasoning: string) => void;
   onArtifactDetected?: (
     artifact: Artifact,
     meta?: {
@@ -297,6 +333,7 @@ export type UseAIStreamReturn = {
   isStreaming: boolean;
   streamedContent: string;
   thinkingSteps: ThinkingStep[];
+  reasoning: string;
   citations: any[];
   policyDecision: any | null;
   policyNotices: any[];
@@ -410,6 +447,10 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamedContent, setStreamedContent] = useState('');
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
+  // Model's extracted chain-of-thought (from <thinking> blocks) for the
+  // per-message collapsible "Tok rozumowania" trace.
+  const [reasoning, setReasoning] = useState('');
+  const reasoningRef = useRef('');
   const [lastError, setLastError] = useState<Error | null>(null);
   const [citations, setCitations] = useState<any[]>([]);
   const [policyDecision, setPolicyDecision] = useState<any | null>(null);
@@ -474,6 +515,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const resetStreamState = useCallback(() => {
     setStreamedContent('');
     setThinkingSteps([]);
+    setReasoning('');
+    reasoningRef.current = '';
     setDeepThinkingState(null);
     setCitations([]);
     citationsRef.current = [];
@@ -550,6 +593,9 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       abortControllerRef.current = new AbortController();
 
       let fullText = '';
+      // Raw accumulator INCLUDING <thinking> blocks — used to split out reasoning
+      // robustly even when a tag spans multiple SSE chunks.
+      let rawBuffer = '';
       const isDeepThinking = aiConfig?.deepResearch === true;
       // Adaptive complexity: start light for casual queries, escalate if response takes long
       const initialComplexity: ThinkingComplexity = isDeepThinking ? 'deep' : 'light';
@@ -656,35 +702,18 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       const handleChunk = (chunk: string) => {
         if (abortRef.current.aborted) return;
 
-        // Handle <thinking> tags: show as visible blockquote when showReasoning is on,
-        // otherwise strip them silently.
-        let processedChunk = chunk;
-        const hasThinkingTags = /<thinking>[\s\S]*?<\/thinking>/g.test(chunk);
-        if (hasThinkingTags) {
-          if (aiConfig?.showReasoning) {
-            // Convert <thinking>...</thinking> into a visible markdown blockquote
-            processedChunk = chunk.replace(
-              /<thinking>([\s\S]*?)<\/thinking>/g,
-              (_match, content: string) => {
-                const trimmed = content.trim();
-                if (!trimmed) return '';
-                // Format as a collapsible reasoning block
-                const quotedLines = trimmed
-                  .split('\n')
-                  .map((line: string) => `> ${line}`)
-                  .join('\n');
-                return `\n> **Tok rozumowania:**\n${quotedLines}\n\n`;
-              }
-            );
-          } else {
-            processedChunk = chunk.replace(/<thinking>[\s\S]*?<\/thinking>/g, '');
-          }
+        // Accumulate raw, then split the model's <thinking> reasoning out of the
+        // visible answer. Reasoning is ALWAYS captured (regardless of the
+        // showReasoning toggle) so the per-message "Tok rozumowania" trace can
+        // render it and it can be persisted; the toggle only affects auto-expand.
+        rawBuffer += chunk;
+        const { visible, reasoning: extractedReasoning } = splitThinking(rawBuffer);
+        if (extractedReasoning !== reasoningRef.current) {
+          reasoningRef.current = extractedReasoning;
+          setReasoning(extractedReasoning);
+          options.onReasoningUpdate?.(extractedReasoning);
         }
-
-        // Add to full text
-        if (processedChunk) {
-          fullText += processedChunk;
-        }
+        fullText = visible;
 
         setStreamedContent(fullText);
         setCurrentStreamContent(fullText);
@@ -780,6 +809,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           sourceLedger: sourceLedgerRef.current,
           trustBundle: trustBundleRef.current,
           proposal: teresaProposalRef.current,
+          reasoning: reasoningRef.current,
         });
       };
 
@@ -1036,6 +1066,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'resume') {
           const newText = String((evt as any).text || '');
           if (newText) {
+            rawBuffer = newText;
             fullText = newText;
             setStreamedContent(newText);
             setCurrentStreamContent(newText);
@@ -1048,6 +1079,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'dt_repair_replace') {
           const newText = String((evt as any).text || '');
           if (newText) {
+            rawBuffer = newText;
             fullText = newText;
             setStreamedContent(newText);
             setCurrentStreamContent(newText);
@@ -1182,6 +1214,17 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
               // New controller for retry
               abortControllerRef.current?.abort();
               abortControllerRef.current = new AbortController();
+              // Reset the streamed-content accumulator before resending. The retry reuses the
+              // same `handleChunk` closure, which APPENDS to `fullText`; without this reset any
+              // chunks received before the error would be duplicated/garbled in the re-stream
+              // (e.g. "The revenue is" + full re-stream → "The revenue isThe revenue is …").
+              fullText = '';
+              rawBuffer = '';
+              reasoningRef.current = '';
+              setReasoning('');
+              hasReceivedContent = false;
+              setStreamedContent('');
+              setCurrentStreamContent('');
               await Api.chatWithAIStream(
                 message,
                 history,
@@ -1217,9 +1260,14 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           }
         }
 
-        // If aborted, don't surface as an error
+        // If aborted, don't surface as an error — but DO release the streaming
+        // state (FIX-002). Returning early without this left the typing spinner
+        // frozen after an aborted/stopped stream.
         const err = error as any;
         if (abortRef.current.aborted || err?.name === 'AbortError') {
+          retryCountRef.current = 0;
+          setIsStreaming(false);
+          setIsBotTyping(false);
           return;
         }
 
@@ -1266,6 +1314,20 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     }
     return hadPartialContent;
   }, [resetStreamState, setIsBotTyping, streamedContent]);
+
+  // Chat P0-3 — abort any in-flight stream when the active conversation
+  // changes. Without this the SSE for conv A keeps running after the user
+  // clicks conv B, and the streamed content (hook-state, not conv-scoped)
+  // leaks into conv B's view. The event is dispatched from
+  // useConversationStore.setActiveConversation when prev !== id.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onAbortRequest = () => {
+      if (isStreaming) abortStream();
+    };
+    window.addEventListener('chat:abort-stream', onAbortRequest);
+    return () => window.removeEventListener('chat:abort-stream', onAbortRequest);
+  }, [abortStream, isStreaming]);
 
   const retryLastStream = useCallback(async () => {
     if (isStreaming) return;
@@ -1341,6 +1403,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     isStreaming,
     streamedContent,
     thinkingSteps,
+    reasoning,
     citations,
     policyDecision,
     policyNotices,

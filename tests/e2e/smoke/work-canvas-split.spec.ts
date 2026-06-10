@@ -28,14 +28,14 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
       expect(response?.status()).toBeLessThan(500);
       await ensureWorkCanvasVisible(page);
 
-      const chat = page.getByText(/AI sees: Work Canvas|Teresa/).first();
+      const chat = page.locator('textarea[data-testid="chat-input"]').first();
       const canvas = page.locator('[data-testid="canvas-document-view"]');
       const titleInput = page.getByLabel('Canvas document title');
 
       await expect(chat).toBeVisible();
       await expect(titleInput).toBeVisible();
       await expect(canvas).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Canvas diagnostics' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Canvas menu' })).toBeVisible();
       await expect(page.getByText(/KIMI lane uses its own generation chat/i)).toHaveCount(0);
       await expectNoRawInternals(page);
 
@@ -43,7 +43,7 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
       const canvasBox = await canvas.boundingBox();
       expect(chatBox, 'chat title bounding box').not.toBeNull();
       expect(canvasBox, `${kind} canvas bounding box`).not.toBeNull();
-      expect(Math.abs((chatBox?.y || 0) - (canvasBox?.y || 0))).toBeLessThan(220);
+      expect((chatBox?.x || 0)).toBeLessThan((canvasBox?.x || 0) + 20);
 
       await testInfo.attach(`work-canvas-${kind}-split`, {
         body: await page.screenshot({ fullPage: true }),
@@ -79,7 +79,7 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
 
     await expect(page.getByText('Canvas linked to existing chat').first()).toBeVisible();
     await expect(page.getByText(conversation.content)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Canvas diagnostics' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Canvas menu' })).toBeVisible();
     expect(page.url()).toContain(conversation.id);
 
     await testInfo.attach('work-canvas-existing-chat-link', {

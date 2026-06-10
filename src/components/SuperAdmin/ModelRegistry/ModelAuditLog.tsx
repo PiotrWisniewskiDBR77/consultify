@@ -153,7 +153,7 @@ export const ModelAuditLog: React.FC = () => {
         </div>
         <button
           onClick={loadEntries}
-          className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+          className="p-2 text-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
         >
           <RefreshCw size={18} />
         </button>
@@ -188,7 +188,7 @@ export const ModelAuditLog: React.FC = () => {
       {/* Search & Filters */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             type="text"
             value={searchTerm}
@@ -307,9 +307,9 @@ export const ModelAuditLog: React.FC = () => {
                       </div>
                     </div>
                     {isExpanded ? (
-                      <ChevronDown size={16} className="text-slate-400" />
+                      <ChevronDown size={16} className="text-slate-600" />
                     ) : (
-                      <ChevronRight size={16} className="text-slate-400" />
+                      <ChevronRight size={16} className="text-slate-600" />
                     )}
                   </div>
                 </button>
@@ -330,7 +330,7 @@ export const ModelAuditLog: React.FC = () => {
                               <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 rounded text-xs font-mono">
                                 {change.from === null ? 'null' : JSON.stringify(change.from)}
                               </span>
-                              <span className="text-slate-400">→</span>
+                              <span className="text-slate-600">→</span>
                               <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-xs font-mono">
                                 {change.to === null ? 'null' : JSON.stringify(change.to)}
                               </span>

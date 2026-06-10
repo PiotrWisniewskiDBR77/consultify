@@ -31,6 +31,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
@@ -157,11 +159,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="h-64 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -193,7 +191,7 @@ export const FeaturesPrivacyTab: React.FC = () => {
             className={`flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all ${
               hasChanges
                 ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20'
-                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -624,7 +622,7 @@ Example:
       {activeSubTab === 'personas' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h3 className="text-sm font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <h3 className="text-sm font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
               Available Personas
             </h3>
             {prompts.map((p) => (
@@ -639,11 +637,11 @@ Example:
               >
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-white">{p.key}</h3>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     {formatPromptDate(p)}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2">
+                <p className="text-xs text-slate-600 dark:text-slate-500 line-clamp-2">
                   {p.description}
                 </p>
               </div>
@@ -656,7 +654,7 @@ Example:
                 <h3 className="text-lg font-bold text-white mb-4">Edit: {editingPrompt.key}</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                       Description
                     </label>
                     <input
@@ -668,7 +666,7 @@ Example:
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                       System Prompt
                     </label>
                     <textarea
@@ -721,7 +719,7 @@ Example:
                               }}
                               className="w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-primary-500 bg-slate-700"
                             />
-                            <span className="text-xs text-slate-300">{opt.label}</span>
+                            <span className="text-xs text-slate-600">{opt.label}</span>
                           </label>
                         );
                       })}
@@ -732,7 +730,7 @@ Example:
                     <button
                       type="button"
                       onClick={() => setEditingPrompt(null)}
-                      className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-white"
+                      className="px-4 py-2 text-slate-600 dark:text-slate-500 hover:text-white"
                     >
                       Cancel
                     </button>

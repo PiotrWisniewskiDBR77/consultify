@@ -1,4 +1,3 @@
-// @ts-nocheck
 // components/PMO/AuditTrailViewer.tsx
 // Audit Trail Viewer for PMO Standards Compliance
 
@@ -218,12 +217,12 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-navy-700">
+      <div className="flex flex-wrap gap-4 bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
         {/* Search */}
         <div className="flex-1 min-w-[200px] relative">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -277,30 +276,30 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-navy-700">
+        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-2xl font-bold text-navy-900 dark:text-white">{entries.length}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">Total Entries</div>
         </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-navy-700">
+        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-2xl font-bold text-green-600">
             {entries.filter((e) => e.action === 'approved').length}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">Approvals</div>
         </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-navy-700">
+        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-2xl font-bold text-blue-600">
             {entries.filter((e) => e.action === 'created').length}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400">Created</div>
         </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-100 dark:border-navy-700">
+        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-2xl font-bold text-primary-600">{uniqueDomains.length}</div>
           <div className="text-xs text-slate-500 dark:text-slate-400">Domains</div>
         </div>
       </div>
 
       {/* Entries List */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-100 dark:border-navy-700 overflow-hidden">
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-slate-500 dark:text-slate-400">
             <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-2"></div>
@@ -312,7 +311,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
             No audit entries found
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
+          <div className="divide-y divide-slate-200 dark:divide-white/5">
             {filteredEntries.map((entry) => (
               <div
                 key={entry.id}
@@ -322,7 +321,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                   className="p-4 flex items-start gap-4 cursor-pointer"
                   onClick={() => toggleExpand(entry.id)}
                 >
-                  <button className="mt-1 text-slate-400 dark:text-slate-500">
+                  <button className="mt-1 text-slate-600 dark:text-slate-500">
                     {expandedEntries.has(entry.id) ? (
                       <ChevronDown size={16} />
                     ) : (
@@ -336,7 +335,7 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                       <span className="font-medium text-navy-900 dark:text-white">
                         {entry.objectType.replace(/_/g, ' ')}
                       </span>
-                      <span className="text-slate-400 dark:text-slate-500">•</span>
+                      <span className="text-slate-600 dark:text-slate-500">•</span>
                       <span className="text-sm text-slate-600 dark:text-slate-300 capitalize">
                         {entry.action}
                       </span>
@@ -365,13 +364,13 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                   <div className="px-12 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
                     {/* Standards Mapping */}
                     <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-4">
-                      <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <h4 className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <BookOpen size={12} />
                         PMO Standards Mapping
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase mb-1">
+                          <div className="text-[10px] text-slate-600 dark:text-slate-500 uppercase mb-1">
                             ISO 21500:2021
                           </div>
                           <div className="text-navy-900 dark:text-white">
@@ -379,13 +378,13 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                           </div>
                         </div>
                         <div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase mb-1">
+                          <div className="text-[10px] text-slate-600 dark:text-slate-500 uppercase mb-1">
                             PMBOK 7th Ed
                           </div>
                           <div className="text-navy-900 dark:text-white">{entry.pmbokMapping}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase mb-1">
+                          <div className="text-[10px] text-slate-600 dark:text-slate-500 uppercase mb-1">
                             PRINCE2
                           </div>
                           <div className="text-navy-900 dark:text-white">
@@ -398,13 +397,13 @@ export const AuditTrailViewer: React.FC<AuditTrailViewerProps> = ({ projectId })
                     {/* Action Details */}
                     {entry.details && Object.keys(entry.details).length > 0 && (
                       <div className="bg-slate-50 dark:bg-navy-900/50 rounded-lg p-4">
-                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                        <h4 className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3">
                           Action Details
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           {Object.entries(entry.details).map(([key, value]) => (
                             <div key={key}>
-                              <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase mb-1">
+                              <div className="text-[10px] text-slate-600 dark:text-slate-500 uppercase mb-1">
                                 {key}
                               </div>
                               <div className="text-navy-900 dark:text-white">{String(value)}</div>

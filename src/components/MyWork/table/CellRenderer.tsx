@@ -123,7 +123,7 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
                 onChange(null);
                 setOpen(false);
               }}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-600 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
             >
               Clear
             </button>
@@ -164,7 +164,7 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
         disabled={locked}
         className="inline-flex items-center gap-0.5 flex-wrap max-w-full"
       >
-        {selected.length === 0 && <span className="text-[10px] text-slate-400">—</span>}
+        {selected.length === 0 && <span className="text-[10px] text-slate-600">—</span>}
         {selected.map((s) => (
           <span
             key={s}
@@ -178,7 +178,7 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
             {s}
           </span>
         ))}
-        {!locked && <ChevronDown size={10} className="text-slate-400 ml-0.5" />}
+        {!locked && <ChevronDown size={10} className="text-slate-600 ml-0.5" />}
       </button>
       {open && (
         <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
@@ -206,7 +206,7 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
 
 const DateCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-    <Calendar size={11} className="text-slate-400 flex-shrink-0" />
+    <Calendar size={11} className="text-slate-600 flex-shrink-0" />
     <input
       type="date"
       value={value ? String(value).slice(0, 10) : ''}
@@ -251,7 +251,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
           <Star
             size={14}
             className={
-              star <= rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600'
+              star <= rating ? 'text-amber-400 fill-amber-400' : 'text-slate-600 dark:text-navy-600'
             }
           />
         </button>
@@ -264,7 +264,7 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 
 const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
+    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
       {String(value || '?')
         .charAt(0)
         .toUpperCase()}
@@ -295,7 +295,7 @@ const UrlCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
         href={String(value)}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-slate-400 hover:text-blue-500"
+        className="text-slate-600 hover:text-blue-500"
       >
         <ExternalLink size={11} />
       </a>
@@ -324,7 +324,7 @@ const ProgressCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         disabled={locked}
         className="w-10 bg-transparent border-0 outline-none text-[10px] text-slate-600 dark:text-slate-300 text-right tabular-nums"
       />
-      <span className="text-[9px] text-slate-400">%</span>
+      <span className="text-[9px] text-slate-600">%</span>
     </div>
   );
 };
@@ -345,7 +345,7 @@ const FormulaCell: React.FC<CellProps> = ({ column, rowData }) => {
 const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) => (
   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
     <span className="flex-1 text-xs text-slate-700 dark:text-slate-300 truncate">
-      {value || <span className="text-slate-400 italic">AI pending...</span>}
+      {value || <span className="text-slate-600 italic">AI pending...</span>}
     </span>
     {!locked && onAIRefresh && (
       <button
@@ -460,7 +460,7 @@ const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
 // ── System-managed cells (read-only) ────────────────────────────────────────
 
 const SystemTimestampCell: React.FC<CellProps> = ({ value }) => {
-  if (!value) return <span className="text-[10px] text-slate-400">—</span>;
+  if (!value) return <span className="text-[10px] text-slate-600">—</span>;
   const d = new Date(value);
   const str = isNaN(d.getTime())
     ? String(value)
@@ -475,7 +475,7 @@ const SystemTimestampCell: React.FC<CellProps> = ({ value }) => {
 };
 
 const SystemUserCell: React.FC<CellProps> = ({ value }) => {
-  if (!value) return <span className="text-[10px] text-slate-400">—</span>;
+  if (!value) return <span className="text-[10px] text-slate-600">—</span>;
   return (
     <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-300">
       <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[8px] font-bold uppercase">

@@ -13,13 +13,20 @@
  * @see docs/ui-standards/00-foundation/visual-language.md
  */
 
-import { Check, ChevronRight, ClipboardList, MessageSquare, Sparkles } from 'lucide-react';
+import {
+  Check,
+  ChevronRight,
+  ClipboardList,
+  MessageCircle,
+  MessageSquare,
+  Sparkles,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-export type RuntimeMode = 'single_question' | 'task_list';
+export type RuntimeMode = 'single_question' | 'task_list' | 'conversational';
 
 export interface RuntimeModeSelectorProps {
   /** Currently selected mode (null = not yet chosen) */
@@ -60,6 +67,13 @@ const MODE_CONFIG: Record<
     prosKey: 'interview.runtimeMode.taskList.pros',
     consKey: 'interview.runtimeMode.taskList.cons',
   },
+  conversational: {
+    icon: MessageCircle,
+    titleKey: 'interview.runtimeMode.conversational.title',
+    descKey: 'interview.runtimeMode.conversational.description',
+    prosKey: 'interview.runtimeMode.conversational.pros',
+    consKey: 'interview.runtimeMode.conversational.cons',
+  },
 };
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -82,14 +96,19 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {currentMode === 'single_question'
             ? t('interview.runtimeMode.singleQuestion.title')
-            : t('interview.runtimeMode.taskList.title')}
+            : currentMode === 'conversational'
+              ? t('interview.runtimeMode.conversational.title', 'Conversational')
+              : t('interview.runtimeMode.taskList.title')}
         </span>
         {!locked && (
           <button
             type="button"
-            onClick={() =>
-              onModeSelect(currentMode === 'single_question' ? 'task_list' : 'single_question')
-            }
+            onClick={() => {
+              const order: RuntimeMode[] = ['single_question', 'task_list', 'conversational'];
+              const idx = order.indexOf(currentMode);
+              const next = order[(idx + 1) % order.length];
+              onModeSelect(next);
+            }}
             className="flex items-center gap-1 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
           >
             <ChevronRight size={14} className="rotate-90" />
@@ -107,8 +126,8 @@ export const RuntimeModeSelector: React.FC<RuntimeModeSelectorProps> = ({
           {t('interview.runtimeMode.chooseTitle')}
         </span>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(['single_question', 'task_list'] as const).map((mode) => {
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {(['single_question', 'task_list', 'conversational'] as const).map((mode) => {
           const config = MODE_CONFIG[mode];
           const Icon = config.icon;
           const isSelected = currentMode === mode;

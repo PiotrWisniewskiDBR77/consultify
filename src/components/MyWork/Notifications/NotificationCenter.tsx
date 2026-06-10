@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * NotificationCenter - Central notification hub with expandable details
  * Part of My Work Module PMO Upgrade
@@ -147,7 +146,7 @@ const NotificationItem: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0 }}
       className={`
-                relative border-b border-slate-100 dark:border-navy-700
+                relative border-b border-slate-200 dark:border-navy-700
                 transition-colors
                 ${!notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}
                 ${isExpanded ? 'bg-slate-50/50 dark:bg-white/[0.02]' : ''}
@@ -207,14 +206,14 @@ const NotificationItem: React.FC<{
                 </h4>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                <span className="text-[10px] text-slate-600 dark:text-slate-500 whitespace-nowrap">
                   {formatRelativeTime(notification.createdAt)}
                 </span>
                 {/* Expand/Collapse indicator */}
                 {isExpanded ? (
-                  <ChevronUp size={12} className="text-slate-400 dark:text-slate-500" />
+                  <ChevronUp size={12} className="text-slate-600 dark:text-slate-500" />
                 ) : (
-                  <ChevronDown size={12} className="text-slate-400 dark:text-slate-500" />
+                  <ChevronDown size={12} className="text-slate-600 dark:text-slate-500" />
                 )}
               </div>
             </div>
@@ -457,7 +456,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   return (
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-navy-700 shrink-0">
+      <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700 shrink-0">
         <div className="flex items-center gap-2">
           <Bell size={18} className="text-slate-500 dark:text-slate-400" />
           <h3 className="font-semibold text-navy-900 dark:text-white">
@@ -526,10 +525,10 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       <div className="flex-1 overflow-y-auto mywork-scrollbar" style={{ maxHeight }}>
         {loading ? (
           <div className="flex items-center justify-center p-8">
-            <Clock size={24} className="animate-spin text-slate-400 dark:text-slate-500" />
+            <Clock size={24} className="animate-spin text-slate-600 dark:text-slate-500" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-8 text-slate-400 dark:text-slate-500">
+          <div className="flex flex-col items-center justify-center p-8 text-slate-600 dark:text-slate-500">
             <Bell size={32} className="mb-2" />
             <p className="text-sm">{t('myWork.notifications.empty', 'No notifications')}</p>
           </div>

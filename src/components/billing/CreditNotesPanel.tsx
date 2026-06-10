@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Credit Notes Panel
  * Manages credit notes creation, viewing, and application to invoices
@@ -298,7 +297,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500" />
           <input
             type="text"
             placeholder="Search credit notes..."
@@ -354,7 +353,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
           </div>
         ) : filteredNotes.length === 0 ? (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <FileText className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
               No Credit Notes
             </h3>
@@ -427,7 +426,7 @@ export const CreditNotesPanel: React.FC<CreditNotesPanelProps> = ({
                       className={`font-medium ${
                         note.amount_remaining > 0
                           ? 'text-amber-600 dark:text-amber-400'
-                          : 'text-slate-400 dark:text-slate-500'
+                          : 'text-slate-600 dark:text-slate-500'
                       }`}
                     >
                       {formatCurrency(note.amount_remaining, note.currency)}

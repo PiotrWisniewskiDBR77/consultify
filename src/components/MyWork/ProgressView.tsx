@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
-  Loader2,
   Minus,
   Target,
   TrendingDown,
@@ -25,6 +24,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 
@@ -140,7 +141,7 @@ const StatCard: React.FC<{
       ? 'text-green-500'
       : trend === 'down'
         ? 'text-rose-500'
-        : 'text-slate-400 dark:text-slate-500';
+        : 'text-slate-600 dark:text-slate-500';
 
   return (
     <div className={`p-4 bg-slate-50 dark:bg-navy-800 rounded-xl ${className}`}>
@@ -158,7 +159,7 @@ const StatCard: React.FC<{
       </p>
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-bold text-navy-900 dark:text-white">{value}</span>
-        {subValue && <span className="text-sm text-slate-400 dark:text-slate-500">{subValue}</span>}
+        {subValue && <span className="text-sm text-slate-600 dark:text-slate-500">{subValue}</span>}
       </div>
       {progress && (
         <div className="mt-3">
@@ -203,7 +204,7 @@ const PeriodSelector: React.FC<{
       </select>
       <ChevronDown
         size={14}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none"
       />
     </div>
   );
@@ -271,8 +272,8 @@ export const ProgressView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
+      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8">
+        <LoadingState variant="spinner" />
       </div>
     );
   }

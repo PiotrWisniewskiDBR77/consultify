@@ -167,7 +167,7 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
             className="group flex items-start gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-800 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
           >
             {/* Drag handle (visual) */}
-            <div className="pt-1 cursor-grab text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500">
+            <div className="pt-1 cursor-grab text-slate-600 dark:text-slate-400 group-hover:text-slate-400 dark:group-hover:text-slate-500">
               <GripVertical className="w-5 h-5" />
             </div>
 
@@ -207,8 +207,8 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
               disabled={section.required}
               className={`flex-shrink-0 p-1.5 rounded-md transition-colors ${
                 section.required
-                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                  : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20'
+                  ? 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
+                  : 'text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20'
               }`}
               title={
                 section.required

@@ -74,7 +74,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
       return <FileSpreadsheet size={size} className="text-emerald-400" />;
     if (type.includes('document') || type.includes('word'))
       return <FileText size={size} className="text-blue-400" />;
-    return <File size={size} className="text-slate-400" />;
+    return <File size={size} className="text-slate-600" />;
   };
 
   const formatFileSize = (bytes: number) => {
@@ -178,12 +178,12 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {attachments.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
               {attachments.length}
             </span>
           )}
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-600" />
           </motion.div>
         </div>
       </motion.button>
@@ -243,7 +243,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         ? 'Przeciągnij pliki lub kliknij aby dodać'
                         : 'Drag files here or click to upload'}
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                    <p className="text-xs text-slate-600 dark:text-slate-500">
                       Max {maxSizeMB}MB / {isPolish ? 'plik' : 'file'}
                     </p>
                   </motion.div>
@@ -282,7 +282,7 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         </p>
 
                         {/* File Size */}
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                        <p className="text-xs text-slate-600 dark:text-slate-500">
                           {formatFileSize(attachment.size)}
                         </p>
 

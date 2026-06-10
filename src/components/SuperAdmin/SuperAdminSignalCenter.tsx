@@ -188,7 +188,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
       {/* POPOVER LIST */}
       {selectedType && (
         <div className="absolute top-full right-0 mt-3 w-80 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden z-[100] animate-in slide-in-from-top-2">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex items-center justify-between">
             <h3 className={`font-semibold text-sm ${getTypeColor(selectedType)}`}>
               {getTypeLabel(selectedType)}
             </h3>
@@ -207,7 +207,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
                 No active signals in this category.
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-white/5">
+              <div className="divide-y divide-slate-200 dark:divide-white/5">
                 {notifications[selectedType].map((item) => (
                   <div
                     key={item.id}
@@ -233,7 +233,7 @@ export const SuperAdminSignalCenter: React.FC = () => {
                     </div>
                     <button
                       onClick={(e) => handleDismiss(item.id, selectedType, e)}
-                      className="absolute top-2 right-2 p-1 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
+                      className="absolute top-2 right-2 p-1 text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
                       aria-label="Dismiss"
                     >
                       <X size={12} />

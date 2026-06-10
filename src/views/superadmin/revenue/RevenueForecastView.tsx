@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
+import { BillingFeaturePending } from '../../../components/billing/BillingFeaturePending';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
+import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 
 interface RevenueForecast {
   id: string;
@@ -26,9 +29,11 @@ interface ForecastStats {
 }
 
 export const RevenueForecastView: React.FC = () => {
+  // Decision D8: revenue-forecast endpoints return 503 until built out.
+  const billingAnalyticsEnabled = isBillingSelfServeEnabled();
   const [forecasts, setForecasts] = useState<RevenueForecast[]>([]);
   const [stats, setStats] = useState<ForecastStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(billingAnalyticsEnabled);
   const [error, setError] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -40,8 +45,13 @@ export const RevenueForecastView: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!billingAnalyticsEnabled) return;
     fetchData();
-  }, []);
+  }, [billingAnalyticsEnabled]);
+
+  if (!billingAnalyticsEnabled) {
+    return <BillingFeaturePending />;
+  }
 
   const fetchData = async () => {
     try {
@@ -121,7 +131,7 @@ export const RevenueForecastView: React.FC = () => {
     };
     const badge = badges[method] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
       label: method,
     };
     return (
@@ -137,7 +147,7 @@ export const RevenueForecastView: React.FC = () => {
       quarterly: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
       yearly: { bg: 'bg-green-500/20', text: 'text-green-400' },
     };
-    const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-400' };
+    const badge = badges[type] || { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-600' };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
         {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -152,11 +162,7 @@ export const RevenueForecastView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

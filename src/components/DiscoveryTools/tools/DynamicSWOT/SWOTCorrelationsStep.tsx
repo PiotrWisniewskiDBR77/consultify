@@ -101,7 +101,7 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
                       : 'Protect'}{' '}
               · {config.label[lang]}
             </h4>
-            <p className="text-xs text-slate-400">{config.description[lang]}</p>
+            <p className="text-xs text-slate-600">{config.description[lang]}</p>
           </div>
         </div>
 
@@ -202,11 +202,11 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
         </div>
       ) : (
         <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center">
-          <Link2 className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <Link2 className="w-8 h-8 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
           <p className="text-slate-500 dark:text-slate-400 mb-2">
             {isPolish ? 'Brak wygenerowanych korelacji' : 'No correlations generated yet'}
           </p>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600">
             {isPolish
               ? 'Kliknij "Generuj analizę" aby AI przeanalizował powiązania'
               : 'Click "Generate Analysis" to let AI analyze connections'}

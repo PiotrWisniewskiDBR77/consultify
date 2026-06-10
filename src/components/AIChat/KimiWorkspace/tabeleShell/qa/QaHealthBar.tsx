@@ -87,7 +87,7 @@ export const QaHealthBar: React.FC<QaHealthBarProps> = ({ report, computing }) =
           </span>
           <span className="text-xs text-slate-500 dark:text-slate-400">{overallBand}</span>
         </div>
-        <span className="text-[10px] text-slate-400 dark:text-slate-500">
+        <span className="text-[10px] text-slate-600 dark:text-slate-500">
           {new Date(report.computedAt).toLocaleString()}
         </span>
       </div>

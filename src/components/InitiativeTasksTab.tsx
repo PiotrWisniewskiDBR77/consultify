@@ -88,7 +88,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       case 'blocked':
         return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
       default:
-        return 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
+        return 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/300/10 border-slate-500/20';
     }
   };
 
@@ -258,7 +258,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
       <div className="flex-1 overflow-y-auto space-y-2 pr-2">
         {/* Select All Header */}
         {filteredTasks.length > 0 && (
-          <div className="flex items-center gap-3 py-2 px-1 border-b border-slate-100 dark:border-navy-700 mb-2">
+          <div className="flex items-center gap-3 py-2 px-1 border-b border-slate-200 dark:border-navy-700 mb-2">
             <button
               onClick={toggleSelectAll}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
@@ -266,7 +266,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
               {selectedTaskIds.size === filteredTasks.length ? (
                 <CheckSquare size={16} className="text-blue-500" />
               ) : (
-                <Square size={16} className="text-slate-400 dark:text-slate-500" />
+                <Square size={16} className="text-slate-600 dark:text-slate-500" />
               )}
             </button>
             <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -281,7 +281,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
           </div>
         ) : filteredTasks.length === 0 ? (
           <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950/30">
-            <CheckCircle size={32} className="mx-auto mb-2 text-slate-400 dark:text-slate-600" />
+            <CheckCircle size={32} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
             <p className="text-slate-500 dark:text-slate-400">
               No tasks found. Create one to get started.
             </p>
@@ -307,7 +307,7 @@ export const InitiativeTasksTab: React.FC<Props> = ({
                 ) : (
                   <Square
                     size={18}
-                    className="text-slate-300 dark:text-slate-600 group-hover:text-slate-400"
+                    className="text-slate-600 dark:text-slate-400 group-hover:text-slate-400"
                   />
                 )}
               </button>

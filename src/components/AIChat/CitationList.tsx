@@ -105,10 +105,10 @@ export const CitationList: React.FC<CitationListProps> = ({
       {/* Header */}
       <button
         onClick={handleToggle}
-        className="flex items-center gap-2 text-[11px] font-medium text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+        className="flex items-center gap-2 text-[11px] font-medium text-slate-600 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
       >
         <span>{t('aiChat.deepSearchSources', 'Deep search sources')}</span>
-        <span className="rounded border border-slate-200/70 px-1.5 py-0.5 text-[10px] text-slate-400 dark:border-navy-700 dark:text-slate-500">
+        <span className="rounded border border-slate-200/70 px-1.5 py-0.5 text-[10px] text-slate-600 dark:border-navy-700 dark:text-slate-500">
           {citations.length}
         </span>
         {isCollapsed ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
@@ -134,12 +134,12 @@ export const CitationList: React.FC<CitationListProps> = ({
                                 `}
               >
                 {/* Citation Number */}
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-[10px] font-semibold text-slate-400 dark:border-navy-700 dark:bg-navy-900">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-[10px] font-semibold text-slate-600 dark:border-navy-700 dark:bg-navy-900">
                   {index + 1}
                 </span>
 
                 {/* Icon */}
-                <Icon size={13} className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500" />
+                <Icon size={13} className="mt-0.5 shrink-0 text-slate-600 dark:text-slate-500" />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
@@ -153,7 +153,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                         icon alone was ambiguous and users asked whether
                         external links were even supposed to appear. */}
                     {citation.type === 'external' && (
-                      <span className="shrink-0 rounded border border-slate-200 bg-white/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-400 dark:border-navy-700 dark:bg-navy-900/50 dark:text-slate-500">
+                      <span className="shrink-0 rounded border border-slate-200 bg-white/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-600 dark:border-navy-700 dark:bg-navy-900/50 dark:text-slate-500">
                         {t('aiChat.citationExternalBadge', 'External')}
                       </span>
                     )}
@@ -162,14 +162,14 @@ export const CitationList: React.FC<CitationListProps> = ({
                     {sanitizeCitationText(citation.reference)}
                   </div>
                   {citation.excerpt && (
-                    <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-2">
+                    <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5 line-clamp-2">
                       "{sanitizeCitationText(citation.excerpt)}"
                     </div>
                   )}
                 </div>
 
                 {/* External Link Icon */}
-                <ExternalLink size={12} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                <ExternalLink size={12} className="shrink-0 text-slate-600 dark:text-slate-500" />
               </button>
             );
           })}

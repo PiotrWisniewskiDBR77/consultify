@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card } from '../../../components/Admin/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -312,11 +313,7 @@ const CustomerAutomationView: React.FC = () => {
   const totalExecutions = rules.reduce((acc, r) => acc + safeNumber(r.executions_count), 0);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -428,7 +425,7 @@ const CustomerAutomationView: React.FC = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Zap
-                            className={`w-4 h-4 ${rule.is_active ? 'text-yellow-500' : 'text-slate-400 dark:text-slate-400'}`}
+                            className={`w-4 h-4 ${rule.is_active ? 'text-yellow-500' : 'text-slate-600 dark:text-slate-400'}`}
                           />
                           <h4 className="text-slate-900 dark:text-white font-medium">
                             {rule.name}

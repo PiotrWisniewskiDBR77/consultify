@@ -304,7 +304,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </button>
-          <div className="writing-vertical-rl text-xs text-slate-400 font-bold tracking-widest uppercase rotate-180 flex-1 text-center">
+          <div className="writing-vertical-rl text-xs text-slate-600 font-bold tracking-widest uppercase rotate-180 flex-1 text-center">
             AI Consultant
           </div>
         </div>
@@ -354,7 +354,7 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
               </div>
               <button
                 onClick={() => setIsMobileChatOpen(false)}
-                className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 text-slate-400"
+                className="touch-target flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 text-slate-600"
               >
                 <X size={20} />
               </button>

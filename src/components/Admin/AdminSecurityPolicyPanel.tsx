@@ -2,6 +2,8 @@ import { KeyRound, Loader2, Lock, Save, Shield } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 
 type SecurityPolicyState = {
@@ -64,11 +66,7 @@ export const AdminSecurityPolicyPanel: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-56 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-56" />;
   }
 
   return (

@@ -38,14 +38,14 @@ export const NarrativeEngineMetadata: React.FC<NarrativeEngineMetadataProps> = (
       </span>
 
       {factsUsed != null && (
-        <span className="flex items-center gap-1 text-slate-400">
+        <span className="flex items-center gap-1 text-slate-600">
           <Database size={9} />
           {factsUsed} {t('reports.narrative.facts', 'facts')}
         </span>
       )}
 
       {observationsUsed != null && (
-        <span className="flex items-center gap-1 text-slate-400">
+        <span className="flex items-center gap-1 text-slate-600">
           <Eye size={9} />
           {observationsUsed} {t('reports.narrative.observations', 'observations')}
         </span>

@@ -7,9 +7,16 @@ const getMembers = vi.fn();
 const addMember = vi.fn();
 const updateMemberRole = vi.fn();
 const removeMember = vi.fn();
+const logAction = vi.fn();
 
 vi.mock('../../utils/DbPromise.js', () => ({
   get: (...args: any[]) => dbGet(...args),
+}));
+
+vi.mock('../../services/adminAuditService.js', () => ({
+  default: {
+    logAction: (...args: any[]) => logAction(...args),
+  },
 }));
 
 vi.mock('../../services/organizationService.js', () => ({
@@ -50,6 +57,8 @@ describe('OrganizationController membership safeguards', () => {
     addMember.mockReset();
     updateMemberRole.mockReset();
     removeMember.mockReset();
+    logAction.mockReset();
+    logAction.mockResolvedValue({ id: 'audit-1' });
   });
 
   it('rejects addMember for non-admin actors with explicit denial guidance', async () => {
@@ -123,5 +132,61 @@ describe('OrganizationController membership safeguards', () => {
     expect(res.status).toHaveBeenCalledWith(409);
     expect(res.body.code).toBe('SELF_LOCKOUT_REJECTED');
     expect(removeMember).not.toHaveBeenCalled();
+  });
+
+  it('emits an audit event on a successful member role change (ADM-RAW-P1-004)', async () => {
+    getMembers.mockResolvedValue([
+      { user_id: 'admin-1', role: 'ADMIN' },
+      { user_id: 'member-1', role: 'MEMBER' },
+    ]);
+    updateMemberRole.mockResolvedValue({ success: true });
+    const req: any = {
+      params: { orgId: 'org-1', memberId: 'member-1' },
+      body: { role: 'ADMIN' },
+      user: { id: 'admin-1', role: 'ADMIN' },
+    };
+    const res = createResponse();
+
+    await OrganizationController.updateMemberRole(req, res, vi.fn());
+
+    expect(updateMemberRole).toHaveBeenCalled();
+    expect(logAction).toHaveBeenCalledTimes(1);
+    const auditArg = logAction.mock.calls[0][0];
+    expect(auditArg.actionType).toBe('update_member_role');
+    expect(auditArg.adminId).toBe('admin-1');
+    expect(auditArg.details).toMatchObject({
+      orgId: 'org-1',
+      targetUserId: 'member-1',
+      fromRole: 'MEMBER',
+      toRole: 'ADMIN',
+      isSensitive: true,
+    });
+  });
+
+  it('emits an audit event on a successful member removal (ADM-RAW-P1-004)', async () => {
+    getMembers.mockResolvedValue([
+      { user_id: 'admin-1', role: 'ADMIN' },
+      { user_id: 'member-1', role: 'MEMBER' },
+    ]);
+    removeMember.mockResolvedValue({ success: true });
+    const req: any = {
+      params: { orgId: 'org-1', memberId: 'member-1' },
+      user: { id: 'admin-1', role: 'ADMIN' },
+    };
+    const res = createResponse();
+
+    await OrganizationController.removeMember(req, res, vi.fn());
+
+    expect(removeMember).toHaveBeenCalled();
+    expect(logAction).toHaveBeenCalledTimes(1);
+    const auditArg = logAction.mock.calls[0][0];
+    expect(auditArg.actionType).toBe('remove_member');
+    expect(auditArg.adminId).toBe('admin-1');
+    expect(auditArg.details).toMatchObject({
+      orgId: 'org-1',
+      targetUserId: 'member-1',
+      targetRole: 'MEMBER',
+      isSensitive: true,
+    });
   });
 });

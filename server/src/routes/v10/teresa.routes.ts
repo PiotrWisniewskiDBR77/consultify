@@ -2,10 +2,22 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
+import {
+  isTeresaTtsConfigured,
+  synthesizeTeresaSpeech,
+  TeresaTtsUnavailableError,
+} from '../../services/ai/teresaTtsService.js';
+import { resolveVoiceRuntime } from '../../services/ai/voiceRuntimeService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+
+const TeresaTtsSchema = z.object({
+  text: z.string().min(1).max(8_000),
+  language: z.string().max(16).optional(),
+  voiceName: z.string().max(64).optional(),
+});
 
 const TeresaVoiceEventSchema = z.object({
   eventName: z.enum([
@@ -30,45 +42,32 @@ const TeresaVoiceEventSchema = z.object({
 router.get(
   '/voice-config',
   verifyToken,
-  asyncHandler(async (_req, res) => {
-    const hasServerKey = Boolean(
-      String(
-        process.env.GEMINI_LIVE_API_KEY ||
-          process.env.GEMINI_API_KEY ||
-          process.env.GOOGLE_AI_API_KEY ||
-          ''
-      ).trim()
-    );
-    const clientToken = String(process.env.GEMINI_LIVE_EPHEMERAL_TOKEN || '').trim();
-    const voiceName = String(process.env.TERESA_VOICE_NAME || 'Kore').trim() || 'Kore';
-    const model =
-      String(process.env.TERESA_VOICE_MODEL || '').trim() ||
-      'gemini-2.5-flash-native-audio-preview-09-2025';
-    const enabledByFlag =
-      String(process.env.TERESA_VOICE_ENABLED || 'true').toLowerCase() !== 'false';
-    const enabled = Boolean(clientToken) && enabledByFlag;
+  asyncHandler(async (req: any, res) => {
+    // SSOT: shared voice runtime resolver (DB worker config + env fallback).
+    // Worker-governed: an ACTIVE 'teresa' virtual worker (managed in the admin
+    // panel) controls voice + persona/tone. Until that row is activated, the
+    // resolver falls back to env (TERESA_VOICE_*), so voice never regresses.
+    const runtime = await resolveVoiceRuntime({
+      assistant: 'teresa',
+      subjectKey: String(req.userId || req.user?.id || req.organizationId || 'unknown'),
+      // A stale/not-yet-activated 'teresa' worker row must never silently kill
+      // workspace voice — fall back to env (TERESA_VOICE_*) when it isn't active.
+      fallbackToEnvWhenInactive: true,
+    });
+    const enabled = runtime.enabled;
 
     return res.json({
       assistant: 'teresa',
       surface: 'workspace_copilot',
       capability: 'voice',
       enabled,
-      model,
-      voiceName,
-      session: enabled
-        ? {
-            clientToken,
-            tokenType: 'ephemeral',
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-          }
-        : null,
-      unavailableReason: enabled
-        ? null
-        : !enabledByFlag
-          ? 'server_disabled'
-          : hasServerKey
-            ? 'server_voice_proxy_required'
-            : 'server_missing_gemini_live_key',
+      model: runtime.model,
+      voiceName: runtime.voiceName || 'Kore',
+      // Admin-configured persona/tone (frozen safety boundaries stay in code).
+      persona: runtime.persona,
+      tone: runtime.tone,
+      session: enabled ? runtime.session : null,
+      unavailableReason: runtime.unavailableReason,
       fallback: {
         dictation: 'browser_speech_or_text_input',
         tts: 'universal_voice_tts',
@@ -108,6 +107,71 @@ router.post(
       surface: 'workspace_copilot',
       capability: 'voice',
     });
+  })
+);
+
+/**
+ * POST /api/v10/teresa/tts — Phase 1A unidirectional text-to-speech.
+ * Accepts { text, language?, voiceName? } and returns an audio/wav body the
+ * client plays back. Returns an honest 503 when no server Gemini key is present
+ * (so the client never fakes success), and 422 for empty/unspeakable input.
+ */
+router.post(
+  '/tts',
+  verifyToken,
+  asyncHandler(async (req: any, res) => {
+    const parsed = TeresaTtsSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid Teresa TTS request',
+        code: 'TERESA_TTS_INVALID',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    if (!isTeresaTtsConfigured()) {
+      return res.status(503).json({
+        error: 'Teresa voice (read-aloud) is not configured on this server.',
+        code: 'TERESA_TTS_UNAVAILABLE',
+        reason: 'server_missing_gemini_live_key',
+        recoverable: true,
+      });
+    }
+
+    try {
+      const result = await synthesizeTeresaSpeech({
+        text: parsed.data.text,
+        language: parsed.data.language ?? null,
+        voiceName: parsed.data.voiceName ?? null,
+      });
+      res.setHeader('Content-Type', result.contentType);
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Teresa-Voice', result.voiceName);
+      return res.send(result.audio);
+    } catch (error) {
+      if (error instanceof TeresaTtsUnavailableError) {
+        const status =
+          error.reason === 'empty_input'
+            ? 422
+            : error.reason === 'server_missing_gemini_live_key'
+              ? 503
+              : 502;
+        return res.status(status).json({
+          error: error.message,
+          code: 'TERESA_TTS_UNAVAILABLE',
+          reason: error.reason,
+          recoverable: true,
+        });
+      }
+      logger.error('[TeresaTTS] route error', {
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return res.status(502).json({
+        error: 'Teresa text-to-speech failed unexpectedly.',
+        code: 'TERESA_TTS_FAILED',
+        recoverable: true,
+      });
+    }
   })
 );
 

@@ -131,7 +131,7 @@ export function MarketForcesLibraryGraphic({
       <div className="grid gap-4 p-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600">
               {labels.scenario}
             </div>
             <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -148,7 +148,7 @@ export function MarketForcesLibraryGraphic({
           </div>
 
           <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600">
               {labels.stagesTitle}
             </div>
             <div className="space-y-2">

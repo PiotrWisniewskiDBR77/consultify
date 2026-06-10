@@ -287,7 +287,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
               onSave(null);
               setOpen(false);
             }}
-            className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-600 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
           >
             Clear
           </button>
@@ -456,7 +456,7 @@ const LinkedRecordEditor: React.FC<CellEditorProps> = ({
 
   if (!linkedTableId) {
     return (
-      <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] text-slate-400">
+      <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] text-slate-600">
         <Link2 className="h-3.5 w-3.5" />
         {isPl ? 'Brak powiązanej tabeli' : 'No linked table configured'}
       </div>
@@ -527,7 +527,7 @@ const RatingEditor: React.FC<CellEditorProps> = ({ value, fieldOptions, onSave, 
             className={
               i < draft
                 ? 'text-amber-400 fill-amber-400'
-                : 'text-slate-300 dark:text-navy-600 hover:text-amber-300'
+                : 'text-slate-600 dark:text-navy-600 hover:text-amber-300'
             }
           />
         </button>

@@ -34,7 +34,7 @@ export const ArtifactPermalinkButton: React.FC<ArtifactPermalinkButtonProps> = (
     <div className="relative inline-flex items-center group">
       <button
         onClick={() => void handleCopy()}
-        className={`p-1.5 rounded-md text-slate-400 hover:text-primary-400 hover:bg-primary-500/10 transition-colors ${className}`}
+        className={`p-1.5 rounded-md text-slate-600 hover:text-primary-400 hover:bg-primary-500/10 transition-colors ${className}`}
         title={isPolish ? 'Kopiuj permalink' : 'Copy permalink'}
       >
         <Link2 size={size} />

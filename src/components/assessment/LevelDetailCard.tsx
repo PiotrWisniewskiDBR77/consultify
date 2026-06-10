@@ -139,7 +139,7 @@ export const LevelDetailCard: React.FC<LevelDetailCardProps> = ({
       <div className="relative z-10 w-full max-w-2xl">
         {/* Header - Sticky on touch devices */}
         <div
-          className={`${isCompact ? 'mb-4' : 'mb-8'} ${isTouchDevice ? 'sticky top-0 bg-white/95 dark:bg-navy-950/95 backdrop-blur-sm -mx-4 px-4 py-3 md:-mx-6 md:px-6 z-20 border-b border-slate-100 dark:border-navy-700' : ''}`}
+          className={`${isCompact ? 'mb-4' : 'mb-8'} ${isTouchDevice ? 'sticky top-0 bg-white/95 dark:bg-navy-950/95 backdrop-blur-sm -mx-4 px-4 py-3 md:-mx-6 md:px-6 z-20 border-b border-slate-200 dark:border-navy-700' : ''}`}
         >
           <span className="text-primary-400 font-bold tracking-wider text-xs uppercase mb-2 block">
             {cardT.level || 'LEVEL'} {level}

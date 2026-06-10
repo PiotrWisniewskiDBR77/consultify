@@ -26,6 +26,7 @@ import {
   markWave5ArtifactExported,
 } from '../wave5ArtifactRuntimeService.js';
 import { getActiveOrgLogo } from './documentAssetRegistryService.js';
+import { generateBlockProse } from './documentBlockProseGenerator.js';
 import {
   ensureBrandVoiceRegistryHydrated,
   getActiveBrandVoiceProfile,
@@ -60,6 +61,14 @@ import {
 import { buildDocumentSchema } from './documentContentGenerator.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
+import {
+  loadAuditForArtifact as daoLoadAuditForArtifact,
+  loadProposalsForArtifact as daoLoadProposalsForArtifact,
+  loadSchemaOverlay as daoLoadSchemaOverlay,
+  persistAuditEntry as daoPersistAuditEntry,
+  persistProposal as daoPersistProposal,
+  persistSchemaOverlay as daoPersistSchemaOverlay,
+} from './documentEditorStateRegistryDao.js';
 import type {
   DocumentLifecycleState,
   TransitionDocumentStatusParams,
@@ -166,6 +175,86 @@ const schemaOverlayStore = new Map<string, DocumentSchema>();
 
 function schemaOverlayKey(artifactId: string, organizationId: string): string {
   return `${artifactId}::${organizationId}`;
+}
+
+// =============================================================================
+// Editor-state persistence (Module 10 hardening).
+//
+// The three Maps above are the synchronous in-process cache. They are
+// backed write-through by `documentEditorStateRegistryDao.ts` (migration
+// `20260603_document_studio_editor_state.sql`) so proposals, the audit
+// ledger, and the schema overlay survive a server restart.
+//
+// Reads hydrate the cache lazily once per (artifact, organization). Writes
+// update the cache synchronously and persist asynchronously (best-effort:
+// a DAO failure never aborts the in-process mutation that already
+// succeeded). A `void`-ed promise keeps the public API synchronous where
+// it already was.
+// =============================================================================
+
+/** Tracks which (artifact, organization) pairs have been hydrated. */
+const hydratedEditorState = new Set<string>();
+
+function hydrationKey(artifactId: string, organizationId: string): string {
+  return `${artifactId}::${organizationId}`;
+}
+
+/**
+ * Lazily hydrate the in-process caches for a single (artifact,
+ * organization) from the DAO. Idempotent and failure-tolerant: any DAO
+ * error leaves the caches untouched and the pair marked hydrated so we
+ * don't thrash the DB on every call. The synchronous public API
+ * (`getStoredProposal`, the sync `listDocumentAuditEntries`) reads the
+ * caches; the async entry points (`getDocumentArtifact`, the proposal
+ * create/approve/reject paths, the async audit listing) call this first
+ * so a cold process sees persisted state.
+ */
+async function ensureEditorStateHydrated(
+  artifactId: string,
+  organizationId: string
+): Promise<void> {
+  if (!artifactId || !organizationId) return;
+  const key = hydrationKey(artifactId, organizationId);
+  if (hydratedEditorState.has(key)) return;
+  hydratedEditorState.add(key);
+  try {
+    const [proposals, audit, overlay] = await Promise.all([
+      daoLoadProposalsForArtifact(artifactId, organizationId),
+      daoLoadAuditForArtifact(artifactId, organizationId),
+      daoLoadSchemaOverlay(artifactId, organizationId),
+    ]);
+    for (const proposal of proposals) {
+      const pk = proposalKey(artifactId, proposal.proposalId);
+      if (!proposalStore.has(pk)) proposalStore.set(pk, proposal);
+    }
+    if (audit.length > 0) {
+      const ak = getAuditKey(artifactId, organizationId);
+      if (!auditStore.has(ak)) auditStore.set(ak, audit);
+    }
+    if (overlay) {
+      const ok = schemaOverlayKey(artifactId, organizationId);
+      if (!schemaOverlayStore.has(ok)) schemaOverlayStore.set(ok, overlay);
+    }
+  } catch {
+    // Hydration is best-effort; the in-process caches remain the source
+    // of truth for this session if the DB is unreachable.
+  }
+}
+
+/** Write-through helper: cache the proposal synchronously, persist async. */
+function persistProposalWriteThrough(proposal: DocumentEditorProposal): void {
+  proposalStore.set(proposalKey(proposal.artifactId, proposal.proposalId), proposal);
+  void daoPersistProposal(proposal);
+}
+
+/** Write-through helper: cache the overlay synchronously, persist async. */
+function persistSchemaOverlayWriteThrough(
+  artifactId: string,
+  organizationId: string,
+  schema: DocumentSchema
+): void {
+  schemaOverlayStore.set(schemaOverlayKey(artifactId, organizationId), schema);
+  void daoPersistSchemaOverlay(artifactId, organizationId, schema);
 }
 
 export interface PlanDocumentParams {
@@ -359,7 +448,7 @@ export async function materializeDocumentArtifact(
   const sourceRefs = incomingSourceRefs;
 
   const provisionalArtifactId = `documentstudio-pending-${Date.now()}`;
-  const provisionalSchema = buildDocumentSchema({
+  let provisionalSchema = buildDocumentSchema({
     artifactId: provisionalArtifactId,
     intake: params.intake,
     outline,
@@ -392,6 +481,17 @@ export async function materializeDocumentArtifact(
     provisionalSchema.clientId = params.clientId;
   }
   provisionalSchema.owner = params.userId;
+
+  // D11 — block-level prose generation. Opt-in via `useLlm`; fills the
+  // deterministic placeholder prose with grounded, consulting-grade
+  // narrative (Teresa). Best-effort: any failure returns the
+  // deterministic schema unchanged, so materialization never fails
+  // because the LLM was unavailable.
+  if (params.useLlm) {
+    provisionalSchema = await generateBlockProse(provisionalSchema, params.intake, sourceRefs, {
+      enable: true,
+    });
+  }
 
   const markdown = renderSchemaToMarkdown(provisionalSchema);
 
@@ -462,6 +562,9 @@ export async function getDocumentArtifact(
   artifactId: string,
   organizationId: string
 ): Promise<DocumentSchema | null> {
+  // Module 10 hardening — ensure the durable overlay (post-rollback /
+  // post-content-block-insert) is loaded into the cache before the read.
+  await ensureEditorStateHydrated(artifactId, organizationId);
   // Epic E5 — consult the in-process schema overlay first so callers
   // see the post-rollback schema even though wave5 still holds the
   // pre-rollback row. The overlay is tenant-scoped via the composite
@@ -770,6 +873,8 @@ function pushAuditEntry(entry: DocumentAuditEntry): void {
   const current = auditStore.get(key) ?? [];
   current.push(entry);
   auditStore.set(key, current);
+  // Write-through to the durable ledger (best-effort; never throws).
+  void daoPersistAuditEntry(entry);
 }
 
 // Wire the lifecycle + snapshot services' audit emissions into the
@@ -916,7 +1021,7 @@ export async function createLocalEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1022,7 +1127,7 @@ export async function createSectionEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1120,7 +1225,7 @@ export async function createGlobalEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1279,7 +1384,7 @@ export async function createMethodologyEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1405,7 +1510,7 @@ export async function createSourceEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1517,7 +1622,7 @@ export async function createTransformativeEditProposal(
     // accept-proposal / apply path lands.
     versionBeforeId: resolveProposalVersionBeforeId(artifactId, organizationId),
   };
-  proposalStore.set(proposalKey(artifactId, proposal.proposalId), proposal);
+  persistProposalWriteThrough(proposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId,
@@ -1633,6 +1738,7 @@ export async function approveEditProposal(params: {
   userId: string;
   proposalId: string;
 }): Promise<ApproveEditProposalResult> {
+  await ensureEditorStateHydrated(params.artifactId, params.organizationId);
   const proposal = getStoredProposal(params.artifactId, params.organizationId, params.proposalId);
   if (proposal.status !== 'proposed') {
     throw new Error('proposal_not_pending');
@@ -1675,7 +1781,7 @@ export async function approveEditProposal(params: {
     status: 'executed',
     executedAt,
   };
-  proposalStore.set(proposalKey(params.artifactId, params.proposalId), nextProposal);
+  persistProposalWriteThrough(nextProposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId: params.artifactId,
@@ -1722,12 +1828,13 @@ export const approveLocalEditProposal = approveEditProposal;
  * Reject a proposal of any scope. Same governance contract as the local
  * rejection from MVP-1; only the recorded audit detail records the scope.
  */
-export function rejectEditProposal(params: {
+export async function rejectEditProposal(params: {
   artifactId: string;
   organizationId: string;
   userId: string;
   proposalId: string;
-}): DocumentEditorProposal {
+}): Promise<DocumentEditorProposal> {
+  await ensureEditorStateHydrated(params.artifactId, params.organizationId);
   const proposal = getStoredProposal(params.artifactId, params.organizationId, params.proposalId);
   if (proposal.status !== 'proposed') {
     throw new Error('proposal_not_pending');
@@ -1739,7 +1846,7 @@ export function rejectEditProposal(params: {
     rejectedBy: params.userId,
     rejectedAt,
   };
-  proposalStore.set(proposalKey(params.artifactId, params.proposalId), nextProposal);
+  persistProposalWriteThrough(nextProposal);
   pushAuditEntry({
     auditId: makeId('doc-audit'),
     artifactId: params.artifactId,
@@ -1880,7 +1987,7 @@ export async function insertDocumentContentBlock(
   }
 
   nextSchema.updatedAt = nowIso();
-  schemaOverlayStore.set(schemaOverlayKey(params.artifactId, params.organizationId), nextSchema);
+  persistSchemaOverlayWriteThrough(params.artifactId, params.organizationId, nextSchema);
 
   const lifecycle = getDocumentStatusOrDefault(params.artifactId, params.organizationId);
   const snapshot = createDocumentVersionSnapshotInternal({
@@ -1925,6 +2032,20 @@ export function listDocumentAuditEntries(
   artifactId: string,
   organizationId: string
 ): DocumentAuditEntry[] {
+  return [...(auditStore.get(getAuditKey(artifactId, organizationId)) ?? [])];
+}
+
+/**
+ * Async variant that hydrates the durable audit ledger from the DAO
+ * before returning. Routes should prefer this so a cold process surfaces
+ * persisted audit history. Falls back to whatever is in the in-process
+ * cache on any DAO failure.
+ */
+export async function listDocumentAuditEntriesAsync(
+  artifactId: string,
+  organizationId: string
+): Promise<DocumentAuditEntry[]> {
+  await ensureEditorStateHydrated(artifactId, organizationId);
   return [...(auditStore.get(getAuditKey(artifactId, organizationId)) ?? [])];
 }
 
@@ -2131,10 +2252,7 @@ export async function rollbackDocumentToVersion(
     artifactId: params.artifactId,
     updatedAt: nowIso(),
   };
-  schemaOverlayStore.set(
-    schemaOverlayKey(params.artifactId, params.organizationId),
-    restoredSchema
-  );
+  persistSchemaOverlayWriteThrough(params.artifactId, params.organizationId, restoredSchema);
 
   // Step 5 — force lifecycle to draft via the system bypass. The
   // bypass emits its own document_status_changed audit entry tagged
@@ -2185,6 +2303,20 @@ export async function rollbackDocumentToVersion(
 /** @internal — test helper to clear the schema overlay between specs. */
 export function __resetSchemaOverlayForTests(): void {
   schemaOverlayStore.clear();
+  hydratedEditorState.clear();
+}
+
+/**
+ * @internal — test helper to clear ALL in-process editor-state caches
+ * (proposals, audit ledger, schema overlay) and the hydration guard.
+ * Use this in persistence tests that exercise the cold-start hydration
+ * path so the in-process cache does not mask the DAO read.
+ */
+export function __resetEditorStateCachesForTests(): void {
+  proposalStore.clear();
+  auditStore.clear();
+  schemaOverlayStore.clear();
+  hydratedEditorState.clear();
 }
 
 // =============================================================================

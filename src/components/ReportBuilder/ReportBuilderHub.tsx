@@ -11,14 +11,15 @@
  */
 
 import {
+  Archive,
   Calendar,
   ChevronDown,
   ChevronRight,
   Clock,
+  ExternalLink,
   FileText,
   Layout,
   Loader2,
-  MoreHorizontal,
   Pause,
   Play,
   Plus,
@@ -27,9 +28,20 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EntityStatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
-import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
+import {
+  FilterableTable,
+  type FilterChip,
+  ModuleHub,
+  type ModuleTab,
+  type TableColumn,
+  type ViewMode,
+} from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { type RowAction } from '../shared/RowActionsMenu';
+import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { ScheduleReportModal } from './ScheduleReportModal';
 
 // ---------------------------------------------------------------------------
@@ -102,17 +114,6 @@ const R_TYPE_META: Record<
   },
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-slate-500',
-  ready: 'bg-emerald-500',
-  generating: 'bg-amber-500',
-  exported: 'bg-blue-500',
-  archived: 'bg-slate-600',
-  in_progress: 'bg-amber-500',
-  completed: 'bg-emerald-500',
-  error: 'bg-rose-500',
-};
-
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -137,6 +138,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('report_builder_hub', { maxOpenDocuments: 6 });
@@ -224,15 +226,23 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
   // -----------------------------------------------------------------------
 
   const filteredReports = useMemo(() => {
-    if (!searchQuery) return reports;
-    const q = searchQuery.toLowerCase();
-    return reports.filter(
-      (r) =>
-        r.title?.toLowerCase().includes(q) ||
-        r.report_type_v3?.toLowerCase().includes(q) ||
-        r.status?.toLowerCase().includes(q)
-    );
-  }, [reports, searchQuery]);
+    let data = reports;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      data = data.filter(
+        (r) =>
+          r.title?.toLowerCase().includes(q) ||
+          r.report_type_v3?.toLowerCase().includes(q) ||
+          r.status?.toLowerCase().includes(q)
+      );
+    }
+    for (const f of activeFilters) {
+      if (f.column === 'status') data = data.filter((r) => (r.status || '') === f.value);
+      if (f.column === 'report_type_v3')
+        data = data.filter((r) => (r.report_type_v3 || '') === f.value);
+    }
+    return data;
+  }, [reports, searchQuery, activeFilters]);
 
   const r1r4Reports = useMemo(
     () => reports.filter((r) => R1_R4_TYPES.includes(r.report_type_v3 as any)),
@@ -394,16 +404,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     });
   };
 
-  const statusBadge = (status: string) => {
-    const color = STATUS_COLORS[status] || 'bg-slate-500';
-    const label = status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ');
-    return (
-      <span className="inline-flex items-center gap-1.5">
-        <span className={`w-2 h-2 rounded-full ${color}`} />
-        <span className="text-xs text-slate-700 dark:text-slate-300">{label}</span>
-      </span>
-    );
-  };
+  const statusBadge = (status: string) => <EntityStatusChip status={status} />;
 
   // -----------------------------------------------------------------------
   // Tab: My Reports
@@ -413,7 +414,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredReports.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-600 mb-4" />
+          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {t('rbHub.emptyReports.title', 'Brak raportów')}
           </h3>
@@ -433,65 +434,164 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
       );
     }
 
+    const typeOptions = Array.from(
+      new Set(filteredReports.map((r) => r.report_type_v3).filter(Boolean) as string[])
+    ).map((v) => ({ value: v, label: v }));
+    const statusOptions = Array.from(
+      new Set(filteredReports.map((r) => r.status).filter(Boolean) as string[])
+    ).map((v) => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ') }));
+
+    const columns: TableColumn[] = [
+      {
+        id: 'title',
+        label: t('rbHub.col.title', 'Tytuł'),
+        render: (row) => (
+          <span className="text-sm font-medium text-slate-900 dark:text-white">
+            {String(row.title ?? '—')}
+          </span>
+        ),
+      },
+      {
+        id: 'report_type_v3',
+        label: t('rbHub.col.type', 'Typ'),
+        width: '120px',
+        filterable: true,
+        filterOptions: typeOptions,
+        render: (row) => (
+          <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+            {String(row.report_type_v3 || '—')}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('rbHub.col.status', 'Status'),
+        width: '130px',
+        filterable: true,
+        filterOptions: statusOptions,
+        render: (row) => <EntityStatusChip status={String(row.status ?? 'draft')} />,
+      },
+      {
+        id: 'created_at',
+        label: t('rbHub.col.created', 'Utworzono'),
+        width: '130px',
+        sortable: true,
+        render: (row) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {formatDate(row.created_at as string)}
+          </span>
+        ),
+      },
+      {
+        id: 'updated_at',
+        label: t('rbHub.col.updated', 'Zaktualizowano'),
+        width: '130px',
+        sortable: true,
+        render: (row) => (
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {formatDate(row.updated_at as string)}
+          </span>
+        ),
+      },
+    ];
+
+    const getRowActions = (report: BuilderReport): RowAction[] => [
+      // GÓRA — kontekst
+      {
+        id: 'open',
+        label: t('common.open', 'Otwórz'),
+        icon: ExternalLink,
+        variant: 'primary',
+        onClick: () => handleRowClick(report),
+      },
+      // DÓŁ — FIXED BOTTOM MANIFEST (reports have no due date → no Delay)
+      {
+        id: 'open_preview',
+        label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+        icon: ChevronRight,
+        divider: true,
+        onClick: () => setSelectedId(report.id),
+      },
+      {
+        id: 'edit',
+        label: t('common.edit', 'Edytuj'),
+        icon: ExternalLink,
+        onClick: () => handleRowClick(report),
+      },
+      {
+        // canon §14 + §9.2: Archive slot — soft-delete (backend TBD)
+        id: 'archive',
+        label: t('rap.actions.archive', 'Archiwizuj'),
+        icon: Archive,
+        disabled: true,
+        description: t('common.comingSoon', 'Wkrótce'),
+        onClick: () => {},
+      },
+    ];
+
+    const selectedReport = selectedId
+      ? (filteredReports.find((r) => r.id === selectedId) ?? null)
+      : null;
+
     return (
-      <div className="overflow-auto h-full">
-        <table className="w-full text-left">
-          <thead className="sticky top-0 bg-slate-50 dark:bg-navy-900/80 border-b border-slate-200 dark:border-white/5">
-            <tr>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                {t('rbHub.col.title', 'Tytuł')}
-              </th>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide w-28">
-                {t('rbHub.col.type', 'Typ')}
-              </th>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide w-28">
-                {t('rbHub.col.status', 'Status')}
-              </th>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide w-32">
-                {t('rbHub.col.created', 'Utworzono')}
-              </th>
-              <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide w-32">
-                {t('rbHub.col.updated', 'Zaktualizowano')}
-              </th>
-              <th className="px-4 py-3 w-12" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-            {filteredReports.map((report) => (
-              <tr
-                key={report.id}
-                className="hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
-                onClick={() => handleRowClick(report)}
-              >
-                <td className="px-4 py-3">
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">
-                    {report.title}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
-                    {report.report_type_v3 || '—'}
-                  </span>
-                </td>
-                <td className="px-4 py-3">{statusBadge(report.status)}</td>
-                <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                  {formatDate(report.created_at)}
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
-                  {formatDate(report.updated_at)}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    className="p-1 rounded hover:bg-white/10 text-slate-400"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreHorizontal size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="h-full overflow-hidden">
+        <TableWithPreviewLayout<BuilderReport & { title: string }>
+          selectedId={selectedId}
+          selectedItem={selectedReport as (BuilderReport & { title: string }) | null}
+          onSelect={setSelectedId}
+          onOpenFull={(id) => {
+            const row = filteredReports.find((x) => x.id === id);
+            if (row) handleRowClick(row);
+          }}
+          itemIds={filteredReports.map((r) => r.id)}
+          getItemById={(id) =>
+            (filteredReports.find((x) => x.id === id) as BuilderReport & { title: string }) ?? null
+          }
+          renderPreview={(item) => (
+            <div className="space-y-3">
+              <div className="rounded-lg bg-slate-100/60 dark:bg-white/[0.03] p-4 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <EntityStatusChip status={String(item.status ?? 'draft')} />
+                  {item.report_type_v3 && (
+                    <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+                      {item.report_type_v3}
+                    </span>
+                  )}
+                </div>
+                <dl className="text-sm space-y-1.5">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-500 dark:text-slate-400">
+                      {t('rbHub.col.created', 'Utworzono')}
+                    </dt>
+                    <dd className="text-slate-700 dark:text-slate-200">
+                      {formatDate(item.created_at)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-500 dark:text-slate-400">
+                      {t('rbHub.col.updated', 'Zaktualizowano')}
+                    </dt>
+                    <dd className="text-slate-700 dark:text-slate-200">
+                      {formatDate(item.updated_at)}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          )}
+        >
+          <FilterableTable
+            columns={columns}
+            data={filteredReports}
+            selectedRowId={selectedId}
+            onRowClick={(row) => setSelectedId(row.id)}
+            onRowDoubleClick={(row) => handleRowClick(row as unknown as BuilderReport)}
+            getRowActions={(row) => getRowActions(row as unknown as BuilderReport)}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            emptyMessage={t('rbHub.emptyReports.title', 'Brak raportów')}
+          />
+        </TableWithPreviewLayout>
       </div>
     );
   };
@@ -504,7 +604,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (r1r4Reports.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <Layout className="w-14 h-14 text-slate-500 dark:text-slate-600 mb-4" />
+          <Layout className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {t('rbHub.emptyR1R4.title', 'Brak raportów R1–R4')}
           </h3>
@@ -534,9 +634,9 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 onClick={() => toggleType(rType)}
               >
                 {isExpanded ? (
-                  <ChevronDown size={16} className="text-slate-400" />
+                  <ChevronDown size={16} className="text-slate-600" />
                 ) : (
-                  <ChevronRight size={16} className="text-slate-400" />
+                  <ChevronRight size={16} className="text-slate-600" />
                 )}
                 <span className={`font-mono text-sm font-bold ${meta.color}`}>{rType}</span>
                 <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">
@@ -549,7 +649,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
               </button>
 
               {isExpanded && (
-                <div className="border-t border-slate-100 dark:border-white/5">
+                <div className="border-t border-slate-200 dark:border-white/5">
                   {/* Latest report summary */}
                   <div className="px-4 py-3 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-4">
                     <div className="flex-1 min-w-0">
@@ -577,7 +677,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                   </div>
 
                   {grouped.length > 1 && (
-                    <div className="divide-y divide-slate-100 dark:divide-white/5">
+                    <div className="divide-y divide-slate-200 dark:divide-white/5">
                       {grouped.slice(1).map((report) => (
                         <div
                           key={report.id}
@@ -612,7 +712,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredTemplates.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-600 mb-4" />
+          <FileText className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {t('rbHub.emptyTemplates.title', 'Brak szablonów')}
           </h3>
@@ -679,7 +779,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (filteredSchedules.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-          <Clock className="w-14 h-14 text-slate-500 dark:text-slate-600 mb-4" />
+          <Clock className="w-14 h-14 text-slate-500 dark:text-slate-400 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
             {t('rbHub.emptySchedules.title', 'Brak harmonogramów')}
           </h3>
@@ -713,7 +813,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
               <th className="px-4 py-3 w-20" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {filteredSchedules.map((s) => (
               <tr
                 key={s.id}
@@ -735,7 +835,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                     className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full ${
                       s.isActive
                         ? 'bg-emerald-500/10 text-emerald-500'
-                        : 'bg-slate-500/10 text-slate-400'
+                        : 'bg-slate-500/10 text-slate-600'
                     }`}
                   >
                     <span
@@ -747,7 +847,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleToggleSchedule(s.id, s.isActive)}
-                    className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-slate-600 hover:text-slate-200 transition-colors"
                     title={
                       s.isActive
                         ? t('rbHub.pauseSchedule', 'Wstrzymaj')

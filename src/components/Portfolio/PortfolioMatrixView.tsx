@@ -323,7 +323,7 @@ export const PortfolioMatrixView: React.FC<PortfolioMatrixViewProps> = ({
         {/* Empty state */}
         {filteredBubbles.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-slate-400 dark:text-slate-500">
+            <div className="text-center text-slate-600 dark:text-slate-500">
               <Info className="w-10 h-10 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No initiatives in this quadrant</p>
             </div>

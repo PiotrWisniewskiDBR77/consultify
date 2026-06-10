@@ -9,7 +9,6 @@ import {
   FileText,
   Layout,
   LayoutGrid,
-  Loader2,
   Plus,
   Trash2,
   X,
@@ -18,6 +17,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 import { InterfaceDesigner } from '../InterfaceDesigner';
@@ -270,40 +271,29 @@ export function InterfacesIndex({
   // ── Loading ────────────────────────────────────────────────────────────────
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-20" />;
   }
 
   // ── Empty state ────────────────────────────────────────────────────────────
 
   if (interfaces.length === 0 && !showTemplates) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="mb-4 rounded-2xl bg-primary-50 p-4 dark:bg-primary-900/20">
-          <Layout className="h-10 w-10 text-primary-500" />
-        </div>
-        <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-          {t('interfacesIndex.emptyTitle', 'Build custom views of your data')}
-        </h3>
-        <p className="mb-6 max-w-sm text-center text-sm text-gray-500 dark:text-gray-400">
-          {t(
-            'interfacesIndex.emptyDescription',
-            'Interfaces let you create dashboards, detail views, and custom layouts.'
-          )}
-        </p>
-        {!locked && (
-          <button
-            onClick={() => setShowTemplates(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700"
-          >
-            <Plus className="h-4 w-4" />
-            {t('interfacesIndex.createInterface', 'Create Interface')}
-          </button>
+      <EmptyState
+        icon={<Layout />}
+        title={t('interfacesIndex.emptyTitle', 'Build custom views of your data')}
+        description={t(
+          'interfacesIndex.emptyDescription',
+          'Interfaces let you create dashboards, detail views, and custom layouts.'
         )}
-      </div>
+        action={
+          !locked
+            ? {
+                label: t('interfacesIndex.createInterface', 'Create Interface'),
+                onClick: () => setShowTemplates(true),
+              }
+            : undefined
+        }
+      />
     );
   }
 
@@ -318,7 +308,7 @@ export function InterfacesIndex({
           </h2>
           <button
             onClick={() => setShowTemplates(false)}
-            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 dark:hover:bg-navy-800"
           >
             <X className="h-4 w-4" />
           </button>
@@ -387,7 +377,7 @@ export function InterfacesIndex({
 
             {/* Last modified */}
             {iface.updatedAt && (
-              <p className="mb-4 text-xs text-gray-400 dark:text-gray-500">
+              <p className="mb-4 text-xs text-gray-600 dark:text-gray-500">
                 {t('interfacesIndex.lastModified', 'Last modified')}{' '}
                 {new Date(iface.updatedAt).toLocaleDateString()}
               </p>
@@ -441,7 +431,7 @@ export function InterfacesIndex({
                   ) : (
                     <button
                       onClick={() => setDeleteConfirm(iface.id)}
-                      className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
+                      className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
                       title={t('interfacesIndex.delete', 'Delete')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

@@ -128,7 +128,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                 className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
                   isOverWip
                     ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'
-                    : 'text-slate-400 bg-slate-200/60 dark:bg-navy-700/60'
+                    : 'text-slate-600 bg-slate-200/60 dark:bg-navy-700/60'
                 }`}
               >
                 {laneNodes.length}
@@ -162,7 +162,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                       {!locked && (
                         <GripVertical
                           size={12}
-                          className="text-slate-300 dark:text-navy-600 mt-0.5 flex-shrink-0 cursor-grab"
+                          className="text-slate-600 dark:text-navy-600 mt-0.5 flex-shrink-0 cursor-grab"
                         />
                       )}
                       <div className="flex-1 min-w-0">
@@ -174,7 +174,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                           if (!val) return null;
                           return (
                             <div key={col.key} className="flex items-center gap-1 mt-1">
-                              <span className="text-[9px] text-slate-400">{col.header}:</span>
+                              <span className="text-[9px] text-slate-600">{col.header}:</span>
                               {col.type === 'rating' ? (
                                 <span className="text-[10px] text-amber-500">
                                   {'★'.repeat(Number(val) || 0)}
@@ -187,7 +187,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                                       style={{ width: `${Number(val) || 0}%` }}
                                     />
                                   </div>
-                                  <span className="text-[9px] text-slate-400">{val}%</span>
+                                  <span className="text-[9px] text-slate-600">{val}%</span>
                                 </div>
                               ) : (
                                 <span className="text-[10px] text-slate-600 dark:text-slate-300 truncate">
@@ -202,10 +202,10 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
 
                     {/* Card footer: person + priority */}
                     {(person || priorityCol) && (
-                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 dark:border-navy-800">
+                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200 dark:border-navy-800">
                         {person ? (
                           <div className="flex items-center gap-1">
-                            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-[7px] font-bold text-white">
+                            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-primary-400 to-crimson-500 flex items-center justify-center text-[7px] font-bold text-white">
                               {String(person).charAt(0).toUpperCase()}
                             </div>
                             <span className="text-[9px] text-slate-500 truncate max-w-[80px]">
@@ -229,7 +229,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
               {!locked && (
                 <button
                   onClick={onAddRow}
-                  className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-400 dark:hover:border-navy-500 transition-colors"
+                  className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 text-[10px] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-400 dark:hover:border-navy-500 transition-colors"
                 >
                   <Plus size={12} />
                   {isPl ? 'Dodaj' : 'Add'}

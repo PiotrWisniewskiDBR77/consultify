@@ -52,7 +52,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
   restoring: string | null;
 }) {
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.04] last:border-0 group">
+    <div className="flex items-center gap-3 px-3 py-2.5 border-b border-slate-200 dark:border-white/[0.04] last:border-0 group">
       <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
         <Archive size={14} className="text-primary-500" />
       </div>
@@ -60,7 +60,7 @@ const SnapshotRow = React.memo(function SnapshotRow({
         <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
           {snapshot.name}
         </p>
-        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
           <span className="flex items-center gap-0.5">
             <Clock size={9} />
             {formatDate(snapshot.createdAt)}
@@ -202,14 +202,14 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
           </span>
           <button
             onClick={onClose}
-            className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="p-1 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Create */}
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.04]">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-white/[0.04]">
           {showCreateInput ? (
             <div className="flex items-center gap-2">
               <input
@@ -233,7 +233,7 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
               </button>
               <button
                 onClick={() => setShowCreateInput(false)}
-                className="p-1.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                className="p-1.5 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
               >
                 <X size={14} />
               </button>
@@ -253,10 +253,10 @@ export const SnapshotManager: React.FC<SnapshotManagerProps> = ({ open, onClose,
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 size={20} className="animate-spin text-slate-400" />
+              <Loader2 size={20} className="animate-spin text-slate-600" />
             </div>
           ) : snapshots.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500 px-4 text-center">
+            <div className="flex flex-col items-center justify-center py-12 text-slate-600 dark:text-slate-500 px-4 text-center">
               <Archive size={24} className="mb-2 opacity-40" />
               <span className="text-xs">{isPl ? 'Brak migawek' : 'No snapshots yet'}</span>
               <span className="text-[10px] mt-1">

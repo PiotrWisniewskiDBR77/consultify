@@ -20,6 +20,8 @@ interface UseProcessFlowValidationOpts {
   nodes: Node[];
   edges: Edge[];
   autoValidate?: boolean;
+  /** Called when validation fails (HTTP error or network), so the host can surface a toast. */
+  onError?: (message: string) => void;
 }
 
 export function useProcessFlowValidation({
@@ -27,6 +29,7 @@ export function useProcessFlowValidation({
   nodes,
   edges,
   autoValidate = true,
+  onError,
 }: UseProcessFlowValidationOpts) {
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -43,13 +46,16 @@ export function useProcessFlowValidation({
       if (res.ok) {
         const data = await res.json();
         setResult(data);
+      } else {
+        onError?.(`Validation failed (HTTP ${res.status}).`);
       }
     } catch {
-      // Network error — keep last result
+      // Network error — keep last result, but surface it instead of failing silently.
+      onError?.('Validation request failed — check your connection and retry.');
     } finally {
       setIsValidating(false);
     }
-  }, [processId]);
+  }, [processId, onError]);
 
   // Auto-validate after graph changes (debounced 500ms)
   useEffect(() => {

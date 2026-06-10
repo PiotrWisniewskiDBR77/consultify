@@ -35,6 +35,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
@@ -231,11 +233,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-amber-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -349,7 +347,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                       className={`p-2 rounded-lg transition-colors ${
                         rule.enabled
                           ? 'text-amber-600 hover:bg-amber-100'
-                          : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30'
+                          : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30'
                       }`}
                     >
                       {rule.enabled ? <Play size={16} /> : <Pause size={16} />}

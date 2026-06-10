@@ -217,8 +217,7 @@ let taskDepsSchemaCache: TaskDepsSchema | null = null;
 async function getTaskDepsSchema(): Promise<TaskDepsSchema> {
   if (taskDepsSchemaCache) return taskDepsSchemaCache;
   try {
-    const cols = await DbPromise.all<{ name: string }>('PRAGMA table_info(task_dependencies)', []);
-    const names = new Set((cols || []).map((c) => String(c.name || '')));
+    const names = await getSchemaColumns('task_dependencies');
     if (names.has('predecessor_id') && names.has('successor_id')) {
       taskDepsSchemaCache = { fromCol: 'predecessor_id', toCol: 'successor_id' };
       return taskDepsSchemaCache;
@@ -549,7 +548,11 @@ export class TaskController {
         taskType,
         search,
         scope,
+        source,
       } = query as any;
+
+      // Mirror the Initiatives `?source` filter (e.g. ?source=interview_insight).
+      const normalizedSourceFilter = source ? String(source).trim().toLowerCase() : '';
 
       // V4-TASK-01: scope=personal|initiative|program — validate required params
       if (scope === 'initiative' && !initiativeId) {
@@ -685,6 +688,12 @@ export class TaskController {
         if (search) {
           s += ` AND (t.title LIKE ? OR t.description LIKE ?)`;
           p.push(`%${search}%`, `%${search}%`);
+        }
+        // Source lineage filter (org scope preserved by WHERE t.organization_id = ?).
+        // No-ops gracefully when the tasks.source_type column is absent.
+        if (normalizedSourceFilter && taskColumns.has('source_type')) {
+          s += ` AND LOWER(COALESCE(t.source_type, '')) = ?`;
+          p.push(normalizedSourceFilter);
         }
 
         // For regular users, show only tasks assigned to them or reported by them

@@ -54,7 +54,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     onStatusChange,
   } = options;
 
-  const effectiveKey = apiKey || null;
+  const effectiveKey = typeof apiKey === 'string' && apiKey.trim() ? apiKey.trim() : null;
 
   const [voiceStatus, setVoiceStatus] = useState<TeresaVoiceStatus>('idle');
   const [voiceError, setVoiceError] = useState<string | null>(null);
@@ -68,6 +68,13 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
   const nextPlayTimeRef = useRef(0);
   const attemptRef = useRef(0);
+
+  // Per-turn accumulation buffers. Gemini Live streams a turn as many small
+  // fragments; emitting each fragment as its own chat message produced the
+  // "rozmawiam z trzema osobami" bug (#4). We accumulate fragments and flush
+  // ONE message per turn on turnComplete.
+  const modelTurnTextRef = useRef('');
+  const inputTranscriptRef = useRef('');
 
   const onTranscriptRef = useRef(onTranscriptUpdate);
   onTranscriptRef.current = onTranscriptUpdate;
@@ -133,6 +140,15 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     };
   }, [teardownVoice]);
 
+  useEffect(() => {
+    if (enabled) return;
+    attemptRef.current += 1;
+    setVoiceError(null);
+    setIsMuted(false);
+    updateStatus('idle');
+    void teardownVoice();
+  }, [enabled, teardownVoice, updateStatus]);
+
   const startVoiceConversation = useCallback(async () => {
     const token = attemptRef.current + 1;
     attemptRef.current = token;
@@ -157,7 +173,10 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     try {
       if (!AudioContextCtor) throw new Error('AudioContext unavailable');
 
-      const ai = new GoogleGenAI({ apiKey: effectiveKey });
+      const ai = new GoogleGenAI({
+        apiKey: effectiveKey,
+        httpOptions: { apiVersion: 'v1alpha' },
+      });
       const audioContext = new AudioContextCtor({
         sampleRate: TERESA_VOICE_CONFIG.sampleRateInput,
       });
@@ -206,11 +225,15 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               for (let i = 0; i < bytes.length; i++) {
                 binary += String.fromCharCode(bytes[i]);
               }
-              sessionRef.current?.sendRealtimeInput({
-                media: {
-                  mimeType: `audio/pcm;rate=${TERESA_VOICE_CONFIG.sampleRateInput}`,
-                  data: btoa(binary),
-                },
+              void Promise.resolve(
+                sessionRef.current?.sendRealtimeInput({
+                  media: {
+                    mimeType: `audio/pcm;rate=${TERESA_VOICE_CONFIG.sampleRateInput}`,
+                    data: btoa(binary),
+                  },
+                })
+              ).catch(() => {
+                /* Realtime send failures are surfaced by the Live API error callback. */
               });
             };
 
@@ -231,26 +254,53 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               });
               activeSourcesRef.current = [];
               nextPlayTimeRef.current = audioContext.currentTime;
+              // Discard the interrupted (incomplete) model turn so its partial
+              // fragments don't bleed into the next message.
+              modelTurnTextRef.current = '';
             }
 
             const sc = message.serverContent as Record<string, unknown> | undefined;
-            const userTranscript = (sc?.inputTranscript ?? sc?.outputTranscript) as
-              | string
-              | undefined;
-            if (userTranscript && onTranscriptRef.current) {
-              onTranscriptRef.current(userTranscript);
+
+            // Accumulate the user's input transcript across the turn instead of
+            // emitting each streamed fragment as a separate message (#4).
+            const transcriptValue = sc?.inputTranscript ?? sc?.outputTranscript;
+            const userTranscript = typeof transcriptValue === 'string' ? transcriptValue : '';
+            if (userTranscript) {
+              inputTranscriptRef.current += userTranscript;
             }
 
+            // Accumulate the model's spoken text fragments for this turn.
             const textPart = message.serverContent?.modelTurn?.parts?.find((p) => p.text);
-            if (textPart?.text && onModelAudioTextRef.current) {
-              onModelAudioTextRef.current(textPart.text);
+            if (textPart?.text) {
+              modelTurnTextRef.current += textPart.text;
+            }
+
+            // On turn boundary, flush ONE user message + ONE assistant message.
+            if (sc?.turnComplete || sc?.generationComplete) {
+              const finalUser = inputTranscriptRef.current.trim();
+              const finalModel = modelTurnTextRef.current.trim();
+              inputTranscriptRef.current = '';
+              modelTurnTextRef.current = '';
+              if (finalUser && onTranscriptRef.current) {
+                onTranscriptRef.current(finalUser);
+              }
+              if (finalModel && onModelAudioTextRef.current) {
+                onModelAudioTextRef.current(finalModel);
+              }
             }
 
             const base64Audio = message.serverContent?.modelTurn?.parts?.find((p) => p.inlineData)
               ?.inlineData?.data;
             if (!base64Audio) return;
 
-            const binaryString = atob(base64Audio);
+            let binaryString = '';
+            try {
+              binaryString = atob(base64Audio);
+            } catch {
+              return;
+            }
+            if (binaryString.length % 2 !== 0) return;
+
             const bytesArray = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
               bytesArray[i] = binaryString.charCodeAt(i);
@@ -335,13 +385,16 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const toggleMute = useCallback(() => {
     const stream = streamRef.current;
     if (!stream) return;
-    const tracks = stream.getAudioTracks();
-    const nextMuted = !isMuted;
-    tracks.forEach((track) => {
-      track.enabled = !nextMuted;
+    const tracks =
+      typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : stream.getTracks();
+    setIsMuted((currentMuted) => {
+      const nextMuted = !currentMuted;
+      tracks.forEach((track) => {
+        track.enabled = !nextMuted;
+      });
+      return nextMuted;
     });
-    setIsMuted(nextMuted);
-  }, [isMuted]);
+  }, []);
 
   const sendTextHistory = useCallback((turns: Array<{ role: string; content: string }>) => {
     const session = sessionRef.current;

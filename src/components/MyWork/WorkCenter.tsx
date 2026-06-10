@@ -167,7 +167,7 @@ export const WorkCenter: React.FC<WorkCenterProps> = ({
 
         {/* Bottleneck Panel (only for decisions tab) */}
         {activeTab === 'decisions' && (
-          <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-700">
+          <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-700">
             <DecisionBottleneckPanel onDecisionClick={handleDecisionClick} />
           </div>
         )}

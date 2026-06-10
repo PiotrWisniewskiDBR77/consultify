@@ -14,6 +14,8 @@ import {
   normalizeCanvasArtifactBlocks,
   projectCanvasArtifactBlockToMarkdown,
 } from '../services/artifacts/contentProjectionService.js';
+import { unifiedExportService } from '../services/export/UnifiedExportService.js';
+import { insertDynamic } from '../utils/dbDynamic.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
@@ -31,7 +33,22 @@ type DraftKind =
   | 'sheet'
   | 'deck';
 type ProposalStatus = 'proposed' | 'approved' | 'rejected';
-type WorkspaceTarget = 'idea' | 'note' | 'initiative';
+type WorkspaceTarget = 'idea' | 'note' | 'initiative' | 'decision' | 'task';
+
+// Proposal targets that approval can MATERIALIZE into a real entity. Targets
+// outside this set (project_brief, research_report, client_deliverable, task —
+// which need project/initiative context they don't have here) stay honest
+// placeholders rather than being faked.
+const MATERIALIZABLE_TARGETS: ReadonlySet<string> = new Set([
+  'idea',
+  'note',
+  'initiative',
+  'decision',
+  // C4.1 — Tasks bridge. createWorkspaceResource now has a 'task' branch that
+  // uses TaskService.createTask (same canonical path commitProposalToDomain uses),
+  // so approve/save-to-workspace produce a real tasks row instead of 422.
+  'task',
+]);
 type OutputType = 'presentation' | 'table' | 'report';
 type ExportFormat = 'markdown' | 'csv' | 'json' | 'pdf' | 'docx' | 'xlsx' | 'pptx';
 type WorkflowTemplate =
@@ -871,70 +888,48 @@ function exportJson(draft: WorkCanvasDraft, userId: string) {
   };
 }
 
+// The binary generators (PDF/DOCX/XLSX/PPTX) were extracted into the
+// domain-agnostic UnifiedExportService (STEP 1 of system-unification). These
+// thin wrappers project the Canvas-domain draft into a generic ExportSource and
+// delegate, preserving byte-for-byte output.
+
 async function exportPdfBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  const PDFDocument = (await import('pdfkit')).default as any;
-  const doc = new PDFDocument({ margin: 48 });
-  const chunks: Buffer[] = [];
-  doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-  const finished = new Promise<Buffer>((resolve, reject) => {
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
+  return unifiedExportService.exportPdf({
+    title: draft.title,
+    markdown: exportMarkdown(draft),
+    sourceLabel: `Source Canvas: ${draft.id}`,
+    lifecycle: draft.lifecycleState,
+    updatedAt: draft.updatedAt,
   });
-  doc.fontSize(18).text(draft.title, { underline: true });
-  doc.moveDown();
-  doc.fontSize(9).fillColor('#475569').text(`Source Canvas: ${draft.id}`);
-  doc.text(`Lifecycle: ${draft.lifecycleState}`);
-  doc.text(`Updated: ${draft.updatedAt}`);
-  doc.moveDown();
-  doc.fillColor('#111827').fontSize(11).text(exportMarkdown(draft), {
-    width: 500,
-    lineGap: 3,
-  });
-  doc.end();
-  return finished;
 }
 
 async function exportDocxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  const docx = await import('docx');
-  const paragraphs = [
-    new docx.Paragraph({
-      children: [new docx.TextRun({ text: draft.title, bold: true, size: 32 })],
-    }),
-    new docx.Paragraph(`Source Canvas: ${draft.id}`),
-    new docx.Paragraph(`Lifecycle: ${draft.lifecycleState}`),
-    new docx.Paragraph(''),
-    ...exportMarkdown(draft)
-      .split('\n')
-      .slice(0, 500)
-      .map((line) => new docx.Paragraph(line || ' ')),
-  ];
-  const document = new docx.Document({ sections: [{ properties: {}, children: paragraphs }] });
-  return Buffer.from(await docx.Packer.toBuffer(document));
+  return unifiedExportService.exportDocx({
+    title: draft.title,
+    markdown: exportMarkdown(draft),
+    sourceLabel: `Source Canvas: ${draft.id}`,
+    lifecycle: draft.lifecycleState,
+  });
 }
 
 async function exportXlsxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  const ExcelJS = (await import('exceljs')).default as any;
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Business Work Canvas';
-  workbook.created = new Date();
-  const sheet = workbook.addWorksheet('Canvas Export');
-  exportCsv(draft)
-    .split('\n')
-    .forEach((line) => {
-      sheet.addRow(line.split(',').map((cell) => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
-    });
-  sheet.addRow([]);
-  sheet.addRow(['Source Canvas', draft.id]);
-  sheet.addRow(['Lifecycle', draft.lifecycleState]);
-  const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer);
+  // XLSX renders a two-cell footer (`['Source Canvas', <id>]`), so the raw draft
+  // id is passed as sourceLabel here (not the prefixed `Source Canvas: <id>`
+  // label used by PDF/DOCX/PPTX), keeping the spreadsheet byte-for-byte.
+  return unifiedExportService.exportXlsx({
+    title: draft.title,
+    markdown: exportMarkdown(draft),
+    csv: exportCsv(draft),
+    sourceLabel: draft.id,
+    lifecycle: draft.lifecycleState,
+    author: 'Business Work Canvas',
+  });
 }
 
 async function exportPptxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
-  const module = await import('pptxgenjs');
-  const PptxGenJS = (module.default || module) as any;
-  const pptx = new PptxGenJS();
-  pptx.author = 'Business Work Canvas';
+  // The Canvas-specific sectionizer (markdownSections/markdownSummary) stays in
+  // the route; pre-built slides are handed to the generic service so the cap and
+  // footer rendering live in one place.
   const sections = markdownSections(draft.contentMd);
   const slides = sections.length
     ? sections.map((section, index) => ({
@@ -942,28 +937,13 @@ async function exportPptxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
         body: markdownSummary(section.body, 700),
       }))
     : [{ title: draft.title, body: markdownSummary(draft.contentMd, 700) }];
-  slides.slice(0, 20).forEach((slide, index) => {
-    const page = pptx.addSlide();
-    page.addText(slide.title, { x: 0.5, y: 0.4, w: 9, h: 0.5, fontSize: 24, bold: true });
-    page.addText(slide.body || 'No slide body available.', {
-      x: 0.5,
-      y: 1.1,
-      w: 9,
-      h: 4.5,
-      fontSize: 13,
-      fit: 'shrink',
-    });
-    page.addText(`Source Canvas: ${draft.id} · Slide ${index + 1}`, {
-      x: 0.5,
-      y: 6.8,
-      w: 9,
-      h: 0.3,
-      fontSize: 8,
-      color: '64748B',
-    });
+  return unifiedExportService.exportPptx({
+    title: draft.title,
+    markdown: markdownSummary(draft.contentMd, 700),
+    sourceLabel: `Source Canvas: ${draft.id}`,
+    author: 'Business Work Canvas',
+    slides,
   });
-  const output = await pptx.write({ outputType: 'nodebuffer' });
-  return Buffer.from(output);
 }
 
 async function exportFormatPayload(draft: WorkCanvasDraft, userId: string, format: ExportFormat) {
@@ -1838,27 +1818,10 @@ function applyBlockOperation(
   throw new Error('Unsupported block operation type');
 }
 
-async function insertDynamic(
-  table: string,
-  values: Record<string, unknown>,
-  requiredColumns: string[] = ['id']
-): Promise<void> {
-  const cols = await getTableColumns(table);
-  for (const col of requiredColumns) {
-    if (!cols.has(col)) {
-      throw new Error(`Required column ${table}.${col} is not available`);
-    }
-  }
-  const entries = Object.entries(values).filter(([key]) => cols.has(key));
-  if (entries.length === 0) throw new Error(`No compatible columns for ${table}`);
-  await dbRun(
-    `INSERT INTO ${table} (${entries.map(([key]) => key).join(', ')}) VALUES (${entries
-      .map(() => '?')
-      .join(', ')})`,
-    entries.map(([, value]) => value),
-    { fallback: false }
-  );
-}
+// M-7 — `insertDynamic` was extracted to `../utils/dbDynamic.ts` so the shared
+// Canvas materializer can call it without a circular dependency. Imported at
+// the top of the file; this comment block reserves the spot for blame
+// continuity.
 
 async function updateDraftAfterOperation(
   draft: WorkCanvasDraft,
@@ -2111,129 +2074,49 @@ async function draftProposals(draftId: string): Promise<WorkCanvasProposal[]> {
   return rows.map(toProposal);
 }
 
+/**
+ * M-7 — `createWorkspaceResource` is now a thin wrapper around the shared
+ * Canvas materializer. The previous in-place implementation (idea / note /
+ * decision / task / initiative branches) lives in `services/canvasMaterialize.ts`
+ * and is shared with `commitProposalToDomain` (proposal-approval path).
+ * Both writers produce identical entities — single bug surface, single fix
+ * site.
+ */
 async function createWorkspaceResource(
   draft: WorkCanvasDraft,
   target: WorkspaceTarget,
   userId: string,
   organizationId: string
 ) {
+  const { materializeOrThrow } = await import('../services/canvasMaterialize.js');
   const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas document');
-  const summary = markdownSummary(draft.contentMd, 5000);
-  const now = new Date().toISOString();
+  // W2-E5 — cap below the canonical TaskService Zod limit (5000) to leave
+  // headroom for multibyte expansion in the persisted summary.
+  const summary = markdownSummary(draft.contentMd, 4900);
 
-  if (target === 'idea') {
-    const ideaId = `idea-${Date.now()}-${randomUUID().slice(0, 8)}`;
-    await insertDynamic(
-      'my_ideas',
-      {
-        id: ideaId,
-        user_id: userId,
-        organization_id: organizationId,
-        title,
-        body: summary,
-        seed_text: draft.contentMd,
-        stage: 'spark',
-        source_type: 'work_canvas',
-        source_conversation_id: draft.conversationId,
-        source_message_id: draft.id,
-        created_at: now,
-        updated_at: now,
-      },
-      ['id']
-    );
+  // W2-E6 — UUID-validate projectId so canonical services (TaskService /
+  // decisionService) don't 500 on a slug-style draft.projectId.
+  const validUuidProjectId =
+    draft.projectId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(draft.projectId)
+      ? draft.projectId
+      : null;
 
-    const mapId = `map-${Date.now()}-${randomUUID().slice(0, 8)}`;
-    await insertDynamic(
-      'my_idea_maps',
-      {
-        id: mapId,
-        idea_id: ideaId,
-        user_id: userId,
-        organization_id: organizationId,
-        nodes_json: '[]',
-        edges_json: '[]',
-        schema_version: 3,
-        extensions_json: JSON.stringify({ source: 'work_canvas', draftId: draft.id }),
-        created_at: now,
-        updated_at: now,
-      },
-      ['id']
-    );
-
-    return {
-      type: 'idea' as const,
-      id: ideaId,
-      title,
-      url: `/my-work/ideas/${ideaId}`,
-      readBack: { target, ideaId, mapId, status: 'created' },
-    };
-  }
-
-  if (target === 'note') {
-    const noteId = randomUUID();
-    await insertDynamic(
-      'notebook_pages',
-      {
-        id: noteId,
-        owner_user_id: userId,
-        user_id: userId,
-        organization_id: organizationId,
-        visibility: 'private',
-        title,
-        content_json: JSON.stringify({
-          type: 'doc',
-          content: [{ type: 'paragraph', text: draft.contentMd }],
-        }),
-        content_text: draft.contentMd,
-        tags_json: JSON.stringify(['work-canvas']),
-        icon: 'FileText',
-        maturity: 'seed',
-        status: 'active',
-        capture_source: 'work_canvas',
-        capture_metadata: JSON.stringify({ sourceType: 'work_canvas', sourceId: draft.id }),
-        created_at: now,
-        updated_at: now,
-      },
-      ['id']
-    );
-    return {
-      type: 'note' as const,
-      id: noteId,
-      title,
-      url: `/my-work/notebook/${noteId}`,
-      readBack: { target, noteId, status: 'created' },
-    };
-  }
-
-  const initiativeId = randomUUID();
-  await insertDynamic(
-    'initiatives',
+  return materializeOrThrow(
     {
-      id: initiativeId,
-      organization_id: organizationId,
-      user_id: userId,
-      created_by: userId,
-      owner_id: userId,
-      owner_execution_id: userId,
-      name: title,
+      organizationId,
+      actorUserId: userId,
+      target,
       title,
+      contentMd: draft.contentMd,
       summary,
-      description: summary,
-      status: 'DRAFT',
-      source_type: 'work_canvas',
-      source_id: draft.id,
-      created_at: now,
-      updated_at: now,
+      projectId: validUuidProjectId,
+      sourceDraftId: draft.id,
+      sourceConversationId: draft.conversationId,
+      sections: markdownSections(draft.contentMd),
     },
-    ['id']
+    { writer: 'save_to_workspace' }
   );
-  return {
-    type: 'initiative' as const,
-    id: initiativeId,
-    title,
-    url: `/initiatives/${initiativeId}`,
-    readBack: { target, initiativeId, status: 'created' },
-  };
 }
 
 function buildTableOutputMarkdown(draft: WorkCanvasDraft): string {
@@ -2335,19 +2218,38 @@ async function createOutputResource(
       createdAt: now,
       lifecycleState: 'draft',
     });
+    // W2-E9 — map to canonical presentation_decks columns. The previous insert
+    // wrote `created_by`, `source_id`, `source_refs_json` — none of which exist
+    // in the canonical schema (`568_presentations_brand_kits_templates.sql`).
+    // `insertDynamic` silently dropped them, so the deck row had no creator
+    // attribution and the outputMetadata payload returned to the client was a
+    // fiction. Canonical columns are `generated_by` + `source_artifacts`; the
+    // rich metadata lives in `outline_json` alongside the slide structure.
     await insertDynamic(
       'presentation_decks',
       {
         id: deckId,
         organization_id: organizationId,
-        created_by: userId,
+        generated_by: userId,
         title: `Presentation: ${title}`,
         deck_type: 'custom',
         theme: 'modern',
         slide_count: slides.length,
         status: 'draft',
-        source_id: draft.id,
-        source_refs_json: JSON.stringify(metadata),
+        source_artifacts: JSON.stringify([
+          {
+            type: 'work_canvas_draft',
+            id: draft.id,
+            versionId: sourceVersionId || null,
+            title,
+          },
+        ]),
+        outline_json: JSON.stringify({
+          source: 'work_canvas',
+          sourceDraftId: draft.id,
+          canvasMetadata: metadata,
+          slides,
+        }),
         created_at: now,
         updated_at: now,
       },
@@ -2482,6 +2384,88 @@ async function createOutputResource(
     ],
     { fallback: false }
   );
+
+  // C4.2 — for `report` outputs, ALSO write a real report_builder_reports row so
+  // Canvas → Report lands in the Reports module (not only as a sibling
+  // work_canvas_drafts kind='report'). The draft above stays as the editable
+  // working copy; the report row is the surface Outputs/Reports renders. Failure
+  // is non-fatal — the draft is still returned, audit log captures the gap.
+  if (outputType === 'report') {
+    try {
+      const reportId = randomUUID();
+      const companyContext = {
+        source: 'work_canvas',
+        sourceDraftId: draft.id,
+        sourceVersionId: sourceVersionId || null,
+        title,
+        markdownExcerpt: String(draft.contentMd || '').slice(0, 4000),
+      };
+      // W2-E4 — `CANVAS_REPORT` is not in `report_invocation_profiles` enum
+      // (R1|R2|R3|R4|custom + legacy GENERAL|ASSESSMENT). Use the recognized
+      // 'custom' discriminant and stash the Canvas hint in config_json so the
+      // builder UI can light up Canvas-specific affordances when it ships.
+      const config = {
+        canvasOutput: true,
+        canvasReport: true,
+        outputDraftId,
+        sourceDraftId: draft.id,
+      };
+      await dbRun(
+        `INSERT INTO report_builder_reports (
+          id, organization_id, project_id, source_type, source_id, source_name, source_framework,
+          title, description, report_type, template_id, config_json, company_context_json, status,
+          created_by, created_at, updated_at, version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          reportId,
+          organizationId,
+          draft.projectId || null,
+          // P1-3 — own discriminant so report-list filters can distinguish
+          // narrative Canvas drafts from real upload bundles. Falls back to
+          // INTERVIEW template via reportBuilderService.getTemplateForSource.
+          'WORK_CANVAS',
+          draft.id,
+          `Canvas: ${title}`,
+          'work_canvas',
+          `Report: ${title}`,
+          'Generated from Work Canvas draft.',
+          'custom',
+          null,
+          JSON.stringify(config),
+          JSON.stringify(companyContext),
+          'DRAFT',
+          userId,
+          now,
+          now,
+          1,
+        ],
+        { fallback: false }
+      );
+      return {
+        type: outputType,
+        id: reportId,
+        title: outputDraft.title,
+        // W2-E2 — Reports module migrated to /presentations (AppRoutes.tsx has
+        // `reports_ui_moved_to_presentations` placeholder). `/reports/:id`
+        // 404s; the canonical mount is /presentations?reportId=...
+        url: `/presentations?reportId=${encodeURIComponent(reportId)}`,
+        metadata,
+        readBack: {
+          outputType,
+          draftId: outputDraft.id,
+          reportId,
+          status: 'created',
+          metadata,
+        },
+      };
+    } catch (err) {
+      logger.warn('[work-canvas] canvas.report.materialize_failed', {
+        draftId: draft.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Fall through to draft-only return below — non-fatal, audit captured.
+    }
+  }
 
   return {
     type: outputType,
@@ -3308,6 +3292,38 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
     ],
     { fallback: false }
   );
+
+  // C1.1 — autosave now snapshots a version on a sensible cadence. Without this,
+  // PUT /drafts/:id (the only route the rich editor hits) never produced a
+  // version, so the Versions panel and Restore were decorative — restore would
+  // jump the user back to a potentially pre-historic state from /operations or
+  // /restore. Cadence: every 5 minutes OR after ~500 chars of net change.
+  try {
+    const { userId } = authContext(req);
+    const oldMd = String(draft.contentMd || '');
+    const newMd = String(updated.contentMd || '');
+    if (oldMd !== newMd) {
+      const lastVersion = (await dbGet(
+        `SELECT created_at, content_md FROM work_canvas_versions
+         WHERE draft_id = ? ORDER BY created_at DESC LIMIT 1`,
+        [updated.id]
+      )) as { created_at?: string; content_md?: string } | null;
+      const sinceMs = lastVersion?.created_at
+        ? Date.now() - new Date(lastVersion.created_at).getTime()
+        : Number.POSITIVE_INFINITY;
+      const baselineMd = lastVersion?.content_md ?? oldMd;
+      const charDelta = Math.abs(newMd.length - String(baselineMd || '').length);
+      const FIVE_MIN = 5 * 60 * 1000;
+      if (sinceMs >= FIVE_MIN || charDelta >= 500) {
+        const summary = lastVersion ? 'Autosave snapshot' : 'Initial autosave';
+        await createVersionSnapshot(updated, 'autosave', summary, userId);
+      }
+    }
+  } catch (err: any) {
+    // Non-fatal: a failed snapshot must not break the save.
+    logger.warn('[WorkCanvas] autosave snapshot failed', { error: err?.message });
+  }
+
   return res.json(envelope(updated, { auditEventId: `ae-${randomUUID()}` }));
 });
 
@@ -3427,19 +3443,73 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
       requiredCapability: proposal.requiredCapability,
     });
   }
-  const readBack = {
-    target: proposal.target,
-    targetObjectId: null,
-    status: 'approved_with_placeholder',
-    entityStatus: 'placeholder_pending_conversion',
-    auditEventId: `ae-${randomUUID()}`,
-  };
+  const auditEventId = `ae-${randomUUID()}`;
+  let materializedId: string | null = null;
+  let readBack: Record<string, unknown>;
+
+  if (MATERIALIZABLE_TARGETS.has(proposal.target)) {
+    // Governed materialization: approval now actually CREATES the target entity
+    // (idea/note/initiative/decision) instead of leaving a placeholder.
+    const draft = await ownedDraft(req, proposal.draftId);
+    if (!draft) {
+      return res.status(404).json({ error: 'Canvas draft for proposal not found' });
+    }
+    try {
+      const { organizationId, userId } = authContext(req);
+      const resource = await createWorkspaceResource(
+        draft,
+        proposal.target as WorkspaceTarget,
+        userId,
+        organizationId
+      );
+      materializedId = resource.id;
+      readBack = {
+        ...resource.readBack,
+        target: proposal.target,
+        targetObjectId: resource.id,
+        status: 'approved',
+        entityStatus: 'created',
+        url: resource.url,
+        auditEventId,
+      };
+    } catch (error) {
+      logger.error('[work-canvas] canvas.proposal.materialize_failed', {
+        proposalId: proposal.id,
+        target: proposal.target,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return res.status(500).json({
+        error: 'Failed to create the approved workspace resource.',
+        code: 'CANVAS_PROPOSAL_MATERIALIZE_FAILED',
+        recoverable: true,
+      });
+    }
+  } else {
+    // Honest 422 for targets without a materialization home in Wave 1
+    // (project_brief / research_report / client_deliverable / task).
+    // Returning a real status here (instead of a silent "approved_with_placeholder")
+    // lets the client surface an inline "not available yet" message rather than
+    // implying the resource was created.
+    logger.info('[work-canvas] canvas.proposal.target_not_yet_supported', {
+      proposalId: proposal.id,
+      target: proposal.target,
+    });
+    return res.status(422).json({
+      error: 'target_not_yet_supported',
+      code: 'CANVAS_TARGET_NOT_YET_SUPPORTED',
+      target: proposal.target,
+      message: `Converting this draft into a "${proposal.target}" is not available yet in this release. You can still save it to an idea, note, or initiative, or export it.`,
+      recoverable: true,
+      supportedTargets: Array.from(MATERIALIZABLE_TARGETS),
+    });
+  }
+
   const updated: WorkCanvasProposal = {
     ...proposal,
     status: 'approved',
-    targetObjectId: null,
+    targetObjectId: materializedId,
     readBack,
-    auditEventId: String(readBack.auditEventId),
+    auditEventId,
     updatedAt: new Date().toISOString(),
   };
   await dbRun(
@@ -3448,7 +3518,7 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
      WHERE id = ? AND organization_id = ?`,
     [
       updated.status,
-      null,
+      materializedId,
       JSON.stringify(updated.readBack),
       updated.auditEventId,
       updated.updatedAt,
@@ -3704,8 +3774,16 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const { organizationId, userId } = authContext(req);
   const target = String(req.body?.target || '') as WorkspaceTarget;
-  if (!['idea', 'note', 'initiative'].includes(target)) {
-    return res.status(400).json({ error: 'target must be idea, note, or initiative' });
+  // C3 — `decision` is fully implemented in createWorkspaceResource (real
+  // INSERT into decisions). This guard was the only thing keeping the chat-
+  // shell from being able to send to it; ecosystem audit flagged it as a
+  // 1-line fix.
+  // C4.1 — `task` added: createWorkspaceResource now has a task branch using
+  // TaskService.createTask (canonical path).
+  if (!['idea', 'note', 'initiative', 'decision', 'task'].includes(target)) {
+    return res
+      .status(400)
+      .json({ error: 'target must be idea, note, initiative, decision, or task' });
   }
 
   try {
@@ -3919,6 +3997,363 @@ router.post('/drafts/:draftId/research/finalize-report', async (req: AuthRequest
     });
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to finalize Canvas research report',
+    });
+  }
+});
+
+/**
+ * L-2 — Canvas → Table Studio bridge (for `kind='table'` drafts).
+ *
+ * Previously a `kind='table'` Canvas produced a sibling `work_canvas_drafts`
+ * row containing the markdown table; Table Studio never saw it. This endpoint
+ * promotes the table into a real Table Studio entry: `tp_bases` (auto-bootstrap
+ * "Canvas Workspace" if needed), `tp_tables` (one per Canvas table), `tp_fields`
+ * (typed via canvasTableSeed.buildCanvasTableSeed inference — date / number /
+ * single_line_text / long_text), `tp_records` (one per markdown table row, with
+ * cell values coerced to the inferred type).
+ *
+ * Only enabled for `kind='table'`. Narrative drafts get a 400 with a hint —
+ * the audit's L-2 rationale (naïve column inference would make Table Studio
+ * worse, not better) still applies for non-table kinds.
+ */
+router.post('/drafts/:draftId/send-to-table-studio', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  if (draft.kind !== 'table') {
+    return res.status(400).json({
+      error: 'Table Studio handoff requires a Canvas with kind=table',
+      code: 'CANVAS_NOT_TABLE_KIND',
+    });
+  }
+  const { organizationId, userId } = authContext(req);
+  const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas table');
+
+  try {
+    const { buildCanvasTableSeed } = await import('../services/canvasTableSeed.js');
+    const seed = buildCanvasTableSeed(draft.contentMd);
+    if (!seed || seed.fields.length === 0) {
+      return res.status(400).json({
+        error: 'No markdown table found in the Canvas draft',
+        code: 'CANVAS_TABLE_EMPTY',
+      });
+    }
+
+    const metadataService = (await import('../services/tablePlatform/MetadataService.js')).default;
+    const recordsService = (await import('../services/tablePlatform/RecordsService.js')).default;
+
+    // Find or auto-create the org-scoped "Canvas Workspace" base. Uses the
+    // same workspaceId=orgId fallback pattern as v8/artifactRegistryService.
+    const workspaceTarget = organizationId;
+    const existingBase = await dbGet<{ id: string }>(
+      `SELECT id FROM tp_bases
+        WHERE organization_id = ? AND workspace_id = ? AND name = ?
+        ORDER BY created_at DESC LIMIT 1`,
+      [organizationId, workspaceTarget, 'Canvas Workspace'],
+      { fallback: true }
+    );
+    let baseId = existingBase?.id || '';
+    if (!baseId) {
+      const newBase = await metadataService.createBase(
+        workspaceTarget,
+        organizationId,
+        'Canvas Workspace',
+        userId
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      baseId = (newBase as any)?.id;
+    }
+    if (!baseId) throw new Error('Failed to bootstrap Canvas Workspace base');
+
+    // Create the table. createTable seeds a default 'Name' field as the
+    // primary; we then add the inferred fields. Default field stays as the
+    // human-readable row identifier (first column of the canvas table is
+    // copied into it via the records loop below).
+    const newTable = await metadataService.createTable(baseId, title, undefined, userId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tableId: string = (newTable as any)?.id || '';
+    if (!tableId) throw new Error('Failed to create Table Studio table');
+
+    // Add inferred fields (skip the auto-created 'Name' field name to avoid
+    // collision — buildCanvasTableSeed wouldn't produce 'Name' unless the
+    // user explicitly used it, in which case we let it merge by skipping).
+    const existingNameSet = new Set(['name']);
+    for (const field of seed.fields) {
+      if (existingNameSet.has(field.name.toLowerCase())) continue;
+      await metadataService.createField(
+        tableId,
+        field.name,
+        field.fieldType,
+        field.options || {},
+        userId
+      );
+      existingNameSet.add(field.name.toLowerCase());
+    }
+
+    // Insert records. Take the first column as the Name field's value so
+    // the row identifier is informative.
+    const primaryFieldName = seed.fields[0]?.name;
+    for (const record of seed.records) {
+      const payload: Record<string, unknown> = { ...record };
+      if (primaryFieldName && record[primaryFieldName] !== undefined) {
+        payload.Name = String(record[primaryFieldName]);
+      }
+      await recordsService.createRecord(tableId, payload, userId);
+    }
+
+    // Back-link on the Canvas draft.
+    const previousLinks =
+      draft.provenance?.linkedWorkspaceResources &&
+      typeof draft.provenance.linkedWorkspaceResources === 'object'
+        ? (draft.provenance.linkedWorkspaceResources as Record<string, unknown>)
+        : {};
+    const updatedDraft = await updateDraftAfterOperation(draft, {
+      linkedWorkspaceResources: {
+        ...previousLinks,
+        table_studio: {
+          id: tableId,
+          title,
+          url: `/table-studio?baseId=${encodeURIComponent(baseId)}&tableId=${encodeURIComponent(tableId)}`,
+          linkedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    return res.json(
+      envelope({
+        draft: updatedDraft,
+        linkedResource: {
+          type: 'table_studio',
+          id: tableId,
+          title,
+          url: `/table-studio?baseId=${encodeURIComponent(baseId)}&tableId=${encodeURIComponent(tableId)}`,
+        },
+        readBack: {
+          target: 'table_studio',
+          baseId,
+          tableId,
+          fieldCount: seed.fields.length,
+          recordCount: seed.records.length,
+          status: 'created',
+        },
+      })
+    );
+  } catch (error) {
+    logger.error('[work-canvas] canvas.table_studio.failed', {
+      draftId: draft.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to send Canvas to Table Studio',
+    });
+  }
+});
+
+/**
+ * M-5 — Canvas → Outputs Library registration.
+ *
+ * Previously the `saveToOutputs` UI action downloaded a markdown blob and
+ * redirected to /outputs (which didn't exist — see W2-E3) or /presentations
+ * (which existed but had no record of the Canvas). Now this endpoint registers
+ * the Canvas draft inside the canonical Outputs registry
+ * (`v8_output_artifacts`, canonical_home='outputs_library') via
+ * `artifactRegistryService.registerArtifactOrigin` — the same path
+ * DocumentStudio and PresentationStudio use. The Outputs aggregate tab can
+ * now list real Canvas-origin entries.
+ *
+ * Treats the Canvas as an outputType='report' / artifactFamily='work_canvas'
+ * artifact. Registration is idempotent on (organization, origin_runtime,
+ * origin_record_id) — calling twice produces a single artifact and updates
+ * its metadata.
+ */
+router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const { organizationId, userId } = authContext(req);
+  const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas output');
+
+  try {
+    const { registerArtifactOrigin } = await import('../services/v8/artifactRegistryService.js');
+    const artifact = await registerArtifactOrigin({
+      organizationId,
+      outputType: 'report',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      artifactFamily: 'work_canvas' as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      originRuntime: 'work_canvas' as any,
+      originRecordId: draft.id,
+      titleSnapshot: title,
+      ownerUserId: userId,
+      createdBy: userId,
+      visibilityScope: undefined,
+      projectId: draft.projectId || null,
+      originSummary: {
+        sourceType: 'work_canvas',
+        sourceTable: 'work_canvas_drafts',
+        contentMdLength: (draft.contentMd || '').length,
+      },
+    });
+
+    const previousLinks =
+      draft.provenance?.linkedWorkspaceResources &&
+      typeof draft.provenance.linkedWorkspaceResources === 'object'
+        ? (draft.provenance.linkedWorkspaceResources as Record<string, unknown>)
+        : {};
+    const updatedDraft = await updateDraftAfterOperation(draft, {
+      linkedWorkspaceResources: {
+        ...previousLinks,
+        outputs_library: {
+          id: artifact?.artifactId || draft.id,
+          title,
+          url: `/presentations?tab=outputs&artifactId=${encodeURIComponent(
+            String(artifact?.artifactId || draft.id)
+          )}`,
+          linkedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    return res.json(
+      envelope({
+        draft: updatedDraft,
+        linkedResource: {
+          type: 'outputs_library',
+          id: String(artifact?.artifactId || draft.id),
+          title,
+          url: `/presentations?tab=outputs&artifactId=${encodeURIComponent(
+            String(artifact?.artifactId || draft.id)
+          )}`,
+        },
+        readBack: {
+          target: 'outputs_library',
+          artifactId: artifact?.artifactId || null,
+          status: 'registered',
+        },
+      })
+    );
+  } catch (error) {
+    logger.error('[work-canvas] canvas.outputs.register_failed', {
+      draftId: draft.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to register Canvas in Outputs',
+    });
+  }
+});
+
+/**
+ * L-1 — Canvas → DocumentStudio bridge.
+ *
+ * Previously the only path from Canvas to DocumentStudio was: user downloads
+ * .docx, manually uploads to DocumentStudio. The proper intake → plan →
+ * generate pipeline was unreachable from the chat-shell. This endpoint wires
+ * the Canvas draft directly into DocumentStudio's `materializeDocumentArtifact`
+ * so the Canvas's markdown becomes a real DocumentStudio artifact with a back-
+ * link to its source draft.
+ *
+ * The Canvas's markdown is forwarded as the `intake.description` so
+ * DocumentStudio's narrative planner can section it normally; the sectionized
+ * heading list from `markdownSections` is also passed as `sourceHints` so the
+ * planner has structured context. The first-heading or draft title becomes
+ * `intake.title`. The source draft id is recorded in `sourceRefs` so the
+ * resulting artifact knows where it came from.
+ */
+router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const { organizationId, userId } = authContext(req);
+
+  const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas document');
+  const sections = markdownSections(draft.contentMd).slice(0, 12);
+  const language = String(req.body?.language || '').toLowerCase() === 'en' ? 'en' : 'pl';
+  const documentType = String(req.body?.documentType || 'business_brief');
+  const useLlm = req.body?.useLlm === true;
+
+  try {
+    const { materializeDocumentArtifact } =
+      await import('../services/documentStudio/documentStudioService.js');
+    // DocumentStudio accepts `description` as the narrative seed. We pass the
+    // full markdown so the planner sees the prose; `sourceHints` carries the
+    // section list as structured context so the planner can preserve the
+    // user's heading topology when it builds the outline.
+    const intake = {
+      title,
+      description: draft.contentMd || title,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      documentType: documentType as any,
+      language,
+      sourceHints: sections.map((section) => ({
+        type: 'inline' as const,
+        title: section.heading,
+        excerpt: section.body.slice(0, 1200),
+      })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    const result = await materializeDocumentArtifact({
+      organizationId,
+      userId,
+      intake,
+      // Pass the source-draft id through sourceRefs so the artifact records
+      // its origin (`work_canvas_drafts/<draftId>`) — visible in the Outputs
+      // hub via artifactRegistryService.registerArtifactOrigin (which the
+      // /generate route already calls).
+      sourceRefs: [
+        {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          type: 'work_canvas' as any,
+          id: draft.id,
+          title,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ] as any,
+      projectId: draft.projectId || null,
+      useLlm,
+    });
+
+    // Record the back-link on the draft so Canvas's UI can show "Open in
+    // DocumentStudio" on subsequent loads.
+    const previousLinks =
+      draft.provenance?.linkedWorkspaceResources &&
+      typeof draft.provenance.linkedWorkspaceResources === 'object'
+        ? (draft.provenance.linkedWorkspaceResources as Record<string, unknown>)
+        : {};
+    const updatedDraft = await updateDraftAfterOperation(draft, {
+      linkedWorkspaceResources: {
+        ...previousLinks,
+        document_studio: {
+          id: result.artifactId,
+          title: String(result.schema?.title || title),
+          url: `/documents/${encodeURIComponent(String(result.artifactId))}`,
+          linkedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    return res.json(
+      envelope({
+        draft: updatedDraft,
+        linkedResource: {
+          type: 'document_studio',
+          id: String(result.artifactId),
+          title: String(result.schema?.title || title),
+          url: `/documents/${encodeURIComponent(String(result.artifactId))}`,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        readBack: {
+          target: 'document_studio',
+          artifactId: result.artifactId,
+          status: 'created',
+        } as any,
+      })
+    );
+  } catch (error) {
+    logger.error('[work-canvas] canvas.document_studio.failed', {
+      draftId: draft.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to send Canvas to Document Studio',
     });
   }
 });

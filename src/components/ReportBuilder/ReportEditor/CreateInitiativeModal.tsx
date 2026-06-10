@@ -83,7 +83,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 bg-[#1a1d2e] border border-white/10 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-lg mx-4 bg-navy-900 border border-white/10 rounded-2xl shadow-2xl">
         {/* Header */}
         <div className="flex items-center gap-3 px-6 py-4 border-b border-white/5">
           <div className="p-2 rounded-lg bg-primary-500/10">
@@ -104,7 +104,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
         <div className="px-6 py-5 space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">
               {isPl ? 'Tytuł' : 'Title'}
             </label>
             <input
@@ -120,7 +120,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">
               {isPl ? 'Opis' : 'Description'}
             </label>
             <textarea
@@ -145,7 +145,7 @@ export const CreateInitiativeModal: React.FC<CreateInitiativeModalProps> = ({
           <button
             onClick={onClose}
             disabled={submitting}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-200 hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
           >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>

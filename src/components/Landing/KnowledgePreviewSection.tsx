@@ -83,7 +83,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
       onClick={() => onArticleClick(article)}
     >
       {/* Video Teaser / Thumbnail */}
-      <div className="relative aspect-video bg-gradient-to-br from-primary-900 to-indigo-900 overflow-hidden">
+      <div className="relative aspect-video bg-gradient-to-br from-primary-900 to-crimson-900 overflow-hidden">
         {article.thumbnail_url ? (
           <img
             src={
@@ -138,7 +138,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ article, onArticleClick }) =>
         <p className="mb-4 flex-1 text-sm text-slate-600 line-clamp-3 dark:text-slate-400">
           {article.summary}
         </p>
-        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:from-primary-700 group-hover:to-indigo-700">
+        <span className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-600 to-crimson-600 px-4 py-2.5 text-sm font-semibold text-white transition-all group-hover:from-primary-700 group-hover:to-crimson-700">
           {t('landing.knowledge.readMore', 'Read Full Article')}
           <ArrowRight size={14} />
         </span>

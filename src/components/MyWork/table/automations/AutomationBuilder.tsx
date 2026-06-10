@@ -251,7 +251,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                 }`}
               >
                 <span
-                  className={`mt-0.5 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`}
+                  className={`mt-0.5 ${isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600'}`}
                 >
                   {opt.icon}
                 </span>
@@ -331,7 +331,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             <Bell className="mr-1.5 inline h-4 w-4" />
             {isPl ? 'Akcje' : 'Actions'}
-            <span className="ml-1.5 text-xs font-normal text-gray-400">({actions.length})</span>
+            <span className="ml-1.5 text-xs font-normal text-gray-600">({actions.length})</span>
           </h3>
           <button
             type="button"
@@ -350,7 +350,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
               className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800"
             >
               <div className="mb-2 flex items-center gap-2">
-                <GripVertical className="h-4 w-4 flex-shrink-0 text-gray-300" />
+                <GripVertical className="h-4 w-4 flex-shrink-0 text-gray-600" />
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
                   {idx + 1}
                 </span>
@@ -375,7 +375,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     type="button"
                     onClick={() => moveAction(idx, -1)}
                     disabled={idx === 0}
-                    className="rounded p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                    className="rounded p-1 text-gray-600 hover:text-gray-600 disabled:opacity-30"
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
                   </button>
@@ -383,7 +383,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                     type="button"
                     onClick={() => moveAction(idx, 1)}
                     disabled={idx === actions.length - 1}
-                    className="rounded p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                    className="rounded p-1 text-gray-600 hover:text-gray-600 disabled:opacity-30"
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
                   </button>
@@ -410,7 +410,7 @@ export const AutomationBuilder: React.FC<AutomationBuilderProps> = ({
                   />
                 )}
                 {action.actionType === 'create_record' && fields.length > 0 && (
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-600">
                     {isPl
                       ? 'Rekord zostanie utworzony z domyślnymi wartościami.'
                       : 'Record will be created with default values.'}

@@ -262,7 +262,7 @@ const PresentationTelemetryView: React.FC<PresentationTelemetryViewProps> = ({ d
           </h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
           {rollup && (
-            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+            <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
               Generated {new Date(rollup.generatedAt).toLocaleString()} · deck{' '}
               <code className="font-mono">{rollup.deckId || trimmedDeckId}</code>
               {rollup.lastActivityAt && (
@@ -569,7 +569,7 @@ function renderBody(props: BodyProps): React.ReactElement {
                       />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                     {sortedByEventType.map((row) => (
                       <tr
                         key={row.eventType}
@@ -587,7 +587,7 @@ function renderBody(props: BodyProps): React.ReactElement {
                               {formatRelativeTime(row.lastAt)}
                             </span>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-600">—</span>
                           )}
                         </td>
                       </tr>

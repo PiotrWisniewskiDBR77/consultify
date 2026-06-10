@@ -199,7 +199,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
     <form onSubmit={handleSaveGeneral} className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
             Organization Name
           </label>
           <input
@@ -210,7 +210,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">ID: {editingOrg.id}</p>
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
             Created At
           </label>
           <input
@@ -223,7 +223,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
 
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
             Plan
           </label>
           <select
@@ -240,7 +240,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
             Status
           </label>
           <select
@@ -258,7 +258,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+        <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
           Discount (%)
         </label>
         <div className="flex items-center gap-4">
@@ -328,7 +328,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-white">Current Subscription</h4>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-slate-600 dark:text-slate-500">
                   {formatText(billing.plan_name, org.plan?.toUpperCase() || '-')} Plan
                 </p>
               </div>
@@ -368,7 +368,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-400 dark:text-slate-500">Used</span>
+                  <span className="text-slate-600 dark:text-slate-500">Used</span>
                   <span className="text-white font-medium">
                     {formatInteger(usage?.tokens_used)}
                   </span>
@@ -394,11 +394,11 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             </h4>
             <div className="space-y-2">
               <div className="flex justify-between text-sm border-b border-white/5 pb-2">
-                <span className="text-slate-400 dark:text-slate-500">Tokens Overage</span>
+                <span className="text-slate-600 dark:text-slate-500">Tokens Overage</span>
                 <span className="text-white">{formatInteger(usage?.tokens_overage)}</span>
               </div>
               <div className="flex justify-between text-sm pt-1">
-                <span className="text-slate-400 dark:text-slate-500">Estimated Cost</span>
+                <span className="text-slate-600 dark:text-slate-500">Estimated Cost</span>
                 <span className="text-green-400 font-bold">
                   {formatMoney(usage?.overage_amount)}
                 </span>
@@ -411,7 +411,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
         <div className="bg-navy-950 rounded-lg border border-white/5 overflow-hidden">
           <div className="px-5 py-3 border-b border-white/5 bg-navy-900/50 flex justify-between items-center">
             <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-              <FileText size={16} className="text-slate-400 dark:text-slate-500" /> Invoice History
+              <FileText size={16} className="text-slate-600 dark:text-slate-500" /> Invoice History
             </h4>
           </div>
           <div className="max-h-56 overflow-y-auto">
@@ -428,7 +428,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                 {invoices && invoices.length > 0 ? (
                   invoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                      <td className="p-3 text-slate-300">{formatDate(inv.created_at)}</td>
+                      <td className="p-3 text-slate-600">{formatDate(inv.created_at)}</td>
                       <td className="p-3 text-white font-medium">{formatMoney(inv.amount_due)}</td>
                       <td className="p-3">
                         <span
@@ -479,14 +479,14 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">{org.name}</h2>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Organization Settings & Billing
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-full text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-full text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
           >
             <X size={24} />
           </button>
@@ -506,7 +506,7 @@ export const SuperAdminOrgDetailsModal: React.FC<SuperAdminOrgDetailsModalProps>
                 className={`py-4 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-white'
-                    : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                    : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-slate-300 hover:border-slate-700'
                 }`}
               >
                 {tab.icon} {tab.label}

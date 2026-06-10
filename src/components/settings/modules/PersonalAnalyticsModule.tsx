@@ -18,12 +18,13 @@ import {
   Clock,
   Download,
   Filter,
-  Loader2,
   Target,
   TrendingUp,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
@@ -153,11 +154,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (

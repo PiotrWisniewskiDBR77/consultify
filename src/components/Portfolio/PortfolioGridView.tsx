@@ -131,7 +131,7 @@ const InitiativeCard: React.FC<InitiativeCardProps> = ({ initiative, onClick }) 
       </div>
 
       {/* Footer: Budget & ROI */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-navy-700">
+      <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
           <DollarSign size={14} />
           <span className="font-medium">{formatCurrency(initiative.budget || 0)}</span>
@@ -168,7 +168,7 @@ export const PortfolioGridView: React.FC<PortfolioGridViewProps> = ({
       </div>
 
       {initiatives.length === 0 && (
-        <div className="flex items-center justify-center h-64 text-slate-400 dark:text-slate-500">
+        <div className="flex items-center justify-center h-64 text-slate-600 dark:text-slate-500">
           <p>No initiatives found</p>
         </div>
       )}

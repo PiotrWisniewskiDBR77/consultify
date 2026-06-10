@@ -12,6 +12,7 @@ import { z } from 'zod';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
 import { radarActionService } from '../../services/radar/radarActionService.js';
+import { radarBriefingService } from '../../services/radar/radarBriefingService.js';
 import { radarRankingService } from '../../services/radar/radarRankingService.js';
 import { radarService } from '../../services/radar/radarService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -50,6 +51,12 @@ const radarActionSchema = z.object({
   payload: z.record(z.string(), z.unknown()).optional(),
 });
 
+const targetModuleNormalization = {
+  Inicjatywy: 'initiatives',
+  Wdrożenia: 'execution',
+  Notatki: 'notebook',
+} as const;
+
 router.get(
   '/radar',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -82,6 +89,76 @@ router.get(
     });
 
     return res.json(payload);
+  })
+);
+
+router.get(
+  '/radar/preview',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    if (
+      !(await requireTables(res, [
+        'radar_sources',
+        'radar_processed_signals',
+        'user_radar_profiles',
+      ]))
+    )
+      return;
+    const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
+    const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
+    const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');
+    const isPolish = langRaw.trim().toLowerCase().startsWith('pl');
+    const payload = await radarService.buildView({
+      userId: identity.userId,
+      orgId: identity.orgId,
+      role: req.user?.role,
+      industry: orgContext.profile.industry || null,
+      isPolish,
+    });
+    return res.json({
+      generatedAt: payload.generatedAt,
+      radarMap: payload.radarMap || { signals: [] },
+      dailyBriefing: payload.dailyBriefing,
+      localization: payload.localization,
+    });
+  })
+);
+
+router.get(
+  '/radar/signal/:signalId/briefing',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    if (
+      !(await requireTables(res, [
+        'radar_processed_signals',
+        'radar_sources',
+        'radar_raw_items',
+        'user_radar_profiles',
+      ]))
+    )
+      return;
+
+    const signalId = String(req.params.signalId || '').trim();
+    if (!signalId) return res.status(400).json({ error: 'Missing signalId' });
+
+    const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
+    const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
+    const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');
+    const isPolish = langRaw.trim().toLowerCase().startsWith('pl');
+
+    const briefing = await radarBriefingService.getBriefing({
+      userId: identity.userId,
+      orgId: identity.orgId,
+      signalId,
+      isPolish,
+      role: req.user?.role,
+      industry: orgContext.profile.industry || null,
+    });
+
+    // 200 with briefing:null tells the client to keep its deterministic baseline.
+    return res.json({ briefing });
   })
 );
 

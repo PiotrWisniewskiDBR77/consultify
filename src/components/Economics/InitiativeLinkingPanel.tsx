@@ -12,7 +12,6 @@ import {
   Check,
   ExternalLink,
   Link2,
-  Loader2,
   Rocket,
   Search,
   Target,
@@ -23,6 +22,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { LoadingState, StatusChip, type StatusTone } from '../ui/primitives';
 
 interface Initiative {
   id: string;
@@ -150,16 +150,14 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusTone = (status: string): StatusTone => {
     switch (status) {
       case 'active':
-        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400';
+        return 'success';
       case 'planned':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400';
-      case 'completed':
-        return 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400';
+        return 'info';
       default:
-        return 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400';
+        return 'neutral';
     }
   };
 
@@ -172,7 +170,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
       case 'low':
         return 'text-green-500';
       default:
-        return 'text-slate-400 dark:text-slate-500';
+        return 'text-slate-600 dark:text-slate-500';
     }
   };
 
@@ -214,17 +212,18 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                 <h4 className="font-bold text-navy-900 dark:text-white truncate">
                   {linkedInitiative.name}
                 </h4>
-                <span
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(linkedInitiative.status)}`}
-                >
-                  {linkedInitiative.status === 'active'
-                    ? 'Aktywna'
-                    : linkedInitiative.status === 'planned'
-                      ? 'Planowana'
-                      : linkedInitiative.status === 'completed'
-                        ? 'Completed'
-                        : linkedInitiative.status}
-                </span>
+                <StatusChip
+                  tone={getStatusTone(linkedInitiative.status)}
+                  label={
+                    linkedInitiative.status === 'active'
+                      ? 'Aktywna'
+                      : linkedInitiative.status === 'planned'
+                        ? 'Planowana'
+                        : linkedInitiative.status === 'completed'
+                          ? 'Completed'
+                          : linkedInitiative.status
+                  }
+                />
               </div>
 
               {linkedInitiative.description && (
@@ -266,7 +265,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
               </div>
             </div>
             <a
-              href={`/initiatives/${linkedInitiative.id}`}
+              href={`/initiatives?open=${encodeURIComponent(linkedInitiative.id)}`}
               className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-500/20 rounded-lg transition-colors"
               title="Open Initiative"
             >
@@ -289,7 +288,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
           </h3>
           <button
             onClick={() => setShowSelector(false)}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
             <X size={20} />
           </button>
@@ -299,7 +298,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         <div className="relative mb-4">
           <Search
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -315,9 +314,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
         {/* List */}
         <div className="max-h-80 overflow-y-auto space-y-2">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 size={24} className="animate-spin text-blue-500" />
-            </div>
+            <LoadingState variant="spinner" className="py-8" />
           ) : filteredInitiatives.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <AlertCircle size={24} className="mx-auto mb-2 opacity-50" />
@@ -345,15 +342,16 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
                       <span className="font-medium text-navy-900 dark:text-white truncate">
                         {initiative.name}
                       </span>
-                      <span
-                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(initiative.status)}`}
-                      >
-                        {initiative.status === 'active'
-                          ? 'Aktywna'
-                          : initiative.status === 'planned'
-                            ? 'Planowana'
-                            : initiative.status}
-                      </span>
+                      <StatusChip
+                        tone={getStatusTone(initiative.status)}
+                        label={
+                          initiative.status === 'active'
+                            ? 'Aktywna'
+                            : initiative.status === 'planned'
+                              ? 'Planowana'
+                              : initiative.status
+                        }
+                      />
                     </div>
                     {initiative.projectName && (
                       <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
@@ -386,7 +384,7 @@ export const InitiativeLinkingPanel: React.FC<InitiativeLinkingPanelProps> = ({
 
       <div className="text-center py-8">
         <div className="w-16 h-16 mx-auto rounded-xl bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-700 flex items-center justify-center mb-4">
-          <Link2 size={32} className="text-slate-400 dark:text-slate-500" />
+          <Link2 size={32} className="text-slate-600 dark:text-slate-500" />
         </div>
         <h4 className="font-medium text-navy-900 dark:text-white mb-2">No linked initiative</h4>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-sm mx-auto">

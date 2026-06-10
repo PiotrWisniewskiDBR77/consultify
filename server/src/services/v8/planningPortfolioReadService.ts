@@ -323,6 +323,16 @@ export async function getInitiativeDetailRead(
   const displayStatus = normalizeInitiativeDbStatusForRead(rawStatus);
   const p11LifecycleState = mapDbStatusToP11Lifecycle(rawStatus);
   const statusReadDrift = hasInitiativeStatusSchemaDrift(rawStatus);
+  // Structured charter (problemStructured, effortProfile, assumptions, strategicRole,
+  // strategicIntent, valueTiming, confidenceLevel, competenciesRequired,
+  // structuredSuccessCriteria, decisionToMake, applicantOneLiner, placementReason,
+  // targetState.process/behavior/capability) is persisted inside target_state JSON.
+  // Surface it top-level so the Initiative detail modal renders it. Purely additive:
+  // fields are undefined when the charter is absent (legacy initiatives unaffected).
+  const charter = safeJsonParseObject((row as any).target_state as string, {}) as Record<
+    string,
+    unknown
+  >;
 
   return {
     ...initiative,
@@ -348,7 +358,21 @@ export async function getInitiativeDetailRead(
     plannedEndDate: (row as any).planned_end_date ?? (row as any).end_date ?? null,
     baselineVersion: (row as any).baseline_version ? Number((row as any).baseline_version) : null,
     scheduleBaselineId: (row as any).schedule_baseline_id ?? null,
-    targetState: safeJsonParseObject((row as any).target_state as string, {}),
+    targetState: charter,
+    problemStructured: charter.problemStructured,
+    structuredSuccessCriteria: charter.structuredSuccessCriteria,
+    assumptions: charter.assumptions,
+    effortProfile: charter.effortProfile,
+    strategicRole: charter.strategicRole,
+    strategicIntent: charter.strategicIntent,
+    competenciesRequired: charter.competenciesRequired,
+    decisionToMake: charter.decisionToMake,
+    applicantOneLiner: charter.applicantOneLiner,
+    placementReason: charter.placementReason,
+    valueDriver: charter.valueDriver ?? (row as any).value_driver,
+    businessValue: charter.businessValue ?? (row as any).business_value,
+    valueTiming: charter.valueTiming ?? (row as any).value_timing,
+    confidenceLevel: charter.confidenceLevel ?? (row as any).confidence_level,
     scope: {
       inScope: safeJsonParse(row.scope_in as string, []),
       outScope: safeJsonParse(row.scope_out as string, []),

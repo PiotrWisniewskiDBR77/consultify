@@ -224,7 +224,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
   if (!report && reports.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FileText className="w-12 h-12 text-gray-300 mb-4" />
+        <FileText className="w-12 h-12 text-gray-600 mb-4" />
         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
           {t('sponsorReport.empty', 'No Sponsor Reports')}
         </h3>
@@ -392,7 +392,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
             {/* Evidence sources */}
             {sections[activeSection].section_type === 'key_findings' && (
               <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-lg">
-                <p className="text-xs text-gray-400 flex items-center gap-1">
+                <p className="text-xs text-gray-600 flex items-center gap-1">
                   <Shield className="w-3 h-3" />
                   {t(
                     'sponsorReport.evidenceNote',
@@ -456,7 +456,7 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
         {report && (
           <div className="space-y-4">
             <div>
-              <span className="text-xs text-gray-400">{t('sponsorReport.status', 'Status')}</span>
+              <span className="text-xs text-gray-600">{t('sponsorReport.status', 'Status')}</span>
               <p
                 className={`text-sm font-medium mt-0.5 inline-block px-2 py-0.5 rounded ${STATUS_COLORS[report.status] || ''}`}
               >
@@ -464,19 +464,19 @@ export const SponsorReportView: React.FC<SponsorReportViewProps> = ({
               </p>
             </div>
             <div>
-              <span className="text-xs text-gray-400">{t('sponsorReport.created', 'Created')}</span>
+              <span className="text-xs text-gray-600">{t('sponsorReport.created', 'Created')}</span>
               <p className="text-sm text-gray-700 dark:text-gray-300">
                 {new Date(report.created_at).toLocaleDateString()}
               </p>
             </div>
             <div>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-600">
                 {t('sponsorReport.sections', 'Sections')}
               </span>
               <p className="text-sm text-gray-700 dark:text-gray-300">{sections.length}</p>
             </div>
             <div>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-600">
                 {t('sponsorReport.languageProp', 'Language')}
               </span>
               <p className="text-sm text-gray-700 dark:text-gray-300">

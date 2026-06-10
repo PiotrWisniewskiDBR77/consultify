@@ -46,15 +46,53 @@ vi.mock('react-i18next', () => ({
   },
 }));
 
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
-  },
-}));
+vi.mock('framer-motion', () => {
+  const stripMotionProps = (props: Record<string, unknown>) => {
+    const cleaned: Record<string, unknown> = {};
+    for (const key of Object.keys(props)) {
+      if (
+        key === 'initial' ||
+        key === 'animate' ||
+        key === 'exit' ||
+        key === 'transition' ||
+        key === 'whileHover' ||
+        key === 'whileTap' ||
+        key === 'whileFocus' ||
+        key === 'whileInView' ||
+        key === 'variants' ||
+        key === 'layout' ||
+        key === 'layoutId'
+      ) {
+        continue;
+      }
+      cleaned[key] = props[key];
+    }
+    return cleaned;
+  };
+  const motion = new Proxy(
+    {},
+    {
+      get: (_target, tag: string) => {
+        const Component = (props: Record<string, unknown> & { children?: React.ReactNode }) => {
+          const { children, ...rest } = props;
+          return React.createElement(tag, stripMotionProps(rest), children);
+        };
+        Component.displayName = `motion.${tag}`;
+        return Component;
+      },
+    }
+  );
+  return { motion };
+});
 
 const useHomeDataMock = vi.fn();
 vi.mock('../../../src/components/MyWork/Home/useHomeData', () => ({
   useHomeData: (...args: unknown[]) => useHomeDataMock(...args),
+}));
+
+const useRadarDataMock = vi.fn();
+vi.mock('../../../src/components/MyWork/Home/useRadarData', () => ({
+  useRadarData: (...args: unknown[]) => useRadarDataMock(...args),
 }));
 
 const useV8MyWorkRoofSummaryMock = vi.fn();
@@ -219,46 +257,84 @@ describe('HomeView aggregated contract', () => {
       isLoading: false,
       isError: false,
     });
+
+    useRadarDataMock.mockReturnValue({
+      data: {
+        generatedAt: '2026-05-18T00:00:00.000Z',
+        radarMap: {
+          signals: [
+            {
+              id: 'sig-1',
+              name: 'AI Agents',
+              ring: 'NOW',
+              quadrant: 'MY_PROJECTS',
+              status: 'new',
+              signalType: 'TECHNOLOGY',
+              importanceLevel: 'large',
+              fitLevel: 'high',
+              preview: {
+                shortDescription: 'Agentic workflows for repetitive work.',
+                whyItMatters: 'Can reduce repetitive delivery effort.',
+                whyItMattersForYou: 'You run delivery and growth experiments.',
+                howToThinkAboutIt: 'Start from one repeatable workflow.',
+                goodFirstQuestion: 'Which repetitive flow should be first?',
+                suggestedNextStep: 'Talk to Teresa for a first experiment.',
+              },
+            },
+          ],
+        },
+        whatChanged: [],
+      },
+      loading: false,
+      error: null,
+      refresh: vi.fn(),
+    });
   });
 
   it('renders the aggregated home contract with roof truth and block orchestration', () => {
     render(<HomeView onAction={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Roof ·/ }));
-
     expect(screen.getByText(/Radar · context/)).toBeInTheDocument();
-    expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
-    expect(screen.getByText(/Home V2 aggregated \+ outputs bridge/)).toBeInTheDocument();
-    expect(screen.getAllByText(/AI Pulse Core/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Industry Lens/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Execution Current/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Momentum/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Spark Field/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Decision Temperature/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Team Signal/).length).toBeGreaterThan(0);
-    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByText(/Your Radar/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Radar/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/AI Agents/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Industry Lens/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Execution Current/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Momentum/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/KPI Alerts/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Triage Cockpit|triage/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/NOW/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/PREPARE/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/LEARN/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/OBSERVE/).length).toBeGreaterThan(0);
   });
 
   it('passes home actions through to the My Work hub contract', () => {
     const onAction = vi.fn();
     render(<HomeView onAction={onAction} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'open AI Pulse Core' }));
+    fireEvent.click(screen.getByRole('button', { name: /Talk to Teresa/i }));
     expect(onAction).toHaveBeenCalledWith({
       type: 'chat',
-      packet: {
-        sourceBlock: 'aiPulseCore',
-        intent: 'prioritize_transformation',
-        title: 'AI Pulse Core',
-        starterPrompt: 'Test prompt',
-      },
+      packet: expect.objectContaining({
+        intent: 'radar_signal_consult',
+        title: 'AI Agents',
+      }),
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'open Execution Current' }));
+    fireEvent.click(screen.getByRole('button', { name: /Create Idea/i }));
     expect(onAction).toHaveBeenCalledWith({
-      type: 'navigate',
-      target: 'outputs_review',
+      type: 'create',
+      target: 'idea',
     });
+  });
+
+  it('supports interactive radar signal selection and updates preview panel', () => {
+    render(<HomeView onAction={vi.fn()} />);
+    const point = screen.getByTestId('radar-signal-sig-1');
+    fireEvent.click(point);
+    expect(screen.getByText('Can reduce repetitive delivery effort.')).toBeInTheDocument();
+    expect(screen.getAllByText('You run delivery and growth experiments.').length).toBeGreaterThan(0);
   });
 
   it('shows a retryable radar error state instead of a raw empty screen', () => {

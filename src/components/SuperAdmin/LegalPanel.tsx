@@ -325,7 +325,7 @@ export const LegalPanel: React.FC = () => {
                 onClick={() => setShowPublishModal(false)}
                 className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
               >
-                <X className="w-5 h-5 text-slate-400" />
+                <X className="w-5 h-5 text-slate-600" />
               </button>
             </div>
             <div className="p-6 space-y-4">

@@ -235,10 +235,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   if (!dateCol) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2 p-8">
+      <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-2 p-8">
         <Calendar size={32} />
         <span className="text-sm font-medium">{isPl ? 'Widok kalendarza' : 'Calendar View'}</span>
-        <span className="text-xs text-slate-400/70">
+        <span className="text-xs text-slate-600/70">
           {isPl
             ? 'Dodaj kolumnę typu Data, aby zobaczyć elementy na kalendarzu'
             : 'Add a Date column to see items on the calendar'}
@@ -276,7 +276,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             {weekdays.map((d) => (
               <div
                 key={d}
-                className="text-[9px] font-bold text-center text-slate-400 dark:text-slate-500 uppercase tracking-wider"
+                className="text-[9px] font-bold text-center text-slate-600 dark:text-slate-500 uppercase tracking-wider"
               >
                 {d}
               </div>
@@ -314,7 +314,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         className={`text-[10px] font-bold mb-0.5 ${
                           isToday
                             ? 'text-primary-600 dark:text-primary-400'
-                            : 'text-slate-400 dark:text-slate-500'
+                            : 'text-slate-600 dark:text-slate-500'
                         }`}
                       >
                         {cell.day}
@@ -334,7 +334,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                         </div>
                       ))}
                       {dayRows.length > 3 && (
-                        <div className="text-[7px] text-slate-400 px-1">+{dayRows.length - 3}</div>
+                        <div className="text-[7px] text-slate-600 px-1">+{dayRows.length - 3}</div>
                       )}
                       {canAdd && (
                         <button
@@ -364,7 +364,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 className={`text-[9px] font-bold text-center py-1 ${
                   dateStr === todayStr
                     ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-500/5'
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-500'
                 }`}
               >
                 {new Date(dateStr + 'T12:00:00').toLocaleDateString(isPl ? 'pl-PL' : 'en-US', {
@@ -375,7 +375,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             ))}
             {HOURS.map((hour) => (
               <React.Fragment key={hour}>
-                <div className="text-[9px] text-slate-400 dark:text-slate-500 py-0.5 pr-1 text-right">
+                <div className="text-[9px] text-slate-600 dark:text-slate-500 py-0.5 pr-1 text-right">
                   {hour}:00
                 </div>
                 {weekDates.map((dateStr) => {
@@ -390,7 +390,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       className={`min-h-[32px] rounded border transition-colors ${
                         isToday
                           ? 'border-primary-200/40 dark:border-primary-600/30 bg-primary-50/30 dark:bg-primary-500/5'
-                          : 'border-slate-100 dark:border-navy-800/60 bg-white dark:bg-navy-900/30'
+                          : 'border-slate-200 dark:border-navy-800/60 bg-white dark:bg-navy-900/30'
                       } ${canAdd ? 'hover:bg-primary-50/50 dark:hover:bg-primary-500/10' : ''}`}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={() => handleDrop(dateStr)}
@@ -470,14 +470,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               const canAdd = !locked && onAddEventAtDate && (isHovered || rowsAtHour.length === 0);
               return (
                 <React.Fragment key={hour}>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500 py-1 pr-1 text-right">
+                  <div className="text-[9px] text-slate-600 dark:text-slate-500 py-1 pr-1 text-right">
                     {hour}:00
                   </div>
                   <div
                     className={`min-h-[40px] rounded border transition-colors ${
                       isToday
                         ? 'border-primary-200/40 dark:border-primary-600/30 bg-primary-50/30 dark:bg-primary-500/5'
-                        : 'border-slate-100 dark:border-navy-800/60 bg-white dark:bg-navy-900/30'
+                        : 'border-slate-200 dark:border-navy-800/60 bg-white dark:bg-navy-900/30'
                     } ${canAdd ? 'hover:bg-primary-50/50 dark:hover:bg-primary-500/10' : ''}`}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleDrop(dateStr)}

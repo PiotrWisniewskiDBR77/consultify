@@ -4,7 +4,7 @@
  * This control only changes the active work system inside one shared workspace.
  * Panel navigation lives separately in the right-side WorkspacePanelStrip.
  */
-import { GitBranch, Layers, StickyNote, Table2, Workflow } from 'lucide-react';
+import { GitBranch, HelpCircle, Layers, Search, StickyNote, Table2, Workflow } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,7 +14,13 @@ export interface IdeaWorkspaceToolbarProps {
   activeTool: CanvasToolType;
   onToolChange: (tool: CanvasToolType) => void;
   familyCounts?: Record<string, number>;
+  /** Opens the in-canvas search (also bound to Cmd/Ctrl+F and `/`). */
+  onSearch?: () => void;
+  /** Opens the keyboard shortcuts help (also bound to `?`). */
+  onShowHelp?: () => void;
 }
+
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
 const TOOL_CONFIG: Array<{
   id: CanvasToolType;
@@ -38,13 +44,49 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   activeTool,
   onToolChange,
   familyCounts,
+  onSearch,
+  onShowHelp,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const searchLabel = isPl ? 'Szukaj' : 'Search';
+  const searchShortcut = isMac ? '⌘F' : 'Ctrl+F';
+  const helpLabel = isPl ? 'Skróty klawiszowe' : 'Keyboard shortcuts';
+  const hasLeadingActions = Boolean(onSearch || onShowHelp);
 
   return (
     <div className="absolute top-3 right-3 z-[50]">
       <div className="flex items-center gap-0.5 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-2 py-1.5">
+        {/* Workspace actions (search, help) */}
+        {onSearch && (
+          <button
+            type="button"
+            onClick={onSearch}
+            aria-label={`${searchLabel} (${searchShortcut})`}
+            title={`${searchLabel} · ${searchShortcut}`}
+            className="flex items-center justify-center h-9 w-9 rounded-hig-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-all"
+          >
+            <Search size={14} />
+          </button>
+        )}
+        {onShowHelp && (
+          <button
+            type="button"
+            onClick={onShowHelp}
+            aria-label={`${helpLabel} (?)`}
+            title={`${helpLabel} · ?`}
+            className="flex items-center justify-center h-9 w-9 rounded-hig-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-all"
+          >
+            <HelpCircle size={14} />
+          </button>
+        )}
+        {hasLeadingActions && (
+          <span
+            className="mx-0.5 h-5 w-px bg-slate-200/70 dark:bg-navy-700/70"
+            aria-hidden="true"
+          />
+        )}
+
         {/* Canvas tool switcher */}
         {TOOL_CONFIG.map((tool) => {
           const Icon = tool.icon;
@@ -80,8 +122,8 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
           if (otherFamilies.length === 0) return null;
           return (
             <div className="flex items-center gap-0.5 ml-0.5">
-              <Layers size={10} className="text-slate-400" />
-              <span className="text-[8px] text-slate-400 font-medium">+{otherFamilies.length}</span>
+              <Layers size={10} className="text-slate-600" />
+              <span className="text-[8px] text-slate-600 font-medium">+{otherFamilies.length}</span>
             </div>
           );
         })()}

@@ -102,7 +102,7 @@ function ToolbarIconButton({
       className={`p-1.5 rounded-lg transition-colors ${
         active
           ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
-          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+          : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${className ?? ''}`}
       title={title}
     >
@@ -389,7 +389,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                   activeViewId === v.id
                     ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
               >
                 {v.name}
@@ -403,7 +403,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               setSaveViewName('');
               setShowSaveViewDialog(true);
             }}
-            className="p-1 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+            className="p-1 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
             title={isPl ? 'Zapisz widok' : 'Save view'}
           >
             <Plus size={12} />
@@ -512,7 +512,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       {/* Quick filter */}
       <div className="relative flex-1 max-w-[200px]">
-        <Filter size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Filter size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600" />
         <input
           value={props.filterInput}
           onChange={(e) => props.onFilterInputChange(e.target.value)}
@@ -522,7 +522,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {props.filterInput && (
           <button
             onClick={() => props.onFilterInputChange('')}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600"
           >
             <X size={10} />
           </button>
@@ -603,7 +603,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           <button
             key={v.id}
             onClick={() => setViewLayout(v.id)}
-            className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
             title={v.label}
           >
             <v.icon size={12} />
@@ -856,7 +856,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
             </button>
             {showToolsMenu && (
               <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto">
-                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                   {isPl ? 'Workflow' : 'Workflow'}
                 </div>
                 {[
@@ -897,8 +897,8 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     {item.icon} {item.label}
                   </button>
                 ))}
-                <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                   {isPl ? 'Budowanie' : 'Build'}
                 </div>
                 {[
@@ -941,7 +941,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     {item.icon} {item.label}
                   </button>
                 ))}
-                <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
                 <button
                   onClick={() => {
                     props.onShowConsultifyLink();
@@ -1066,7 +1066,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         {props.connectors.connectors.length > 0 && (
           <button
             onClick={props.onShowConnectorList}
-            className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="relative p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             title={isPl ? 'Konektory' : 'Connectors'}
           >
             <Layers size={12} />
@@ -1135,10 +1135,10 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                 {col.visible ? (
                   <Eye size={12} className="text-primary-500" />
                 ) : (
-                  <EyeOff size={12} className="text-slate-400" />
+                  <EyeOff size={12} className="text-slate-600" />
                 )}
                 {col.header}
-                <span className="ml-auto text-[9px] text-slate-400">{col.type}</span>
+                <span className="ml-auto text-[9px] text-slate-600">{col.type}</span>
               </button>
             ))}
             <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-1 pt-1">
@@ -1173,7 +1173,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <button
           onClick={props.onPlatformUndo}
           disabled={!usePlatform && !props.nodesUndo.canUndo}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
           title="Undo (Ctrl+Z)"
         >
           <Undo2 size={13} />
@@ -1181,7 +1181,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
         <button
           onClick={props.nodesUndo.redo}
           disabled={!props.nodesUndo.canRedo}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
           title="Redo (Ctrl+Y)"
         >
           <Redo2 size={13} />
@@ -1250,7 +1250,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           </button>
           <button
             onClick={props.onAddRowWithTemplate}
-            className="px-1 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60"
+            className="px-1 py-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60"
             title={isPl ? 'Dodaj z szablonu' : 'Add from template'}
           >
             <ChevronDown size={10} />

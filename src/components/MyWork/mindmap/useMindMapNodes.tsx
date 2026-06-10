@@ -90,6 +90,7 @@ export interface UseMindMapNodesOpts {
   fitView: (opts?: any) => void;
   remoteLockedNodeIds: Set<string>;
   autoLayout?: (nodes: Node[], edges: Edge[]) => Node[];
+  partialLayoutSubtree?: (nodes: Node[], edges: Edge[], subtreeRootId: string) => Node[];
 }
 
 export function useMindMapNodes(opts: UseMindMapNodesOpts) {
@@ -104,6 +105,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     fitView,
     remoteLockedNodeIds,
     autoLayout,
+    partialLayoutSubtree,
   } = opts;
 
   const editingNodeIdRef = useRef<string | null>(null);
@@ -123,8 +125,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
           return [...prev, newEdge];
         });
       };
-      window.setTimeout(reapply, 120);
-      window.setTimeout(reapply, 600);
+      window.setTimeout(reapply, 200);
     },
     [setEdges, setNodes]
   );
@@ -259,11 +260,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         newNode.position = { x: selected.position.x + 220, y: maxY + 80 };
       }
 
-      setNodes((prev: Node[]) => [
-        ...prev.map((n) => ({ ...n, selected: false })),
+      const updatedEdges: Edge[] = [...edges, newEdge];
+      const updatedNodes: Node[] = [
+        ...nodes.map((n) => ({ ...n, selected: false })),
         { ...newNode, selected: true, data: { ...newNode.data, _isNew: true } },
-      ]);
-      setEdges((prev: Edge[]) => [...prev, newEdge]);
+      ];
+
+      const layoutedNodes = partialLayoutSubtree
+        ? partialLayoutSubtree(updatedNodes, updatedEdges, selected.id)
+        : updatedNodes;
+
+      setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
+      setEdges(updatedEdges);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
 
       toast.success(isPolish ? 'Dodano gałąź' : 'Child added', { id: 'mm-op-cue', duration: 1500 });
@@ -274,15 +282,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         } catch {
           /* */
         }
-      }, 60);
-
-      setTimeout(() => {
-        setNodes((prev) =>
-          prev.map((n) =>
-            n.id === newId && n.data?._isNew ? { ...n, data: { ...n.data, _isNew: false } } : n
-          )
-        );
-      }, 3000);
+      }, 150);
     },
     [
       edges,
@@ -370,11 +370,18 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         newNode.position = { x: selected.position.x, y: maxY + 80 };
       }
 
-      setNodes((prev: Node[]) => [
-        ...prev.map((n) => ({ ...n, selected: false })),
+      const updatedEdges: Edge[] = [...edges, newEdge];
+      const updatedNodes: Node[] = [
+        ...nodes.map((n) => ({ ...n, selected: false })),
         { ...newNode, selected: true, data: { ...newNode.data, _isNew: true } },
-      ]);
-      setEdges((prev: Edge[]) => [...prev, newEdge]);
+      ];
+
+      const layoutedNodes = partialLayoutSubtree
+        ? partialLayoutSubtree(updatedNodes, updatedEdges, parentId)
+        : updatedNodes;
+
+      setNodes(layoutedNodes.map((n) => (n.id === newId ? { ...n, selected: true } : n)));
+      setEdges(updatedEdges);
       ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
 
       toast.success(isPolish ? 'Dodano sąsiada' : 'Sibling added', {
@@ -388,15 +395,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         } catch {
           /* */
         }
-      }, 60);
-
-      setTimeout(() => {
-        setNodes((prev) =>
-          prev.map((n) =>
-            n.id === newId && n.data?._isNew ? { ...n, data: { ...n.data, _isNew: false } } : n
-          )
-        );
-      }, 3000);
+      }, 150);
     },
     [
       edges,

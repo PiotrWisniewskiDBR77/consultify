@@ -1,53 +1,73 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-interface ShortcutDefinition {
+import { Api } from '../services/api';
+import { KeyboardShortcuts } from '../types';
+
+/**
+ * SET-11: Runtime keyboard-shortcut hook.
+ *
+ * Source of truth = the persisted preferences saved by
+ * KeyboardShortcutsSettings (preset + customShortcuts + disabledShortcuts),
+ * loaded via Api.getShortcuts(). The default catalog below is UNIFIED with the
+ * settings panel (same ids + default keys) so both refer to the same shortcuts.
+ *
+ * - disabledShortcuts: those ids never fire.
+ * - customShortcuts: the rebound key wins over the default.
+ * - Robust to absent/failed prefs: falls back to defaults, never throws.
+ */
+
+export interface ShortcutDefinition {
   id: string;
   name: string;
   description: string;
-  category: 'navigation' | 'task_management' | 'ai' | 'general';
+  category: 'navigation' | 'task_management' | 'ai' | 'general' | 'search' | 'editing';
   defaultKey: string;
-  currentKey: string;
-  enabled: boolean;
 }
 
-interface ShortcutsConfig {
-  enabled: boolean;
-  preset: string;
-  customMappings: Record<string, string>;
-  disabledActions: string[];
-}
-
-interface UseKeyboardShortcutsOptions {
-  onShortcutTriggered?: (shortcutId: string) => void;
-}
-
+// Canonical catalog — mirrors DEFAULT_SHORTCUTS in
+// src/components/settings/KeyboardShortcutsSettings.tsx (ids + default keys).
 const DEFAULT_SHORTCUTS: ShortcutDefinition[] = [
   {
-    id: 'navigate_dashboard',
-    name: 'Go to Dashboard',
+    id: 'go_home',
+    name: 'Go to Home',
     description: 'Navigate to dashboard',
     category: 'navigation',
-    defaultKey: 'g d',
-    currentKey: 'g d',
-    enabled: true,
+    defaultKey: 'g h',
   },
   {
-    id: 'navigate_tasks',
+    id: 'go_tasks',
     name: 'Go to Tasks',
-    description: 'Navigate to tasks',
+    description: 'Navigate to my tasks',
     category: 'navigation',
     defaultKey: 'g t',
-    currentKey: 'g t',
-    enabled: true,
   },
   {
-    id: 'navigate_projects',
-    name: 'Go to Projects',
-    description: 'Navigate to projects',
+    id: 'go_inbox',
+    name: 'Go to Inbox',
+    description: 'Navigate to inbox',
     category: 'navigation',
-    defaultKey: 'g p',
-    currentKey: 'g p',
-    enabled: true,
+    defaultKey: 'g i',
+  },
+  {
+    id: 'go_settings',
+    name: 'Go to Settings',
+    description: 'Navigate to settings',
+    category: 'navigation',
+    defaultKey: 'g s',
+  },
+  {
+    id: 'search_global',
+    name: 'Global Search',
+    description: 'Open global search',
+    category: 'search',
+    defaultKey: 'Cmd+K',
+  },
+  {
+    id: 'search_tasks',
+    name: 'Search Tasks',
+    description: 'Search in tasks',
+    category: 'search',
+    defaultKey: 'Cmd+Shift+T',
   },
   {
     id: 'new_task',
@@ -55,8 +75,13 @@ const DEFAULT_SHORTCUTS: ShortcutDefinition[] = [
     description: 'Create a new task',
     category: 'task_management',
     defaultKey: 'n t',
-    currentKey: 'n t',
-    enabled: true,
+  },
+  {
+    id: 'complete_task',
+    name: 'Complete Task',
+    description: 'Mark selected task as done',
+    category: 'task_management',
+    defaultKey: 'c',
   },
   {
     id: 'edit_task',
@@ -64,136 +89,267 @@ const DEFAULT_SHORTCUTS: ShortcutDefinition[] = [
     description: 'Edit selected task',
     category: 'task_management',
     defaultKey: 'e',
-    currentKey: 'e',
-    enabled: true,
   },
   {
-    id: 'complete_task',
-    name: 'Complete Task',
-    description: 'Complete selected task',
+    id: 'delete_task',
+    name: 'Delete Task',
+    description: 'Delete selected task',
     category: 'task_management',
-    defaultKey: 'x',
-    currentKey: 'x',
-    enabled: true,
+    defaultKey: 'Backspace',
   },
   {
-    id: 'open_ai',
-    name: 'Open AI Chat',
+    id: 'assign_task',
+    name: 'Assign Task',
+    description: 'Assign selected task',
+    category: 'task_management',
+    defaultKey: 'a',
+  },
+  {
+    id: 'save',
+    name: 'Save',
+    description: 'Save current changes',
+    category: 'editing',
+    defaultKey: 'Cmd+S',
+  },
+  {
+    id: 'undo',
+    name: 'Undo',
+    description: 'Undo last action',
+    category: 'editing',
+    defaultKey: 'Cmd+Z',
+  },
+  {
+    id: 'redo',
+    name: 'Redo',
+    description: 'Redo last action',
+    category: 'editing',
+    defaultKey: 'Cmd+Shift+Z',
+  },
+  {
+    id: 'ai_assist',
+    name: 'AI Assistant',
     description: 'Open AI assistant',
     category: 'ai',
-    defaultKey: 'Ctrl+/',
-    currentKey: 'Ctrl+/',
-    enabled: true,
+    defaultKey: 'Cmd+J',
   },
   {
-    id: 'search',
-    name: 'Search',
-    description: 'Open search',
+    id: 'ai_summarize',
+    name: 'AI Summarize',
+    description: 'Summarize selected text',
+    category: 'ai',
+    defaultKey: 'Cmd+Shift+S',
+  },
+  {
+    id: 'toggle_sidebar',
+    name: 'Toggle Sidebar',
+    description: 'Show/hide sidebar',
     category: 'general',
-    defaultKey: 'Ctrl+k',
-    currentKey: 'Ctrl+k',
-    enabled: true,
+    defaultKey: 'Cmd+\\',
+  },
+  {
+    id: 'notifications',
+    name: 'Notifications',
+    description: 'Open notifications',
+    category: 'general',
+    defaultKey: 'n n',
   },
   {
     id: 'help',
     name: 'Help',
-    description: 'Show keyboard shortcuts help',
+    description: 'Show keyboard shortcuts',
     category: 'general',
     defaultKey: '?',
-    currentKey: '?',
-    enabled: true,
   },
 ];
 
+const DEFAULT_PREFS: KeyboardShortcuts = {
+  preset: 'default',
+  enabled: true,
+  showHints: true,
+  customShortcuts: {},
+  disabledShortcuts: [],
+};
+
+interface UseKeyboardShortcutsOptions {
+  onShortcutTriggered?: (shortcutId: string) => void;
+}
+
+/** Build a "Cmd+Shift+K"-style signature from a keyboard event. */
+const eventSignature = (e: KeyboardEvent): string => {
+  const parts: string[] = [];
+  if (e.metaKey || e.ctrlKey) parts.push('Cmd');
+  if (e.shiftKey) parts.push('Shift');
+  if (e.altKey) parts.push('Alt');
+  if (e.key && !['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) {
+    parts.push(e.key.length === 1 ? e.key.toUpperCase() : e.key);
+  }
+  return parts.join('+');
+};
+
+/** Normalize a bound key for comparison ("Cmd+k" -> "CMD+K", "g h" -> "G H"). */
+const normalizeBinding = (key: string): string => key.trim().toUpperCase();
+
+const isCombo = (key: string): boolean => key.includes('+');
+const isSequence = (key: string): boolean => /\s/.test(key.trim());
+
+const SEQUENCE_TIMEOUT_MS = 800;
+
 export const useKeyboardShortcuts = (options: UseKeyboardShortcutsOptions = {}) => {
-  const [allShortcuts, setAllShortcuts] = useState<ShortcutDefinition[]>(DEFAULT_SHORTCUTS);
-  const [shortcuts, setShortcuts] = useState<ShortcutsConfig>({
-    enabled: true,
-    preset: 'default',
-    customMappings: {},
-    disabledActions: [],
-  });
-  const [loading, setLoading] = useState(false);
+  const [prefs, setPrefs] = useState<KeyboardShortcuts>(DEFAULT_PREFS);
+  const [loading, setLoading] = useState(true);
+  const { onShortcutTriggered } = options;
+
+  const loadPrefs = useCallback(async () => {
+    try {
+      const response = await Api.getShortcuts();
+      if (response?.preferences) {
+        setPrefs({ ...DEFAULT_PREFS, ...response.preferences });
+      }
+    } catch {
+      // Robust fallback: keep defaults if prefs cannot be loaded.
+      setPrefs(DEFAULT_PREFS);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    setLoading(false);
-  }, []);
+    void loadPrefs();
+  }, [loadPrefs]);
 
-  const setEnabled = useCallback((enabled: boolean) => {
-    setShortcuts((prev) => ({ ...prev, enabled }));
-  }, []);
-
-  const setPreset = useCallback((preset: string) => {
-    setShortcuts((prev) => ({ ...prev, preset }));
-  }, []);
-
-  const setCustomShortcut = useCallback((shortcutId: string, key: string) => {
-    setShortcuts((prev) => ({
-      ...prev,
-      customMappings: { ...prev.customMappings, [shortcutId]: key },
+  /** Active bindings: id -> bound key, honoring customShortcuts + disabled. */
+  const activeShortcuts = useMemo(() => {
+    const custom = prefs.customShortcuts ?? {};
+    const disabled = new Set(prefs.disabledShortcuts ?? []);
+    return DEFAULT_SHORTCUTS.filter((s) => !disabled.has(s.id)).map((s) => ({
+      ...s,
+      currentKey: custom[s.id] || s.defaultKey,
     }));
-    setAllShortcuts((prev) =>
-      prev.map((s) => (s.id === shortcutId ? { ...s, currentKey: key } : s))
-    );
-  }, []);
-
-  const resetAll = useCallback(() => {
-    setShortcuts({
-      enabled: true,
-      preset: 'default',
-      customMappings: {},
-      disabledActions: [],
-    });
-    setAllShortcuts(DEFAULT_SHORTCUTS);
-  }, []);
+  }, [prefs.customShortcuts, prefs.disabledShortcuts]);
 
   const getShortcutKey = useCallback(
     (shortcutId: string): string => {
-      const shortcut = allShortcuts.find((s) => s.id === shortcutId);
-      return shortcut?.currentKey ?? '';
+      const custom = prefs.customShortcuts ?? {};
+      const def = DEFAULT_SHORTCUTS.find((s) => s.id === shortcutId);
+      return custom[shortcutId] || def?.defaultKey || '';
     },
-    [allShortcuts]
+    [prefs.customShortcuts]
   );
 
   const isShortcutEnabled = useCallback(
     (shortcutId: string): boolean => {
-      if (!shortcuts.enabled) return false;
-      const shortcut = allShortcuts.find((s) => s.id === shortcutId);
-      return shortcut?.enabled ?? false;
+      if (!prefs.enabled) return false;
+      return !(prefs.disabledShortcuts ?? []).includes(shortcutId);
     },
-    [shortcuts.enabled, allShortcuts]
+    [prefs.enabled, prefs.disabledShortcuts]
   );
 
-  // Handle keyboard events
+  // Track in-progress key sequences (e.g. "g h").
+  const sequenceRef = useRef<{ buffer: string; timer: number | null }>({ buffer: '', timer: null });
+
   useEffect(() => {
-    if (!shortcuts.enabled) return undefined;
+    if (!prefs.enabled || typeof window === 'undefined') return undefined;
+
+    const fire = (id: string) => {
+      onShortcutTriggered?.(id);
+    };
+
+    const clearSequence = () => {
+      if (sequenceRef.current.timer !== null) {
+        window.clearTimeout(sequenceRef.current.timer);
+      }
+      sequenceRef.current = { buffer: '', timer: null };
+    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const matched = allShortcuts.find((s) => {
-        if (!s.enabled) return false;
-        return s.currentKey === e.key;
-      });
-      if (matched && options.onShortcutTriggered) {
-        options.onShortcutTriggered(matched.id);
+      // Don't hijack typing in inputs/editables (except for combos w/ modifiers).
+      const target = e.target as HTMLElement | null;
+      const isTyping =
+        !!target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+
+      const hasModifier = e.metaKey || e.ctrlKey || e.altKey;
+
+      // 1) Modifier combos ("Cmd+K", "Cmd+Shift+S").
+      if (hasModifier) {
+        const sig = normalizeBinding(eventSignature(e));
+        const combo = activeShortcuts.find(
+          (s) => isCombo(s.currentKey) && normalizeBinding(s.currentKey) === sig
+        );
+        if (combo) {
+          e.preventDefault();
+          clearSequence();
+          fire(combo.id);
+        }
+        return;
+      }
+
+      if (isTyping) {
+        clearSequence();
+        return;
+      }
+
+      // 2) Single-key shortcuts ("c", "e", "?", "Backspace").
+      const keyUpper = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      const single = activeShortcuts.find(
+        (s) =>
+          !isCombo(s.currentKey) &&
+          !isSequence(s.currentKey) &&
+          normalizeBinding(s.currentKey) === normalizeBinding(keyUpper)
+      );
+
+      // 3) Sequences ("g h", "n t"). Accumulate buffer.
+      const nextBuffer = (
+        sequenceRef.current.buffer ? `${sequenceRef.current.buffer} ${keyUpper}` : keyUpper
+      ).toUpperCase();
+
+      const seqMatch = activeShortcuts.find(
+        (s) => isSequence(s.currentKey) && normalizeBinding(s.currentKey) === nextBuffer
+      );
+
+      if (seqMatch) {
+        e.preventDefault();
+        clearSequence();
+        fire(seqMatch.id);
+        return;
+      }
+
+      // Is this key a prefix of any sequence? If so, keep buffering.
+      const seqPrefix = activeShortcuts.find(
+        (s) =>
+          isSequence(s.currentKey) && normalizeBinding(s.currentKey).startsWith(nextBuffer + ' ')
+      );
+
+      if (seqPrefix) {
+        clearSequence();
+        sequenceRef.current.buffer = nextBuffer;
+        sequenceRef.current.timer = window.setTimeout(clearSequence, SEQUENCE_TIMEOUT_MS);
+        return;
+      }
+
+      clearSequence();
+
+      if (single) {
+        // Avoid stealing things like "?" inside selects etc. (already guarded by isTyping)
+        fire(single.id);
       }
     };
 
-    if (typeof window === 'undefined') return undefined;
-
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [shortcuts.enabled, allShortcuts, options]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearSequence();
+    };
+  }, [prefs.enabled, activeShortcuts, onShortcutTriggered]);
 
   return {
-    allShortcuts,
-    shortcuts,
+    shortcuts: prefs,
+    activeShortcuts,
     loading,
-    setEnabled,
-    setPreset,
-    setCustomShortcut,
-    resetAll,
+    enabled: prefs.enabled,
     getShortcutKey,
     isShortcutEnabled,
+    reload: loadPrefs,
   };
 };
 

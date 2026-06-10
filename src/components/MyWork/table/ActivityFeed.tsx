@@ -108,7 +108,7 @@ const EventItem = React.memo(function EventItem({
           {eventLabel(event, isPl)}
         </p>
         {!compact && (
-          <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
+          <span className="text-[10px] text-slate-600 dark:text-slate-500 flex items-center gap-1 mt-0.5">
             <Clock size={9} />
             {relativeTime(event.timestamp, isPl)}
           </span>
@@ -117,7 +117,7 @@ const EventItem = React.memo(function EventItem({
       {onClick && (
         <ChevronRight
           size={12}
-          className="text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0"
+          className="text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0"
         />
       )}
     </button>
@@ -221,7 +221,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         </span>
         <button
           onClick={onClose}
-          className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          className="p-1 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
         >
           <X size={14} />
         </button>
@@ -231,10 +231,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       <div className="flex-1 overflow-y-auto">
         {loading && events.length === 0 ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-400" />
+            <Loader2 size={20} className="animate-spin text-slate-600" />
           </div>
         ) : events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500 px-4 text-center">
+          <div className="flex flex-col items-center justify-center py-12 text-slate-600 dark:text-slate-500 px-4 text-center">
             <Activity size={20} className="mb-2 opacity-40" />
             <span className="text-[11px]">{isPl ? 'Brak aktywności' : 'No activity yet'}</span>
           </div>
@@ -244,7 +244,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             if (!items || items.length === 0) return null;
             return (
               <div key={group}>
-                <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/50 sticky top-0 z-[1]">
+                <div className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/50 sticky top-0 z-[1]">
                   {timeGroupLabel(group, isPl)}
                 </div>
                 {items.map((ev) => (

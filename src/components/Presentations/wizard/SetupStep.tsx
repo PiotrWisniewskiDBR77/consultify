@@ -96,7 +96,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
           </div>
         )}
         {smartDefaultsLoading && (
-          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 dark:bg-navy-800 text-xs text-slate-400">
+          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 dark:bg-navy-800 text-xs text-slate-600">
             <div className="w-3 h-3 border border-primary-400 border-t-transparent rounded-full animate-spin" />
             {t('presentations.setup.loadingDefaults', 'Loading smart defaults...')}
           </div>
@@ -143,7 +143,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
             <p className="font-medium text-slate-900 dark:text-white text-sm">
               {t('presentations.setup.aiGenerates', 'AI Generates')}
             </p>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-600 mt-0.5">
               {t('presentations.setup.aiGeneratesDesc', 'AI proposes structure from your sources')}
             </p>
           </button>
@@ -166,7 +166,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{tmpl.description}</p>
+              <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{tmpl.description}</p>
             </button>
           ))}
         </div>
@@ -191,7 +191,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
                 }`}
               >
                 <p className="text-sm font-medium">{t(reg.labelKey, reg.id)}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">{t(reg.descriptionKey, '')}</p>
+                <p className="text-[10px] text-slate-600 mt-0.5">{t(reg.descriptionKey, '')}</p>
               </button>
             ))}
           </div>
@@ -214,7 +214,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
                 }`}
               >
                 <p className="text-sm font-medium">{t(depth.labelKey, depth.id)}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">{t(depth.descriptionKey, '')}</p>
+                <p className="text-[10px] text-slate-600 mt-0.5">{t(depth.descriptionKey, '')}</p>
               </button>
             ))}
           </div>

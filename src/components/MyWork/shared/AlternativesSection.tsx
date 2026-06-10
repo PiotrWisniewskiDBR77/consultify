@@ -138,7 +138,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                 className={`p-1.5 rounded-md transition-colors ${
                   viewMode === 'list'
                     ? 'bg-white dark:bg-navy-700 shadow-sm text-primary-600 dark:text-primary-400'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
                 title={isPolish ? 'Widok listy' : 'List view'}
               >
@@ -152,7 +152,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                 className={`p-1.5 rounded-md transition-colors ${
                   viewMode === 'comparison'
                     ? 'bg-white dark:bg-navy-700 shadow-sm text-primary-600 dark:text-primary-400'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
                 title={isPolish ? 'Porównanie' : 'Comparison view'}
               >
@@ -161,7 +161,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
             </div>
           )}
           {alternatives.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
               {alternatives.length}
             </span>
           )}
@@ -192,7 +192,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
             )}
           </AnimatePresence>
           <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-600" />
           </motion.div>
         </div>
       </motion.button>
@@ -273,7 +273,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             <button
                               onClick={() => onSetRecommended(alt.id)}
                               className={`p-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors ${
-                                alt.isRecommended ? 'text-amber-500' : 'text-slate-400'
+                                alt.isRecommended ? 'text-amber-500' : 'text-slate-600'
                               }`}
                               title={isPolish ? 'Ustaw jako rekomendowaną' : 'Set as recommended'}
                             >
@@ -281,7 +281,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                             </button>
                             <button
                               onClick={() => onRemove(alt.id)}
-                              className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -329,7 +329,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                         pros: alt.pros.filter((_, idx) => idx !== i),
                                       });
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 transition-opacity"
+                                    className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-500 transition-opacity"
                                   >
                                     <X size={10} />
                                   </button>
@@ -375,7 +375,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                                         cons: alt.cons.filter((_, idx) => idx !== i),
                                       });
                                     }}
-                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-500 transition-opacity"
+                                    className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-500 transition-opacity"
                                   >
                                     <X size={10} />
                                   </button>
@@ -461,7 +461,7 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                     </thead>
                     <tbody>
                       {/* Score row */}
-                      <tr className="border-b border-slate-100 dark:border-navy-800">
+                      <tr className="border-b border-slate-200 dark:border-navy-800">
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400">
                           {isPolish ? 'Ocena' : 'Score'}
                         </td>
@@ -472,14 +472,14 @@ export const AlternativesSection: React.FC<AlternativesSectionProps> = ({
                               <span className={`text-lg font-bold ${getScoreColor(score)}`}>
                                 {score.toFixed(1)}
                               </span>
-                              <span className="text-slate-400 text-xs">/10</span>
+                              <span className="text-slate-600 text-xs">/10</span>
                             </td>
                           );
                         })}
                       </tr>
 
                       {/* Pros count row */}
-                      <tr className="border-b border-slate-100 dark:border-navy-800">
+                      <tr className="border-b border-slate-200 dark:border-navy-800">
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400 flex items-center gap-1">
                           <ThumbsUp size={14} className="text-emerald-500" />
                           {isPolish ? 'Zalety' : 'Pros'}

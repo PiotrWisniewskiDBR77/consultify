@@ -2,7 +2,6 @@ import {
   ArrowRight,
   Bell,
   BookOpen,
-  Bot,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -36,10 +35,10 @@ import { useConversationStore } from '../../store/useConversationStore';
 import { AppView } from '../../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../../types/workspace';
 import { KeyboardShortcutsHelp } from '../MyWork/shared/KeyboardShortcutsHelp';
+import TeresaMark from '../shared/TeresaMark';
 import { FeatureUpdatesPanel } from './FeatureUpdatesPanel';
 import { KnowledgeArticleView } from './KnowledgeArticleView';
 import { KnowledgeLibrary } from './KnowledgeLibrary';
-
 const HELP_CONFIG = getHelpConfig();
 
 const TABS: { id: Exclude<HelpTab, 'onboarding'>; icon: typeof BookOpen; label: string }[] = [
@@ -226,7 +225,7 @@ const GuideCard: React.FC<{
           {description}
         </div>
       </div>
-      <ChevronRight size={14} className="text-slate-400 mt-1" />
+      <ChevronRight size={14} className="text-slate-600 mt-1" />
     </div>
   </button>
 );
@@ -481,7 +480,7 @@ export const HelpSidePanel: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary-500 to-indigo-600 rounded-xl text-white">
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary-500 to-crimson-600 rounded-xl text-white">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <PlayCircle size={24} />
                 </div>
@@ -543,7 +542,7 @@ export const HelpSidePanel: React.FC = () => {
                   onClick={openAiNow}
                   className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
                 >
-                  <Bot size={16} />
+                  <TeresaMark size={16} />
                   {getLocalizedText(help.promptAction.label, lang)}
                 </button>
               </SectionCard>
@@ -562,7 +561,7 @@ export const HelpSidePanel: React.FC = () => {
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-primary-700 dark:group-hover:text-primary-300">
                     {t('help.sidePanel.overview.keyboardShortcuts', 'Keyboard Shortcuts')}
                   </span>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">
                     {t('help.sidePanel.overview.keyboardShortcutsHint', 'Press ? anytime to view')}
                   </p>
                 </div>
@@ -641,7 +640,7 @@ export const HelpSidePanel: React.FC = () => {
                 onClick={openAiNow}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors"
               >
-                <Bot size={16} />
+                <TeresaMark size={16} />
                 {getLocalizedText(help.promptAction.label, lang)}
               </button>
             </div>
@@ -677,7 +676,7 @@ export const HelpSidePanel: React.FC = () => {
               <div className="relative">
                 <Search
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
                 />
                 <input
                   type="text"
@@ -703,7 +702,7 @@ export const HelpSidePanel: React.FC = () => {
                 <div className="text-center py-8">
                   <HelpCircle
                     size={32}
-                    className="mx-auto text-slate-300 dark:text-slate-600 mb-3"
+                    className="mx-auto text-slate-600 dark:text-slate-400 mb-3"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {searchQuery

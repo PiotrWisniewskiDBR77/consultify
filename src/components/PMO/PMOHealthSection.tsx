@@ -222,7 +222,7 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
 
       {/* Top Blockers */}
       {snapshot.blockers.length > 0 && (
-        <div className="border-t border-slate-100 dark:border-navy-700 pt-3">
+        <div className="border-t border-slate-200 dark:border-navy-700 pt-3">
           <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
             Top Blockers
           </div>
@@ -250,8 +250,8 @@ export const PMOHealthSection: React.FC<PMOHealthSectionProps> = ({
       )}
 
       {/* Timestamp */}
-      <div className="mt-3 pt-2 border-t border-slate-100 dark:border-navy-700">
-        <span className="text-[10px] text-slate-400 dark:text-slate-500">
+      <div className="mt-3 pt-2 border-t border-slate-200 dark:border-navy-700">
+        <span className="text-[10px] text-slate-600 dark:text-slate-500">
           Updated: {new Date(snapshot.updatedAt).toLocaleTimeString()}
         </span>
       </div>

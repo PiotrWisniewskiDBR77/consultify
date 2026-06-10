@@ -168,7 +168,7 @@ const IndicatorGroup: React.FC<IndicatorGroupProps> = ({
       {/* Dropdown Panel */}
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-80 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-2xl z-[100] animate-in slide-in-from-top-2 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
             <div className="flex items-center gap-2">
               <Icon
                 size={16}
@@ -186,7 +186,7 @@ const IndicatorGroup: React.FC<IndicatorGroupProps> = ({
               onClick={onToggle}
               className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded"
             >
-              <X size={14} className="text-slate-400 dark:text-slate-500" />
+              <X size={14} className="text-slate-600 dark:text-slate-500" />
             </button>
           </div>
           <div className="max-h-72 overflow-y-auto p-3">{children}</div>
@@ -239,7 +239,7 @@ const ListItem: React.FC<{
       <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{secondary}</div>
     )}
     {timestamp && (
-      <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
+      <div className="text-[9px] text-slate-600 dark:text-slate-500 mt-0.5">
         {new Date(timestamp).toLocaleString()}
       </div>
     )}
@@ -411,8 +411,8 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         />
         <DetailRow label="DB Size" value={`${stats?.infrastructure.dbSizeMB || 0} MB`} />
         {llmHealth.providers && llmHealth.providers.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
               LLM Providers
             </div>
             {llmHealth.providers.map((p, i) => (
@@ -442,8 +442,8 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         <DetailRow label="Today's Logins" value={stats?.users.todayLogins || 0} />
         <DetailRow label="New Signups Today" value={stats?.users.todaySignups || 0} />
         {stats?.users.recentSignups && stats.users.recentSignups.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
               Recent Signups
             </div>
             {stats.users.recentSignups.map((s, i) => (
@@ -486,8 +486,8 @@ export const SuperAdminStatusIndicators: React.FC = () => {
 
         {stats?.business.trialsExpiringSoonList &&
           stats.business.trialsExpiringSoonList.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-              <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+            <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+              <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
                 Expiring Trials
               </div>
               {stats.business.trialsExpiringSoonList.map((t, i) => (
@@ -502,8 +502,8 @@ export const SuperAdminStatusIndicators: React.FC = () => {
           )}
 
         {stats?.business.overdueInvoicesList && stats.business.overdueInvoicesList.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
               Overdue Invoices
             </div>
             {stats.business.overdueInvoicesList.map((inv, i) => (
@@ -518,8 +518,8 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         )}
 
         {stats?.business.recentFeedback && stats.business.recentFeedback.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
               Recent Feedback
             </div>
             {stats.business.recentFeedback.slice(0, 5).map((f, i) => (
@@ -561,8 +561,8 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         />
 
         {stats?.security.failedLoginsList && stats.security.failedLoginsList.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
               Failed Logins
             </div>
             {stats.security.failedLoginsList.slice(0, 5).map((l, i) => (
@@ -578,8 +578,8 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         )}
 
         {stats?.security.recentErrors && stats.security.recentErrors.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
               API Errors
             </div>
             {stats.security.recentErrors.slice(0, 5).map((e, i) => (
@@ -626,8 +626,8 @@ export const SuperAdminStatusIndicators: React.FC = () => {
         />
 
         {stats?.performance.slowQueriesList && stats.performance.slowQueriesList.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase mb-1">
               Slow Queries
             </div>
             {stats.performance.slowQueriesList.slice(0, 5).map((q, i) => (

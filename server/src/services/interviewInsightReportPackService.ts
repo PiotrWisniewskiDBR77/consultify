@@ -200,6 +200,10 @@ export interface ReportPackSourceInsight {
   evidenceMap?: Array<Record<string, unknown>>;
   missingData?: string[];
   generationContext?: Record<string, unknown>;
+  // D3 — governed P10 findings, loaded by createInterviewReportPackDraft and
+  // rendered into the findings_p10 worksheet. The differentiator artifact was
+  // previously stubbed empty ("attached in the next phase").
+  p10Findings?: Array<Record<string, unknown>>;
 }
 
 export interface UpdateInterviewReportWorksheetInput {
@@ -366,10 +370,48 @@ function buildWorksheetMarkdown(worksheet: InterviewReportWorksheet): string {
     lines.push('', markdownEscape(worksheet.markdown));
   }
   if (worksheet.rows.length > 0) {
-    lines.push('', 'Rows:', '');
-    worksheet.rows.forEach((row, index) => {
-      lines.push(`### Row ${index + 1}`, '', '```json', JSON.stringify(row, null, 2), '```', '');
-    });
+    // D4 — render rows as a Markdown table rather than raw ```json fences.
+    // A consultant exporting a client report pack got `### Row 1` + a JSON
+    // blob (the same degenerate-row pattern the Canvas export bar eliminated).
+    // We derive the column set from the union of row keys (stable order: keys
+    // of the first row first, then any extras), and render values as
+    // single-line cells. Nested objects/arrays collapse to a compact JSON
+    // string so the table stays readable.
+    lines.push('', renderRowsAsMarkdownTable(worksheet.rows));
+  }
+  return lines.join('\n');
+}
+
+function renderRowsAsMarkdownTable(rows: Array<Record<string, unknown>>): string {
+  // Column union — first row's key order, then any keys appearing later.
+  const columns: string[] = [];
+  for (const row of rows) {
+    for (const key of Object.keys(row || {})) {
+      if (!columns.includes(key)) columns.push(key);
+    }
+  }
+  if (columns.length === 0) return '';
+
+  const headerLabel = (key: string) =>
+    key
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .trim();
+
+  const cell = (value: unknown): string => {
+    if (value == null) return '';
+    if (typeof value === 'string') return value.replace(/\r?\n/g, ' ').replace(/\|/g, '\\|').trim();
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    // Objects/arrays → compact JSON, pipe-escaped, length-capped.
+    const json = JSON.stringify(value);
+    return json.replace(/\|/g, '\\|').slice(0, 300);
+  };
+
+  const lines: string[] = [];
+  lines.push(`| ${columns.map(headerLabel).join(' | ')} |`);
+  lines.push(`| ${columns.map(() => '---').join(' | ')} |`);
+  for (const row of rows) {
+    lines.push(`| ${columns.map((col) => cell((row || {})[col])).join(' | ')} |`);
   }
   return lines.join('\n');
 }
@@ -650,14 +692,54 @@ export function buildInterviewReportPackDraft(
           rows: topicRows.filter((item) => item.perspective_labels || item.divergence_note),
           warnings: ['Matrix is partial until respondent x topic rows are generated natively.'],
         });
-      case 'findings_p10':
-        return worksheet({
-          key,
-          title,
-          warnings: [
-            'P10 findings are governed separately and must be attached in the next phase.',
-          ],
+      case 'findings_p10': {
+        // D3 — render the governed P10 findings (the module's flagship
+        // artifact) into the client report pack. Previously stubbed empty.
+        const findings = Array.isArray(insight.p10Findings) ? insight.p10Findings : [];
+        if (findings.length === 0) {
+          return worksheet({
+            key,
+            title,
+            warnings: [
+              'No published P10 findings yet — confirm client readback on findings to populate this section.',
+            ],
+            degraded: true,
+          });
+        }
+        const findingRows = findings.map((finding) => {
+          const evidence = Array.isArray((finding as Record<string, unknown>).evidence_pointers)
+            ? ((finding as Record<string, unknown>).evidence_pointers as Array<
+                Record<string, unknown>
+              >)
+            : [];
+          const activeEvidence = evidence.filter((pointer) => !pointer.isTombstone);
+          return {
+            findingStatement:
+              (finding as Record<string, unknown>).finding_statement ||
+              (finding as Record<string, unknown>).findingStatement ||
+              '',
+            confidenceLevel:
+              (finding as Record<string, unknown>).confidence_level ??
+              (finding as Record<string, unknown>).confidenceLevel ??
+              null,
+            limits: (finding as Record<string, unknown>).limits || '',
+            nextAction:
+              (finding as Record<string, unknown>).next_action ||
+              (finding as Record<string, unknown>).nextAction ||
+              '',
+            readbackStatus:
+              (finding as Record<string, unknown>).readback_status ||
+              (finding as Record<string, unknown>).readbackStatus ||
+              'pending',
+            evidenceCount: activeEvidence.length,
+            evidence: activeEvidence
+              .slice(0, 6)
+              .map((pointer) => String(pointer.excerpt || pointer.source_id || '').slice(0, 280))
+              .join(' • '),
+          };
         });
+        return worksheet({ key, title, rows: findingRows });
+      }
       case 'evidence_register':
         return worksheet({
           key,
@@ -1232,7 +1314,20 @@ export async function createInterviewReportPackDraft(params: {
   const existing = await getPersistedInterviewReportPack(params.organizationId, params.insight.id);
   if (existing) return existing;
 
-  const draft = buildInterviewReportPackDraft(params.insight);
+  // D3 — load the governed P10 findings and attach them so the findings_p10
+  // worksheet renders the flagship artifact rather than a stub. Non-fatal:
+  // a findings load failure degrades the worksheet, not the whole pack.
+  let p10Findings: Array<Record<string, unknown>> = [];
+  try {
+    const { listFindings } = await import('./v8/interviewInsightFindingsService.js');
+    p10Findings = (await listFindings(params.insight.id)) as unknown as Array<
+      Record<string, unknown>
+    >;
+  } catch {
+    /* degrade gracefully — worksheet shows the readback-needed warning */
+  }
+
+  const draft = buildInterviewReportPackDraft({ ...params.insight, p10Findings });
   const now = new Date().toISOString();
 
   await queryHelpers.queryRun(

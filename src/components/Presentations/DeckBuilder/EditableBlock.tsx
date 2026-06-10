@@ -97,7 +97,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
     >
       {isSelected && (
         <div className="absolute -top-8 left-0 flex items-center gap-1 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg px-1 py-0.5 z-20">
-          <button className="p-1 text-slate-400 cursor-grab hover:text-slate-600">
+          <button className="p-1 text-slate-600 cursor-grab hover:text-slate-600">
             <GripVertical size={12} />
           </button>
           {block.is_refreshable && (
@@ -113,7 +113,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
             </button>
           )}
           {block.type === 'image' && (
-            <button className="p-1 text-slate-400 hover:text-slate-600" title="Replace image">
+            <button className="p-1 text-slate-600 hover:text-slate-600" title="Replace image">
               <Image size={12} />
             </button>
           )}
@@ -122,7 +122,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
               e.stopPropagation();
               onDuplicate();
             }}
-            className="p-1 text-slate-400 hover:text-slate-600"
+            className="p-1 text-slate-600 hover:text-slate-600"
             title="Duplicate"
           >
             <Copy size={12} />

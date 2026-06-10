@@ -1,6 +1,15 @@
 import { isPilotRestrictedRole } from './roleGuards';
 
-export const PILOT_VISIBLE_MENU_IDS = new Set(['AI_CHAT', 'INTERVIEW']);
+// VTS pilot scope: Chat + Interview plus My Work (Ideas stays locked via
+// isPilotAllowedMyWorkTab), Initiatives, Execution and Settings.
+export const PILOT_VISIBLE_MENU_IDS = new Set([
+  'AI_CHAT',
+  'INTERVIEW',
+  'MY_WORK',
+  'MODULE_INITIATIVES',
+  'MODULE_EXECUTION',
+  'SETTINGS',
+]);
 
 export const PILOT_ALLOWED_SETTINGS_SECTIONS = new Set([
   'profile',
@@ -9,7 +18,15 @@ export const PILOT_ALLOWED_SETTINGS_SECTIONS = new Set([
   'theme',
 ]);
 
-const PILOT_ALLOWED_ROUTE_PREFIXES = ['/chat', '/interview', '/settings', '/share/'] as const;
+const PILOT_ALLOWED_ROUTE_PREFIXES = [
+  '/chat',
+  '/interview',
+  '/my-work',
+  '/initiatives',
+  '/implementation',
+  '/settings',
+  '/share/',
+] as const;
 
 const PILOT_ALLOWED_ARTIFACT_TYPES = new Set(['insight']);
 
@@ -44,21 +61,6 @@ export function getPilotLockedAreaDetail(
   }
 
   if (
-    normalized === 'MY_WORK' ||
-    normalized === 'MODULE_MY_WORK' ||
-    areaLabel === 'my work' ||
-    areaLabel === 'moja praca'
-  ) {
-    return {
-      href: '/interview',
-      message:
-        'My Work is locked for today’s pilot session. Please use Chat and Interview during the meeting.',
-    };
-  }
-
-  if (
-    normalized === 'MODULE_INITIATIVES' ||
-    normalized === 'MODULE_EXECUTION' ||
     normalized === 'MODULE_BENEFITS' ||
     normalized === 'MODULE_ECONOMICS' ||
     normalized === 'MODULE_PRESENTATIONS' ||

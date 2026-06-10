@@ -132,6 +132,30 @@ const MOCK_SCREEN: HomeScreenData = {
   updatedAt: new Date().toISOString(),
   pulseLabel: 'Radar · context, ideas, and a gentle steer — not an ops wall.',
   blocks: [
+    // QA-2026-06-08 (BUG-22): the server emits a `commandDock` block, but MOCK_SCREEN had
+    // no default for it, so cloneDefaultBlock('commandDock') threw "Missing default home
+    // block for commandDock" and crashed the whole My Work home view. Provide a default.
+    {
+      id: 'commandDock',
+      title: 'Command Dock',
+      subtitle: 'Quick actions',
+      accent: 'cool',
+      size: 'md',
+      priorityWeight: 50,
+      relevanceScore: 50,
+      freshnessScore: 50,
+      ctaIntents: [],
+      payload: {
+        primaryAction: null,
+        actions: [],
+        runtimeSummary: {
+          inboxPending: 0,
+          inboxAtRisk: 0,
+          recentOutputs: 0,
+          reviewSharedOutputs: 0,
+        },
+      },
+    },
     {
       id: 'aiPulseCore',
       title: 'AI Pulse Core',
@@ -899,7 +923,16 @@ function normalizeHomeScreenData(value: unknown): HomeScreenData {
     updatedAt: asString(input.updatedAt, new Date().toISOString()),
     pulseLabel: asString(input.pulseLabel, fallback.pulseLabel),
     blocks: rawBlocks
-      .map((block) => normalizeHomeBlock(block))
+      .map((block) => {
+        // QA-2026-06-08 (BUG-22): one malformed/unknown block must not crash the whole
+        // home view — degrade it to null (filtered out) instead of throwing.
+        try {
+          return normalizeHomeBlock(block);
+        } catch (err) {
+          console.warn('[useHomeData] Skipping unprocessable home block', err);
+          return null;
+        }
+      })
       .filter((block): block is HomeBlock => block !== null),
   };
 }

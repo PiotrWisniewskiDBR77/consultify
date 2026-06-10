@@ -129,7 +129,7 @@ export const DocsHomeView: React.FC = () => {
               <div className="relative">
                 <Search
                   size={20}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600"
                 />
                 <input
                   type="text"
@@ -691,7 +691,7 @@ export const DocsHomeView: React.FC = () => {
 
       {/* CTA Section */}
       <section className="max-w-6xl mx-auto px-4 py-12">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 to-indigo-600 p-8 lg:p-12 text-center text-white">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 to-crimson-600 p-8 lg:p-12 text-center text-white">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImEiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblRyYW5zZm9ybT0icm90YXRlKDQ1KSI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMjAiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNhKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==')] opacity-50" />
           <div className="relative">
             <GraduationCap size={48} className="mx-auto mb-4 opacity-90" />

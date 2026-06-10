@@ -180,7 +180,7 @@ export const DUE_DATE_STYLES: Record<string, BadgeStyle> = {
   completed: SUBTLE.emerald,
   no_date: {
     bg: 'bg-slate-50 dark:bg-slate-800/50',
-    text: 'text-slate-400 dark:text-slate-500',
+    text: 'text-slate-600 dark:text-slate-500',
     dot: 'bg-slate-300 dark:bg-slate-600',
     tier: 'neutral',
   },

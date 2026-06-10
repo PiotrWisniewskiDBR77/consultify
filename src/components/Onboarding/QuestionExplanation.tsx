@@ -95,7 +95,7 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
           Dlaczego o to pytam?
         </span>
         <svg
-          className={`ml-auto w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`ml-auto w-4 h-4 text-slate-600 dark:text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -107,7 +107,7 @@ export const QuestionExplanation: React.FC<QuestionExplanationProps> = ({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="px-4 pb-4 pt-0 space-y-3">
-          <div className="flex items-start gap-3 bg-white dark:bg-navy-800 rounded-lg p-3 border border-slate-100 dark:border-slate-600">
+          <div className="flex items-start gap-3 bg-white dark:bg-navy-800 rounded-lg p-3 border border-slate-200 dark:border-slate-600">
             <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
               <Icon size={16} className="text-primary-600 dark:text-primary-400" />
             </div>

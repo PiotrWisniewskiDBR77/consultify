@@ -350,7 +350,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                   {/* Drag handle */}
                   {!readOnly && (
                     <div
-                      className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                      className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                       onMouseDown={(e) => e.stopPropagation()}
                     >
                       <GripVertical className="w-5 h-5" />
@@ -388,21 +388,21 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                       <>
                         <button
                           onClick={() => onAIAction(section.id, 'improve')}
-                          className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
+                          className="p-2 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
                           title={t('reports.aiImprove', 'AI Improve')}
                         >
                           <Wand2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteSection(section.id)}
-                          className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
+                          className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
                           title={t('common.delete', 'Delete')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
                     )}
-                    <button className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors">
+                    <button className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 transition-colors">
                       {isExpanded ? (
                         <ChevronUp className="w-4 h-4" />
                       ) : (
@@ -414,7 +414,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
                 {/* Section content */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-slate-100 dark:border-navy-700">
+                  <div className="px-4 pb-4 border-t border-slate-200 dark:border-navy-700">
                     {/* Embedded matrix for data sections */}
                     {hasEmbeddableData(section) && (
                       <div className="mt-4 mb-4">
@@ -452,7 +452,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                   <div className="flex items-center justify-center">
                     <button
                       onClick={() => setShowAddMenu(showAddMenu === index ? null : index)}
-                      className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-full transition-all opacity-0 hover:opacity-100 focus:opacity-100 group-hover:opacity-100"
+                      className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-full transition-all opacity-0 hover:opacity-100 focus:opacity-100 group-hover:opacity-100"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -472,7 +472,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                             onClick={() => handleAddSection(type, index)}
                             className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                           >
-                            <TypeIcon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <TypeIcon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                             <span className="text-sm text-navy-900 dark:text-white">
                               {isPolish ? labelPl : label}
                             </span>
@@ -530,7 +530,7 @@ export const ReportBuilder: React.FC<ReportBuilderProps> = ({
                       onClick={() => handleAddSection(type, sections.length - 1)}
                       className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                     >
-                      <TypeIcon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      <TypeIcon className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                       <span className="text-sm text-navy-900 dark:text-white">
                         {isPolish ? labelPl : label}
                       </span>

@@ -12,6 +12,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InterviewSessionPreviewBody
@@ -29,10 +30,9 @@ export interface InterviewSessionPreviewBodyProps {
     ownerId?: string;
   };
   isPolish: boolean;
+  // canon §4.1: tone/colour come from EntityStatusChip(statusChipTone) — NOT
+  // hardcoded bg/text/dot colours. We only need the bilingual label here.
   statusConfig: {
-    bgColor: string;
-    dotColor: string;
-    textColor: string;
     label: { pl: string; en: string };
   };
   progress: number;
@@ -60,11 +60,6 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
       label: isPolish ? 'Sesja' : 'Session',
       className:
         'bg-primary-500/10 text-primary-700 dark:text-primary-200 border-primary-300/30 dark:border-primary-500/20',
-    },
-    {
-      label: isPolish ? statusConfig.label.pl : statusConfig.label.en,
-      className: `${statusConfig.bgColor} ${statusConfig.textColor}`,
-      dot: statusConfig.dotColor,
     },
     {
       label: `${isPolish ? 'Postęp' : 'Progress'}: ${progress}%`,
@@ -108,6 +103,13 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
 
   return (
     <div className="space-y-4">
+      {/* canon §4.1: status via EntityStatusChip (statusChipTone → c.*) */}
+      <div className="flex items-center gap-2">
+        <EntityStatusChip
+          status={session.status}
+          label={isPolish ? statusConfig.label.pl : statusConfig.label.en}
+        />
+      </div>
       <PreviewMetaCard pills={pills} />
       <PreviewDetailsSection
         text={detailsText}
@@ -159,39 +161,32 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
     tone: r.tone ?? 'text-slate-600 dark:text-slate-300',
   }));
 
-  const actionRows: ActionRow[] = [
+  // NOTE: "Open" lives exclusively in PreviewPaneShell header (canon §7.3 anty-duplikacja).
+  const contextButtons = [
+    ...(canRunAi && onGenerateInsight
+      ? [
+          {
+            label: isPolish ? 'Generuj wnioski' : 'Generate insights',
+            icon: Sparkles,
+            onClick: () => onGenerateInsight('summary'),
+            colorScheme: 'neutral' as const,
+            shortcut: 'G',
+          },
+        ]
+      : []),
     {
-      buttons: [
-        {
-          label: isPolish ? 'Otwórz' : 'Open',
-          icon: ChevronRight,
-          onClick: onOpenFull,
-          colorScheme: 'primary',
-          shortcut: 'O',
-        },
-        ...(canRunAi && onGenerateInsight
-          ? [
-              {
-                label: isPolish ? 'Generuj wnioski' : 'Generate insights',
-                icon: Sparkles,
-                onClick: () => onGenerateInsight('summary'),
-                colorScheme: 'neutral' as const,
-                shortcut: 'G',
-              },
-            ]
-          : []),
-        {
-          label: isPolish ? 'Kopiuj ID' : 'Copy ID',
-          icon: Copy,
-          onClick: onCopyId,
-          colorScheme: 'neutral',
-        },
-      ],
+      label: isPolish ? 'Kopiuj ID' : 'Copy ID',
+      icon: Copy,
+      onClick: onCopyId,
+      colorScheme: 'neutral' as const,
     },
   ];
 
+  const actionRows: ActionRow[] = contextButtons.length > 0 ? [{ buttons: contextButtons }] : [];
+
   return (
-    <div className="space-y-0">
+    // canon §7.3: space-y-2.5, NO border-t dividers between footer cards
+    <div className="space-y-2.5">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip
           hints={aiHints}
@@ -203,13 +198,9 @@ export const InterviewSessionPreviewFooter: React.FC<InterviewSessionPreviewFoot
         />
       </div>
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
       <PreviewRelations items={relationItems} />
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
-      <PreviewActionBar rows={actionRows} />
+      {actionRows.length > 0 && <PreviewActionBar rows={actionRows} />}
     </div>
   );
 };

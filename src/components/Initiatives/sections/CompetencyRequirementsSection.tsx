@@ -5,11 +5,12 @@
  * Uses InlineTable pattern: "Add requirement" + table of requirements.
  */
 
-import { AlertCircle, BookOpen, Loader2, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, BookOpen, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { useInitiativeContext } from './InitiativeContext';
@@ -166,11 +167,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="animate-spin text-primary-500" size={20} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-8" />;
   }
 
   return (
@@ -181,7 +178,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
           <h3 className="text-sm font-semibold text-navy-900 dark:text-white">
             {t('competency.requirements.title', 'Competency Requirements')}
           </h3>
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-600 dark:text-slate-500">
             ({requirements.length})
           </span>
         </div>
@@ -340,14 +337,14 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
               {requirements.map((req) => (
                 <tr
                   key={req.id}
-                  className="border-b border-slate-100 dark:border-navy-800 last:border-0"
+                  className="border-b border-slate-200 dark:border-navy-800 last:border-0"
                 >
                   <td className="px-3 py-2">
                     <span className="font-medium text-navy-900 dark:text-white text-xs">
                       {req.capabilityName}
                     </span>
                     {req.justification && (
-                      <div className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[200px]">
+                      <div className="text-[10px] text-slate-600 mt-0.5 truncate max-w-[200px]">
                         {req.justification}
                       </div>
                     )}
@@ -358,7 +355,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
                         {req.categoryName}
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-400">—</span>
+                      <span className="text-xs text-slate-600">—</span>
                     )}
                   </td>
                   <td className="text-center px-3 py-2">
@@ -386,7 +383,7 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
                     <td className="px-3 py-2">
                       <button
                         onClick={() => handleDelete(req.id)}
-                        className="text-slate-400 hover:text-rose-500 transition-colors"
+                        className="text-slate-600 hover:text-rose-500 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>

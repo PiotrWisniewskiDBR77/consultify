@@ -29,7 +29,18 @@ export type HandoffTargetModule =
   | 'calendar'
   | 'notebook'
   | 'interview'
-  | 'excele';
+  | 'excele'
+  | 'ideas'
+  | 'results'
+  | 'kpi'
+  | 'roi'
+  | 'execution'
+  | 'finance'
+  | 'meeting'
+  | 'outputs'
+  | 'documents'
+  | 'tables'
+  | 'presentations';
 
 export interface TeresaHandoffContext {
   origin: 'teresa';
@@ -194,6 +205,7 @@ export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
   'notebook',
   'interview',
   'excele',
+  'ideas',
 ];
 
 export const P08_COMMON_PAYLOAD_FIELDS = [

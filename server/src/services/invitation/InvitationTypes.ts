@@ -59,6 +59,9 @@ export interface AcceptInvitationParams {
   firstName: string;
   lastName: string;
   password: string;
+  jobTitle?: string;
+  siteLocation?: string;
+  department?: string;
 }
 
 export interface InvitationRecord {

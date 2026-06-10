@@ -169,7 +169,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
   );
 
   return (
-    <footer className="border-t border-slate-200/90 bg-slate-50/95 py-16 px-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#0B0A23]/95">
+    <footer className="border-t border-slate-200/90 bg-slate-50/95 py-16 px-6 backdrop-blur-sm dark:border-white/[0.08] dark:bg-[#0F172A]/95">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[1.45fr_repeat(5,minmax(0,0.9fr))] lg:gap-8 xl:gap-10">
@@ -285,8 +285,8 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
             href={ROUTES.BECOME_PARTNER}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 shrink-0"
             style={{
-              background: 'linear-gradient(135deg, #7c3aed, #c026d3)',
-              boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)',
+              background: 'linear-gradient(135deg, #A51C30, #651120)',
+              boxShadow: '0 0 24px -8px rgba(165,28,48,0.60)',
             }}
           >
             <Handshake size={15} />

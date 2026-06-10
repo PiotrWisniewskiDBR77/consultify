@@ -84,7 +84,7 @@ function ErrorCategoryBadge({
         ? 'bg-rose-500/10 text-rose-400'
         : category === 'rate_limit'
           ? 'bg-yellow-500/10 text-yellow-400'
-          : 'bg-slate-500/10 text-slate-400';
+          : 'bg-slate-500/10 text-slate-600';
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}
@@ -184,7 +184,7 @@ function ActionsMenu({
         title={disabled ? 'Model catalog is unavailable' : undefined}
         className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
       >
-        <MoreVertical size={16} className="text-slate-400" />
+        <MoreVertical size={16} className="text-slate-600" />
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl z-20 py-1">
@@ -578,7 +578,7 @@ export const ModelCatalogTable: React.FC = () => {
           <button
             onClick={loadModels}
             disabled={loading}
-            className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
             <RefreshCw size={18} />
           </button>
@@ -643,7 +643,7 @@ export const ModelCatalogTable: React.FC = () => {
             <div className="relative flex-1 max-w-md">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
               />
               <input
                 type="text"

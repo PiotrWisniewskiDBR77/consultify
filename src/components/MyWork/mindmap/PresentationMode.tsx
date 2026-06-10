@@ -174,10 +174,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
             {isPl ? 'Tryb prezentacji' : 'Presentation Mode'}
           </span>
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-slate-600">
             {currentSlide + 1} / {slides.length}
           </span>
-          <span className="text-[10px] text-slate-400 flex items-center gap-1 ml-2">
+          <span className="text-[10px] text-slate-600 flex items-center gap-1 ml-2">
             <Clock size={10} />
             {formatElapsed(elapsedSeconds)}
           </span>
@@ -189,14 +189,14 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
             className={`p-2 rounded-lg transition-colors ${
               showNotes
                 ? 'text-amber-500 bg-amber-500/10'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800'
+                : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800'
             }`}
           >
             <StickyNote size={14} />
           </button>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -241,7 +241,7 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                   <div className={`w-3 h-3 rounded-full ${colors.accent}`} />
                   <GitBranch size={20} className={colors.text} />
                   <h2 className={`text-2xl font-bold ${colors.text}`}>{b.label}</h2>
-                  <span className="text-sm text-slate-400 ml-2">({b.nodes.length})</span>
+                  <span className="text-sm text-slate-600 ml-2">({b.nodes.length})</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -252,13 +252,13 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                       style={{ animationDelay: `${idx * 100}ms` }}
                     >
                       <div className="flex items-start gap-2">
-                        <span className="text-[10px] font-bold text-slate-400 mt-0.5">
+                        <span className="text-[10px] font-bold text-slate-600 mt-0.5">
                           {idx + 1}.
                         </span>
                         <div>
                           <div className={`text-sm font-semibold ${colors.text}`}>{node.label}</div>
                           {node.status && node.status !== 'idea' && (
-                            <div className="text-[9px] text-slate-400 mt-1 capitalize">
+                            <div className="text-[9px] text-slate-600 mt-1 capitalize">
                               {node.status.replace(/_/g, ' ')}
                             </div>
                           )}

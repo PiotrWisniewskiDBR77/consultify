@@ -101,7 +101,7 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
             className={`
               px-3 py-2 text-[11px] font-medium uppercase tracking-wider
               ${hasItems ? 'border-b mb-0.5' : ''} 
-              ${isDark ? 'border-white/[0.06] text-slate-400' : 'border-slate-100 text-slate-500'}
+              ${isDark ? 'border-white/[0.06] text-slate-600' : 'border-slate-200 text-slate-500'}
             `}
           >
             {title}
@@ -127,14 +127,14 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
                 ${
                   isLocked
                     ? isDark
-                      ? 'text-slate-400 hover:bg-white/[0.04]'
+                      ? 'text-slate-600 hover:bg-white/[0.04]'
                       : 'text-slate-500 hover:bg-slate-50'
                     : isActive
                       ? isDark
                         ? 'bg-white/[0.08] text-slate-100'
                         : 'bg-primary-50 text-primary-700'
                       : isDark
-                        ? 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-200'
+                        ? 'text-slate-600 hover:bg-white/[0.05] hover:text-slate-200'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }
               `}

@@ -87,11 +87,11 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
                 className={`rounded-lg border-l-4 p-3 ${BLOCK_COLORS[block.type] || ''}`}
               >
                 <div className="flex items-center gap-2 mb-1.5">
-                  <Clock size={12} className="text-slate-400" />
+                  <Clock size={12} className="text-slate-600" />
                   <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
                     {block.start} — {block.label}
                   </span>
-                  <span className="text-[10px] text-slate-400">{block.hours}h</span>
+                  <span className="text-[10px] text-slate-600">{block.hours}h</span>
                 </div>
                 <div className="space-y-1 ml-5">
                   {block.items.map((item, j) => (
@@ -102,14 +102,14 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
                       <span className="w-1 h-1 rounded-full bg-current shrink-0" />
                       <span className="truncate">{item.title}</span>
                       {item.estimatedHours > 0 && (
-                        <span className="text-[9px] text-slate-400 shrink-0">
+                        <span className="text-[9px] text-slate-600 shrink-0">
                           ~{item.estimatedHours}h
                         </span>
                       )}
                     </div>
                   ))}
                   {block.items.length === 0 && (
-                    <span className="text-[10px] text-slate-400 italic">
+                    <span className="text-[10px] text-slate-600 italic">
                       {isPolish ? 'Brak zadań' : 'No items'}
                     </span>
                   )}
@@ -118,7 +118,7 @@ export const AIPlanView: React.FC<AIPlanViewProps> = ({ onClose, embedded = fals
             ))}
           </>
         ) : (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600">
             {isPolish ? 'Nie udało się wygenerować planu' : 'Failed to generate plan'}
           </p>
         )}

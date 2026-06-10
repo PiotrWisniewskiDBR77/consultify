@@ -87,7 +87,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                 {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
               <Link to="/docs" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center">
                   <Book size={16} className="text-white" />
                 </div>
                 <span className="hidden sm:inline">
@@ -151,7 +151,7 @@ export const DocsLayout: React.FC<DocsLayoutProps> = ({ children }) => {
                 <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
                   <form onSubmit={handleSearch}>
                     <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-navy-700">
-                      <Search size={20} className="text-slate-400" />
+                      <Search size={20} className="text-slate-600" />
                       <input
                         type="text"
                         value={searchQuery}

@@ -26,7 +26,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
   label,
   description,
   icon: Icon,
-  iconColor = 'text-slate-400 dark:text-slate-500',
+  iconColor = 'text-slate-600 dark:text-slate-500',
   checked,
   onChange,
   disabled = false,
@@ -56,13 +56,13 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span
-            className={`font-medium ${isDisabled ? 'text-slate-400 dark:text-slate-500' : 'text-navy-900 dark:text-slate-200'}`}
+            className={`font-medium ${isDisabled ? 'text-slate-600 dark:text-slate-500' : 'text-navy-900 dark:text-slate-200'}`}
           >
             {label}
           </span>
           {locked && (
             <div className="relative group">
-              <Lock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <Lock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-500" />
               <div
                 className="
                                 absolute left-1/2 -translate-x-1/2 bottom-full mb-2
@@ -79,7 +79,7 @@ export const SettingsToggle: React.FC<SettingsToggleProps> = ({
         </div>
         {description && (
           <p
-            className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-400 dark:text-slate-600' : 'text-slate-500 dark:text-slate-400'}`}
+            className={`text-sm mt-0.5 ${isDisabled ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-400'}`}
           >
             {description}
           </p>

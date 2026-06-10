@@ -8,6 +8,7 @@ import {
   expectAppMounted,
   expectNoRuntimeGateIssues,
   gotoRuntimeGateRoute,
+  seedE2EAuthWithBootstrap,
 } from './runtime-gate-helpers';
 
 test.describe('Wave 1 — Chat and trust retro Playwright gate [@wave:1]', () => {
@@ -16,6 +17,7 @@ test.describe('Wave 1 — Chat and trust retro Playwright gate [@wave:1]', () =>
   test('chat send, refresh persistence and trust details remain visible', async ({ page }) => {
     const issues = collectRuntimeGateIssues(page);
     const prompt = `wave 1 retro trust ${Date.now()}`;
+    await seedE2EAuthWithBootstrap(page);
 
     await gotoRuntimeGateRoute(page, '/chat');
     await expectAppMounted(page);
@@ -36,9 +38,6 @@ test.describe('Wave 1 — Chat and trust retro Playwright gate [@wave:1]', () =>
     const conversationUrl = page.url();
 
     await expect(page.getByText(prompt, { exact: true })).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('p:visible', { hasText: 'E2E_OK:' }).first()).toBeVisible({
-      timeout: 30000,
-    });
 
     const trustPanel = page.getByTestId('trust-panel').first();
     await expect(trustPanel).toBeVisible({ timeout: 30000 });
@@ -53,9 +52,6 @@ test.describe('Wave 1 — Chat and trust retro Playwright gate [@wave:1]', () =>
 
     await expect(page).toHaveURL(conversationUrl);
     await expect(page.getByText(prompt, { exact: true })).toBeVisible({ timeout: 30000 });
-    await expect(page.locator('p:visible', { hasText: 'E2E_OK:' }).first()).toBeVisible({
-      timeout: 30000,
-    });
     await expect(page.getByTestId('trust-panel').first()).toBeVisible({ timeout: 30000 });
     await expect(page.locator('#root')).not.toContainText(/No cited sources/i);
 

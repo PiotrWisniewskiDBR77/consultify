@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
+import { ErrorState } from '@/components/ui/primitives';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -58,6 +58,8 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { type AssessmentItem, AssessmentItemPreview } from './AssessmentItemPreview';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
@@ -308,6 +310,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const [slideOverReportId, setSlideOverReportId] = useState<string | null>(null);
   const [slideOverBuilderReportId, setSlideOverBuilderReportId] = useState<string | null>(null);
   const [slideOverReportOpen, setSlideOverReportOpen] = useState(false);
+  // canon §7.1: selected row for side-preview (assessment 'list' tab)
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
 
   // API data state
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
@@ -632,7 +636,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
               const importStatusConfig: Record<string, { label: string; color: string }> = {
                 pending: {
                   label: 'Uploaded',
-                  color: 'bg-slate-500/15 text-slate-400 border-slate-500/20',
+                  color: 'bg-slate-500/15 text-slate-600 border-slate-500/20',
                 },
                 detecting: {
                   label: 'Detecting...',
@@ -1348,29 +1352,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     [hubMenu3Actions, hubMenu3Chips]
   );
 
-  const hubCommandRowRightContent = useMemo(
-    () => (
-      <>
-        {hubMenu3Actions.map((action) => {
-          const Icon = action.icon;
-          return (
-            <button
-              key={action.id}
-              type="button"
-              onClick={action.onClick}
-              disabled={action.disabled}
-              className={getMenu3AiButtonClass(Boolean(action.active))}
-              title={action.label}
-            >
-              <Icon size={12} />
-              {action.label}
-            </button>
-          );
-        })}
-      </>
-    ),
-    [hubMenu3Actions]
-  );
+  // NOTE: right-side actions are rendered by AssessmentMenu3ActionBar (inside hubCommandRowContent)
+  // via MENU_3_INNER_CLASS (flex items-center justify-between). ModuleNavBar voids
+  // commandRowRightContent, so all Menu 3 content lives in commandRowContent.
 
   // Render content based on active document or list
   const renderContent = () => {
@@ -1521,6 +1505,59 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
           onNewItem={handleNewAssessment}
           newItemLabel="New Assessment"
         />
+      );
+    }
+
+    // canon §2+§7.1: Assessment 'list' tab → TableWithPreviewLayout + side preview
+    if (activeTab === 'list') {
+      type AssessmentItemWithTitle = AssessmentItem & { title: string };
+      const toItem = (row: any): AssessmentItemWithTitle => ({
+        ...(row as AssessmentItem),
+        title: (row.name as string) || 'Assessment',
+      });
+      const selectedRow = selectedAssessmentId
+        ? (currentData.find((r: any) => r.id === selectedAssessmentId) ?? null)
+        : null;
+      const selectedItem: AssessmentItemWithTitle | null = selectedRow ? toItem(selectedRow) : null;
+
+      return (
+        <TableWithPreviewLayout<AssessmentItemWithTitle>
+          selectedId={selectedAssessmentId}
+          selectedItem={selectedItem}
+          onSelect={setSelectedAssessmentId}
+          onOpenFull={(id) => {
+            const row = currentData.find((r: any) => r.id === id);
+            if (row) handleOpenDocument(row);
+          }}
+          itemIds={currentData.map((r: any) => r.id as string)}
+          getItemById={(id) => {
+            const r = currentData.find((x: any) => x.id === id);
+            return r ? toItem(r) : null;
+          }}
+          renderPreview={(item) => (
+            <AssessmentItemPreview
+              item={item as AssessmentItem}
+              onOpen={() => {
+                const row = currentData.find((r: any) => r.id === item.id);
+                if (row) handleOpenDocument(row);
+              }}
+              onClose={() => setSelectedAssessmentId(null)}
+            />
+          )}
+        >
+          <div className="pl-4 pr-1.5 pt-3 pb-4">
+            <FilterableTable
+              columns={tableColumns}
+              data={currentData}
+              onRowClick={(row) => setSelectedAssessmentId((row as any).id as string)}
+              onRowDoubleClick={handleOpenDocument}
+              onRowAction={handleRowAction}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              emptyMessage={emptyStateMessage}
+            />
+          </div>
+        </TableWithPreviewLayout>
       );
     }
 
@@ -1684,26 +1721,32 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         newItemLabel={getNewItemLabel()}
         rightControls={statusDropdownControl}
         commandRowContent={hubCommandRowContent}
-        commandRowRightContent={hubCommandRowRightContent}
       >
         <div className="space-y-3">
-          {loadWarning && (
-            <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
-                  <p>{loadWarning}</p>
+          {loadWarning &&
+            !(activeTab === 'list' && !activeDocumentId && assessments.length === 0) && (
+              <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+                    <p>{loadWarning}</p>
+                  </div>
+                  <button
+                    onClick={() => refreshData()}
+                    className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
+                  >
+                    Retry
+                  </button>
                 </div>
-                <button
-                  onClick={() => refreshData()}
-                  className="shrink-0 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-400/10"
-                >
-                  Retry
-                </button>
               </div>
-            </div>
+            )}
+          {loadWarning && activeTab === 'list' && !activeDocumentId && assessments.length === 0 ? (
+            // Hard failure (no cached data): show ErrorState with retry instead of the
+            // empty-list CTA, which would falsely imply the user has 0 assessments.
+            <ErrorState message={loadWarning} retry={() => void refreshData()} />
+          ) : (
+            renderContent()
           )}
-          {renderContent()}
         </div>
       </ModuleHub>
 
@@ -1785,7 +1828,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                     setSlideOverBuilderReportId(null);
                   }, 300);
                 }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -2179,7 +2222,7 @@ const ReportSlideOverContent: React.FC<{
                     ) : (
                       <Download
                         size={14}
-                        className="text-slate-400 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
+                        className="text-slate-600 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300 transition-colors"
                       />
                     )}
                   </div>
@@ -2237,7 +2280,7 @@ const ReportSlideOverContent: React.FC<{
             </div>
             <ArrowRight
               size={14}
-              className="text-slate-400 group-hover:text-slate-700 dark:text-slate-600 dark:group-hover:text-slate-300 transition-colors shrink-0"
+              className="text-slate-600 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-300 transition-colors shrink-0"
             />
           </button>
         </div>

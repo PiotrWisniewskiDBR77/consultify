@@ -23,6 +23,7 @@ import { DegradedState } from '@/components/Admin/AdminState';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { Card } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
 interface Report {
@@ -391,11 +392,7 @@ const SavedReportsView: React.FC = () => {
   const controlsDisabled = !!loadError;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -565,7 +562,7 @@ const SavedReportsView: React.FC = () => {
                 {/* Report Info */}
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div className="bg-gray-700/50 rounded-lg p-3">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                    <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
                       Type
                     </span>
                     <p className="text-white font-medium mt-1">
@@ -573,7 +570,7 @@ const SavedReportsView: React.FC = () => {
                     </p>
                   </div>
                   <div className="bg-gray-700/50 rounded-lg p-3">
-                    <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                    <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
                       Created By
                     </span>
                     <p className="text-white font-medium mt-1">
@@ -662,7 +659,7 @@ const SavedReportsView: React.FC = () => {
                               .map((key) => (
                                 <th
                                   key={key}
-                                  className="text-left py-2 px-3 text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium"
+                                  className="text-left py-2 px-3 text-gray-600 dark:text-gray-500 dark:text-gray-400 font-medium"
                                 >
                                   {key}
                                 </th>
@@ -687,7 +684,7 @@ const SavedReportsView: React.FC = () => {
                         </tbody>
                       </table>
                       {executionResult.data.length > 10 && (
-                        <p className="text-center text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs mt-2">
+                        <p className="text-center text-gray-600 dark:text-gray-500 dark:text-gray-400 text-xs mt-2">
                           Showing 10 of {executionResult.data.length} records
                         </p>
                       )}
@@ -745,7 +742,7 @@ const SavedReportsView: React.FC = () => {
           ) : (
             <Card className="p-8">
               <div className="flex flex-col items-center justify-center h-64">
-                <FileText className="w-16 h-16 text-slate-400 dark:text-slate-400 mb-4" />
+                <FileText className="w-16 h-16 text-slate-600 dark:text-slate-400 mb-4" />
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
                   Select a Report
                 </h3>
@@ -838,7 +835,7 @@ const SavedReportsView: React.FC = () => {
             <h3 className="text-xl font-bold text-white mb-4">Schedule Report</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Frequency</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Frequency</label>
                 <select
                   value={schedule.frequency}
                   onChange={(e) => setSchedule({ ...schedule, frequency: e.target.value })}
@@ -850,7 +847,7 @@ const SavedReportsView: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Time</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Time</label>
                 <input
                   type="time"
                   value={schedule.time}
@@ -866,7 +863,7 @@ const SavedReportsView: React.FC = () => {
                   onChange={(e) => setSchedule({ ...schedule, is_active: e.target.checked })}
                   className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600"
                 />
-                <label htmlFor="schedule-active" className="text-sm text-gray-300">
+                <label htmlFor="schedule-active" className="text-sm text-gray-600">
                   Enable scheduled execution
                 </label>
               </div>

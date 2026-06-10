@@ -126,7 +126,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
         <span className="truncate max-w-[100px]">
           {activeView?.name ?? (isPl ? 'Widoki' : 'Views')}
         </span>
-        <ChevronDown size={10} className="text-slate-400" />
+        <ChevronDown size={10} className="text-slate-600" />
       </button>
 
       {/* Dropdown */}
@@ -134,7 +134,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
         <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="px-3 py-2 border-b border-slate-200/60 dark:border-navy-700/60">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
               {isPl ? 'Zapisane widoki' : 'Saved views'}
             </span>
           </div>
@@ -142,7 +142,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
           {/* View list */}
           <div className="py-1 max-h-[240px] overflow-auto">
             {views.length === 0 && (
-              <p className="text-[11px] text-slate-400 text-center py-3">
+              <p className="text-[11px] text-slate-600 text-center py-3">
                 {isPl ? 'Brak widoków' : 'No views'}
               </p>
             )}
@@ -164,9 +164,9 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
                   }`}
                 >
-                  <Icon size={13} className={isActive ? 'text-primary-500' : 'text-slate-400'} />
+                  <Icon size={13} className={isActive ? 'text-primary-500' : 'text-slate-600'} />
                   <span className="flex-1 truncate">{view.name}</span>
-                  {view.isPersonal && <Lock size={10} className="text-slate-400 flex-shrink-0" />}
+                  {view.isPersonal && <Lock size={10} className="text-slate-600 flex-shrink-0" />}
                   {view.isShared && <Share2 size={10} className="text-emerald-500 flex-shrink-0" />}
                   <button
                     type="button"
@@ -174,12 +174,12 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                       e.stopPropagation();
                       setSharingViewId(view.id);
                     }}
-                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-400 hover:text-primary-500 flex-shrink-0 opacity-0 group-hover/view:opacity-100 transition-opacity"
+                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-600 hover:text-primary-500 flex-shrink-0 opacity-0 group-hover/view:opacity-100 transition-opacity"
                     title={isPl ? 'Udostępnij' : 'Share'}
                   >
                     <Share2 size={10} />
                   </button>
-                  <span className="text-[9px] text-slate-400">
+                  <span className="text-[9px] text-slate-600">
                     {isPl ? meta.labelPl : meta.labelEn}
                   </span>
                   {isActive && <Check size={12} className="text-primary-500 flex-shrink-0" />}
@@ -237,7 +237,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                     onChange={(e) => setNewPersonal(e.target.checked)}
                     className="rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30 h-3.5 w-3.5"
                   />
-                  <Lock size={10} className="text-slate-400" />
+                  <Lock size={10} className="text-slate-600" />
                   <span className="text-[10px] text-slate-500 dark:text-slate-400">
                     {isPl ? 'Widok prywatny' : 'Personal view'}
                   </span>
@@ -254,7 +254,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                   <button
                     type="button"
                     onClick={() => setCreating(false)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                   >
                     <X size={12} />
                   </button>

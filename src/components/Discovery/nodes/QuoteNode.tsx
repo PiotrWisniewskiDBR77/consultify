@@ -46,7 +46,7 @@ export const QuoteNode: React.FC<NodeProps<QuoteNodeData>> = memo(({ data, selec
 
       {/* Header */}
       <div className="flex items-center gap-1.5 mb-2">
-        <MessageSquareQuote size={14} className="text-slate-400 dark:text-slate-500" />
+        <MessageSquareQuote size={14} className="text-slate-600 dark:text-slate-500" />
         <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
           {t('discovery.nodes.quote.title', 'Quote')}
         </span>

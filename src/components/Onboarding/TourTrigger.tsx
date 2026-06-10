@@ -12,12 +12,12 @@ import { Tour, useTour } from './TourProvider';
 const tourAnimationStyle = `
 @keyframes tourColorPulse {
     0%, 100% {
-        background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
-        box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+        background: linear-gradient(135deg, #A51C30 0%, #651120 100%);
+        box-shadow: 0 0 8px rgba(165, 28, 48, 0.3);
     }
     50% {
-        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-        box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+        background: linear-gradient(135deg, #D42B3D 0%, #851627 100%);
+        box-shadow: 0 0 12px rgba(165, 28, 48, 0.4);
     }
 }
 
@@ -78,7 +78,7 @@ export const TourTrigger: React.FC<TourTriggerProps> = ({
         <Play size={14} />
         <span>{label}</span>
         {completed && (
-          <span className="text-xs text-slate-400 dark:text-slate-500">(ukończony)</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">(ukończony)</span>
         )}
       </button>
     );

@@ -2,7 +2,6 @@ import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import {
   BarChart3,
   Bell,
-  Bot,
   Brain,
   Calendar,
   Check,
@@ -28,8 +27,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import TeresaMark from '../components/shared/TeresaMark';
 import { apiGet, apiPost } from '../services/api/baseClient';
-
 type ModuleKey = 'iris' | 'marketplace' | 'meeting' | 'wordy' | 'excele' | 'prezentacje';
 
 interface ModuleConfig {
@@ -78,7 +77,7 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
           'AI analizuje kontekst projektu, wcześniejsze decyzje i otwarte punkty, by wygenerować precyzyjną agendę jeszcze przed rozpoczęciem spotkania.',
       },
       {
-        icon: <Bot size={20} />,
+        icon: <TeresaMark size={20} />,
         title: 'Teresa — AI moderator spotkań',
         description:
           'Teresa uczestniczy w spotkaniu jako konsultant AI, który zna kontekst Twojej organizacji, projektów i wcześniejszych ustaleń. Moderuje dyskusję, pilnuje agendy i na bieżąco podpowiada kluczowe dane i rekomendacje.',
@@ -103,7 +102,7 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
     ],
     imageUrl: MEETING_IMAGE,
     imageAlt: 'Zespół współpracujący na produktywnym spotkaniu',
-    gradient: 'from-blue-600/20 via-indigo-600/10 to-primary-600/5',
+    gradient: 'from-blue-600/20 via-crimson-600/10 to-primary-600/5',
     accentColor: 'blue',
     bannerTitle: 'Bądź na bieżąco z Meeting Intelligence',
     bannerDescription:
@@ -148,7 +147,7 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
     ],
     imageUrl: IRIS_IMAGE,
     imageAlt: 'Automatyka przemysłowa i technologia produkcji',
-    gradient: 'from-primary-600/20 via-primary-600/10 to-fuchsia-600/5',
+    gradient: 'from-primary-600/20 via-primary-600/10 to-crimson-600/5',
     accentColor: 'purple',
     lpUrl: IRIS_LP_URL,
     lpLabel: 'Dowiedz się więcej o IRIS',
@@ -332,7 +331,7 @@ const copyByModule: Record<ModuleKey, ModuleConfig> = {
     ],
     imageUrl: PREZENTACJE_IMAGE,
     imageAlt: 'Tworzenie prezentacji z AI w nowoczesnym środowisku',
-    gradient: 'from-rose-600/20 via-pink-600/10 to-fuchsia-600/5',
+    gradient: 'from-crimson-600/20 via-crimson-500/10 to-hbs-magenta-600/5',
     accentColor: 'rose',
     bannerTitle: 'Zainteresowany modułem Prezentacje AI?',
     bannerDescription:

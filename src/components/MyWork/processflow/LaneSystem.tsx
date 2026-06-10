@@ -124,7 +124,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
                 title="Move up"
               >
-                <ArrowDownUp size={9} className="text-slate-400 rotate-180" />
+                <ArrowDownUp size={9} className="text-slate-600 rotate-180" />
               </button>
             )}
             {!isLast && (
@@ -133,7 +133,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
                 title="Move down"
               >
-                <ArrowDownUp size={9} className="text-slate-400" />
+                <ArrowDownUp size={9} className="text-slate-600" />
               </button>
             )}
             <button
@@ -141,7 +141,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
               className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
               title="Change color"
             >
-              <Palette size={9} className="text-slate-400" />
+              <Palette size={9} className="text-slate-600" />
             </button>
             {laneCount > 1 && (
               <button

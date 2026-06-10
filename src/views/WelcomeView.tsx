@@ -119,7 +119,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
             <div className="space-y-4">
               {/* PRIMARY CTA: EXPLORE DEMO (Low Pressure Entry) */}
               <div
-                className="group relative bg-gradient-to-br from-primary-600 to-indigo-700 border border-primary-500 rounded-lg p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/20 cursor-pointer"
+                className="group relative bg-gradient-to-br from-primary-600 to-crimson-700 border border-primary-500 rounded-lg p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/20 cursor-pointer"
                 onClick={() => onStartSession(SessionMode.DEMO)}
               >
                 <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
@@ -166,7 +166,7 @@ export const WelcomeView: React.FC<WelcomeViewProps> = ({ onStartSession, onLogi
                     </p>
                   </div>
                   <ArrowRight
-                    className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
+                    className="text-slate-600 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
                     size={20}
                   />
                 </div>

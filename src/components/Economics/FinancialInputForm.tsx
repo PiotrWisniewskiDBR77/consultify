@@ -189,7 +189,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
       </label>
       <div className="relative">
         {type === 'currency' && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 text-sm">
             {currency}
           </span>
         )}
@@ -212,7 +212,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                         text-navy-900 dark:text-white`}
         />
         {type === 'percent' && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 text-sm">
             %
           </span>
         )}
@@ -252,9 +252,9 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
         </div>
       </div>
       {expandedSections[section] ? (
-        <ChevronUp size={20} className="text-slate-400 dark:text-slate-500" />
+        <ChevronUp size={20} className="text-slate-600 dark:text-slate-500" />
       ) : (
-        <ChevronDown size={20} className="text-slate-400 dark:text-slate-500" />
+        <ChevronDown size={20} className="text-slate-600 dark:text-slate-500" />
       )}
     </button>
   );
@@ -275,7 +275,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
           summary={`Total investment: ${formatCurrency(totalInvestment)}`}
         />
         {expandedSections.costs && (
-          <div className="p-4 border-t border-slate-100 dark:border-navy-700 space-y-4">
+          <div className="p-4 border-t border-slate-200 dark:border-navy-700 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
                 label="Initial Investment"
@@ -302,7 +302,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
               min={0}
               max={50}
             />
-            <div className="pt-2 border-t border-slate-100 dark:border-navy-700">
+            <div className="pt-2 border-t border-slate-200 dark:border-navy-700">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-600 dark:text-slate-400">
                   Total initial investment:
@@ -325,7 +325,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
           summary={`Roczne benefits: ${formatCurrency(totalAnnualBenefits)}`}
         />
         {expandedSections.benefits && (
-          <div className="p-4 border-t border-slate-100 dark:border-navy-700 space-y-4">
+          <div className="p-4 border-t border-slate-200 dark:border-navy-700 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
                 label="Annual Savings costs"
@@ -349,7 +349,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
                 hint="Unikniete straty, kary"
               />
             </div>
-            <div className="pt-2 border-t border-slate-100 dark:border-navy-700">
+            <div className="pt-2 border-t border-slate-200 dark:border-navy-700">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-600 dark:text-slate-400">Total annual benefits:</span>
                 <span className="font-semibold text-green-600 dark:text-green-400">
@@ -370,7 +370,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
           summary={`Horyzont: ${formData.analysisHorizonYears} lat, Stopa dyskontowa: ${formData.discountRate}%`}
         />
         {expandedSections.time && (
-          <div className="p-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="p-4 border-t border-slate-200 dark:border-navy-700">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
                 label="Implementation Time (months)"
@@ -418,7 +418,7 @@ export const FinancialInputForm: React.FC<FinancialInputFormProps> = ({
           summary={`${formData.assumptions.length} assumptions defined`}
         />
         {expandedSections.assumptions && (
-          <div className="p-4 border-t border-slate-100 dark:border-navy-700 space-y-4">
+          <div className="p-4 border-t border-slate-200 dark:border-navy-700 space-y-4">
             <div className="flex gap-2">
               <input
                 type="text"

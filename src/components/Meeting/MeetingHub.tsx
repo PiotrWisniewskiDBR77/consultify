@@ -1,10 +1,16 @@
 import {
+  Archive,
   CalendarDays,
   CheckSquare2,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
+  ExternalLink,
   FileText,
   Loader2,
+  Pencil,
   Sparkles,
+  Trash2,
   Users,
   X,
 } from 'lucide-react';
@@ -21,6 +27,7 @@ import {
 } from '@/components/shared/ModuleHub';
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
+import { Menu3Row } from '@/components/shared/ModuleHub/Menu3Row';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
@@ -28,10 +35,11 @@ import {
   MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
-  MENU_3_LEFT_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { ErrorState, LoadingState, StatusChip } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';
@@ -70,10 +78,18 @@ export const MeetingHub: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [meetings, setMeetings] = useState<MeetingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [notesTranscript, setNotesTranscript] = useState('');
+  const [generatingNotes, setGeneratingNotes] = useState(false);
+  const [generatedNote, setGeneratedNote] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MeetingItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [operatorBrief, setOperatorBrief] = useState<any>(null);
   const [operatorBriefLoading, setOperatorBriefLoading] = useState(false);
   const [draft, setDraft] = useState({
@@ -96,6 +112,7 @@ export const MeetingHub: React.FC = () => {
 
   const loadMeetings = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await (Api as any).getMeetings?.();
       const rows = Array.isArray(data) ? data : data?.meetings || [];
@@ -103,6 +120,7 @@ export const MeetingHub: React.FC = () => {
     } catch (error) {
       console.error('Failed to load meetings:', error);
       setMeetings([]);
+      setLoadError(t('meeting.errors.loadFailed', 'Failed to load meetings'));
       toast.error(t('meeting.errors.loadFailed', 'Failed to load meetings'));
     } finally {
       setLoading(false);
@@ -263,18 +281,16 @@ export const MeetingHub: React.FC = () => {
             color: 'bg-emerald-400',
           },
         ],
+        // canon §4.1 — EntityStatusChip maps scheduled→info, completed→success via statusChipTone()
         render: (row: MeetingItem) => (
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+          <EntityStatusChip
+            status={row.status}
+            label={
               row.status === 'completed'
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-            }`}
-          >
-            {row.status === 'completed'
-              ? t('meeting.status.completed', 'Completed')
-              : t('meeting.status.scheduled', 'Scheduled')}
-          </span>
+                ? t('meeting.status.completed', 'Completed')
+                : t('meeting.status.scheduled', 'Scheduled')
+            }
+          />
         ),
       },
       {
@@ -332,9 +348,12 @@ export const MeetingHub: React.FC = () => {
       },
     ];
 
+    // Canonical Menu 3 layout: left preset chips + right AI action in one justify-between row.
+    // NOTE: commandRowRightContent is voided by ModuleNavBar (line 188), so we embed both
+    // sides here via the canonical Menu3Row shell (left/right slots over MENU_3 tokens).
     return (
-      <div className={MENU_3_LEFT_CLASS}>
-        {chips.map((chip) => (
+      <Menu3Row
+        left={chips.map((chip) => (
           <button
             key={chip.id}
             type="button"
@@ -348,59 +367,120 @@ export const MeetingHub: React.FC = () => {
             </span>
           </button>
         ))}
-      </div>
+        right={
+          <button
+            type="button"
+            disabled={!briefingMeeting}
+            onClick={() => {
+              if (briefingMeeting) openMeetingDocument(briefingMeeting);
+            }}
+            className={getMenu3AiButtonClass(Boolean(briefingMeeting && activeDocumentId))}
+            title={t('meeting.actions.operatorBrief', 'Open operator brief')}
+          >
+            <Sparkles size={12} />
+            <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
+          </button>
+        }
+      />
     );
-  }, [activeFilters, counts, t]);
+  }, [activeDocumentId, activeFilters, briefingMeeting, counts, openMeetingDocument, t]);
 
-  const commandRowRightContent = useMemo(
-    () => (
-      <button
-        type="button"
-        disabled={!briefingMeeting}
-        onClick={() => {
-          if (briefingMeeting) openMeetingDocument(briefingMeeting);
-        }}
-        className={getMenu3AiButtonClass(Boolean(briefingMeeting && activeDocumentId))}
-        title={t('meeting.actions.operatorBrief', 'Open operator brief')}
-      >
-        <Sparkles size={12} />
-        <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
-      </button>
-    ),
-    [activeDocumentId, briefingMeeting, t]
-  );
+  const resetDraft = () => {
+    setDraft({
+      title: '',
+      startAt: '',
+      endAt: '',
+      location: '',
+      attendees: '',
+      preRead: '',
+      agenda: '',
+    });
+  };
 
-  const handleCreateMeeting = async () => {
+  const openCreateModal = () => {
+    setEditingId(null);
+    resetDraft();
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (meeting: MeetingItem) => {
+    setEditingId(meeting.id);
+    setDraft({
+      title: meeting.title,
+      startAt: toLocalInput(meeting.startAt),
+      endAt: toLocalInput(meeting.endAt),
+      location: meeting.location || '',
+      attendees: meeting.attendees.join('\n'),
+      preRead: meeting.preRead.join('\n'),
+      agenda: meeting.agenda.join('\n'),
+    });
+    setShowCreateModal(true);
+  };
+
+  const closeMeetingModal = () => {
+    setShowCreateModal(false);
+    setEditingId(null);
+    resetDraft();
+  };
+
+  const handleSaveMeeting = async () => {
     if (!draft.title.trim() || !draft.startAt) return;
+    const payload = {
+      title: draft.title.trim(),
+      startAt: draft.startAt,
+      endAt: draft.endAt || draft.startAt,
+      location: draft.location.trim(),
+      attendees: splitLines(draft.attendees),
+      preRead: splitLines(draft.preRead),
+      agenda: splitLines(draft.agenda),
+    };
+
+    if (editingId) {
+      try {
+        const response = await (Api as any).updateMeeting?.(editingId, payload);
+        const meeting = response?.meeting as MeetingItem | undefined;
+        if (!meeting) throw new Error('Meeting was not updated');
+        setMeetings((prev) => prev.map((item) => (item.id === editingId ? meeting : item)));
+        closeMeetingModal();
+        toast.success(t('meeting.notifications.updated', 'Meeting updated'));
+      } catch (error) {
+        console.error('Failed to update meeting:', error);
+        toast.error(t('meeting.errors.updateFailed', 'Failed to update meeting'));
+      }
+      return;
+    }
+
     try {
-      const response = await (Api as any).createMeeting?.({
-        title: draft.title.trim(),
-        startAt: draft.startAt,
-        endAt: draft.endAt || draft.startAt,
-        location: draft.location.trim(),
-        attendees: splitLines(draft.attendees),
-        preRead: splitLines(draft.preRead),
-        agenda: splitLines(draft.agenda),
-        decisions: [],
-      });
+      const response = await (Api as any).createMeeting?.({ ...payload, decisions: [] });
       const meeting = response?.meeting as MeetingItem | undefined;
       if (!meeting) throw new Error('Meeting was not created');
       setMeetings((prev) => [meeting, ...prev]);
       setSelectedId(meeting.id);
-      setShowCreateModal(false);
-      setDraft({
-        title: '',
-        startAt: '',
-        endAt: '',
-        location: '',
-        attendees: '',
-        preRead: '',
-        agenda: '',
-      });
+      closeMeetingModal();
       toast.success(t('meeting.notifications.created', 'Meeting created'));
     } catch (error) {
       console.error('Failed to create meeting:', error);
       toast.error(t('meeting.errors.createFailed', 'Failed to create meeting'));
+    }
+  };
+
+  const handleDeleteMeeting = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await (Api as any).deleteMeeting?.(deleteTarget.id);
+      const removedId = deleteTarget.id;
+      setMeetings((prev) => prev.filter((item) => item.id !== removedId));
+      if (selectedId === removedId) setSelectedId(null);
+      if (activeDocumentId === removedId) setActiveDocumentId(null);
+      setOpenDocuments((prev) => prev.filter((doc) => doc.id !== removedId));
+      setDeleteTarget(null);
+      toast.success(t('meeting.notifications.deleted', 'Meeting deleted'));
+    } catch (error) {
+      console.error('Failed to delete meeting:', error);
+      toast.error(t('meeting.errors.deleteFailed', 'Failed to delete meeting'));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -457,6 +537,32 @@ export const MeetingHub: React.FC = () => {
     }
   };
 
+  const handleGenerateNotes = async () => {
+    if (!activeMeeting || !notesTranscript.trim()) return;
+    setGeneratingNotes(true);
+    setGeneratedNote(null);
+    try {
+      const response = await (Api as any).generateMeetingNotes?.(activeMeeting.id, {
+        transcript: notesTranscript.trim(),
+        language: isPolish ? 'pl' : 'en',
+      });
+      const note = response?.note;
+      if (!note) throw new Error('No notes returned');
+      setGeneratedNote(note);
+      // The route persisted decisions/follow-ups; refresh the meeting in the list.
+      const meeting = response?.meeting as MeetingItem | undefined;
+      if (meeting) {
+        setMeetings((prev) => prev.map((item) => (item.id === activeMeeting.id ? meeting : item)));
+      }
+      toast.success(t('meeting.notes.notifications.generated', 'AI notes generated'));
+    } catch (error) {
+      console.error('Failed to generate meeting notes:', error);
+      toast.error(t('meeting.notes.errors.generateFailed', 'Failed to generate notes'));
+    } finally {
+      setGeneratingNotes(false);
+    }
+  };
+
   const handleToggleFollowUpStatus = async (meetingId: string, followUpId: string) => {
     const meeting = meetings.find((item) => item.id === meetingId);
     const followUp = meeting?.followUps.find((item) => item.id === followUpId);
@@ -502,7 +608,7 @@ export const MeetingHub: React.FC = () => {
         primaryCta={
           <button
             type="button"
-            onClick={() => setShowCreateModal(true)}
+            onClick={openCreateModal}
             className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
           >
             <span>{t('meeting.actions.new', 'New meeting')}</span>
@@ -521,29 +627,41 @@ export const MeetingHub: React.FC = () => {
           </div>
         }
         commandRowContent={commandRowContent}
-        commandRowRightContent={commandRowRightContent}
         availableViewModes={['table', 'calendar']}
       >
         {loading ? (
-          <div className="flex h-full items-center justify-center">
-            <Loader2 size={24} className="animate-spin text-slate-400" />
-          </div>
+          <LoadingState variant="spinner" className="h-full" />
+        ) : loadError ? (
+          <ErrorState message={loadError} retry={() => void loadMeetings()} />
         ) : activeMeeting ? (
           <MeetingDetailView
             meeting={activeMeeting}
             isPolish={isPolish}
-            operatorBrief={operatorBrief?.meetingId === activeMeeting.id ? operatorBrief : null}
+            operatorBrief={
+              briefMatchesMeeting(operatorBrief, activeMeeting.id) ? operatorBrief : null
+            }
             operatorBriefLoading={operatorBriefLoading}
             onBack={() => setActiveDocumentId(null)}
+            onEdit={() => openEditModal(activeMeeting)}
+            onDelete={() => setDeleteTarget(activeMeeting)}
             onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
             onAddDecision={() => setShowDecisionModal(true)}
             onAddFollowUp={() => setShowFollowUpModal(true)}
+            onGenerateNotes={() => {
+              setGeneratedNote(null);
+              setNotesTranscript('');
+              setShowNotesModal(true);
+            }}
             onToggleFollowUpStatus={(followUpId) =>
               handleToggleFollowUpStatus(activeMeeting.id, followUpId)
             }
           />
         ) : viewMode === 'calendar' ? (
-          <MeetingCalendarView meetings={filteredMeetings} isPolish={isPolish} />
+          <MeetingCalendarView
+            meetings={filteredMeetings}
+            isPolish={isPolish}
+            onSelectMeeting={(meeting) => openMeetingDocument(meeting)}
+          />
         ) : (
           <div className="h-full overflow-hidden">
             <TableWithPreviewLayout<MeetingItem & { title: string }>
@@ -560,7 +678,7 @@ export const MeetingHub: React.FC = () => {
                 <MeetingPreview
                   meeting={item}
                   isPolish={isPolish}
-                  operatorBrief={operatorBrief?.meetingId === item.id ? operatorBrief : null}
+                  operatorBrief={briefMatchesMeeting(operatorBrief, item.id) ? operatorBrief : null}
                   operatorBriefLoading={operatorBriefLoading && briefingMeeting?.id === item.id}
                 />
               )}
@@ -572,15 +690,45 @@ export const MeetingHub: React.FC = () => {
                 onRowClick={(row) => setSelectedId(row.id)}
                 onRowDoubleClick={(row) => openMeetingDocument(row as MeetingItem)}
                 getRowActions={(row) => [
+                  // canon §9.2 FIXED BOTTOM MANIFEST position 1 — side preview, not navigation
                   {
-                    id: 'preview',
-                    label: t('common.preview', 'Preview'),
+                    id: 'open_preview',
+                    label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                    icon: ChevronRight,
                     onClick: () => setSelectedId(String(row.id)),
                   },
                   {
-                    id: 'edit',
+                    id: 'open',
                     label: t('common.open', 'Open'),
+                    icon: ExternalLink,
+                    variant: 'primary',
                     onClick: () => openMeetingDocument(row as MeetingItem),
+                  },
+                  // canon §9.2 position 2 — Edit (start of fixed "manage" block)
+                  {
+                    id: 'edit',
+                    label: t('common.edit', 'Edit'),
+                    icon: Pencil,
+                    divider: true,
+                    onClick: () => openEditModal(row as MeetingItem),
+                  },
+                  // canon §9.2 position 3 — Archive slot always present; no backend yet → disabled
+                  {
+                    id: 'archive',
+                    label: isPolish ? 'Archiwizuj' : 'Archive',
+                    icon: Archive,
+                    disabled: true,
+                    description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                    onClick: () => undefined,
+                  },
+                  // canon §9 DANGER zone — hard delete, separated, confirm dialog
+                  {
+                    id: 'delete',
+                    label: isPolish ? 'Usuń' : 'Delete',
+                    icon: Trash2,
+                    divider: true,
+                    variant: 'danger',
+                    onClick: () => setDeleteTarget(row as MeetingItem),
                   },
                 ]}
                 activeFilters={activeFilters}
@@ -599,7 +747,9 @@ export const MeetingHub: React.FC = () => {
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
               <div>
                 <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {t('meeting.modal.title', 'Create meeting')}
+                  {editingId
+                    ? t('meeting.modal.editTitle', 'Edit meeting')
+                    : t('meeting.modal.title', 'Create meeting')}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   {t('meeting.modal.subtitle', 'Agenda + pre-read + follow-up workspace')}
@@ -607,7 +757,7 @@ export const MeetingHub: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setShowCreateModal(false)}
+                onClick={closeMeetingModal}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
               >
                 <X size={16} />
@@ -677,17 +827,19 @@ export const MeetingHub: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={closeMeetingModal}
                   className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>
                 <button
                   type="button"
-                  onClick={handleCreateMeeting}
+                  onClick={handleSaveMeeting}
                   className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
                 >
-                  {t('meeting.actions.create', 'Create meeting')}
+                  {editingId
+                    ? t('meeting.actions.save', 'Save changes')
+                    : t('meeting.actions.create', 'Create meeting')}
                 </button>
               </div>
             </div>
@@ -797,6 +949,171 @@ export const MeetingHub: React.FC = () => {
           </div>
         </div>
       ) : null}
+      {showNotesModal && activeMeeting ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-slate-900 dark:text-white inline-flex items-center gap-2">
+                  <Sparkles size={16} className="text-[#A51C30]" />
+                  {isPolish ? 'Notatki AI ze spotkania' : 'AI Meeting Notes'}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {activeMeeting.title}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNotesModal(false)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="space-y-4 p-5">
+              {!generatedNote ? (
+                <Field
+                  label={isPolish ? 'Wklej transkrypcję spotkania' : 'Paste the meeting transcript'}
+                >
+                  <textarea
+                    className="w-full min-h-[180px] rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                    placeholder={
+                      isPolish
+                        ? 'Wklej tu transkrypcję — Teresa wyciągnie podsumowanie, decyzje i zadania...'
+                        : 'Paste the transcript — Teresa will extract a summary, decisions, and action items...'
+                    }
+                    value={notesTranscript}
+                    onChange={(e) => setNotesTranscript(e.target.value)}
+                  />
+                </Field>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                      {isPolish ? 'Podsumowanie' : 'Summary'}
+                    </div>
+                    <p className="text-sm text-slate-700 dark:text-slate-200">
+                      {generatedNote.summary}
+                    </p>
+                  </div>
+                  {Array.isArray(generatedNote.keyPoints) && generatedNote.keyPoints.length > 0 && (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                        {isPolish ? 'Kluczowe punkty' : 'Key points'}
+                      </div>
+                      <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                        {generatedNote.keyPoints.map((kp: string, i: number) => (
+                          <li key={i}>{kp}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(generatedNote.decisions) && generatedNote.decisions.length > 0 && (
+                    <div>
+                      <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                        {isPolish ? 'Decyzje (zapisane)' : 'Decisions (saved)'}
+                      </div>
+                      <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                        {generatedNote.decisions.map((d: any, i: number) => (
+                          <li key={i}>{d?.decision || String(d)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(generatedNote.actionItems) &&
+                    generatedNote.actionItems.length > 0 && (
+                      <div>
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                          {isPolish
+                            ? 'Zadania (zapisane jako follow-up)'
+                            : 'Action items (saved as follow-ups)'}
+                        </div>
+                        <ul className="list-disc pl-5 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                          {generatedNote.actionItems.map((a: any, i: number) => (
+                            <li key={i}>
+                              {a?.task || String(a)}
+                              {a?.owner ? (
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  {' '}
+                                  — {a.owner}
+                                </span>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+              <button
+                type="button"
+                onClick={() => setShowNotesModal(false)}
+                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+              >
+                {generatedNote ? t('common.close', 'Close') : t('common.cancel', 'Cancel')}
+              </button>
+              {!generatedNote && (
+                <button
+                  type="button"
+                  onClick={handleGenerateNotes}
+                  disabled={generatingNotes || !notesTranscript.trim()}
+                  className="h-9 px-4 rounded-full bg-[#A51C30] text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:bg-[#8a1828]"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  {generatingNotes
+                    ? isPolish
+                      ? 'Generuję...'
+                      : 'Generating...'
+                    : isPolish
+                      ? 'Wygeneruj notatki'
+                      : 'Generate notes'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                {t('meeting.delete.title', 'Delete meeting')}
+              </div>
+            </div>
+            <div className="px-5 py-4 text-sm text-slate-600 dark:text-slate-300">
+              {t(
+                'meeting.delete.confirm',
+                'This permanently removes the meeting, its decisions, and follow-ups. This cannot be undone.'
+              )}
+              <div className="mt-2 font-medium text-slate-900 dark:text-white">
+                {deleteTarget.title}
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm disabled:opacity-60"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteMeeting}
+                disabled={deleting}
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-full bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : null}
+                {t('meeting.delete.action', 'Delete meeting')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 };
@@ -814,9 +1131,12 @@ const MeetingDetailView: React.FC<{
   operatorBrief?: any;
   operatorBriefLoading?: boolean;
   onBack: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   onToggleStatus: () => void;
   onAddDecision: () => void;
   onAddFollowUp: () => void;
+  onGenerateNotes: () => void;
   onToggleFollowUpStatus: (followUpId: string) => void;
 }> = ({
   meeting,
@@ -824,9 +1144,12 @@ const MeetingDetailView: React.FC<{
   operatorBrief,
   operatorBriefLoading,
   onBack,
+  onEdit,
+  onDelete,
   onToggleStatus,
   onAddDecision,
   onAddFollowUp,
+  onGenerateNotes,
   onToggleFollowUpStatus,
 }) => (
   <div className="p-4 lg:p-6">
@@ -844,6 +1167,20 @@ const MeetingDetailView: React.FC<{
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm font-medium"
+          >
+            {isPolish ? 'Edytuj' : 'Edit'}
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="h-9 px-4 rounded-full border border-red-200 text-red-600 dark:border-red-500/30 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10"
+          >
+            {isPolish ? 'Usuń' : 'Delete'}
+          </button>
           <button
             type="button"
             onClick={onToggleStatus}
@@ -870,6 +1207,19 @@ const MeetingDetailView: React.FC<{
             className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
           >
             {isPolish ? 'Dodaj follow-up' : 'Add follow-up'}
+          </button>
+          <button
+            type="button"
+            onClick={onGenerateNotes}
+            className="h-9 px-4 rounded-full bg-[#A51C30] text-white text-sm font-medium inline-flex items-center gap-1.5 hover:bg-[#8a1828]"
+            title={
+              isPolish
+                ? 'Wygeneruj notatki AI z transkrypcji (Teresa)'
+                : 'Generate AI notes from transcript (Teresa)'
+            }
+          >
+            <Sparkles className="w-4 h-4" />
+            {isPolish ? 'Notatki AI' : 'AI Notes'}
           </button>
           <button
             type="button"
@@ -932,27 +1282,24 @@ const MeetingDetailView: React.FC<{
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{item.owner}</div>
                     </div>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    <StatusChip
+                      tone={item.status === 'done' ? 'success' : 'warning'}
+                      label={
                         item.status === 'done'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                      }`}
-                    >
-                      {item.status === 'done'
-                        ? isPolish
-                          ? 'Zrobione'
-                          : 'Done'
-                        : isPolish
-                          ? 'Otwarte'
-                          : 'Open'}
-                    </span>
+                          ? isPolish
+                            ? 'Zrobione'
+                            : 'Done'
+                          : isPolish
+                            ? 'Otwarte'
+                            : 'Open'
+                      }
+                    />
                   </div>
                 </button>
               ))}
             </div>
           ) : (
-            <div className="text-sm text-slate-400">
+            <div className="text-sm text-slate-600">
               {isPolish ? 'Brak follow-upów' : 'No follow-ups yet'}
             </div>
           )}
@@ -968,18 +1315,9 @@ const MeetingPreview: React.FC<{
   operatorBrief?: any;
   operatorBriefLoading?: boolean;
 }> = ({ meeting, isPolish, operatorBrief, operatorBriefLoading }) => {
+  // canon §4.1 — status uses the c.* chip family (statusChipTone via EntityStatusChip),
+  // never a hardcoded status-colored pill. Only the neutral date stays in PreviewMetaCard.
   const pills: MetaPill[] = [
-    {
-      label:
-        meeting.status === 'completed'
-          ? isPolish
-            ? 'Zamknięte'
-            : 'Completed'
-          : isPolish
-            ? 'Zaplanowane'
-            : 'Scheduled',
-      className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    },
     {
       label: formatDateTime(meeting.startAt, isPolish),
       className: 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300',
@@ -988,6 +1326,20 @@ const MeetingPreview: React.FC<{
 
   return (
     <div className="space-y-4 text-sm">
+      <div className="flex items-center gap-2">
+        <EntityStatusChip
+          status={meeting.status}
+          label={
+            meeting.status === 'completed'
+              ? isPolish
+                ? 'Zamknięte'
+                : 'Completed'
+              : isPolish
+                ? 'Zaplanowane'
+                : 'Scheduled'
+          }
+        />
+      </div>
       <PreviewMetaCard pills={pills} />
 
       <MeetingOperatorBriefCard
@@ -1095,67 +1447,197 @@ const PreviewSection: React.FC<{
         ))}
       </div>
     ) : (
-      <div className="text-sm text-slate-400">{emptyLabel}</div>
+      <div className="text-sm text-slate-600">{emptyLabel}</div>
     )}
   </div>
 );
 
-const MeetingCalendarView: React.FC<{ meetings: MeetingItem[]; isPolish: boolean }> = ({
-  meetings,
-  isPolish,
-}) => {
-  const grouped = meetings.reduce<Record<string, MeetingItem[]>>((acc, item) => {
-    const key = new Date(item.startAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-      month: 'long',
-      year: 'numeric',
-    });
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {});
+const dayKey = (date: Date): string =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate()
+  ).padStart(2, '0')}`;
 
-  if (!meetings.length) {
-    return (
-      <div className="flex items-center justify-center h-full text-sm text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Brak spotkań do pokazania.' : 'No meetings to display.'}
-      </div>
-    );
-  }
+const MeetingCalendarView: React.FC<{
+  meetings: MeetingItem[];
+  isPolish: boolean;
+  onSelectMeeting: (meeting: MeetingItem) => void;
+}> = ({ meetings, isPolish, onSelectMeeting }) => {
+  const locale = isPolish ? 'pl-PL' : 'en-US';
+  const today = useMemo(() => new Date(), []);
+  const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+
+  // Group meetings by local day for O(1) cell lookup.
+  const byDay = useMemo(() => {
+    const map = new Map<string, MeetingItem[]>();
+    for (const meeting of meetings) {
+      const date = new Date(meeting.startAt);
+      if (Number.isNaN(date.getTime())) continue;
+      const key = dayKey(date);
+      const bucket = map.get(key);
+      if (bucket) bucket.push(meeting);
+      else map.set(key, [meeting]);
+    }
+    return map;
+  }, [meetings]);
+
+  // Build a Monday-first 6-week grid covering the visible month.
+  const weeks = useMemo(() => {
+    const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const offset = (firstOfMonth.getDay() + 6) % 7; // 0 = Monday
+    const gridStart = new Date(firstOfMonth);
+    gridStart.setDate(firstOfMonth.getDate() - offset);
+    const rows: Date[][] = [];
+    const runner = new Date(gridStart);
+    for (let week = 0; week < 6; week += 1) {
+      const row: Date[] = [];
+      for (let day = 0; day < 7; day += 1) {
+        row.push(new Date(runner));
+        runner.setDate(runner.getDate() + 1);
+      }
+      rows.push(row);
+    }
+    return rows;
+  }, [cursor]);
+
+  const weekdayLabels = useMemo(() => {
+    const ref = new Date(2024, 0, 1); // a Monday
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(ref);
+      d.setDate(ref.getDate() + i);
+      return d.toLocaleDateString(locale, { weekday: 'short' });
+    });
+  }, [locale]);
+
+  const monthLabel = cursor.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  const todayKey = dayKey(today);
 
   return (
-    <div className="p-4 space-y-4">
-      {Object.entries(grouped).map(([month, items]) => (
-        <div
-          key={month}
-          className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-white/[0.03]"
-        >
-          <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-900 dark:text-white">
-            {month}
-          </div>
-          <div className="divide-y divide-slate-200 dark:divide-white/[0.06]">
-            {items.map((item) => (
-              <div key={item.id} className="px-4 py-3 flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-sm font-medium text-slate-900 dark:text-white">
-                    {item.title}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {formatDateTime(item.startAt, isPolish)} ·{' '}
-                    {item.location || (isPolish ? 'Bez lokalizacji' : 'No location')}
-                  </div>
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {item.followUps.filter((x) => x.status === 'open').length}{' '}
-                  {isPolish ? 'open follow-ups' : 'open follow-ups'}
-                </div>
-              </div>
-            ))}
-          </div>
+    <div className="flex h-full flex-col p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-sm font-semibold capitalize text-slate-900 dark:text-white">
+          {monthLabel}
         </div>
-      ))}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
+            aria-label={isPolish ? 'Poprzedni miesiąc' : 'Previous month'}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
+            className="h-8 rounded-full border border-slate-200 px-3 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
+          >
+            {isPolish ? 'Dziś' : 'Today'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
+            aria-label={isPolish ? 'Następny miesiąc' : 'Next month'}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-px">
+        {weekdayLabels.map((label) => (
+          <div
+            key={label}
+            className="px-2 py-1.5 text-center text-[11px] font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500"
+          >
+            {label}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid flex-1 grid-cols-7 grid-rows-6 gap-px overflow-auto rounded-xl border border-slate-200 bg-slate-200 dark:border-white/[0.08] dark:bg-white/[0.06]">
+        {weeks.flat().map((date) => {
+          const key = dayKey(date);
+          const inMonth = date.getMonth() === cursor.getMonth();
+          const dayMeetings = byDay.get(key) || [];
+          const isToday = key === todayKey;
+          return (
+            <div
+              key={key}
+              className={`min-h-[88px] p-1.5 ${
+                inMonth ? 'bg-white dark:bg-navy-900' : 'bg-slate-50 dark:bg-white/[0.02]'
+              }`}
+            >
+              <div className="mb-1 flex items-center justify-between">
+                <span
+                  className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] ${
+                    isToday
+                      ? 'bg-primary-600 font-semibold text-white'
+                      : inMonth
+                        ? 'text-slate-600 dark:text-slate-300'
+                        : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  {date.getDate()}
+                </span>
+              </div>
+              <div className="space-y-1">
+                {dayMeetings.slice(0, 3).map((meeting) => (
+                  <button
+                    key={meeting.id}
+                    type="button"
+                    onClick={() => onSelectMeeting(meeting)}
+                    title={meeting.title}
+                    className={`block w-full truncate rounded-md px-1.5 py-0.5 text-left text-[11px] font-medium transition-colors ${
+                      meeting.status === 'completed'
+                        ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300'
+                        : 'bg-primary-500/10 text-primary-700 hover:bg-primary-500/20 dark:text-primary-300'
+                    }`}
+                  >
+                    {new Date(meeting.startAt).toLocaleTimeString(locale, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}{' '}
+                    {meeting.title}
+                  </button>
+                ))}
+                {dayMeetings.length > 3 ? (
+                  <div className="px-1.5 text-[10px] text-slate-600 dark:text-slate-500">
+                    +{dayMeetings.length - 3} {isPolish ? 'więcej' : 'more'}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
+
+/**
+ * Guard that the loaded operator brief belongs to the meeting we are rendering.
+ * The brief response carries a `meetingId` (see aiOperatorService.getMeetingBrief);
+ * when present we match on it to avoid flashing a stale brief during the
+ * meeting→meeting transition. If a future brief omits the id we fall back to
+ * trusting the response (the fetch effect is already keyed to the active meeting).
+ */
+function briefMatchesMeeting(brief: any, meetingId: string): boolean {
+  if (!brief) return false;
+  if (typeof brief.meetingId === 'string') return brief.meetingId === meetingId;
+  return true;
+}
+
+/** Convert an ISO/date string into a value the `datetime-local` input accepts. */
+function toLocalInput(value: string): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
 
 function splitLines(value: string): string[] {
   return String(value || '')

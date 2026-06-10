@@ -49,11 +49,12 @@ vi.mock('@google/genai', () => {
   };
 });
 
-function Harness() {
+function Harness({ apiKey = 'short-lived-client-token' }: { apiKey?: string | null } = {}) {
   const voice = useTeresaVoice({
     enabled: true,
     language: 'pl',
     systemInstruction: 'test',
+    apiKey,
   });
 
   return (
@@ -167,44 +168,24 @@ describe('useTeresaVoice', () => {
     vi.restoreAllMocks();
   });
 
-  it('fetches v10 voice-config and marks voice as available when key is present', async () => {
+  it('marks voice as available when a short-lived client token is present', async () => {
     render(<Harness />);
-
-    await waitFor(() => {
-      expect(globalThis.fetch).toHaveBeenCalledWith('/api/v10/teresa/voice-config', {
-        credentials: 'include',
-      });
-    });
 
     await waitFor(() => {
       expect(screen.getByTestId('available').textContent).toBe('true');
     });
   });
 
-  it('falls back to server voice-config when provided apiKey is whitespace-only', async () => {
+  it('keeps voice unavailable when provided client token is whitespace-only', async () => {
     render(<HarnessWithApiKey apiKey="   " />);
 
     await waitFor(() => {
-      expect(globalThis.fetch).toHaveBeenCalledWith('/api/v10/teresa/voice-config', {
-        credentials: 'include',
-      });
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('available').textContent).toBe('true');
+      expect(screen.getByTestId('available').textContent).toBe('false');
     });
   });
 
   it('enters error state when started without a resolved API key', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        enabled: false,
-        apiKey: null,
-      }),
-    } as Response);
-
-    render(<Harness />);
+    render(<Harness apiKey={null} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('available').textContent).toBe('false');
@@ -221,44 +202,30 @@ describe('useTeresaVoice', () => {
   });
 
   it('keeps voice unavailable when server config is explicitly disabled', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        enabled: false,
-        apiKey: 'server-key-should-not-enable-ui',
-        voiceName: 'Kore',
-      }),
-    } as Response);
-
-    render(<Harness />);
+    render(<Harness apiKey={null} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('available').textContent).toBe('false');
     });
   });
 
-  it('posts a non-blocking voice-event telemetry call when stop is triggered', async () => {
+  it('returns to idle when stop is triggered', async () => {
     render(<Harness />);
 
-    await waitFor(() => {
-      expect(globalThis.fetch).toHaveBeenCalledWith('/api/v10/teresa/voice-config', {
-        credentials: 'include',
-      });
+    await act(async () => {
+      screen.getByText('start').click();
     });
 
-    act(() => {
+    await waitFor(() => {
+      expect(latestLiveCallbacks).not.toBeNull();
+    });
+
+    await act(async () => {
       screen.getByText('stop').click();
     });
 
     await waitFor(() => {
-      expect(globalThis.fetch).toHaveBeenCalledWith('/api/v10/teresa/voice-event', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ event: 'session_stopped' }),
-      });
+      expect(screen.getByTestId('status').textContent).toBe('idle');
     });
   });
 
@@ -358,6 +325,7 @@ describe('useTeresaVoice', () => {
         enabled: true,
         language: 'pl',
         systemInstruction: 'test',
+        apiKey: 'short-lived-client-token',
         onTranscriptUpdate,
       });
       return (
@@ -444,6 +412,7 @@ describe('useTeresaVoice', () => {
         enabled: true,
         language: 'pl',
         systemInstruction: 'test',
+        apiKey: 'short-lived-client-token',
       });
       return (
         <div>

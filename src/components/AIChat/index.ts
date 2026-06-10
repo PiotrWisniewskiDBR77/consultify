@@ -5,7 +5,6 @@
  */
 
 // Menu and sidebar components
-export { ChatExportModal } from './ChatExportModal';
 export { ChatHistorySidebar } from './ChatHistorySidebar';
 export { ChatMenu } from './ChatMenu';
 export { ConversationActions } from './ConversationActions';
@@ -18,8 +17,8 @@ export { AddFilesMenu } from './AddFilesMenu';
 export { CloudFilePicker } from './CloudFilePicker';
 export { EnhancedChatInput } from './EnhancedChatInput';
 export { FocusModeBadge, FocusModeSelector } from './Input/FocusModeSelector';
+export { TeresaTTSPlayer } from './TeresaTTSPlayer';
 export { ToolsMenu } from './ToolsMenu';
-export { TTSIndicator } from './TTSIndicator';
 
 // Response components
 export { CitationList, CitationMarker } from './CitationList';

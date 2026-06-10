@@ -2,6 +2,9 @@ import { AlertTriangle, CheckCircle2, ClipboardList, Clock, Filter, RefreshCw } 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
+
 interface Approval {
   id: string;
   proposal_id: string;
@@ -201,24 +204,20 @@ const MyApprovalsView: React.FC<MyApprovalsViewProps> = ({ onSelectProposal }) =
       )}
 
       {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
-        </div>
-      )}
+      {loading && <LoadingState variant="spinner" className="py-12" />}
 
       {/* Empty State */}
       {!loading && approvals.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          <ClipboardList className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No approvals found
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            {statusFilter !== 'ALL'
-              ? `No ${statusFilter.toLowerCase()} approvals assigned to you.`
-              : 'No approvals are currently assigned to you.'}
-          </p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+          <EmptyState
+            icon={<ClipboardList />}
+            title="No approvals found"
+            description={
+              statusFilter !== 'ALL'
+                ? `No ${statusFilter.toLowerCase()} approvals assigned to you.`
+                : 'No approvals are currently assigned to you.'
+            }
+          />
         </div>
       )}
 

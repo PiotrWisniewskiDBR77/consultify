@@ -1,4 +1,4 @@
-import { Bot, ClipboardList, ExternalLink, Plus, Sparkles, X } from 'lucide-react';
+import { ChevronRight, ClipboardList, ExternalLink, Plus, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { StatusChip, type StatusTone } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -22,9 +23,9 @@ import {
 } from '../shared/ModuleHub/FilterableTable';
 import { type RowAction } from '../shared/RowActionsMenu';
 import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import TeresaMark from '../shared/TeresaMark';
 import { type KpiDrawerSection, type ResultsKPI } from './kpiDomain';
 import type { SignalSheetKpiItem, SignalSheetRecord } from './kpiSignalSheetTypes';
-
 interface KpiQueueViewProps {
   kpis: ResultsKPI[];
   activeFilters: FilterChip[];
@@ -68,6 +69,14 @@ const formatDate = (date: Date) =>
   });
 
 type PreviewSheet = SignalSheetRecord & PreviewableItem;
+
+const statusToneToChip = (tone: SignalSheetRecord['statusTone']): StatusTone => {
+  if (tone === 'amber') return 'warning';
+  if (tone === 'red') return 'danger';
+  if (tone === 'emerald') return 'success';
+  if (tone === 'primary') return 'info';
+  return 'neutral';
+};
 
 const toneClassName = (tone: SignalSheetRecord['statusTone']) => {
   if (tone === 'amber') return 'bg-amber-500/10 text-amber-600 dark:text-amber-300';
@@ -273,11 +282,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
         label: t('common.status', 'Status'),
         width: '18%',
         render: (row) => (
-          <span
-            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${toneClassName(row.statusTone)}`}
-          >
-            {String(row.status || '—')}
-          </span>
+          <StatusChip label={String(row.status || '—')} tone={statusToneToChip(row.statusTone)} />
         ),
       },
     ],
@@ -311,8 +316,15 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
       if (!sheet) return [];
       return [
         {
+          id: 'preview',
+          label: t('common.preview', 'Open preview'),
+          icon: ChevronRight,
+          onClick: () => setSelectedId(sheet.id),
+        },
+        {
           id: 'open-sheet',
           label: t('results.kpi.signals.openSheet', 'Open sheet'),
+          icon: ExternalLink,
           onClick: () => onOpenSheet(sheet),
         },
         {
@@ -602,7 +614,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-navy-700 px-6 py-4">
               <div className="flex items-center gap-2">
                 <div className="rounded-lg bg-primary-500/10 p-2">
-                  <Bot size={16} className="text-primary-400" />
+                  <TeresaMark size={16} className="text-primary-400" />
                 </div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                   {t('results.kpi.signals.createTitle', 'Create data-entry sheet')}

@@ -12,6 +12,8 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
+import { LoadingState } from '../../../../components/ui/primitives';
+
 interface Model {
   id: string;
   name: string;
@@ -192,7 +194,7 @@ export const ModelRegistryTab: React.FC = () => {
   const getTierBadge = (tier: Model['tier']) => {
     const styles = {
       budget: 'bg-blue-500/10 text-blue-500',
-      standard: 'bg-slate-500/10 text-slate-400',
+      standard: 'bg-slate-500/10 text-slate-600',
       premium: 'bg-amber-500/10 text-amber-500',
       reasoning: 'bg-primary-500/10 text-primary-500',
     };
@@ -228,11 +230,7 @@ export const ModelRegistryTab: React.FC = () => {
   const providers = [...new Set(models.map((m) => m.provider))];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -307,7 +305,7 @@ export const ModelRegistryTab: React.FC = () => {
             <div className="relative flex-1 max-w-md">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
               />
               <input
                 type="text"
@@ -432,13 +430,13 @@ export const ModelRegistryTab: React.FC = () => {
                           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
                           title="View Details"
                         >
-                          <Eye size={16} className="text-slate-400" />
+                          <Eye size={16} className="text-slate-600" />
                         </button>
                         <button
                           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
                           title="Edit"
                         >
-                          <Edit size={16} className="text-slate-400" />
+                          <Edit size={16} className="text-slate-600" />
                         </button>
                       </div>
                     </td>

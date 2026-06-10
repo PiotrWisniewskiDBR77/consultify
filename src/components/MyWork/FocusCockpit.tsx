@@ -48,8 +48,8 @@ export interface FocusCockpitProps {
 const LANES: FocusLane[] = ['my_list', 'today', 'this_week'];
 
 const PRIORITY_STYLES: Record<FocusTask['priority'], string> = {
-  LOW: 'bg-slate-500/20 text-slate-400 dark:text-slate-500',
-  MEDIUM: 'bg-slate-400/20 text-slate-300 dark:text-slate-400',
+  LOW: 'bg-slate-500/20 text-slate-600 dark:text-slate-500',
+  MEDIUM: 'bg-slate-400/20 text-slate-600 dark:text-slate-400',
   HIGH: 'bg-amber-500/20 text-amber-500 dark:text-amber-400',
   CRITICAL: 'bg-rose-500/20 text-rose-500 dark:text-rose-400',
 };
@@ -124,7 +124,7 @@ const FocusTaskCard: React.FC<FocusTaskCardProps> = ({ task, onToggle, onClick, 
         className="shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity p-0.5 -ml-0.5"
         onClick={(e) => e.stopPropagation()}
       >
-        <GripVertical size={14} className="text-slate-400 dark:text-slate-500" />
+        <GripVertical size={14} className="text-slate-600 dark:text-slate-500" />
       </div>
 
       <button
@@ -168,7 +168,7 @@ const FocusTaskCard: React.FC<FocusTaskCardProps> = ({ task, onToggle, onClick, 
           {t(`myWork.focusCockpit.priority.${task.priority.toLowerCase()}`, task.priority)}
         </span>
         {task.dueDate && (
-          <span className="flex items-center gap-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+          <span className="flex items-center gap-0.5 text-[10px] text-slate-600 dark:text-slate-500">
             <Calendar size={10} />
             {formatDueDate(task.dueDate)}
           </span>
@@ -250,10 +250,10 @@ const FocusLaneColumn: React.FC<FocusLaneColumnProps> = ({
       {/* Lane Header */}
       <div className="flex items-center justify-between gap-2 px-3 py-2 h-9 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 truncate">
             {laneLabels[lane]}
           </span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/5 dark:bg-navy-800 text-slate-400 dark:text-slate-500 shrink-0">
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/5 dark:bg-navy-800 text-slate-600 dark:text-slate-500 shrink-0">
             {tasks.length}
           </span>
         </div>
@@ -261,7 +261,7 @@ const FocusLaneColumn: React.FC<FocusLaneColumnProps> = ({
           <button
             onClick={() => onCreateTask(lane)}
             className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium
-              bg-white/5 dark:bg-navy-800 text-slate-400 dark:text-slate-500
+              bg-white/5 dark:bg-navy-800 text-slate-600 dark:text-slate-500
               hover:bg-white/[0.08] dark:hover:bg-navy-700 hover:text-slate-300 dark:hover:text-slate-300
               transition-colors shrink-0"
           >
@@ -357,12 +357,12 @@ export const FocusCockpit: React.FC<FocusCockpitProps> = ({
           `}
         >
           <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 dark:border-navy-700/50">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               {t('myWork.focusCockpit.preview', 'Preview')}
             </span>
             <button
               onClick={() => setPreviewOpen(false)}
-              className="text-slate-400 hover:text-slate-300 dark:text-slate-500 dark:hover:text-slate-400 text-xs"
+              className="text-slate-600 hover:text-slate-300 dark:text-slate-500 dark:hover:text-slate-400 text-xs"
             >
               ×
             </button>

@@ -144,9 +144,9 @@ function EvidenceCard({
           </span>
         )}
         {expanded ? (
-          <ChevronDown size={11} className="flex-shrink-0 text-slate-400" />
+          <ChevronDown size={11} className="flex-shrink-0 text-slate-600" />
         ) : (
-          <ChevronRight size={11} className="flex-shrink-0 text-slate-400" />
+          <ChevronRight size={11} className="flex-shrink-0 text-slate-600" />
         )}
       </button>
       {expanded && (
@@ -164,7 +164,7 @@ function EvidenceCard({
             )}
             {evidence.source && (
               <div className="space-y-0.5">
-                <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                   {sourceLabel}
                 </div>
                 {evidence.source.rowLabel && (
@@ -246,7 +246,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
       {!explain ? (
         <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100/80 dark:bg-white/[0.05]">
-            <FileSearch size={20} className="text-slate-400 dark:text-slate-500" />
+            <FileSearch size={20} className="text-slate-600 dark:text-slate-500" />
           </div>
           <div className="text-[13px] font-medium text-slate-500 dark:text-slate-400 max-w-[220px] leading-relaxed">
             {emptyLabel}
@@ -266,7 +266,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
               <div className="flex items-start gap-2">
                 <BookOpen
                   size={14}
-                  className="mt-0.5 flex-shrink-0 text-slate-400 dark:text-slate-500"
+                  className="mt-0.5 flex-shrink-0 text-slate-600 dark:text-slate-500"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold leading-snug text-slate-900 dark:text-white">
@@ -292,7 +292,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                   }).format(explain.value || 0)}
                 </div>
                 {currency && (
-                  <div className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                  <div className="text-[10px] font-medium text-slate-600 dark:text-slate-500">
                     {currency}
                   </div>
                 )}
@@ -333,7 +333,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                           : 'bg-slate-50/60 dark:bg-white/[0.025]'
                       }`}
                     >
-                      <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                         {pv.periodLabel ||
                           (i === 0 ? (isPl ? 'Poprzedni' : 'Prior') : isPl ? 'Bieżący' : 'Current')}
                       </div>
@@ -355,7 +355,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
 
             {/* Analyst comment placeholder */}
             <div className="rounded-lg border border-dashed border-slate-200/60 px-2.5 py-2 dark:border-white/[0.05]">
-              <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-500">
                 <MessageSquare size={11} />
                 <span className="italic">
                   {isPl
@@ -375,14 +375,14 @@ export const StatementExplainPanel: React.FC<Props> = ({
               onClick={() => setTechOpen((prev) => !prev)}
               className="flex flex-shrink-0 items-center gap-2 px-4 py-2 text-left transition-colors hover:bg-slate-50/40 dark:hover:bg-white/[0.02]"
             >
-              <Cog size={12} className="text-slate-400 dark:text-slate-500" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <Cog size={12} className="text-slate-600 dark:text-slate-500" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {isPl ? 'Szczegóły techniczne' : 'Technical details'}
               </span>
               {techOpen ? (
-                <ChevronDown size={11} className="ml-auto text-slate-400" />
+                <ChevronDown size={11} className="ml-auto text-slate-600" />
               ) : (
-                <ChevronRight size={11} className="ml-auto text-slate-400" />
+                <ChevronRight size={11} className="ml-auto text-slate-600" />
               )}
             </button>
 
@@ -391,14 +391,14 @@ export const StatementExplainPanel: React.FC<Props> = ({
                 <div className="space-y-3">
                   {/* Mapping flow */}
                   <div className="rounded-lg bg-slate-50/60 p-2.5 dark:bg-white/[0.02]">
-                    <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                    <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1.5">
                       {mappingLabel}
                     </div>
                     <div className="flex items-center gap-1.5 text-[11px]">
                       <span className="truncate rounded bg-white px-1.5 py-0.5 font-medium text-slate-700 shadow-sm dark:bg-white/[0.06] dark:text-slate-200">
                         {explain.originalLabel}
                       </span>
-                      <ArrowRight size={10} className="flex-shrink-0 text-slate-400" />
+                      <ArrowRight size={10} className="flex-shrink-0 text-slate-600" />
                       <span className="truncate rounded bg-blue-50 px-1.5 py-0.5 font-medium text-blue-700 shadow-sm dark:bg-blue-500/10 dark:text-blue-300">
                         {explain.mappedTo || explain.lineCode || '—'}
                       </span>
@@ -417,7 +417,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                     {explain.lineCode && (
                       <MetaRow label={isPl ? 'Kod linii' : 'Line code'}>
                         <span className="inline-flex items-center gap-1 font-mono text-[10px]">
-                          <Hash size={9} className="text-slate-400" />
+                          <Hash size={9} className="text-slate-600" />
                           {explain.lineCode}
                         </span>
                       </MetaRow>
@@ -434,7 +434,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
 
                   {/* Evidence */}
                   <div>
-                    <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                       {sourceLabel}
                     </div>
                     {explain.evidences.length > 0 ? (
@@ -459,7 +459,7 @@ export const StatementExplainPanel: React.FC<Props> = ({
                   {/* Selected mapping candidate */}
                   {explain.selectedMappingCandidate && (
                     <div className="rounded-lg bg-slate-50/60 p-2.5 dark:bg-white/[0.02]">
-                      <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-1">
                         {isPl ? 'Wybrany kandydat' : 'Selected candidate'}
                       </div>
                       <div className="text-[11px] text-slate-700 dark:text-slate-200">

@@ -41,6 +41,7 @@ import {
 } from 'recharts';
 
 import { Api } from '../../services/api';
+import { LoadingState } from '../ui/primitives';
 
 interface BenefitTrackingEntry {
   id: string;
@@ -211,7 +212,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                 {formatCurrency(data.actual)}
               </span>
             </div>
-            <div className="flex justify-between gap-4 pt-1 border-t border-slate-100 dark:border-navy-700">
+            <div className="flex justify-between gap-4 pt-1 border-t border-slate-200 dark:border-navy-700">
               <span className="text-slate-500 dark:text-slate-400">Odchylenie:</span>
               <span
                 className={`font-bold ${data.variance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
@@ -227,11 +228,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 size={32} className="animate-spin text-emerald-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-20" />;
   }
 
   return (
@@ -340,13 +337,13 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
 
       {/* Tracking History Table */}
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white">Historia measurements</h3>
         </div>
 
         {benefits.length === 0 ? (
           <div className="p-12 text-center">
-            <Target size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+            <Target size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-400" />
             <h4 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
               No measurements
             </h4>
@@ -385,7 +382,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {benefits.map((entry) => {
                   const variancePercent =
                     entry.plannedBenefits > 0
@@ -399,7 +396,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                     <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-slate-400 dark:text-slate-500" />
+                          <Calendar size={16} className="text-slate-600 dark:text-slate-500" />
                           <span className="font-medium text-navy-900 dark:text-white">
                             {entry.trackingPeriod}
                           </span>
@@ -440,7 +437,7 @@ export const BenefitsTrackingDashboard: React.FC<BenefitsTrackingDashboardProps>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
                           onClick={() => handleEditEntry(entry)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded transition-colors"
                         >
                           <Edit2 size={16} />
                         </button>
@@ -551,13 +548,13 @@ const MeasurementModal: React.FC<{
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-navy-800 rounded-xl w-full max-w-md shadow-2xl">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-navy-700">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-bold text-navy-900 dark:text-white">
             {initialData ? 'Edit measurement' : 'Nowy measurement'}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
+            className="p-2 text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
           >
             <X size={20} />
           </button>

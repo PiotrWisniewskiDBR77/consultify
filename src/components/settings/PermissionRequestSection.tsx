@@ -27,6 +27,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import {
   PermissionRequest,
@@ -96,7 +99,7 @@ const STATUS_CONFIG = {
   },
   CANCELLED: {
     icon: X,
-    color: 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-500/10',
+    color: 'text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-slate-500/10',
     label: 'Cancelled',
   },
 };
@@ -396,7 +399,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-navy-700">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-navy-700">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
@@ -419,36 +422,26 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
 
       {/* Request History */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
           <h4 className="text-sm font-bold text-navy-900 dark:text-white uppercase tracking-wider">
             {t('settings.permissions.history', 'Request History')}
           </h4>
-          {pendingCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 rounded-full">
-              {pendingCount} pending
-            </span>
-          )}
+          {pendingCount > 0 && <StatusChip tone="warning" label={`${pendingCount} pending`} />}
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
-          </div>
+          <LoadingState variant="spinner" />
         ) : requests.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-500 dark:text-slate-400">
-            <FileText size={40} className="mb-3 opacity-30" />
-            <p className="text-sm">
-              {t('settings.permissions.noRequests', 'No permission requests yet')}
-            </p>
-            <button
-              onClick={() => setShowForm(true)}
-              className="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium"
-            >
-              {t('settings.permissions.createFirst', 'Create your first request')}
-            </button>
-          </div>
+          <EmptyState
+            icon={<FileText />}
+            title={t('settings.permissions.noRequests', 'No permission requests yet')}
+            action={{
+              label: t('settings.permissions.createFirst', 'Create your first request'),
+              onClick: () => setShowForm(true),
+            }}
+          />
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
+          <div className="divide-y divide-slate-200 dark:divide-white/5">
             {requests.map((request) => {
               const status = STATUS_CONFIG[request.status] || STATUS_CONFIG.PENDING;
               const StatusIcon = status.icon;
@@ -490,7 +483,7 @@ export const PermissionRequestSection: React.FC<PermissionRequestSectionProps> =
                             <span className="font-medium">Admin notes:</span> {request.adminNotes}
                           </div>
                         )}
-                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                        <p className="text-xs text-slate-600 dark:text-slate-500 mt-2">
                           {new Date(request.createdAt).toLocaleDateString()} at{' '}
                           {new Date(request.createdAt).toLocaleTimeString()}
                         </p>

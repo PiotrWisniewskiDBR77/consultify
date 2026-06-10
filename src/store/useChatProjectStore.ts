@@ -74,6 +74,14 @@ export interface ChatProject {
   /** 'personal' (default) or 'team' - team projects are shared with org members */
   scope: ChatProjectScope;
   conversationCount: number;
+  /** Per-project brief injected into Teresa's system prompt (composer #5). */
+  customInstructions?: string;
+  /** F2: team-project visibility ('org' whole-org | 'private' invited-only). */
+  visibility?: 'org' | 'private';
+  /** F2: the current user's role on this project, if a team project. */
+  myRole?: 'owner' | 'editor' | 'viewer' | null;
+  /** F4c: parent folder id for nesting (null = top level). */
+  parentId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -111,10 +119,16 @@ interface ChatProjectState {
     color?: string;
     icon?: string;
     scope?: ChatProjectScope;
+    visibility?: 'org' | 'private';
   }) => Promise<ChatProject>;
   updateProject: (
     id: string,
-    updates: Partial<Pick<ChatProject, 'name' | 'description' | 'color' | 'icon'>>
+    updates: Partial<
+      Pick<
+        ChatProject,
+        'name' | 'description' | 'color' | 'icon' | 'customInstructions' | 'visibility' | 'parentId'
+      >
+    >
   ) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
 
@@ -358,6 +372,10 @@ function mapApiProject(api: any): ChatProject {
     icon: api.icon || 'folder',
     scope: api.scope || 'personal',
     conversationCount: api.conversation_count || api.conversationCount || 0,
+    customInstructions: api.custom_instructions ?? api.customInstructions ?? undefined,
+    visibility: api.visibility ?? undefined,
+    myRole: api.my_role ?? api.myRole ?? undefined,
+    parentId: api.parent_id ?? api.parentId ?? null,
     createdAt: new Date(api.created_at || api.createdAt),
     updatedAt: new Date(api.updated_at || api.updatedAt),
   };

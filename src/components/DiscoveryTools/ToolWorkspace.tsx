@@ -570,7 +570,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   if (!currentSession) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-slate-400">Loading...</div>
+        <div className="animate-pulse text-slate-600">Loading...</div>
       </div>
     );
   }

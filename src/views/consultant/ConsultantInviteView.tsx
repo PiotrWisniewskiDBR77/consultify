@@ -141,7 +141,7 @@ export const ConsultantInviteView = () => {
                   placeholder={t('consultant.invites.emailPlaceholder')}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-sm focus:outline-none focus:border-primary-500"
                 />
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                   {t('consultant.invites.emailHint')}
                 </p>
               </div>
@@ -160,17 +160,17 @@ export const ConsultantInviteView = () => {
 
           {/* History */}
           <div className="bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-navy-700 flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700 text-lg font-semibold flex items-center gap-2">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 text-lg font-semibold flex items-center gap-2">
               <Clock size={18} className="text-blue-500" />
               {t('consultant.invites.recentInvites')}
             </div>
             <div className="flex-1 overflow-y-auto max-h-[400px] p-2">
               {isLoading ? (
-                <div className="p-4 text-center text-slate-400 dark:text-slate-500">
+                <div className="p-4 text-center text-slate-600 dark:text-slate-500">
                   {t('consultant.panel.loading')}
                 </div>
               ) : invites.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
+                <div className="p-8 text-center text-slate-600 dark:text-slate-500 text-sm">
                   {t('consultant.invites.noInvites')}
                 </div>
               ) : (
@@ -178,7 +178,7 @@ export const ConsultantInviteView = () => {
                   {invites.map((invite) => (
                     <div
                       key={invite.id}
-                      className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-navy-700"
+                      className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="font-mono font-bold text-lg tracking-wider text-primary-600 dark:text-primary-400">

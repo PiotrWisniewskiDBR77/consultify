@@ -393,7 +393,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                     {stepLabels[idx]}
                   </div>
                   {idx < 2 && (
-                    <ChevronRight size={16} className="text-slate-500 dark:text-slate-600" />
+                    <ChevronRight size={16} className="text-slate-500 dark:text-slate-400" />
                   )}
                 </React.Fragment>
               );
@@ -427,7 +427,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                 </div>
               ) : reports.length === 0 ? (
                 <div className="text-center py-12">
-                  <FileText className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+                  <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
                   <p className="text-slate-500 dark:text-slate-400 font-medium">
                     Brak sfinalizowanych raportów
                   </p>
@@ -709,7 +709,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
 
               {generatedInitiatives.length === 0 && (
                 <div className="text-center py-8">
-                  <Lightbulb className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" />
+                  <Lightbulb className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
                   <p className="text-slate-500 dark:text-slate-400">
                     Nie wygenerowano żadnych inicjatyw
                   </p>
@@ -784,7 +784,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                         ${
                                           selectedReportId
                                             ? 'bg-primary-600 hover:bg-primary-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                         }
                                     `}
                 >
@@ -822,7 +822,7 @@ export const GenerateInitiativesModal: React.FC<GenerateInitiativesModalProps> =
                                         ${
                                           selectedInitiatives.size > 0 && !saving
                                             ? 'bg-green-600 hover:bg-green-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                         }
                                     `}
                 >

@@ -126,7 +126,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
 
       {/* Chart */}
       <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/5 rounded-xl p-6 h-[400px]">
-        <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-4 uppercase">
+        <h3 className="text-sm font-bold text-slate-600 dark:text-slate-500 mb-4 uppercase">
           Investment vs Return Over Time
         </h3>
         <ROIPaybackChart economics={economics} />
@@ -299,7 +299,7 @@ export const FullROIWorkspace: React.FC<FullROIWorkspaceProps> = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as ROITab)}
-            className={`pb-3 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-green-500 text-green-400' : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+            className={`pb-3 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-green-500 text-green-400' : 'border-transparent text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
           >
             <tab.icon size={16} />
             {tab.label}

@@ -22,6 +22,8 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
@@ -188,7 +190,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
       {/* Change Password Section */}
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 dark:border-navy-700">
+        <div className="p-6 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Key className="w-5 h-5 text-primary-500" />
             {t('settings.security.changePassword', 'Change Password')}
@@ -208,7 +210,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
               {t('settings.security.currentPassword', 'Current Password')}
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
               <input
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
@@ -219,7 +221,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
               >
                 {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -232,7 +234,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
               {t('settings.security.newPassword', 'New Password')}
             </label>
             <div className="relative">
-              <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
               <input
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
@@ -243,7 +245,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
               >
                 {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -292,7 +294,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
               {t('settings.security.confirmPassword', 'Confirm New Password')}
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 dark:text-slate-500" />
               <input
                 type="password"
                 value={confirmPassword}
@@ -334,7 +336,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           <button
             onClick={handleChangePassword}
             disabled={!isPasswordValid || !currentPassword || isChangingPassword}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-medium hover:from-primary-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-medium hover:from-primary-500 hover:to-crimson-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isChangingPassword ? (
               <>
@@ -353,7 +355,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
       {/* Active Sessions Section */}
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between">
+        <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
               <Monitor className="w-5 h-5 text-blue-500" />
@@ -377,7 +379,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
           )}
         </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-white/5">
+        <div className="divide-y divide-slate-200 dark:divide-white/5">
           {isLoadingSessions ? (
             <div className="p-8 flex items-center justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
@@ -399,9 +401,10 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
                         {session.deviceInfo || 'Unknown Device'}
                       </p>
                       {session.isCurrent && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full">
-                          {t('settings.security.currentSession', 'Current')}
-                        </span>
+                        <StatusChip
+                          tone="success"
+                          label={t('settings.security.currentSession', 'Current')}
+                        />
                       )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -439,7 +442,7 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
       {/* Security Documents Section */}
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 dark:border-navy-700">
+        <div className="p-6 border-b border-slate-200 dark:border-navy-700">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <FileText className="w-5 h-5 text-slate-500 dark:text-slate-400" />
             {t('settings.security.documents', 'Security Documentation')}
@@ -488,7 +491,7 @@ const SecurityDocLink: React.FC<SecurityDocLinkProps> = ({ to, icon, title, desc
     to={to}
     className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group"
   >
-    <div className="text-slate-400 dark:text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 mt-0.5">
+    <div className="text-slate-600 dark:text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 mt-0.5">
       {icon}
     </div>
     <div className="flex-1 min-w-0">
@@ -496,7 +499,7 @@ const SecurityDocLink: React.FC<SecurityDocLinkProps> = ({ to, icon, title, desc
         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
           {title}
         </span>
-        <ExternalLink className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+        <ExternalLink className="w-3 h-3 text-slate-600 dark:text-slate-500" />
       </div>
       <span className="text-xs text-slate-500 dark:text-slate-400">{description}</span>
     </div>

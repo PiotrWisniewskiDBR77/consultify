@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionInbox - Central inbox for all decisions across modules
  * Shows unified view of decisions from initiatives, tasks, assessments, tools, etc.
@@ -12,7 +11,6 @@ import {
   Clock,
   Filter,
   Hourglass,
-  Loader2,
   Plus,
   RefreshCw,
   Search,
@@ -22,6 +20,9 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { StatusChip } from '@/components/ui/primitives/chips';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -46,6 +47,8 @@ interface DecisionInboxProps {
   onCreateDecision?: () => void;
   showHeader?: boolean;
   embedded?: boolean;
+  /** Optional callback fired whenever counts change — lets parent hubs update their Menu 3 badges */
+  onCountsChange?: (counts: DecisionCounts) => void;
 }
 
 export const DecisionInbox: React.FC<DecisionInboxProps> = ({
@@ -54,10 +57,12 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
   onCreateDecision,
   showHeader = true,
   embedded = false,
+  onCountsChange,
 }) => {
   const { t } = useTranslation();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('my');
   const [filterType, setFilterType] = useState<FilterType>('all');
@@ -76,6 +81,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
       try {
         if (isRefresh) setRefreshing(true);
         else setLoading(true);
+        setLoadError(null);
 
         const url = effectiveProjectId
           ? `/decisions?projectId=${effectiveProjectId}&includeAll=true`
@@ -103,12 +109,13 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
         setDecisions(enhanced);
       } catch (error) {
         console.error('Failed to fetch decisions:', error);
+        setLoadError(t('decisions.loadError', 'Failed to load decisions'));
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [effectiveProjectId]
+    [effectiveProjectId, t]
   );
 
   useEffect(() => {
@@ -128,6 +135,11 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
       escalated: pending.filter((d) => d.status === 'ESCALATED').length,
     };
   }, [decisions, currentUserId]);
+
+  // Fire onCountsChange whenever counts update (lets parent hubs update Menu 3 badges)
+  useEffect(() => {
+    onCountsChange?.(counts);
+  }, [counts, onCountsChange]);
 
   // Filter and sort decisions
   const filteredDecisions = useMemo(() => {
@@ -269,9 +281,14 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
   };
 
   if (loading) {
+    return <LoadingState variant="spinner" className={`${embedded ? 'p-4' : 'p-8'} py-0`} />;
+  }
+
+  // Distinguish error from empty: a failed load should not look like "no decisions".
+  if (loadError) {
     return (
-      <div className={`${embedded ? 'p-4' : 'p-8'} flex items-center justify-center`}>
-        <Loader2 className="animate-spin text-primary-500" size={24} />
+      <div className={embedded ? 'p-4' : 'p-8'}>
+        <ErrorState message={loadError} retry={() => fetchDecisions()} />
       </div>
     );
   }
@@ -293,19 +310,23 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                 <h2 className="font-bold text-navy-900 dark:text-white">
                   {t('decisions.inbox', 'Decision Inbox')}
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {counts.total} {t('decisions.pending', 'pending')}
+                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <span>
+                    {counts.total} {t('decisions.pending', 'pending')}
+                  </span>
                   {counts.overdue > 0 && (
-                    <span className="text-rose-500 ml-1">
-                      • {counts.overdue} {t('decisions.overdue', 'overdue')}
-                    </span>
+                    <StatusChip
+                      tone="danger"
+                      label={`${counts.overdue} ${t('decisions.overdue', 'overdue')}`}
+                    />
                   )}
                   {counts.escalated > 0 && (
-                    <span className="text-amber-500 ml-1">
-                      • {counts.escalated} {t('decisions.escalated', 'escalated')}
-                    </span>
+                    <StatusChip
+                      tone="warning"
+                      label={`${counts.escalated} ${t('decisions.escalated', 'escalated')}`}
+                    />
                   )}
-                </p>
+                </div>
               </div>
             </div>
 
@@ -398,7 +419,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
             <div className="flex-1 relative">
               <Search
                 size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               />
               <input
                 type="text"
@@ -523,7 +544,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
                     ? t('decisions.noAwaitingOthers', 'No decisions pending from others')
                     : t('decisions.noDecisions', 'No pending decisions')}
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 {t('decisions.allCaughtUp', 'All caught up!')}
               </p>
               {onCreateDecision && (

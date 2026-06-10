@@ -48,7 +48,7 @@ const LIMIT_CONFIG: Record<
     title: 'upgrade.userLimit.title',
     description: 'upgrade.userLimit.description',
     upgradeFeature: 'Unlimited team members',
-    color: 'from-primary-500 to-pink-500',
+    color: 'from-primary-500 to-crimson-500',
   },
   storage: {
     icon: <Database className="w-5 h-5" />,

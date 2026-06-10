@@ -75,7 +75,7 @@ export const PartnerApplicationView: React.FC = () => {
   return (
     <MarketingLayout>
       <section className="relative overflow-hidden px-6 py-20">
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(160deg,#0D0828,#0A0A1F,#12082E)]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(160deg,#0B1220,#0F172A,#0B1220)]" />
         <div className="absolute left-[10%] top-[0%] -z-10 h-80 w-80 rounded-full bg-primary-500/20 blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[8%] -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-[120px]" />
 

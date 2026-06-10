@@ -51,7 +51,7 @@ export const ROIPaybackChart: React.FC<Props> = ({ economics }) => {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-4">
-      <h3 className="text-sm font-semibold text-slate-400 dark:text-slate-500 mb-2">
+      <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-500 mb-2">
         Cumulative Cash Flow (5 Years)
       </h3>
       <svg

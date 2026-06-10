@@ -270,7 +270,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
               'px-2.5 py-1 text-xs rounded-md transition-colors flex-shrink-0',
               isPreferred
                 ? 'bg-primary-600 text-white'
-                : 'bg-white/5 text-slate-400 hover:bg-primary-600/20 hover:text-primary-300'
+                : 'bg-white/5 text-slate-600 hover:bg-primary-600/20 hover:text-primary-300'
             )}
           >
             {isPreferred
@@ -329,7 +329,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           {!loadError && models.length === 0 && !loading && (
             <div className="text-center py-8">
               <Brain size={32} className="text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-600">
                 {t(
                   'settings.ai.noModels',
                   'No AI models are configured yet. Contact your administrator to enable models.'
@@ -346,22 +346,21 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
               'text-primary-400',
               platform,
               platform.length > 0 && (
-                <div className="mt-3 p-3 bg-gradient-to-r from-primary-600/10 to-indigo-600/5 border border-primary-500/20 rounded-lg">
+                <div className="mt-3 p-3 bg-gradient-to-r from-primary-600/10 to-crimson-600/5 border border-primary-500/20 rounded-lg">
                   <div className="flex items-start gap-3">
                     <Sparkles size={16} className="text-primary-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs text-primary-300 font-medium mb-1">
                         Vector DBR77 — Platform AI
                       </p>
-                      <p className="text-xs text-slate-400 leading-relaxed">
+                      <p className="text-xs text-slate-600 leading-relaxed">
                         {t(
                           'settings.ai.vectorDesc',
-                          'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations. Currently in beta for early adopters.'
+                          'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations.'
                         )}
                       </p>
-                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 rounded-full">
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                        {t('settings.ai.betaActive', 'Beta active for your account')}
+                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-slate-500/15 text-slate-400 rounded-full">
+                        {t('settings.ai.platformModelBadge', 'Platform AI model')}
                       </span>
                     </div>
                   </div>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * TeamPerformancePanel - Comprehensive team analytics dashboard
  * BCG/McKinsey style: Data-dense, multiple views, actionable insights
@@ -76,7 +75,7 @@ const QuickStat: React.FC<{
                     ? 'text-emerald-500'
                     : trend === 'down'
                       ? 'text-rose-500'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-500'
                 }`}
               >
                 {trendValue}

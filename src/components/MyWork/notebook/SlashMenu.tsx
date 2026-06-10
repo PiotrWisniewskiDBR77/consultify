@@ -423,7 +423,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
               cmd.id === 'todo' ||
               cmd.id === 'callout' ||
               cmd.id === 'toggle' ? (
-              <ChevronRight size={12} className="ml-auto shrink-0 text-slate-400" />
+              <ChevronRight size={12} className="ml-auto shrink-0 text-slate-600" />
             ) : null}
           </button>
         ))}

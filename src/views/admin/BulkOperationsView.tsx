@@ -319,7 +319,7 @@ export const BulkOperationsView: React.FC = () => {
                   ? 'text-primary-600'
                   : ['upload', 'mapping', 'preview', 'complete'].indexOf(importStep) > idx
                     ? 'text-emerald-600'
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-500'
               }`}
             >
               <div
@@ -339,7 +339,7 @@ export const BulkOperationsView: React.FC = () => {
               </div>
               <span className="text-sm font-medium">{s.label}</span>
             </div>
-            {idx < 3 && <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />}
+            {idx < 3 && <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />}
           </React.Fragment>
         ))}
       </div>
@@ -407,7 +407,7 @@ export const BulkOperationsView: React.FC = () => {
                     )}
                   </span>
                 </div>
-                <ArrowRight size={16} className="text-slate-400 dark:text-slate-500" />
+                <ArrowRight size={16} className="text-slate-600 dark:text-slate-500" />
                 <select
                   value={columnMapping[field] || ''}
                   onChange={(e) => setColumnMapping({ ...columnMapping, [field]: e.target.value })}
@@ -466,7 +466,7 @@ export const BulkOperationsView: React.FC = () => {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {csvData.slice(0, 10).map((row, idx) => (
                   <tr key={idx}>
                     {ALL_FIELDS.map((field) => (
@@ -602,7 +602,7 @@ export const BulkOperationsView: React.FC = () => {
         >
           <RefreshCw
             size={18}
-            className={`text-slate-400 dark:text-slate-500 ${loadingUsers ? 'animate-spin' : ''}`}
+            className={`text-slate-600 dark:text-slate-500 ${loadingUsers ? 'animate-spin' : ''}`}
           />
         </button>
       </div>
@@ -715,7 +715,7 @@ export const BulkOperationsView: React.FC = () => {
             {!usersLoadError && users.length === 0 && !loadingUsers && (
               <tr>
                 <td colSpan={4} className="px-6 py-12 text-center">
-                  <Users size={40} className="mx-auto mb-3 text-slate-300" />
+                  <Users size={40} className="mx-auto mb-3 text-slate-600" />
                   <p className="text-slate-500 dark:text-slate-400">No users found</p>
                   <button
                     onClick={fetchUsers}

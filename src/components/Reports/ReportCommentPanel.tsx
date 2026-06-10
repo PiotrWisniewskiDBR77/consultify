@@ -79,7 +79,7 @@ const STATUS_CONFIG = {
   OPEN: { label: 'Open', icon: Clock, color: 'text-amber-500' },
   IN_PROGRESS: { label: 'In Progress', icon: RefreshCw, color: 'text-blue-500' },
   RESOLVED: { label: 'Resolved', icon: CheckCircle2, color: 'text-green-500' },
-  DISMISSED: { label: 'Dismissed', icon: X, color: 'text-slate-400 dark:text-slate-500' },
+  DISMISSED: { label: 'Dismissed', icon: X, color: 'text-slate-600 dark:text-slate-500' },
 };
 
 export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
@@ -271,7 +271,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             <X size={18} />
           </button>
@@ -299,9 +299,9 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageCircle className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <MessageCircle className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
             <p className="text-sm text-slate-500 dark:text-slate-400">No comments yet</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-500">
               Add a comment to start the discussion
             </p>
           </div>
@@ -329,7 +329,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusIcon size={14} className={STATUS_CONFIG[comment.status]?.color} />
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       {formatDate(comment.createdAt)}
                     </span>
                   </div>
@@ -400,14 +400,14 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
                     {(comment.aiResponse || comment.aiSuggestedEdits?.length) && (
                       <button
                         onClick={() => toggleExpanded(comment.id)}
-                        className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 rounded"
+                        className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 rounded"
                       >
                         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       </button>
                     )}
                     <button
                       onClick={() => handleDelete(comment.id)}
-                      className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded"
+                      className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -464,7 +464,7 @@ export const ReportCommentPanel: React.FC<ReportCommentPanelProps> = ({
             className={`p-2 rounded-lg transition-colors ${
               newComment.trim() && !submitting
                 ? 'bg-primary-600 text-white hover:bg-primary-500'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}

@@ -1,11 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Bot, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { getQuestionsForAxis } from '@/services/drdStructure';
 
 import { AxisId } from '../types';
-
+import TeresaMark from './shared/TeresaMark';
 interface MaturityMatrixProps {
   axisId: number;
   axisKey: AxisId;
@@ -114,7 +114,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
         {/* LEFT: Agenda / Areas Navigation */}
         <div className="w-64  border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 overflow-y-auto custom-scrollbar transition-colors duration-300">
           <div className="p-4">
-            <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
+            <h3 className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest mb-3">
               Assessment Areas
             </h3>
             <div className="space-y-0.5">
@@ -140,7 +140,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                             ? 'bg-emerald-100 dark:bg-emerald-500/20 border-emerald-500/50 text-emerald-600 dark:text-emerald-400'
                             : isSelected
                               ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                              : 'border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-600'
+                              : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                         }`}
                       >
                         {isScored ? <CheckCircle2 size={10} /> : idx + 1}
@@ -200,7 +200,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                         >
                           <div className="mt-3 p-3 bg-primary-50 dark:bg-primary-500/10 border border-primary-200 dark:border-primary-500/20 rounded-lg">
                             <h4 className="text-primary-700 dark:text-primary-300 font-semibold mb-2 flex items-center gap-1.5 text-xs">
-                              <Bot size={14} /> Digital Pathfinder AI
+                              <TeresaMark size={14} /> Digital Pathfinder AI
                             </h4>
 
                             {!aiResult ? (
@@ -293,7 +293,7 @@ export const MaturityMatrix: React.FC<MaturityMatrixProps> = ({
                             className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold transition-colors duration-300 ${
                               isSelected
                                 ? 'bg-blue-500 text-white shadow-lg'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                             }`}
                           >
                             {level.level}

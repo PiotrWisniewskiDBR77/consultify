@@ -50,12 +50,14 @@ import {
   ActionTypeParamSchema,
   AIAuthoringAuditRequestSchema,
   AIContextQuerySchema,
+  AiGenerateRequestSchema,
   AIReadinessAnalysisRequestSchema,
   ApproveActionRequestSchema,
   AuditIdParamSchema,
   CalculateQualityRequestSchema,
   CanPerformActionQuerySchema,
   ChatConfirmRequestSchema,
+  ChatQuickRequestSchema,
   ChatRequestSchema,
   ChatStreamRequestSchema,
   CreateDraftRequestSchema,
@@ -289,6 +291,62 @@ const attachmentsUpload = multer({
     return cb(new Error(`Unsupported file type: ${file.mimetype}`));
   },
 });
+
+// ==================== SHARED AI HANDLER PRELUDE (standard formula) ====================
+// Single source of truth for the provider-availability + access-policy gate that
+// every direct LLM endpoint needs. Returns an error descriptor to send, or null
+// when the request may proceed (usage is incremented as a side effect).
+async function ensureAiProviderAndAccess(
+  req: AuthRequest
+): Promise<{ status: number; body: Record<string, unknown> } | null> {
+  const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
+  const hasDbProvider = !!(await dbGet(
+    `SELECT 1 AS ok
+       FROM llm_providers
+       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
+       LIMIT 1`
+  ));
+  if (!hasEnvProvider && !hasDbProvider) {
+    return {
+      status: 500,
+      body: {
+        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
+        code: 'NO_LLM_PROVIDER',
+      },
+    };
+  }
+
+  const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
+  const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
+  if (!aiAccessCheck.allowed) {
+    return {
+      status: 403,
+      body: {
+        error: aiAccessCheck.reason || 'Access blocked',
+        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
+      },
+    };
+  }
+  AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
+    logger.warn('[AI] Failed to increment ai_calls usage:', err?.message || err);
+  });
+  return null;
+}
+
+// Standard mapping for a failed direct llmService call.
+function mapLlmCallError(error: any): { status: number; body: Record<string, unknown> } {
+  if (error?.isBudgetError) {
+    return {
+      status: 403,
+      body: {
+        error: error.message,
+        code: 'AI_BUDGET_EXHAUSTED',
+        budgetStatus: error.budgetStatus,
+      },
+    };
+  }
+  return { status: 502, body: { error: 'LLM call failed', code: 'LLM_CALL_FAILED' } };
+}
 
 router.post(
   '/attachments/ingest',
@@ -1181,37 +1239,9 @@ router.post(
       focusMode: bodyFocusMode,
     } = body;
 
-    // Fast-fail when no LLM provider is configured (dev UX parity with stream)
-    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
-    const hasDbProvider = !!(await dbGet(
-      `SELECT 1 AS ok
-       FROM llm_providers
-       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
-       LIMIT 1`
-    ));
-
-    if (!hasEnvProvider && !hasDbProvider) {
-      return res.status(500).json({
-        error:
-          'No LLM provider configured on the backend. Set OPENROUTER_API_KEY or configure OpenRouter in llm_providers.',
-        code: 'NO_LLM_PROVIDER',
-      });
-    }
-
-    // Access policy enforcement (same semantics as streaming)
-    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
-    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
-    if (!aiAccessCheck.allowed) {
-      return res.status(403).json({
-        error: aiAccessCheck.reason || 'Access blocked',
-        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
-      });
-    }
-
-    // Count the AI call (confirm is a real model call)
-    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
-      logger.warn('[AI Confirm] Failed to increment ai_calls usage:', err?.message || err);
-    });
+    // --- Provider + access gate (standard formula) ---
+    const aiGate = await ensureAiProviderAndAccess(req);
+    if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // Language instruction (keep behavior consistent with stream)
     const languageMap: Record<string, string> = {
@@ -3430,6 +3460,27 @@ router.post(
       const attachmentDocIds = Array.isArray(attachmentDocIdsRaw)
         ? Array.from(new Set(attachmentDocIdsRaw.map((x: any) => String(x)).filter(Boolean)))
         : [];
+
+      // F3: merge the conversation's PROJECT knowledge files into the RAG scope so
+      // Teresa can retrieve from project-shared documents. Guarded — table may not
+      // exist yet. Only widens retrieval; never throws.
+      try {
+        if (conversationId) {
+          const { all: dbAll } = await import('../utils/DbPromise.js');
+          const kRows = (await dbAll(
+            `SELECT k.doc_id FROM conversations c
+             JOIN project_knowledge k ON k.project_id = c.chat_project_id
+             WHERE c.id = ? AND k.kind = 'file' AND k.doc_id IS NOT NULL`,
+            [conversationId]
+          )) as Array<{ doc_id?: string }>;
+          for (const r of kRows || []) {
+            const d = String(r.doc_id || '').trim();
+            if (d && !attachmentDocIds.includes(d)) attachmentDocIds.push(d);
+          }
+        }
+      } catch {
+        /* project_knowledge may not exist yet — skip */
+      }
       const failedAttachments = Array.isArray((context as any)?.failedAttachments)
         ? (context as any).failedAttachments
             .map((a: any) => ({
@@ -4499,6 +4550,32 @@ router.post(
             }
 
             // ================================================================
+            // Post-stream: User memory write-back (A0 — close the memory loop)
+            // Previously `updateUserMemoryAfterInteraction` had ZERO runtime callers.
+            // Now every chat turn increments interaction_count + total_messages.
+            // ================================================================
+            try {
+              if (req.userId) {
+                const memMod = await import('../services/ai/aiMemoryService.js');
+                const memSvc = (memMod as any).default || memMod;
+                if (memSvc?.updateUserMemoryAfterInteraction) {
+                  // Extract a rough topic from the user message (first 50 chars)
+                  const roughTopic =
+                    typeof message === 'string'
+                      ? message.slice(0, 50).replace(/\n/g, ' ').trim() || undefined
+                      : undefined;
+                  memSvc
+                    .updateUserMemoryAfterInteraction(req.userId, roughTopic, 1)
+                    .catch((err: unknown) =>
+                      logger.debug('[AI] user memory write-back failed (non-critical)', err)
+                    );
+                }
+              }
+            } catch {
+              // Non-critical — don't break the stream for memory
+            }
+
+            // ================================================================
             // Post-stream: Citation extraction (best-effort, non-blocking)
             // ================================================================
             try {
@@ -5188,36 +5265,9 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { text, mode, systemInstruction, fieldLabel, artifactContext, language } = req.body;
 
-    // --- Provider check ---
-    const hasEnvProvider = !!String(process.env.OPENROUTER_API_KEY || '').trim();
-    const hasDbProvider = !!(await dbGet(
-      `SELECT 1 AS ok
-       FROM llm_providers
-       WHERE is_active = true AND provider = 'openrouter' AND api_key IS NOT NULL AND api_key != ''
-       LIMIT 1`
-    ));
-
-    if (!hasEnvProvider && !hasDbProvider) {
-      return res.status(500).json({
-        error: 'No LLM provider configured. Set OPENROUTER_API_KEY or configure OpenRouter.',
-        code: 'NO_LLM_PROVIDER',
-      });
-    }
-
-    // --- Access policy ---
-    const AccessPolicyService = (await import('../services/accessPolicyService.js')).default as any;
-    const aiAccessCheck = await AccessPolicyService.checkAccess(req.organizationId!, 'ai_call');
-    if (!aiAccessCheck.allowed) {
-      return res.status(403).json({
-        error: aiAccessCheck.reason || 'Access blocked',
-        code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
-      });
-    }
-
-    // Count the call
-    AccessPolicyService.incrementUsage(req.organizationId!, 'ai_calls', 1).catch((err: any) => {
-      logger.warn('[AI RefineText] Failed to increment ai_calls usage:', err?.message || err);
-    });
+    // --- Provider + access gate (standard formula) ---
+    const aiGate = await ensureAiProviderAndAccess(req);
+    if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // --- Build prompts ---
     const langCode = (language || 'pl').split('-')[0];
@@ -5298,6 +5348,154 @@ router.post(
     }
 
     return res.json({ text: refinedText });
+  })
+);
+
+// ==================== CANVAS INLINE-AI QUICK EDIT ====================
+// Non-streaming single-shot transform for the Canvas floating selection menu
+// (CanvasRichEditor.handleAIRequest). Returns ONLY the modified fragment as
+// { response }. Deliberately bypasses the heavy /chat/stream governance path
+// (policy gateway, trust bundle, proposals) — this edits a text fragment, not a
+// governed workspace mutation.
+router.post(
+  '/chat/quick',
+  verifyToken,
+  validateBody(ChatQuickRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message, context, language } = req.body as {
+      message: string;
+      context?: { source?: string; selectedText?: string } & Record<string, unknown>;
+      language?: string;
+    };
+
+    // --- Provider + access gate (standard formula) ---
+    const aiGate = await ensureAiProviderAndAccess(req);
+    if (aiGate) return res.status(aiGate.status).json(aiGate.body);
+
+    // --- System prompt: return ONLY the modified fragment ---
+    const langCode = (language || 'pl').split('-')[0];
+    const langMap: Record<string, string> = {
+      pl: 'Polish',
+      en: 'English',
+      de: 'German',
+      es: 'Spanish',
+    };
+    const langName = langMap[langCode] || 'Polish';
+
+    const sys = [
+      'You edit a selected fragment of a document for an inline editor.',
+      'Return ONLY the modified text — no commentary, no explanations, no quotes, no markdown code fences, no prefixes.',
+      'Preserve the original language UNLESS the instruction explicitly asks to translate.',
+      `\n[LANGUAGE INSTRUCTION: Unless asked to translate, respond in ${langName}.]`,
+    ].join('\n');
+
+    // --- Call LLM (fail-fast for an interactive UI surface) ---
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: req.organizationId,
+      tier: 'BUDGET',
+    } as any);
+
+    logger.info('[AI ChatQuick] Using model:', modelCfg.id, 'provider:', modelCfg.provider);
+
+    let result: any;
+    try {
+      result = (await llmService.callText({
+        type: 'chat',
+        modelConfig: {
+          provider: modelCfg.provider,
+          id: modelCfg.id,
+          endpoint: (modelCfg as any).endpoint,
+          apiKey: (modelCfg as any).apiKey,
+        },
+        systemPrompt: sys,
+        messages: [{ role: 'user', content: message }],
+        timeoutMs: 20000,
+        breakerOptions: {
+          retryAttempts: 1,
+          retryBaseDelay: 250,
+          retryMaxDelay: 1000,
+        },
+      } as any)) as any;
+    } catch (err: any) {
+      logger.error('[AI ChatQuick] LLM call failed:', err?.message || err);
+      const mapped = mapLlmCallError(err);
+      return res.status(mapped.status).json(mapped.body);
+    }
+
+    const responseText = String(result?.content || result?.text || '').trim();
+
+    if (!responseText) {
+      return res.status(502).json({
+        error: 'LLM returned empty response',
+        code: 'EMPTY_LLM_RESPONSE',
+      });
+    }
+
+    return res.json({ response: responseText });
+  })
+);
+
+// ==================== AI GENERATE (tool-side single-shot) ====================
+// Lightweight endpoint for in-app tools (TemplateBuilder, etc.) that need a
+// single LLM call with a custom system instruction and no chat orchestration.
+// Returns { text: string }.
+router.post(
+  '/generate',
+  verifyToken,
+  validateBody(AiGenerateRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { message, systemInstruction } = req.body as {
+      message: string;
+      systemInstruction?: string;
+    };
+
+    const aiGate = await ensureAiProviderAndAccess(req);
+    if (aiGate) return res.status(aiGate.status).json(aiGate.body);
+
+    const { modelRouter } = await import('../services/ai/modelRouter.js');
+    const { llmService } = await import('../services/ai/llmService.js');
+
+    const modelCfg = await modelRouter.select({
+      capability: 'chat_confirm',
+      organizationId: req.organizationId,
+      tier: 'STANDARD',
+    } as any);
+
+    logger.info('[AI Generate] Using model:', modelCfg.id, 'provider:', modelCfg.provider);
+
+    let result: any;
+    try {
+      result = (await llmService.callText({
+        type: 'chat',
+        modelConfig: {
+          provider: modelCfg.provider,
+          id: modelCfg.id,
+          endpoint: (modelCfg as any).endpoint,
+          apiKey: (modelCfg as any).apiKey,
+        },
+        systemPrompt: systemInstruction || 'You are a helpful assistant.',
+        messages: [{ role: 'user', content: message }],
+        timeoutMs: 60000,
+        breakerOptions: { retryAttempts: 2, retryBaseDelay: 500, retryMaxDelay: 2000 },
+      } as any)) as any;
+    } catch (err: any) {
+      logger.error('[AI Generate] LLM call failed:', err?.message || err);
+      const mapped = mapLlmCallError(err);
+      return res.status(mapped.status).json(mapped.body);
+    }
+
+    const text = String(result?.content || result?.text || '').trim();
+    if (!text) {
+      return res
+        .status(502)
+        .json({ error: 'LLM returned empty response', code: 'EMPTY_LLM_RESPONSE' });
+    }
+
+    return res.json({ text });
   })
 );
 

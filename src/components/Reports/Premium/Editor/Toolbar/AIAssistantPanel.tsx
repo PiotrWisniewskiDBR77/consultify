@@ -130,7 +130,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+          className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -211,7 +211,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                       {action.description}
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                  <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                 </button>
               );
             })}

@@ -348,7 +348,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span
-                    className="cursor-grab text-gray-400 hover:text-gray-600"
+                    className="cursor-grab text-gray-600 hover:text-gray-600"
                     title="Drag to reorder"
                   >
                     ⋮⋮
@@ -362,7 +362,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
                     e.stopPropagation();
                     removeBlock(block.id);
                   }}
-                  className="text-gray-400 hover:text-rose-500 text-sm transition-colors"
+                  className="text-gray-600 hover:text-rose-500 text-sm transition-colors"
                 >
                   ×
                 </button>
@@ -371,7 +371,7 @@ export const InterfaceDesigner: React.FC<InterfaceDesignerProps> = ({ layout, ta
             </div>
           ))}
           {blocks.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
+            <div className="text-center py-20 text-gray-600">
               <p className="text-lg">Empty interface</p>
               <p className="text-sm mt-1">Add blocks from the left panel to build your interface</p>
             </div>

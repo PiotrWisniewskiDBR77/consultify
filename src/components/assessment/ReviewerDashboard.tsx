@@ -14,7 +14,6 @@ import {
   Clock,
   FileEdit,
   Filter,
-  Loader2,
   MessageSquare,
   RefreshCw,
   Star,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import { useAppStore } from '../../store/useAppStore';
@@ -176,11 +176,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -330,7 +326,7 @@ export const ReviewerDashboard: React.FC<ReviewerDashboardProps> = ({ onNavigate
 
         {filteredReviews.length === 0 ? (
           <div className="text-center py-12">
-            <ClipboardCheck className="w-12 h-12 text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+            <ClipboardCheck className="w-12 h-12 text-slate-700 dark:text-slate-300 dark:text-slate-400 mx-auto mb-4" />
             <p className="text-slate-500 dark:text-slate-400">
               {activeTab === 'pending' && 'No pending reviews'}
               {activeTab === 'in_progress' && 'No reviews in progress'}

@@ -155,7 +155,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       <div className="p-6 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-primary-600 text-white rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-crimson-500 to-primary-600 text-white rounded-xl shadow-lg">
               <FileText size={24} />
             </div>
             <div>
@@ -180,12 +180,12 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       {report && (
         <div className="p-6 space-y-6">
           {/* Report Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-navy-700">
             <div>
               <h3 className="text-lg font-bold text-navy-900 dark:text-white">
                 {report.projectName}
               </h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 Generated: {new Date(report.generatedAt).toLocaleString()}
               </p>
             </div>
@@ -301,7 +301,7 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
           </div>
 
           {/* Export Button */}
-          <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-navy-700">
             <button className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg flex items-center gap-2 transition-colors">
               <Download size={16} />
               Export PDF
@@ -313,11 +313,11 @@ export const ExecutiveReport: React.FC<ExecutiveReportProps> = ({ projectId }) =
       {/* Empty State */}
       {!report && !loading && (
         <div className="p-12 text-center">
-          <FileText size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+          <FileText size={48} className="mx-auto mb-4 text-slate-600 dark:text-slate-400" />
           <h3 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-2">
             No Report Generated
           </h3>
-          <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+          <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
             Click "Generate Report" to create an AI-powered executive summary
           </p>
         </div>

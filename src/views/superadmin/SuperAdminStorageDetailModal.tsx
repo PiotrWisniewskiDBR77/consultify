@@ -163,13 +163,13 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
               <Folder className="text-pink-500" />
               File Browser: {orgName}
             </h2>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               {files.length} files found
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+            className="text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
           >
             <X size={24} />
           </button>
@@ -232,10 +232,10 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
                       <File size={16} className="text-blue-400" />
                       {getFileName(file)}
                     </td>
-                    <td className="p-4 text-slate-400 dark:text-slate-500 font-mono text-xs">
+                    <td className="p-4 text-slate-600 dark:text-slate-500 font-mono text-xs">
                       {file.path}
                     </td>
-                    <td className="p-4 text-slate-300 whitespace-nowrap">
+                    <td className="p-4 text-slate-600 whitespace-nowrap">
                       {formatBytes(file.size)}
                     </td>
                     <td className="p-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
@@ -245,7 +245,7 @@ export const SuperAdminStorageDetailModal: React.FC<StorageModalProps> = ({
                       <button
                         onClick={() => handleDelete(file.path)}
                         aria-label={`Delete file ${file.path}`}
-                        className="p-1.5 hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
+                        className="p-1.5 hover:bg-rose-500/20 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors"
                         title="Permanently Delete"
                       >
                         <Trash2 size={16} />

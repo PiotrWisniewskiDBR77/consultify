@@ -11,9 +11,16 @@ import publicAnnaRouter, {
   resetAnnaFunnelEventRateLimitStoreForTests,
 } from '../../public-anna.routes.js';
 
-const { buildWorkerKnowledgeContextMock, buildWorkerVoiceBootstrapMock } = vi.hoisted(() => ({
+const {
+  buildWorkerKnowledgeContextMock,
+  buildWorkerVoiceBootstrapMock,
+  mintGeminiLiveEphemeralTokenMock,
+  resolveGeminiLiveServerKeyMock,
+} = vi.hoisted(() => ({
   buildWorkerKnowledgeContextMock: vi.fn(),
   buildWorkerVoiceBootstrapMock: vi.fn(),
+  mintGeminiLiveEphemeralTokenMock: vi.fn(),
+  resolveGeminiLiveServerKeyMock: vi.fn(),
 }));
 
 vi.mock('../../../services/ai/annaKnowledgeService.js', () => ({
@@ -38,6 +45,11 @@ vi.mock('../../../services/ai/virtualWorkerKnowledgeService.js', () => ({
 
 vi.mock('../../../services/ai/virtualWorkerService.js', () => ({
   getWorkerWithProfile: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../../services/ai/geminiLiveTokenService.js', () => ({
+  mintGeminiLiveEphemeralToken: mintGeminiLiveEphemeralTokenMock,
+  resolveGeminiLiveServerKey: resolveGeminiLiveServerKeyMock,
 }));
 
 vi.mock('../../../services/ai/virtualWorkerConversationLogger.js', () => ({
@@ -73,12 +85,13 @@ describe('Public Anna route guardrails', () => {
     vi.clearAllMocks();
     resetAnnaChatRateLimitStoreForTests();
     resetAnnaFunnelEventRateLimitStoreForTests();
+    mintGeminiLiveEphemeralTokenMock.mockReset();
+    resolveGeminiLiveServerKeyMock.mockReset();
     delete process.env.GEMINI_API_KEY;
     delete process.env.GOOGLE_API_KEY;
     delete process.env.GOOGLE_AI_API_KEY;
     delete process.env.GOOGLE_AI_KEY;
     delete process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    delete process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN;
     delete process.env.OPENROUTER_API_KEY;
     delete process.env.OPENAI_API_KEY;
   });
@@ -456,8 +469,13 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'server-only-key';
-    process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN = 'anna-ephemeral-token';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-only-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'anna-ephemeral-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -472,6 +490,11 @@ describe('Public Anna route guardrails', () => {
       }),
       unavailableReason: null,
     });
+    expect(mintGeminiLiveEphemeralTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assistant: 'anna',
+      })
+    );
   });
 
   it('respects worker voice_enabled=false through the bounded public voice-config seam', async () => {
@@ -493,8 +516,13 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'server-only-key';
-    process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN = 'anna-ephemeral-token';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-only-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'anna-ephemeral-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -503,12 +531,10 @@ describe('Public Anna route guardrails', () => {
     expect(res.body).toEqual({
       enabled: false,
       voiceName: 'Aoede',
-      session: expect.objectContaining({
-        clientToken: 'anna-ephemeral-token',
-        tokenType: 'ephemeral',
-      }),
-      unavailableReason: null,
+      session: null,
+      unavailableReason: 'server_voice_proxy_required',
     });
+    expect(mintGeminiLiveEphemeralTokenMock).not.toHaveBeenCalled();
   });
 
   it('respects worker status when deciding whether public Anna voice is enabled', async () => {
@@ -530,8 +556,13 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'server-only-key';
-    process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN = 'anna-ephemeral-token';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-only-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'anna-ephemeral-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -540,12 +571,10 @@ describe('Public Anna route guardrails', () => {
     expect(res.body).toEqual({
       enabled: false,
       voiceName: 'Aoede',
-      session: expect.objectContaining({
-        clientToken: 'anna-ephemeral-token',
-        tokenType: 'ephemeral',
-      }),
-      unavailableReason: null,
+      session: null,
+      unavailableReason: 'server_voice_proxy_required',
     });
+    expect(mintGeminiLiveEphemeralTokenMock).not.toHaveBeenCalled();
   });
 
   it('respects worker surface when deciding whether public Anna voice is enabled', async () => {
@@ -567,8 +596,13 @@ describe('Public Anna route guardrails', () => {
       },
       profile: null,
     });
-    process.env.GEMINI_API_KEY = 'server-only-key';
-    process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN = 'anna-ephemeral-token';
+    resolveGeminiLiveServerKeyMock.mockReturnValue('server-only-key');
+    mintGeminiLiveEphemeralTokenMock.mockResolvedValue({
+      clientToken: 'anna-ephemeral-token',
+      tokenType: 'ephemeral',
+      expiresAt: '2026-05-28T10:30:00.000Z',
+      newSessionExpiresAt: '2026-05-28T10:01:00.000Z',
+    });
 
     const app = createApp();
     const res = await request(app).get('/api/public/anna/voice-config');
@@ -577,12 +611,10 @@ describe('Public Anna route guardrails', () => {
     expect(res.body).toEqual({
       enabled: false,
       voiceName: 'Aoede',
-      session: expect.objectContaining({
-        clientToken: 'anna-ephemeral-token',
-        tokenType: 'ephemeral',
-      }),
-      unavailableReason: null,
+      session: null,
+      unavailableReason: 'server_voice_proxy_required',
     });
+    expect(mintGeminiLiveEphemeralTokenMock).not.toHaveBeenCalled();
   });
 
   it('expands short follow-up questions with the latest user context for retrieval', async () => {

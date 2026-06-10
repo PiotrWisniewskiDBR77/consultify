@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * @deprecated This monolithic API client (16k+ lines) is being migrated to typed
  * modules under ./api/ (e.g. api/tasks.api.ts, api/v8/client.ts).
@@ -14,7 +13,13 @@ import i18n from '@/i18n';
 
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
+import {
+  dispatchAccessBlocked,
+  getAccessBlockedCode,
+  isAccessBlockedCode,
+} from '../utils/accessBlocked';
 import { normalizeApiErrorMessage } from '../utils/apiError';
+import { decodeHtmlEntities } from '../utils/decodeHtmlEntities';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
@@ -78,13 +83,19 @@ const TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:transportCircuit:v1';
 const TRANSPORT_CIRCUIT_BASE_MS = 5000;
 const TRANSPORT_CIRCUIT_MAX_MS = 120000;
 const GLOBAL_TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:globalTransportCircuit:v1';
-const GLOBAL_TRANSPORT_FAILURE_WINDOW_MS = 8000;
-const GLOBAL_TRANSPORT_FAILURE_THRESHOLD = 2;
-const GLOBAL_TRANSPORT_BLOCK_MS = 300000;
+// QA-2026-06-08 (BUG-14): a 2-failure/8s trip with a 5-min block let a couple of
+// transient 429/5xx self-inflict an app-wide synthetic-429 blackout for legit users
+// with multiple tabs / fast navigation. Relaxed to tolerate normal bursts.
+const GLOBAL_TRANSPORT_FAILURE_WINDOW_MS = 20000;
+const GLOBAL_TRANSPORT_FAILURE_THRESHOLD = 6;
+const GLOBAL_TRANSPORT_BLOCK_MS = 45000;
 const AUTH_LOOP_GUARD_STORAGE_KEY = 'consultify:authLoopGuard:v1';
 const AUTH_LOOP_GUARD_WINDOW_MS = 10000;
-const AUTH_LOOP_GUARD_THRESHOLD = 3;
-const AUTH_LOOP_GUARD_BLOCK_MS = 600000;
+// IMPACT-TR-002: Only a genuine 401 -> refresh -> 401 loop should trip the guard.
+// Require several consecutive post-refresh 401s before latching, and keep the
+// cooldown short so a transient race never blocks whole modules for minutes.
+const AUTH_LOOP_GUARD_THRESHOLD = 4;
+const AUTH_LOOP_GUARD_BLOCK_MS = 30000;
 
 let transportCircuitState: Record<string, TransportCircuitEntry> = (() => {
   try {
@@ -416,10 +427,14 @@ const clearTransportFailure = (path: string) => {
   logTransportStabilityMarker('transport_circuit_close', { key, path });
 };
 
+// IMPACT-TR-002: This is intentionally only fed by a TRUE auth-refresh loop signal
+// (a 401 that persists AFTER a token refresh was attempted). It must NOT be called
+// for generic failures, 429 rate-limiting, 5xx, or the first/pre-refresh 401 — those
+// are transient and must never latch a global block that kills unrelated modules.
 const recordAuthLoopSignal = (path: string, status: number) => {
   if (!path.startsWith('/api/')) return;
   if (shouldBypassAuthLoopGuard(path)) return;
-  if (![401, 429].includes(status)) return;
+  if (status !== 401) return;
 
   const now = Date.now();
   const withinWindow =
@@ -463,6 +478,23 @@ const clearAuthLoopSignal = (path: string) => {
     lastPath: '',
   };
   persistAuthLoopGuard();
+};
+
+/**
+ * IMPACT-TR-002: Hard reset of the auth-loop guard. Used by user-initiated retry
+ * UI so a module that got caught behind a (possibly stale) guard can recover
+ * immediately instead of waiting out the cooldown.
+ */
+export const resetAuthLoopGuard = () => {
+  authLoopGuardState = {
+    failures: 0,
+    windowStartedAt: 0,
+    blockedUntil: 0,
+    lastStatus: 0,
+    lastPath: '',
+  };
+  persistAuthLoopGuard();
+  logTransportStabilityMarker('auth_loop_guard_reset');
 };
 
 const shouldSuppressAuthRetry = (path: string): boolean =>
@@ -553,7 +585,6 @@ let _cachedDemoFlags: DemoFlags = {
 };
 
 export function getDemoFlags(): DemoFlags {
-  const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
   let raw: string | null = null;
   try {
     raw = localStorage.getItem('consultify-storage');
@@ -571,13 +602,15 @@ export function getDemoFlags(): DemoFlags {
   try {
     if (raw) {
       const parsed = JSON.parse(raw);
+      // Demo data is gated STRICTLY to the explicit user toggle. `isDemoMode`
+      // is set only when the user flips the Settings "Show demo data" toggle
+      // (persisted server-side as `demo:enabled` and rehydrated into the store).
+      // There is NO localhost/DEV auto-trigger and NO hardcoded-email backdoor.
       isDemoMode = parsed?.state?.isDemoMode === true;
       demoSessionOrgId = parsed?.state?.demoSessionOrgId || null;
-      const persistedUser = parsed?.state?.currentUser;
-      isDemoSession =
-        persistedUser?.isDemo === true ||
-        persistedUser?.email === DEMO_EMAIL ||
-        (sessionStorage.getItem('isDemo') === 'true' && persistedUser?.email === DEMO_EMAIL);
+      // `isDemoSession` mirrors the same explicit toggle so existing callers of
+      // shouldAllowDemoData() keep working when demo is ON.
+      isDemoSession = isDemoMode;
     }
   } catch {
     // Ignore parsing errors
@@ -678,7 +711,58 @@ export const getMapVersionFromPayload = (payload: unknown): number | null => {
 // Wrapper for fetch that handles 401 with automatic token refresh
 type FetchWithRetryOptions = RequestInit & { skipDefaultHeaders?: boolean };
 
+/**
+ * FIX-1 (429 self-storm): in-flight GET de-duplication.
+ *
+ * React StrictMode double-invokes effects in dev, so identical GETs fire twice
+ * and (a) double the per-user rate-limiter load and (b) surface duplicate
+ * "Failed to load" toasts. We coalesce concurrent identical GETs (same URL +
+ * auth token + org context) into a single network request; extra callers await
+ * the same promise and each receive an independent `clone()` of the resolved
+ * Response (bodies are single-use). The entry clears on settle, so only
+ * genuinely overlapping requests are shared.
+ */
+const inFlightGetRequests = new Map<string, Promise<Response>>();
+
+const isCoalesceableGet = (options: FetchWithRetryOptions): boolean => {
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET') return false;
+  // Don't share requests that carry a caller-owned abort signal — aborting one
+  // consumer must never abort the others.
+  if (options.signal) return false;
+  return true;
+};
+
+const buildInFlightGetKey = (url: string): string => {
+  const token = tokenService.getToken() || '';
+  const org = getStoredOrganizationContextId();
+  return `${url} ${token} ${org}`;
+};
+
 const fetchWithRetry = async (
+  url: string,
+  options: FetchWithRetryOptions = {}
+): Promise<Response> => {
+  if (isCoalesceableGet(options)) {
+    const key = buildInFlightGetKey(url);
+    const existing = inFlightGetRequests.get(key);
+    if (existing) {
+      const shared = await existing;
+      return shared.clone();
+    }
+    const promise = fetchWithRetryInner(url, options);
+    inFlightGetRequests.set(key, promise);
+    try {
+      const res = await promise;
+      return res.clone();
+    } finally {
+      inFlightGetRequests.delete(key);
+    }
+  }
+  return fetchWithRetryInner(url, options);
+};
+
+const fetchWithRetryInner = async (
   url: string,
   options: FetchWithRetryOptions = {}
 ): Promise<Response> => {
@@ -697,9 +781,12 @@ const fetchWithRetry = async (
     ...((fetchOptions.headers as Record<string, string>) || {}),
   };
   const hasExternalSignal = !!fetchOptions.signal;
-  const shouldApplyTimeout =
-    !hasExternalSignal && typeof url === 'string' && url.includes('/api/ai/refine-text');
-  const timeoutMs = shouldApplyTimeout ? 25000 : null;
+  const isAiRefine = typeof url === 'string' && url.includes('/api/ai/refine-text');
+  // Stabilization: every request that does not carry its own AbortSignal gets a
+  // hard timeout so a stalled network call can never hang a list/table spinner
+  // forever. AI refine keeps its longer 25s budget; everything else uses 20s.
+  const shouldApplyTimeout = !hasExternalSignal;
+  const timeoutMs = shouldApplyTimeout ? (isAiRefine ? 25000 : 20000) : null;
   const controller = shouldApplyTimeout ? new AbortController() : null;
   const timer = controller
     ? window.setTimeout(() => {
@@ -727,12 +814,14 @@ const fetchWithRetry = async (
     } else {
       recordTransportFailure(transportPath, res.status);
       recordGlobalTransportFailure(transportPath, res.status);
-      recordAuthLoopSignal(transportPath, res.status);
+      // IMPACT-TR-002: Do NOT feed the auth-loop guard from the FIRST response.
+      // A single pre-refresh 401 (or a generic 4xx/5xx) is transient — the guard
+      // is only fed below, AFTER a refresh attempt fails, to detect a true loop.
     }
   } catch (err: any) {
     if (controller && err?.name === 'AbortError') {
-      const e: any = new Error('AI request timed out');
-      e.code = 'AI_TIMEOUT';
+      const e: any = new Error(isAiRefine ? 'AI request timed out' : 'Request timed out');
+      e.code = isAiRefine ? 'AI_TIMEOUT' : 'REQUEST_TIMEOUT';
       throw e;
     }
     throw err;
@@ -896,30 +985,10 @@ const handleResponse = async (res: Response, defaultError: string) => {
 
   // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
   if (res.status === 403) {
-    const featureAccessDenied = data?.error === 'FEATURE_ACCESS_DENIED';
-    const code = featureAccessDenied ? 'FEATURE_ACCESS_DENIED' : data.code || data.errorCode;
-    const accessBlockedCodes = new Set([
-      'TRIAL_PROFILE_INCOMPLETE',
-      'TRIAL_EXPIRED',
-      'AI_LIMIT_REACHED',
-      'AI_TOKEN_BUDGET_EXCEEDED',
-      'INSUFFICIENT_TOKENS',
-      'DEMO_READ_ONLY',
-      'FEATURE_ACCESS_DENIED',
-    ]);
-    if (accessBlockedCodes.has(code)) {
+    const code = getAccessBlockedCode(data);
+    if (isAccessBlockedCode(code)) {
       try {
-        window.dispatchEvent(
-          new CustomEvent('access:blocked', {
-            detail: {
-              code,
-              message:
-                data.message ||
-                (featureAccessDenied ? 'Access to this feature is restricted.' : data.error) ||
-                defaultError,
-            },
-          })
-        );
+        dispatchAccessBlocked(data, defaultError);
       } catch {
         // ignore
       }
@@ -932,6 +1001,18 @@ const handleResponse = async (res: Response, defaultError: string) => {
   err.url = res.url;
   err.data = data;
   if (parsed.kind === 'text') err.bodyText = parsed.text;
+  // FIX-1: surface Retry-After on 429 so callers can back off / show a clean
+  // state. We deliberately do NOT auto-retry 429 anywhere — retrying is what
+  // amplified the rate-limit storm.
+  if (res.status === 429) {
+    const retryAfterHeader = res.headers.get('Retry-After');
+    const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN;
+    if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+      err.retryAfter = retryAfterSeconds;
+    } else if (typeof (data as any)?.retryAfter === 'number') {
+      err.retryAfter = (data as any).retryAfter;
+    }
+  }
   throw err;
 };
 
@@ -1075,6 +1156,24 @@ const invalidateCachedApiByPrefix = (prefix: string): void => {
       cachedApiGets.delete(key);
     }
   }
+};
+
+/**
+ * Decode HTML-entity-encoded display fields on an idea row.
+ *
+ * Legacy rows were stored entity-encoded (some twice) by the server input
+ * sanitizer, which made titles render literally as `&quot;…` / `&amp;quot;…`.
+ * Decoding here yields plain text; React re-escapes safely on render.
+ */
+const normalizeIdeaDisplayFields = <T>(idea: T): T => {
+  if (!idea || typeof idea !== 'object') return idea;
+  const row = idea as Record<string, unknown>;
+  for (const field of ['title', 'body', 'description'] as const) {
+    if (typeof row[field] === 'string') {
+      row[field] = decodeHtmlEntities(row[field] as string);
+    }
+  }
+  return idea;
 };
 
 const getCachedJson = async <T = any>(
@@ -1432,6 +1531,52 @@ export const Api = {
         headers: getHeaders(),
       });
       return handleResponse(res, 'Failed to complete onboarding');
+    },
+
+    // --- First-run onboarding flow (X4 / D22) ---
+    // Persisted via the generic user_preferences store (GET/PUT /api/preferences).
+    // Keys: `onboarding_completed` (boolean) and `onboarding_role` (string).
+    getFirstRunState: async (): Promise<{
+      completed: boolean;
+      role: string | null;
+    }> => {
+      const res = await fetchWithRetry(`${API_URL}/preferences`, {
+        headers: getHeaders(),
+      });
+      const prefs = await handleResponse(res, 'Failed to fetch onboarding state');
+      return {
+        completed: Boolean((prefs as Record<string, unknown>)?.onboarding_completed),
+        role: ((prefs as Record<string, unknown>)?.onboarding_role as string | undefined) ?? null,
+      };
+    },
+
+    setFirstRunRole: async (role: string): Promise<void> => {
+      const res = await fetchWithRetry(`${API_URL}/preferences`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ onboarding_role: role }),
+      });
+      return handleResponse(res, 'Failed to save onboarding role');
+    },
+
+    markFirstRunComplete: async (role?: string): Promise<void> => {
+      const payload: Record<string, unknown> = { onboarding_completed: true };
+      if (role) payload.onboarding_role = role;
+      const res = await fetchWithRetry(`${API_URL}/preferences`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      return handleResponse(res, 'Failed to mark onboarding complete');
+    },
+
+    resetFirstRun: async (): Promise<void> => {
+      const res = await fetchWithRetry(`${API_URL}/preferences`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ onboarding_completed: false }),
+      });
+      return handleResponse(res, 'Failed to reset onboarding');
     },
   },
 
@@ -1928,13 +2073,15 @@ export const Api = {
     roleName?: string
   ) => {
     try {
-      const response = await fetch(`${API_URL}/ai/chat`, {
+      const response = await fetch(`${API_URL}/ai/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history, systemInstruction, roleName }),
+        credentials: 'include',
+        headers: getHeaders(),
+        body: JSON.stringify({ message, systemInstruction, roleName }),
       });
       const data = await response.json();
-      return data.text;
+      if (!response.ok) throw new Error(data?.error || `HTTP ${response.status}`);
+      return data.text ?? '';
     } catch (error) {
       console.error('API Chat Error', error);
       throw error;
@@ -2055,6 +2202,37 @@ export const Api = {
       }
     );
     return handleResponse(res, 'Failed to load Teresa proposal');
+  },
+
+  /**
+   * Phase 1A unidirectional TTS — synthesize Teresa's reply to an audio blob.
+   * Throws an Error with `.code`/`.reason` on a non-OK response so the caller can
+   * distinguish "not configured" (server_missing_gemini_live_key) from transient
+   * failures and surface an honest, recoverable message.
+   */
+  teresaSynthesizeSpeech: async (input: {
+    text: string;
+    language?: string | null;
+    voiceName?: string | null;
+  }): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/v10/teresa/tts`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        text: input.text,
+        language: input.language ?? undefined,
+        voiceName: input.voiceName ?? undefined,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}) as Record<string, unknown>);
+      const err: any = new Error((data as any)?.error || `Teresa TTS failed (HTTP ${res.status})`);
+      err.code = (data as any)?.code;
+      err.reason = (data as any)?.reason;
+      err.status = res.status;
+      throw err;
+    }
+    return res.blob();
   },
 
   approveTeresaProposal: async (proposalId: string) => {
@@ -2422,9 +2600,13 @@ export const Api = {
                     onChunk(friendly);
                   }
                 } else if (dataCode === 'DEEP_THINKING_CONFIRM_REQUIRED') {
-                  // Deep Thinking requires Confirm step - this is a flow control error, not a user-facing error.
-                  // The frontend should handle this by calling /api/ai/chat/confirm first.
-                  // Show a user-friendly message instead of the raw error.
+                  // Deep Thinking is a two-step contract, not an error:
+                  //   1. POST /api/ai/chat/confirm (Api.chatConfirm) to surface the
+                  //      understanding/confirm card the user must accept, then
+                  //   2. retry POST /api/ai/chat/stream with
+                  //      context.deepThinkingConfirmed = true.
+                  // This branch only fires when step 2 is attempted before step 1, so
+                  // we render a recoverable hint instead of leaking the raw flow-control code.
                   const uiLang = getCachedUserLanguage();
                   const friendly =
                     uiLang === 'pl'
@@ -2982,6 +3164,23 @@ export const Api = {
     return handleResponse(res, 'Failed to create meeting');
   },
 
+  updateMeeting: async (meetingId: string, data: any): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data || {}),
+    });
+    return handleResponse(res, 'Failed to update meeting');
+  },
+
+  deleteMeeting: async (meetingId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete meeting');
+  },
+
   updateMeetingStatus: async (
     meetingId: string,
     status: 'scheduled' | 'completed'
@@ -3013,6 +3212,21 @@ export const Api = {
       body: JSON.stringify({ decision }),
     });
     return handleResponse(res, 'Failed to add decision');
+  },
+
+  // Module 13: turn a meeting transcript into structured AI notes (summary, key
+  // points, decisions, action items). Persists extracted decisions/action items
+  // as meeting decisions/follow-ups unless persist:false is passed.
+  generateMeetingNotes: async (
+    meetingId: string,
+    data: { transcript: string; language?: string; persist?: boolean }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/generate-notes`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data || {}),
+    });
+    return handleResponse(res, 'Failed to generate meeting notes');
   },
 
   updateMeetingFollowUpStatus: async (
@@ -4054,12 +4268,18 @@ export const Api = {
       return cached as any[];
     }
 
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch personal tasks');
-    const raw = await res.json();
-    const data = Array.isArray(raw) ? raw : Array.isArray(raw?.tasks) ? raw.tasks : [];
-    personalTasksCacheSet(cacheKey, data);
-    return data;
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const res = await fetch(url, { headers: getHeaders(), signal: ctrl.signal });
+      if (!res.ok) throw new Error('Failed to fetch personal tasks');
+      const raw = await res.json();
+      const data = Array.isArray(raw) ? raw : Array.isArray(raw?.tasks) ? raw.tasks : [];
+      personalTasksCacheSet(cacheKey, data);
+      return data;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   },
 
   getPersonalTask: async (id: string): Promise<any> => {
@@ -4111,18 +4331,95 @@ export const Api = {
   // ==========================================
   // MY WORK (V2): MY IDEAS (T009)
   // ==========================================
-  getMyIdeas: async (filters?: { q?: string; tag?: string; limit?: number }): Promise<any[]> => {
+  getMyIdeas: async (filters?: {
+    q?: string;
+    tag?: string;
+    limit?: number;
+    folder?: string;
+    favoriteOnly?: boolean;
+  }): Promise<any[]> => {
     let url = `${API_URL}/my-work/my-ideas`;
     if (filters) {
       const params = new URLSearchParams();
       if (filters.q) params.append('q', filters.q);
       if (filters.tag) params.append('tag', filters.tag);
       if (filters.limit) params.append('limit', String(filters.limit));
+      if (filters.folder) params.append('folder', filters.folder);
+      if (filters.favoriteOnly) params.append('favoriteOnly', '1');
       if (params.toString()) url += `?${params.toString()}`;
     }
     const res = await fetch(url, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch ideas');
+    const rows = await res.json();
+    return Array.isArray(rows) ? rows.map(normalizeIdeaDisplayFields) : rows;
+  },
+
+  // M2 home-shell: server-backed favorites / recents / folders.
+  setIdeaFavorite: async (id: string, isFavorite: boolean): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-ideas/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ isFavorite }),
+    });
+    await handleResponse(res, 'Failed to update favorite');
+  },
+
+  setIdeaFolder: async (id: string, folderId: string | null): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-ideas/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ folderId }),
+    });
+    await handleResponse(res, 'Failed to move idea');
+  },
+
+  recordIdeaOpened: async (id: string): Promise<void> => {
+    // Best-effort recents stamp; never block opening on this.
+    try {
+      await fetchWithRetry(`${API_URL}/my-work/my-ideas/${id}/opened`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
+    } catch {
+      /* ignore */
+    }
+  },
+
+  getMyIdeaFolders: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/my-work/my-idea-folders`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch folders');
     return res.json();
+  },
+
+  createMyIdeaFolder: async (payload: {
+    name: string;
+    description?: string;
+    color?: string;
+    parentFolderId?: string | null;
+  }): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-idea-folders`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create folder');
+  },
+
+  updateMyIdeaFolder: async (folderId: string, updates: any): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-idea-folders/${folderId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    await handleResponse(res, 'Failed to update folder');
+  },
+
+  deleteMyIdeaFolder: async (folderId: string): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/my-work/my-idea-folders/${folderId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(res, 'Failed to delete folder');
   },
 
   suggestMyIdeas: async (q?: string, limit = 5): Promise<any[]> => {
@@ -4139,7 +4436,7 @@ export const Api = {
   getMyIdea: async (id: string): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/my-ideas/${id}`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch idea');
-    return res.json();
+    return normalizeIdeaDisplayFields(await res.json());
   },
 
   createMyIdea: async (idea: {
@@ -4817,13 +5114,16 @@ export const Api = {
 
   workCanvasSaveToWorkspace: async (
     draftId: string,
-    payload: { target: 'idea' | 'note' | 'initiative' }
+    // C3 — 'decision' now accepted (backend was already implemented in
+    // createWorkspaceResource; only the runtime guard had been excluding it).
+    // C4.1 — 'task' added (canonical TaskService.createTask path).
+    payload: { target: 'idea' | 'note' | 'initiative' | 'decision' | 'task' }
   ): Promise<{
     success: boolean;
     data: {
       draft: any;
       linkedResource: {
-        type: 'idea' | 'note' | 'initiative';
+        type: 'idea' | 'note' | 'initiative' | 'decision' | 'task';
         id: string;
         title: string;
         url?: string;
@@ -4870,6 +5170,91 @@ export const Api = {
       }
     );
     return handleResponse(res, 'Failed to create Canvas output');
+  },
+
+  /**
+   * L-2 — send a `kind='table'` Canvas draft into Table Studio. Creates a
+   * `tp_bases`/`tp_tables`/`tp_fields`/`tp_records` set with field types
+   * inferred from the markdown table's cells (date / number / text).
+   * Returns 400 with code='CANVAS_NOT_TABLE_KIND' when called on a non-table
+   * draft, and 400 with code='CANVAS_TABLE_EMPTY' when no markdown table is
+   * present.
+   */
+  workCanvasSendToTableStudio: async (
+    draftId: string
+  ): Promise<{
+    success: boolean;
+    data: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      draft: any;
+      linkedResource: { type: 'table_studio'; id: string; title: string; url: string };
+      readBack: Record<string, unknown>;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/send-to-table-studio`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to send Canvas to Table Studio');
+  },
+
+  /**
+   * M-5 — register the Canvas in the canonical Outputs Library
+   * (`v8_output_artifacts`). Idempotent — re-registering updates the
+   * artifact's metadata snapshot. The Outputs aggregate tab can now list
+   * real Canvas-origin entries.
+   */
+  workCanvasRegisterInOutputs: async (
+    draftId: string
+  ): Promise<{
+    success: boolean;
+    data: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      draft: any;
+      linkedResource: { type: 'outputs_library'; id: string; title: string; url: string };
+      readBack: Record<string, unknown>;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/register-in-outputs`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to register Canvas in Outputs');
+  },
+
+  /**
+   * L-1 — send a Canvas draft to DocumentStudio. The backend wires the
+   * draft's markdown through `materializeDocumentArtifact` (the same path
+   * the studio's own /generate uses), so the resulting artifact lives in
+   * the Outputs hub and back-links to its source draft.
+   */
+  workCanvasSendToDocumentStudio: async (
+    draftId: string,
+    payload?: { documentType?: string; language?: 'pl' | 'en'; useLlm?: boolean }
+  ): Promise<{
+    success: boolean;
+    data: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      draft: any;
+      linkedResource: { type: 'document_studio'; id: string; title: string; url: string };
+      readBack: Record<string, unknown>;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/send-to-document-studio`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload || {}),
+      }
+    );
+    return handleResponse(res, 'Failed to send Canvas to Document Studio');
   },
 
   workCanvasFinalizeResearchReport: async (
@@ -5044,10 +5429,80 @@ export const Api = {
             type: 'replace_selection';
             selectedText: string;
             replacementMd: string;
+            selection?: {
+              draftId?: string;
+              mode: 'document' | 'md';
+              selectedText: string;
+              startOffset?: number;
+              endOffset?: number;
+              occurrenceIndex?: number;
+              headingPath?: string[];
+            } | null;
             reason?: string;
+            buildMode?: 'teresa' | 'user';
+            risk?: 'low' | 'medium' | 'high';
+            approved?: boolean;
           }
-        | { type: 'append_section'; heading: string; contentMd: string; reason?: string }
-        | { type: 'update_document'; contentMd: string; reason?: string }
+        | {
+            type: 'insert_element';
+            elementKind: 'text' | 'heading' | 'table' | 'diagram' | 'list' | 'summary';
+            contentMd: string;
+            target?: {
+              position:
+                | 'at_cursor'
+                | 'before_selection'
+                | 'after_selection'
+                | 'replace_selection'
+                | 'end_of_document';
+              selection?: {
+                draftId?: string;
+                mode: 'document' | 'md';
+                selectedText: string;
+                startOffset?: number;
+                endOffset?: number;
+                occurrenceIndex?: number;
+                headingPath?: string[];
+              } | null;
+            };
+            reason?: string;
+            buildMode?: 'teresa' | 'user';
+            risk?: 'low' | 'medium' | 'high';
+            approved?: boolean;
+          }
+        | {
+            type: 'append_section';
+            heading: string;
+            contentMd: string;
+            target?: {
+              position:
+                | 'at_cursor'
+                | 'before_selection'
+                | 'after_selection'
+                | 'replace_selection'
+                | 'end_of_document';
+              selection?: {
+                draftId?: string;
+                mode: 'document' | 'md';
+                selectedText: string;
+                startOffset?: number;
+                endOffset?: number;
+                occurrenceIndex?: number;
+                headingPath?: string[];
+              } | null;
+            };
+            reason?: string;
+            buildMode?: 'teresa' | 'user';
+            risk?: 'low' | 'medium' | 'high';
+            approved?: boolean;
+          }
+        | {
+            type: 'update_document';
+            contentMd: string;
+            reason?: string;
+            buildMode?: 'teresa' | 'user';
+            risk?: 'low' | 'medium' | 'high';
+            approved?: boolean;
+          }
         | {
             type: 'generate_block_from_selection';
             kind: 'table' | 'chart' | 'diagram' | 'decision' | 'research' | 'dashboard';
@@ -6302,7 +6757,9 @@ export const Api = {
 
     try {
       const data = await V8AssessmentApi.getAssessment(assessmentId);
-      const assessment = data.assessment || {};
+      // The wire payload may carry either snake_case or camelCase variants depending on
+      // backend version, so read defensively through a loosely-typed view.
+      const assessment: Record<string, any> = data.assessment || {};
       return {
         ...assessment,
         type: assessment.assessment_type || assessment.assessmentType,
@@ -6379,7 +6836,10 @@ export const Api = {
   }> => {
     const isTransientListError = (error: any) => {
       const status = Number(error?.status);
-      if ([429, 502, 503, 504].includes(status)) return true;
+      // FIX-1 (429 self-storm): do NOT treat 429 as retryable — retrying a
+      // rate-limited request only amplifies the storm. Retry only on 5xx
+      // gateway/availability errors and genuine network failures.
+      if ([502, 503, 504].includes(status)) return true;
       const msg = String(error?.message || '').toLowerCase();
       return (
         msg.includes('failed to fetch') ||
@@ -6408,9 +6868,9 @@ export const Api = {
         }
       }
 
-      if (!shouldFallbackToLegacy(lastV8Error)) {
-        throw lastV8Error;
-      }
+      // V8 failed with a fallback-eligible error: rethrow so the catch below runs
+      // the legacy fetch path (the only place the fallback request is issued).
+      throw lastV8Error;
     } catch (error) {
       if (!shouldFallbackToLegacy(error)) {
         throw error;
@@ -8087,6 +8547,30 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch admin billing summary');
   },
 
+  getAdminBillingPlans: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/plans`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch admin billing plans');
+  },
+
+  assignAdminBillingPlan: async (payload: {
+    planId?: string | null;
+    planName?: string | null;
+    status?: string;
+    tokenLimit?: number | null;
+    storageLimitMb?: number | null;
+    seats?: number | null;
+    aiCallsPerDay?: number | null;
+    tokenBalance?: number | null;
+    expiresAt?: string | null;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/admin/billing/plan`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to assign admin billing plan');
+  },
+
   getAdminAISummary: async (): Promise<any> => {
     const res = await fetch(`${API_URL}/admin/ai/summary`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch admin AI summary');
@@ -8673,6 +9157,61 @@ export const Api = {
     const url = `${API_URL}/economics/analyses${params.toString() ? `?${params.toString()}` : ''}`;
     const res = await fetchWithRetry(url, { headers: getHeaders() });
     return handleResponse(res, 'Failed to load analyses');
+  },
+
+  /**
+   * Module 05 (Inicjatywy) — alias for the economics analyses list, used by the
+   * Value Realization & ROI dashboard (FullROIView). Returns analyses joined with
+   * `analysis_financials` (npv, roi_percent) and the linked initiative name.
+   */
+  getEconomicsAnalyses: async (filters?: {
+    status?: string;
+    projectId?: string;
+    initiativeId?: string;
+    search?: string;
+  }): Promise<{ analyses: any[]; total: number }> => {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
+      });
+    }
+    const url = `${API_URL}/economics/analyses${params.toString() ? `?${params.toString()}` : ''}`;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to load analyses');
+  },
+
+  // ============================================
+  // INITIATIVE GENERATOR API (Module 05 — Inicjatywy)
+  // Real mount at /api/initiative-generator (promoted from disabled stub).
+  // ============================================
+
+  /**
+   * List AI-generated initiative drafts for the current organization.
+   */
+  getGeneratedInitiatives: async (): Promise<any[]> => {
+    const res = await fetchWithRetry(`${API_URL}/initiative-generator`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load generated initiatives');
+  },
+
+  /**
+   * Trigger AI generation of an initiative draft (Teresa).
+   */
+  generateInitiatives: async (payload: {
+    source?: string;
+    context?: Record<string, unknown>;
+    assessmentId?: string;
+  }): Promise<{ success: boolean; id: string; message: string }> => {
+    const res = await fetchWithRetry(`${API_URL}/initiative-generator/generate`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload || {}),
+    });
+    return handleResponse(res, 'Failed to generate initiatives');
   },
 
   /**
@@ -9533,6 +10072,8 @@ export const Api = {
       metadata?: Record<string, any>;
       tokenCount?: number;
       modelUsed?: string;
+      /** Idempotency key so a network-retried POST doesn't create a duplicate row. */
+      clientMessageId?: string;
     }
   ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/messages`, {
@@ -10234,7 +10775,8 @@ export const Api = {
     return { downloadUrl: '', expiresAt: '' };
   },
   deleteAccount: async (password: string): Promise<void> => {
-    return;
+    // SECURITY: route through the password-verified GDPR deletion endpoint
+    await Api.post('/api/settings/gdpr/deletion-request', { password });
   },
   // AI Memory
   clearAIMemory: async (): Promise<void> => {
@@ -11207,6 +11749,7 @@ export const Api = {
     color?: string;
     icon?: string;
     scope?: 'personal' | 'team';
+    visibility?: 'org' | 'private';
   }) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects`, {
       method: 'POST',
@@ -11217,7 +11760,15 @@ export const Api = {
   },
   updateChatProject: async (
     id: string,
-    data: { name?: string; description?: string; color?: string; icon?: string }
+    data: {
+      name?: string;
+      description?: string;
+      color?: string;
+      icon?: string;
+      customInstructions?: string | null;
+      visibility?: 'org' | 'private';
+      parentId?: string | null;
+    }
   ) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
       method: 'PATCH',
@@ -11225,6 +11776,77 @@ export const Api = {
       body: JSON.stringify(data),
     });
     return handleResponse(res, 'Failed to update chat folder');
+  },
+  // F2: team-project membership (RBAC).
+  getProjectMembers: async (projectId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/members`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load project members');
+  },
+  addProjectMember: async (
+    projectId: string,
+    data: { email?: string; memberUserId?: string; role?: 'owner' | 'editor' | 'viewer' }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/members`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to add member');
+  },
+  updateProjectMemberRole: async (
+    projectId: string,
+    memberUserId: string,
+    role: 'owner' | 'editor' | 'viewer'
+  ) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/chat-projects/${projectId}/members/${memberUserId}`,
+      {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ role }),
+      }
+    );
+    return handleResponse(res, 'Failed to update member role');
+  },
+  removeProjectMember: async (projectId: string, memberUserId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/chat-projects/${projectId}/members/${memberUserId}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to remove member');
+  },
+  // F3: project knowledge (text snippets + uploaded files shared with members).
+  getProjectKnowledge: async (projectId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/knowledge`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load project knowledge');
+  },
+  addProjectKnowledge: async (
+    projectId: string,
+    data: { kind: 'text' | 'file'; title?: string; content?: string; docId?: string }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/chat-projects/${projectId}/knowledge`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to add knowledge');
+  },
+  deleteProjectKnowledge: async (projectId: string, knowledgeId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/chat-projects/${projectId}/knowledge/${knowledgeId}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete knowledge');
   },
   deleteChatProject: async (id: string) => {
     const res = await fetchWithRetry(`${API_URL}/chat-projects/${id}`, {
@@ -11242,6 +11864,63 @@ export const Api = {
       }
     );
     return handleResponse(res, 'Failed to move conversation to folder');
+  },
+  /** Create (or return existing) a public share link for a conversation (F4). */
+  shareConversation: async (
+    conversationId: string,
+    opts?: { title?: string; expiresIn?: number }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/share`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(opts || {}),
+    });
+    return handleResponse(res, 'Failed to create share link');
+  },
+  /** Get an existing share for a conversation (F4). */
+  getConversationShare: async (conversationId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/share`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load share');
+  },
+  /** Revoke a conversation's share link (F4). */
+  revokeConversationShare: async (conversationId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/share`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to revoke share');
+  },
+  /** Public, unauthenticated fetch of a shared conversation by token (F4). */
+  getPublicShare: async (token: string) => {
+    // Chat P0-2 — never pass passwords in the URL. Unlock-then-fetch flow:
+    // call `unlockPublicShare(token, password)` first, then call this fetch.
+    // The unlock endpoint sets a `share_access_<token>` HttpOnly cookie this
+    // GET reads.
+    const res = await fetch(`${API_URL}/share/${encodeURIComponent(token)}`, {
+      credentials: 'include',
+    });
+    return handleResponse(res, 'Failed to load shared conversation');
+  },
+  /** Chat P0-2 — unlock a password-protected share. Sets an HttpOnly cookie. */
+  unlockPublicShare: async (token: string, password: string) => {
+    const res = await fetch(`${API_URL}/share/${encodeURIComponent(token)}/unlock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ password }),
+    });
+    return handleResponse(res, 'Failed to unlock shared conversation');
+  },
+  /** Fork a conversation from a message into a new conversation (composer #4). */
+  branchConversation: async (conversationId: string, forkMessageId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/branch`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ forkMessageId }),
+    });
+    return handleResponse(res, 'Failed to branch conversation');
   },
   // Analytics Reports - connected to real API
   getAnalyticsReports: async (filters?: any): Promise<any[]> => {
@@ -11573,7 +12252,29 @@ export const Api = {
   },
   // Login History
   getLoginHistory: async (): Promise<any[]> => {
-    return [];
+    try {
+      const res = await fetchWithRetry(`${API_URL}/auth/login-history`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) return [];
+      const payload = await res.json().catch(() => null);
+      const rows = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+      return rows.map((entry: any) => ({
+        id: String(entry.id ?? ''),
+        timestamp: entry.time ?? entry.created_at ?? '',
+        status:
+          entry.status === 'failed' || entry.status === 'suspicious' ? entry.status : 'success',
+        location: entry.location ?? 'Unknown location',
+        ip: entry.ip_address ?? entry.ip ?? '',
+        device: entry.device ?? 'Unknown Device',
+      }));
+    } catch {
+      return [];
+    }
   },
   // User Status
   updateUserStatus: async (userId: string, data?: any): Promise<any> => {
@@ -14737,35 +15438,42 @@ export const Api = {
   },
 
   getAIUsageStats: async (period?: string) => {
+    // NOTE: avgResponseTime / successRate / limit are NOT tracked by the backend
+    // (the server hardcodes placeholder values). We deliberately return them as
+    // null so the UI can hide those metrics instead of showing fabricated data.
     try {
-      const res = await fetchWithRetry(
-        `${API_URL}/ai-settings/user/costs?period=${period || '30d'}`,
-        { headers: getHeaders() }
-      );
+      const res = await fetchWithRetry(`${API_URL}/settings/ai-usage?period=${period || '30d'}`, {
+        headers: getHeaders(),
+      });
       const payload = await handleResponse(res, 'Failed to fetch AI usage stats');
-      const dailyRows = Array.isArray(payload)
-        ? payload
-        : payload?.costs || payload?.dailyUsage || [];
-      const dailyUsage = dailyRows.map((row: any) => ({
-        date: row.date,
-        tokens: Number(row.tokens || 0),
-        requests: Number(row.requests || row.count || 0),
-        cost: Number(row.cost || 0),
-      }));
-      const totalTokens = dailyUsage.reduce((sum: number, row: any) => sum + row.tokens, 0);
-      const totalCost = dailyUsage.reduce((sum: number, row: any) => sum + row.cost, 0);
-      const totalRequests = dailyUsage.reduce((sum: number, row: any) => sum + row.requests, 0);
+      const s = payload?.stats || {};
+      const dailyUsage = Array.isArray(payload?.dailyUsage)
+        ? payload.dailyUsage.map((row: any) => ({
+            date: row.date,
+            tokens: Number(row.tokens || 0),
+            requests: Number(row.requests || row.count || 0),
+          }))
+        : [];
+      const usageByFeature = Array.isArray(payload?.usageByFeature)
+        ? payload.usageByFeature.map((row: any) => ({
+            feature: row.feature ?? 'general',
+            count: Number(row.count || 0),
+            tokens: Number(row.tokens || 0),
+            cost: Number(row.cost || 0),
+          }))
+        : [];
       return {
         stats: {
-          totalTokens,
-          totalCost,
-          totalRequests,
-          avgResponseTime: 0,
-          successRate: 100,
-          limit: 1000000,
-          used: totalTokens,
+          totalTokens: Number(s.totalTokens || 0),
+          totalCost: Number(s.totalCost || 0),
+          totalRequests: Number(s.totalRequests || 0),
+          // Not genuinely measured by the backend — hidden in the UI.
+          avgResponseTime: null,
+          successRate: null,
+          limit: null,
+          used: Number(s.used ?? s.totalTokens ?? 0),
         },
-        usageByFeature: payload?.usageByFeature || [],
+        usageByFeature,
         dailyUsage,
       };
     } catch {
@@ -14774,9 +15482,9 @@ export const Api = {
           totalTokens: 0,
           totalCost: 0,
           totalRequests: 0,
-          avgResponseTime: 0,
-          successRate: 100,
-          limit: 10000,
+          avgResponseTime: null,
+          successRate: null,
+          limit: null,
           used: 0,
         },
         usageByFeature: [],
@@ -14844,8 +15552,9 @@ export const Api = {
     return Api.post('/api/gdpr/export-request', {});
   },
 
-  requestGdprDeletion: async () => {
-    return Api.post('/api/gdpr/deletion-request', {});
+  requestGdprDeletion: async (password?: string) => {
+    // SECURITY: use the password-gated endpoint that verifies bcrypt before deletion
+    return Api.post('/api/settings/gdpr/deletion-request', { password: password || '' });
   },
 
   cancelGdprDeletion: async (_requestId?: string) => {
@@ -15566,6 +16275,7 @@ export const Api = {
   },
   getNotebookPages: async (filters?: {
     projectId?: string | null;
+    notebookId?: string | null;
     status?: string;
     pinned?: boolean;
     sort?: string;
@@ -15578,6 +16288,7 @@ export const Api = {
       if (filters) {
         const params = new URLSearchParams();
         if (filters.projectId) params.append('projectId', filters.projectId);
+        if (filters.notebookId) params.append('notebookId', filters.notebookId);
         if (filters.status) params.append('status', filters.status);
         if (filters.pinned !== undefined) params.append('pinned', filters.pinned ? '1' : '0');
         if (filters.sort) params.append('sort', filters.sort);
@@ -15590,6 +16301,12 @@ export const Api = {
       if (!res.ok) throw new Error('Failed to fetch notebook pages');
       return res.json();
     };
+
+    // notebookId scoping lives on the legacy container router only; force legacy
+    // so pages stay scoped to their notebook regardless of V8 mode.
+    if (filters?.notebookId) {
+      return fetchLegacy();
+    }
 
     if (Api.shouldPreferLegacyMyWorkNotebook()) {
       return fetchLegacy();
@@ -15605,6 +16322,64 @@ export const Api = {
         Api.lockLegacyMyWorkNotebookMode();
       }
       return fetchLegacy();
+    }
+  },
+
+  // ── Notebook containers (Notatniki, L1) ──────────────────────────────────
+  getNotebooks: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch notebooks');
+    const data = await res.json();
+    return Array.isArray(data?.notebooks) ? data.notebooks : Array.isArray(data) ? data : [];
+  },
+
+  getNotebook: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks/${encodeURIComponent(id)}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch notebook');
+  },
+
+  createNotebook: async (input: {
+    title: string;
+    icon?: string | null;
+    scope?: 'personal' | 'team';
+    teamId?: string | null;
+    contextSharing?: 'private' | 'org_context';
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    });
+    return handleResponse(res, 'Failed to create notebook');
+  },
+
+  updateNotebook: async (id: string, updates: Record<string, any>): Promise<any> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates),
+    });
+    return handleResponse(res, 'Failed to update notebook');
+  },
+
+  deleteNotebook: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/my-work/notebooks/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      let detail: any = null;
+      try {
+        detail = await res.json();
+      } catch {
+        /* ignore */
+      }
+      const err: any = new Error(detail?.error || 'Failed to delete notebook');
+      err.status = res.status;
+      err.pageCount = detail?.pageCount;
+      throw err;
     }
   },
 
@@ -15713,7 +16488,7 @@ export const Api = {
         `${API_URL}/my-work/notebook/pages/${encodeURIComponent(id)}/attachments`,
         {
           method: 'POST',
-          headers: getHeaders(true),
+          headers: getHeaders(),
           body: formData,
         }
       );
@@ -15760,6 +16535,7 @@ export const Api = {
   createNotebookPage: async (page: {
     title?: string;
     projectId?: string | null;
+    notebookId?: string | null;
     visibility?: string;
     tags?: string[];
     contentJson?: any;
@@ -15776,6 +16552,12 @@ export const Api = {
       });
       return handleResponse(res, 'Failed to create notebook page');
     };
+
+    // notebook_id assignment lives on the legacy container router; force legacy
+    // when a target notebook is specified so the page lands in it.
+    if (page.notebookId) {
+      return createLegacy();
+    }
 
     if (Api.shouldPreferLegacyMyWorkNotebook()) {
       return createLegacy();
@@ -16785,6 +17567,13 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to rebuild organization context snapshot');
+  },
+  // M16 P0-5: live plan limits + current usage for the Organization → Limits section.
+  organizationPolicySnapshot: async () => {
+    const res = await fetch(`${API_URL}/organization/policy-snapshot`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load organization limits');
   },
 
   // ──────────────────────────────────────────────

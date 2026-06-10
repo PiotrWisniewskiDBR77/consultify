@@ -50,7 +50,7 @@ export const DraggableTaskRow: React.FC<DraggableTaskRowProps> = ({
           {...listeners}
           className={`
             p-1 rounded cursor-grab active:cursor-grabbing
-            text-slate-300 dark:text-navy-500
+            text-slate-600 dark:text-navy-500
             hover:text-slate-500 dark:hover:text-navy-300
             hover:bg-slate-100 dark:hover:bg-navy-700
             transition-colors

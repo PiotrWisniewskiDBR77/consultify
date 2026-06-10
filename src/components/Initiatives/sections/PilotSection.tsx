@@ -32,7 +32,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
     not_started: {
       label: 'Not Started',
       labelPl: 'Nie rozpoczęty',
-      color: 'bg-slate-500/20 text-slate-400',
+      color: 'bg-slate-500/20 text-slate-600',
     },
     in_progress: {
       label: 'In Progress',
@@ -53,12 +53,12 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
       id="pilot"
       title="Pilot"
       icon={<Sparkle size={18} className="text-indigo-500 dark:text-indigo-400" />}
-      iconBg="bg-gradient-to-br from-indigo-500/10 to-primary-500/10 dark:from-indigo-500/20 dark:to-primary-500/20"
+      iconBg="bg-gradient-to-br from-crimson-500/10 to-primary-500/10 dark:from-crimson-500/20 dark:to-primary-500/20"
       expanded={expanded}
       onToggle={onToggle}
       badge={
         <span
-          className={`text-[10px] px-1.5 py-0.5 rounded ${statusConfig[pilotStatus]?.color || 'bg-slate-500/20 text-slate-400'}`}
+          className={`text-[10px] px-1.5 py-0.5 rounded ${statusConfig[pilotStatus]?.color || 'bg-slate-500/20 text-slate-600'}`}
         >
           {isPolish ? statusConfig[pilotStatus]?.labelPl : statusConfig[pilotStatus]?.label}
         </span>
@@ -125,7 +125,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                 <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{h}</span>
                 <button
                   onClick={() => setHypotheses(hypotheses.filter((_, j) => j !== i))}
-                  className="text-slate-400 hover:text-rose-500"
+                  className="text-slate-600 hover:text-rose-500"
                 >
                   <X size={14} />
                 </button>
@@ -175,7 +175,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                 <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{c}</span>
                 <button
                   onClick={() => setSuccessCriteria(successCriteria.filter((_, j) => j !== i))}
-                  className="text-slate-400 hover:text-rose-500"
+                  className="text-slate-600 hover:text-rose-500"
                 >
                   <X size={14} />
                 </button>
@@ -227,7 +227,7 @@ export const PilotSection: React.FC<InitiativeSectionProps> = ({
                 <span className="flex-1 text-sm text-slate-700 dark:text-slate-300">{c}</span>
                 <button
                   onClick={() => setFailureCriteria(failureCriteria.filter((_, j) => j !== i))}
-                  className="text-slate-400 hover:text-rose-500"
+                  className="text-slate-600 hover:text-rose-500"
                 >
                   <X size={14} />
                 </button>

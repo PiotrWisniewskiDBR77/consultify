@@ -7,6 +7,8 @@ import { DollarSign, Loader2, RefreshCw, TrendingDown, TrendingUp, Zap } from 'l
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
@@ -181,11 +183,7 @@ export const AICostDashboard: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -261,11 +259,11 @@ export const AICostDashboard: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-400 dark:text-slate-500">
-                <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No cost data available yet</p>
-                <p className="text-xs mt-1">Start using AI features to see cost analytics</p>
-              </div>
+              <EmptyState
+                icon={<DollarSign />}
+                title="No cost data available yet"
+                description="Start using AI features to see cost analytics"
+              />
             )}
           </div>
 

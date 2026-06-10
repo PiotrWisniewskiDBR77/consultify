@@ -31,6 +31,7 @@ import type { PresentationMode } from '@/hooks/usePresentationMode';
 
 import NModeActionBar from './NModeActionBar';
 import NModeCanvas from './NModeCanvas';
+import { NModeCBoard } from './NModeCBoard';
 import NModeHeader from './NModeHeader';
 import NModeLeftNav from './NModeLeftNav';
 import NModePropertiesStrip from './NModePropertiesStrip';
@@ -45,6 +46,9 @@ interface NModeShellExtraProps extends NModeShellProps {
   showModeSwitcher?: boolean;
   /** Build artifact code string from type + id */
   buildArtifactCode?: (type: string, id: string) => string;
+  /** Max columns for the properties strip (default 6). Use to balance a long
+   *  metric strip — e.g. 5 for 10 metrics → a symmetric 5×2 (#27b). */
+  propertiesMaxColumns?: number;
   /** Show loading state */
   loading?: boolean;
 }
@@ -56,15 +60,18 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   actions = [],
   actionsVisible = false,
   aiContextActions = [],
+  toolAIActions = [],
   renderActionBar,
   activeSection,
   onSectionChange,
+  onSectionReorder,
   reducedMotion = false,
   motionDuration = 0.22,
   presentationMode,
   onPresentationModeChange,
   showModeSwitcher = true,
   buildArtifactCode,
+  propertiesMaxColumns,
   loading = false,
   children,
 }) => {
@@ -78,9 +85,9 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
 
   return (
     <div className="h-full min-h-0 overflow-y-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto space-y-0">
-          {/* ── Header ──────────────────────────────────────────── */}
+      {/* ── Segment 1: Header + PropertiesStrip (scrolls away) ────────────────── */}
+      <div className="px-6 pt-6 pb-0">
+        <div className="max-w-6xl mx-auto">
           <NModeHeader
             {...header}
             presentationMode={presentationMode}
@@ -88,50 +95,59 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
             showModeSwitcher={showModeSwitcher}
             buildArtifactCode={buildArtifactCode}
           />
+          {(presentationMode === 'n' || presentationMode === 'c') && (
+            <NModePropertiesStrip fields={properties} maxColumns={propertiesMaxColumns} />
+          )}
+        </div>
+      </div>
 
-          {/* ── N Mode Content ──────────────────────────────────── */}
-          {presentationMode === 'n' && (
-            <div className="col-span-full space-y-0 mt-4">
-              {/* Properties Strip */}
-              <NModePropertiesStrip fields={properties} />
-
-              {/* Action Bar — custom slot or standard NModeActionBar */}
-              {renderActionBar ? (
-                <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
-                  {renderActionBar()}
-                </div>
-              ) : (
-                actionsVisible &&
-                actions.length > 0 && (
-                  <div className="mb-4 px-4 py-2 rounded-2xl bg-slate-50/90 dark:bg-navy-900/50 backdrop-blur-xl">
-                    <NModeActionBar
-                      actions={actions}
-                      aiContextActions={aiContextActions}
-                      activeSection={activeSection}
-                    />
-                  </div>
-                )
+      {/* ── Segment 2: Sticky toolbar ──────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40">
+        <div className="max-w-6xl mx-auto px-6 py-2">
+          {renderActionBar
+            ? renderActionBar()
+            : ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
+                <NModeActionBar
+                  actions={actionsVisible ? actions : []}
+                  aiContextActions={aiContextActions}
+                  toolAIActions={toolAIActions}
+                  activeSection={activeSection}
+                />
               )}
+        </div>
+      </div>
 
-              {/* 2-Pane: LeftNav + Canvas */}
-              <div className="flex gap-0 min-h-[60vh]">
-                <NModeLeftNav
-                  sections={sections}
-                  activeSection={activeSection}
-                  onSectionChange={onSectionChange}
-                />
-                <NModeCanvas
-                  sections={sections}
-                  activeSection={activeSection}
-                  reducedMotion={reducedMotion}
-                  motionDuration={motionDuration}
-                />
-              </div>
+      {/* ── Segment 3: Main content (scrollable, padded) ──────────────────────── */}
+      <div className="px-6 pb-6">
+        <div className="max-w-6xl mx-auto">
+          {/* N Mode */}
+          {presentationMode === 'n' && (
+            <div className="flex gap-0 min-h-[60vh] pt-4">
+              <NModeLeftNav
+                sections={sections}
+                activeSection={activeSection}
+                onSectionChange={onSectionChange}
+                onSectionReorder={onSectionReorder}
+              />
+              <NModeCanvas
+                sections={sections}
+                activeSection={activeSection}
+                reducedMotion={reducedMotion}
+                motionDuration={motionDuration}
+              />
             </div>
           )}
 
-          {/* ── C Mode Content (rendered by consumer via children) ── */}
-          {presentationMode === 'c' && children}
+          {/* C Mode */}
+          {presentationMode === 'c' && (
+            <div className="pt-4">
+              <NModeCBoard sections={sections} />
+            </div>
+          )}
+
+          {/* Always-rendered children (modals, overlays, dialogs) — available in
+              BOTH N and C modes, not gated by presentation mode. */}
+          {children}
         </div>
       </div>
     </div>

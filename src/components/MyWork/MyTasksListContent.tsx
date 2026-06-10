@@ -1,6 +1,11 @@
 /**
  * MyTasksListContent - Professional task table for MyWorkHub
  * Interview-style design with hover animations and resizable columns
+ *
+ * Scope: personal tasks — renders the current user's personal tasks served by the
+ * canonical `/my-work/personal-tasks` endpoint (org + assignee scoped). By default
+ * the terminal statuses `done/completed/validated` are de-prioritised (sorted to the
+ * bottom and hidden from the active list) so the view surfaces actionable work.
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -11,6 +16,10 @@ import {
   Calendar,
   CheckCircle2,
   CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  ChevronsUpDown,
+  ChevronUp,
   Clock,
   Edit,
   Eye,
@@ -19,7 +28,6 @@ import {
   Minus,
   Pause,
   Plus,
-  Settings2,
   Square,
   Trash2,
   User,
@@ -29,6 +37,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  type TableSettingsColumn,
+  TableSettingsPopover,
+} from '@/components/shared/ModuleHub/TableSettingsPopover';
 import {
   type ActionRow,
   type ExtraCopyFormat,
@@ -40,8 +52,15 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  type RowAction,
+  type RowActionSection,
+  RowActionsMenu,
+} from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { ErrorState } from '@/components/ui/primitives';
+import { deriveDueRisk, DueChip } from '@/components/ui/primitives/chips/DueChip';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -182,31 +201,31 @@ const getStatusConfig = (status?: string) => {
     case 'completed':
     case 'validated':
       return {
-        color: 'text-emerald-600 dark:text-emerald-400',
-        bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
+        color: 'text-emerald-700 dark:text-emerald-400',
+        bg: 'bg-emerald-100 dark:bg-emerald-500/10',
         dot: 'bg-emerald-500',
         label: 'Done',
       };
     case 'in_progress':
     case 'in progress':
       return {
-        color: 'text-blue-600 dark:text-blue-400',
-        bg: 'bg-blue-50/70 dark:bg-blue-500/10',
+        color: 'text-blue-700 dark:text-blue-400',
+        bg: 'bg-blue-100 dark:bg-blue-500/10',
         dot: 'bg-blue-500',
         label: 'In progress',
       };
     case 'pending_approval':
     case 'pending approval':
       return {
-        color: 'text-amber-600 dark:text-amber-400',
-        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+        color: 'text-amber-700 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-500/10',
         dot: 'bg-amber-500',
         label: 'Pending approval',
       };
     case 'review':
       return {
-        color: 'text-amber-600 dark:text-amber-400',
-        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
+        color: 'text-amber-700 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-500/10',
         dot: 'bg-amber-500',
         label: 'In review',
       };
@@ -227,9 +246,9 @@ const getStatusConfig = (status?: string) => {
       };
     default:
       return {
-        color: 'text-slate-600 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-navy-800/60',
-        dot: 'bg-slate-400 dark:bg-slate-500',
+        color: 'text-slate-700 dark:text-slate-400',
+        bg: 'bg-slate-200/80 dark:bg-navy-800/60',
+        dot: 'bg-slate-500 dark:bg-slate-500',
         label: 'To Do',
       };
   }
@@ -373,6 +392,77 @@ const TASK_RESIZE_BOUNDS: Record<TaskResizableColumn, { min: number; max: number
   priority: { min: 90, max: 160 },
   date: { min: 100, max: 170 },
   assignee: { min: 120, max: 220 },
+};
+
+// Per-column sort (canon §5/§27.O) — sortable fields + deterministic ordinals.
+type TaskSortField = 'title' | 'status' | 'priority' | 'date' | 'assignee';
+
+const TASK_STATUS_SORT_ORDER: Record<string, number> = {
+  blocked: 0,
+  in_progress: 1,
+  'in progress': 1,
+  review: 2,
+  pending_approval: 3,
+  todo: 4,
+  done: 5,
+  completed: 5,
+  validated: 5,
+  cancelled: 6,
+  canceled: 6,
+};
+
+const TASK_PRIORITY_SORT_ORDER: Record<string, number> = {
+  critical: 0,
+  urgent: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+const taskAssigneeName = (task: Task): string =>
+  task.assignee?.firstName || task.assignee?.lastName
+    ? `${task.assignee.firstName || ''} ${task.assignee.lastName || ''}`.trim()
+    : task.assigneeId
+      ? 'You'
+      : '';
+
+function compareTasks(a: Task, b: Task, field: TaskSortField): number {
+  switch (field) {
+    case 'title':
+      return (a.title || '').localeCompare(b.title || '');
+    case 'status':
+      return (
+        (TASK_STATUS_SORT_ORDER[a.status?.toLowerCase() || 'todo'] ?? 99) -
+        (TASK_STATUS_SORT_ORDER[b.status?.toLowerCase() || 'todo'] ?? 99)
+      );
+    case 'priority':
+      return (
+        (TASK_PRIORITY_SORT_ORDER[a.priority?.toLowerCase() || 'medium'] ?? 2) -
+        (TASK_PRIORITY_SORT_ORDER[b.priority?.toLowerCase() || 'medium'] ?? 2)
+      );
+    case 'date': {
+      const at = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+      const bt = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+      return at - bt;
+    }
+    case 'assignee':
+      return taskAssigneeName(a).localeCompare(taskAssigneeName(b));
+    default:
+      return 0;
+  }
+}
+
+const TaskSortIcon: React.FC<{
+  field: TaskSortField;
+  sortConfig: { field: TaskSortField; direction: 'asc' | 'desc' } | null;
+}> = ({ field, sortConfig }) => {
+  if (sortConfig?.field !== field)
+    return <ChevronsUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+  return sortConfig.direction === 'asc' ? (
+    <ChevronUp size={12} className="text-primary-500" />
+  ) : (
+    <ChevronDown size={12} className="text-primary-500" />
+  );
 };
 
 // Default column widths
@@ -551,14 +641,6 @@ const TaskTableRow: React.FC<{
         </button>
       </td>
 
-      {/* Priority Dot */}
-      <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div
-          className={`w-2.5 h-2.5 rounded-full ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
-          title={priorityConfig.label}
-        />
-      </td>
-
       {/* Task Title */}
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
@@ -595,7 +677,7 @@ const TaskTableRow: React.FC<{
       {/* Status — inline editable */}
       {!hiddenCols?.has('status') && (
         <td
-          className="px-3 py-2.5 text-center relative"
+          className="px-3 py-2.5 text-left relative"
           style={{ width: columnWidths.status }}
           onClick={(e) => {
             e.stopPropagation();
@@ -603,12 +685,11 @@ const TaskTableRow: React.FC<{
           }}
         >
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all ${statusConfig.bg} ${statusConfig.color}`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`} />
-              {statusConfig.label}
-            </span>
+            <EntityStatusChip
+              status={task.status}
+              label={statusConfig.label}
+              className="cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
+            />
             {(task as any).triageAction && (
               <span
                 className="px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200"
@@ -641,7 +722,7 @@ const TaskTableRow: React.FC<{
       {/* Priority — inline editable */}
       {!hiddenCols?.has('priority') && (
         <td
-          className="px-3 py-2.5 text-center relative"
+          className="px-3 py-2.5 text-left relative"
           style={{ width: columnWidths.priority }}
           onClick={(e) => {
             e.stopPropagation();
@@ -649,8 +730,12 @@ const TaskTableRow: React.FC<{
           }}
         >
           <span
-            className={`text-xs font-medium cursor-pointer hover:underline decoration-dotted ${priorityConfig.color}`}
+            className={`inline-flex items-center gap-1.5 text-xs font-medium cursor-pointer hover:underline decoration-dotted ${priorityConfig.color}`}
           >
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
+              aria-hidden="true"
+            />
             {priorityConfig.label}
           </span>
           <AnimatePresence>
@@ -670,25 +755,25 @@ const TaskTableRow: React.FC<{
       {/* Due Date — inline editable */}
       {!hiddenCols?.has('date') && (
         <td
-          className="px-3 py-2.5 text-center relative"
+          className="px-3 py-2.5 text-left relative"
           style={{ width: columnWidths.date }}
           onClick={(e) => {
             e.stopPropagation();
             setInlineDropdown(inlineDropdown === 'date' ? null : 'date');
           }}
         >
-          <div
-            className={`flex items-center gap-1.5 text-xs cursor-pointer hover:underline decoration-dotted ${
-              !task.dueDate
-                ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600 italic'
-                : overdue
-                  ? 'text-rose-700 dark:text-rose-300 font-medium'
-                  : 'text-slate-600 dark:text-slate-400'
-            }`}
-          >
-            <Calendar size={12} />
-            <span>{formatDueDate(task.dueDate)}</span>
-          </div>
+          {!task.dueDate ? (
+            <span className="text-xs italic text-slate-400 dark:text-slate-500 cursor-pointer hover:underline decoration-dotted">
+              {formatDueDate(task.dueDate)}
+            </span>
+          ) : (
+            <DueChip
+              label={formatDueDate(task.dueDate)}
+              risk={overdue ? 'overdue' : deriveDueRisk(task.dueDate)}
+              showIcon
+              className="cursor-pointer hover:ring-2 hover:ring-primary-500/30 transition-all"
+            />
+          )}
           <AnimatePresence>
             {inlineDropdown === 'date' && (
               <motion.div
@@ -723,19 +808,19 @@ const TaskTableRow: React.FC<{
 
       {/* Assignee */}
       {!hiddenCols?.has('assignee') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.assignee }}>
-          <div className="flex items-center justify-center gap-2">
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.assignee }}>
+          <div className="flex items-center gap-2">
             {assigneeInitial ? (
               <div className="w-6 h-6 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] flex items-center justify-center text-[10px] font-semibold text-slate-600 dark:text-slate-200">
                 {assigneeInitial}
               </div>
             ) : (
-              <User size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-600" />
+              <User size={14} className="text-slate-700 dark:text-slate-300 dark:text-slate-400" />
             )}
             <span
               className={`text-xs truncate max-w-[120px] ${
                 assigneeName === 'Unassigned'
-                  ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600 italic'
+                  ? 'text-slate-700 dark:text-slate-300 dark:text-slate-400 italic'
                   : 'text-slate-600 dark:text-slate-400'
               }`}
             >
@@ -755,81 +840,137 @@ const TaskTableRow: React.FC<{
           <RowActionsMenu
             size="sm"
             className="opacity-40 transition-opacity group-hover:opacity-100"
-            actions={
+            sections={
               [
+                // GÓRA — kontekst (status/triage)
                 {
-                  id: 'view',
-                  label: t('common.view', 'View'),
-                  icon: Eye,
-                  onClick: () => onOpenFull(task.id, task),
-                  variant: 'primary',
+                  id: 'context',
+                  kind: 'context',
+                  actions: [
+                    {
+                      id: 'view',
+                      label: t('common.view', 'View'),
+                      icon: Eye,
+                      onClick: () => onOpenFull(task.id, task),
+                      variant: 'primary',
+                    },
+                    {
+                      id: 'complete',
+                      label: isCompleted
+                        ? t('myWork.personalTasks.reopen', 'Reopen')
+                        : t('myWork.personalTasks.complete', 'Complete'),
+                      icon: CheckCircle2,
+                      onClick: () => onToggleComplete(task.id, !isCompleted),
+                    },
+                    {
+                      id: 'status_todo',
+                      label: t('myWork.personalTasks.status.todo', 'To do'),
+                      icon: CheckSquare,
+                      onClick: () => onSetStatus(task.id, 'todo'),
+                      divider: true,
+                    },
+                    {
+                      id: 'status_in_progress',
+                      label: t('myWork.personalTasks.status.inProgress', 'In progress'),
+                      icon: Clock,
+                      onClick: () => onSetStatus(task.id, 'in_progress'),
+                    },
+                    {
+                      id: 'status_blocked',
+                      label: t('myWork.personalTasks.status.blocked', 'Blocked'),
+                      icon: AlertCircle,
+                      onClick: () => onSetStatus(task.id, 'blocked'),
+                    },
+                    ...(isNew && onTriageAccept
+                      ? [
+                          {
+                            id: 'triage_accept',
+                            label: t('myWork.triage.acceptToday', 'Accept (Today)'),
+                            icon: Zap,
+                            onClick: () => onTriageAccept(task.id),
+                            variant: 'primary' as const,
+                            divider: true,
+                          },
+                          {
+                            id: 'triage_snooze',
+                            label: t('myWork.triage.snooze', 'Snooze 2 days'),
+                            icon: Pause,
+                            onClick: () => onTriageSnooze?.(task.id),
+                          },
+                        ]
+                      : []),
+                  ],
                 },
+                // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2)
                 {
-                  id: 'edit',
-                  label: t('common.edit', 'Edit'),
-                  icon: Edit,
-                  onClick: () => onOpenFull(task.id, task),
+                  id: 'fixed',
+                  kind: 'manage',
+                  actions: [
+                    {
+                      id: 'open-preview',
+                      label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+                      icon: ChevronRight,
+                      onClick: () => onPreview(task.id, task),
+                    },
+                    {
+                      id: 'edit',
+                      label: t('common.edit', 'Edit'),
+                      icon: Edit,
+                      onClick: () => onOpenFull(task.id, task),
+                    },
+                    {
+                      id: 'archive',
+                      label: t('myWork.triage.archive', 'Archive'),
+                      icon: Archive,
+                      disabled: !onTriageArchive,
+                      description: onTriageArchive
+                        ? undefined
+                        : isPolish
+                          ? 'Wkrótce (backend)'
+                          : 'Coming soon (backend)',
+                      onClick: () => onTriageArchive?.(task.id),
+                    },
+                    // Delay ▸ — tasks have a due date, so the slot is present.
+                    ...(onInlineEdit
+                      ? [
+                          {
+                            id: 'delay',
+                            label: isPolish ? 'Odłóż termin' : 'Delay',
+                            icon: Clock,
+                            onClick: () => {},
+                            submenu: [1, 3, 7].map((d) => ({
+                              id: `delay-${d}`,
+                              label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                              icon: Clock,
+                              onClick: () => {
+                                const base =
+                                  task.dueDate && !Number.isNaN(new Date(task.dueDate).getTime())
+                                    ? new Date(task.dueDate)
+                                    : new Date();
+                                base.setDate(base.getDate() + d);
+                                onInlineEdit(task.id, 'dueDate', base.toISOString().split('T')[0]);
+                              },
+                            })),
+                          } satisfies RowAction,
+                        ]
+                      : []),
+                  ],
                 },
+                // DANGER
                 {
-                  id: 'complete',
-                  label: isCompleted
-                    ? t('myWork.personalTasks.reopen', 'Reopen')
-                    : t('myWork.personalTasks.complete', 'Complete'),
-                  icon: CheckCircle2,
-                  onClick: () => onToggleComplete(task.id, !isCompleted),
+                  id: 'danger',
+                  kind: 'danger',
+                  actions: [
+                    {
+                      id: 'delete',
+                      label: t('common.delete', 'Delete'),
+                      icon: Trash2,
+                      onClick: () => onDelete(task.id),
+                      variant: 'danger',
+                    },
+                  ],
                 },
-                {
-                  id: 'status_todo',
-                  label: t('myWork.personalTasks.status.todo', 'To do'),
-                  icon: CheckSquare,
-                  onClick: () => onSetStatus(task.id, 'todo'),
-                  divider: true,
-                },
-                {
-                  id: 'status_in_progress',
-                  label: t('myWork.personalTasks.status.inProgress', 'In progress'),
-                  icon: Clock,
-                  onClick: () => onSetStatus(task.id, 'in_progress'),
-                },
-                {
-                  id: 'status_blocked',
-                  label: t('myWork.personalTasks.status.blocked', 'Blocked'),
-                  icon: AlertCircle,
-                  onClick: () => onSetStatus(task.id, 'blocked'),
-                },
-                ...(isNew && onTriageAccept
-                  ? [
-                      {
-                        id: 'triage_accept',
-                        label: t('myWork.triage.acceptToday', 'Accept (Today)'),
-                        icon: Zap,
-                        onClick: () => onTriageAccept(task.id),
-                        variant: 'primary' as const,
-                        divider: true,
-                      },
-                      {
-                        id: 'triage_snooze',
-                        label: t('myWork.triage.snooze', 'Snooze 2 days'),
-                        icon: Pause,
-                        onClick: () => onTriageSnooze?.(task.id),
-                      },
-                      {
-                        id: 'triage_archive',
-                        label: t('myWork.triage.archive', 'Archive'),
-                        icon: Archive,
-                        onClick: () => onTriageArchive?.(task.id),
-                      },
-                    ]
-                  : []),
-                {
-                  id: 'delete',
-                  label: t('common.delete', 'Delete'),
-                  icon: Trash2,
-                  onClick: () => onDelete(task.id),
-                  variant: 'danger',
-                  divider: true,
-                },
-              ] satisfies RowAction[]
+              ] satisfies RowActionSection[]
             }
           />
         </td>
@@ -851,6 +992,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [dataContext, setDataContext] = useState<DataContextSummary | null>(null);
   const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
 
@@ -931,30 +1073,19 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     return Math.max(980, visibleWidth);
   }, [columnWidths, hiddenSet]);
 
-  const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
-  const viewSettingsRef = useRef<HTMLDivElement | null>(null);
+  // Per-column sort (canon §5/§27.O) — client-side; overrides smartSort when active.
+  const [sortConfig, setSortConfig] = useState<{
+    field: TaskSortField;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
-  useEffect(() => {
-    if (!isViewSettingsOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (viewSettingsRef.current?.contains(event.target as Node)) return;
-      setIsViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsViewSettingsOpen(false);
-      }
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isViewSettingsOpen]);
+  const handleSort = useCallback((field: TaskSortField) => {
+    setSortConfig((prev) => {
+      if (prev?.field !== field) return { field, direction: 'asc' };
+      if (prev.direction === 'asc') return { field, direction: 'desc' };
+      return null; // asc → desc → none
+    });
+  }, []);
 
   // Smart sort toggle (persisted)
   const [smartSort, setSmartSort] = useState<boolean>(() => {
@@ -1013,10 +1144,12 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const data = await Api.getPersonalTasks();
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
+      setLoadError(true);
       toast.error(t('myWork.errors.fetchFailed', 'Failed to load tasks'));
     } finally {
       setLoading(false);
@@ -1640,7 +1773,11 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       result = result.filter((task) => priorityFilter.includes(task.priority?.toLowerCase() || ''));
     }
 
-    if (smartSort) {
+    // Explicit per-column sort takes precedence over smartSort heuristics.
+    if (sortConfig) {
+      const dir = sortConfig.direction === 'asc' ? 1 : -1;
+      result = [...result].sort((a, b) => compareTasks(a, b, sortConfig.field) * dir);
+    } else if (smartSort) {
       const now = new Date();
       now.setHours(0, 0, 0, 0);
       const endOfDay = new Date(now);
@@ -1679,29 +1816,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     }
 
     return result;
-  }, [groupedTasks, tableFilters, smartSort]);
+  }, [groupedTasks, tableFilters, smartSort, sortConfig]);
 
   const orderedTaskIds = useMemo(() => allFilteredTasks.map((t) => t.id), [allFilteredTasks]);
-  const scopeSummary = useMemo(() => {
-    const orgId = dataContext?.organization.activeOrganizationId || 'unknown-org';
-    const modeLabel =
-      dataContext?.demo.enabled || dataContext?.demo.headerActive
-        ? isPolish
-          ? 'Tryb demo'
-          : 'Demo mode'
-        : isPolish
-          ? 'Dane realne'
-          : 'Real data';
-    return [
-      isPolish ? 'Zakres: zadania osobiste' : 'Scope: personal tasks',
-      'API: /my-work/personal-tasks',
-      `${isPolish ? 'Org' : 'Org'}: ${orgId}`,
-      isPolish
-        ? 'Domyślnie ukryte: done/completed/validated'
-        : 'Hidden by default: done/completed/validated',
-      modeLabel,
-    ];
-  }, [dataContext, isPolish]);
 
   const previewTask = useMemo(
     () => allFilteredTasks.find((t) => t.id === previewTaskId) || null,
@@ -1793,6 +1910,19 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
+        <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
+          <ErrorState
+            message={t('myWork.errors.fetchFailed', 'Failed to load tasks')}
+            retry={() => void fetchTasks()}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-navy-950">
       <div className="flex-1 min-h-0">
@@ -1839,7 +1969,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               <span
                 className={`text-[11px] font-semibold ${
                   due === 'No due date'
-                    ? 'text-slate-400 dark:text-slate-500 italic'
+                    ? 'text-slate-600 dark:text-slate-500 italic'
                     : 'text-slate-600 dark:text-slate-300'
                 }`}
               >
@@ -2019,19 +2149,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           }}
         >
           <div className="pl-4 pr-1.5 pt-3 pb-4">
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
-              {scopeSummary.map((item) => (
-                <span
-                  key={item}
-                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] px-2.5 py-1 text-slate-600 dark:text-slate-300"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
             {tasks.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
-                <CheckCircle2 size={48} className="text-slate-400 mb-4" />
+                <CheckCircle2 size={48} className="text-slate-600 mb-4" />
                 <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200 mb-2">
                   {t('myWork.personalTasks.empty.title', 'No personal tasks in the current scope')}
                 </h3>
@@ -2055,7 +2175,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                   <thead>
                     <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-navy-900/60 sticky top-0 z-10">
                       {/* Select All */}
-                      <th className="w-10 px-2 py-2">
+                      <th className="px-2 py-2" style={{ width: columnWidths.select }}>
                         <button
                           onClick={() => handleSelectAll(!allSelected)}
                           className={`
@@ -2078,12 +2198,18 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           )}
                         </button>
                       </th>
-                      <th className="w-8 px-1 py-2" />
                       <th
                         className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                         style={{ width: columnWidths.title }}
                       >
-                        {isPolish ? 'Zadanie' : 'Task'}
+                        <button
+                          type="button"
+                          onClick={() => handleSort('title')}
+                          className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                        >
+                          {isPolish ? 'Zadanie' : 'Task'}
+                          <TaskSortIcon field="title" sortConfig={sortConfig} />
+                        </button>
                         <ColumnResizer
                           columnId="title"
                           currentWidth={columnWidths.title}
@@ -2095,17 +2221,20 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('status') && (
                         <th
-                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.status }}
                         >
-                          <div className="flex items-center justify-center gap-1">
-                            <span
-                              className={
+                          <div className="flex items-center justify-start gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSort('status')}
+                              className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
                                 (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
-                              }
+                              }`}
                             >
                               Status
-                            </span>
+                              <TaskSortIcon field="status" sortConfig={sortConfig} />
+                            </button>
                             <FilterDropdown
                               column={TASK_COLUMNS.find((c) => c.id === 'status')!}
                               value={tableFilters.status as string[]}
@@ -2129,19 +2258,22 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('priority') && (
                         <th
-                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.priority }}
                         >
-                          <div className="flex items-center justify-center gap-1">
-                            <span
-                              className={
+                          <div className="flex items-center justify-start gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSort('priority')}
+                              className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
                                 (tableFilters.priority as string[])?.length
                                   ? 'text-primary-500'
                                   : ''
-                              }
+                              }`}
                             >
                               Priority
-                            </span>
+                              <TaskSortIcon field="priority" sortConfig={sortConfig} />
+                            </button>
                             <FilterDropdown
                               column={TASK_COLUMNS.find((c) => c.id === 'priority')!}
                               value={tableFilters.priority as string[]}
@@ -2165,10 +2297,17 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('date') && (
                         <th
-                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.date }}
                         >
-                          <span>{isPolish ? 'Termin' : 'Due Date'}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('date')}
+                            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                          >
+                            {isPolish ? 'Termin' : 'Due Date'}
+                            <TaskSortIcon field="date" sortConfig={sortConfig} />
+                          </button>
                           <ColumnResizer
                             columnId="date"
                             currentWidth={columnWidths.date}
@@ -2180,10 +2319,17 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       )}
                       {!hiddenSet.has('assignee') && (
                         <th
-                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.assignee }}
                         >
-                          <span>{isPolish ? 'Właściciel' : 'Assignee'}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSort('assignee')}
+                            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+                          >
+                            {isPolish ? 'Właściciel' : 'Assignee'}
+                            <TaskSortIcon field="assignee" sortConfig={sortConfig} />
+                          </button>
                           <ColumnResizer
                             columnId="assignee"
                             currentWidth={columnWidths.assignee}
@@ -2198,119 +2344,64 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                           style={{ width: columnWidths.actions }}
                         >
-                          <div ref={viewSettingsRef} className="flex items-center justify-end">
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setIsViewSettingsOpen((open) => !open);
-                              }}
-                              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                              aria-label={
-                                isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
-                              }
-                              aria-expanded={isViewSettingsOpen}
-                              title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                            >
-                              <Settings2 size={14} />
-                            </button>
-                            {isViewSettingsOpen ? (
-                              <div
-                                className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                <div className="px-2 pb-2 pt-1">
-                                  <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                                    {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                                  </div>
-                                  <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                                    {isPolish
-                                      ? 'Wybierz widoczne kolumny.'
-                                      : 'Choose visible columns.'}
-                                  </div>
-                                </div>
-                                <div className="space-y-0.5">
-                                  {TASK_COLUMNS.filter(
-                                    (c) => !['select', 'indicator'].includes(c.id)
-                                  ).map((col) => {
-                                    const alwaysVisible =
-                                      col.id === 'title' || col.id === 'actions';
-                                    const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                                    const label =
-                                      col.id === 'status'
-                                        ? 'Status'
-                                        : col.id === 'priority'
+                          <div className="flex items-center justify-end normal-case tracking-normal">
+                            <TableSettingsPopover
+                              columns={TASK_COLUMNS.filter(
+                                (c) => !['select', 'indicator'].includes(c.id)
+                              ).map((col): TableSettingsColumn => {
+                                const required = col.id === 'title' || col.id === 'actions';
+                                const label =
+                                  col.id === 'status'
+                                    ? 'Status'
+                                    : col.id === 'priority'
+                                      ? isPolish
+                                        ? 'Pilność'
+                                        : 'Priority'
+                                      : col.id === 'date'
+                                        ? isPolish
+                                          ? 'Termin'
+                                          : 'Due date'
+                                        : col.id === 'assignee'
                                           ? isPolish
-                                            ? 'Pilność'
-                                            : 'Priority'
-                                          : col.id === 'date'
+                                            ? 'Właściciel'
+                                            : 'Assignee'
+                                          : col.id === 'title'
                                             ? isPolish
-                                              ? 'Termin'
-                                              : 'Due date'
-                                            : col.id === 'assignee'
+                                              ? 'Zadanie'
+                                              : 'Task'
+                                            : col.id === 'actions'
                                               ? isPolish
-                                                ? 'Właściciel'
-                                                : 'Assignee'
+                                                ? 'Akcje'
+                                                : 'Actions'
                                               : col.label;
-
-                                    return (
-                                      <label
-                                        key={col.id}
-                                        className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                                          alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                                        }`}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={checked}
-                                          disabled={alwaysVisible}
-                                          onChange={() => {
-                                            if (alwaysVisible) return;
-                                            setHiddenColumns((prev) => {
-                                              const set = new Set(prev);
-                                              if (set.has(col.id)) set.delete(col.id);
-                                              else set.add(col.id);
-                                              const next = Array.from(set);
-                                              localStorage.setItem(
-                                                TASK_TABLE_VIEW_STORAGE_KEY,
-                                                JSON.stringify(next)
-                                              );
-                                              return next;
-                                            });
-                                          }}
-                                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                        />
-                                        <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                          {label}
-                                        </span>
-                                        {alwaysVisible ? (
-                                          <span className="text-[10px] font-medium text-slate-400">
-                                            {isPolish ? 'Wymagane' : 'Required'}
-                                          </span>
-                                        ) : null}
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                                <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                                  <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                                    <input
-                                      type="checkbox"
-                                      checked={showRowDescription}
-                                      onChange={(event) =>
-                                        updateRowDescriptionSetting(event.target.checked)
-                                      }
-                                      className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                    />
-                                    <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                      {isPolish
-                                        ? 'Pokaż opis / uzasadnienie'
-                                        : 'Show row description'}
-                                    </span>
-                                  </label>
-                                </div>
-                              </div>
-                            ) : null}
+                                return {
+                                  id: col.id,
+                                  label,
+                                  required,
+                                  visible: required ? true : !hiddenSet.has(col.id),
+                                };
+                              })}
+                              onToggle={(columnId, visible) =>
+                                setHiddenColumns((prev) => {
+                                  const set = new Set(prev);
+                                  if (visible) set.delete(columnId);
+                                  else set.add(columnId);
+                                  const next = Array.from(set);
+                                  localStorage.setItem(
+                                    TASK_TABLE_VIEW_STORAGE_KEY,
+                                    JSON.stringify(next)
+                                  );
+                                  return next;
+                                })
+                              }
+                              showDescription={showRowDescription}
+                              onToggleDescription={updateRowDescriptionSetting}
+                              label={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                              columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+                              descriptionLabel={
+                                isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'
+                              }
+                            />
                           </div>
                         </th>
                       )}

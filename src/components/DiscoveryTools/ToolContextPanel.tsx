@@ -299,7 +299,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                     key={String(label)}
                     className="rounded-2xl bg-slate-50/80 px-3 py-2 dark:bg-navy-950/50"
                   >
-                    <div className="text-[11px] text-slate-400">{label}</div>
+                    <div className="text-[11px] text-slate-600">{label}</div>
                     <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
                       {value}
                     </div>
@@ -381,7 +381,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
           </div>
 
           <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
               {isPolish ? 'Komentarz roboczy dla AI' : 'Working note for AI'}
             </div>
             <textarea
@@ -463,7 +463,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
 
           {orgName && (
             <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                 {isPolish ? 'Kontekst organizacji' : 'Organization context'}
               </div>
               <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -682,7 +682,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
-                  <div className="text-slate-400">
+                  <div className="text-slate-600">
                     {isPolish ? 'Akceptowane karty' : 'Accepted cards'}
                   </div>
                   <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -690,19 +690,19 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                   </div>
                 </div>
                 <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
-                  <div className="text-slate-400">{isPolish ? 'Propozycje' : 'Proposals'}</div>
+                  <div className="text-slate-600">{isPolish ? 'Propozycje' : 'Proposals'}</div>
                   <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {(swotSignals?.proposedItems || 0) + (swotSignals?.proposedSignals || 0)}
                   </div>
                 </div>
                 <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
-                  <div className="text-slate-400">{isPolish ? 'Napięcia' : 'Tensions'}</div>
+                  <div className="text-slate-600">{isPolish ? 'Napięcia' : 'Tensions'}</div>
                   <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {swotSignals?.tensions || 0}
                   </div>
                 </div>
                 <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
-                  <div className="text-slate-400">
+                  <div className="text-slate-600">
                     {isPolish ? 'Gotowe outputy' : 'Ready outputs'}
                   </div>
                   <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -735,7 +735,7 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
                       className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-xs dark:border-navy-700/70 dark:bg-navy-950/40"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="uppercase text-[10px] text-slate-400">
+                        <span className="uppercase text-[10px] text-slate-600">
                           {candidate.outputType}
                         </span>
                         <span

@@ -401,10 +401,10 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                   transition-all duration-300
                   ${
                     isActive
-                      ? 'bg-gradient-to-br from-primary-500 to-indigo-600 text-white ring-4 ring-primary-100 dark:ring-primary-900/30 shadow-lg shadow-primary-200 dark:shadow-primary-900/20'
+                      ? 'bg-gradient-to-br from-primary-500 to-crimson-600 text-white ring-4 ring-primary-100 dark:ring-primary-900/30 shadow-lg shadow-primary-200 dark:shadow-primary-900/20'
                       : isCompleted
                         ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600 shadow-sm'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                   }
                 `}
               >
@@ -419,12 +419,12 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
                       ? 'text-primary-600 dark:text-primary-400'
                       : isCompleted
                         ? 'text-green-600 dark:text-green-400'
-                        : 'text-slate-400 dark:text-slate-500'
+                        : 'text-slate-600 dark:text-slate-500'
                   }`}
                 >
                   {isPl ? step.titlePl : step.title}
                 </div>
-                <div className="hidden md:block text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 max-w-[120px]">
+                <div className="hidden md:block text-[10px] text-slate-600 dark:text-slate-500 mt-0.5 max-w-[120px]">
                   {isPl ? step.descriptionPl : step.description}
                 </div>
               </div>
@@ -657,9 +657,9 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               ${
                 canGoNext && !isLoading && !isGenerating
                   ? activeStepId === 3
-                    ? 'bg-gradient-to-r from-primary-500 to-indigo-500 hover:from-primary-600 hover:to-indigo-600 text-white shadow-md hover:shadow-lg'
+                    ? 'bg-gradient-to-r from-primary-500 to-crimson-500 hover:from-primary-600 hover:to-crimson-600 text-white shadow-md hover:shadow-lg'
                     : 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
               }
             `}
           >
@@ -675,7 +675,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
 
           {/* Keyboard shortcut hint */}
           {canGoNext && !isLoading && !isGenerating && (
-            <span className="hidden md:inline text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="hidden md:inline text-[10px] text-slate-600 dark:text-slate-500">
               Ctrl+Enter
             </span>
           )}
@@ -709,7 +709,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
         </div>
         {report?.id && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">ID: {report.id.slice(0, 12)}...</span>
+            <span className="text-xs text-slate-600">ID: {report.id.slice(0, 12)}...</span>
             <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${
                 report.status === 'GENERATED'
@@ -759,7 +759,7 @@ export const ReportBuilderWizard: React.FC<ReportBuilderWizardProps> = ({
               {isPl ? STEPS[currentStep].descriptionPl : STEPS[currentStep].description}
             </p>
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">
+          <div className="text-xs text-slate-600 dark:text-slate-500">
             {isPl ? 'Krok' : 'Step'} {currentStep + 1}/{STEPS.length}
           </div>
         </div>

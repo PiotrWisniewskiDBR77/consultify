@@ -20,7 +20,6 @@ import {
   Crown,
   Download,
   FileText,
-  Loader2,
   Plus,
   Trash2,
   Zap,
@@ -28,6 +27,10 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
 
 import { usePolicySnapshot, useSubscriptionStatus } from '../../../contexts/AccessPolicyContext';
 import { Api } from '../../../services/api';
@@ -385,11 +388,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-emerald-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   if (loadError) {
@@ -410,14 +409,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
       <InfoButton cardId="settings-billing" position="top-right" />
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Past Due Banner */}
       {effectiveStatus === 'past_due' && (
@@ -685,7 +677,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <div className="text-center">
               <button
                 onClick={handleCancelSubscription}
-                className="text-sm text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors"
+                className="text-sm text-slate-600 dark:text-slate-500 hover:text-rose-400 transition-colors"
               >
                 Cancel Subscription
               </button>
@@ -787,15 +779,13 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
             <h3 className="font-semibold text-slate-900 dark:text-white">Billing History</h3>
           </div>
           {invoices.length === 0 ? (
-            <div className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-              No invoices yet.
-            </div>
+            <EmptyState preset="noData" title="No invoices yet." />
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-white/5">
+            <div className="divide-y divide-slate-200 dark:divide-white/5">
               {invoices.map((invoice) => (
                 <div key={invoice.id} className="px-6 py-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <FileText size={20} className="text-slate-400 dark:text-slate-500" />
+                    <FileText size={20} className="text-slate-600 dark:text-slate-500" />
                     <div>
                       <p className="font-medium text-slate-900 dark:text-white">
                         Invoice {invoice.id}
@@ -894,7 +884,7 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <CreditCard size={24} className="text-slate-400 dark:text-slate-500" />
+                        <CreditCard size={24} className="text-slate-600 dark:text-slate-500" />
                         <div>
                           <p className="font-medium text-slate-900 dark:text-white">
                             {method.brand} &bull;&bull;&bull;&bull; {method.last4}

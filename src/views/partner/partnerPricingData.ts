@@ -61,6 +61,14 @@ export interface PartnerTier {
 // =============================================================================
 // PARTNER TIERS CONFIGURATION
 // =============================================================================
+//
+// SSOT — confirm % with partner contract.
+// This is the single canonical commission-tier schedule for the WHOLE app
+// (public pricing page + in-product ProviderHomeView calculator + tier bar +
+// the FAQ below). Customer-facing source of truth is the public pricing hero
+// "up to 20%". Canonical schedule: Bronze 10% / Silver 12% / Gold 14% /
+// Platinum 20%. Do NOT fork these numbers anywhere — import PARTNER_TIERS
+// instead so the calculator and tier visuals can never drift again.
 
 export const PARTNER_TIERS: PartnerTier[] = [
   {
@@ -216,6 +224,34 @@ export const PARTNER_TIERS: PartnerTier[] = [
 ];
 
 // =============================================================================
+// COMMISSION CALCULATOR TIER RESOLVER (SSOT-derived)
+// =============================================================================
+//
+// SSOT — confirm % with partner contract.
+// Maps an annual closed-deal volume onto the canonical PARTNER_TIERS schedule
+// above. Rates are pulled FROM PARTNER_TIERS so the in-product calculator can
+// never drift from the public pricing page. Thresholds are illustrative
+// estimator inputs (not contract terms).
+
+const tierRate = (id: PartnerTierId): number =>
+  (PARTNER_TIERS.find((t) => t.id === id)?.commissionRate ?? 0) / 100;
+
+export interface CalculatorTierResult {
+  id: PartnerTierId;
+  name: string;
+  rate: number; // fraction, e.g. 0.14
+}
+
+export function resolveCalculatorTier(annualClients: number): CalculatorTierResult {
+  let id: PartnerTierId = 'BRONZE';
+  if (annualClients >= 50) id = 'PLATINUM';
+  else if (annualClients >= 25) id = 'GOLD';
+  else if (annualClients >= 10) id = 'SILVER';
+  const tier = PARTNER_TIERS.find((t) => t.id === id)!;
+  return { id, name: tier.name, rate: tierRate(id) };
+}
+
+// =============================================================================
 // PARTNER BENEFITS
 // =============================================================================
 
@@ -325,7 +361,7 @@ export interface TrustIndicator {
 
 export const TRUST_INDICATORS: TrustIndicator[] = [
   { icon: Shield, label: 'PMO Standards Compliant' },
-  { icon: Users, label: '150+ Active Partners' },
+  { icon: Users, label: 'Program partnerski w fazie beta' },
   { icon: Headphones, label: 'Dedicated Support' },
   { icon: Award, label: 'ISO 21500 / PMBOK 7 / PRINCE2' },
 ];

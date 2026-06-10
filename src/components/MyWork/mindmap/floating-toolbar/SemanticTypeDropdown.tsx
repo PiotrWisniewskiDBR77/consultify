@@ -58,7 +58,7 @@ export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
 }) => {
   return (
     <div className="w-48 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl py-1">
-      <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+      <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
         {isPl ? 'Typ węzła' : 'Node type'}
       </div>
       {SEMANTIC_TYPE_OPTIONS.map((t) => {
@@ -77,7 +77,7 @@ export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
                 : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
             }`}
           >
-            <Icon size={12} className={`shrink-0 ${isActive ? t.color : 'text-slate-400'}`} />
+            <Icon size={12} className={`shrink-0 ${isActive ? t.color : 'text-slate-600'}`} />
             {isPl ? t.labelPl : t.labelEn}
           </button>
         );

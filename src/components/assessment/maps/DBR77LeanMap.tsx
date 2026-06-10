@@ -222,7 +222,7 @@ const WasteSelector: React.FC<{
               >
                 <Icon
                   size={20}
-                  className={`mx-auto mb-1 ${isSelected ? `text-${waste.color}-500` : 'text-slate-400 dark:text-slate-500'}`}
+                  className={`mx-auto mb-1 ${isSelected ? `text-${waste.color}-500` : 'text-slate-600 dark:text-slate-500'}`}
                 />
                 <div
                   className={`text-xs font-medium ${isSelected ? `text-${waste.color}-700 dark:text-${waste.color}-400` : 'text-slate-500'}`}
@@ -1286,7 +1286,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                   <div className="text-xs text-slate-500 mt-1">
                     {t('assessment.lean.leanMaturity', 'Lean Maturity')}
                   </div>
-                  <div className="text-xs text-slate-400">/5.0</div>
+                  <div className="text-xs text-slate-600">/5.0</div>
                 </div>
                 <div className="bg-white/80 dark:bg-navy-800/80 rounded-lg p-4 text-center">
                   <div className="text-3xl font-bold text-primary-600">
@@ -1324,7 +1324,7 @@ export const DBR77LeanMap: React.FC<DBR77LeanMapProps> = ({
                         key={w}
                         className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-navy-700/50 rounded-lg"
                       >
-                        <span className="text-sm font-bold text-slate-400 w-6">#{i + 1}</span>
+                        <span className="text-sm font-bold text-slate-600 w-6">#{i + 1}</span>
                         <div
                           className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: wc.color }}

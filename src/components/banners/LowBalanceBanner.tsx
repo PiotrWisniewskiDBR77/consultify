@@ -68,7 +68,7 @@ export const LowBalanceBanner: React.FC<LowBalanceBannerProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowModal(true)}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-sm font-medium hover:from-primary-500 hover:to-indigo-500 transition-all shadow-lg shadow-primary-500/25 flex items-center gap-2"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-primary-600 to-crimson-600 text-white text-sm font-medium hover:from-primary-500 hover:to-crimson-500 transition-all shadow-lg shadow-primary-500/25 flex items-center gap-2"
             >
               <CreditCard className="w-4 h-4" />
               {t('billing.buyTokens', 'Buy Tokens')}

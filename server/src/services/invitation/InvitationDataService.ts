@@ -161,20 +161,26 @@ export class InvitationDataService {
     const id = this.deps.uuidv4();
     const { ipAddress, userAgent } = requestInfo;
 
-    await this.deps.db.run(
-      `INSERT INTO invitation_events 
-             (id, invitation_id, event_type, performed_by_user_id, ip_address, user_agent, metadata) 
+    // Audit/event log is best-effort: a drifted schema (missing column/table)
+    // must NEVER break invitation accept/activation for the end user.
+    try {
+      await this.deps.db.run(
+        `INSERT INTO invitation_events
+             (id, invitation_id, event_type, performed_by_user_id, ip_address, user_agent, metadata)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        invitationId,
-        eventType,
-        performedByUserId,
-        ipAddress || null,
-        userAgent || null,
-        JSON.stringify(metadata),
-      ]
-    );
+        [
+          id,
+          invitationId,
+          eventType,
+          performedByUserId,
+          ipAddress || null,
+          userAgent || null,
+          JSON.stringify(metadata),
+        ]
+      );
+    } catch (err) {
+      console.warn('[InvitationDataService] logEvent failed (non-fatal):', (err as Error)?.message);
+    }
 
     return { id };
   }

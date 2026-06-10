@@ -10,20 +10,74 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    /* shadcn --primary re-pointed crimson (was blue 221.2/83.2/53.3) so any
+     * raw shadcn `bg-primary` / `text-primary-foreground` consumers match the
+     * Tailwind primary scale + brand. */
+    --primary: 347 69% 31%; /* crimson-600 #85182F — HBS official (was 358 71% 38% #A51C30) */
+    --primary-foreground: 0 0% 100%; /* white on crimson */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Brand accent — HBS Crimson (#85182F) */
+    --accent: 347 69% 31%; /* crimson-600 #85182F — HBS official */
+    --accent-foreground: 0 0% 100%; /* white text on crimson */
+    --accent-hover: 347 69% 25%; /* crimson-700 #6D1427 — darker than base */
+    --accent-surface: 354 73% 97%; /* crimson-50 #FDF2F3 */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --ring: 347 69% 31%; /* focus ring = crimson-600 #85182F */
+    --radius: 0.75rem; /* hig-md = 12px, global default */
+
+    /* ========================================================================
+     * CANONICAL SEMANTIC PALETTE — single source of truth (light mode)
+     * Spec: docs/audit/2026-06-03/_DESIGN_SYSTEM_STANDARDIZATION_PLAN.md §A
+     *       + COLOR_PALETTE_AUDIT_AND_PROPOSAL.md
+     * Brand: Apple/Google/OpenAI "2026 tech" — Harvard Crimson (#85182F) as the
+     * SINGLE accent (used LIGHTLY); navy/neutral structural surfaces.
+     * Consumed via Tailwind `c.*` namespace (see tailwind.config.js).
+     * Reversible: change values here to recolor the whole app.
+     * ======================================================================== */
+    --c-bg: #fafaf9; /* warm off-white — app background */
+    --c-surface: #ffffff; /* cards / panels */
+    --c-surface-raised: #f8fafc; /* popovers / chips — slight tint so a chip reads off a white row */
+    --c-border-subtle: #e6e9ed; /* hairlines */
+    --c-border: #cbd2da; /* default borders — strengthened so chip outline is visible on white (light mode) */
+    --c-text: #0f172a; /* primary text */
+    --c-text-secondary: #475569; /* secondary text */
+    --c-text-muted: #64748b; /* muted / placeholder */
+    --c-accent: #85182f; /* Harvard Crimson — SOLE brand accent */
+    --c-accent-soft: rgba(133, 24, 47, 0.08); /* accent tint (selected bg) */
+    --c-focus: rgba(133, 24, 47, 0.35); /* focus ring (was violet) */
+    /* Status tokens — Harvard complementary anchors (light mode).
+     * Each value is the DARK family member (HBS "1") so text-on-white is AA.
+     * Approx contrast on #ffffff:
+     *   success #026833 ≈ 7.0:1  (AAA)
+     *   warning #AE6429 ≈ 4.4:1  (AA Large; borderline for body — OK for icons/badges)
+     *   danger  #E80538 ≈ 5.3:1  (AA)  — distinct from crimson #85182F brand
+     *   info    #3B2883 ≈ 12.1:1 (AAA)
+     */
+    --c-success: #026833; /* was #059669 — HBS Green 1 */
+    --c-warning: #ae6429; /* was #d97706 — HBS Orange 1 */
+    --c-danger: #e80538; /* was #dc2626 — HBS Red 2 */
+    --c-info: #3b2883; /* was #2563eb — HBS Blue 1 */
+    /* Tag/identity palette (light) — MUTED, equal-weight hues for category/type/
+     * source chips. Deliberately distinct from the signal tones above so a tag
+     * NEVER reads as status/alarm. Used only as a thin left accent / dot. */
+    --c-tag-1: #3b8ea5; /* cyan-blue */
+    --c-tag-2: #6a74d8; /* periwinkle */
+    --c-tag-3: #9d5bd2; /* violet */
+    --c-tag-4: #c45b9c; /* magenta */
+    --c-tag-5: #b06a4a; /* terracotta */
+    --c-tag-6: #5a9367; /* sage */
+    --c-tag-7: #8a8f3a; /* olive */
+    --c-tag-8: #7b8794; /* slate */
+    --c-tag-9: #b5783a; /* amber-brown */
+    --c-tag-10: #5566b8; /* blue */
+    --c-tag-11: #a0568f; /* plum */
+    --c-tag-12: #4f9e6f; /* emerald-muted */
   }
 
   .dark {
@@ -33,19 +87,64 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* shadcn --primary re-pointed crimson (was blue 217.2/91.2/59.8) — lifted
+     * crimson for dark contrast. */
+    --primary: 347 60% 55%; /* lifted HBS crimson #85182F family for dark contrast (was 354 72% 62%) */
+    --primary-foreground: 0 0% 100%; /* white on lifted crimson */
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Brand accent — HBS Crimson (lighter, readable in dark) */
+    --accent: 347 60% 55%; /* lifted HBS crimson #85182F family */
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 354 65% 53%; /* crimson-500 #D42B3D */
+    --accent-surface: 350 60% 13%; /* deep crimson surface */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 354 72% 62%; /* crimson-400 readable in dark */
+
+    /* ========================================================================
+     * CANONICAL SEMANTIC PALETTE — single source of truth (dark mode)
+     * Mirrors :root --c-* tokens; crimson lifted for dark contrast.
+     * ======================================================================== */
+    --c-bg: #0b1220; /* navy-950 — app background */
+    --c-surface: #0f172a; /* navy-900 — cards / panels */
+    --c-surface-raised: #15213b; /* navy-800 — popovers / chips */
+    --c-border-subtle: rgba(255, 255, 255, 0.06); /* hairlines */
+    --c-border: rgba(255, 255, 255, 0.1); /* default borders */
+    --c-text: #f1f5f9; /* primary text */
+    --c-text-secondary: #94a3b8; /* secondary text */
+    --c-text-muted: #64748b; /* muted / placeholder */
+    --c-accent: #c8324a; /* crimson lifted for dark contrast */
+    --c-accent-soft: rgba(200, 50, 74, 0.14); /* accent tint (selected bg) */
+    --c-focus: rgba(133, 24, 47, 0.35); /* focus ring */
+    /* Status tokens — Harvard complementary lifted for dark backgrounds.
+     * Each value is the LIGHT/mid family member so contrast on navy is good.
+     *   success #9EC44D (HBS Green 3)  — lifted from #026833
+     *   warning #F7C76B (HBS Orange 4) — lifted from #AE6429
+     *   danger  #ED5541 (HBS Red 3)    — lifted from #E80538
+     *   info    #AAC8EB (HBS Blue 4)   — lifted from #3B2883
+     */
+    --c-success: #9ec44d; /* was #34d399 — HBS Green 3 */
+    --c-warning: #f7c76b; /* was #fbbf24 — HBS Orange 4 */
+    --c-danger: #ed5541; /* was #f87171 — HBS Red 3 */
+    --c-info: #aac8eb; /* was #60a5fa — HBS Blue 4 */
+    /* Tag/identity palette (dark) — lifted for contrast on navy. */
+    --c-tag-1: #5ab0c4;
+    --c-tag-2: #8e96e6;
+    --c-tag-3: #b97fe0;
+    --c-tag-4: #d97fb5;
+    --c-tag-5: #cc8a6e;
+    --c-tag-6: #7fb88f;
+    --c-tag-7: #aeb35f;
+    --c-tag-8: #9aa4b2;
+    --c-tag-9: #d29a5a;
+    --c-tag-10: #7d8de0;
+    --c-tag-11: #c47fb0;
+    --c-tag-12: #6fc492;
   }
 }
 
@@ -148,7 +247,7 @@
   }
 
   .admin-table td {
-    @apply px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-b border-slate-100/60 dark:border-white/[0.03];
+    @apply px-4 py-3 text-sm text-slate-700 dark:text-slate-300 border-b border-slate-200/60 dark:border-white/[0.03];
   }
 
   .admin-table tbody tr:hover {
@@ -161,7 +260,7 @@
 
   /* Admin List Items with separator */
   .admin-list {
-    @apply divide-y divide-slate-100 dark:divide-white/5;
+    @apply divide-y divide-slate-200 dark:divide-white/5;
   }
 
   .admin-list-item {
@@ -208,7 +307,7 @@
   }
 
   .admin-data-item {
-    @apply bg-slate-50 dark:bg-white/[0.02] rounded-lg p-4 border border-slate-100 dark:border-white/5;
+    @apply bg-slate-50 dark:bg-white/[0.02] rounded-lg p-4 border border-slate-200 dark:border-white/5;
   }
 
   /* Admin Stats Row with clear dividers */
@@ -381,4 +480,194 @@ html[data-feedback-redact-active="1"] [data-feedback-redact]::before {
   content: "■■■■■■■■" !important;
   color: #111 !important;
   letter-spacing: 0.1em !important;
+}
+
+/* ============================================================================
+ * RUNTIME-APPLIED USER PREFERENCES
+ * These rules consume CSS custom properties / classes set at runtime by the
+ * settings panels (ThemeSettings, AccessibilitySettings). They make the
+ * "save-only" settings actually take visible effect.
+ * ============================================================================ */
+
+/* ---- SET-08: Accent color override ----------------------------------------
+ * ThemeSettings writes the picked accent hex to --user-accent (+ derived
+ * shades) on <html>. The Tailwind `primary-*` palette is static hex, so we
+ * remap the most common primary/accent utility classes + semantic tokens to
+ * the user's accent when --user-accent is present. Scoped to
+ * html[data-user-accent] so the default crimson is untouched when unset. */
+html[data-user-accent] {
+  /* shadcn / semantic tokens that real components consume */
+  --c-accent: var(--user-accent);
+  --c-accent-soft: var(--user-accent-soft);
+  --c-focus: var(--user-accent-focus);
+}
+html[data-user-accent] .bg-primary-500,
+html[data-user-accent] .bg-primary-600,
+html[data-user-accent] .bg-primary {
+  background-color: var(--user-accent) !important;
+}
+html[data-user-accent] .hover\:bg-primary-600:hover,
+html[data-user-accent] .hover\:bg-primary-700:hover {
+  background-color: var(--user-accent-hover) !important;
+}
+html[data-user-accent] .text-primary-300,
+html[data-user-accent] .text-primary-400,
+html[data-user-accent] .text-primary-500,
+html[data-user-accent] .text-primary-600,
+html[data-user-accent] .text-primary {
+  color: var(--user-accent) !important;
+}
+html[data-user-accent] .border-primary-500,
+html[data-user-accent] .border-primary-600 {
+  border-color: var(--user-accent) !important;
+}
+html[data-user-accent] .ring-primary-500,
+html[data-user-accent] .focus\:ring-primary-500:focus {
+  --tw-ring-color: var(--user-accent) !important;
+}
+
+/* ---- SET-09: UI density ---------------------------------------------------
+ * ThemeSettings toggles density-compact|comfortable|spacious on <html>.
+ * We expose a --density-scale and adjust the root rem so spacing/padding that
+ * derives from rem (most of the app's Tailwind spacing) scales with density.
+ * Kept subtle (0.92 / 1 / 1.08) to remain non-breaking. */
+html.density-compact {
+  font-size: 14.5px;
+  --density-scale: 0.92;
+}
+html.density-comfortable {
+  font-size: 16px;
+  --density-scale: 1;
+}
+html.density-spacious {
+  font-size: 17px;
+  --density-scale: 1.08;
+}
+
+/* ---- SET-10: Accessibility -------------------------------------------------
+ * AccessibilitySettings sets classes + CSS vars on <html>. Below are the
+ * matching rules so those toggles visibly work. */
+
+/* Base font size / line-height / letter-spacing / font-family vars */
+html {
+  /* Default fallback MUST stay the brand font (Inter) so users who never set an
+   * accessibility font preference keep the app's intended typeface. Only an
+   * explicit a11y font choice overrides --font-family-base. */
+  font-family: var(--font-family-base, 'Inter', system-ui, -apple-system, sans-serif);
+}
+body {
+  font-size: var(--base-font-size, 16px);
+  line-height: var(--line-height-base, 1.5);
+  letter-spacing: var(--letter-spacing-base, normal);
+}
+
+/* High contrast: strengthen text + borders, remove low-opacity muting */
+html.high-contrast {
+  --c-text: #000000;
+  --c-text-secondary: #1a1a1a;
+  --c-text-muted: #333333;
+  --c-border: #000000;
+  --c-border-subtle: #444444;
+}
+html.high-contrast.dark,
+html.dark.high-contrast {
+  --c-text: #ffffff;
+  --c-text-secondary: #f1f5f9;
+  --c-text-muted: #cbd5e1;
+  --c-border: #ffffff;
+  --c-border-subtle: #cbd5e1;
+}
+html.high-contrast a {
+  text-decoration: underline;
+}
+
+/* Reduce motion: force-kill animations + transitions */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Underline links everywhere */
+html.underline-links a {
+  text-decoration: underline !important;
+}
+
+/* Colorblind correction filters (SVG matrices defined inline via filter()).
+ * Daltonization-style correction using CSS filters as a lightweight approx. */
+html.colorblind-protanopia {
+  filter: url("#cb-protanopia");
+}
+html.colorblind-deuteranopia {
+  filter: url("#cb-deuteranopia");
+}
+html.colorblind-tritanopia {
+  filter: url("#cb-tritanopia");
+}
+
+/* Cursor size: scale the pointer via a larger SVG cursor */
+html.cursor-large,
+html.cursor-large * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' stroke='%23fff' stroke-width='1' d='M4 2l14 8-6 1 3 7-3 1-3-7-5 5z'/%3E%3C/svg%3E") 4 2, auto;
+}
+
+/* Text spacing (WCAG 1.4.12 style spacing bump) */
+html.text-spacing-relaxed body {
+  letter-spacing: 0.06em;
+  word-spacing: 0.12em;
+  line-height: 1.7;
+}
+html.text-spacing-spacious body {
+  letter-spacing: 0.1em;
+  word-spacing: 0.16em;
+  line-height: 1.9;
+}
+
+/* Caret width */
+html.caret-thick * {
+  caret-color: var(--c-accent, #85182f);
+}
+html.caret-thick input,
+html.caret-thick textarea,
+html.caret-thick [contenteditable="true"] {
+  caret-color: var(--c-accent, #85182f);
+  /* thicker caret via accentuated caret on supporting browsers */
+  caret-shape: block;
+}
+
+/* Focus indicators — enhanced focus highlight + style variants.
+ * focus-visible only, so mouse users are unaffected. */
+html.focus-highlight :focus-visible {
+  outline: 2px solid var(--c-accent, #85182f);
+  outline-offset: 2px;
+}
+html.focus-style-high-contrast :focus-visible {
+  outline: 3px solid #000000 !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #ffffff !important;
+}
+html.dark.focus-style-high-contrast :focus-visible {
+  outline: 3px solid #ffffff !important;
+  box-shadow: 0 0 0 5px #000000 !important;
+}
+html.focus-style-animated :focus-visible {
+  outline: 2px solid var(--c-accent, #85182f);
+  outline-offset: 2px;
+  animation: focus-pulse 1.2s ease-in-out infinite;
+}
+@keyframes focus-pulse {
+  0%,
+  100% {
+    outline-offset: 2px;
+  }
+  50% {
+    outline-offset: 5px;
+  }
+}
+/* reduce-motion wins over animated focus */
+html.reduce-motion.focus-style-animated :focus-visible {
+  animation: none;
 }

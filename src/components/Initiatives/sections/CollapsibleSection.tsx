@@ -49,7 +49,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         {badge}
         {expanded && actions}
         <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown size={18} className="text-slate-400" />
+          <ChevronDown size={18} className="text-slate-600" />
         </motion.div>
       </div>
     </div>

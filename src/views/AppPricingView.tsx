@@ -5,11 +5,9 @@
  * Modern, minimalistic design that's welcoming and not intimidating.
  * Accessible from within the application (Admin panel).
  */
-
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
-  Bot,
   Building2,
   Calendar,
   Check,
@@ -27,6 +25,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import TeresaMark from '../components/shared/TeresaMark';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
@@ -239,7 +238,7 @@ export const AppPricingView: React.FC = () => {
 
             <h1 className="mt-6 text-3xl font-black tracking-tight text-navy-950 dark:text-white md:text-4xl">
               AI Strategic Consulting,{' '}
-              <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-crimson-600 bg-clip-text text-transparent">
                 skalowany dla Ciebie
               </span>
             </h1>
@@ -414,7 +413,7 @@ export const AppPricingView: React.FC = () => {
                             className={`mt-0.5 flex-shrink-0 ${
                               tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-300 dark:text-slate-600'
+                                : 'text-slate-600 dark:text-slate-400'
                             }`}
                           />
                         )}
@@ -426,7 +425,7 @@ export const AppPricingView: React.FC = () => {
                                 : 'text-slate-700 dark:text-slate-300'
                               : tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-600 dark:text-slate-500'
                           }`}
                         >
                           {feature.name}
@@ -495,7 +494,7 @@ export const AppPricingView: React.FC = () => {
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
-                  <Bot size={22} className="text-primary-600 dark:text-primary-400" />
+                  <TeresaMark size={22} className="text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-navy-950 dark:text-white">Managed AI</h3>
@@ -516,7 +515,7 @@ export const AppPricingView: React.FC = () => {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 dark:border-navy-700"
+                    className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0 dark:border-navy-700"
                   >
                     <span className="text-sm text-slate-600 dark:text-slate-400">{item.label}</span>
                     <span className="text-sm font-bold text-navy-950 dark:text-white">
@@ -556,7 +555,7 @@ export const AppPricingView: React.FC = () => {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 dark:border-navy-700"
+                    className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0 dark:border-navy-700"
                   >
                     <span className="text-sm text-slate-600 dark:text-slate-400">{item.label}</span>
                     <span className="text-sm font-bold text-navy-950 dark:text-white">
@@ -626,7 +625,7 @@ export const AppPricingView: React.FC = () => {
                   >
                     <ArrowRight
                       size={16}
-                      className="flex-shrink-0 rotate-90 text-slate-400 dark:text-slate-500"
+                      className="flex-shrink-0 rotate-90 text-slate-600 dark:text-slate-500"
                     />
                   </motion.div>
                 </button>
@@ -634,7 +633,7 @@ export const AppPricingView: React.FC = () => {
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
-                    className="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-navy-700"
+                    className="border-t border-slate-200 px-4 pb-4 pt-3 dark:border-navy-700"
                   >
                     <p className="pl-7 text-sm text-slate-600 dark:text-slate-400">{faq.answer}</p>
                   </motion.div>

@@ -124,7 +124,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
               {activeSourceCount}
             </span>
           )}
-          <ChevronDown size={12} className="text-slate-400 dark:text-slate-500" />
+          <ChevronDown size={12} className="text-slate-600 dark:text-slate-500" />
         </button>
 
         {isOpen && (
@@ -175,7 +175,7 @@ export const FocusModeSelector: React.FC<FocusModeSelectorProps> = ({
       >
         <Icon size={14} className={selectedMode.color} />
         <span className={`text-xs font-medium ${selectedMode.color}`}>{selectedMode.label}</span>
-        <ChevronDown size={12} className="text-slate-400 dark:text-slate-500" />
+        <ChevronDown size={12} className="text-slate-600 dark:text-slate-500" />
       </button>
 
       {isOpen && (

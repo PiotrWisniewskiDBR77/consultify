@@ -85,7 +85,7 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
             </div>
             <button
               onClick={handleClose}
-              className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+              className="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
             >
               <X size={16} />
             </button>
@@ -106,7 +106,7 @@ export const MicroVideoHelpModal: React.FC<MicroVideoHelpModalProps> = ({
           ) : (
             <div className="px-5 py-5">
               {/* Thumbnail / preview */}
-              <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-indigo-100 dark:from-primary-900/30 dark:to-indigo-900/30 rounded-xl flex items-center justify-center mb-4 border border-slate-200 dark:border-navy-700">
+              <div className="relative aspect-video bg-gradient-to-br from-primary-100 to-crimson-100 dark:from-primary-900/30 dark:to-crimson-900/30 rounded-xl flex items-center justify-center mb-4 border border-slate-200 dark:border-navy-700">
                 {video.thumbnailUrl ? (
                   <img
                     src={video.thumbnailUrl}

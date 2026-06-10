@@ -206,7 +206,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
       </div>
 
       {/* Progress Card */}
-      <div className="bg-gradient-to-r from-indigo-600 to-primary-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-crimson-600 to-primary-600 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{t('reports.progress')}</h2>
           <div className="text-4xl font-bold">{report.progress}%</div>
@@ -353,7 +353,7 @@ export const InitiativeExecutionReport: React.FC<InitiativeExecutionReportProps>
 
       {/* Footer */}
       {isPublic && (
-        <div className="text-center text-sm text-gray-400 dark:text-gray-500 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="text-center text-sm text-gray-600 dark:text-gray-500 pt-8 border-t border-gray-200 dark:border-gray-700">
           {t('reports.sharedReport')} • Consultify
         </div>
       )}

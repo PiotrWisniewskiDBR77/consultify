@@ -158,7 +158,7 @@ export const ModuleWaitlistView: React.FC = () => {
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
               type="text"
               placeholder="Search by name, email, org..."
@@ -205,7 +205,7 @@ export const ModuleWaitlistView: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 dark:border-navy-800">
+              <tr className="border-b border-slate-200 dark:border-navy-800">
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Module
                 </th>
@@ -226,14 +226,14 @@ export const ModuleWaitlistView: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={5} className="px-4 py-12 text-center text-slate-600">
                     <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
                     Loading...
                   </td>
                 </tr>
               ) : filteredInterests.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={5} className="px-4 py-12 text-center text-slate-600">
                     <Bell size={20} className="mx-auto mb-2 opacity-40" />
                     {interests.length === 0
                       ? 'No interest registrations yet'
@@ -288,7 +288,7 @@ export const ModuleWaitlistView: React.FC = () => {
 
         {/* Footer */}
         {filteredInterests.length > 0 && (
-          <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-800 text-xs text-slate-500 dark:text-slate-400">
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-800 text-xs text-slate-500 dark:text-slate-400">
             Showing {filteredInterests.length} of {interests.length} registrations
           </div>
         )}

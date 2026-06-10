@@ -98,7 +98,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
           {/* Next slide preview */}
           {nextCard && (
             <div className="p-4 border-b border-slate-700">
-              <p className="text-[10px] text-slate-400 uppercase mb-2">Next slide</p>
+              <p className="text-[10px] text-slate-600 uppercase mb-2">Next slide</p>
               <div className="pointer-events-none opacity-80">
                 <CardRenderer card={nextCard} colorSetId={colorSetId} scale={0.3} />
               </div>
@@ -107,8 +107,8 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
           {/* Speaker notes */}
           <div className="flex-1 p-4 overflow-y-auto">
-            <p className="text-[10px] text-slate-400 uppercase mb-2">Speaker Notes</p>
-            <p className="text-sm text-slate-300 whitespace-pre-wrap">
+            <p className="text-[10px] text-slate-600 uppercase mb-2">Speaker Notes</p>
+            <p className="text-sm text-slate-600 whitespace-pre-wrap">
               {currentCard.speaker_notes || 'No notes for this slide.'}
             </p>
           </div>
@@ -124,7 +124,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
             </button>
             <button
               onClick={onExit}
-              className="p-2 rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white"
+              className="p-2 rounded-lg text-slate-600 hover:bg-slate-700 hover:text-white"
             >
               <X size={20} />
             </button>

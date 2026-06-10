@@ -31,7 +31,13 @@ export type PriorityLevel = 'P0' | 'P1' | 'P2';
 export type PrimaryDriver = 'deadline' | 'blocker' | 'variance' | 'escalation' | 'opportunity';
 export type TimeWindow = 'next_24h' | 'this_week' | 'this_month';
 export type HandoffIntent = 'open' | 'create' | 'append';
-export type TargetModule = 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
+export type TargetModule =
+  | 'initiatives'
+  | 'execution'
+  | 'notebook'
+  | 'Inicjatywy'
+  | 'Wdrożenia'
+  | 'Notatki';
 
 export type P0Archetype =
   | 'critical_path_blocker'
@@ -52,31 +58,31 @@ export const P0_ARCHETYPES: Record<
   critical_path_blocker: {
     category: 'execution_delivery',
     ownerRole: 'Delivery Lead / PMO',
-    primaryTarget: 'Wdrożenia',
+    primaryTarget: 'execution',
     fallbackTarget: 'Notatki — capture blockers checklist',
   },
   decision_needed: {
     category: 'decision_alignment',
     ownerRole: 'PMO / Initiative Owner',
-    primaryTarget: 'Inicjatywy',
+    primaryTarget: 'initiatives',
     fallbackTarget: 'Notatki',
   },
   stakeholder_escalation: {
     category: 'decision_alignment',
     ownerRole: 'Program Lead / PMO',
-    primaryTarget: 'Notatki',
+    primaryTarget: 'notebook',
     fallbackTarget: 'Inicjatywy — if decision required',
   },
   compliance_deadline: {
     category: 'governance_compliance',
     ownerRole: 'Governance Owner / PMO',
-    primaryTarget: 'Wdrożenia',
+    primaryTarget: 'execution',
     fallbackTarget: 'Notatki',
   },
   kpi_finance_anomaly: {
     category: 'finance_kpi',
     ownerRole: 'Finance Lead / PMO',
-    primaryTarget: 'Inicjatywy',
+    primaryTarget: 'initiatives',
     fallbackTarget: 'Notatki — analysis',
   },
 };
@@ -251,15 +257,15 @@ function determineTargetModule(
   if (archetype) return P0_ARCHETYPES[archetype].primaryTarget;
   switch (category) {
     case 'execution_delivery':
-      return 'Wdrożenia';
+      return 'execution';
     case 'decision_alignment':
-      return 'Inicjatywy';
+      return 'initiatives';
     case 'governance_compliance':
-      return 'Wdrożenia';
+      return 'execution';
     case 'finance_kpi':
-      return 'Inicjatywy';
+      return 'initiatives';
     case 'external_change':
-      return 'Notatki';
+      return 'notebook';
   }
 }
 
@@ -447,6 +453,60 @@ export async function createTriageSignal(params: {
   return signal;
 }
 
+/**
+ * Teresa last-mile (backlog #2): create a REAL radar signal from a Teresa handoff.
+ *
+ * `teresaCopilotService.handleRadarHandoff` looks for `createSignal` on this module;
+ * it did not exist, so the handoff fell back to a synthetic ref (`real_entity:false`).
+ * This normalizes the loosely-typed handoff payload into the frozen triage shape and
+ * delegates to `createTriageSignal` (full ranking + dedup), returning `{ id }`.
+ */
+export async function createSignal(params: {
+  organizationId: string;
+  why_now?: unknown;
+  evidence_pointers?: unknown;
+  user_intent?: unknown;
+  source?: string;
+  proposalId?: string;
+}): Promise<{ id: string }> {
+  const whyNowRaw = (params.why_now || {}) as Record<string, unknown>;
+  const rationaleText =
+    String(
+      whyNowRaw.rationaleText || params.why_now || params.user_intent || 'Teresa-raised signal'
+    ).slice(0, 1000) || 'Teresa-raised signal';
+  const timeWindow = (['next_24h', 'this_week', 'this_month'] as const).includes(
+    whyNowRaw.timeWindow as any
+  )
+    ? (whyNowRaw.timeWindow as TimeWindow)
+    : 'this_week';
+  const primaryDriver = (
+    ['deadline', 'blocker', 'variance', 'escalation', 'opportunity'] as const
+  ).includes(whyNowRaw.primaryDriver as any)
+    ? (whyNowRaw.primaryDriver as PrimaryDriver)
+    : 'opportunity';
+
+  const evidencePointers = Array.isArray(params.evidence_pointers)
+    ? (params.evidence_pointers as any[]).map((p) => ({
+        type: String((p && p.type) || 'reference'),
+        ref: String((p && (p.ref ?? p)) || ''),
+      }))
+    : [];
+
+  const signal = await createTriageSignal({
+    organizationId: params.organizationId,
+    category: 'decision_alignment',
+    bands: { impact: 2, urgency: 2, scope: 1, confidence: 2, freshness: 3, actionability: 1 },
+    whyNow: { rationaleText, timeWindow, primaryDriver },
+    evidence: {
+      evidencePointers,
+      lastObservedAt: new Date().toISOString(),
+      sourceCoverage: 'partial',
+    },
+    handoffPayload: { source: params.source || 'teresa', proposalId: params.proposalId },
+  });
+  return { id: signal.signalId };
+}
+
 export async function getTriageSignals(
   organizationId: string,
   filters?: { category?: RadarCategory; priorityLevel?: PriorityLevel; triageState?: TriageState }
@@ -524,7 +584,7 @@ export async function executeHandoff(
     radar_handoff_context: handoffContext,
   };
 
-  if (targetModule === 'Inicjatywy') {
+  if (targetModule === 'initiatives' || targetModule === 'Inicjatywy') {
     targetPayload = {
       ...targetPayload,
       initiative_suggestion: {
@@ -535,7 +595,7 @@ export async function executeHandoff(
         open_questions: signal.uncertaintyBoundary.missingInputs,
       },
     };
-  } else if (targetModule === 'Wdrożenia') {
+  } else if (targetModule === 'execution' || targetModule === 'Wdrożenia') {
     targetPayload = {
       ...targetPayload,
       deployment_suggestion: {

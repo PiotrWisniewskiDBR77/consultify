@@ -1,4 +1,4 @@
-import { FileText, MessageCircle, Sparkles, X } from 'lucide-react';
+import { ChevronRight, ExternalLink, FileText, MessageCircle, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -525,8 +525,15 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   const getRowActions = useCallback(
     (row: TableRow): RowAction[] => [
       {
+        id: 'preview',
+        label: t('common.preview', 'Open preview'),
+        icon: ChevronRight,
+        onClick: () => setSelectedId(String(row.id)),
+      },
+      {
         id: 'open',
         label: t('common.open', 'Open'),
+        icon: ExternalLink,
         onClick: () => navigate(`/reports/builder/${row.reportId}`),
       },
       {
@@ -1031,7 +1038,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                     >
                       {t('common.selectAll', 'Select all')}
                     </button>
-                    <span className="text-slate-300 dark:text-navy-600">|</span>
+                    <span className="text-slate-600 dark:text-navy-600">|</span>
                     <button
                       type="button"
                       onClick={() => setSelectedKpiIds([])}

@@ -33,7 +33,7 @@ const MODE_CONFIG: Record<
     longDescription:
       'The AI remains silent until you ask. Perfect for experienced users who prefer to work independently.',
     icon: Pause,
-    color: 'text-slate-400 dark:text-slate-500',
+    color: 'text-slate-600 dark:text-slate-500',
     bgGradient: 'from-slate-800 to-slate-900',
     borderColor: 'border-slate-600',
     glowColor: 'shadow-slate-500/20',
@@ -291,7 +291,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                 <h4 className={`font-semibold ${selectedConfig.color} mb-1`}>
                   {selectedConfig.title} Mode
                 </h4>
-                <p className="text-sm text-slate-300 mb-3">{selectedConfig.longDescription}</p>
+                <p className="text-sm text-slate-600 mb-3">{selectedConfig.longDescription}</p>
 
                 {/* Behavior flags */}
                 <div className="grid grid-cols-2 gap-2">
@@ -304,7 +304,7 @@ export const ProactivitySelector: React.FC<ProactivitySelectorProps> = ({
                       )}
                       <span
                         className={
-                          enabled ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'
+                          enabled ? 'text-slate-600' : 'text-slate-500 dark:text-slate-400'
                         }
                       >
                         {formatBehaviorKey(key)}

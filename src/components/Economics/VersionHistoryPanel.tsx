@@ -166,7 +166,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       case 'milestone':
         return <Flag size={14} className="text-emerald-500" />;
       default:
-        return <Clock size={14} className="text-slate-400 dark:text-slate-500" />;
+        return <Clock size={14} className="text-slate-600 dark:text-slate-500" />;
     }
   };
 
@@ -198,7 +198,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
           onClick={onClose}
           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-white/5 rounded-lg transition-colors"
         >
-          <X size={20} className="text-slate-400 dark:text-slate-500" />
+          <X size={20} className="text-slate-600 dark:text-slate-500" />
         </button>
       </div>
 
@@ -235,7 +235,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="animate-spin text-slate-400 dark:text-slate-500" size={24} />
+            <Loader2 className="animate-spin text-slate-600 dark:text-slate-500" size={24} />
           </div>
         ) : (
           <div className="space-y-4">
@@ -391,12 +391,12 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             {versions.length === 0 ? (
               <div className="text-center py-8">
                 <div className="w-16 h-16 mx-auto bg-slate-100 dark:bg-navy-800 rounded-xl flex items-center justify-center mb-4">
-                  <History className="text-slate-400 dark:text-slate-500" size={28} />
+                  <History className="text-slate-600 dark:text-slate-500" size={28} />
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                   No zapisanych version
                 </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-slate-600 dark:text-slate-500">
                   Create first version to track changesy
                 </p>
               </div>
@@ -433,11 +433,11 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                              <span className="text-xs font-bold text-slate-600 dark:text-slate-500">
                                 v{version.version_number}
                               </span>
                               {getVersionTypeIcon(version.version_type)}
-                              <span className="text-xs text-slate-400 dark:text-slate-500">
+                              <span className="text-xs text-slate-600 dark:text-slate-500">
                                 {getVersionTypeLabel(version.version_type)}
                               </span>
                             </div>
@@ -464,7 +464,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                             <p className="text-lg font-bold text-emerald-500">
                               {version.overall_score?.toFixed(1) || '0'}
                             </p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500">
+                            <p className="text-xs text-slate-600 dark:text-slate-500">
                               {version.completion_percent || 0}%
                             </p>
                           </div>

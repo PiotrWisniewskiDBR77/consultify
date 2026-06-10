@@ -26,6 +26,8 @@ import ReactMarkdown from 'react-markdown';
 import { Link, useParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 interface LegalDocument {
   id: string;
   doc_type: string;
@@ -70,7 +72,7 @@ const DOCUMENT_INFO: Record<
     title: 'Terms of Service',
     description: 'Main agreement governing your use of Consultify',
     icon: Scale,
-    color: 'from-primary-500 to-indigo-600',
+    color: 'from-primary-500 to-crimson-600',
   },
   PRIVACY: {
     title: 'Privacy Policy',
@@ -130,13 +132,13 @@ const DOCUMENT_INFO: Record<
     title: 'Customer Data Security',
     description: 'How we protect your data: encryption, isolation, incident response',
     icon: Shield,
-    color: 'from-indigo-500 to-primary-600',
+    color: 'from-crimson-500 to-primary-600',
   },
   SUBPROCESSORS: {
     title: 'Sub-processor List',
     description: 'Third parties who process data on our behalf',
     icon: Users,
-    color: 'from-fuchsia-500 to-pink-600',
+    color: 'from-hbs-magenta-500 to-hbs-magenta-700',
   },
 };
 
@@ -249,10 +251,7 @@ export const LegalDocumentView: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-400">Loading document...</p>
-        </div>
+        <LoadingState variant="spinner" label="Loading document..." />
       </div>
     );
   }
@@ -262,7 +261,7 @@ export const LegalDocumentView: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
           <div className="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-xl flex items-center justify-center mx-auto mb-6">
-            <FileText className="w-10 h-10 text-slate-400 dark:text-slate-500" />
+            <FileText className="w-10 h-10 text-slate-600 dark:text-slate-500" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
             Document Not Found
@@ -272,7 +271,7 @@ export const LegalDocumentView: React.FC = () => {
           </p>
           <Link
             to="/legal"
-            className="inline-flex items-center gap-2 p-4 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl hover:from-primary-500 hover:to-indigo-500 transition-all shadow-lg shadow-primary-500/25"
+            className="inline-flex items-center gap-2 p-4 py-2.5 bg-gradient-to-r from-primary-600 to-crimson-600 text-white rounded-xl hover:from-primary-500 hover:to-crimson-500 transition-all shadow-lg shadow-primary-500/25"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Legal Documents
@@ -286,7 +285,7 @@ export const LegalDocumentView: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* Header */}
       <header
-        className={`sticky top-0 z-50 bg-gradient-to-r ${docInfo?.color || 'from-primary-600 to-indigo-600'} text-white shadow-lg`}
+        className={`sticky top-0 z-50 bg-gradient-to-r ${docInfo?.color || 'from-primary-600 to-crimson-600'} text-white shadow-lg`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -516,7 +515,7 @@ export const LegalDocumentView: React.FC = () => {
                     </thead>
                   ),
                   tbody: ({ children }) => (
-                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                       {children}
                     </tbody>
                   ),
@@ -585,7 +584,7 @@ export const LegalDocumentView: React.FC = () => {
                       <Link
                         key={slug}
                         to={`/legal/${slug}`}
-                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all group"
+                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-primary-300 dark:hover:border-primary-500/50 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all group"
                       >
                         <div
                           className={`w-9 h-9 bg-gradient-to-br ${info?.color || 'from-slate-400 to-slate-500'} rounded-lg flex items-center justify-center shrink-0`}
@@ -597,12 +596,12 @@ export const LegalDocumentView: React.FC = () => {
                             {info?.title || type}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 shrink-0" />
                       </Link>
                     );
                   })}
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
                 <Link
                   to="/legal"
                   className="inline-flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"

@@ -253,7 +253,7 @@ const PresentationOperationsHealthView: React.FC<PresentationOperationsHealthVie
             Live snapshot: SLOs, scheduled jobs, alert dispatch volume.
           </p>
           {data && (
-            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+            <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
               Generated {new Date(data.generatedAt).toLocaleString()} · last {data.windowDays} day
               {data.windowDays === 1 ? '' : 's'}
             </p>
@@ -557,7 +557,7 @@ const JobsStrip: React.FC<JobsStripProps> = ({ jobs }) => {
             No scheduled jobs reported.
           </div>
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="divide-y divide-slate-200 dark:divide-slate-800">
             {jobs.map((job) => (
               <li key={job.jobId} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
                 <div className="min-w-0 flex-1">

@@ -1,7 +1,6 @@
 import {
   AlertTriangle,
   ArrowRight,
-  Bot,
   Building2,
   Check,
   ChevronRight,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import TeresaMark from '../../shared/TeresaMark';
 export interface AIProposalOp {
   action: 'create' | 'delete' | 'connect' | 'move' | 'update_label';
   target_id?: string;
@@ -142,7 +142,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
 
       {isGenerating ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-slate-600 dark:text-slate-300">
-          <Bot size={28} className="animate-spin text-primary-600 dark:text-primary-400" />
+          <TeresaMark size={28} className="animate-spin text-primary-600 dark:text-primary-400" />
           <span className="text-xs font-medium">{t.generating}</span>
         </div>
       ) : proposal ? (
@@ -209,13 +209,13 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-lg border border-slate-200/70 bg-white/90 p-2 dark:border-navy-700 dark:bg-navy-900/50">
-                <div className="mb-1 text-[9px] font-bold uppercase text-slate-400">{t.before}</div>
+                <div className="mb-1 text-[9px] font-bold uppercase text-slate-600">{t.before}</div>
                 <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-slate-700 dark:text-slate-200">
                   {proposal.readback_before}
                 </pre>
               </div>
               <div className="rounded-lg border border-slate-200/70 bg-white/90 p-2 dark:border-navy-700 dark:bg-navy-900/50">
-                <div className="mb-1 text-[9px] font-bold uppercase text-slate-400">{t.after}</div>
+                <div className="mb-1 text-[9px] font-bold uppercase text-slate-600">{t.after}</div>
                 <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug text-slate-700 dark:text-slate-200">
                   {proposal.readback_after}
                 </pre>
@@ -228,7 +228,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             <span className="font-medium text-slate-800 dark:text-slate-100">
               {t.issues(proposal.validation_before.issue_count)}
             </span>
-            <span className="text-slate-400">→</span>
+            <span className="text-slate-600">→</span>
             <span
               className={`font-semibold ${
                 improved
@@ -292,7 +292,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             disabled={!draftPrompt.trim() || isGenerating}
             className="inline-flex items-center justify-center gap-1.5 self-start rounded-xl bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-primary-500 dark:hover:bg-primary-400"
           >
-            <Bot size={14} />
+            <TeresaMark size={14} />
             {t.generate}
           </button>
         </div>

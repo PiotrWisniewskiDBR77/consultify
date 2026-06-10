@@ -24,7 +24,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
 }) => {
   return (
     <div className="w-72 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl p-3 space-y-3">
-      <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+      <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
         <Paperclip size={11} />
         {isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
       </div>
@@ -61,7 +61,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenArtifact(link)}
-                    className="text-slate-400 hover:text-primary-600 transition-colors"
+                    className="text-slate-600 hover:text-primary-600 transition-colors"
                     title={isPl ? 'Otwórz artefakt' : 'Open artifact'}
                   >
                     <ExternalLink size={12} />
@@ -70,7 +70,7 @@ export const ArtifactLinksPopover: React.FC<ArtifactLinksPopoverProps> = ({
                     type="button"
                     disabled={disabled}
                     onClick={() => onRemoveArtifact(link)}
-                    className="text-slate-400 hover:text-rose-500 transition-colors disabled:opacity-40"
+                    className="text-slate-600 hover:text-rose-500 transition-colors disabled:opacity-40"
                     title={isPl ? 'Usuń powiązanie' : 'Remove link'}
                   >
                     <Trash2 size={12} />

@@ -1,10 +1,12 @@
-import type { Express } from 'express';
+import type { Express, RequestHandler } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
-import verifyToken from './middleware/auth.middleware.js';
+import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
+import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
 import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
+import { trialEntryGuard } from './middleware/trialEntryGuard.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
@@ -59,6 +61,7 @@ import assessmentWorkflowV2Routes from './routes/assessment-workflow-v2.routes.j
 import assessmentEvidenceRoutes from './routes/assessmentEvidence.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import auditEventsRoutes from './routes/audit-events.routes.js';
+import auditProgramsRouter from './routes/audit-programs.routes.js';
 import auditLogRoutes from './routes/auditLog.routes.js';
 // Route Imports
 import authRoutes from './routes/auth.routes.js';
@@ -77,6 +80,7 @@ import budgetsRoutes from './routes/budgets.routes.js';
 import capabilityRoutes from './routes/capability.routes.js';
 import changeSentimentRoutes from './routes/change-sentiment.routes.js';
 import chatProjectsRoutes from './routes/chat-projects.routes.js';
+import clientErrorRoutes from './routes/client-errors.routes.js';
 import cloudRoutes from './routes/cloud.routes.js';
 import competencyRoutes from './routes/competency.routes.js';
 import complianceRoutes from './routes/compliance.routes.js';
@@ -93,6 +97,7 @@ import dailyBriefRoutes from './routes/daily-brief.routes.js';
 import dataCollectionRoutes from './routes/data-collection.routes.js';
 import dataExportRoutes from './routes/dataExport.routes.js';
 import demoRoutes from './routes/demo.routes.js';
+import discoveryRoutes from './routes/discovery.routes.js';
 import documentStudioRoutes, {
   documentShareLinkPublicRoutes,
 } from './routes/document-studio.routes.js';
@@ -122,6 +127,8 @@ import helpFeedbackRoutes from './routes/helpFeedback.routes.js';
 import inboxEnterpriseRoutes from './routes/inbox-enterprise.routes.js';
 import initiativeGeneratorRoutes from './routes/initiative-generator.routes.js';
 import initiativeGovernanceRoutes from './routes/initiative-governance.routes.js';
+import initiativesAdditiveRoutes from './routes/initiatives-additive.routes.js';
+import insightSourceBasketsRouter from './routes/insightSourceBaskets.routes.js';
 import automationRoutes from './routes/integrations/automation.routes.js';
 import calendarIntegrationsRoutes from './routes/integrations/calendarIntegrations.routes.js';
 import connectorRoutes from './routes/integrations/connectors.routes.js';
@@ -226,11 +233,13 @@ import resourceManagementRoutes from './routes/resourceManagement.routes.js';
 import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
 import resultsKpiReportsRoutes from './routes/results-kpi-reports.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
+import rolloutRoutes from './routes/rollout.routes.js';
 import scenariosRoutes from './routes/scenarios.routes.js';
 import scheduledReportsRoutes from './routes/scheduled-reports.routes.js';
 import securityRoutes from './routes/security.routes.js';
 import securityPoliciesRoutes from './routes/securityPolicies.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
+import shareRoutes from './routes/share.routes.js';
 import skillsGapRoutes from './routes/skills-gap.routes.js';
 import sponsorReportsRoutes from './routes/sponsor-reports.routes.js';
 import stabilizationRoutes from './routes/stabilization.routes.js';
@@ -294,6 +303,9 @@ import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
 import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
 import logger from './utils/Logger.js';
 
+const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
+const orgMembershipGuard = validateOrgMembership as unknown as RequestHandler;
+
 export class ApiGateway {
   private static instance: ApiGateway;
 
@@ -332,9 +344,22 @@ export class ApiGateway {
       // otherwise early-mounted high-traffic routes bypass logging entirely.
       app.use(apiLoggingMiddleware);
 
+      // Demo Mode middleware - switches context and protects against writes.
+      // Mount immediately after logging so all gateway routes share the same boundary.
+      app.use(demoContextMiddleware);
+      app.use(
+        demoWriteProtection({
+          // Demo onboarding/status endpoints must remain writable/readable enough
+          // to enter and leave demo mode; auth routes handle login/logout.
+          allowedRoutes: ['/api/demo/', '/api/auth/'],
+        })
+      );
+
       // TypeScript routes (migrated)
       logger.info('[ApiGateway] Mounting /api/auth');
       app.use('/api/auth', authRoutes);
+      // Client crash telemetry sink (#24b) — unauthenticated, best-effort.
+      app.use('/api/errors', clientErrorRoutes);
       logger.info('[ApiGateway] Mounting /api/billing');
       app.use('/api/billing', billingRoutes);
       app.use('/api/superadmin/billing', billingAdminRoutes);
@@ -342,7 +367,7 @@ export class ApiGateway {
       // V8 shadow mode: check flag and intercept legacy AI routes for comparison
       app.use('/api/ai', v8ShadowModeCheck, v8ShadowInterceptor);
 
-      const internalToolsGuard = [verifyToken, requireInternalToolsAccess];
+      const internalToolsGuard = [gatewayVerifyToken, requireInternalToolsAccess];
       app.use('/api/ai/actions', ...internalToolsGuard);
       app.use('/api/ai/prompts', ...internalToolsGuard);
       app.use('/api/ai-context', ...internalToolsGuard);
@@ -356,6 +381,8 @@ export class ApiGateway {
       app.use('/api/agents', ...internalToolsGuard);
       app.use('/api/ai-operator', ...internalToolsGuard);
       app.use('/api/ai-memory', ...internalToolsGuard);
+      app.use('/api/ai-operator', highRiskSurfaceGuard({ categories: ['autopilot'] }));
+      app.use('/api/ai-memory', highRiskSurfaceGuard({ categories: ['ai_memory'] }));
       app.use('/api/ai-prompts', ...internalToolsGuard);
       app.use('/api/ai-training', ...internalToolsGuard);
       app.use('/api/ai-analytics', ...internalToolsGuard);
@@ -394,15 +421,6 @@ export class ApiGateway {
       app.use('/api/admin', adminBulkRoutes);
       app.use('/api/admin', adminP32Routes);
 
-      // Demo Mode middleware - switches context and protects against writes
-      app.use(demoContextMiddleware);
-      app.use(
-        demoWriteProtection({
-          // Allow demo mode toggle and status check
-          allowedRoutes: ['/api/demo/', '/api/auth/'],
-        })
-      );
-
       logger.info('[ApiGateway] Mounting /api/users');
       app.use('/api/users', userRoutes);
 
@@ -435,15 +453,28 @@ export class ApiGateway {
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
       app.use('/api/teams', teamsRoutes);
-      app.use('/api/initiatives', initiativesRoutes);
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
+      // Additive initiative slices (suggested-changes CRUD + propose engine). Mounted
+      // on the same base path AFTER the main router so it only serves the new paths
+      // (/:id/suggested-changes, /suggested-changes/:id, /propose) the main router
+      // does not define. Own auth/org middleware is applied inside the router.
+      app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesAdditiveRoutes);
       app.use('/api/admin-alerts', adminAlertsRoutes);
       app.use('/api/admin/backups', adminBackupRoutes);
       app.use('/api/admin/ai-quality', adminAIQualityRoutes);
       app.use('/api/admin/model-registry', modelRegistryRoutes);
 
       // AI-related legacy/duplicate routes (cleaned up)
-      app.use('/api/conversations', conversationsRoutes);
-      app.use('/api/chat-projects', chatProjectsRoutes);
+      // gatewayVerifyToken populates req.organizationId from the token BEFORE validateOrgMembership
+      // re-checks active membership against the DB (fail-fast on revocation; passes through when
+      // no org context = personal chat). Closes the stale-token tenancy gap on chat routes.
+      app.use('/api/conversations', gatewayVerifyToken, orgMembershipGuard, conversationsRoutes);
+      app.use('/api/chat-projects', gatewayVerifyToken, orgMembershipGuard, chatProjectsRoutes);
+      // Conversation share links (F4). Mounted AFTER conversations so its
+      // /conversations/:id/share handlers don't shadow the main routes. Carries
+      // its own auth (authenticate for manage, optionalAuth for the public
+      // /share/:token viewer) — so it must NOT sit behind the gateway guard.
+      app.use('/api', shareRoutes);
       mountStub('/api/daily-brief', dailyBriefRoutes, 'dailyBriefRoutes');
       mountStub('/api/pinned-prompts', pinnedPromptsRoutes, 'pinnedPromptsRoutes');
       mountStub('/api/task-advisor', taskAdvisorRoutes, 'taskAdvisorRoutes');
@@ -480,7 +511,12 @@ export class ApiGateway {
 
       // Integration routes
       app.use('/api/voice', voiceRoutes);
-      app.use('/api/documents', documentRoutes);
+      app.use(
+        '/api/documents',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export', 'public_share'] }),
+        documentRoutes
+      );
       app.use('/api/settings', settingsRoutes);
       app.use('/api/meeting', meetingRoutes);
       mountStub(
@@ -578,11 +614,23 @@ export class ApiGateway {
       // Core API routes
       app.use('/api/conclusions', conclusionsRoutes);
       app.use('/api/artifact-conversions', artifactConversionsRoutes);
-      app.use('/api/projects', projectRoutes);
-      app.use('/api/knowledge', knowledgeRoutes);
+      app.use('/api/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
+      app.use(
+        '/api/knowledge',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        highRiskSurfaceGuard({ categories: ['upload', 'ai_memory'] }),
+        knowledgeRoutes
+      );
       app.use('/api/knowledge-graph', knowledgeGraphRoutes);
       app.use('/api/kb', knowledgeBaseRoutes); // Public Knowledge Base API
-      app.use('/api/media-ingestion', mediaIngestionRoutes);
+      app.use(
+        '/api/media-ingestion',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        highRiskSurfaceGuard({ categories: ['upload'] }),
+        mediaIngestionRoutes
+      );
       app.use('/api/llm', llmRoutes);
       app.use('/api/tasks', taskRoutes);
       app.use('/api/public/v1', publicApiV1Routes);
@@ -617,10 +665,33 @@ export class ApiGateway {
 
       // Organization routes
       app.use('/api/megatrends', megatrendRoutes);
+      app.use(
+        '/api/organizations',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        highRiskSurfaceGuard({ categories: ['invite'] })
+      );
       app.use('/api/organizations', organizationRoutes);
       app.use('/api/organizations', ownershipRoutes);
       app.use('/api/organizations', approvedDomainsRoutes);
-      mountStub('/api/invitations', invitationRoutes, 'invitationRoutes');
+      // Public, token-based invitation endpoints must bypass JWT auth: the recipient
+      // has no account/session yet when validating a link or completing first login.
+      // (req.path here is relative to the '/api/invitations' mount, e.g. '/accept'.)
+      const isPublicInvitePath = (req: { path?: string }): boolean => {
+        const p = typeof req.path === 'string' ? req.path : '';
+        return p === '/accept' || p.startsWith('/validate/');
+      };
+      app.use('/api/invitations', ((req, res, next) =>
+        isPublicInvitePath(req)
+          ? next()
+          : (gatewayVerifyToken as RequestHandler)(req, res, next)) as RequestHandler);
+      app.use('/api/invitations', ((req, res, next) =>
+        isPublicInvitePath(req)
+          ? next()
+          : (trialEntryGuard as RequestHandler)(req, res, next)) as RequestHandler);
+      // M16 P0-1: invitations are now a production route (auth guard applied above).
+      // Previously wrapped in mountStub, which 404'd the member-invite funnel in prod.
+      app.use('/api/invitations', invitationRoutes);
       app.use('/api/organization-context', organizationContextRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);
       app.use('/api/organization-data', organizationDataRoutes);
@@ -651,10 +722,20 @@ export class ApiGateway {
       // Feature routes
       app.use('/api/gamification', gamificationRoutes);
       app.use('/api/analytics/advanced', advancedAnalyticsRoutes);
-      app.use('/api/trial', trialRoutes);
-      app.use('/api/cloud', cloudRoutes);
+      app.use('/api/trial', trialEntryGuard, trialRoutes);
+      app.use(
+        '/api/cloud',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export'] }),
+        cloudRoutes
+      );
       app.use('/api/rbac', rbacRoutes);
-      app.use('/api/branding', brandingRoutes);
+      app.use(
+        '/api/branding',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload'] }),
+        brandingRoutes
+      );
       mountStub('/api/workspace-defaults', workspaceDefaultsRoutes, 'workspaceDefaultsRoutes');
       // My Work is a production-critical module (not a stub).
       // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
@@ -671,7 +752,12 @@ export class ApiGateway {
       // so `POST /share-links/resolve` lands here and never reaches the
       // authed router.
       app.use('/api/document-studio', documentShareLinkPublicRoutes);
-      app.use('/api/document-studio', documentStudioRoutes);
+      app.use(
+        '/api/document-studio',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export', 'public_share'] }),
+        documentStudioRoutes
+      );
       // Execution-module UI/UX standard (Epic E11) — read-only governance
       // surface exposing the canonical Doc / Excel / Deck Builder standard
       // and the system-owned reference manifests.
@@ -692,7 +778,7 @@ export class ApiGateway {
       app.use('/api/benchmark', benchmarkRoutes);
 
       // Assessment routes
-      app.use('/api/assessment', assessmentAIRoutes); // AI endpoints: /api/assessment/:projectId/ai/*
+      app.use('/api/assessment', gatewayVerifyToken, trialEntryGuard, assessmentAIRoutes); // AI endpoints: /api/assessment/:projectId/ai/*
       mountStub('/api/assessment', assessmentRoutes, 'assessmentRoutes');
       mountStub('/api/rapidlean', rapidleanRoutes, 'rapidleanRoutes');
       mountStub(
@@ -701,7 +787,17 @@ export class ApiGateway {
         'externalAssessmentsRoutes'
       );
       app.use('/api/generic-reports', genericReportsRoutes);
-      mountStub('/api/initiatives', initiativeGeneratorRoutes, 'initiativeGeneratorRoutes');
+      // Module 05 Inicjatywy — AI initiative generator. Promoted off `mountStub`
+      // to a real mount: the prior path `/api/initiatives` collided with the PMO
+      // initiatives router (mounted above) AND was production-disabled, so AI
+      // generation silently 503'd. Now mounted at a dedicated, non-colliding path
+      // backed by the `generated_initiatives` table (migration 20260603).
+      app.use(
+        '/api/initiative-generator',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        initiativeGeneratorRoutes
+      );
       app.use('/api/assessments', assessmentHubRoutes);
       app.use('/api/assessment-reports', assessmentReportsRoutes);
       app.use('/api/assessment-level-attachments', assessmentLevelAttachmentsRoutes);
@@ -718,8 +814,9 @@ export class ApiGateway {
       );
 
       // PMO routes
-      app.use('/api/roadmap', roadmapRoutes);
+      app.use('/api/roadmap', gatewayVerifyToken, trialEntryGuard, roadmapRoutes);
       app.use('/api/execution', executionRoutes);
+      app.use('/api/rollout', rolloutRoutes);
       mountStub('/api/stabilization', stabilizationRoutes, 'stabilizationRoutes');
       app.use('/api/decisions', decisionsRoutes);
       app.use('/api/stage-gates', stageGatesRoutes);
@@ -727,8 +824,8 @@ export class ApiGateway {
       app.use('/api/pmo-context', pmoContextRoutes);
       app.use('/api/pmo', pmoRoutes);
       // Compatibility mounts (some clients expect PMO-scoped prefixes)
-      app.use('/api/pmo/projects', projectRoutes);
-      app.use('/api/pmo/initiatives', initiativesRoutes);
+      app.use('/api/pmo/projects', gatewayVerifyToken, trialEntryGuard, projectRoutes);
+      app.use('/api/pmo/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
       app.use('/api/pmo/tasks', taskRoutes);
       app.use('/api/pmo-domains', pmoDomainsRoutes);
       // Compatibility mount for legacy clients.
@@ -743,11 +840,22 @@ export class ApiGateway {
       app.use('/api/scenarios', scenariosRoutes);
 
       // Reports routes
-      app.use('/api/reports', reportsRoutes);
+      app.use('/api/reports', gatewayVerifyToken, trialEntryGuard, reportsRoutes);
       app.use('/api/reports/premium', premiumReportsRoutes);
-      app.use('/api/report-builder', reportBuilderRoutes);
+      app.use(
+        '/api/report-builder',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export', 'public_share'] }),
+        reportBuilderRoutes
+      );
       app.use('/api/reports-v4', reportEnterpriseRoutes);
-      app.use('/api/report-import', reportImportRoutes);
+      app.use(
+        '/api/report-import',
+        gatewayVerifyToken,
+        trialEntryGuard,
+        highRiskSurfaceGuard({ categories: ['upload'] }),
+        reportImportRoutes
+      );
       app.use('/api/ai-suggestions', aiSuggestionsRoutes);
       app.use('/api/report-initiatives', reportInitiativesRoutes);
       app.use('/api/scheduled-reports', scheduledReportsRoutes);
@@ -841,7 +949,25 @@ export class ApiGateway {
       app.use('/api/studio', studioRoutes);
       app.use('/api/intelligence', intelligenceRoutes);
       app.use('/api/sponsor-reports', sponsorReportsRoutes);
-      app.use('/api/interview', deprecationHeader('/api/v8/interview'), interviewRoutes);
+      // The /api/interview router is NOT fully deprecated: its authoring
+      // surface (sessions / questions / notes / evidence / summary / templates /
+      // ai-assist / transcript) is load-bearing and has NO v8 equivalent. The
+      // deprecation header lied — a client trusting it and migrating to
+      // /api/v8/interview would 404 on every authoring call. Header removed; the
+      // V8-superseded assignment/insight duplicates inside this router are
+      // reached only via frontend `.catch()` fallbacks and are tracked for a
+      // future router split, not a blanket deprecation.
+      app.use('/api/interview', interviewRoutes);
+      // Source Baskets — reusable saved source-session selections for the AI
+      // Insight Creator (audit #28c/#28d). Mounted under the same /api/interview
+      // prefix so paths are /api/interview/insight-baskets[...].
+      app.use('/api/interview', insightSourceBasketsRouter);
+      // Audit Orchestrator — org-scoped CRUD for audit programs (owner flagged
+      // direction ⭐⭐⭐, audit #19/#19d/#19e). Paths are /api/audit/programs[...].
+      app.use('/api/audit', auditProgramsRouter);
+      // Discovery revive — the Discovery Consultant canvas now has a real
+      // backend (persistence + convert-to-project + SPIN extraction).
+      app.use('/api/discovery', discoveryRoutes);
       app.use('/api/interview-v4', interviewEnterpriseRoutes);
       app.use('/api/agents', agentsRoutes);
       app.use('/api/ai-operator', aiOperatorRoutes);
@@ -861,6 +987,8 @@ export class ApiGateway {
       app.use('/api/benefits', benefitsRoutes);
       app.use(
         '/api/finance-statements',
+        gatewayVerifyToken,
+        highRiskSurfaceGuard({ categories: ['upload', 'export'] }),
         deprecationHeader('/api/v8/finance'),
         financeStatementsRoutes
       );

@@ -439,7 +439,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
               data-testid="trust-badge-answered-by"
               className="mb-2 flex items-center gap-1.5 text-slate-500 dark:text-slate-400"
             >
-              <span className="uppercase tracking-wide text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+              <span className="uppercase tracking-wide text-[10px] font-semibold text-slate-600 dark:text-slate-500">
                 {t('trust.badge.answeredBy', 'Answered by')}
               </span>
               <span className="font-medium text-slate-700 dark:text-slate-200">{modelLabel}</span>
@@ -478,7 +478,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                     >
                       <span
                         aria-hidden="true"
-                        className="inline-block w-4 text-slate-400 dark:text-slate-500"
+                        className="inline-block w-4 text-slate-600 dark:text-slate-500"
                       >
                         {idx + 1}.
                       </span>
@@ -509,7 +509,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                             domain: citationDomain,
                           })}
                         >
-                          <span aria-hidden="true" className="text-slate-300 dark:text-navy-600">
+                          <span aria-hidden="true" className="text-slate-600 dark:text-navy-600">
                             ·
                           </span>
                           <span aria-hidden="true" className="ml-1">
@@ -553,7 +553,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
             <div
               data-testid="trust-badge-reasoning"
               data-expanded={reasoningExpanded}
-              className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-800"
+              className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-800"
             >
               <button
                 type="button"
@@ -639,7 +639,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
 
           {/* Honest footer — explain what the badge actually means so
               users don't mistake "3 sources" for "this is verified". */}
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-800 text-slate-500 dark:text-slate-400">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-800 text-slate-500 dark:text-slate-400">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
                 {t(

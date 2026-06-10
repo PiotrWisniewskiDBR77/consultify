@@ -160,7 +160,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               </span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                className="text-slate-600 hover:text-slate-600 dark:text-slate-400"
               >
                 <X size={16} />
               </button>
@@ -171,7 +171,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               <div className="relative">
                 <Search
                   size={14}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                 />
                 <input
                   type="text"
@@ -201,7 +201,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                 <Tooltip content={t('admin.table.resetColumns', 'Reset to default')}>
                   <button
                     onClick={onReset}
-                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 rounded"
+                    className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 rounded"
                   >
                     <RefreshCw size={14} />
                   </button>
@@ -221,7 +221,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                     )}
                   >
                     {/* Drag Handle */}
-                    <div className="cursor-grab text-slate-400 hover:text-slate-600 dark:text-slate-400">
+                    <div className="cursor-grab text-slate-600 hover:text-slate-600 dark:text-slate-400">
                       <GripVertical size={14} />
                     </div>
 
@@ -230,14 +230,14 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                       <button
                         onClick={() => moveColumn(column.id, 'up')}
                         disabled={index === 0}
-                        className="text-slate-400 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
+                        className="text-slate-600 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
                       >
                         <ChevronUp size={10} />
                       </button>
                       <button
                         onClick={() => moveColumn(column.id, 'down')}
                         disabled={index === filteredColumns.length - 1}
-                        className="text-slate-400 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
+                        className="text-slate-600 hover:text-slate-600 dark:text-slate-400 disabled:opacity-30"
                       >
                         <ChevronDown size={10} />
                       </button>
@@ -251,7 +251,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                         'p-1 rounded',
                         column.visible
                           ? 'text-primary-600 bg-primary-100 dark:bg-primary-900/30'
-                          : 'text-slate-400 dark:text-slate-500',
+                          : 'text-slate-600 dark:text-slate-500',
                         column.required && 'opacity-50 cursor-not-allowed'
                       )}
                     >

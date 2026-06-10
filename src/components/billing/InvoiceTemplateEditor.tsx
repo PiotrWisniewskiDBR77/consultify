@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Invoice Template Editor
  * Create and customize invoice templates with live preview
@@ -232,7 +231,7 @@ export const InvoiceTemplateEditor: React.FC<InvoiceTemplateEditorProps> = ({ or
         {!selectedTemplate ? (
           <div className="h-full flex items-center justify-center text-slate-500 dark:text-slate-400">
             <div className="text-center">
-              <FileText className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+              <FileText className="w-12 h-12 mx-auto mb-4 text-slate-600" />
               <p>Select a template to view or edit</p>
             </div>
           </div>

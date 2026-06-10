@@ -2,6 +2,12 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+// Lazy so the (heavy) mermaid bundle stays out of the critical document path
+// and only loads when a ```mermaid fence is actually rendered.
+const DiagramRenderer = React.lazy(() =>
+  import('./Artifacts/renderers/DiagramRenderer').then((m) => ({ default: m.DiagramRenderer }))
+);
+
 function plainText(children: React.ReactNode): string {
   if (typeof children === 'string') return children;
   if (Array.isArray(children)) return children.map(plainText).join('');
@@ -73,7 +79,7 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
             </th>
           ),
           td: ({ children }) => (
-            <td className="border-t border-slate-100 px-4 py-3 align-top text-slate-700 dark:border-white/10 dark:text-slate-300">
+            <td className="border-t border-slate-200 px-4 py-3 align-top text-slate-700 dark:border-white/10 dark:text-slate-300">
               {children}
             </td>
           ),
@@ -83,6 +89,26 @@ export function CanvasMarkdownRenderer({ text }: { text: string }) {
                 <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.85em] text-slate-800 dark:bg-white/10 dark:text-slate-100">
                   {children}
                 </code>
+              );
+            }
+            const language =
+              typeof className === 'string'
+                ? (className.match(/language-([\w-]+)/)?.[1] ?? '').toLowerCase()
+                : '';
+            if (language === 'mermaid') {
+              const source = plainText(children).trim();
+              return (
+                <React.Suspense
+                  fallback={
+                    <pre className="my-5 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-sm leading-6 text-slate-100">
+                      <code>{source}</code>
+                    </pre>
+                  }
+                >
+                  <div className="my-5">
+                    <DiagramRenderer content={source} />
+                  </div>
+                </React.Suspense>
               );
             }
             return (

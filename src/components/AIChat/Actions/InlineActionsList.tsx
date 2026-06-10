@@ -127,7 +127,7 @@ export const InlineActionsList: React.FC<InlineActionsListProps> = ({
 
       {/* Recently completed actions (collapsed) */}
       {completedActions.length > 0 && !isExpanded && (
-        <div className="text-[10px] text-slate-400 dark:text-slate-500">
+        <div className="text-[10px] text-slate-600 dark:text-slate-500">
           {completedActions.filter((a) => a.status === 'executed').length > 0 && (
             <span className="text-green-500">
               ✓ {completedActions.filter((a) => a.status === 'executed').length}{' '}
@@ -135,7 +135,7 @@ export const InlineActionsList: React.FC<InlineActionsListProps> = ({
             </span>
           )}
           {completedActions.filter((a) => a.status === 'dismissed').length > 0 && (
-            <span className="ml-2 text-slate-400">
+            <span className="ml-2 text-slate-600">
               {completedActions.filter((a) => a.status === 'dismissed').length}{' '}
               {t('aiActions.dismissed', 'odrzucone')}
             </span>

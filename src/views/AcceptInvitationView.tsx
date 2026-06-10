@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { API_URL } from '@/services/api';
 
+import { WORK_LOCATION_COUNTRIES } from '../constants/countries';
 import { useAppStore } from '../store/useAppStore';
 import { InvitationType, InvitationValidation } from '../types';
 
@@ -67,6 +68,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   const [emailMismatch, setEmailMismatch] = useState(false);
 
   // Form state
+  const [enteredEmail, setEnteredEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
@@ -99,7 +101,11 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
           throw new Error(mappedMessage);
         }
 
-        setInvitation(data as InvitationValidation);
+        const validated = data as InvitationValidation;
+        setInvitation(validated);
+        // Prefill name from the pre-created (pending) account, if the server provided it.
+        if (validated.firstName) setFirstName(validated.firstName);
+        if (validated.lastName) setLastName(validated.lastName);
         const loggedEmail = currentUser?.email?.trim().toLowerCase();
         const invitedEmail = (data as InvitationValidation | null)?.email?.trim().toLowerCase();
         const shouldBlockMismatch = Boolean(
@@ -142,7 +148,21 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
       return;
     }
 
-    if (!jobTitle.trim() || !department.trim()) {
+    if (invitation?.requireEmail) {
+      const em = enteredEmail.trim();
+      if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+        setError('Please enter your work email address');
+        return;
+      }
+    }
+
+    const requireProfile = invitation?.requireProfile === true;
+    if (requireProfile) {
+      if (!jobTitle.trim() || !siteLocation.trim()) {
+        setError('Please provide your job title and the country where you work');
+        return;
+      }
+    } else if (!jobTitle.trim() || !department.trim()) {
       setError('Please provide your function and department in the organization');
       return;
     }
@@ -163,7 +183,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
         },
         body: JSON.stringify({
           token,
-          email: invitation?.email,
+          email: invitation?.requireEmail ? enteredEmail.trim().toLowerCase() : invitation?.email,
           firstName,
           lastName,
           jobTitle: jobTitle.trim(),
@@ -247,7 +267,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex items-center justify-center p-4 [color-scheme:light]">
       <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
         {/* Header */}
         <div className="bg-indigo-600 text-white p-6">
@@ -265,7 +285,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
         </div>
 
         {/* Invitation Details */}
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6 border-b border-gray-200">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-indigo-50 rounded-lg">
@@ -318,10 +338,34 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
             </div>
           )}
 
-          <div className="bg-gray-50 dark:bg-navy-800 rounded-lg p-3 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Joining as:</span>{' '}
-            <span className="font-medium text-gray-900">{invitation?.email}</span>
-          </div>
+          {invitation?.requireEmail ? (
+            <div>
+              <label
+                htmlFor="enteredEmail"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Your work email *
+              </label>
+              <input
+                type="email"
+                id="enteredEmail"
+                value={enteredEmail}
+                onChange={(e) => setEnteredEmail(e.target.value)}
+                placeholder="you@vtsgroup.com"
+                autoComplete="email"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Use the work email this invitation was sent to.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-lg p-3 text-sm">
+              <span className="text-gray-600">Joining as:</span>{' '}
+              <span className="font-medium text-gray-900">{invitation?.email}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -336,7 +380,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 id="firstName"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
@@ -352,7 +396,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 id="lastName"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
@@ -364,7 +408,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 htmlFor="jobTitle"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Function / Job Title *
+                Job Title *
               </label>
               <input
                 type="text"
@@ -372,10 +416,35 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="e.g. Production Manager"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
+            <div>
+              <label
+                htmlFor="siteLocation"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Country where you work{invitation?.requireProfile ? ' *' : ''}
+              </label>
+              <select
+                id="siteLocation"
+                value={siteLocation}
+                onChange={(e) => setSiteLocation(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
+                required={invitation?.requireProfile === true}
+              >
+                <option value="">Select a country…</option>
+                {WORK_LOCATION_COUNTRIES.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {!invitation?.requireProfile && (
             <div>
               <label
                 htmlFor="department"
@@ -389,28 +458,11 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 placeholder="e.g. Operations"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
                 required
               />
             </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="siteLocation"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Site / Location
-            </label>
-            <input
-              type="text"
-              id="siteLocation"
-              value={siteLocation}
-              onChange={(e) => setSiteLocation(e.target.value)}
-              placeholder="Optional"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
+          )}
 
           <div>
             <label
@@ -425,7 +477,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 8 characters"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
               required
               minLength={8}
             />
@@ -443,7 +495,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 placeholder:text-gray-400"
               required
             />
           </div>
@@ -485,7 +537,7 @@ const AcceptInvitationView: React.FC<AcceptInvitationViewProps> = ({
                 !firstName ||
                 !lastName ||
                 !jobTitle ||
-                !department ||
+                (invitation?.requireProfile ? !siteLocation : !department) ||
                 !password ||
                 !acceptedTerms
               }

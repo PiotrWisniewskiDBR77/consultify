@@ -209,7 +209,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
           }`}
         >
           <input {...getInputProps()} />
-          <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+          <Upload className="w-16 h-16 mx-auto mb-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
           {isDragActive ? (
             <p className="text-lg text-blue-500">Drop the file here...</p>
           ) : (
@@ -228,7 +228,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
       {/* Search & Filter */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 mb-6 flex items-center gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
           <input
             type="text"
             placeholder="Search reports..."
@@ -259,7 +259,7 @@ export const GenericReportsWorkspace: React.FC<GenericReportsWorkspaceProps> = (
           </div>
         ) : filteredReports.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <FileText className="w-16 h-16 mx-auto mb-4 text-gray-600" />
             <p className="text-gray-500 dark:text-gray-400">No reports found</p>
           </div>
         ) : (

@@ -49,7 +49,7 @@ export const LinkNode: React.FC<NodeProps> = ({ data, selected }) => {
             {favicon ? (
               <img src={favicon} alt="" className="w-3.5 h-3.5" />
             ) : (
-              <Link2 size={10} className="text-slate-400" />
+              <Link2 size={10} className="text-slate-600" />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -62,7 +62,7 @@ export const LinkNode: React.FC<NodeProps> = ({ data, selected }) => {
               </div>
             )}
             {data?.url && (
-              <div className="text-[8px] text-slate-400 truncate mt-0.5">{data.url}</div>
+              <div className="text-[8px] text-slate-600 truncate mt-0.5">{data.url}</div>
             )}
           </div>
         </div>

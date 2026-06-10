@@ -155,7 +155,7 @@ const FieldRenderer: React.FC<{
                 className={
                   n <= numVal
                     ? 'text-amber-400 fill-amber-400'
-                    : 'text-slate-300 dark:text-navy-600'
+                    : 'text-slate-600 dark:text-navy-600'
                 }
               />
             </button>
@@ -261,9 +261,9 @@ export const FormView: React.FC<FormViewProps> = ({
 
   if (records.length === 0 && !isCreating) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-3 p-8">
+      <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-500 gap-3 p-8">
         <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-          <FileText size={28} className="text-slate-300 dark:text-slate-600" />
+          <FileText size={28} className="text-slate-600 dark:text-slate-400" />
         </div>
         <span className="text-sm font-medium">{isPl ? 'Brak rekordów' : 'No records'}</span>
         {onRecordCreate && (
@@ -348,7 +348,7 @@ export const FormView: React.FC<FormViewProps> = ({
                   <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                     {col.header}
                   </span>
-                  <span className="text-[8px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <span className="text-[8px] font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
                     {isPl ? typeLabel?.pl : typeLabel?.en}
                   </span>
                 </label>

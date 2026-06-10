@@ -161,7 +161,7 @@ export function ImpactHypothesisStep(props: { session: ToolSession; isPolish: bo
         </div>
 
         {impactHypothesis.assumptions.length === 0 ? (
-          <div className="p-6 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-400 text-sm">
+          <div className="p-6 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600 text-sm">
             {isPolish ? 'Brak założeń.' : 'No assumptions yet.'}
           </div>
         ) : (

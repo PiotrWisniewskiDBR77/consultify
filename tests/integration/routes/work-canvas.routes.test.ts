@@ -370,7 +370,9 @@ describe('work canvas routes', () => {
     expect(dbRunMock).not.toHaveBeenCalled();
   });
 
-  it('approves a Canvas proposal with capability read-back', async () => {
+  it('materializes a real idea when approving an idea proposal', async () => {
+    // First dbGet returns the proposal; subsequent dbGet (ownedDraft) falls back
+    // to the default draftRow from beforeEach.
     dbGetMock.mockResolvedValueOnce(proposalRow);
 
     const response = await request(app)
@@ -384,15 +386,49 @@ describe('work canvas routes', () => {
       requiredCapability: 'canvas.convert.idea',
       readBack: expect.objectContaining({
         target: 'idea',
+        status: 'approved',
+        entityStatus: 'created',
+      }),
+    });
+    // Approval now produces a real target object id (no longer a placeholder).
+    expect(response.body.data.targetObjectId).toEqual(expect.any(String));
+    expect(response.body.data.readBack.targetObjectId).toEqual(expect.any(String));
+    // The idea was actually inserted.
+    expect(dbRunMock).toHaveBeenCalledWith(
+      expect.stringContaining('my_ideas'),
+      expect.any(Array),
+      expect.any(Object)
+    );
+    expect(dbRunMock).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE work_canvas_proposals'),
+      expect.arrayContaining(['approved']),
+      { fallback: false }
+    );
+  });
+
+  it('keeps an honest placeholder when approving a non-materializable target', async () => {
+    dbGetMock.mockResolvedValueOnce({ ...proposalRow, target: 'project_brief' });
+
+    const response = await request(app)
+      .post('/api/work-canvas/proposals/proposal-1/approve')
+      .send({})
+      .expect(200);
+
+    expect(response.body.data).toMatchObject({
+      status: 'approved',
+      targetObjectId: null,
+      readBack: expect.objectContaining({
+        target: 'project_brief',
         status: 'approved_with_placeholder',
         entityStatus: 'placeholder_pending_conversion',
         targetObjectId: null,
       }),
     });
-    expect(dbRunMock).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE work_canvas_proposals'),
-      expect.arrayContaining(['approved']),
-      { fallback: false }
+    // No entity table was written for a placeholder target.
+    expect(dbRunMock).not.toHaveBeenCalledWith(
+      expect.stringContaining('my_ideas'),
+      expect.any(Array),
+      expect.any(Object)
     );
   });
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * WebhookDeliveriesModal - Webhook Delivery History
  *
@@ -122,7 +121,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div>
             <h3 className="text-lg font-semibold text-white">Delivery History</h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               Recent webhook deliveries and their status
             </p>
           </div>
@@ -133,14 +132,14 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
             >
               <RefreshCw
                 size={18}
-                className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+                className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
               />
             </button>
             <button
               onClick={onClose}
               className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
             >
-              <X size={18} className="text-slate-400 dark:text-slate-500" />
+              <X size={18} className="text-slate-600 dark:text-slate-500" />
             </button>
           </div>
         </div>
@@ -152,7 +151,7 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
               <Loader2 size={32} className="animate-spin text-primary-500" />
             </div>
           ) : deliveries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+            <div className="flex flex-col items-center justify-center py-20 text-slate-600 dark:text-slate-500">
               <Clock size={48} className="mb-4 opacity-50" />
               <p>No deliveries yet</p>
             </div>
@@ -212,9 +211,9 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                         </button>
                       )}
                       {expandedId === delivery.id ? (
-                        <ChevronDown size={18} className="text-slate-400 dark:text-slate-500" />
+                        <ChevronDown size={18} className="text-slate-600 dark:text-slate-500" />
                       ) : (
-                        <ChevronRight size={18} className="text-slate-400 dark:text-slate-500" />
+                        <ChevronRight size={18} className="text-slate-600 dark:text-slate-500" />
                       )}
                     </div>
                   </div>
@@ -232,12 +231,12 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                       {/* Request */}
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <Code size={14} className="text-slate-400 dark:text-slate-500" />
-                          <span className="text-sm font-medium text-slate-300">
+                          <Code size={14} className="text-slate-600 dark:text-slate-500" />
+                          <span className="text-sm font-medium text-slate-600">
                             Request Payload
                           </span>
                         </div>
-                        <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto font-mono">
+                        <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono">
                           {formatJson(delivery.payload)}
                         </pre>
                       </div>
@@ -246,12 +245,12 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                       {delivery.response_body && (
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <Code size={14} className="text-slate-400 dark:text-slate-500" />
-                            <span className="text-sm font-medium text-slate-300">
+                            <Code size={14} className="text-slate-600 dark:text-slate-500" />
+                            <span className="text-sm font-medium text-slate-600">
                               Response Body
                             </span>
                           </div>
-                          <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto font-mono max-h-48 overflow-y-auto">
+                          <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono max-h-48 overflow-y-auto">
                             {formatJson(delivery.response_body)}
                           </pre>
                         </div>
@@ -261,12 +260,12 @@ export const WebhookDeliveriesModal: React.FC<WebhookDeliveriesModalProps> = ({
                       {delivery.request_headers && (
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <Code size={14} className="text-slate-400 dark:text-slate-500" />
-                            <span className="text-sm font-medium text-slate-300">
+                            <Code size={14} className="text-slate-600 dark:text-slate-500" />
+                            <span className="text-sm font-medium text-slate-600">
                               Request Headers
                             </span>
                           </div>
-                          <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-300 overflow-x-auto font-mono">
+                          <pre className="bg-slate-900/50 rounded-lg p-3 text-xs text-slate-600 overflow-x-auto font-mono">
                             {formatJson(delivery.request_headers)}
                           </pre>
                         </div>

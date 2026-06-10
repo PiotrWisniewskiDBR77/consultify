@@ -113,11 +113,11 @@ const SEVERITY_TEXT: Record<string, string> = {
   warning: 'text-amber-400',
   warn: 'text-amber-400',
   medium: 'text-amber-400',
-  low: 'text-slate-400',
+  low: 'text-slate-600',
 };
 
 const severityText = (v?: string) =>
-  SEVERITY_TEXT[String(v ?? '').toLowerCase()] ?? 'text-slate-400';
+  SEVERITY_TEXT[String(v ?? '').toLowerCase()] ?? 'text-slate-600';
 
 const confidenceTone = (score: number): 'critical' | 'warn' | 'default' =>
   score < 45 ? 'critical' : score < 70 ? 'warn' : 'default';
@@ -159,9 +159,9 @@ const MetricPill: React.FC<{
   icon?: React.ReactNode;
 }> = ({ label, value, tone = 'default', icon }) => (
   <GlassCard tone={tone} className="flex items-center gap-3 px-4 py-3">
-    {icon && <span className="text-slate-400 dark:text-slate-500">{icon}</span>}
+    {icon && <span className="text-slate-600 dark:text-slate-500">{icon}</span>}
     <div className="min-w-0">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
         {label}
       </div>
       <div
@@ -205,7 +205,7 @@ const Section: React.FC<{
               {title}
             </h3>
             {subtitle && (
-              <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{subtitle}</p>
+              <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-500">{subtitle}</p>
             )}
           </div>
           {children}
@@ -229,7 +229,7 @@ const DataTable: React.FC<{
           {headers.map((h) => (
             <th
               key={h}
-              className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+              className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500"
             >
               {h}
             </th>
@@ -241,7 +241,7 @@ const DataTable: React.FC<{
           <tr>
             <td
               colSpan={headers.length}
-              className="px-3 py-6 text-center text-[11px] text-slate-400 dark:text-slate-500"
+              className="px-3 py-6 text-center text-[11px] text-slate-600 dark:text-slate-500"
             >
               {emptyText}
             </td>
@@ -273,7 +273,7 @@ const AiInsightStrip: React.FC<{ items: string[]; emptyText?: string }> = ({
 }) => (
   <div className="space-y-1.5">
     {items.length === 0 ? (
-      <div className="rounded-lg border border-dashed border-slate-300/60 px-3 py-3 text-[11px] text-slate-400 dark:border-white/[0.06] dark:text-slate-500">
+      <div className="rounded-lg border border-dashed border-slate-300/60 px-3 py-3 text-[11px] text-slate-600 dark:border-white/[0.06] dark:text-slate-500">
         {emptyText}
       </div>
     ) : (
@@ -307,9 +307,9 @@ const ActionCards: React.FC<{ actions: ReportAiRecommendation[] }> = ({ actions 
             .join(' ')}
         >
           <div className="text-[12px] font-semibold text-slate-900 dark:text-white">{a.action}</div>
-          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-500">
             <span>{a.owner}</span>
-            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="text-slate-600 dark:text-slate-400">·</span>
             <span>{a.dueLabel}</span>
           </div>
           <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -329,7 +329,7 @@ const QualityFooter: React.FC<{ report: ReportDef }> = ({ report }) => {
 
   return (
     <div className="rounded-xl border border-slate-200/60 bg-slate-50/80 p-4 backdrop-blur-sm dark:border-white/[0.04] dark:bg-navy-900/40">
-      <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+      <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
         Data quality posture
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -358,7 +358,7 @@ const QualityFooter: React.FC<{ report: ReportDef }> = ({ report }) => {
       {limitations.length > 0 && (
         <div className="mt-2 space-y-1">
           {limitations.map((lim) => (
-            <div key={lim} className="text-[10px] text-slate-400 dark:text-slate-500">
+            <div key={lim} className="text-[10px] text-slate-600 dark:text-slate-500">
               ⚠ {lim}
             </div>
           ))}
@@ -1750,7 +1750,7 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100/80 hover:text-slate-600 dark:hover:bg-white/[0.06]"
+              className="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-600 dark:hover:bg-white/[0.06]"
             >
               <ArrowLeft size={16} />
             </button>
@@ -1771,11 +1771,11 @@ export const ReportDocumentView: React.FC<ReportDocumentViewProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500">
+              <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-500">
                 <span>{safeReport.audience}</span>
-                <span className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="text-slate-600 dark:text-slate-400">·</span>
                 <span>{safeReport.cadence}</span>
-                <span className="text-slate-300 dark:text-slate-600">·</span>
+                <span className="text-slate-600 dark:text-slate-400">·</span>
                 <span>{safeReport.dataQuality.freshnessLabel}</span>
               </div>
             </div>

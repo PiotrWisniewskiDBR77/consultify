@@ -22,6 +22,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '@/components/ui';
+import { LoadingState } from '@/components/ui/primitives';
 import * as Api from '@/services/api/tablePlatform.api';
 
 import { DataLineageView } from './DataLineageView';
@@ -123,7 +125,7 @@ function KpiProgressBar({
   target?: number;
   unit?: string;
 }) {
-  if (value === null) return <span className="text-xs text-slate-400">—</span>;
+  if (value === null) return <span className="text-xs text-slate-600">—</span>;
   const pct = target && target > 0 ? Math.min((value / target) * 100, 100) : 0;
   return (
     <div className="flex items-center gap-2">
@@ -264,7 +266,7 @@ function CreateModelWizard({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-navy-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-800">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Nowy model danych' : 'New Data Model'}
           </h3>
@@ -272,7 +274,7 @@ function CreateModelWizard({
             onClick={onClose}
             className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-slate-600" />
           </button>
         </div>
 
@@ -280,14 +282,14 @@ function CreateModelWizard({
         <div className="flex items-center gap-1 px-5 py-3 border-b border-slate-50 dark:border-navy-800">
           {stepLabels.map((lbl, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <ChevronRight size={12} className="text-slate-300 dark:text-navy-600" />}
+              {i > 0 && <ChevronRight size={12} className="text-slate-600 dark:text-navy-600" />}
               <span
                 className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                   i + 1 === step
                     ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
                     : i + 1 < step
                       ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-slate-400'
+                      : 'text-slate-600'
                 }`}
               >
                 {lbl}
@@ -328,7 +330,7 @@ function CreateModelWizard({
                 {isPl ? 'Wybierz tabele źródłowe:' : 'Select source tables:'}
               </p>
               {tables.length === 0 && (
-                <p className="text-xs text-slate-400 italic">
+                <p className="text-xs text-slate-600 italic">
                   {isPl ? 'Brak tabel' : 'No tables available'}
                 </p>
               )}
@@ -351,7 +353,7 @@ function CreateModelWizard({
                       }
                       className="rounded border-slate-300 text-indigo-600"
                     />
-                    <Database size={14} className="text-slate-400" />
+                    <Database size={14} className="text-slate-600" />
                     <span className="text-sm text-slate-700 dark:text-slate-300">{t.name}</span>
                   </label>
                 ))}
@@ -367,7 +369,7 @@ function CreateModelWizard({
               {wiz.kpis.map((k, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl border border-slate-100 dark:border-navy-800 space-y-2 mb-2"
+                  className="p-3 rounded-xl border border-slate-200 dark:border-navy-800 space-y-2 mb-2"
                 >
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -457,7 +459,7 @@ function CreateModelWizard({
               {wiz.dimensions.map((d, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl border border-slate-100 dark:border-navy-800 space-y-2 mb-2"
+                  className="p-3 rounded-xl border border-slate-200 dark:border-navy-800 space-y-2 mb-2"
                 >
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -542,7 +544,7 @@ function CreateModelWizard({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-navy-800">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-navy-800">
           <button
             onClick={() => (step === 1 ? onClose() : setStep((s) => (s - 1) as WizardStep))}
             className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
@@ -642,7 +644,7 @@ function ModelCard({
             </span>
           ))}
           {model.sources.length > 3 && (
-            <span className="text-[10px] text-slate-400">+{model.sources.length - 3}</span>
+            <span className="text-[10px] text-slate-600">+{model.sources.length - 3}</span>
           )}
         </div>
       )}
@@ -665,8 +667,8 @@ function ModelCard({
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-navy-800">
-        <span className="text-[10px] text-slate-400">
+      <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-navy-800">
+        <span className="text-[10px] text-slate-600">
           {model.updated_at
             ? `${isPl ? 'Ost. zmiana' : 'Updated'}: ${new Date(model.updated_at).toLocaleDateString()}`
             : ''}
@@ -677,7 +679,7 @@ function ModelCard({
               e.stopPropagation();
               onEdit();
             }}
-            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 hover:text-slate-600"
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 hover:text-slate-600"
             title={isPl ? 'Edytuj' : 'Edit'}
           >
             <Pencil size={12} />
@@ -687,11 +689,152 @@ function ModelCard({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500"
+            className="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 hover:text-rose-500"
             title={isPl ? 'Usuń' : 'Delete'}
           >
             <Trash2 size={12} />
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Edit Model Modal                                                    */
+/* ------------------------------------------------------------------ */
+
+const TRUST_OPTIONS = ['draft', 'certified', 'deprecated'] as const;
+
+function EditModelModal({
+  model,
+  isPl,
+  onSaved,
+  onClose,
+}: {
+  model: GovernedModel;
+  isPl: boolean;
+  onSaved: () => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(model.name ?? '');
+  const [description, setDescription] = useState(model.description ?? '');
+  const [status, setStatus] = useState(model.status ?? 'draft');
+  const [saving, setSaving] = useState(false);
+
+  const inputCls =
+    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-crimson-500/40';
+
+  const dirty =
+    name.trim() !== (model.name ?? '').trim() ||
+    description.trim() !== (model.description ?? '').trim() ||
+    status !== (model.status ?? 'draft');
+
+  const handleSave = useCallback(async () => {
+    if (!name.trim()) {
+      toast.error(isPl ? 'Nazwa jest wymagana' : 'Name is required');
+      return;
+    }
+    setSaving(true);
+    try {
+      await Api.updateGovernedModel(model.model_id, {
+        name: name.trim(),
+        description: description.trim() || undefined,
+        status,
+      });
+      toast.success(isPl ? 'Model zaktualizowany' : 'Model updated');
+      onSaved();
+    } catch {
+      toast.error(isPl ? 'Nie udało się zapisać' : 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  }, [name, description, status, model.model_id, isPl, onSaved]);
+
+  const trustLabel = (s: string) =>
+    isPl ? (TRUST_CONFIG[s]?.labelPl ?? s) : (TRUST_CONFIG[s]?.label ?? s);
+
+  return (
+    <div
+      className="fixed inset-0 z-[160] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-[480px] max-w-[95vw] max-h-[85vh] bg-white dark:bg-navy-950 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-800">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+            {isPl ? 'Edytuj model' : 'Edit model'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+            aria-label={isPl ? 'Zamknij' : 'Close'}
+          >
+            <X size={16} className="text-slate-600" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+              {isPl ? 'Nazwa modelu' : 'Model name'}
+            </label>
+            <input
+              className={inputCls}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+              {isPl ? 'Opis' : 'Description'}
+            </label>
+            <textarea
+              className={inputCls + ' min-h-[80px]'}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+              {isPl ? 'Poziom zaufania' : 'Trust level'}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {TRUST_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setStatus(opt)}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    status === opt
+                      ? 'border-crimson-500 bg-crimson-50 text-crimson-700 dark:bg-crimson-500/10 dark:text-crimson-300'
+                      : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                  }`}
+                >
+                  {TRUST_CONFIG[opt]?.icon}
+                  {trustLabel(opt)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-800">
+          <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>
+            {isPl ? 'Anuluj' : 'Cancel'}
+          </Button>
+          <Button
+            variant="brand"
+            size="sm"
+            onClick={handleSave}
+            disabled={saving || !dirty}
+            loading={saving}
+          >
+            {isPl ? 'Zapisz zmiany' : 'Save changes'}
+          </Button>
         </div>
       </div>
     </div>
@@ -724,6 +867,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
   const [showLineage, setShowLineage] = useState(false);
   const [kpiValues, setKpiValues] = useState<Record<string, KpiValue>>({});
   const [selectedModel, setSelectedModel] = useState<GovernedModel | null>(null);
+  const [editModel, setEditModel] = useState<GovernedModel | null>(null);
 
   const loadModels = useCallback(async () => {
     setLoading(true);
@@ -779,11 +923,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="animate-spin text-slate-400" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-16" />;
   }
 
   return (
@@ -832,7 +972,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
       {/* Empty state */}
       {!showLineage && models.length === 0 && (
         <div className="text-center py-12">
-          <Layers size={40} className="mx-auto text-slate-300 dark:text-navy-600 mb-3" />
+          <Layers size={40} className="mx-auto text-slate-600 dark:text-navy-600 mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {isPl ? 'Brak modeli danych' : 'No data models yet'}
           </p>
@@ -856,9 +996,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
               model={m}
               isPl={isPl}
               kpiValues={kpiValues}
-              onEdit={() => {
-                toast(isPl ? 'Edycja — wkrótce' : 'Edit — coming soon');
-              }}
+              onEdit={() => setEditModel(m)}
               onDelete={() => handleDelete(m.model_id)}
               onSelect={() => setSelectedModel(m)}
             />
@@ -884,7 +1022,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 onClick={() => setSelectedModel(null)}
                 className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
               >
-                <X size={16} className="text-slate-400" />
+                <X size={16} className="text-slate-600" />
               </button>
             </div>
 
@@ -902,7 +1040,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 KPIs
               </h4>
               {(selectedModel.kpis ?? []).length === 0 && (
-                <p className="text-xs text-slate-400 italic">
+                <p className="text-xs text-slate-600 italic">
                   {isPl ? 'Brak KPI' : 'No KPIs defined'}
                 </p>
               )}
@@ -912,13 +1050,13 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                   return (
                     <div
                       key={kpi.kpi_id}
-                      className="p-3 rounded-lg border border-slate-100 dark:border-navy-800"
+                      className="p-3 rounded-lg border border-slate-200 dark:border-navy-800"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                           {isPl ? kpi.label_pl || kpi.label_en : kpi.label_en}
                         </span>
-                        <span className="text-[10px] text-slate-400 uppercase">
+                        <span className="text-[10px] text-slate-600 uppercase">
                           {kpi.formula_type}
                         </span>
                       </div>
@@ -935,7 +1073,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {isPl ? 'Wymiary' : 'Dimensions'}
               </h4>
               {(selectedModel.dimensions ?? []).length === 0 && (
-                <p className="text-xs text-slate-400 italic">
+                <p className="text-xs text-slate-600 italic">
                   {isPl ? 'Brak wymiarów' : 'No dimensions'}
                 </p>
               )}
@@ -957,7 +1095,7 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {isPl ? 'Źródła' : 'Sources'}
               </h4>
               {(selectedModel.sources ?? []).length === 0 && (
-                <p className="text-xs text-slate-400 italic">
+                <p className="text-xs text-slate-600 italic">
                   {isPl ? 'Brak źródeł' : 'No sources'}
                 </p>
               )}
@@ -965,9 +1103,9 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
                 {(selectedModel.sources ?? []).map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-100 dark:border-navy-800"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-800"
                   >
-                    <Database size={14} className="text-slate-400" />
+                    <Database size={14} className="text-slate-600" />
                     <span className="text-xs text-slate-700 dark:text-slate-300 flex-1">
                       {s.table_name || s.table_id}
                     </span>
@@ -995,6 +1133,19 @@ export const GovernedModelsDashboard: React.FC<GovernedModelsDashboardProps> = (
             loadModels();
           }}
           onClose={() => setShowWizard(false)}
+        />
+      )}
+
+      {/* Edit model modal */}
+      {editModel && (
+        <EditModelModal
+          model={editModel}
+          isPl={isPl}
+          onSaved={() => {
+            setEditModel(null);
+            loadModels();
+          }}
+          onClose={() => setEditModel(null)}
         />
       )}
     </div>

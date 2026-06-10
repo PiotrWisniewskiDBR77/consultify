@@ -7,7 +7,8 @@ import {
   Target,
   Users,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { FIRST_VALUE_TOUR } from '../../config/tours/firstValueTour';
 import { TEAM_TOUR } from '../../config/tours/teamTour';
@@ -23,7 +24,11 @@ import { useTour } from './TourProvider';
 
 export interface UserGoal {
   id: string;
+  /** i18n key suffix under `firstRun.goals.*` */
+  i18nKey: string;
+  /** English fallback title (shown if no translation present) */
   title: string;
+  /** English fallback description */
   description: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   suggestedActions: string[];
@@ -35,9 +40,9 @@ export interface UserGoal {
 export const USER_GOALS: UserGoal[] = [
   {
     id: 'strategic_decision',
-    title: 'Zrozumieć kluczową decyzję',
-    description:
-      'Mam konkretną decyzję strategiczną do przeanalizowania i chcę ją ustrukturyzować.',
+    i18nKey: 'strategic',
+    title: 'Understand a key decision',
+    description: 'I have a specific strategic decision to analyze and I want to structure it.',
     icon: Target,
     suggestedActions: ['create_axis', 'add_position', 'generate_snapshot'],
     tourId: 'first_value',
@@ -46,28 +51,31 @@ export const USER_GOALS: UserGoal[] = [
   },
   {
     id: 'team_alignment',
-    title: 'Ustrukturyzować wiedzę zespołu',
+    i18nKey: 'team',
+    title: 'Structure team knowledge',
     description:
-      'Chcę zebrać różne perspektywy mojego zespołu w jednym miejscu i wykryć rozbieżności.',
+      'I want to gather my team’s different perspectives in one place and surface divergences.',
     icon: Users,
     suggestedActions: ['create_axis', 'invite_team', 'multi_perspective'],
     tourId: 'team_expansion',
-    estimatedTime: '1-2 godz',
+    estimatedTime: '1-2 h',
     color: 'blue',
   },
   {
     id: 'executive_prep',
-    title: 'Przygotować materiał dla zarządu',
-    description: 'Potrzebuję ustrukturyzowanej analizy do prezentacji decydentom.',
+    i18nKey: 'executive',
+    title: 'Prepare material for the board',
+    description: 'I need a structured analysis to present to decision-makers.',
     icon: Presentation,
     suggestedActions: ['create_axis', 'document_positions', 'generate_report'],
-    estimatedTime: '2-3 godz',
+    estimatedTime: '2-3 h',
     color: 'emerald',
   },
   {
     id: 'explore',
-    title: 'Eksploruję możliwości',
-    description: 'Chcę zobaczyć jak system może pomóc mojej organizacji bez konkretnego celu.',
+    i18nKey: 'explore',
+    title: 'Exploring the possibilities',
+    description: 'I want to see how the system can help my organization without a specific goal.',
     icon: Compass,
     suggestedActions: ['browse_demo', 'read_methodology'],
     estimatedTime: '15-30 min',
@@ -86,6 +94,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
   initialGoalId,
   showSkip = true,
 }) => {
+  const { t } = useTranslation();
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(initialGoalId || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { startTour } = useTour();
@@ -166,10 +175,13 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
       {/* Header */}
       <div className="text-center mb-10">
         <h1 className="text-2xl font-bold text-navy-900 dark:text-white mb-3">
-          Co chcesz dziś osiągnąć?
+          {t('firstRun.goals.title', 'What do you want to achieve today?')}
         </h1>
         <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-          Twój wybór pomoże nam dostosować doświadczenie i zaproponować najlepsze następne kroki.
+          {t(
+            'firstRun.goals.subtitle',
+            'Your choice helps us tailor the experience and suggest the best next steps.'
+          )}
         </p>
       </div>
 
@@ -209,7 +221,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
               >
                 <Icon
                   size={24}
-                  className={isSelected ? colors.text : 'text-slate-400 dark:text-slate-500'}
+                  className={isSelected ? colors.text : 'text-slate-600 dark:text-slate-500'}
                 />
               </div>
 
@@ -220,12 +232,14 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                                 ${isSelected ? 'text-navy-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}
                             `}
               >
-                {goal.title}
+                {t(`firstRun.goals.${goal.i18nKey}.title`, goal.title)}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{goal.description}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                {t(`firstRun.goals.${goal.i18nKey}.description`, goal.description)}
+              </p>
 
               {/* Time estimate */}
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500">
                 <Clock size={12} />
                 <span>{goal.estimatedTime}</span>
               </div>
@@ -241,7 +255,7 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
             onClick={handleSkip}
             className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-300 transition-colors"
           >
-            Pomiń na razie
+            {t('firstRun.goals.skip', 'Skip for now')}
           </button>
         )}
         <div className="flex-1" />
@@ -253,11 +267,13 @@ export const GoalSelector: React.FC<GoalSelectorProps> = ({
                         ${
                           selectedGoalId
                             ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-900/20'
-                            : 'bg-slate-100 dark:bg-navy-900 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                            : 'bg-slate-100 dark:bg-navy-900 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                         }
                     `}
         >
-          {isSubmitting ? 'Zapisuję...' : 'Kontynuuj'}
+          {isSubmitting
+            ? t('firstRun.goals.saving', 'Saving…')
+            : t('firstRun.goals.continue', 'Continue')}
           <ChevronRight size={16} />
         </button>
       </div>

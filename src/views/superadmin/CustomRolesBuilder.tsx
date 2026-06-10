@@ -28,6 +28,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '../../components/ui/BaseCard';
+import { LoadingState } from '../../components/ui/primitives';
 import { api } from '../../services/api';
 
 interface Permission {
@@ -377,7 +378,7 @@ const CustomRolesBuilder: React.FC = () => {
 
             {selectedRole.isSystem || selectedRole.roleType === 'system' ? (
               <div className="text-center py-8">
-                <Lock className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+                <Lock className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
                 <p className="text-slate-700 dark:text-gray-300">System roles cannot be modified</p>
                 <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
                   Create a custom role to customize permissions
@@ -389,7 +390,7 @@ const CustomRolesBuilder: React.FC = () => {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative flex-1">
                     <Search
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-400"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-gray-400"
                       size={18}
                     />
                     <input
@@ -499,7 +500,7 @@ const CustomRolesBuilder: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-12 text-center">
-            <Shield className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
+            <Shield className="mx-auto text-slate-600 dark:text-gray-400 mb-4" size={48} />
             <p className="text-slate-700 dark:text-gray-300">
               Select a role to view and edit permissions
             </p>
@@ -673,9 +674,7 @@ const CustomRolesBuilder: React.FC = () => {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="animate-spin text-primary-500" size={32} />
-        </div>
+        <LoadingState variant="spinner" className="py-12" />
       ) : loadError ? (
         <Card className="p-6 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10">
           <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300 font-medium">

@@ -1,7 +1,6 @@
 import {
   AlertTriangle,
   BarChart3,
-  Bot,
   Copy,
   GitMerge,
   LayoutGrid,
@@ -16,9 +15,9 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import TeresaMark from '../../shared/TeresaMark';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
 import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
-
 // ── Re-export types ──────────────────────────────────────────────────────────
 
 export type ProcessFlowMode = 'classic' | 'automation' | 'vsm';
@@ -361,7 +360,11 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               }`}
               title="AI Coach"
             >
-              {coachLoading ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
+              {coachLoading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <TeresaMark size={14} />
+              )}
               AI Coach
             </button>
             <button

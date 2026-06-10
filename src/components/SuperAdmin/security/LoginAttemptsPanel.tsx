@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * LoginAttemptsPanel - Login Attempts History & Analysis
  *
@@ -183,7 +182,7 @@ export const LoginAttemptsPanel: React.FC = () => {
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <Shield size={18} className="text-primary-400" />
-            <span className="text-sm text-slate-400 dark:text-slate-500">Success Rate</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Success Rate</span>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-white">
@@ -200,7 +199,7 @@ export const LoginAttemptsPanel: React.FC = () => {
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle2 size={18} className="text-emerald-400" />
-            <span className="text-sm text-slate-400 dark:text-slate-500">Successful</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Successful</span>
           </div>
           <span className="text-2xl font-bold text-white">{stats.loginAttempts.successful}</span>
           <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">/ 7 days</span>
@@ -209,7 +208,7 @@ export const LoginAttemptsPanel: React.FC = () => {
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <XCircle size={18} className="text-rose-400" />
-            <span className="text-sm text-slate-400 dark:text-slate-500">Failed</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Failed</span>
           </div>
           <span className="text-2xl font-bold text-white">{stats.loginAttempts.failed}</span>
           <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">/ 7 days</span>
@@ -218,7 +217,7 @@ export const LoginAttemptsPanel: React.FC = () => {
         <div className="bg-slate-800/50 border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={18} className="text-amber-400" />
-            <span className="text-sm text-slate-400 dark:text-slate-500">Active Lockouts</span>
+            <span className="text-sm text-slate-600 dark:text-slate-500">Active Lockouts</span>
           </div>
           <span className="text-2xl font-bold text-white">{stats.activeLockouts}</span>
         </div>
@@ -253,14 +252,14 @@ export const LoginAttemptsPanel: React.FC = () => {
                   <p className="font-medium text-white">
                     {lockout.firstName} {lockout.lastName || lockout.user_email}
                   </p>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
                     {lockout.failed_attempts} failed attempts • {lockout.reason}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-right text-sm">
-                  <p className="text-slate-400 dark:text-slate-500">
+                  <p className="text-slate-600 dark:text-slate-500">
                     Locked {formatDate(lockout.locked_at)}
                   </p>
                   {lockout.expires_at && (
@@ -303,7 +302,7 @@ export const LoginAttemptsPanel: React.FC = () => {
           <div className="relative">
             <Search
               size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -322,7 +321,7 @@ export const LoginAttemptsPanel: React.FC = () => {
                 className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
                   filterStatus === status
                     ? 'bg-primary-600 text-white'
-                    : 'text-slate-400 dark:text-slate-500 hover:text-white'
+                    : 'text-slate-600 dark:text-slate-500 hover:text-white'
                 }`}
               >
                 {status === 'all' ? 'All' : status === 'success' ? 'Success' : 'Failed'}
@@ -338,7 +337,7 @@ export const LoginAttemptsPanel: React.FC = () => {
         >
           <RefreshCw
             size={18}
-            className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+            className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
           />
         </button>
       </div>
@@ -349,7 +348,7 @@ export const LoginAttemptsPanel: React.FC = () => {
           <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredAttempts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-600 dark:text-slate-500">
           <Key size={48} className="mb-4 opacity-50" />
           <p>No login attempts found</p>
         </div>
@@ -358,22 +357,22 @@ export const LoginAttemptsPanel: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Status
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   User
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Method
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   IP Address
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Location
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Time
                 </th>
               </tr>
@@ -405,26 +404,26 @@ export const LoginAttemptsPanel: React.FC = () => {
                     <span className="text-white">{attempt.user_email}</span>
                   </td>
                   <td className="p-4">
-                    <span className="px-2 py-1 bg-slate-900/50 rounded text-xs text-slate-300">
+                    <span className="px-2 py-1 bg-slate-900/50 rounded text-xs text-slate-600">
                       {attempt.auth_method || 'password'}
                     </span>
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
                       <Globe size={14} />
                       <span className="text-sm font-mono">{attempt.ip_address || 'Unknown'}</span>
                     </div>
                   </td>
                   <td className="p-4">
                     {attempt.location && (
-                      <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
                         <MapPin size={14} />
                         <span className="text-sm">{attempt.location}</span>
                       </div>
                     )}
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
                       <Clock size={14} />
                       <span className="text-sm">{formatDate(attempt.created_at)}</span>
                     </div>

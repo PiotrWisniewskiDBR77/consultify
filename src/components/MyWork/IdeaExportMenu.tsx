@@ -614,7 +614,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
                   </div>
                   <Code2
                     size={14}
-                    className="text-slate-300 dark:text-slate-600 group-hover:text-primary-400 transition-colors"
+                    className="text-slate-600 dark:text-slate-400 group-hover:text-primary-400 transition-colors"
                   />
                 </button>
               );
@@ -678,7 +678,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
         </div>
 
         <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
-          <div className="text-[10px] text-slate-400 dark:text-slate-500">
+          <div className="text-[10px] text-slate-600 dark:text-slate-500">
             {isPl
               ? `${graphNodes.length} elementów, ${graphEdges.length} połączeń`
               : `${graphNodes.length} elements, ${graphEdges.length} connections`}

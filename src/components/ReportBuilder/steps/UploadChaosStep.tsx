@@ -245,7 +245,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
         >
           <Upload
             className={`w-8 h-8 ${
-              isDragging ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+              isDragging ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'
             }`}
           />
         </div>
@@ -253,7 +253,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
           {isPl ? 'Przeciągnij pliki tutaj' : 'Drag & drop files here'}
         </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+        <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
           {isPl
             ? 'lub kliknij, aby wybrać • PDF, DOCX, XLSX, CSV • do 20 MB'
             : 'or click to browse • PDF, DOCX, XLSX, CSV • up to 20 MB'}
@@ -283,12 +283,12 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                 key={`${f.name}-${idx}`}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
               >
-                <FileText className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+                <FileText className="w-4 h-4 text-slate-600 dark:text-slate-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
                     {f.name}
                   </p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">
                     {formatFileSize(f.size)}
                   </p>
                 </div>
@@ -312,7 +312,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
                       e.stopPropagation();
                       removeFile(idx);
                     }}
-                    className="text-slate-300 hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400"
+                    className="text-slate-600 hover:text-slate-500 dark:text-slate-400 dark:hover:text-slate-400"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -335,7 +335,7 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
 
       {/* Knowledge Map Card */}
       {knowledgeMap && allDone && (
-        <div className="rounded-2xl border border-primary-200 dark:border-primary-800/50 bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 p-6 space-y-4">
+        <div className="rounded-2xl border border-primary-200 dark:border-primary-800/50 bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 p-6 space-y-4">
           <div className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-primary-500" />
             <h3 className="text-base font-bold text-slate-800 dark:text-white">
@@ -416,15 +416,15 @@ export const UploadChaosStep: React.FC<UploadChaosStepProps> = ({
             >
               <FileText className="w-4 h-4 text-primary-500" />
               {isPl ? 'Użyj szablonu (Ścieżka A)' : 'Use Template (Path A)'}
-              <ArrowRight className="w-4 h-4 text-slate-400" />
+              <ArrowRight className="w-4 h-4 text-slate-600" />
             </button>
 
             <button
               onClick={() => onChoosePath('B')}
               disabled={isLoading}
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl
-                bg-gradient-to-r from-primary-500 to-indigo-500
-                hover:from-primary-600 hover:to-indigo-600
+                bg-gradient-to-r from-primary-500 to-crimson-500
+                hover:from-primary-600 hover:to-crimson-600
                 text-white font-semibold text-sm
                 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >

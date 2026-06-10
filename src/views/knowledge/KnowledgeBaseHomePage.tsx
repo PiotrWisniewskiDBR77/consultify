@@ -207,7 +207,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
       <div className="relative">
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_45%,#0B1220_100%)]" />
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
@@ -247,7 +247,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                 <div className="relative">
                   <Search
                     size={18}
-                    className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40"
+                    className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-white/40"
                   />
                   <input
                     type="text"
@@ -263,7 +263,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
                         setSearchQuery('');
                         setActiveSearch('');
                       }}
-                      className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
+                      className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-700 transition-colors dark:text-white/40 dark:hover:text-white"
                     >
                       <X size={18} />
                     </button>
@@ -392,7 +392,7 @@ export const KnowledgeBaseHomePage: React.FC = () => {
           <section className="relative z-10 px-4 sm:px-6 pb-6 sm:pb-8">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-                <Tag size={14} className="flex-shrink-0 text-slate-400 dark:text-white/30" />
+                <Tag size={14} className="flex-shrink-0 text-slate-600 dark:text-white/30" />
                 {tags.slice(0, 18).map((tag: any) => (
                   <button
                     key={tag.id}
@@ -585,11 +585,11 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
         'group flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden',
         'border-slate-200 bg-white backdrop-blur-sm dark:border-white/[0.06] dark:bg-white/[0.025]',
         'hover:bg-slate-50 hover:border-slate-300 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]',
-        'hover:shadow-[0_0_40px_-12px_rgba(124,58,237,0.20)]'
+        'hover:shadow-[0_0_40px_-12px_rgba(165,28,48,0.20)]'
       )}
     >
       {article.thumbnail_url ? (
-        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0D0828]">
+        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0B1220]">
           <img
             src={kbImg(article.thumbnail_url)}
             alt={article.title}
@@ -600,7 +600,7 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
             loading="lazy"
             decoding="async"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A1F]/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/60 via-transparent to-transparent" />
           {featured && article.is_featured && (
             <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white backdrop-blur-sm">
               {t('kb.card.featured', 'Featured')}
@@ -608,8 +608,8 @@ const ArticleCard: React.FC<{ article: KbArticleListItem; featured?: boolean }> 
           )}
         </div>
       ) : (
-        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0D0828] dark:to-[#12082E]">
-          <BookOpen size={32} className="text-slate-300 dark:text-white/15" />
+        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0B1220] dark:to-[#0B1220]">
+          <BookOpen size={32} className="text-slate-600 dark:text-white/15" />
         </div>
       )}
 
@@ -781,7 +781,7 @@ const SectionPreview: React.FC<{
             className="group p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 backdrop-blur-sm transition-all duration-200 dark:border-white/[0.045] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] dark:hover:border-white/[0.10]"
           >
             {article.thumbnail_url && (
-              <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-slate-100 dark:bg-[#0D0828]">
+              <div className="aspect-[16/9] rounded-lg overflow-hidden mb-3 bg-slate-100 dark:bg-[#0B1220]">
                 <img
                   src={kbThumb(article.thumbnail_url) || kbImg(article.thumbnail_url)}
                   alt={article.title}

@@ -339,7 +339,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
         {/* Score vs Average */}
         <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-gray-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-4">
-            <BarChart3 className="w-6 h-6 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+            <BarChart3 className="w-6 h-6 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
             <span className="text-xs text-gray-500 dark:text-gray-400">vs Industry Average</span>
           </div>
           <div className="flex items-end gap-4">
@@ -376,7 +376,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
         {/* Sample Info */}
         <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-gray-200 dark:border-navy-700">
           <div className="flex items-center justify-between mb-4">
-            <Target className="w-6 h-6 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+            <Target className="w-6 h-6 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
             <span className="text-xs text-gray-500 dark:text-gray-400">Benchmark Data</span>
           </div>
           <div className="space-y-3">
@@ -519,7 +519,7 @@ export const MultiFwBenchmarkComparison: React.FC<MultiFwBenchmarkComparisonProp
 
       {/* Disclaimer */}
       <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-navy-900 rounded-lg">
-        <Info className="w-5 h-5 text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+        <Info className="w-5 h-5 text-gray-600 dark:text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Benchmark data is based on aggregated industry assessments and may not reflect the most
           recent market conditions. Sample sizes vary by industry and region. Use these comparisons

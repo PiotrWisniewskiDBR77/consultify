@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ComplianceCenterView - Super Admin Compliance Management
  *
@@ -834,7 +833,7 @@ export const ComplianceCenterView: React.FC = () => {
             dsarRequests.slice(0, 5).map((dsar) => (
               <div
                 key={dsar.id}
-                className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700 last:border-0"
+                className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
@@ -886,9 +885,7 @@ export const ComplianceCenterView: React.FC = () => {
     const framework = selectedFramework ? frameworks.find((f) => f.id === selectedFramework) : null;
 
     if (framework) {
-      const requirements = Array.isArray((framework as any)?.requirements)
-        ? (framework as any).requirements
-        : [];
+      const requirements = Array.isArray(framework.requirements) ? framework.requirements : [];
       return (
         <div className="space-y-6">
           <div className="flex items-center gap-4">
@@ -896,7 +893,7 @@ export const ComplianceCenterView: React.FC = () => {
               onClick={() => setSelectedFramework(null)}
               className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
             >
-              <ChevronRight size={20} className="rotate-180 text-slate-400 dark:text-slate-500" />
+              <ChevronRight size={20} className="rotate-180 text-slate-600 dark:text-slate-500" />
             </button>
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -964,7 +961,7 @@ export const ComplianceCenterView: React.FC = () => {
                         className="p-2 cursor-not-allowed opacity-60 rounded-lg"
                         title="Control editing unavailable until persisted controls are connected"
                       >
-                        <Edit size={16} className="text-slate-400 dark:text-slate-500" />
+                        <Edit size={16} className="text-slate-600 dark:text-slate-500" />
                       </button>
                     </td>
                   </tr>
@@ -998,7 +995,7 @@ export const ComplianceCenterView: React.FC = () => {
     if (frameworks.length === 0) {
       return (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-10 text-center">
-          <Shield size={40} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+          <Shield size={40} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
           <p className="text-slate-900 dark:text-white font-semibold">No compliance frameworks</p>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl mx-auto">
             This section lists available compliance standards (e.g., SOC 2, GDPR, HIPAA) so you can
@@ -1043,7 +1040,7 @@ export const ComplianceCenterView: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <ChevronRight size={20} className="text-slate-400 dark:text-slate-500" />
+                <ChevronRight size={20} className="text-slate-600 dark:text-slate-500" />
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{fw.description}</p>
               <div className="flex items-center justify-between">
@@ -1076,7 +1073,7 @@ export const ComplianceCenterView: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             size={18}
           />
           <input
@@ -1173,7 +1170,7 @@ export const ComplianceCenterView: React.FC = () => {
                       onClick={() => handleViewDsar(dsar)}
                       className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
                     >
-                      <Eye size={16} className="text-slate-400 dark:text-slate-500" />
+                      <Eye size={16} className="text-slate-600 dark:text-slate-500" />
                     </button>
                   </td>
                 </tr>
@@ -1181,7 +1178,7 @@ export const ComplianceCenterView: React.FC = () => {
               {dsarRequests.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
-                    <Users size={40} className="mx-auto mb-3 text-slate-300" />
+                    <Users size={40} className="mx-auto mb-3 text-slate-600" />
                     <p className="text-slate-500 dark:text-slate-400 font-medium">
                       No data subject requests
                     </p>
@@ -1256,9 +1253,9 @@ export const ComplianceCenterView: React.FC = () => {
           ))}
           {audits.length === 0 && (
             <div className="col-span-2 text-center py-12 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-              <FileCheck size={40} className="mx-auto mb-3 text-slate-300" />
+              <FileCheck size={40} className="mx-auto mb-3 text-slate-600" />
               <p className="text-slate-500 dark:text-slate-400 font-medium">No audits scheduled</p>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Schedule your first compliance audit
               </p>
             </div>
@@ -1350,9 +1347,9 @@ export const ComplianceCenterView: React.FC = () => {
           </table>
         ) : (
           <div className="p-12 text-center">
-            <FileText size={40} className="mx-auto mb-3 text-slate-300" />
+            <FileText size={40} className="mx-auto mb-3 text-slate-600" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">No processing records</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Document your data processing activities
             </p>
           </div>
@@ -1403,7 +1400,7 @@ export const ComplianceCenterView: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
           <button
@@ -1476,7 +1473,7 @@ export const ComplianceCenterView: React.FC = () => {
                 onClick={() => setEditControlModal(null)}
                 className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
               >
-                <X size={18} className="text-slate-400" />
+                <X size={18} className="text-slate-600" />
               </button>
             </div>
             <div className="space-y-4">
@@ -1585,7 +1582,7 @@ export const ComplianceCenterView: React.FC = () => {
                 onClick={() => setDsarCreateModal(false)}
                 className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
               >
-                <X size={18} className="text-slate-400" />
+                <X size={18} className="text-slate-600" />
               </button>
             </div>
             <div className="space-y-4">
@@ -1683,7 +1680,7 @@ export const ComplianceCenterView: React.FC = () => {
                 onClick={() => setDsarViewModal(null)}
                 className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
               >
-                <X size={18} className="text-slate-400" />
+                <X size={18} className="text-slate-600" />
               </button>
             </div>
             {dsarViewLoading ? (
@@ -1821,7 +1818,7 @@ export const ComplianceCenterView: React.FC = () => {
                 onClick={() => setAuditCreateModal(false)}
                 className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
               >
-                <X size={18} className="text-slate-400" />
+                <X size={18} className="text-slate-600" />
               </button>
             </div>
             <div className="space-y-4">
@@ -1949,7 +1946,7 @@ export const ComplianceCenterView: React.FC = () => {
                 onClick={() => setRecordCreateModal(false)}
                 className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
               >
-                <X size={18} className="text-slate-400" />
+                <X size={18} className="text-slate-600" />
               </button>
             </div>
             <div className="space-y-4">

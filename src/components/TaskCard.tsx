@@ -22,7 +22,7 @@ const getStatusColor = (status: string) => {
     case 'done':
       return 'border-green-500 text-green-500';
     case 'cancelled':
-      return 'border-slate-400 text-slate-400 dark:text-slate-500';
+      return 'border-slate-400 text-slate-600 dark:text-slate-500';
     default:
       return 'border-slate-500';
   }
@@ -81,7 +81,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         </p>
       )}
 
-      <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 mt-3">
+      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-500 mt-3">
         <div className="flex items-center gap-2">
           {task.assignee ? (
             <div

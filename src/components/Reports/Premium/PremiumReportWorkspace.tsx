@@ -204,14 +204,14 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
 
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-indigo-500 to-primary-600 rounded-lg">
+            <div className="p-2 bg-gradient-to-br from-crimson-500 to-primary-600 rounded-lg">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -264,7 +264,7 @@ export const PremiumReportWorkspace: React.FC<PremiumReportWorkspaceProps> = ({
           <button
             onClick={handleGeneratePDF}
             disabled={isGeneratingPDF || !reportId}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-primary-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-primary-700 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-crimson-600 to-primary-600 text-white text-sm font-medium rounded-lg hover:from-crimson-700 hover:to-primary-700 transition-all disabled:opacity-50"
           >
             {isGeneratingPDF ? (
               <Loader2 className="w-4 h-4 animate-spin" />

@@ -7,8 +7,11 @@
 
 import {
   AlertTriangle,
+  Archive,
   BarChart3,
+  CalendarClock,
   CheckCircle2,
+  Download,
   Edit2,
   Filter,
   GitBranch,
@@ -18,8 +21,12 @@ import {
   RefreshCw,
   Shield,
   Sparkles,
+  Tag,
   Target,
+  Trash2,
+  UserPlus,
   Users,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -68,6 +75,7 @@ import {
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
+  MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -93,6 +101,7 @@ import {
 } from './InitiativePreviewV3';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { InitiativeCharterWizard } from './Wizard/InitiativeCharterWizard';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -130,6 +139,10 @@ const ALLOWED_STATUSES: InitiativeStatus[] =
         InitiativeStatus.CANCELLED,
         InitiativeStatus.ARCHIVED,
       ];
+
+// Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
+const COMING_SOON_BADGE =
+  'ml-1.5 inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-slate-500 dark:bg-white/[0.06] dark:text-slate-400';
 
 // D1.1: Initiative type/level — determines governance complexity
 // Downgrade blocked, upgrade possible
@@ -226,6 +239,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
+  const [showCharter, setShowCharter] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -640,6 +654,34 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       setActiveTab('list');
       setActiveDocumentId(initiative.id);
       handlePreviewSelection(initiative.id);
+    },
+    [handlePreviewSelection, openDocuments, setActiveDocumentId, setOpenDocuments, t]
+  );
+
+  // Generic document opener (used by canon §9 kebab "Open full" on list/grid cards).
+  // Restores a referenced-but-undefined handler so the module typechecks.
+  const handleOpenDocument = useCallback(
+    (doc: {
+      id: string;
+      type: OpenDocument['type'];
+      name: string;
+      status?: string;
+      subType?: string;
+    }) => {
+      const existingDoc = openDocuments.find((d) => d.id === doc.id && d.type === doc.type);
+      if (!existingDoc) {
+        const newDoc: OpenDocument = {
+          id: doc.id,
+          name: doc.name || t('initiatives.document.untitled', 'Untitled initiative'),
+          type: doc.type,
+          subType: doc.subType ?? doc.type,
+          status: (doc.status || InitiativeStatus.DRAFT) as any,
+        };
+        setOpenDocuments((prev) => [...prev, newDoc]);
+      }
+      setActiveTab('list');
+      setActiveDocumentId(doc.id);
+      handlePreviewSelection(doc.id);
     },
     [handlePreviewSelection, openDocuments, setActiveDocumentId, setOpenDocuments, t]
   );
@@ -1091,6 +1133,83 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     t,
   ]);
 
+  // Canon §9: Archive initiative (only DONE/CANCELLED → ARCHIVED per backend rule)
+  const handleArchiveInitiative = useCallback(
+    async (initiative: PortfolioInitiative) => {
+      try {
+        await Api.post(`/initiatives/${initiative.id}/archive`, {});
+        toast.success(t('initiatives.toast.archived', 'Initiative archived'));
+        await fetchData(true);
+      } catch {
+        toast.error(t('initiatives.toast.archiveFailed', 'Could not archive initiative'));
+      }
+    },
+    [fetchData, t]
+  );
+
+  // Canon §15.3 Formula 2: clear multi-select (restores Formula 1 command row).
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  // Canon §15.3 Formula 2: real bulk action — Export selected rows as CSV (frontend-only).
+  const handleExportSelectedCsv = useCallback(() => {
+    const selected = initiatives.filter((i) => selectedIds.has(i.id));
+    if (selected.length === 0) return;
+    const escape = (value: unknown): string => {
+      const s = value == null ? '' : String(value);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const ownerName = (init: PortfolioInitiative): string => {
+      const owner = (init as any).ownerBusiness || (init as any).ownerExecution;
+      return owner ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : '';
+    };
+    const headers = [
+      'id',
+      'name',
+      'status',
+      'priority',
+      'axis',
+      'owner',
+      'plannedEndDate',
+      'updatedAt',
+    ];
+    const rows = selected.map((i) =>
+      [
+        i.id,
+        i.name,
+        i.status,
+        (i as any).priority ?? '',
+        (i as any).axis ?? '',
+        ownerName(i),
+        (i as any).plannedEndDate ?? '',
+        (i as any).updatedAt ?? '',
+      ]
+        .map(escape)
+        .join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    try {
+      const blob = new Blob([` ${csv}`], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `initiatives-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(
+        t('initiatives.bulk.exported', {
+          count: selected.length,
+          defaultValue: 'Exported {{count}}',
+        })
+      );
+    } catch {
+      toast.error(t('initiatives.bulk.exportFailed', 'Export failed'));
+    }
+  }, [initiatives, selectedIds, t]);
+
   useEffect(() => {
     if (!isPilotParticipant) return;
     if (showNewModal) setShowNewModal(false);
@@ -1346,12 +1465,22 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               renderPreviewFooter={renderInitiativePreviewFooter}
             >
               <PortfolioListView
+                persistKey="initiatives.portfolio"
                 initiatives={searchedInitiatives}
                 onInitiativeClick={handleInitiativeClick}
+                onOpenFull={(initiative) =>
+                  handleOpenDocument({
+                    id: initiative.id,
+                    type: 'initiative',
+                    name: String(initiative.name || ''),
+                    status: String(initiative.status || '').toUpperCase() as any,
+                  })
+                }
                 onStatusChange={handleStatusChange}
                 onQuickUpdate={handleQuickUpdate}
                 onSelectionChange={setSelectedIds}
                 canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
+                onArchive={handleArchiveInitiative}
               />
             </TableWithPreviewLayout>
           </div>
@@ -1375,6 +1504,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       key={initiative.id}
                       initiative={initiative}
                       onClick={() => handleInitiativeClick(initiative)}
+                      onArchive={handleArchiveInitiative}
+                      onOpenFull={(initiative) =>
+                        handleOpenDocument({
+                          id: initiative.id,
+                          type: 'initiative',
+                          name: String(initiative.name || ''),
+                          status: String(initiative.status || '').toUpperCase() as any,
+                        })
+                      }
                     />
                   ))}
                 </div>
@@ -1548,6 +1686,142 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
+  // Menu 3 stability: render the FULL portfolio status set ALWAYS (In Review →
+  // Promoted → Planning → Approved → Scheduled), regardless of which filter is
+  // active or which view is shown. Only the active state + the bottom list change —
+  // Menu 3 itself never rebuilds on view/filter change. Any extra active status
+  // (e.g. a non-portfolio status reached via deep link) is appended so it never
+  // disappears while selected.
+  const PORTFOLIO_STATUS_CHIPS: InitiativeStatus[] = useMemo(
+    () => [
+      InitiativeStatus.REVIEW,
+      InitiativeStatus.PROMOTED,
+      InitiativeStatus.PLANNING,
+      InitiativeStatus.APPROVED,
+      InitiativeStatus.SCHEDULED,
+    ],
+    []
+  );
+  const visibleStatusChips = useMemo(() => {
+    const base = [...PORTFOLIO_STATUS_CHIPS];
+    if (
+      activeStatusFilter &&
+      ALLOWED_STATUSES.includes(activeStatusFilter as InitiativeStatus) &&
+      !base.includes(activeStatusFilter as InitiativeStatus)
+    ) {
+      base.push(activeStatusFilter as InitiativeStatus);
+    }
+    return base;
+  }, [PORTFOLIO_STATUS_CHIPS, activeStatusFilter]);
+
+  // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
+  // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
+  // "N selected · Clear" + framed action buttons (real where wired, disabled
+  // "Wkrótce (backend)" where the endpoint doesn't exist yet — never omitted).
+  const isBulkMode =
+    viewMode === 'table' &&
+    !activeDocumentId &&
+    activeTab !== 'analysis' &&
+    !isPilotParticipant &&
+    selectedIds.size > 0;
+
+  const comingSoonBackend = t('common.comingSoonBackend', 'Coming soon (backend)');
+  // "Coming soon" affordance for features that are not yet functional (task #11).
+  const comingSoonPrep = t('common.comingSoonPrep', 'Coming soon');
+  const bulkButtonBase = `${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`;
+
+  const bulkBarContent = (
+    <div className="flex items-center justify-between gap-2">
+      <div className="inline-flex items-center gap-2">
+        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+          {t('initiatives.bulk.selected', {
+            count: selectedIds.size,
+            defaultValue: '{{count}} selected',
+          })}
+        </span>
+        <button
+          type="button"
+          onClick={handleClearSelection}
+          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+        >
+          <X className="h-3.5 w-3.5" />
+          {t('common.clear', 'Clear')}
+        </button>
+      </div>
+      <div className={`${MENU_3_RIGHT_CLASS} overflow-x-auto no-scrollbar`}>
+        {/* Export CSV — real, frontend-only */}
+        <button type="button" onClick={handleExportSelectedCsv} className={bulkButtonBase}>
+          <Download className="h-3.5 w-3.5" />
+          {t('initiatives.bulk.exportCsv', 'Export CSV')}
+        </button>
+        {/* Tag — no backend endpoint */}
+        <button type="button" disabled className={bulkButtonBase} title={comingSoonBackend}>
+          <Tag className="h-3.5 w-3.5" />
+          {t('initiatives.bulk.tag', 'Tag')}
+        </button>
+        {/* Assign / Reassign — wired via bulk modal (owner change) */}
+        <button type="button" onClick={() => setShowBulkModal(true)} className={bulkButtonBase}>
+          <UserPlus className="h-3.5 w-3.5" />
+          {t('initiatives.bulk.assign', 'Assign')}
+        </button>
+        {/* Change due date — no backend endpoint */}
+        <button type="button" disabled className={bulkButtonBase} title={comingSoonBackend}>
+          <CalendarClock className="h-3.5 w-3.5" />
+          {t('initiatives.bulk.changeDueDate', 'Change due date')}
+        </button>
+        {/* Archive — wired (only DONE/CANCELLED eligible per backend rule) */}
+        <button
+          type="button"
+          onClick={async () => {
+            const eligible = initiatives.filter(
+              (i) =>
+                selectedIds.has(i.id) &&
+                (i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.CANCELLED)
+            );
+            if (eligible.length === 0) {
+              toast.error(
+                t(
+                  'initiatives.bulk.archiveIneligible',
+                  'Tylko zakończone/anulowane można archiwizować'
+                )
+              );
+              return;
+            }
+            for (const init of eligible) {
+              // eslint-disable-next-line no-await-in-loop
+              await handleArchiveInitiative(init);
+            }
+            handleClearSelection();
+          }}
+          className={bulkButtonBase}
+        >
+          <Archive className="h-3.5 w-3.5" />
+          {t('common.archive', 'Archive')}
+        </button>
+        {/* AI: Analizuj zaznaczenie — contextual, retained */}
+        <button
+          type="button"
+          onClick={() => setShowBulkModal(true)}
+          className={MENU_3_ACTION_NEUTRAL}
+          title={t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
+        </button>
+        {/* Delete — danger, end, no backend endpoint */}
+        <button
+          type="button"
+          disabled
+          className={`${MENU_3_ACTION_DANGER} disabled:opacity-50 disabled:cursor-not-allowed`}
+          title={comingSoonBackend}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {t('common.delete', 'Delete')}
+        </button>
+      </div>
+    </div>
+  );
+
   const commandRowContent = (
     <div className="flex items-center justify-between gap-2">
       <div className={MENU_3_LEFT_CLASS}>
@@ -1562,7 +1836,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             {statusCounts.all ?? 0}
           </span>
         </button>
-        {ALLOWED_STATUSES.map((s) => {
+        {visibleStatusChips.map((s) => {
           const meta = STATUS_METADATA[s];
           const isActive = activeStatusFilter === s;
           const count = statusCounts[s] ?? 0;
@@ -1652,18 +1926,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           </>
         )}
       </div>
-      {!isPilotParticipant && (
-        <div className={MENU_3_RIGHT_CLASS}>
-          <button
-            type="button"
-            onClick={() => setShowInitiativeWizard(true)}
-            className={MENU_3_ACTION_NEUTRAL}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            AI Initiative Wizard
-          </button>
-        </div>
-      )}
+      {/* Stable right group — AI Initiative Wizard + Charter. Present at all times
+          (not conditional), separated from the status filters. Both are COMING
+          SOON: disabled + "w przygotowaniu" badge until wired. */}
+      <div className={MENU_3_RIGHT_CLASS}>
+        <button
+          type="button"
+          disabled
+          className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+          title={comingSoonPrep}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          AI Initiative Wizard
+          <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
+        </button>
+        <button
+          type="button"
+          disabled
+          className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
+          title={comingSoonPrep}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          {t('initiatives.charter.short', 'Charter')}
+          <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
+        </button>
+      </div>
     </div>
   );
 
@@ -1685,11 +1972,28 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={isPilotParticipant ? undefined : () => setShowNewModal(true)}
-        newItemLabel={isPilotParticipant ? undefined : t('initiatives.form.newInitiative')}
+        primaryCta={
+          isPilotParticipant ? undefined : (
+            <button
+              type="button"
+              disabled
+              title={comingSoonPrep}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span>{t('initiatives.form.newInitiative')}</span>
+              <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
+            </button>
+          )
+        }
         filterActions={filterActions}
         rightControls={rightControls}
-        commandRowContent={activeTab === 'analysis' ? analysisCommandRow : commandRowContent}
+        commandRowContent={
+          activeTab === 'analysis'
+            ? analysisCommandRow
+            : isBulkMode
+              ? bulkBarContent
+              : commandRowContent
+        }
         availableViewModes={availableViewModes}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
@@ -1697,6 +2001,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       <InitiativeWizardModal
         isOpen={showInitiativeWizard}
+        language={i18n.language === 'pl' ? 'pl' : 'en'}
         projectId={currentProjectId || undefined}
         existingInitiatives={allInitiatives}
         onClose={() => setShowInitiativeWizard(false)}
@@ -1721,6 +2026,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setActiveStatusFilter(revealState.activeStatusFilter);
             setPreviewInitiativeId(first.id);
           }
+        }}
+      />
+
+      <InitiativeCharterWizard
+        isOpen={showCharter}
+        onClose={() => setShowCharter(false)}
+        projectId={currentProjectId || undefined}
+        onCreated={() => {
+          setShowCharter(false);
+          void fetchData(true);
         }}
       />
 

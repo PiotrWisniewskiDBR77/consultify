@@ -244,7 +244,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
             onClick={resetWizard}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <ChevronLeft size={16} className="text-slate-400" />
+            <ChevronLeft size={16} className="text-slate-600" />
           </button>
           <Send size={16} className="text-pink-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
@@ -253,10 +253,10 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 border-b border-slate-100 px-5 py-3 dark:border-navy-800">
+        <div className="flex items-center gap-1 border-b border-slate-200 px-5 py-3 dark:border-navy-800">
           {WIZARD_STEPS.map((s, idx) => (
             <React.Fragment key={s.key}>
-              {idx > 0 && <ArrowRight size={10} className="text-slate-300" />}
+              {idx > 0 && <ArrowRight size={10} className="text-slate-600" />}
               <button
                 onClick={() => idx <= stepIndex && setStep(s.key)}
                 className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
@@ -264,7 +264,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     ? 'bg-pink-500 text-white'
                     : idx < stepIndex
                       ? 'bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:text-pink-400'
-                      : 'text-slate-400'
+                      : 'text-slate-600'
                 }`}
               >
                 {isPl ? s.pl : s.en}
@@ -455,11 +455,11 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                     {schedule === s.value && <Check size={14} className="text-pink-500" />}
                     <Clock
                       size={14}
-                      className={schedule === s.value ? 'text-pink-500' : 'text-slate-400'}
+                      className={schedule === s.value ? 'text-pink-500' : 'text-slate-600'}
                     />
                     {isPl ? s.pl : s.en}
                     {s.value && (
-                      <span className="ml-auto text-[10px] text-slate-400">{s.value}</span>
+                      <span className="ml-auto text-[10px] text-slate-600">{s.value}</span>
                     )}
                   </button>
                 ))}
@@ -587,13 +587,13 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
             onClick={onClose}
             className="rounded-lg p-1 transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <ChevronLeft size={16} className="text-slate-400" />
+            <ChevronLeft size={16} className="text-slate-600" />
           </button>
           <Send size={18} className="text-pink-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Dystrybucja' : 'Distributions'}
             {distributions.length > 0 && (
-              <span className="ml-1 font-normal text-slate-400">({distributions.length})</span>
+              <span className="ml-1 font-normal text-slate-600">({distributions.length})</span>
             )}
           </h3>
         </div>
@@ -610,12 +610,12 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
       <div className="flex-1 overflow-y-auto p-5">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={20} className="animate-spin text-slate-400" />
+            <Loader2 size={20} className="animate-spin text-slate-600" />
           </div>
         ) : distributions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-4 rounded-2xl bg-slate-100 p-4 dark:bg-navy-800">
-              <Send size={28} className="text-slate-400 dark:text-slate-500" />
+              <Send size={28} className="text-slate-600 dark:text-slate-500" />
             </div>
             <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
               {isPl ? 'Brak dystrybucji' : 'No distributions yet'}
@@ -661,7 +661,7 @@ export const DistributionManager: React.FC<DistributionManagerProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                    <div className="mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
                       {dist.format?.toUpperCase()} · {isPl ? chDef.pl : chDef.en}
                       {dist.schedule && (
                         <>

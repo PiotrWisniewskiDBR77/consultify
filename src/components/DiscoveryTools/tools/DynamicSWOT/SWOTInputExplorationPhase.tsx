@@ -838,7 +838,7 @@ export function SWOTInputExplorationPhase({
 
         <div className="grid gap-3 border-b border-slate-200/70 px-6 py-5 dark:border-white/10 md:grid-cols-4">
           <div className="rounded-[24px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
               {labels.totalAccepted}
             </div>
             <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
@@ -931,7 +931,7 @@ export function SWOTInputExplorationPhase({
                 </div>
 
                 <div className="mt-4 rounded-[24px] border border-white/70 bg-white/75 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                     {labels.acceptedList}
                   </div>
                   {acceptedSignals.length === 0 ? (
@@ -1029,7 +1029,7 @@ export function SWOTInputExplorationPhase({
                             activeAction.signalId === signal.id &&
                             activeAction.streamId === streamId && (
                               <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                                   {activeAction.mode === 'comment' ? labels.comment : labels.deepen}
                                 </div>
                                 {activeAction.mode === 'comment' ? (
@@ -1157,7 +1157,7 @@ export function SWOTInputExplorationPhase({
                 {acceptedCount < 5 && (
                   <div className={`mt-4 rounded-[24px] border p-5 ${meta.proposalTone}`}>
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                         {labels.aiProposal}
                       </div>
                       <span className="inline-flex rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:border-primary-900/40 dark:bg-white/[0.05] dark:text-primary-200">
@@ -1220,7 +1220,7 @@ export function SWOTInputExplorationPhase({
 
                     {activeAction?.streamId === streamId && activeAction.target === 'proposal' && (
                       <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                           {activeAction.mode === 'comment' ? labels.comment : labels.deepen}
                         </div>
                         {activeAction.mode === 'comment' ? (

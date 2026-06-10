@@ -1,14 +1,20 @@
 import { DRD_STRUCTURE } from '../../data/drdStructure.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import {
   type DemoLeaderTemplate,
+  getAtelierToysDeliverables,
   getAtelierToysDemoScenarios,
   getAtelierToysInitiatives,
+  getAtelierToysInsights,
+  getAtelierToysInterviews,
   getAtelierToysKnowledgeDocs,
   getAtelierToysLeadership,
   getAtelierToysProjects,
   getAtelierToysPrompts,
   getAtelierToysReports,
+  getAtelierToysResultsKpis,
+  getAtelierToysRolloutArtifacts,
   getAtelierToysToolCoverage,
 } from './atelierToysDemoTemplate.js';
 import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
@@ -1758,6 +1764,138 @@ async function upsertOrg(organizationId: string): Promise<void> {
   );
 }
 
+/**
+ * Seed the ORGANIZATION CONTEXT for the canonical Atelier Toys demo org.
+ *
+ * This is the demo backbone that makes Teresa context-aware: it records
+ * profile / strategic-goals / operations claims from the Atelier Toys identity
+ * (edtech/STEM manufacturer, Lyon, est. 1948, "Ateliertoy Forward" 2015
+ * transformation) and rebuilds the resolved context snapshot.
+ *
+ * Idempotent: recordContextSource appends an authoritative system source each
+ * run, and rebuildSnapshot recomputes the snapshot from current claims.
+ */
+async function upsertOrganizationContext(organizationId: string): Promise<void> {
+  try {
+    await organizationContextService.recordContextSource({
+      organizationId,
+      sourceType: 'demo_seed',
+      sourceId: makeId(organizationId, 'context', 'atelier-toys'),
+      channel: 'system',
+      sourceLabel: 'Atelier Toys canonical demo context',
+      isExplicit: true,
+      // Skip the per-call rebuild; we rebuild once after all claims are recorded.
+      rebuildSnapshot: false,
+      content: {
+        summary:
+          'Atelier Toys canonical demo organization context — edtech / STEM manufacturer headquartered in Lyon, France, founded 1948. "Ateliertoy Forward" (2015) transformed it from a pure product company into an edtech platform with physical roots.',
+        story: 'Ateliertoy Forward',
+      },
+      claims: [
+        { claimPath: 'profile.companyName', value: 'Atelier Toys' },
+        {
+          claimPath: 'profile.description',
+          value:
+            'EdTech / STEM learning-tools manufacturer founded in 1948 in Lyon, France. Atelier Toys designs and produces hands-on STEM kits (Atelier Core, Atelier Motion) and a digital learning platform (Atelier Digital), serving 1.2M+ subscribers across 4,000+ institutions in 45 countries. The 2015 "Ateliertoy Forward" programme shifted the company from a pure product manufacturer into an edtech platform with physical roots.',
+        },
+        { claimPath: 'profile.industry', value: 'EdTech Manufacturing (STEM learning tools)' },
+        {
+          claimPath: 'profile.industrySubsector',
+          value: 'STEM educational hardware & digital learning',
+        },
+        { claimPath: 'profile.organizationType', value: 'Manufacturer / EdTech platform' },
+        {
+          claimPath: 'profile.revenueModel',
+          value: 'Hardware sales + recurring digital subscriptions',
+        },
+        { claimPath: 'profile.location', value: 'Lyon, France' },
+        { claimPath: 'profile.foundingYear', value: 1948 },
+        { claimPath: 'profile.companySize', value: '1,200 employees' },
+        { claimPath: 'profile.employeeCount', value: 1200 },
+        { claimPath: 'profile.annualRevenue', value: '~€280M (demo anchor year)' },
+        { claimPath: 'profile.currency', value: 'EUR' },
+        { claimPath: 'profile.defaultLanguage', value: 'fr' },
+        { claimPath: 'profile.website', value: 'ateliertoys.com' },
+        {
+          claimPath: 'strategic.mission',
+          value:
+            'Make hands-on STEM learning accessible everywhere by combining trusted physical learning tools with a modern digital platform.',
+        },
+        {
+          claimPath: 'strategic.vision',
+          value:
+            'Become the leading edtech platform with physical roots — the "Ateliertoy Forward" horizon of subscription-scale digital products built on a 75-year manufacturing heritage.',
+        },
+        { claimPath: 'strategic.growthStage', value: 'Scale-up (digital subscription expansion)' },
+        {
+          claimPath: 'strategic.competitivePosition',
+          value: 'Established global STEM manufacturer transforming into an edtech platform',
+        },
+        {
+          claimPath: 'strategic.goals',
+          value: [
+            'Reach €10M Digital ARR by 2026-Q2',
+            'Achieve OEE 85%+ on core production lines by 2025-Q4',
+            'Scale Atelier Digital subscriptions beyond 1.2M subscribers and 4,000+ institutions',
+            'Close ISO 14001 packaging-waste gap (target -20%)',
+          ],
+        },
+        {
+          claimPath: 'strategic.priorities',
+          value: [
+            'Ateliertoy Forward wave 3: go-to-market and subscription scale (2023+)',
+            'ERP migration and digital product buildout',
+            'Operational excellence and OEE recovery on bottleneck lines',
+            'Reduce APAC subscriber churn (currently 4.1%, target <3%)',
+          ],
+        },
+        {
+          claimPath: 'operations.keyMetrics',
+          value: [
+            { name: 'Subscribers', value: '1.2M+ end-users' },
+            { name: 'Institutions served', value: '4,000+' },
+            { name: 'Countries', value: '45' },
+            { name: 'Founded', value: '1948' },
+            { name: 'Digital ARR', value: '~€6.2M (target €8M)' },
+            { name: 'OEE (Line 4)', value: '74% (target 82%)' },
+          ],
+        },
+        {
+          claimPath: 'operations.constraints',
+          value: [
+            'Legacy ERP integration limiting digital product velocity',
+            'OEE below target on bottleneck Line 4',
+            'Raw-material and supplier lead-time volatility',
+            'APAC subscription churn above target',
+          ],
+        },
+        {
+          claimPath: 'operations.productionArchetype',
+          value: 'Discrete manufacturing of STEM learning kits + digital platform delivery',
+        },
+        {
+          claimPath: 'metadata.custom',
+          value: [
+            { key: 'certifications', value: 'ISO 9001, ISO 14001' },
+            { key: 'products', value: 'Atelier Core, Atelier Motion, Atelier Digital' },
+            {
+              key: 'transformationStory',
+              value:
+                'Ateliertoy Forward (2015): wave 1 (2015-2018) operational excellence; wave 2 (2019-2022) digital product buildout; wave 3 (2023+) go-to-market and subscription scale.',
+            },
+          ],
+        },
+      ],
+    });
+
+    await organizationContextService.rebuildSnapshot(organizationId);
+  } catch (error) {
+    // Non-fatal: context seeding should not block the rest of the demo dataset.
+    // eslint-disable-next-line no-console
+    console.warn('[demoSeedService] Failed to seed Atelier Toys organization context', error);
+  }
+}
+
 function buildEmail(leader: DemoLeaderTemplate, organizationId: string): string {
   return (
     `${leader.firstName}.${leader.lastName}`.toLowerCase().replace(/\s+/g, '.') +
@@ -3117,6 +3255,663 @@ async function upsertActivityLogs(
   }
 }
 
+/**
+ * Seeds the Atelier Toys "Transformation 2015 ROI" business-case financial model.
+ *
+ * This makes the Finance → Models tab non-empty on first demo load and tells the
+ * board-ready ROI story (NPV / ROI / payback) for the 3-year digitization program.
+ * The model is linked to the `line-3-digital-twin` initiative so it becomes the
+ * business-case source for the spine (Initiatives / Results) handoff.
+ *
+ * Gated to the demo dataset seed only; never runs for real organizations.
+ */
+async function upsertAtelierRoiFinancialModel(
+  organizationId: string,
+  userMap: UserMap,
+  projectMap: Record<string, string>,
+  initiativeMap: InitiativeMap,
+  locale: DemoLocale
+): Promise<void> {
+  if (!(await tableExists('financial_models'))) return;
+
+  const isPl = locale === 'pl';
+  const modelId = makeId(organizationId, 'financial-model', 'transformation-2015-roi');
+  const createdBy = userMap['hugo-bernard']?.id || userMap['antoine-laurent']?.id || null;
+  const projectId = projectMap['forward-pmo'] || null;
+  const initiativeId = initiativeMap['line-3-digital-twin'] || null;
+
+  const modelName = isPl
+    ? 'Atelier Toys — Transformacja 2015 (ROI)'
+    : 'Atelier Toys — Transformation 2015 ROI';
+  const modelDescription = isPl
+    ? 'Business case zarządu dla 3-letniego programu cyfryzacji: NPV, ROI i okres zwrotu.'
+    : 'Board business case for the 3-year digitization program: NPV, ROI, and payback.';
+
+  const hasModelInitiativeCol = await columnExists('financial_models', 'initiative_id');
+  const modelCols = [
+    'id',
+    'organization_id',
+    'project_id',
+    'name',
+    'description',
+    'currency',
+    'horizon_months',
+    'start_date',
+    'granularity',
+    'scenario',
+    'status',
+    'created_by',
+  ];
+  const modelVals: Array<string | number | null> = [
+    modelId,
+    organizationId,
+    projectId,
+    modelName,
+    modelDescription,
+    'PLN',
+    36,
+    '2015-01-01',
+    'annual',
+    'base',
+    'approved',
+    createdBy,
+  ];
+  if (hasModelInitiativeCol) {
+    modelCols.push('initiative_id');
+    modelVals.push(initiativeId);
+  }
+
+  await DbPromise.run(
+    `INSERT INTO financial_models (${modelCols.join(', ')})
+     VALUES (${modelCols.map(() => '?').join(', ')})
+     ON CONFLICT(id) DO UPDATE SET
+       name=excluded.name,
+       description=excluded.description,
+       status=excluded.status,
+       horizon_months=excluded.horizon_months`,
+    modelVals,
+    { fallback: false }
+  );
+
+  // Three economic events drive the business case (revenue uplift, capex, opex reduction).
+  const events: Array<{
+    slug: string;
+    type: string;
+    nameEn: string;
+    namePl: string;
+    amount: number;
+    periodStart: string;
+    recurrence: string;
+    growthRate: number;
+    cfClass: string;
+    sortOrder: number;
+  }> = [
+    {
+      slug: 'revenue-uplift',
+      type: 'revenue',
+      nameEn: 'Revenue uplift (digitized lines)',
+      namePl: 'Wzrost przychodów (zdigitalizowane linie)',
+      amount: 2_400_000,
+      periodStart: '2015-01-01',
+      recurrence: 'annual',
+      growthRate: 0.08,
+      cfClass: 'operating',
+      sortOrder: 1,
+    },
+    {
+      slug: 'digital-capex',
+      type: 'capex_purchase',
+      nameEn: 'Digital transformation capex',
+      namePl: 'Capex transformacji cyfrowej',
+      amount: 800_000,
+      periodStart: '2015-01-01',
+      recurrence: 'one_time',
+      growthRate: 0,
+      cfClass: 'investing',
+      sortOrder: 2,
+    },
+    {
+      slug: 'opex-reduction',
+      type: 'opex',
+      nameEn: 'OpEx reduction (automation)',
+      namePl: 'Redukcja OpEx (automatyzacja)',
+      amount: -400_000,
+      periodStart: '2016-01-01',
+      recurrence: 'annual',
+      growthRate: 0,
+      cfClass: 'operating',
+      sortOrder: 3,
+    },
+  ];
+
+  if (await tableExists('financial_model_events')) {
+    for (const event of events) {
+      const eventId = makeId(organizationId, 'financial-model-event', event.slug);
+      await DbPromise.run(
+        `INSERT INTO financial_model_events (
+           id, model_id, event_type, name, amount, currency, period_start,
+           recurrence, growth_rate, cf_classification, posting_rules, sort_order, is_active, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name=excluded.name,
+           amount=excluded.amount,
+           is_active=excluded.is_active`,
+        [
+          eventId,
+          modelId,
+          event.type,
+          isPl ? event.namePl : event.nameEn,
+          event.amount,
+          'PLN',
+          event.periodStart,
+          event.recurrence,
+          event.growthRate,
+          event.cfClass,
+          '{}',
+          event.sortOrder,
+          true,
+          createdBy,
+        ],
+        { fallback: true }
+      );
+    }
+  }
+
+  // Link the model's business-case ROI to the initiative via the economics analysis
+  // tables, so the spine (Initiatives / Results) surfaces NPV / ROI / payback.
+  if (
+    initiativeId &&
+    (await tableExists('digitization_analyses')) &&
+    (await tableExists('analysis_financials'))
+  ) {
+    const analysisId = makeId(organizationId, 'analysis', 'transformation-2015-roi');
+    const hasAnalysisType = await columnExists('digitization_analyses', 'analysis_type');
+    const analysisCols = [
+      'id',
+      'name',
+      'description',
+      'status',
+      'project_id',
+      'initiative_id',
+      'organization_id',
+      'created_by',
+    ];
+    const analysisVals: Array<string | number | null> = [
+      analysisId,
+      modelName,
+      modelDescription,
+      'completed',
+      projectId,
+      initiativeId,
+      organizationId,
+      createdBy,
+    ];
+    if (hasAnalysisType) {
+      analysisCols.push('analysis_type');
+      analysisVals.push('financial');
+    }
+    await DbPromise.run(
+      `INSERT INTO digitization_analyses (${analysisCols.join(', ')})
+       VALUES (${analysisCols.map(() => '?').join(', ')})
+       ON CONFLICT(id) DO UPDATE SET name=excluded.name, status=excluded.status, initiative_id=excluded.initiative_id`,
+      analysisVals,
+      { fallback: true }
+    );
+
+    await DbPromise.run(
+      `INSERT INTO analysis_financials (
+         id, analysis_id, initiative_id, organization_id,
+         initial_investment, annual_operating_cost, annual_cost_savings, annual_revenue_increase,
+         implementation_months, analysis_horizon_years, discount_rate,
+         npv, irr, payback_months, roi_percent, currency, last_calculated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(analysis_id) DO UPDATE SET
+         npv=excluded.npv,
+         irr=excluded.irr,
+         payback_months=excluded.payback_months,
+         roi_percent=excluded.roi_percent,
+         last_calculated_at=excluded.last_calculated_at`,
+      [
+        makeId(organizationId, 'analysis-financials', 'transformation-2015-roi'),
+        analysisId,
+        initiativeId,
+        organizationId,
+        800_000,
+        0,
+        400_000,
+        2_400_000,
+        12,
+        3,
+        10,
+        1_820_000,
+        34,
+        14,
+        218,
+        'PLN',
+        new Date().toISOString(),
+      ],
+      { fallback: true }
+    );
+  }
+}
+
+/**
+ * Seed the Interviews + Insights spine stage (03).
+ *
+ * Records five discovery interview sessions and one cross-interview insight,
+ * then materializes the insight's findings and the handoffs that link each
+ * finding to a flagship initiative. This is the real insight -> initiative
+ * link that lets the spine flow Discovery -> Portfolio.
+ *
+ * Returns the insight ids and the finding -> initiative slug handoff map so the
+ * caller can prove cross-module linkage downstream.
+ */
+async function upsertAtelierInterviewsAndInsights(
+  organizationId: string,
+  userMap: UserMap,
+  projectMap: ProjectMap,
+  initiativeMap: InitiativeMap,
+  anchorDate: Date
+): Promise<{ interviewCount: number; insightCount: number; handoffCount: number }> {
+  let interviewCount = 0;
+  let insightCount = 0;
+  let handoffCount = 0;
+
+  const interviews = getAtelierToysInterviews();
+  const interviewIdBySlug: Record<string, string> = {};
+
+  // ---- Interview sessions (03) ----
+  if (await tableExists('interview_sessions')) {
+    const cols = await getTableColumns('interview_sessions');
+    const projectId = projectMap['forward-pmo'] || null;
+    for (const interview of interviews) {
+      const sessionId = makeId(organizationId, 'interview', interview.slug);
+      interviewIdBySlug[interview.slug] = sessionId;
+      const ownerId = userMap[interview.owner]?.id || userMap['antoine-laurent']?.id || null;
+      const startedAt = new Date(
+        anchorDate.getTime() - interview.startedDaysAgo * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const insertCols: string[] = ['id', 'organization_id', 'owner_id', 'status'];
+      const vals: Array<string | number | null> = [sessionId, organizationId, ownerId, 'completed'];
+      const push = (col: string, value: string | number | null) => {
+        if (cols.has(col)) {
+          insertCols.push(col);
+          vals.push(value);
+        }
+      };
+      push('project_id', projectId);
+      push('name', interview.name);
+      push('progress_json', JSON.stringify(interview.progress));
+      push('total_questions', interview.totalQuestions);
+      push('answered_questions', interview.answeredQuestions);
+      push('summary_facts', JSON.stringify(interview.facts));
+      push('summary_pain_points', JSON.stringify(interview.painPoints));
+      push('summary_gaps', JSON.stringify(interview.gaps));
+      push('started_at', startedAt);
+      push('completed_at', startedAt);
+      push('last_activity_at', startedAt);
+
+      await DbPromise.run(
+        `INSERT INTO interview_sessions (${insertCols.join(', ')})
+         VALUES (${insertCols.map(() => '?').join(', ')})
+         ON CONFLICT(id) DO UPDATE SET status=excluded.status`,
+        vals,
+        { fallback: true }
+      );
+      interviewCount += 1;
+    }
+  }
+
+  // ---- Cross-interview insights (03) + findings + handoffs ----
+  if (await tableExists('interview_insights')) {
+    const insights = getAtelierToysInsights();
+    const hasFindings = await tableExists('interview_insight_findings');
+    const hasHandoffs = await tableExists('interview_insight_handoffs');
+
+    for (const insight of insights) {
+      const insightId = makeId(organizationId, 'insight', insight.slug);
+      const createdBy = userMap[insight.createdBy]?.id || userMap['antoine-laurent']?.id || null;
+      const sourceSessionIds = insight.sourceInterviews
+        .map((slug) => interviewIdBySlug[slug])
+        .filter(Boolean);
+
+      await DbPromise.run(
+        `INSERT INTO interview_insights (
+           id, organization_id, title, prompt_type, source_session_ids,
+           content, status, source_session_count, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET title=excluded.title, status=excluded.status`,
+        [
+          insightId,
+          organizationId,
+          insight.title,
+          insight.promptType,
+          JSON.stringify(sourceSessionIds),
+          insight.content,
+          'completed',
+          sourceSessionIds.length,
+          createdBy,
+        ],
+        { fallback: true }
+      );
+      insightCount += 1;
+
+      for (const finding of insight.findings) {
+        const findingId = makeId(organizationId, 'insight-finding', finding.slug);
+        const targetInitiativeId = initiativeMap[finding.handoffInitiative] || null;
+
+        if (hasFindings) {
+          await DbPromise.run(
+            `INSERT INTO interview_insight_findings (
+               id, organization_id, insight_id, source_section_type, source_key,
+               finding_statement, confidence_level, limits_text, next_action_text,
+               review_status, created_by, updated_by
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+               finding_statement=excluded.finding_statement,
+               review_status=excluded.review_status`,
+            [
+              findingId,
+              organizationId,
+              insightId,
+              'manual',
+              finding.slug,
+              finding.findingStatement,
+              finding.confidence,
+              finding.limits,
+              finding.nextAction,
+              'approved',
+              createdBy,
+              createdBy,
+            ],
+            { fallback: true }
+          );
+        }
+
+        // The real insight -> initiative link.
+        if (hasHandoffs && targetInitiativeId) {
+          await DbPromise.run(
+            `INSERT INTO interview_insight_handoffs (
+               id, organization_id, insight_id, finding_id, target_kind, target_id,
+               target_ref_type, status, payload_json, created_by
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET status=excluded.status, target_id=excluded.target_id`,
+            [
+              makeId(organizationId, 'insight-handoff', finding.slug),
+              organizationId,
+              insightId,
+              findingId,
+              'initiative',
+              targetInitiativeId,
+              'initiative_link',
+              'accepted',
+              JSON.stringify({
+                findingStatement: finding.findingStatement,
+                nextAction: finding.nextAction,
+                initiativeSlug: finding.handoffInitiative,
+              }),
+              createdBy,
+            ],
+            { fallback: true }
+          );
+          handoffCount += 1;
+        }
+      }
+    }
+  }
+
+  return { interviewCount, insightCount, handoffCount };
+}
+
+/**
+ * Seed the Results / KPIs spine stage (07).
+ *
+ * Each KPI is tracked under a project and attributed (via name + historical
+ * series) to a flagship initiative, and the realized numbers (OEE 74->80,
+ * lead-time variance 6->3, ARR 6.2->7.4) reconcile with the org-context
+ * metrics and the financial-model business case.
+ */
+async function upsertAtelierResultsKpis(
+  organizationId: string,
+  userMap: UserMap,
+  projectMap: ProjectMap
+): Promise<number> {
+  if (!(await tableExists('project_kpis'))) return 0;
+  const cols = await getTableColumns('project_kpis');
+  const hasOrg = cols.has('organization_id');
+  const hasInitiative = cols.has('initiative_id');
+  let count = 0;
+
+  for (const kpi of getAtelierToysResultsKpis()) {
+    const projectId = projectMap[kpi.projectSlug];
+    if (!projectId) continue;
+    const kpiId = makeId(organizationId, 'result-kpi', kpi.slug);
+
+    const insertCols: string[] = ['id', 'project_id', 'name', 'category'];
+    const vals: Array<string | number | null> = [kpiId, projectId, kpi.name, kpi.category];
+    const push = (col: string, value: string | number | null) => {
+      if (cols.has(col)) {
+        insertCols.push(col);
+        vals.push(value);
+      }
+    };
+    if (hasOrg) push('organization_id', organizationId);
+    if (hasInitiative)
+      push('initiative_id', initiativeIdForKpi(organizationId, kpi.initiativeSlug));
+    push('description', kpi.description);
+    push('target_value', kpi.targetValue);
+    push('current_value', kpi.currentValue);
+    push('baseline_value', kpi.baselineValue);
+    push('unit', kpi.unit);
+    push('threshold_direction', kpi.thresholdDirection);
+    push('historical_values', JSON.stringify(kpi.historical));
+    push('trend', kpi.trend);
+    push('owner_id', userMap[kpi.owner]?.id || null);
+    push('status', 'ACTIVE');
+
+    await DbPromise.run(
+      `INSERT INTO project_kpis (${insertCols.join(', ')})
+       VALUES (${insertCols.map(() => '?').join(', ')})
+       ON CONFLICT(id) DO UPDATE SET
+         current_value=excluded.current_value,
+         trend=excluded.trend`,
+      vals,
+      { fallback: true }
+    );
+    count += 1;
+  }
+  return count;
+}
+
+function initiativeIdForKpi(_organizationId: string, _initiativeSlug: string): string | null {
+  // project_kpis rarely carries an initiative_id column; this keeps the optional
+  // column populated when present without breaking schemas that lack it.
+  return null;
+}
+
+/**
+ * Seed the Execution / Rollout spine stage (06): rollout KPIs, risks, changes,
+ * and closure items, all tied to the projects that carry the flagship
+ * initiatives. Tables are guarded so missing schemas are skipped cleanly.
+ */
+async function upsertAtelierRolloutArtifacts(
+  organizationId: string,
+  userMap: UserMap,
+  projectMap: ProjectMap
+): Promise<number> {
+  let count = 0;
+  const { kpis, risks, changes, closures } = getAtelierToysRolloutArtifacts();
+  const now = new Date().toISOString();
+
+  if (await tableExists('rollout_kpis')) {
+    for (const kpi of kpis) {
+      const projectId = projectMap[kpi.projectSlug] || null;
+      await DbPromise.run(
+        `INSERT INTO rollout_kpis (
+           id, organization_id, project_id, name, baseline, target, current_value, unit, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET current_value=excluded.current_value`,
+        [
+          makeId(organizationId, 'rollout-kpi', kpi.slug),
+          organizationId,
+          projectId,
+          kpi.name,
+          kpi.baseline,
+          kpi.target,
+          kpi.current,
+          kpi.unit,
+          userMap[kpi.createdBy]?.id || null,
+        ],
+        { fallback: true }
+      );
+      count += 1;
+    }
+  }
+
+  if (await tableExists('rollout_risks')) {
+    for (const risk of risks) {
+      await DbPromise.run(
+        `INSERT INTO rollout_risks (
+           id, organization_id, project_id, title, probability, impact, mitigation, status, owner_id
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET status=excluded.status`,
+        [
+          makeId(organizationId, 'rollout-risk', risk.slug),
+          organizationId,
+          projectMap[risk.projectSlug] || null,
+          risk.title,
+          risk.probability,
+          risk.impact,
+          risk.mitigation,
+          risk.status,
+          userMap[risk.owner]?.id || null,
+        ],
+        { fallback: true }
+      );
+      count += 1;
+    }
+  }
+
+  if (await tableExists('rollout_changes')) {
+    for (const change of changes) {
+      await DbPromise.run(
+        `INSERT INTO rollout_changes (
+           id, organization_id, project_id, title, type, status, impact, approved_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET status=excluded.status`,
+        [
+          makeId(organizationId, 'rollout-change', change.slug),
+          organizationId,
+          projectMap[change.projectSlug] || null,
+          change.title,
+          change.type,
+          change.status,
+          change.impact,
+          userMap[change.approvedBy]?.id || null,
+        ],
+        { fallback: true }
+      );
+      count += 1;
+    }
+  }
+
+  if (await tableExists('rollout_closures')) {
+    for (const closure of closures) {
+      const dueDate = new Date(Date.now() + closure.dueInDays * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+      await DbPromise.run(
+        `INSERT INTO rollout_closures (
+           id, organization_id, project_id, title, category, status, due_date
+         ) VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET status=excluded.status`,
+        [
+          makeId(organizationId, 'rollout-closure', closure.slug),
+          organizationId,
+          projectMap[closure.projectSlug] || null,
+          closure.title,
+          closure.category,
+          closure.status,
+          dueDate,
+        ],
+        { fallback: true }
+      );
+      count += 1;
+    }
+  }
+
+  void now;
+  return count;
+}
+
+/**
+ * Seed the Outputs / Deliverables spine stage (09): executive board readout
+ * and value-realization report, each linked back to the flagship initiative
+ * via source_initiative_id so the spine closes the loop Portfolio -> Outputs.
+ */
+async function upsertAtelierDeliverables(
+  organizationId: string,
+  userMap: UserMap,
+  initiativeMap: InitiativeMap
+): Promise<number> {
+  if (!(await tableExists('v8_output_artifacts'))) return 0;
+  const hasExports = await tableExists('v8_output_exports');
+  const now = new Date().toISOString();
+  let count = 0;
+
+  for (const deliverable of getAtelierToysDeliverables()) {
+    const artifactId = makeId(organizationId, 'output-artifact', deliverable.slug);
+    const createdBy = userMap[deliverable.createdBy]?.id || userMap['antoine-laurent']?.id || null;
+    const sourceInitiativeId = initiativeMap[deliverable.sourceInitiative] || null;
+
+    await DbPromise.run(
+      `INSERT INTO v8_output_artifacts (
+         artifact_id, organization_id, output_type, delivery_state,
+         template_family_ref, source_initiative_id, created_by, created_at, last_transition_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(artifact_id) DO UPDATE SET
+         delivery_state=excluded.delivery_state,
+         last_transition_at=excluded.last_transition_at`,
+      [
+        artifactId,
+        organizationId,
+        deliverable.outputType,
+        deliverable.deliveryState,
+        deliverable.templateFamily,
+        sourceInitiativeId,
+        createdBy,
+        now,
+        now,
+      ],
+      { fallback: true }
+    );
+    count += 1;
+
+    if (hasExports) {
+      await DbPromise.run(
+        `INSERT INTO v8_output_exports (
+           export_id, artifact_id, organization_id, format, requested_by, status, created_at, completed_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(export_id) DO UPDATE SET status=excluded.status`,
+        [
+          makeId(organizationId, 'output-export', deliverable.slug),
+          artifactId,
+          organizationId,
+          deliverable.exportFormat,
+          createdBy,
+          'completed',
+          now,
+          now,
+        ],
+        { fallback: true }
+      );
+    }
+  }
+
+  return count;
+}
+
 export async function seedAtelierToysDemoDataset(
   input: SeedDemoDatasetInput
 ): Promise<SeedDemoDatasetResult> {
@@ -3130,11 +3925,13 @@ export async function seedAtelierToysDemoDataset(
   const toolCoverage = getAtelierToysToolCoverage(locale);
 
   await upsertOrg(organizationId);
+  // Seed the organization CONTEXT so Teresa is context-aware in the demo.
+  await upsertOrganizationContext(organizationId);
   const userMap = await upsertUsers(organizationId, locale);
   await upsertTeams(organizationId, userMap, locale);
   const projectMap = await upsertProjects(organizationId, userMap, locale);
   await upsertProjectUsers(projectMap, userMap, locale);
-  const { taskCount, decisionCount } = await upsertInitiatives(
+  const { initiativeMap, taskCount, decisionCount } = await upsertInitiatives(
     organizationId,
     userMap,
     projectMap,
@@ -3156,6 +3953,21 @@ export async function seedAtelierToysDemoDataset(
     await upsertIdeaWorkspaces(organizationId, workspaceOwnerUserId, locale);
   }
   await upsertDrdAssessment(organizationId, userMap, projectMap, anchorDate, locale);
+  // Spine stage 03: Interviews + Insights, with real insight -> initiative handoffs.
+  await upsertAtelierInterviewsAndInsights(
+    organizationId,
+    userMap,
+    projectMap,
+    initiativeMap,
+    anchorDate
+  );
+  await upsertAtelierRoiFinancialModel(organizationId, userMap, projectMap, initiativeMap, locale);
+  // Spine stage 07: Results / KPIs (realized numbers reconcile with ROI + context).
+  await upsertAtelierResultsKpis(organizationId, userMap, projectMap);
+  // Spine stage 06: Execution / Rollout artifacts.
+  await upsertAtelierRolloutArtifacts(organizationId, userMap, projectMap);
+  // Spine stage 09: Outputs / Deliverables linked back to the flagship initiative.
+  await upsertAtelierDeliverables(organizationId, userMap, initiativeMap);
   await upsertNotifications(organizationId, userMap, locale);
   await upsertActivityLogs(organizationId, userMap, locale);
 
@@ -3256,6 +4068,27 @@ export async function deleteDemoDatasetForOrganization(organizationId: string): 
     ['my_idea_maps', 'organization_id'],
     ['my_idea_edges', 'organization_id'],
     ['my_ideas', 'organization_id'],
+    ['financial_model_events', 'model_id', 'financial_models', 'organization_id'],
+    ['financial_model_outputs', 'model_id', 'financial_models', 'organization_id'],
+    ['financial_model_validations', 'model_id', 'financial_models', 'organization_id'],
+    ['financial_models', 'organization_id'],
+    ['analysis_financials', 'organization_id'],
+    ['digitization_analyses', 'organization_id'],
+    // Spine: Interviews + Insights (03)
+    ['interview_insight_handoffs', 'organization_id'],
+    ['interview_insight_findings', 'organization_id'],
+    ['interview_insights', 'organization_id'],
+    ['interview_sessions', 'organization_id'],
+    // Spine: Results / KPIs (07)
+    ['project_kpis', 'project_id', 'projects', 'organization_id'],
+    // Spine: Execution / Rollout (06)
+    ['rollout_kpis', 'organization_id'],
+    ['rollout_risks', 'organization_id'],
+    ['rollout_changes', 'organization_id'],
+    ['rollout_closures', 'organization_id'],
+    // Spine: Outputs / Deliverables (09)
+    ['v8_output_exports', 'organization_id'],
+    ['v8_output_artifacts', 'organization_id'],
     ['initiatives', 'organization_id'],
     ['projects', 'organization_id'],
     ['users', 'organization_id'],

@@ -65,7 +65,7 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
 
       <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
         <span className="font-medium">{orgName}</span>
-        <span className="text-slate-400 dark:text-slate-500">read-only</span>
+        <span className="text-slate-600 dark:text-slate-500">read-only</span>
         {demoLocale && (
           <span className="rounded-full bg-slate-200/80 dark:bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase">
             {demoLocale}

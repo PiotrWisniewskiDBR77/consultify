@@ -215,7 +215,7 @@ export const ContactView: React.FC = () => {
   const handleContactClick = () => navigate('/contact');
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0A1F]">
+    <div className="min-h-screen flex flex-col bg-[#0F172A]">
       <EntryTopBar
         onTrialClick={handleTrialClick}
         onDemoClick={handleDemoClick}
@@ -226,7 +226,7 @@ export const ContactView: React.FC = () => {
 
       {/* Hero */}
       <section className="relative pt-32 pb-16 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_45%,#0B1220_100%)]" />
         <div className="absolute top-[-20%] left-[10%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.18)_0%,transparent_65%)] blur-[80px]" />
         <div className="absolute bottom-[-10%] right-[5%] w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(0,210,255,0.08)_0%,transparent_65%)] blur-[90px]" />
 
@@ -248,7 +248,7 @@ export const ContactView: React.FC = () => {
               {t('contact.hero.title1', "Let's talk about")}{' '}
               <span
                 style={{
-                  background: 'linear-gradient(90deg, #a78bfa, #c084fc, #67e8f9)',
+                  background: 'linear-gradient(90deg, #A51C30, #D42B3D, #67e8f9)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -389,8 +389,8 @@ export const ContactView: React.FC = () => {
                     }}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                     style={{
-                      background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
-                      boxShadow: '0 0 30px -8px rgba(124,58,237,0.50)',
+                      background: 'linear-gradient(135deg, #A51C30 0%, #851627 50%, #651120 100%)',
+                      boxShadow: '0 0 30px -8px rgba(165,28,48,0.50)',
                     }}
                   >
                     {t('contact.success.another', 'Send another message')}
@@ -520,9 +520,8 @@ export const ContactView: React.FC = () => {
                     disabled={isSubmitting}
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold text-white transition-all duration-300 active:scale-[0.98]"
                     style={{
-                      background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
-                      boxShadow:
-                        '0 0 40px -10px rgba(124,58,237,0.60), 0 3px 16px rgba(0,0,0,0.35)',
+                      background: 'linear-gradient(135deg, #A51C30 0%, #851627 50%, #651120 100%)',
+                      boxShadow: '0 0 40px -10px rgba(165,28,48,0.60), 0 3px 16px rgba(0,0,0,0.35)',
                     }}
                   >
                     {isSubmitting ? (

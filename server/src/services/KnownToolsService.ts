@@ -189,19 +189,34 @@ type SeedKnownTool = {
   tags: string[];
   icon: string | null;
   sortOrder: number;
+  /** When true the tool shows a "Coming soon" badge and cannot be launched. */
+  isComingSoon?: boolean;
 };
 
-// Only tools that are actually prepared in our current library
-// should be openable from the Tools table.
-const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
+// The curated Wave 1 SHIP set — tools with a complete, launchable step flow.
+// Everything NOT in this set is rendered as "Coming soon" (isComingSoon: true)
+// in the Library and is blocked from starting a session.
+export const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
+  // 6 fully-worked strategic + automation
   'dynamic-swot',
   'market-forces',
   'growth-paths',
   'portfolio-priority',
   'risk-uncertainty',
+  'process-automation',
+  // 5 operational with real domain step UIs
+  'sop-builder',
+  'a3-problem-solving',
+  'smed-planner',
+  'dms-builder',
+  'inventory-autopilot',
+  // 3 digital with Wave 1 GenericDomainStep flows
+  'ai-discovery',
+  'pain-explorer',
+  'rpa-scanner',
 ]);
 
-const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
+export const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
   {
     id: 'tool-known-dynamic-swot',
     toolType: 'dynamic-swot',
@@ -274,6 +289,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'value-chain', 'operating-model'],
     icon: 'Map',
     sortOrder: 104,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-portfolio-priority',
@@ -322,6 +338,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'capabilities', 'roadmap'],
     icon: 'Users',
     sortOrder: 107,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-ambition-decomposer',
@@ -335,6 +352,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'targets', 'roadmap'],
     icon: 'Target',
     sortOrder: 108,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-focus-tradeoff',
@@ -348,6 +366,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'tradeoffs', 'focus'],
     icon: 'GitBranch',
     sortOrder: 109,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-narrative-engine',
@@ -361,6 +380,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['strategy', 'narrative', 'alignment'],
     icon: 'FileText',
     sortOrder: 110,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-sop-builder',
@@ -402,6 +422,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['operations', 'lean', 'vsm'],
     icon: 'Workflow',
     sortOrder: 202,
+    isComingSoon: true,
   },
   // Toolsets from Bundle 05 (T022–T024) — keep short/usable for SQLite demo
   {
@@ -417,6 +438,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['operations', 'toc', 'throughput'],
     icon: 'Shield',
     sortOrder: 204,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-decision-engine',
@@ -430,6 +452,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['operations', 'decision', 'prioritization'],
     icon: 'GitBranch',
     sortOrder: 205,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-control-tower',
@@ -443,6 +466,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['operations', 'kpi', 'governance'],
     icon: 'Radar',
     sortOrder: 206,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-automation-pipeline',
@@ -456,6 +480,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['operations', 'automation', 'pipeline'],
     icon: 'Zap',
     sortOrder: 207,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-smed-planner',
@@ -512,6 +537,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['digital', 'robotics', 'automation'],
     icon: 'Bot',
     sortOrder: 301,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-logistics-automation',
@@ -525,6 +551,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['digital', 'logistics', 'warehouse'],
     icon: 'Truck',
     sortOrder: 302,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-rpa-scanner',
@@ -565,6 +592,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['digital', 'integration', 'architecture'],
     icon: 'Network',
     sortOrder: 305,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-digital-value-pool',
@@ -578,6 +606,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['digital', 'value', 'economics'],
     icon: 'DollarSign',
     sortOrder: 306,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-legacy-analyzer',
@@ -591,6 +620,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['digital', 'legacy', 'modernization'],
     icon: 'HardDrive',
     sortOrder: 307,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-data-inventory',
@@ -604,6 +634,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['digital', 'data', 'governance'],
     icon: 'Database',
     sortOrder: 308,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-pain-to-solution',
@@ -618,6 +649,7 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     tags: ['digital', 'solutions', 'mapping'],
     icon: 'Lightbulb',
     sortOrder: 309,
+    isComingSoon: true,
   },
   {
     id: 'tool-known-pain-explorer',
@@ -667,16 +699,11 @@ class KnownToolsService {
     const db = await this.getDb();
     const q = new QueryAdapter(db);
 
-    const countRow = await q.get<{ cnt: number | string }>(
-      `SELECT COUNT(*) as cnt FROM tools WHERE tool_type IS NOT NULL`
-    );
-    const existing = Number(countRow?.cnt ?? 0);
-
-    if (existing >= SQLITE_KNOWN_TOOLS_SEED.length) {
-      this.ensuredSqliteSeed = true;
-      return;
-    }
-
+    // NOTE: Always run the upsert loop once per process. The INSERT ... ON CONFLICT
+    // (name) DO UPDATE below is idempotent, so re-running it on an already-populated DB
+    // is safe and is required to propagate corrections (e.g. Wave 1 is_coming_soon flags)
+    // to existing production DBs that already have all rows. A count-guard here would skip
+    // those corrections whenever the row count already met the seed length.
     for (const seed of SQLITE_KNOWN_TOOLS_SEED) {
       const descTranslations = JSON.stringify({
         en: seed.descriptionEn,
@@ -702,6 +729,7 @@ class KnownToolsService {
            library_content_translations = EXCLUDED.library_content_translations,
            icon = EXCLUDED.icon,
            is_active = EXCLUDED.is_active,
+           is_coming_soon = EXCLUDED.is_coming_soon,
            tags_json = EXCLUDED.tags_json,
            sort_order = EXCLUDED.sort_order`,
         [
@@ -717,7 +745,7 @@ class KnownToolsService {
           seed.icon,
           1,
           0,
-          0,
+          seed.isComingSoon ? 1 : 0,
           tagsJson,
           seed.sortOrder,
           new Date().toISOString(),

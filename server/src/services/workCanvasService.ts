@@ -893,104 +893,68 @@ async function commitProposalToDomain(params: {
   );
   const assigneeId = readString(params.proposal.payload.assigneeId, ownerId);
 
-  switch (params.proposal.target) {
-    case 'task': {
-      const dueDate = normalizeDateTime(params.proposal.payload.dueDate);
-      const taskService = new TaskService(getDatabase() as any);
-      const task = await taskService.createTask(
-        {
-          projectId: projectId || null,
-          title,
-          description,
-          status: 'todo',
-          priority:
-            params.proposal.payload.priority === 'low' ||
-            params.proposal.payload.priority === 'high' ||
-            params.proposal.payload.priority === 'critical'
-              ? (params.proposal.payload.priority as any)
-              : 'medium',
-          assigneeId: assigneeId || undefined,
-          dueDate,
-          tags: ['ai', 'work-canvas'],
-        },
-        params.actorUserId
-      );
-      return {
-        status: task.status,
-        entityStatus: task.status,
-        target: 'task',
-        targetObjectId: task.id,
-        title: task.title,
-        projectId: task.projectId,
-        assigneeId: task.assigneeId,
-        artifactId: params.draft.artifactId,
-        sourceDraftId: params.draft.id,
-      };
-    }
-    case 'initiative': {
-      const initiative = await initiativeService.createInitiative({
-        organization_id: params.organizationId,
-        project_id: projectId || undefined,
-        title,
-        summary: description,
-        status: readString(params.proposal.payload.status, 'DRAFT'),
-        owner_id: ownerId || undefined,
-        market_context: `Created from Work Canvas draft ${params.draft.id}`,
-      } as any);
-      return {
-        status: initiative.status,
-        entityStatus: initiative.status,
-        target: 'initiative',
-        targetObjectId: initiative.id,
-        title: initiative.title,
-        projectId: initiative.project_id || params.draft.projectId,
-        ownerId: initiative.owner_id || ownerId,
-        artifactId: params.draft.artifactId,
-        sourceDraftId: params.draft.id,
-      };
-    }
-    case 'decision': {
-      const decision = await decisionService.createDecision({
+  // M-7 — task / initiative / decision / note now route through the SAME
+  // shared materializer that /save-to-workspace uses
+  // (services/canvasMaterialize.ts). Previously this switch had its own
+  // hand-rolled branches with a divergent `note → unsupported` outcome; both
+  // writers now produce identical entities (the note audit fix lands here
+  // too: the proposal-approval path can now create notes via notebookService).
+  if (
+    params.proposal.target === 'task' ||
+    params.proposal.target === 'initiative' ||
+    params.proposal.target === 'decision' ||
+    params.proposal.target === 'note'
+  ) {
+    const { materializeOrThrow } = await import('./canvasMaterialize.js');
+    const dueDate = normalizeDateTime(params.proposal.payload.dueDate);
+    const priority =
+      params.proposal.payload.priority === 'low' ||
+      params.proposal.payload.priority === 'high' ||
+      params.proposal.payload.priority === 'critical'
+        ? (params.proposal.payload.priority as 'low' | 'high' | 'critical')
+        : 'medium';
+    const decisionTypeRaw = params.proposal.payload.decisionType;
+    const decisionType =
+      decisionTypeRaw === 'GO_NO_GO' ||
+      decisionTypeRaw === 'RESOURCE_ALLOCATION' ||
+      decisionTypeRaw === 'OTHER'
+        ? (decisionTypeRaw as 'GO_NO_GO' | 'RESOURCE_ALLOCATION' | 'OTHER')
+        : 'APPROVAL';
+    const materialized = await materializeOrThrow(
+      {
         organizationId: params.organizationId,
-        projectId: projectId || undefined,
+        actorUserId: params.actorUserId,
+        target: params.proposal.target,
         title,
-        description,
-        type:
-          params.proposal.payload.decisionType === 'GO_NO_GO' ||
-          params.proposal.payload.decisionType === 'RESOURCE_ALLOCATION' ||
-          params.proposal.payload.decisionType === 'OTHER'
-            ? (params.proposal.payload.decisionType as any)
-            : 'APPROVAL',
-        decisionMakerId: ownerId || params.actorUserId,
-        createdBy: params.actorUserId,
-        criteria: readString(params.proposal.payload.criteria) || undefined,
-        deadline: readString(params.proposal.payload.dueDate) || undefined,
-      });
-      return {
-        status: decision.status,
-        entityStatus: decision.status,
-        target: 'decision',
-        targetObjectId: decision.id,
-        title: decision.title,
-        projectId: decision.projectId || params.draft.projectId,
-        ownerId: decision.decisionMakerId,
-        artifactId: params.draft.artifactId,
+        contentMd: params.draft.contentMd || description || title,
+        summary: description || title,
+        projectId: projectId || null,
         sourceDraftId: params.draft.id,
-      };
-    }
+        decisionType,
+        taskPriority: priority,
+        taskAssigneeId: assigneeId || undefined,
+        taskDueDate: dueDate || undefined,
+        ownerId: ownerId || undefined,
+      },
+      { writer: 'proposal_approval' }
+    );
+    return {
+      status: 'created',
+      entityStatus: 'created',
+      target: params.proposal.target,
+      targetObjectId: materialized.id,
+      title: materialized.title,
+      projectId: projectId || params.draft.projectId,
+      ownerId: ownerId || undefined,
+      assigneeId: assigneeId || undefined,
+      artifactId: params.draft.artifactId,
+      sourceDraftId: params.draft.id,
+    };
+  }
+
+  switch (params.proposal.target) {
     case 'idea':
       return createCanvasIdea(params);
-    case 'note':
-      return {
-        status: 'unsupported',
-        entityStatus: null,
-        target: 'note',
-        targetObjectId: null,
-        title,
-        projectId: params.draft.projectId,
-        sourceDraftId: params.draft.id,
-        code: 'CANVAS_NOTE_COMMIT_UNSUPPORTED',
-      };
     case 'project_brief':
     case 'client_deliverable':
     case 'research_report':

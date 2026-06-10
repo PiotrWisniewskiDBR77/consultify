@@ -48,15 +48,34 @@ export const NModePropertiesStrip: React.FC<NModePropertiesStripProps> = ({
           // Tailwind needs static class names — map colSpan to known utilities
           const spanClass =
             field.colSpan === 2 ? ' col-span-2' : field.colSpan === 3 ? ' col-span-3' : '';
+          // Read-only text/date/select render as a clean label + value
+          // (dashboard strip), not a disabled input box. Fixes the "10 okien
+          // niesymetrycznie" look (#27) across every NModeShell consumer while
+          // leaving editable fields fully interactive.
+          const isReadOnlyValue =
+            field.readOnly &&
+            (field.type === 'text' || field.type === 'date' || field.type === 'select');
+          const readOnlyDisplay = (() => {
+            if (field.type === 'select') {
+              const opt = (field.options || []).find((o) => o.value === field.value);
+              return opt ? (isPolish ? opt.label.pl : opt.label.en) : field.value;
+            }
+            return field.value;
+          })();
+
           return (
             <div key={field.id} className={`space-y-1${spanClass}`}>
-              <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <label className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {isPolish ? field.label.pl : field.label.en}
               </label>
 
               {/* Custom render */}
               {field.type === 'custom' && field.render ? (
                 field.render()
+              ) : isReadOnlyValue ? (
+                <div className="flex h-8 items-center text-sm font-medium text-slate-800 dark:text-slate-200">
+                  <span className="truncate">{readOnlyDisplay || '—'}</span>
+                </div>
               ) : /* Select field */
               field.type === 'select' ? (
                 <select

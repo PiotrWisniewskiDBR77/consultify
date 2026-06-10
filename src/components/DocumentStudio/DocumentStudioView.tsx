@@ -14,6 +14,8 @@ import { Layers, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import {
   generateDocumentStudioArtifact,
   getDocumentStudioArtifact,
@@ -38,7 +40,7 @@ export const DocumentStudioView: React.FC = () => {
   const [phase, setPhase] = useState<Phase>('intake');
   const [intake, setIntake] = useState<DocumentIntake | null>(null);
   const [outline, setOutline] = useState<DocumentOutline | null>(null);
-  const [useLlm, setUseLlm] = useState(false);
+  const [useLlm, setUseLlm] = useState(true);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [approvedTemplates, setApprovedTemplates] = useState<DocumentTemplate[]>([]);
   const [artifactId, setArtifactId] = useState<string | null>(null);
@@ -224,9 +226,7 @@ export const DocumentStudioView: React.FC = () => {
             }}
           />
         ) : loadingArtifact ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
-            Loading document…
-          </div>
+          <LoadingState variant="spinner" label="Loading document…" className="flex-1" />
         ) : phase === 'intake' ? (
           <DocumentStudioIntakeForm
             onSubmit={handleIntakeSubmit}

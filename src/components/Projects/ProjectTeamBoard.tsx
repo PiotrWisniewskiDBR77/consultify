@@ -375,7 +375,7 @@ export const ProjectTeamBoard: React.FC<ProjectTeamBoardProps> = ({
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {isPl ? labelPl : label}
                 </h3>
-                <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400">
                   ({members.length})
                 </span>
               </div>
@@ -432,7 +432,7 @@ export const ProjectTeamBoard: React.FC<ProjectTeamBoardProps> = ({
                       {!readOnly && (
                         <button
                           onClick={() => handleRemoveMember(member.userId)}
-                          className="p-1 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-1 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="h-4 w-4" />
                         </button>

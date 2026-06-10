@@ -21,6 +21,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import {
   type FinanceVersionSnapshot,
@@ -127,7 +128,7 @@ function PackValidationsSection({
               >
                 <span className="font-medium">{v.checkCode}</span>: {v.message || v.checkName}
                 {v.expectedValue != null && v.actualValue != null && (
-                  <span className="text-slate-400">
+                  <span className="text-slate-600">
                     {' '}
                     (expected: {v.expectedValue}, actual: {v.actualValue})
                   </span>
@@ -418,18 +419,7 @@ export function useFinancePreview({
         },
         {
           label: row.status,
-          dot:
-            row.status === 'APPROVED'
-              ? 'bg-emerald-500'
-              : row.status === 'REVIEW'
-                ? 'bg-amber-500'
-                : 'bg-slate-400',
-          className:
-            row.status === 'APPROVED'
-              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-              : row.status === 'REVIEW'
-                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+          tone: statusChipTone(row.status),
         },
         ...(metaPills.map((mp) => ({
           label: mp.value,
@@ -480,7 +470,7 @@ export function useFinancePreview({
             pills={metaPillsForCard}
             trailing={
               <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 inline-flex items-center gap-1.5">
-                <Clock size={14} className="text-slate-400" />
+                <Clock size={14} className="text-slate-600" />
                 {formatAge(row.updatedAt, isPl)}
               </span>
             }

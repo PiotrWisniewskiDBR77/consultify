@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 
 interface PaymentMethod {
@@ -115,7 +116,7 @@ export const PaymentMethodsView: React.FC = () => {
     };
     const badge = badges[type] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
       icon: '💰',
     };
     return (
@@ -139,7 +140,7 @@ export const PaymentMethodsView: React.FC = () => {
     };
     const badge = badges[safe] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
     };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
@@ -162,11 +163,7 @@ export const PaymentMethodsView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (

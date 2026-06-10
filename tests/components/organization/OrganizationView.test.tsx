@@ -90,6 +90,21 @@ vi.mock('../../../src/components/Organization/KnowledgeGraphExplorer', () => ({
   KnowledgeGraphExplorer: () => <div data-testid="module-knowledge-graph" />,
 }));
 
+// M16 P0-2: V8 canon panel replaced by the live context summary banner.
+vi.mock('../../../src/components/Organization/OrgContextSummaryBanner', () => ({
+  OrgContextSummaryBanner: ({
+    organizationId,
+    isAdmin,
+  }: {
+    organizationId?: string;
+    isAdmin?: boolean;
+  }) => (
+    <div data-testid="org-context-summary-banner">
+      {organizationId}:{isAdmin ? 'admin' : 'member'}
+    </div>
+  ),
+}));
+
 vi.mock('../../../src/views/ContextBuilder/modules/CompanyProfileModule', () => ({
   CompanyProfileModule: () => <div data-testid="module-profile" />,
 }));
@@ -124,8 +139,8 @@ describe('OrganizationView (L2)', () => {
   it('renders profile module by default and resolves active section from pathname', async () => {
     const { OrganizationView } = await loadDeps();
     render(<OrganizationView />);
-    expect(screen.getByText('One canonical tenant organization product')).toBeInTheDocument();
-    expect(screen.getByTestId('organization-context-overview')).toHaveTextContent('org-1:readonly');
+    expect(screen.getByTestId('org-context-summary-banner')).toHaveTextContent('org-1:member');
+    expect(screen.queryByTestId('organization-context-overview')).not.toBeInTheDocument();
     expect(screen.getByTestId('module-profile')).toBeInTheDocument();
     expect(screen.getAllByTestId('active-section')[0]).toHaveTextContent('profile');
   });
@@ -158,7 +173,8 @@ describe('OrganizationView (L2)', () => {
     h.locationState.pathname = '/organization/members';
     render(<OrganizationView />);
     expect(screen.getByTestId('admin-panel')).toHaveTextContent('members');
-    expect(screen.getByTestId('organization-context-overview')).toHaveTextContent('org-1:rebuild');
+    expect(screen.queryByTestId('organization-context-overview')).not.toBeInTheDocument();
+    expect(screen.getByTestId('org-context-summary-banner')).toHaveTextContent('org-1:admin');
   });
 
   it('redirects megatrends route to Discovery Tools canonical route', async () => {

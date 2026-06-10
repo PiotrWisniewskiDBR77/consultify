@@ -210,7 +210,7 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
             className={`mt-3 text-sm ${
               canGenerate
                 ? 'text-primary-600 hover:text-primary-700'
-                : 'text-slate-400 cursor-not-allowed'
+                : 'text-slate-600 cursor-not-allowed'
             }`}
           >
             {isPolish ? 'Konfiguruj' : 'Configure'}
@@ -261,7 +261,7 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
           className={`px-4 py-2 rounded-lg text-sm font-medium ${
             ready && canApprove && confirmApprove
               ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-              : 'bg-slate-200 dark:bg-navy-800 text-slate-400 cursor-not-allowed'
+              : 'bg-slate-200 dark:bg-navy-800 text-slate-600 cursor-not-allowed'
           }`}
         >
           {isPolish ? 'Approve' : 'Approve'}
@@ -272,7 +272,7 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
           className={`px-4 py-2 rounded-lg text-sm font-medium border ${
             comment.trim() && canApprove
               ? 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300'
-              : 'bg-slate-100 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-400 cursor-not-allowed'
+              : 'bg-slate-100 dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-600 cursor-not-allowed'
           }`}
         >
           {isPolish ? 'Send back to Draft' : 'Send back to Draft'}

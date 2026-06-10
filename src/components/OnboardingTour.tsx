@@ -121,7 +121,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white p-1"
+              className="text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white p-1"
             >
               <X size={20} />
             </button>

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-nocheck
 import { Calendar, CheckSquare, Link as LinkIcon, Loader2, Save, Trash2, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -183,7 +181,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+            className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
           >
             <X size={20} />
           </button>
@@ -253,7 +251,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </label>
                 <div className="relative">
                   <Calendar
-                    className="absolute left-3 top-2.5 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-2.5 text-slate-600 dark:text-slate-500"
                     size={16}
                   />
                   <input
@@ -349,14 +347,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       />
                       <button
                         onClick={() => removeChecklistItem(item.id)}
-                        className="text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                        className="text-slate-600 dark:text-slate-500 hover:text-rose-500"
                       >
                         <X size={14} />
                       </button>
                     </div>
                   ))}
                   {checklist.length === 0 && (
-                    <div className="text-xs text-slate-400 dark:text-slate-500 italic">
+                    <div className="text-xs text-slate-600 dark:text-slate-500 italic">
                       No subtasks
                     </div>
                   )}

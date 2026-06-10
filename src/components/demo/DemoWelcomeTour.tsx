@@ -205,7 +205,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
           {/* Skip Button */}
           <button
             onClick={handleSkip}
-            className="absolute -top-12 right-0 text-slate-400 hover:text-slate-200 text-sm flex items-center gap-1 transition-colors duration-150"
+            className="absolute -top-12 right-0 text-slate-600 hover:text-slate-200 text-sm flex items-center gap-1 transition-colors duration-150"
           >
             {t('tour.skip', 'Skip tour')}
             <X size={14} />
@@ -218,7 +218,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8">
                 <div className="text-center mb-8">
                   <div className="w-16 h-16 mx-auto bg-slate-100 dark:bg-navy-700/50 rounded-xl flex items-center justify-center mb-6">
-                    <Sparkles size={32} className="text-slate-400" />
+                    <Sparkles size={32} className="text-slate-600" />
                   </div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
                     {t('tour.welcome.title', 'Open the sample workspace walkthrough')}
@@ -247,7 +247,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                           : 'bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06]'
                       }`}
                     >
-                      <role.icon size={24} className="text-slate-400 mb-2" />
+                      <role.icon size={24} className="text-slate-600 mb-2" />
                       <h3 className="text-slate-900 dark:text-slate-100 font-semibold text-sm">
                         {role.label}
                       </h3>
@@ -258,7 +258,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
 
                 {scenarios.length > 0 && (
                   <div className="mt-6">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-3">
                       {t('tour.scenarios.label', 'Guided scenarios')}
                     </p>
                     <div className="grid grid-cols-1 gap-3">
@@ -346,7 +346,7 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                           >
                             <Icon
                               size={32}
-                              className={isComplete ? 'text-success-500' : 'text-slate-400'}
+                              className={isComplete ? 'text-success-500' : 'text-slate-600'}
                             />
                           </div>
                           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">

@@ -193,8 +193,8 @@ export const STATUS_COLORS = {
   ARCHIVED: {
     bg: 'bg-slate-50 dark:bg-slate-900',
     bgDark: 'dark:bg-slate-900',
-    text: 'text-slate-400 dark:text-slate-600',
-    textDark: 'dark:text-slate-600',
+    text: 'text-slate-600 dark:text-slate-400',
+    textDark: 'dark:text-slate-400',
     border: 'border-slate-200',
     borderDark: 'dark:border-slate-800',
     indicator: 'bg-slate-300',

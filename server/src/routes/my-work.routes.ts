@@ -298,6 +298,53 @@ const parseTagsArray = (input: unknown): string[] => {
   return [];
 };
 
+/**
+ * Decode HTML entities back to plain text before persisting idea fields.
+ *
+ * The global inputSanitizationMiddleware HTML-encodes every request body
+ * (e.g. `"` -> `&quot;`). Persisting that encoded value is wrong for a React
+ * frontend (React escapes on render), and content that was already encoded
+ * once (e.g. an idea seeded from a sanitized chat message) gets encoded again
+ * (`&quot;` -> `&amp;quot;`). Decoding here stores PLAIN text, which React
+ * re-escapes safely at render time — no XSS hole is introduced.
+ */
+const IDEA_NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  '#x27': "'",
+  '#39': "'",
+  '#96': '`',
+  '#x60': '`',
+  nbsp: ' ',
+};
+const decodeIdeaText = (input: string): string => {
+  let current = input;
+  for (let i = 0; i < 5; i += 1) {
+    const next = current.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
+      const key = body.toLowerCase();
+      if (IDEA_NAMED_ENTITIES[key] !== undefined) return IDEA_NAMED_ENTITIES[key];
+      if (body[0] === '#') {
+        const isHex = body[1] === 'x' || body[1] === 'X';
+        const code = parseInt(isHex ? body.slice(2) : body.slice(1), isHex ? 16 : 10);
+        if (Number.isFinite(code) && code > 0 && code <= 0x10ffff) {
+          try {
+            return String.fromCodePoint(code);
+          } catch {
+            return match;
+          }
+        }
+      }
+      return match;
+    });
+    if (next === current) break;
+    current = next;
+  }
+  return current;
+};
+
 const parseJsonField = <T>(input: unknown, fallback: T): T => {
   if (input == null) return fallback;
   if (typeof input !== 'string') return input as T;
@@ -920,6 +967,17 @@ router.get(
     const customFieldsSelect = taskCols.has('custom_fields_json')
       ? 't.custom_fields_json as customFields'
       : 'NULL as customFields';
+    // Mirror the Initiatives/Decisions `?source` lineage filter (e.g.
+    // ?source=interview_insight). No-ops when the source_type column is absent.
+    const tSourceTypeSelect = taskCols.has('source_type') ? 't.source_type' : 'NULL as source_type';
+    const tSourceIdSelect = taskCols.has('source_id') ? 't.source_id' : 'NULL as source_id';
+    const normalizedTaskSource = req.query.source
+      ? String(req.query.source).trim().toLowerCase()
+      : '';
+    const applyTaskSourceFilter = !!(normalizedTaskSource && taskCols.has('source_type'));
+    const taskSourceWhere = applyTaskSourceFilter
+      ? `AND LOWER(COALESCE(t.source_type, '')) = ?`
+      : '';
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -940,6 +998,8 @@ router.get(
           a.avatar_url as assigneeAvatarUrl,
           t.estimated_hours as estimatedHours,
           t.checklist,
+          ${tSourceTypeSelect} as "sourceType",
+          ${tSourceIdSelect} as "sourceId",
           ${customFieldsSelect}
         FROM tasks t
         LEFT JOIN initiatives i ON t.initiative_id = i.id
@@ -948,13 +1008,14 @@ router.get(
         WHERE t.organization_id = ?
           AND t.assignee_id = ?
           ${onlyOpen ? "AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')" : ''}
+          ${taskSourceWhere}
         ORDER BY
           CASE lower(coalesce(t.priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
           COALESCE(t.due_date, '9999-12-31') ASC,
           t.updated_at DESC
         LIMIT ?
       `,
-        [orgId, userId, limit]
+        [orgId, userId, ...(applyTaskSourceFilter ? [normalizedTaskSource] : []), limit]
       )) || [];
 
     const parseCustomFields = (raw: string | null) => {
@@ -977,7 +1038,10 @@ router.get(
 /**
  * T007 (V2) — Personal Tasks (private per-user)
  *
- * NOTE: stored in `tasks` with `task_type='personal'` and filtered by assignee + org.
+ * NOTE: stored in `tasks` and filtered by assignee + org. The GET list returns
+ * all owner-scoped tasks regardless of task_type (real tasks default to
+ * 'execution'); personal tasks are sorted first. Org + owner scoping is always
+ * enforced — no cross-tenant leak.
  */
 router.get(
   '/personal-tasks',
@@ -1044,9 +1108,9 @@ router.get(
         LEFT JOIN users a ON t.assignee_id = a.id
         WHERE t.organization_id = ?
           AND ${ownerScope.whereSql}
-          AND lower(coalesce(t.task_type,'')) = 'personal'
           ${whereExtra}
         ORDER BY
+          CASE WHEN lower(coalesce(t.task_type,'')) = 'personal' THEN 0 ELSE 1 END,
           CASE lower(coalesce(t.priority,'')) WHEN 'urgent' THEN 0 WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 2 END,
           COALESCE(t.due_date, '9999-12-31') ASC,
           t.updated_at DESC
@@ -1407,8 +1471,11 @@ router.get(
     const nowIso = new Date().toISOString();
     const today = todayIsoDate();
 
-    const triagedRows =
-      (await queryHelpers.queryAll<{
+    // PERF (FIX-1 inbox N+1): these sources are independent — run them in
+    // parallel with Promise.all instead of ~8 sequential awaits so a single
+    // /inbox request issues one fan-out round-trip set, not a serial chain.
+    const triagedRowsPromise = queryHelpers
+      .queryAll<{
         item_key: string;
         action: string;
         params_json?: string;
@@ -1416,30 +1483,11 @@ router.get(
       }>(
         `SELECT item_key, action, params_json, triaged_at FROM my_work_inbox_triage WHERE user_id = ?`,
         [userId]
-      )) || [];
-    const triagedMap = new Map<
-      string,
-      { action: TriageAction; params?: Record<string, unknown>; triagedAt: string }
-    >();
-    for (const r of triagedRows) {
-      let params: Record<string, unknown> | undefined;
-      if (r.params_json) {
-        try {
-          params = JSON.parse(r.params_json);
-        } catch {
-          params = undefined;
-        }
-      }
-      triagedMap.set(r.item_key, {
-        action: r.action as TriageAction,
-        params,
-        triagedAt: r.triaged_at,
-      });
-    }
-
+      )
+      .then((rows) => rows || []);
     // 1) Overdue tasks (assigned)
-    const overdueTasks =
-      (await queryHelpers.queryAll<any>(
+    const overdueTasksPromise = queryHelpers
+      .queryAll<any>(
         `
         SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
                t.initiative_id as initiativeId, i.name as initiativeName,
@@ -1458,11 +1506,12 @@ router.get(
         LIMIT ?
       `,
         [orgId, userId, today, Math.min(25, limit)]
-      )) || [];
+      )
+      .then((rows) => rows || []);
 
     // 1b) Blocked tasks (assigned)
-    const blockedTasks =
-      (await queryHelpers.queryAll<any>(
+    const blockedTasksPromise = queryHelpers
+      .queryAll<any>(
         `
         SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
                t.initiative_id as initiativeId, i.name as initiativeName,
@@ -1487,11 +1536,12 @@ router.get(
         LIMIT ?
       `,
         [orgId, userId, Math.min(25, limit)]
-      )) || [];
+      )
+      .then((rows) => rows || []);
 
     // 1c) Assigned open tasks (non-overdue, non-blocked)
-    const assignedOpenTasks =
-      (await queryHelpers.queryAll<any>(
+    const assignedOpenTasksPromise = queryHelpers
+      .queryAll<any>(
         `
         SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date as dueDate,
                t.initiative_id as initiativeId, i.name as initiativeName,
@@ -1515,16 +1565,18 @@ router.get(
         LIMIT ?
       `,
         [orgId, userId, today, Math.min(25, limit)]
-      )) || [];
+      )
+      .then((rows) => rows || []);
 
-    // 2) Pending decisions (owned)
-    const decisionCols = await getTableColumns('decisions');
-    const decisionPrioritySelect = decisionCols.has('priority')
-      ? 'd.priority'
-      : `'MEDIUM' as priority`;
-    const pendingDecisions =
-      (await queryHelpers.queryAll<any>(
-        `
+    // 2) Pending decisions (owned) — self-contained: schema probe + query
+    const pendingDecisionsPromise = (async () => {
+      const decisionCols = await getTableColumns('decisions');
+      const decisionPrioritySelect = decisionCols.has('priority')
+        ? 'd.priority'
+        : `'MEDIUM' as priority`;
+      return (
+        (await queryHelpers.queryAll<any>(
+          `
         SELECT d.id, d.title, d.description, d.type as decisionType, d.status, ${decisionPrioritySelect}, d.deadline as dueDate, d.created_at as createdAt,
                p.name as projectName
         FROM decisions d
@@ -1535,33 +1587,36 @@ router.get(
         ORDER BY d.created_at DESC
         LIMIT ?
       `,
-        [orgId, userId, Math.min(25, limit)]
-      )) || [];
+          [orgId, userId, Math.min(25, limit)]
+        )) || []
+      );
+    })();
 
-    // 3) Unread notifications (owned)
-    const notifCols = await getTableColumns('notifications');
-    const notifHasRead = notifCols.has('read');
-    const notifReadExpr = notifHasRead ? 'COALESCE(read, 0)' : '0';
-    const notifPrioritySelect = notifCols.has('priority') ? 'priority' : `'normal' as priority`;
-    const notifMessageSelect = notifCols.has('message')
-      ? 'message as body'
-      : notifCols.has('body')
-        ? 'body as body'
-        : `'' as body`;
-    const notifEntityTypeSelect = notifCols.has('entity_type')
-      ? 'entity_type as entityType'
-      : notifCols.has('entityType')
-        ? 'entityType as entityType'
-        : 'NULL as entityType';
-    const notifEntityIdSelect = notifCols.has('entity_id')
-      ? 'entity_id as entityId'
-      : notifCols.has('entityId')
-        ? 'entityId as entityId'
-        : 'NULL as entityId';
+    // 3) Unread notifications (owned) — self-contained: schema probe + query
+    const unreadNotificationsPromise = (async () => {
+      const notifCols = await getTableColumns('notifications');
+      const notifHasRead = notifCols.has('read');
+      const notifReadExpr = notifHasRead ? 'COALESCE(read, 0)' : '0';
+      const notifPrioritySelect = notifCols.has('priority') ? 'priority' : `'normal' as priority`;
+      const notifMessageSelect = notifCols.has('message')
+        ? 'message as body'
+        : notifCols.has('body')
+          ? 'body as body'
+          : `'' as body`;
+      const notifEntityTypeSelect = notifCols.has('entity_type')
+        ? 'entity_type as entityType'
+        : notifCols.has('entityType')
+          ? 'entityType as entityType'
+          : 'NULL as entityType';
+      const notifEntityIdSelect = notifCols.has('entity_id')
+        ? 'entity_id as entityId'
+        : notifCols.has('entityId')
+          ? 'entityId as entityId'
+          : 'NULL as entityId';
 
-    const unreadNotifications =
-      (await queryHelpers.queryAll<any>(
-        `
+      return (
+        (await queryHelpers.queryAll<any>(
+          `
         SELECT
           id,
           type,
@@ -1577,8 +1632,47 @@ router.get(
         ORDER BY created_at DESC
         LIMIT ?
       `,
-        [userId, Math.min(25, limit)]
-      )) || [];
+          [userId, Math.min(25, limit)]
+        )) || []
+      );
+    })();
+
+    // Resolve all independent inbox sources in parallel (FIX-1 inbox N+1).
+    const [
+      triagedRows,
+      overdueTasks,
+      blockedTasks,
+      assignedOpenTasks,
+      pendingDecisions,
+      unreadNotifications,
+    ] = await Promise.all([
+      triagedRowsPromise,
+      overdueTasksPromise,
+      blockedTasksPromise,
+      assignedOpenTasksPromise,
+      pendingDecisionsPromise,
+      unreadNotificationsPromise,
+    ]);
+
+    const triagedMap = new Map<
+      string,
+      { action: TriageAction; params?: Record<string, unknown>; triagedAt: string }
+    >();
+    for (const r of triagedRows) {
+      let params: Record<string, unknown> | undefined;
+      if (r.params_json) {
+        try {
+          params = JSON.parse(r.params_json);
+        } catch {
+          params = undefined;
+        }
+      }
+      triagedMap.set(r.item_key, {
+        action: r.action as TriageAction,
+        params,
+        triagedAt: r.triaged_at,
+      });
+    }
 
     // Anti-spam aggregation (best-effort): group notifications by (type, entityType, entityId) when possible
     const aggregatedNotifications: any[] = [];
@@ -2337,6 +2431,20 @@ router.get(
       ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
     ].join(',\n          ');
 
+    // Home-shell columns (folders / favorites / recents). Guarded so the list
+    // works whether or not the M2 migration has been applied yet.
+    const homeSelect = [
+      ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"',
+      ideaColumns.has('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"',
+      ideaColumns.has('last_opened_at')
+        ? 'last_opened_at as "lastOpenedAt"'
+        : 'NULL as "lastOpenedAt"',
+    ].join(',\n          ');
+
+    const folder = req.query.folder ? String(req.query.folder).trim() : '';
+    const favoriteOnly =
+      String(req.query.favoriteOnly || '') === 'true' || req.query.favoriteOnly === '1';
+
     const params: any[] = [userId, orgId];
     let whereExtra = '';
     if (q) {
@@ -2346,6 +2454,13 @@ router.get(
     if (tag) {
       whereExtra += " AND lower(coalesce(tags,'')) LIKE ?";
       params.push(`%${tag}%`);
+    }
+    if (folder && ideaColumns.has('folder_id')) {
+      whereExtra += ' AND folder_id = ?';
+      params.push(folder);
+    }
+    if (favoriteOnly && ideaColumns.has('is_favorite')) {
+      whereExtra += ' AND is_favorite = 1';
     }
     params.push(limit);
 
@@ -2368,6 +2483,7 @@ router.get(
           branch,
           promoted_to as "promotedTo",
           ${lineageSelect},
+          ${homeSelect},
           created_at as "createdAt",
           updated_at as "updatedAt"
         FROM my_ideas
@@ -2379,7 +2495,15 @@ router.get(
         params
       )) || [];
 
-    res.json(rows.map((r: any) => decorateIdeaLineage({ ...r, tags: parseTagsArray(r?.tags) })));
+    res.json(
+      rows.map((r: any) =>
+        decorateIdeaLineage({
+          ...r,
+          tags: parseTagsArray(r?.tags),
+          isFavorite: !!r?.isFavorite,
+        })
+      )
+    );
   })
 );
 
@@ -2434,13 +2558,13 @@ router.post(
     const { userId, orgId } = identity;
     if (!(await requireTables(res, ['my_ideas']))) return;
 
-    const title = String(req.body?.title || '').trim();
+    const title = decodeIdeaText(String(req.body?.title || '').trim());
     if (!title) {
       res.status(400).json({ error: 'title is required' });
       return;
     }
 
-    const body = typeof req.body?.body === 'string' ? req.body.body : null;
+    const body = typeof req.body?.body === 'string' ? decodeIdeaText(req.body.body) : null;
     const tags = parseTagsArray(req.body?.tags);
     const sourceType = req.body?.sourceType ? String(req.body.sourceType) : null;
     const sourceConversationId = req.body?.sourceConversationId
@@ -2649,14 +2773,24 @@ router.put(
       params.push(val);
     };
 
-    if (typeof req.body?.title === 'string') set('title', String(req.body.title).trim());
-    if (typeof req.body?.body === 'string') set('body', req.body.body);
+    if (typeof req.body?.title === 'string')
+      set('title', decodeIdeaText(String(req.body.title).trim()));
+    if (typeof req.body?.body === 'string') set('body', decodeIdeaText(req.body.body));
     if (req.body?.tags !== undefined) set('tags', JSON.stringify(parseTagsArray(req.body.tags)));
     if (typeof req.body?.branch === 'string') set('branch', req.body.branch);
     if (typeof req.body?.area === 'string') set('area', req.body.area);
     if (typeof req.body?.priority === 'number')
       set('priority', Math.max(0, Math.min(100, req.body.priority)));
     if (typeof req.body?.stage === 'string') set('stage', req.body.stage);
+
+    // Home-shell fields (guarded so they no-op until the M2 migration lands).
+    const ideaColumns = await getTableColumns('my_ideas');
+    if (typeof req.body?.isFavorite === 'boolean' && ideaColumns.has('is_favorite')) {
+      set('is_favorite', req.body.isFavorite ? 1 : 0);
+    }
+    if (req.body?.folderId !== undefined && ideaColumns.has('folder_id')) {
+      set('folder_id', req.body.folderId ? String(req.body.folderId) : null);
+    }
 
     if (setParts.length === 0) {
       const row = await queryHelpers.queryOne<any>(
@@ -2745,6 +2879,140 @@ router.put(
     });
 
     res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+  })
+);
+
+// Record that an idea was opened (server-backed "recents"). Lightweight, no audit.
+router.post(
+  '/my-ideas/:id/opened',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas']))) return;
+
+    const ideaColumns = await getTableColumns('my_ideas');
+    if (!ideaColumns.has('last_opened_at')) {
+      res.json({ ok: true, skipped: true });
+      return;
+    }
+    const id = String(req.params.id || '').trim();
+    await queryHelpers.queryRun(
+      `UPDATE my_ideas SET last_opened_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [id, userId, orgId]
+    );
+    res.json({ ok: true });
+  })
+);
+
+// ── Idea folders (per-user organization) ─────────────────────────────────────
+router.get(
+  '/my-idea-folders',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_folders']))) return;
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT id, name, description, color,
+                parent_folder_id as "parentFolderId",
+                created_at as "createdAt", updated_at as "updatedAt"
+         FROM my_idea_folders
+         WHERE user_id = ? AND organization_id = ?
+         ORDER BY lower(name) ASC`,
+        [userId, orgId]
+      )) || [];
+    res.json(rows);
+  })
+);
+
+router.post(
+  '/my-idea-folders',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_folders']))) return;
+    const name = String(req.body?.name || '').trim();
+    if (!name) {
+      res.status(400).json({ error: 'name is required' });
+      return;
+    }
+    const description = typeof req.body?.description === 'string' ? req.body.description : null;
+    const color = req.body?.color ? String(req.body.color) : null;
+    const parentFolderId = req.body?.parentFolderId ? String(req.body.parentFolderId) : null;
+    const id = uuidv4();
+    await queryHelpers.queryRun(
+      `INSERT INTO my_idea_folders
+         (id, user_id, organization_id, name, description, color, parent_folder_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, orgId, name, description, color, parentFolderId]
+    );
+    res.json({ id, name, description, color, parentFolderId });
+  })
+);
+
+router.put(
+  '/my-idea-folders/:folderId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_folders']))) return;
+    const folderId = String(req.params.folderId || '').trim();
+    const setParts: string[] = [];
+    const params: any[] = [];
+    const set = (col: string, val: any) => {
+      setParts.push(`${col} = ?`);
+      params.push(val);
+    };
+    if (typeof req.body?.name === 'string') set('name', req.body.name.trim());
+    if (typeof req.body?.description === 'string') set('description', req.body.description);
+    if (typeof req.body?.color === 'string') set('color', req.body.color);
+    if (req.body?.parentFolderId !== undefined)
+      set('parent_folder_id', req.body.parentFolderId ? String(req.body.parentFolderId) : null);
+    if (setParts.length === 0) {
+      res.json({ ok: true });
+      return;
+    }
+    setParts.push('updated_at = CURRENT_TIMESTAMP');
+    params.push(folderId, userId, orgId);
+    await queryHelpers.queryRun(
+      `UPDATE my_idea_folders SET ${setParts.join(', ')}
+       WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      params
+    );
+    res.json({ ok: true });
+  })
+);
+
+router.delete(
+  '/my-idea-folders/:folderId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_idea_folders']))) return;
+    const folderId = String(req.params.folderId || '').trim();
+    // Keep the ideas — just unfile them — then drop the folder.
+    const ideaColumns = await getTableColumns('my_ideas');
+    if (ideaColumns.has('folder_id')) {
+      await queryHelpers.queryRun(
+        `UPDATE my_ideas SET folder_id = NULL
+         WHERE folder_id = ? AND user_id = ? AND organization_id = ?`,
+        [folderId, userId, orgId]
+      );
+    }
+    await queryHelpers.queryRun(
+      `DELETE FROM my_idea_folders WHERE id = ? AND user_id = ? AND organization_id = ?`,
+      [folderId, userId, orgId]
+    );
+    res.json({ ok: true });
   })
 );
 

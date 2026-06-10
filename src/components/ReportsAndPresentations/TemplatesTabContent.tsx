@@ -5,12 +5,13 @@
  */
 
 import {
+  Archive,
   BookTemplate,
+  ChevronRight,
   Copy,
   Edit,
   FileSpreadsheet,
   FileText,
-  Loader2,
   MessageSquare,
   Play,
   Presentation,
@@ -18,6 +19,8 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
 import { useOpenChatWithContext } from '../../hooks/useOpenChatWithContext';
 import {
@@ -206,14 +209,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         ],
         render: (row: TemplateItem) => {
           const meta = TEMPLATE_STATUS_META[row.status] || TEMPLATE_STATUS_META.active;
-          return (
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-500/10">
-              <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                {isPolish ? meta.labelPl : meta.label}
-              </span>
-            </div>
-          );
+          return <StatusChip label={isPolish ? meta.labelPl : meta.label} tone={meta.tone} />;
         },
       },
       {
@@ -239,6 +235,13 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   );
 
   const getRowActions = (row: TemplateItem): RowAction[] => [
+    // canon §9.2 FIXED BOTTOM MANIFEST position 1
+    {
+      id: 'open_preview',
+      label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+      icon: ChevronRight,
+      onClick: () => setSelectedId(row.id),
+    },
     {
       id: 'use',
       label: t('rap.actions.useTemplate', 'Użyj wzorca'),
@@ -299,6 +302,16 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       icon: Edit,
       onClick: () => navigate(resolveTemplateEditPath(row.id, row.type)),
     },
+    {
+      // canon §14 + §9.2: Archive slot — soft-delete placeholder (backend TBD)
+      id: 'archive',
+      label: t('rap.actions.archive', 'Archiwizuj'),
+      icon: Archive,
+      divider: true,
+      disabled: true,
+      description: 'Wkrótce',
+      onClick: () => {},
+    },
   ];
 
   useEffect(() => {
@@ -315,11 +328,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const itemIds = filteredData.map((i) => i.id);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={24} className="animate-spin text-slate-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   if (error && templates.length === 0 && !searchQuery && activeFilters.length === 0) {
@@ -371,7 +380,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
 
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 max-w-2xl mx-auto">
-        <BookTemplate size={40} className="text-slate-300 dark:text-slate-600 mb-4" />
+        <BookTemplate size={40} className="text-slate-600 dark:text-slate-400 mb-4" />
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
           {t('rap.empty.templatesOnboarding', 'Biblioteka wzorców')}
         </h3>

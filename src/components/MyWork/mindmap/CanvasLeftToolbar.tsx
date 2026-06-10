@@ -416,7 +416,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               aria-label={isPl ? slot.labelPl : slot.labelEn}
               className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${
                 isDisabled
-                  ? 'opacity-40 cursor-not-allowed text-slate-400 dark:text-slate-600'
+                  ? 'opacity-40 cursor-not-allowed text-slate-600 dark:text-slate-400'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
               }`}
             >

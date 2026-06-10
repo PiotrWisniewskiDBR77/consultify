@@ -56,7 +56,7 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
           >
             <X size={16} />
           </button>
@@ -74,7 +74,7 @@ export const AssignPersonModal: React.FC<AssignPersonModalProps> = ({
 
         {uniqueRecent.length > 0 && (
           <div className="mb-3">
-            <div className="mb-1 text-[10px] uppercase tracking-wider text-slate-400">
+            <div className="mb-1 text-[10px] uppercase tracking-wider text-slate-600">
               {isPl ? 'Ostatnio przypisani' : 'Recent'}
             </div>
             <div className="flex flex-wrap gap-1">

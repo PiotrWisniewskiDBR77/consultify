@@ -175,7 +175,7 @@ const MultiSelectDropdown: React.FC<{
                 >
                   <CheckSquare
                     size={14}
-                    className={selected.includes(opt.value) ? 'text-brand' : 'text-slate-300'}
+                    className={selected.includes(opt.value) ? 'text-brand' : 'text-slate-600'}
                   />
                   {opt.avatar && <img src={opt.avatar} alt="" className="w-5 h-5 rounded-full" />}
                   <span className="truncate">{opt.label}</span>
@@ -183,7 +183,7 @@ const MultiSelectDropdown: React.FC<{
               ))}
             </div>
             {hasSelection && (
-              <div className="border-t border-slate-100 dark:border-navy-700 p-2">
+              <div className="border-t border-slate-200 dark:border-navy-700 p-2">
                 <button
                   onClick={() => onChange([])}
                   className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-rose-500 py-1"
@@ -355,7 +355,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -367,7 +367,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
           {filters.search && (
             <button
               onClick={() => updateFilter('search', '')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
             >
               <X size={14} />
             </button>
@@ -483,7 +483,7 @@ export const TaskFiltersBar: React.FC<TaskFiltersBarProps> = ({
               {onDeletePreset && (
                 <button
                   onClick={() => onDeletePreset(preset.id)}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-all"
                 >
                   <X size={10} />
                 </button>

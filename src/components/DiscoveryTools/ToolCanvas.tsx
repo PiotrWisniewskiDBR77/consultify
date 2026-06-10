@@ -25,6 +25,7 @@ import { ReasoningStep } from './steps/ReasoningStep';
 import { ReportStep } from './steps/ReportStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { SummaryStep } from './steps/SummaryStep';
+import { GenericDomainStep } from './tools/Digital';
 import { SWOTBuildPhase } from './tools/DynamicSWOT/SWOTBuildPhase';
 import { SWOTInputExplorationPhase } from './tools/DynamicSWOT/SWOTInputExplorationPhase';
 import { SWOTInsightsPhase } from './tools/DynamicSWOT/SWOTInsightsPhase';
@@ -118,7 +119,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   const renderStepContent = () => {
     if (!stepDefinition) {
       return (
-        <div className="flex items-center justify-center h-full text-slate-400">
+        <div className="flex items-center justify-center h-full text-slate-600">
           Loading step...
         </div>
       );
@@ -586,6 +587,27 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
       }
     }
 
+    // --- Wave 1 digital trio: dedicated domain steps via GenericDomainStep ---
+    const DIGITAL_DOMAIN_STEPS: Record<string, string[]> = {
+      'ai-discovery': ['use-cases', 'prerequisites', 'pilot-plan'],
+      'pain-explorer': ['problems', 'hypotheses', 'evidence-gaps'],
+      'rpa-scanner': ['candidates', 'sizing', 'backlog'],
+    };
+    if (
+      DIGITAL_DOMAIN_STEPS[toolType] &&
+      DIGITAL_DOMAIN_STEPS[toolType].includes(stepDefinition.id)
+    ) {
+      return (
+        <GenericDomainStep
+          sectionId={stepDefinition.id}
+          title={isPolish ? stepDefinition.namePl : stepDefinition.name}
+          description={isPolish ? stepDefinition.descriptionPl : stepDefinition.description}
+          session={session}
+          isPolish={isPolish}
+        />
+      );
+    }
+
     if (
       [
         'sop-builder',
@@ -638,10 +660,23 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
       }
     }
 
-    // Default fallback
+    // Default guard — every launchable (shipped) tool resolves a step above.
+    // This is belt-and-suspenders: shipped tools never reach here, and HIDE
+    // tools are blocked from launching by the `isComingSoon` catalog flag, so
+    // no paid session can ever surface a raw "not implemented" string.
+    // We still render a graceful, on-brand panel rather than a blank/error.
     return (
-      <div className="flex items-center justify-center h-full text-slate-400">
-        Step content not implemented yet.
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="max-w-md rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center dark:border-white/[0.08] dark:bg-white/[0.04]">
+          <p className="text-base font-medium text-slate-700 dark:text-slate-200">
+            {isPolish ? 'Ten krok jest w przygotowaniu' : 'This step is being prepared'}
+          </p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Wróć do podsumowania, aby kontynuować i wygenerować inicjatywy.'
+              : 'Head back to the summary to continue and generate initiatives.'}
+          </p>
+        </div>
       </div>
     );
   };

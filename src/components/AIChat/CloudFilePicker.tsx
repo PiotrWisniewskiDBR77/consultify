@@ -7,23 +7,15 @@
  * @version 1.0.0
  */
 
-import {
-  ChevronRight,
-  File,
-  FileText,
-  Folder,
-  Image,
-  Loader2,
-  Search,
-  Table,
-  X,
-} from 'lucide-react';
+import { ChevronRight, File, FileText, Folder, Image, Search, Table, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type { CloudFile, CloudProviderId } from '../../hooks/useCloudIntegrations';
 import { Api } from '../../services/api';
+import { EmptyState } from '../ui/composed/EmptyState';
+import { LoadingState } from '../ui/primitives';
 import {
   isSupportedChatAttachment,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
@@ -79,7 +71,7 @@ const getFileIcon = (mimeType: string, isFolder: boolean) => {
     return <Table size={20} className="text-green-500" />;
   if (mimeType.includes('document') || mimeType.includes('word') || mimeType === 'application/pdf')
     return <FileText size={20} className="text-blue-500" />;
-  return <File size={20} className="text-slate-400" />;
+  return <File size={20} className="text-slate-600" />;
 };
 
 // Format file size
@@ -206,7 +198,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
         <div className="flex items-center gap-1 px-4 py-2 border-b border-slate-200 dark:border-navy-700 overflow-x-auto">
           {currentPath.map((item, index) => (
             <React.Fragment key={item.id}>
-              {index > 0 && <ChevronRight size={14} className="text-slate-400 shrink-0" />}
+              {index > 0 && <ChevronRight size={14} className="text-slate-600 shrink-0" />}
               <button
                 onClick={() => navigateToBreadcrumb(index)}
                 className={`text-sm px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors whitespace-nowrap ${
@@ -229,7 +221,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
             })}
           </p>
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
               type="text"
               placeholder={t('common.search', 'Szukaj...')}
@@ -243,16 +235,16 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
         {/* File List */}
         <div className="flex-1 overflow-y-auto min-h-[300px]">
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 size={32} className="animate-spin text-primary-500" />
-            </div>
+            <LoadingState variant="spinner" className="h-full justify-center" />
           ) : filteredFiles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
-              <Folder size={48} className="mb-2 opacity-50" />
-              <p>{t('aiChat.cloudPicker.noFiles', 'Brak plików')}</p>
-            </div>
+            <EmptyState
+              className="h-full justify-center"
+              icon={<Folder />}
+              title={t('aiChat.cloudPicker.noFiles', 'Brak plików')}
+              description=""
+            />
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-navy-700">
+            <div className="divide-y divide-slate-200 dark:divide-navy-700">
               {filteredFiles.map((file) => (
                 <button
                   key={file.id}
@@ -286,7 +278,7 @@ export const CloudFilePicker: React.FC<CloudFilePickerProps> = ({
                       {formatSize(file.size ?? 0)}
                     </span>
                   )}
-                  {file.isFolder && <ChevronRight size={16} className="text-slate-400 shrink-0" />}
+                  {file.isFolder && <ChevronRight size={16} className="text-slate-600 shrink-0" />}
                 </button>
               ))}
             </div>

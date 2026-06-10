@@ -116,6 +116,33 @@ export async function seedE2EAuthWithBootstrap(page: Page): Promise<void> {
     );
   }
 
+  // Fallback for environments where anonymous demo-login is deprecated.
+  try {
+    const suffix = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const registerDemo = await page.request.post(`${API_BASE_URL}/api/auth/register-demo`, {
+      data: {
+        email: `e2e+${suffix}@local.test`,
+        password: `E2E-${suffix}-Pass1!`,
+        firstName: 'E2E',
+      },
+    });
+    if (registerDemo.ok()) {
+      const payload = (await registerDemo.json()) as Record<string, unknown>;
+      if (typeof payload.token === 'string' && payload.token.trim()) {
+        await seedE2EAuthToken(page, payload.token);
+        return;
+      }
+    } else {
+      errors.push(
+        `auth/register-demo ${registerDemo.status()}: ${await registerDemo.text().catch(() => '<no-body>')}`
+      );
+    }
+  } catch (error) {
+    errors.push(
+      `auth/register-demo request failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
   if (isStrictCanvasGate()) {
     throw new Error(
       [
@@ -189,6 +216,17 @@ function isIgnoredRuntimeGateApiFailure(url: string, statusOrError: string | num
   if (
     (url.includes('/api/v10/teresa/voice-config') || url.includes('/api/v10/teresa/voice-event')) &&
     normalized === '401'
+  ) {
+    return true;
+  }
+
+  // Public Anna shell can run without KB v8/public funnel telemetry in local stacks.
+  if (
+    url.includes('/api/public/kb-v8/') ||
+    url.includes('/api/v8/kb/') ||
+    url.includes('/api/kb/') ||
+    url.includes('/api/public/anna/funnel-event') ||
+    url.endsWith('/api/health')
   ) {
     return true;
   }

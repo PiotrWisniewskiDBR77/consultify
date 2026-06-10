@@ -136,7 +136,7 @@ export const PMORoleSelector: React.FC<PMORoleSelectorProps> = ({
         `}
       >
         {isLoading ? (
-          <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+          <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
             {t('common.loading', 'Loading...')}
           </span>
         ) : selectedRole ? (
@@ -150,12 +150,12 @@ export const PMORoleSelector: React.FC<PMORoleSelectorProps> = ({
             )}
           </div>
         ) : (
-          <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+          <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
             {placeholder || t('admin.pmoRoles.selectRole', 'Select PMO Role')}
           </span>
         )}
         <ChevronDown
-          className={`h-4 w-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 text-gray-600 dark:text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 

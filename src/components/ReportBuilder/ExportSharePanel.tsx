@@ -359,7 +359,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
               </h3>
               <button
                 onClick={() => setShowShareModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -461,7 +461,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
 
                 {isLoadingLinks ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+                    <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
                   </div>
                 ) : shareLinks.length === 0 ? (
                   <div className="text-center py-8 text-slate-500">
@@ -500,7 +500,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                         <div className="flex items-center gap-1 ml-2">
                           <button
                             onClick={() => handleCopyLink(link)}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
                             title={isPl ? 'Kopiuj link' : 'Copy link'}
                           >
                             {copiedLinkId === link.id ? (
@@ -511,7 +511,7 @@ export const ExportSharePanel: React.FC<ExportSharePanelProps> = ({
                           </button>
                           <button
                             onClick={() => handleRevokeLink(link.id)}
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
+                            className="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
                             title={isPl ? 'Usuń link' : 'Revoke link'}
                           >
                             <Trash2 className="w-4 h-4" />

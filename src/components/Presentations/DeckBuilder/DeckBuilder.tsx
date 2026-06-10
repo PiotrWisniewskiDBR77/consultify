@@ -13,6 +13,7 @@ import { useParams } from 'react-router-dom';
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
 import {
@@ -24,9 +25,9 @@ import {
   fetchPresentationRuntimeEvents,
   type PresentationRuntimeEvent,
 } from '@/services/presentationRuntimeEvents';
-import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
 import type { WorkspaceContext } from '@/types/workspace';
+import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
 import { AgentActivityPanel } from './AgentActivityPanel';
@@ -35,6 +36,8 @@ import { CardCanvas } from './CardCanvas';
 import { CommandPalette, useCommandPaletteShortcut } from './CommandPalette';
 import { DeckAuditLogModal } from './DeckAuditLogModal';
 import { DeckBuilderBottomBar } from './DeckBuilderBottomBar';
+import type { DeckBuilderTopBarChipsState } from './DeckBuilderMelsChips';
+import { DeckBuilderMelsView } from './DeckBuilderMelsView';
 import { DeckBuilderTopBar } from './DeckBuilderTopBar';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
@@ -46,7 +49,6 @@ import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
 import { ShareModal } from './ShareModal';
 import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
@@ -341,22 +343,9 @@ export const DeckBuilder: React.FC = () => {
   } | null>(null);
 
   const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
-    useVersionHistory(deck);
+    useVersionHistory(deck, deckId);
 
   const { isCardOutdated, refreshCard, refreshAllCards } = useDataRefresh(deck, updateCard);
-
-  const { currentUser: authUser } = useAppStore();
-  const currentUser = useMemo(
-    () => ({
-      userId: authUser?.id || 'current-user',
-      name:
-        `${authUser?.firstName || ''} ${authUser?.lastName || ''}`.trim() ||
-        authUser?.email ||
-        'You',
-    }),
-    [authUser]
-  );
-  const collab = useCollaboration(deckId, currentUser, false);
 
   const [brandKit, setBrandKit] = useState<BrandKit | null>(null);
   useEffect(() => {
@@ -625,10 +614,6 @@ export const DeckBuilder: React.FC = () => {
   }, [undo, redo]);
 
   useEffect(() => {
-    collab.updatePresence({ activeCardIndex });
-  }, [activeCardIndex, collab]);
-
-  useEffect(() => {
     const targetDeckId = String(deckId || deck?.deck_id || '').trim();
     if (!targetDeckId) return;
     setDeckBacklinksLoading(true);
@@ -767,11 +752,24 @@ export const DeckBuilder: React.FC = () => {
   );
 
   const handleRestoreVersion = useCallback(
-    (versionId: string) => {
-      const restored = restoreVersion(versionId);
-      if (restored) setDeck(restored);
+    async (versionId: string) => {
+      try {
+        const restored = await restoreVersion(versionId);
+        if (restored) {
+          setDeck(restored);
+          toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
+        } else {
+          toast.error(
+            isPolish ? 'Nie udało się przywrócić wersji' : 'Could not restore that version'
+          );
+        }
+      } catch {
+        toast.error(
+          isPolish ? 'Nie udało się przywrócić wersji' : 'Could not restore that version'
+        );
+      }
     },
-    [restoreVersion, setDeck]
+    [restoreVersion, setDeck, isPolish]
   );
 
   const handleAcceptAgentEdit = useCallback(async () => {
@@ -874,28 +872,21 @@ export const DeckBuilder: React.FC = () => {
     if (!loadingDeck && loadError) {
       return (
         <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950 px-6">
-          <div className="max-w-md rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-6 text-center shadow-xl">
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {t('presentations.builder.loadFailed', 'Failed to load deck')}
-            </h1>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{loadError}</p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 inline-flex rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-            >
-              {t('common.retry', 'Retry')}
-            </button>
-          </div>
+          <ErrorState
+            title={t('presentations.builder.loadFailed', 'Failed to load deck')}
+            message={loadError}
+            retry={() => window.location.reload()}
+          />
         </div>
       );
     }
 
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
-        <div className="animate-pulse text-slate-400">
-          {t('presentations.builder.loading', 'Loading deck...')}
-        </div>
+        <LoadingState
+          variant="spinner"
+          label={t('presentations.builder.loading', 'Loading deck...')}
+        />
       </div>
     );
   }
@@ -909,6 +900,214 @@ export const DeckBuilder: React.FC = () => {
         onExit={() => setPresentMode('off')}
         presenterView={presentMode === 'presenter'}
       />
+    );
+  }
+
+  // WS-A4: unified ExecutiveModuleShell rendering — now the DEFAULT surface
+  // (flag default ON, Module 12 audit gap #4). The shell adapter is
+  // presentational only — all deck state/handlers below are reused verbatim,
+  // so the legacy 3-panel path remains available via an explicit `?ff_melsDeckBuilder=0`
+  // / localStorage override.
+  if (isMelsDeckBuilderEnabled()) {
+    const deckConfidentiality = ((deck as any)?.confidentiality ||
+      (deck as any)?.meta?.confidentiality ||
+      'internal') as 'public' | 'internal' | 'confidential';
+    return (
+      <DeckThemeProvider
+        initialColorSetId={deck.color_set_id || 'midnight_navy'}
+        initialBrandKit={brandKit}
+      >
+        <DeckBuilderMelsView
+          title={deck.title}
+          onTitleChange={handleTitleChange}
+          moduleLabel={t('presentations.builder.moduleLabel', 'Prezentacje')}
+          backLabel={t('presentations.builder.back', 'Back to presentations')}
+          topBarHandlers={{
+            onTheme: () => setThemeSwitcherOpen(true),
+            onHistory: () => setVersionHistoryOpen((v) => !v),
+            onQa: () => setQualityGatesOpen((v) => !v),
+            onGovernance: () => setGovernanceModalOpen(true),
+            onAnalytics: () => setAnalyticsOpen((v) => !v),
+            onAudit: () => setAuditLogOpen(true),
+            onShare: () => setShareModalOpen(true),
+            onToggleAgent: () => setTeresaOpen((v) => !v),
+            onRun: () => setPresentMode('fullscreen'),
+          }}
+          topBarState={
+            {
+              confidentiality: deckConfidentiality,
+              governanceVerdict: governanceVerdict ?? null,
+              agentOpen: teresaOpen,
+              runEnabled: deck.cards.length > 0,
+            } satisfies DeckBuilderTopBarChipsState
+          }
+          rightRailState={{
+            agentActivityCount: runtimeEvents.events.length,
+            activityTone: runtimeEvents.degraded
+              ? 'warning'
+              : runtimeEvents.events.length > 0
+                ? 'info'
+                : null,
+          }}
+          rightRailPanels={{
+            blocks: (
+              <BlockToolbar
+                onInsertBlock={handleInsertBlock}
+                onOpenMediaLibrary={() => setMediaLibraryOpen(true)}
+              />
+            ),
+            activity: (
+              <AgentActivityPanel
+                events={runtimeEvents.events}
+                degraded={runtimeEvents.degraded}
+                reason={runtimeEvents.reason}
+              />
+            ),
+          }}
+          leftRailTitle={t('presentations.builder.slides', 'Slides')}
+          leftRail={
+            <SlideSorter
+              cards={deck.cards}
+              activeIndex={activeCardIndex}
+              colorSetId={deck.color_set_id}
+              onSelect={setActiveCardIndex}
+              onReorder={reorderCards}
+              onDuplicate={duplicateCard}
+              onDelete={deleteCard}
+              onAddCard={handleAddBlankCard}
+              isCardOutdated={isCardOutdated}
+            />
+          }
+          canvas={
+            <CardCanvas
+              cards={deck.cards}
+              activeCardIndex={activeCardIndex}
+              colorSetId={deck.color_set_id}
+              onSelectCard={setActiveCardIndex}
+              onBlockClick={() => {}}
+              onAddCard={handleAddBlankCard}
+              speakerNotes={activeCard?.speaker_notes}
+              showNotes={showNotes}
+              animationsEnabled={animationsEnabled}
+            />
+          }
+          teresaSlot={
+            teresaOpen ? (
+              <aside className="w-[360px] min-w-[320px] max-w-[420px] flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+                <UnifiedChatPanel
+                  mode="split"
+                  title={t('presentations.builder.teresa.title', 'Teresa')}
+                  workspaceContext={deckWorkspaceContext}
+                  onModuleIntent={handleTeresaDeckIntent}
+                  showModeToggle={false}
+                  showHistoryTrigger
+                  showFocusMode
+                  maxHeight="100%"
+                />
+              </aside>
+            ) : null
+          }
+          bannerSlot={
+            pendingAgentEdit ? (
+              <div className="flex items-center gap-3 border-b border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-4 py-2.5">
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-200 flex-1">
+                  {pendingAgentEdit.reply}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAcceptAgentEdit}
+                  className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                >
+                  {isPolish ? 'Zastosuj' : 'Accept'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRejectAgentEdit}
+                  className="rounded-lg bg-slate-200 dark:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                >
+                  {isPolish ? 'Odrzuć' : 'Reject'}
+                </button>
+              </div>
+            ) : null
+          }
+          bottomBarSlot={
+            <DeckBuilderBottomBar
+              currentIndex={activeCardIndex}
+              totalCards={deck.cards.length}
+              cardTitle={activeCard?.title || ''}
+              onQuickEdits={() => setTeresaOpen(true)}
+              onToggleNotes={() => setShowNotes((v) => !v)}
+              notesOpen={showNotes}
+            />
+          }
+          overlays={
+            <>
+              <ThemeSwitcher
+                isOpen={themeSwitcherOpen}
+                onClose={() => setThemeSwitcherOpen(false)}
+              />
+              <VersionHistoryPanel
+                isOpen={versionHistoryOpen}
+                onClose={() => setVersionHistoryOpen(false)}
+                versions={versions}
+                onRestore={handleRestoreVersion}
+                onSaveCheckpoint={saveManualCheckpoint}
+                hasUnsavedChanges={hasUnsavedChanges}
+                lastSavedAt={lastSavedAt}
+              />
+              <MediaLibraryBrowser
+                isOpen={mediaLibraryOpen}
+                onClose={() => setMediaLibraryOpen(false)}
+                onSelect={handleInsertMediaImage}
+              />
+              <DeckQualityGatesPanel
+                deckId={deckId || deck?.deck_id || ''}
+                isOpen={qualityGatesOpen}
+                onClose={() => setQualityGatesOpen(false)}
+                onJumpToCard={setActiveCardIndex}
+              />
+              <ShareAnalyticsPanel
+                deckId={deckId || deck?.deck_id || ''}
+                isOpen={analyticsOpen}
+                onClose={() => setAnalyticsOpen(false)}
+                totalCards={deck?.cards.length || 0}
+              />
+              {auditLogOpen && (
+                <DeckAuditLogModal
+                  deckId={deckId || deck?.deck_id || ''}
+                  onClose={() => setAuditLogOpen(false)}
+                />
+              )}
+              {governanceModalOpen && (
+                <DeckGovernanceCardModal
+                  deckId={deckId || deck?.deck_id || ''}
+                  onClose={() => setGovernanceModalOpen(false)}
+                  onCardLoaded={(card) => setGovernanceVerdict(card.overallVerdict)}
+                />
+              )}
+              <ShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                deckId={deck.deck_id}
+                deckTitle={deck.title}
+                onExport={handleExport}
+              />
+              <CommandPalette
+                isOpen={commandPaletteOpen}
+                onClose={() => setCommandPaletteOpen(false)}
+                onInsertBlock={handleInsertBlock}
+                onPresent={() => setPresentMode('fullscreen')}
+                onExport={handleExport}
+                onToggleAgent={() => setTeresaOpen((v) => !v)}
+                onOpenTheme={() => setThemeSwitcherOpen(true)}
+                onAddCard={() => handleAddBlankCard()}
+              />
+            </>
+          }
+          onRunPrimary={() => setPresentMode('fullscreen')}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        />
+      </DeckThemeProvider>
     );
   }
 
@@ -935,9 +1134,6 @@ export const DeckBuilder: React.FC = () => {
             onVersionHistory={() => setVersionHistoryOpen((v) => !v)}
             onToggleAnimations={() => setAnimationsEnabled((v) => !v)}
             animationsEnabled={animationsEnabled}
-            collaborators={collab.connectedUsers}
-            isConnected={collab.isConnected}
-            connectionStatus={collab.connectionStatus}
             onQualityGates={() => setQualityGatesOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
             onAuditLog={() => setAuditLogOpen(true)}

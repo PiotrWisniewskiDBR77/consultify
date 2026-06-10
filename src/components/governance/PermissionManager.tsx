@@ -226,7 +226,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
           <input
             type="text"
             placeholder="Search permissions..."
@@ -254,9 +254,9 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
             >
               <div className="flex items-center gap-2">
                 {expandedCategories.has(category) ? (
-                  <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+                  <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
                 )}
                 <Key className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                 <span className="font-medium text-gray-900 dark:text-white">{category}</span>
@@ -291,7 +291,7 @@ export const PermissionManager: React.FC<PermissionManagerProps> = ({
                     return (
                       <div
                         key={perm.key}
-                        className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700"
+                        className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">

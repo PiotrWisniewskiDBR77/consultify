@@ -49,7 +49,7 @@ export const PMODashboard: React.FC = () => {
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
         <h2 className="text-lg font-semibold mb-4 dark:text-white">Portfolio Overview</h2>
-        <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-gray-400">
+        <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg text-gray-600">
           Portfolio Visualization Placeholder
         </div>
       </div>
@@ -74,7 +74,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({ title, value, icon, trend
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${colorClasses[color]}`}>{icon}</div>
         {trend && (

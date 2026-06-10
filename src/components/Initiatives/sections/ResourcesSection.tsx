@@ -215,13 +215,18 @@ const INLINE_SELECT_CLS =
 // Shared helpers
 // ==========================================
 
-const statusBadgeClass = (status: string): string => {
+/** canon §4.2 — status pill shell is always neutral; colour lives in the signal dot. */
+const STATUS_BADGE_SHELL =
+  'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border border-slate-200/70 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300';
+
+/** Signal-tone dot for embedded resource-status pills (no hardcoded shell fills). */
+const statusDotClass = (status: string): string => {
   const map: Record<string, string> = {
-    planned: 'bg-slate-100 dark:bg-slate-500/10 text-slate-600 dark:text-slate-400',
-    active: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-300',
-    deprecated: 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400',
-    expired: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    renewed: 'bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300',
+    planned: 'bg-slate-400 dark:bg-slate-500',
+    active: 'bg-c-success',
+    deprecated: 'bg-c-danger',
+    expired: 'bg-c-warning',
+    renewed: 'bg-c-info',
   };
   return map[status] || map.planned;
 };
@@ -1950,7 +1955,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   <td className="py-2.5 pl-3 pr-2 text-xs text-right text-slate-500">{idx + 1}</td>
                   <td className="py-2.5 pl-3 pr-2 text-slate-700 dark:text-slate-200 truncate">
                     <span className="inline-flex items-center gap-1.5">
-                      <Briefcase size={12} className="text-slate-400 flex-shrink-0" />
+                      <Briefcase size={12} className="text-slate-600 flex-shrink-0" />
                       {BUDGET_CATEGORIES.find((c) => c.value === item.category)?.[
                         isPolish ? 'labelPl' : 'labelEn'
                       ] || item.category}
@@ -1979,7 +1984,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
@@ -2007,7 +2012,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-emerald-50/30 dark:bg-emerald-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2083,7 +2088,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-400 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
                       title={isPolish ? 'Anuluj' : 'Cancel'}
                     >
                       <X size={14} />
@@ -2094,7 +2099,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-sm text-slate-400">
+                <td colSpan={7} className="py-8 text-center text-sm text-slate-600">
                   {isPolish ? 'Brak pozycji budżetowych' : 'No budget items yet'}
                 </td>
               </tr>
@@ -2302,7 +2307,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
@@ -2330,7 +2335,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-blue-50/30 dark:bg-blue-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2414,7 +2419,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-400 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
                       title={isPolish ? 'Anuluj' : 'Cancel'}
                     >
                       <X size={14} />
@@ -2425,7 +2430,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-sm text-slate-400">
+                <td colSpan={8} className="py-8 text-center text-sm text-slate-600">
                   {isPolish ? 'Brak przypisanych zasobów' : 'No team members assigned'}
                 </td>
               </tr>
@@ -2603,9 +2608,8 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                       '—'}
                   </td>
                   <td className="py-2.5 pr-2">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs ${statusBadgeClass(item.status)}`}
-                    >
+                    <span className={STATUS_BADGE_SHELL}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass(item.status)}`} />
                       {TOOL_STATUS_OPTIONS.find((s) => s.value === item.status)?.[
                         isPolish ? 'labelPl' : 'labelEn'
                       ] || item.status}
@@ -2617,7 +2621,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
@@ -2645,7 +2649,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-indigo-50/30 dark:bg-indigo-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pl-3 pr-2">
@@ -2737,7 +2741,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-400 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
                       title={isPolish ? 'Anuluj' : 'Cancel'}
                     >
                       <X size={14} />
@@ -2748,7 +2752,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-sm text-slate-400">
+                <td colSpan={8} className="py-8 text-center text-sm text-slate-600">
                   {isPolish ? 'Brak narzędzi' : 'No tools added yet'}
                 </td>
               </tr>
@@ -2857,7 +2861,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
       case 'knowledge':
         return <BookOpen size={12} className="text-amber-400 flex-shrink-0" />;
       default:
-        return <Briefcase size={12} className="text-slate-400 flex-shrink-0" />;
+        return <Briefcase size={12} className="text-slate-600 flex-shrink-0" />;
     }
   };
 
@@ -2973,9 +2977,8 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                     {item.validUntil ? new Date(item.validUntil).toLocaleDateString() : '—'}
                   </td>
                   <td className="py-2.5 pr-2">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs ${statusBadgeClass(item.status)}`}
-                    >
+                    <span className={STATUS_BADGE_SHELL}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusDotClass(item.status)}`} />
                       {INTANGIBLE_STATUS_OPTIONS.find((s) => s.value === item.status)?.[
                         isPolish ? 'labelPl' : 'labelEn'
                       ] || item.status}
@@ -2987,7 +2990,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                         e.stopPropagation();
                         setMenuId((p) => (p === item.id ? null : item.id));
                       }}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                     >
                       <MoreVertical size={14} />
                     </button>
@@ -3015,7 +3018,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-primary-50/30 dark:bg-primary-500/5"
               >
-                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-400">
+                <td className="py-2 pl-3 pr-2 text-xs text-right text-slate-600">
                   {items.length + 1}
                 </td>
                 <td className="py-2 pr-2">
@@ -3110,7 +3113,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
-                      className="p-1 rounded-md text-slate-400 hover:bg-slate-500/10 transition-colors"
+                      className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
                       title={isPolish ? 'Anuluj' : 'Cancel'}
                     >
                       <X size={14} />
@@ -3121,7 +3124,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
             )}
             {items.length === 0 && !showAdd && (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-sm text-slate-400">
+                <td colSpan={9} className="py-8 text-center text-sm text-slate-600">
                   {isPolish ? 'Brak wartości niematerialnych' : 'No intangible assets yet'}
                 </td>
               </tr>

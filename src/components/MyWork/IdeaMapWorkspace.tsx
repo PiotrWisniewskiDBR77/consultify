@@ -6,13 +6,25 @@
  * - Tools / Context / AI Suggestions stay in the fixed right strip
  * - Selection contract drives Tools panel content
  */
-import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import {
+  AlertTriangle,
+  Download,
+  GitBranch,
+  Keyboard,
+  LayoutTemplate,
+  RefreshCw,
+  Search,
+  StickyNote,
+  Table2,
+  Workflow,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
+import { LoadingState } from '@/components/ui/primitives';
 import { Api, getMapVersionFromPayload } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
@@ -30,8 +42,8 @@ import { ArtifactAttachPopover } from '../shared/NModeBlocks/ArtifactAttachPopov
 import { applyAIProposalRuntime } from './aiProposalRuntime';
 import type { ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { mergeWorkspaceExtensions, useWorkspaceGraphRuntime } from './canvas/workspaceGraphRuntime';
-import { CommandPalette, useCommandPalette } from './CommandPalette';
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { type CommandItem, CommandPalette, useCommandPalette } from './CommandPalette';
+import { type ShortcutHelp, useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
@@ -237,6 +249,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const deepLinkedTableId = searchParams.get('tpTable');
   const deepLinkedViewId = searchParams.get('tpView');
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
@@ -353,7 +366,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const activeTool = externalActiveTool ?? internalActiveTool;
   const activePanel = externalActivePanel ?? internalActivePanel;
-  const cmdPalette = useCommandPalette({ enabled: activeTool !== 'mindmap' });
+  // Command palette enabled in ALL tools (Cmd+K). Mind Map's keyboard layer
+  // does not bind Cmd+K, so there is no double-trigger.
+  const cmdPalette = useCommandPalette();
   // The canvas must stay editable even before formal acceptance.
   // Acceptance still gates downstream actions like AI/convert, but not node manipulation.
   const canvasLocked = false;
@@ -1500,16 +1515,131 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     onClearSelection: () => handleQuickAction('clearSelection'),
   });
 
+  // Workspace-global shortcuts (active in every tool) — prepended to the
+  // mindmap-only `shortcuts` so the help modal is accurate regardless of tool.
+  const helpShortcuts = useMemo<ShortcutHelp[]>(() => {
+    const isMacPlatform =
+      typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+    const globals: ShortcutHelp[] = [
+      {
+        key: 'Alt+1 / 2 / 3 / 4',
+        description: isPolish
+          ? 'Przełącz narzędzie (Mapa / Tablica / Przepływ / Tabela)'
+          : 'Switch tool (Mind Map / Whiteboard / Process Flow / Table)',
+        category: 'navigation',
+      },
+      {
+        key: isMacPlatform ? '⌘F' : 'Ctrl+F',
+        description: isPolish ? 'Szukaj w tej idei' : 'Search this idea',
+        category: 'navigation',
+      },
+      {
+        key: `Shift+1 / ${isMacPlatform ? '⌘0' : 'Ctrl+0'}`,
+        description: isPolish ? 'Dopasuj widok (zoom to fit)' : 'Zoom to fit',
+        category: 'navigation',
+      },
+    ];
+    // `shortcuts` already starts with the '?' help row injected by the hook.
+    return [...globals, ...shortcuts];
+  }, [shortcuts, isPolish]);
+
+  // Workspace-scoped commands injected into the command palette (⌘K).
+  const workspaceCommands = useMemo<CommandItem[]>(() => {
+    const closeAnd = (fn: () => void) => () => {
+      fn();
+      cmdPalette.close();
+    };
+    const toolCmd = (
+      id: CanvasToolType,
+      labelPl: string,
+      labelEn: string,
+      icon: React.ReactNode
+    ): CommandItem => ({
+      id: `ws-tool-${id}`,
+      title: isPolish ? `Przełącz: ${labelPl}` : `Switch to ${labelEn}`,
+      subtitle: isPolish ? 'Narzędzie workspace' : 'Workspace tool',
+      icon,
+      category: 'workspace',
+      action: closeAnd(() => setActiveTool(id)),
+      keywords: [labelPl, labelEn, 'tool', 'narzędzie', id],
+    });
+    return [
+      toolCmd('mindmap', 'Mapa rekomendacji', 'Mind Map', <GitBranch size={18} />),
+      toolCmd('whiteboard', 'Tablica', 'Whiteboard', <StickyNote size={18} />),
+      toolCmd('process_flow', 'Przepływ', 'Process Flow', <Workflow size={18} />),
+      toolCmd('table', 'Tabela', 'Table', <Table2 size={18} />),
+      {
+        id: 'ws-search',
+        title: isPolish ? 'Szukaj w tej idei' : 'Search this idea',
+        icon: <Search size={18} />,
+        category: 'workspace',
+        shortcut: '⌘F',
+        action: closeAnd(() => setSearchOpen(true)),
+        keywords: ['search', 'szukaj', 'find', 'znajdź'],
+      },
+      {
+        id: 'ws-templates',
+        title: isPolish ? 'Otwórz galerię szablonów' : 'Open template gallery',
+        icon: <LayoutTemplate size={18} />,
+        category: 'workspace',
+        action: closeAnd(() => setTemplateGalleryOpen(true)),
+        keywords: ['template', 'szablon', 'gallery', 'galeria'],
+      },
+      {
+        id: 'ws-export',
+        title: isPolish ? 'Eksportuj…' : 'Export…',
+        icon: <Download size={18} />,
+        category: 'workspace',
+        action: closeAnd(() => setExportMenuOpen(true)),
+        keywords: ['export', 'eksport', 'pdf', 'png', 'csv'],
+      },
+      {
+        id: 'ws-help',
+        title: isPolish ? 'Skróty klawiszowe' : 'Keyboard shortcuts',
+        icon: <Keyboard size={18} />,
+        category: 'workspace',
+        shortcut: '?',
+        action: closeAnd(() => setShortcutsHelpOpen(true)),
+        keywords: ['help', 'pomoc', 'shortcuts', 'skróty', 'keyboard'],
+      },
+    ];
+  }, [
+    isPolish,
+    cmdPalette,
+    setActiveTool,
+    setSearchOpen,
+    setTemplateGalleryOpen,
+    setExportMenuOpen,
+    setShortcutsHelpOpen,
+  ]);
+
+  // Workspace-global keyboard: search (⌘F) + tool switch (Alt+1..4).
+  // Active in EVERY tool (the useKeyboardShortcuts hook above is mindmap-only).
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
         e.preventDefault();
         setSearchOpen(true);
+        return;
+      }
+      // Alt+1..4 → switch tool. Use e.code (layout-independent: Option+1 on
+      // macOS yields a special char, not "1"). Skip while typing.
+      if (e.altKey && !e.metaKey && !e.ctrlKey) {
+        const target = e.target as HTMLElement | null;
+        const typing =
+          !!target &&
+          (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable);
+        if (typing) return;
+        const idx = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
+        if (idx >= 0) {
+          e.preventDefault();
+          setActiveTool((['mindmap', 'whiteboard', 'process_flow', 'table'] as const)[idx]);
+        }
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [setActiveTool]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -2453,7 +2583,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   if (loading) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-amber-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -2483,7 +2613,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             </button>
             {drillDownStack.map((item, i) => (
               <React.Fragment key={item.nodeId}>
-                <span className="text-[10px] text-slate-400 mx-0.5">/</span>
+                <span className="text-[10px] text-slate-600 mx-0.5">/</span>
                 <button
                   onClick={() => handleDrillUp(i + 1)}
                   className={`text-[10px] font-medium truncate max-w-[120px] ${
@@ -2523,9 +2653,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         <div
           className={`absolute ${workspaceHeaderOffsetClass} left-20 z-[57] max-w-[28rem] rounded-2xl border border-slate-200/70 bg-white/92 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-navy-700/60 dark:bg-navy-900/92`}
         >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary-600 dark:text-primary-400">
-              {isPolish ? 'Idea workspace' : 'Idea workspace'}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* A4: breadcrumb — Ideas › {idea title} › {tool} */}
+            <button
+              type="button"
+              onClick={() => navigate('/my-work')}
+              className="text-[11px] font-semibold text-primary-600 hover:underline dark:text-primary-400"
+            >
+              {isPolish ? 'Idee' : 'Ideas'}
+            </button>
+            <span className="text-[10px] text-slate-600" aria-hidden="true">
+              ›
+            </span>
+            <span
+              className="max-w-[14rem] truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200"
+              title={title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+            >
+              {title ||
+                safeTitleFromSeed(seedText, isPolish) ||
+                (isPolish ? 'Bez tytułu' : 'Untitled')}
+            </span>
+            <span className="text-[10px] text-slate-600" aria-hidden="true">
+              ›
             </span>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
               {activeToolLabel}
@@ -2543,7 +2692,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 </span>
               );
             })()}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">
               {draftSavedLabel}
             </span>
           </div>
@@ -2795,6 +2944,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           activeTool={activeTool}
           onToolChange={setActiveTool}
           familyCounts={familyCounts}
+          onSearch={() => setSearchOpen(true)}
+          onShowHelp={() => setShortcutsHelpOpen(true)}
         />
 
         {proposalBatch && (
@@ -3063,7 +3214,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         isPl={isPolish ?? false}
       />
 
-      <CommandPalette isOpen={cmdPalette.isOpen} onClose={cmdPalette.close} />
+      <CommandPalette
+        isOpen={cmdPalette.isOpen}
+        onClose={cmdPalette.close}
+        extraCommands={workspaceCommands}
+      />
 
       {/* V51-30: Artifact attach popover */}
       <ArtifactAttachPopover
@@ -3078,7 +3233,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       <KeyboardShortcutsHelp
         isOpen={shortcutsHelpOpen}
         onClose={() => setShortcutsHelpOpen(false)}
-        shortcuts={shortcuts}
+        shortcuts={helpShortcuts}
       />
     </div>
   );

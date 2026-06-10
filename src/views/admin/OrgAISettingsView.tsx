@@ -47,7 +47,7 @@ const POLICY_LEVELS = [
     title: 'Advisory',
     description: 'AI can only explain and suggest. No modifications.',
     icon: MessageSquare,
-    color: 'text-slate-400 dark:text-slate-500',
+    color: 'text-slate-600 dark:text-slate-500',
     bgColor: 'from-slate-700 to-slate-800',
   },
   {
@@ -299,7 +299,7 @@ export const OrgAISettingsView: React.FC = () => {
           <Brain className="text-slate-500 dark:text-slate-400" size={32} />
         </div>
         <h2 className="text-xl font-semibold text-white mb-2">No AI Settings Found</h2>
-        <p className="text-slate-400 dark:text-slate-500 max-w-md mb-6">
+        <p className="text-slate-600 dark:text-slate-500 max-w-md mb-6">
           This organization doesn't have AI settings configured yet. Please contact support or check
           your permissions.
         </p>
@@ -327,7 +327,7 @@ export const OrgAISettingsView: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Organization AI Settings</h1>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Configure AI behavior for {currentOrganization?.name || 'your organization'}
               </p>
             </div>
@@ -377,7 +377,7 @@ export const OrgAISettingsView: React.FC = () => {
                             ${
                               activeTab === tab.id
                                 ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                                : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
+                                : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-50 dark:hover:bg-navy-800/20'
                             }
                         `}
           >
@@ -454,11 +454,11 @@ export const OrgAISettingsView: React.FC = () => {
                           </div>
                           <div>
                             <h4
-                              className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-300'}`}
+                              className={`font-semibold ${isSelected ? 'text-white' : 'text-slate-600'}`}
                             >
                               {level.title}
                             </h4>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                            <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">
                               {level.description}
                             </p>
                           </div>
@@ -497,7 +497,7 @@ export const OrgAISettingsView: React.FC = () => {
                       />
                       <div>
                         <span className="font-medium text-white">{role.title}</span>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                        <p className="text-xs text-slate-600 dark:text-slate-500">
                           {role.description}
                         </p>
                       </div>
@@ -506,7 +506,7 @@ export const OrgAISettingsView: React.FC = () => {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-slate-700/50">
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                     Default Role
                   </label>
                   <select
@@ -585,7 +585,7 @@ export const OrgAISettingsView: React.FC = () => {
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                      <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                         Monthly Budget (USD)
                       </label>
                       <input
@@ -599,7 +599,7 @@ export const OrgAISettingsView: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                      <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                         Hard Limit (USD)
                       </label>
                       <input

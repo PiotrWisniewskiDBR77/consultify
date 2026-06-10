@@ -1234,7 +1234,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
           />
         </td>
-        <td className="w-10 px-1 py-1.5 text-[10px] text-slate-400 dark:text-slate-500 text-right select-none tabular-nums">
+        <td className="w-10 px-1 py-1.5 text-[10px] text-slate-600 dark:text-slate-500 text-right select-none tabular-nums">
           {rowIdx + 1}
         </td>
         {stretchedVisibleCols.map((col, colIdx) => {
@@ -1299,7 +1299,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     className="opacity-0 group-hover/cell:opacity-60 hover:!opacity-100 p-0.5 rounded transition-opacity flex-shrink-0"
                     title={isPl ? 'Rozwiń' : 'Expand'}
                   >
-                    <Maximize2 size={9} className="text-slate-400" />
+                    <Maximize2 size={9} className="text-slate-600" />
                   </button>
                 )}
               </div>
@@ -1464,7 +1464,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
                           activeViewId === v.id
                             ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                            : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'
                         }`}
                       >
                         {v.name}
@@ -1478,7 +1478,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       setSaveViewName('');
                       setShowSaveViewDialog(true);
                     }}
-                    className="p-1 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+                    className="p-1 rounded-lg text-slate-600 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
                     title={isPl ? 'Zapisz widok' : 'Save view'}
                   >
                     <Plus size={12} />
@@ -1595,7 +1595,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <div className="relative flex-1 max-w-[200px]">
                 <Filter
                   size={12}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600"
                 />
                 <input
                   value={filterInput}
@@ -1606,7 +1606,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {filterInput && (
                   <button
                     onClick={() => setFilterInput('')}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600"
                   >
                     <X size={10} />
                   </button>
@@ -1696,7 +1696,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <button
                     key={v.id}
                     onClick={() => (usePlatform ? effectiveSetViewLayout : setViewLayout)(v.id)}
-                    className={`relative p-1.5 transition-colors ${_vl === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`relative p-1.5 transition-colors ${_vl === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={v.label}
                   >
                     <v.icon size={12} />
@@ -1733,7 +1733,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {!locked && (
                   <button
                     onClick={() => setShowAICategorize(true)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
                   >
                     <Layers size={12} />
@@ -1743,7 +1743,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Scoring Model */}
                 <button
                   onClick={() => setShowScoringModel(true)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Model scoringowy' : 'Scoring Model'}
                 >
                   <Trophy size={12} />
@@ -1752,7 +1752,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Export to Presentation */}
                 <button
                   onClick={() => setShowExportPresentation(true)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
                 >
                   <Presentation size={12} />
@@ -1761,7 +1761,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Pipeline */}
                 <button
                   onClick={() => setShowPipeline(true)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}
                 >
                   <Rocket size={12} />
@@ -1770,7 +1770,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* AI Copilot */}
                 <button
                   onClick={() => setShowCopilot(true)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'AI Copilot' : 'AI Copilot'}
                 >
                   <Brain size={12} />
@@ -1779,7 +1779,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Voice / Image Input */}
                 <button
                   onClick={() => setShowVoiceInput(true)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Głos / Obraz' : 'Voice / Image'}
                 >
                   <Mic size={12} />
@@ -1788,7 +1788,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Cross-table Relations */}
                 <button
                   onClick={() => setShowCrossRelations(true)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}
                 >
                   <Network size={12} />
@@ -1798,7 +1798,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <div className="relative">
                   <button
                     onClick={() => setShowHeatmap(!showHeatmap)}
-                    className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-amber-500 bg-amber-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={isPl ? 'Heatmapa' : 'Heatmap'}
                   >
                     <Flame size={12} />
@@ -1817,7 +1817,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* History / Audit */}
                 <button
                   onClick={() => setShowAuditTrail((p) => !p)}
-                  className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Historia zmian' : 'History'}
                 >
                   <History size={12} />
@@ -1826,7 +1826,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Activity Feed */}
                 <button
                   onClick={() => setShowActivityFeed((p) => !p)}
-                  className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Aktywność' : 'Activity'}
                 >
                   <Activity size={12} />
@@ -1835,7 +1835,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Snapshots */}
                 <button
                   onClick={() => setShowSnapshotManager(true)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Migawki' : 'Snapshots'}
                 >
                   <Camera size={12} />
@@ -1844,7 +1844,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Keyboard shortcuts */}
                 <button
                   onClick={() => setShowKeyboardShortcuts(true)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
                 >
                   <Keyboard size={12} />
@@ -1854,7 +1854,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {!locked && (
                   <button
                     onClick={() => setShowTemplateGallery(true)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     title={isPl ? 'Szablony' : 'Templates'}
                   >
                     <LayoutTemplate size={12} />
@@ -1865,7 +1865,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {!locked && (
                   <button
                     onClick={() => setShowDistributionBuilder(true)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     title={isPl ? 'Dystrybucja' : 'Distribute'}
                   >
                     <Send size={12} />
@@ -1887,7 +1887,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {/* Conditional formatting */}
                 <button
                   onClick={() => setShowConditionalFmt(true)}
-                  className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
                 >
                   <Paintbrush size={12} />
@@ -1897,7 +1897,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <div className="relative">
                   <button
                     onClick={() => setShowColorPalette(!showColorPalette)}
-                    className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={isPl ? 'Paleta kolorów' : 'Color Palette'}
                   >
                     <Palette size={12} />
@@ -1974,7 +1974,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {usePlatform && (
                   <button
                     onClick={() => setShowInterfaceDesigner(true)}
-                    className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
                   >
                     <Layout size={12} />
@@ -1985,7 +1985,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {usePlatform && !locked && (
                   <button
                     onClick={() => setShowFormBuilder(true)}
-                    className="p-1.5 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    className="p-1.5 rounded-lg transition-colors text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
                     title={isPl ? 'Kreator formularzy' : 'Form Builder'}
                   >
                     <FileText size={12} />
@@ -2010,7 +2010,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     </button>
                     {showToolsMenu && (
                       <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto">
-                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                           {isPl ? 'Workflow' : 'Workflow'}
                         </div>
                         <button
@@ -2063,8 +2063,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           <Send size={14} className="text-pink-500" />
                           {isPl ? 'Dystrybucja' : 'Distribution'}
                         </button>
-                        <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
+                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                           {isPl ? 'Budowanie' : 'Build'}
                         </div>
                         <button
@@ -2107,7 +2107,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           <Download size={14} className="text-blue-500" />
                           {isPl ? 'Konektory' : 'Connectors'}
                         </button>
-                        <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                        <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
                         <button
                           onClick={() => {
                             setShowConsultifyLink(true);
@@ -2233,7 +2233,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {connectors.connectors.length > 0 && (
                   <button
                     onClick={() => setShowConnectorList((v) => !v)}
-                    className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    className="relative p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     title={isPl ? 'Konektory' : 'Connectors'}
                   >
                     <Layers size={12} />
@@ -2248,7 +2248,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {usePlatform && (
                   <button
                     onClick={() => setShowWebhookRelays(true)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-600 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
                     title={isPl ? 'Webhook Relay (Zapier/Make)' : 'Webhook Relays (Zapier/Make)'}
                   >
                     <Webhook size={12} />
@@ -2264,7 +2264,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {!locked && (
                   <button
                     onClick={() => csvInputRef.current?.click()}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     title={isPl ? 'Importuj CSV' : 'Import CSV'}
                   >
                     <Upload size={12} />
@@ -2275,7 +2275,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     const csv = exportToCSV(_cols, effectiveNodes);
                     downloadCSV(csv, `idea-${ideaId}.csv`);
                   }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Eksportuj CSV' : 'Export CSV'}
                 >
                   <Download size={12} />
@@ -2285,7 +2285,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     copyTableToClipboard(_cols, effectiveNodes);
                     toast.success(isPl ? 'Skopiowano' : 'Copied');
                   }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   title={isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
                 >
                   <ClipboardCopy size={12} />
@@ -2312,10 +2312,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         {col.visible ? (
                           <Eye size={12} className="text-primary-500" />
                         ) : (
-                          <EyeOff size={12} className="text-slate-400" />
+                          <EyeOff size={12} className="text-slate-600" />
                         )}
                         {col.header}
-                        <span className="ml-auto text-[9px] text-slate-400">{col.type}</span>
+                        <span className="ml-auto text-[9px] text-slate-600">{col.type}</span>
                       </button>
                     ))}
                     <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-1 pt-1">
@@ -2339,7 +2339,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={handlePlatformUndo}
                   disabled={!usePlatform && !nodesUndo.canUndo}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
                   title="Undo (Ctrl+Z)"
                 >
                   <Undo2 size={13} />
@@ -2347,7 +2347,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   onClick={nodesUndo.redo}
                   disabled={!nodesUndo.canRedo}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
                   title="Redo (Ctrl+Y)"
                 >
                   <Redo2 size={13} />
@@ -2423,7 +2423,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   </button>
                   <button
                     onClick={handleAddRowWithTemplate}
-                    className="px-1 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60"
+                    className="px-1 py-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60"
                     title={isPl ? 'Dodaj z szablonu' : 'Add from template'}
                   >
                     <ChevronDown size={10} />
@@ -2636,7 +2636,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <P15ViewRouter onCSVImport={handleCSVImport} />
               ) : _loading ? (
                 <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="animate-spin text-slate-400" size={24} />
+                  <Loader2 className="animate-spin text-slate-600" size={24} />
                 </div>
               ) : usePlatform && (_vl === 'kanban' || _vl === 'calendar' || _vl === 'grid') ? (
                 <LegacyViewRouter
@@ -2806,7 +2806,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
                           />
                         </th>
-                        <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-400 dark:text-slate-500 text-right select-none">
+                        <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-600 dark:text-slate-500 text-right select-none">
                           #
                         </th>
                         {stretchedVisibleCols.map((col) => (
@@ -2890,7 +2890,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                               >
                                 {groupKey || (isPl ? '(brak wartości)' : '(empty)')}{' '}
-                                <span className="text-slate-400 font-normal ml-1">
+                                <span className="text-slate-600 font-normal ml-1">
                                   ({rows.length})
                                 </span>
                               </td>
@@ -2901,7 +2901,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       ) : processedRowsWithRollups.length === 0 ? (
                         <tr>
                           <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
-                            <div className="mx-auto max-w-xl text-slate-400 dark:text-slate-500">
+                            <div className="mx-auto max-w-xl text-slate-600 dark:text-slate-500">
                               <div className="text-sm font-semibold mb-1">
                                 {isPl ? 'Tabela jest jeszcze pusta' : 'This table is still empty'}
                               </div>
@@ -2959,7 +2959,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                   key={col.key}
                                   className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums"
                                 >
-                                  <span className="text-[8px] text-slate-400 uppercase mr-1">
+                                  <span className="text-[8px] text-slate-600 uppercase mr-1">
                                     {agg}
                                   </span>
                                   {computeAggregation(agg, values)}
@@ -3378,7 +3378,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 onClick={() => setShowInterfaceDesigner(false)}
                 className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
               >
-                <X size={14} className="text-slate-400" />
+                <X size={14} className="text-slate-600" />
               </button>
             </div>
             <InterfaceDesigner

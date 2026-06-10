@@ -25,7 +25,6 @@ import {
   Filter,
   Flag,
   FolderOutput,
-  Grid3X3,
   Layers,
   Library,
   Lightbulb,
@@ -34,11 +33,9 @@ import {
   Loader2,
   MessageSquare,
   Play,
-  Plus,
   RefreshCw,
   Settings,
   Shield,
-  Sparkles,
   Target,
   TrendingUp,
   User,
@@ -55,7 +52,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
-import { Api } from '@/services/api';
+import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -153,8 +150,8 @@ interface StatusFilterOption {
 
 // Discovery tab: DRAFT, PENDING_REVIEW (work in progress)
 const DISCOVERY_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
-  { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
+  { id: 'draft', label: 'Draft', color: 'text-slate-600', bgColor: 'bg-slate-500' },
   {
     id: 'pending_review',
     label: 'Pending Review',
@@ -171,15 +168,15 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
 
 // Reports tab: APPROVED, COMPLETED (finished analyses)
 const REPORTS_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
   { id: 'approved', label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
   { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
 ];
 
 // Initiatives tab: DRAFT, PROPOSED, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED
 const INITIATIVES_STATUSES: StatusFilterOption[] = [
-  { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
-  { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
+  { id: 'all', label: 'All', color: 'text-slate-600', bgColor: 'bg-slate-500' },
+  { id: 'draft', label: 'Draft', color: 'text-slate-600', bgColor: 'bg-slate-500' },
   { id: 'proposed', label: 'Proposed', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'planned', label: 'Planned', color: 'text-blue-400', bgColor: 'bg-blue-500' },
   { id: 'in_progress', label: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500' },
@@ -689,7 +686,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     setKnowledgeModuleIdOverride,
   } = useHelpSidePanel();
 
-  const openContextualHelp = useCallback(() => {
+  // Contextual help available for future global shell/sidebar integration.
+  // Removed from Menu 2 right cluster per §2.1 canon (Help belongs to global shell/sidebar).
+  const _openContextualHelp = useCallback(() => {
     setKnowledgeModuleIdOverride('discovery-tools');
     setHelpTab('knowledge');
     setHelpOpen(true);
@@ -722,8 +721,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   >(initialCategory);
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const statusDropdownRef = React.useRef<HTMLDivElement>(null);
-  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
-  const viewDropdownRef = React.useRef<HTMLDivElement>(null);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [addMenuCategory, setAddMenuCategory] = useState<ToolCategory | 'all'>('all');
   const [addMenuQuery, setAddMenuQuery] = useState('');
@@ -1410,9 +1407,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
         setIsStatusDropdownOpen(false);
       }
-      if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target as Node)) {
-        setIsViewDropdownOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -1536,7 +1530,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
               {meta?.name || row.category}
             </span>
           );
@@ -1639,7 +1633,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row: any) => {
           const meta = CATEGORY_META[row.category as ToolCategory];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
               {meta?.name || row.category}
             </span>
           );
@@ -1694,7 +1688,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 className={`truncate text-sm font-medium ${
                   row.isActive
                     ? 'text-slate-900 dark:text-white'
-                    : 'text-slate-400 dark:text-slate-500'
+                    : 'text-slate-600 dark:text-slate-500'
                 }`}
                 title={row.name}
               >
@@ -1722,7 +1716,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           const category = (row.libraryCategory || '') as ToolCategory;
           const meta = CATEGORY_META[category];
           return (
-            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-400'}`}>
+            <span className={`text-xs font-medium ${meta?.textClass || 'text-slate-600'}`}>
               {meta?.name || row.libraryCategory || '-'}
             </span>
           );
@@ -1744,7 +1738,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </span>
             ))}
             {(row.tags || []).length > 3 ? (
-              <span className="shrink-0 text-[10px] text-slate-400">
+              <span className="shrink-0 text-[10px] text-slate-600">
                 +{(row.tags || []).length - 3}
               </span>
             ) : null}
@@ -1782,13 +1776,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           { value: 'inactive', label: isPolish ? 'Nieaktywny' : 'Inactive' },
         ],
         render: (row) => (
-          <span
-            className={`inline-flex items-center h-6 px-2 rounded-full text-[11px] font-medium border ${
-              row.isActive
-                ? 'border-emerald-200/70 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300'
-                : 'border-rose-200/70 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300'
-            }`}
-          >
+          // canon §3.5/§4.0: status carried by signal dot only; chip shell stays neutral
+          // (no status-colored background fill).
+          <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[11px] font-medium border border-slate-200/70 bg-white/60 text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-300">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                row.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+              }`}
+            />
             {row.isActive
               ? isPolish
                 ? 'Aktywny'
@@ -1835,7 +1830,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           };
           return (
             <span
-              className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-slate-400'}`}
+              className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-slate-600'}`}
             >
               {row.category}
             </span>
@@ -1889,7 +1884,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         render: (row) => {
           const taskCount = row._fullData?.tasks?.length || 0;
           return (
-            <span className="text-xs text-slate-400 flex items-center gap-1">
+            <span className="text-xs text-slate-600 flex items-center gap-1">
               <ListTodo size={12} />
               {taskCount}
             </span>
@@ -1934,7 +1929,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           const c = cfg[kind] || {
             icon: <FileText size={14} />,
             label: isPolish ? 'Output' : 'Output',
-            color: 'text-slate-400',
+            color: 'text-slate-600',
           };
           return (
             <div className="flex items-center gap-2">
@@ -2055,7 +2050,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       }
 
       try {
-        const initiative = await Api.get(`/api/initiatives/${id}`);
+        // Fix: API_URL is already '/api'; the `/api/` prefix here produced a
+        // doubled `/api/api/initiatives/...` 404. Siblings (1229, 2777) use
+        // the bare `/initiatives/...` path. Aligned.
+        const initiative = await Api.get(`/initiatives/${id}`);
         const row = initiative?.data;
         if (row?.id) {
           handleOpenDocument({
@@ -2759,7 +2757,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       case 'BLOCKED':
         return 'bg-rose-500/20 text-rose-400';
       default:
-        return 'bg-slate-500/20 text-slate-400';
+        return 'bg-slate-500/20 text-slate-600';
     }
   };
 
@@ -2772,7 +2770,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       case 'MEDIUM':
         return 'text-blue-400';
       default:
-        return 'text-slate-400';
+        return 'text-slate-600';
     }
   };
 
@@ -2841,7 +2839,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 >
                   <ChevronRight size={18} className="rotate-180" />
                 </button>
-                <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-500/20 text-slate-400">
+                <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-500/20 text-slate-600">
                   DRAFT
                 </span>
                 {selectedInitiative.axis && (
@@ -3166,6 +3164,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">{loadError.message}</p>
           <button
             onClick={() => {
+              // IMPACT-TR-002: a user-initiated retry must clear any latched
+              // transport/auth-loop guard so the module can recover immediately.
+              clearGlobalTransportFailure();
+              resetAuthLoopGuard();
               setLoadError(null);
               setIsLoading(true);
               fetchData();
@@ -3328,6 +3330,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               <button
                 type="button"
                 onClick={() => {
+                  // IMPACT-TR-002: clear any latched guard before retrying.
+                  clearGlobalTransportFailure();
+                  resetAuthLoopGuard();
                   void fetchKnownTools();
                 }}
                 className="mt-4 inline-flex items-center justify-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.06] text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.1]"
@@ -3353,7 +3358,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             className="max-w-xl rounded-2xl border border-slate-200/70 bg-slate-50/80 px-6 py-7 text-center text-sm text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300"
             data-testid="tools-library-search-empty-state"
           >
-            <Library className="mx-auto mb-3 h-8 w-8 text-slate-400 dark:text-slate-500" />
+            <Library className="mx-auto mb-3 h-8 w-8 text-slate-600 dark:text-slate-500" />
             <p className="font-medium text-slate-900 dark:text-white">{libraryEmptyMessage}</p>
             <button
               type="button"
@@ -4168,54 +4173,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     [t]
   );
 
-  // View tool (pill dropdown) — shown in Tools hub to match Golden Standard.
-  const ViewToolDropdown = (
-    <div ref={viewDropdownRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setIsViewDropdownOpen((v) => !v)}
-        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-white/70 dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-        aria-expanded={isViewDropdownOpen}
-      >
-        {viewMode === 'grid' ? <Grid3X3 size={16} /> : <List size={16} />}
-        <span>{viewMode === 'grid' ? t('common.grid', 'Grid') : t('common.table', 'Table')}</span>
-        <ChevronDown
-          size={16}
-          className={`text-slate-400 transition-transform duration-200 ${isViewDropdownOpen ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {isViewDropdownOpen && (
-        <div className="absolute top-full right-0 mt-1 z-50 min-w-[180px] py-1 bg-white dark:bg-navy-800 border border-slate-200/70 dark:border-white/[0.08] rounded-xl shadow-xl shadow-black/30">
-          {[
-            { id: 'table' as const, label: t('common.table', 'Table'), icon: <List size={16} /> },
-            { id: 'grid' as const, label: t('common.grid', 'Grid'), icon: <Grid3X3 size={16} /> },
-          ].map((opt) => {
-            const selected = viewMode === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => {
-                  setViewMode(opt.id);
-                  setIsViewDropdownOpen(false);
-                }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
-                  selected
-                    ? 'bg-primary-500/10 text-slate-900 dark:text-white'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
-                }`}
-              >
-                <span className="text-slate-500 dark:text-slate-400">{opt.icon}</span>
-                <span className="text-sm">{opt.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-
   const toolPickerCategories = useMemo(() => {
     const items: Array<{
       id: ToolCategory | 'all';
@@ -4302,6 +4259,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [addMenuCategory, addMenuQuery, isPolish, knownTools, strategyCatalogSlugs, titleFromSlug]);
 
+  // PrimaryCta: no leading `+` icon per §2.2 / §2.1 canon.
+  // Chevron is allowed because the button opens a tool-picker menu (variants).
   const PrimaryCta = (
     <div ref={addMenuRef} className="relative">
       <button
@@ -4310,7 +4269,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors duration-150"
         aria-expanded={isAddMenuOpen}
       >
-        <Plus size={16} />
         <span>{isPolish ? 'Dodaj' : t('common.add', 'Add')}</span>
         <ChevronDown
           size={16}
@@ -4334,7 +4292,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   <button
                     type="button"
                     onClick={() => setAddMenuQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-700 dark:hover:text-slate-200"
                     aria-label={isPolish ? 'Wyczyść' : 'Clear'}
                   >
                     <X size={16} />
@@ -4434,7 +4392,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           </div>
                         ) : null}
                       </div>
-                      <span className="mt-0.5 text-slate-400">
+                      <span className="mt-0.5 text-slate-600">
                         <ArrowRight size={16} />
                       </span>
                     </button>
@@ -4449,9 +4407,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   );
 
   // Status Filter Dropdown Component (Filters — last in right cluster)
+  // Domain-specific trigger label: "Status: All", "Status: Draft", etc. per §2.1
   const StatusFilterDropdown = (
     <div ref={statusDropdownRef} className="relative">
       <button
+        type="button"
         onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
         className={`
           inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium
@@ -4463,12 +4423,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           }
         `}
       >
-        <Filter size={16} className="text-slate-400" />
+        <Filter size={16} className="text-slate-600" />
         <span className={`w-2 h-2 rounded-full ${selectedStatusOption.bgColor}`} />
-        <span>{getStatusOptionLabel(selectedStatusOption.id, selectedStatusOption.label)}</span>
+        <span>
+          {isPolish ? 'Status' : 'Status'}:{' '}
+          {getStatusOptionLabel(selectedStatusOption.id, selectedStatusOption.label)}
+        </span>
         <ChevronDown
           size={16}
-          className={`text-slate-400 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-600 transition-transform duration-200 ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -4520,106 +4483,117 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     </div>
   );
 
+  // CommandRowContent: canonical Menu 3 layout — flex justify-between, left=presets, right=actions.
   const CommandRowContent = (
-    <div className={MENU_3_LEFT_CLASS}>
-      {activeTab === 'library' ? (
-        <>
-          {(
-            [
-              {
-                id: 'all' as const,
-                label: t('common.all', 'All'),
-                count: libraryCatalogItems.length,
-                dot: 'bg-slate-500',
-              },
-              {
-                id: 'strategic' as const,
-                label: isPolish ? 'Strategia' : 'Strategy',
-                count: libraryCategoryCounts.strategic,
-                dot: 'bg-emerald-500',
-              },
-              {
-                id: 'operational' as const,
-                label: isPolish ? 'Operacje' : 'Operations',
-                count: libraryCategoryCounts.operational,
-                dot: 'bg-blue-500',
-              },
-              {
-                id: 'digital' as const,
-                label: 'Digital',
-                count: libraryCategoryCounts.digital,
-                dot: 'bg-blue-500',
-              },
-              {
-                id: 'automation' as const,
-                label: isPolish ? 'Automatyzacje' : 'Automation',
-                count: libraryCategoryCounts.automation,
-                dot: 'bg-amber-500',
-              },
-              {
-                id: 'licensed' as const,
-                label: isPolish ? 'Assessments' : 'Assessments',
-                count: libraryCategoryCounts.licensed,
-                dot: 'bg-rose-500',
-              },
-              {
-                id: 'other' as const,
-                label: isPolish ? 'Inne' : 'Other',
-                count: libraryCategoryCounts.other,
-                dot: 'bg-slate-500',
-              },
-            ] as const
-          ).map((opt) => {
-            const isActive = libraryCategoryFilter === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setLibraryCategoryFilter(isActive ? 'all' : opt.id)}
-                className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-              >
-                <span
-                  className={
-                    opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.dot}`
-                  }
-                />
-                <span>{opt.label}</span>
-                <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-                  {opt.count}
-                </span>
-              </button>
-            );
-          })}
-        </>
-      ) : (
-        <>
-          {currentStatusOptions.map((opt) => {
-            const isActive = statusFilter === opt.id;
-            const label = getStatusOptionLabel(opt.id, opt.label);
-            const count = statusCountsForCommandRow[opt.id] ?? 0;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setStatusFilter(isActive ? 'all' : opt.id)}
-                className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-              >
-                <span
-                  className={
-                    opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.bgColor}`
-                  }
-                />
-                <span>{label}</span>
-                <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </>
-      )}
+    <div className="flex w-full items-center justify-between gap-3">
+      <div className={MENU_3_LEFT_CLASS}>
+        {activeTab === 'library' ? (
+          <>
+            {(
+              [
+                {
+                  id: 'all' as const,
+                  label: t('common.all', 'All'),
+                  count: libraryCatalogItems.length,
+                  dot: 'bg-slate-500',
+                },
+                {
+                  id: 'strategic' as const,
+                  label: isPolish ? 'Strategia' : 'Strategy',
+                  count: libraryCategoryCounts.strategic,
+                  dot: 'bg-emerald-500',
+                },
+                {
+                  id: 'operational' as const,
+                  label: isPolish ? 'Operacje' : 'Operations',
+                  count: libraryCategoryCounts.operational,
+                  dot: 'bg-blue-500',
+                },
+                {
+                  id: 'digital' as const,
+                  label: 'Digital',
+                  count: libraryCategoryCounts.digital,
+                  dot: 'bg-blue-500',
+                },
+                {
+                  id: 'automation' as const,
+                  label: isPolish ? 'Automatyzacje' : 'Automation',
+                  count: libraryCategoryCounts.automation,
+                  dot: 'bg-amber-500',
+                },
+                {
+                  id: 'licensed' as const,
+                  label: isPolish ? 'Assessments' : 'Assessments',
+                  count: libraryCategoryCounts.licensed,
+                  dot: 'bg-rose-500',
+                },
+                {
+                  id: 'other' as const,
+                  label: isPolish ? 'Inne' : 'Other',
+                  count: libraryCategoryCounts.other,
+                  dot: 'bg-slate-500',
+                },
+              ] as const
+            ).map((opt) => {
+              const isActive = libraryCategoryFilter === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setLibraryCategoryFilter(isActive ? 'all' : opt.id)}
+                  className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+                >
+                  <span
+                    className={
+                      opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.dot}`
+                    }
+                  />
+                  <span>{opt.label}</span>
+                  <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                    {opt.count}
+                  </span>
+                </button>
+              );
+            })}
+          </>
+        ) : (
+          <>
+            {currentStatusOptions.map((opt) => {
+              const isActive = statusFilter === opt.id;
+              const label = getStatusOptionLabel(opt.id, opt.label);
+              const count = statusCountsForCommandRow[opt.id] ?? 0;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setStatusFilter(isActive ? 'all' : opt.id)}
+                  className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+                >
+                  <span
+                    className={
+                      opt.id === 'all'
+                        ? MENU_3_ALL_DOT_CLASS
+                        : `w-2 h-2 rounded-full ${opt.bgColor}`
+                    }
+                  />
+                  <span>{label}</span>
+                  <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </>
+        )}
+      </div>
+      {/* Right slot: contextual AI / actions — empty for now, reserved per §3.4 */}
+      <div />
     </div>
   );
+
+  // View modes: Library supports table+grid (segmented icon buttons via ModuleNavBar);
+  // other tabs support table only. §2.2 / §2c canon: view toggle must be segmented icons.
+  const activeViewModes: ViewMode[] = activeTab === 'library' ? ['table', 'grid'] : ['table'];
 
   return (
     <>
@@ -4641,25 +4615,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         onClearFilters={handleClearFilters}
         commandRowContent={CommandRowContent}
         primaryCta={PrimaryCta}
-        availableViewModes={['table']}
-        toolControl={
-          <button
-            type="button"
-            onClick={openContextualHelp}
-            className="inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-            data-testid="contextual-help-entry-tools"
-            title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
-          >
-            <Sparkles size={16} />
-            <span>{t('help.entrypoint.contextual', 'Help')}</span>
-          </button>
-        }
-        rightControls={
-          <div className="flex items-center gap-2">
-            {activeTab === 'library' ? null : StatusFilterDropdown}
-            {ViewToolDropdown}
-          </div>
-        }
+        availableViewModes={activeViewModes}
+        rightControls={activeTab === 'library' ? null : StatusFilterDropdown}
       >
         {renderContent()}
       </ModuleHub>

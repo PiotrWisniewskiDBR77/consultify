@@ -149,7 +149,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -158,7 +158,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {recommendations.length === 0 && !loading && (
             <div className="text-center py-8">
-              <ArrowUpDown size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <ArrowUpDown size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'AI przeanalizuje priorytety Twoich pomysłów.'
@@ -188,14 +188,14 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
             <>
               {/* Sort controls */}
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
                   {isPl ? 'Sortuj:' : 'Sort:'}
                 </span>
                 {(['rank', 'impact', 'effort'] as const).map((s) => (
                   <button
                     key={s}
                     onClick={() => setSortBy(s)}
-                    className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors ${sortBy === s ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-2 py-0.5 rounded-lg text-[9px] font-bold transition-colors ${sortBy === s ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'text-slate-600 hover:text-slate-600'}`}
                   >
                     {s === 'rank'
                       ? isPl
@@ -222,7 +222,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                       <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
                         {rec.label}
                       </div>
-                      <div className="text-[9px] text-slate-400">{rec.branchKey}</div>
+                      <div className="text-[9px] text-slate-600">{rec.branchKey}</div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span
@@ -240,7 +240,7 @@ export const AIPriorityRecommender: React.FC<AIPriorityRecommenderProps> = ({
                       <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
                         {rec.suggestedPriority}
                       </div>
-                      <div className="text-[8px] text-slate-400 line-through">
+                      <div className="text-[8px] text-slate-600 line-through">
                         {rec.currentPriority}
                       </div>
                     </div>

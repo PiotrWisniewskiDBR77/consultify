@@ -303,7 +303,7 @@ export const IntentStep: React.FC<IntentStepProps> = (props) => {
 
           {isLoadingProfiles ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

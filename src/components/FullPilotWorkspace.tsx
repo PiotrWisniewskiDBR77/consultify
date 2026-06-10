@@ -175,7 +175,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
               <div
                 className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 ${m.status === 'completed' ? 'bg-green-500 border-green-500' : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-slate-500'}`}
               ></div>
-              <div className="text-sm text-slate-400 mb-0.5">{m.date}</div>
+              <div className="text-sm text-slate-600 mb-0.5">{m.date}</div>
               <div className="text-base font-semibold">{m.name}</div>
             </div>
           )) || <div className="text-center text-slate-500">No milestones set.</div>}
@@ -302,7 +302,7 @@ export const FullPilotWorkspace: React.FC<FullPilotWorkspaceProps> = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as PilotTab)}
-            className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-400 hover:text-white'}`}
+            className={`pb-4 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id ? 'border-primary-500 text-primary-400' : 'border-transparent text-slate-600 hover:text-white'}`}
           >
             <tab.icon size={16} />
             {tab.label}

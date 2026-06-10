@@ -141,7 +141,7 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
           return (
             <div
               key={axis.axisId || i}
-              className="group p-3 bg-white dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50 hover:border-blue-200 dark:hover:border-blue-800 transition-all"
+              className="group p-3 bg-white dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/50 hover:border-blue-200 dark:hover:border-blue-800 transition-all"
             >
               <div className="flex items-center gap-3">
                 {/* Rank */}
@@ -161,7 +161,7 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
                       >
                         {axis.score.toFixed(1)}
                       </span>
-                      <span className="text-xs text-slate-400">/ {data.scaleMax}</span>
+                      <span className="text-xs text-slate-600">/ {data.scaleMax}</span>
                     </div>
                   </div>
 
@@ -190,7 +190,7 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
                         Gap: {gap.toFixed(1)} ({gapInfo.label})
                       </span>
                       {axis.targetScore && (
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-600">
                           Target: {axis.targetScore.toFixed(1)}
                         </span>
                       )}
@@ -201,7 +201,7 @@ export const MatrixHeatmap: React.FC<MatrixHeatmapProps> = ({
 
               {/* Sub-areas (expandable on hover) */}
               {axis.areas && axis.areas.length > 0 && !compact && (
-                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50 hidden group-hover:block">
+                <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700/50 hidden group-hover:block">
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                     {axis.areas.map((area, ai) => {
                       const areaPct = Math.round(

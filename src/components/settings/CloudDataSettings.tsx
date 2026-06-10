@@ -10,6 +10,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
@@ -195,14 +198,7 @@ export const CloudDataSettings: React.FC = () => {
 
       {loadError && <DegradedState title="Cloud sources unavailable" description={loadError} />}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {showAddForm && !loadError && (
         <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 space-y-3">
@@ -253,12 +249,12 @@ export const CloudDataSettings: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="text-center py-8 text-slate-400">{t('common.loading', 'Loading...')}</div>
+        <div className="text-center py-8 text-slate-600">{t('common.loading', 'Loading...')}</div>
       ) : sources.length === 0 && !loadError ? (
-        <div className="text-center py-8 text-slate-400 dark:text-slate-500">
-          <Cloud size={32} className="mx-auto mb-2 opacity-50" />
-          <p className="text-sm">{t('cloud.noSources', 'No cloud sources connected yet.')}</p>
-        </div>
+        <EmptyState
+          icon={<Cloud />}
+          title={t('cloud.noSources', 'No cloud sources connected yet.')}
+        />
       ) : (
         <div className="space-y-2">
           {sources.map((source) => (
@@ -272,7 +268,7 @@ export const CloudDataSettings: React.FC = () => {
                   <div className="text-sm font-medium text-navy-900 dark:text-white">
                     {source.name}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     {getProviderLabel(source.provider)} ·{' '}
                     <span
                       className={
@@ -280,7 +276,7 @@ export const CloudDataSettings: React.FC = () => {
                           ? 'text-green-500'
                           : source.status === 'error'
                             ? 'text-rose-500'
-                            : 'text-slate-400'
+                            : 'text-slate-600'
                       }
                     >
                       {t(`cloud.status.${source.status}`, source.status)}
@@ -299,14 +295,14 @@ export const CloudDataSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={() => openInProvider(source)}
-                  className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
+                  className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700"
                   title={t('cloud.openInProvider', 'Open in provider')}
                 >
                   <ExternalLink size={14} />
                 </button>
                 <button
                   onClick={() => handleDelete(source.id)}
-                  className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                  className="p-1.5 text-slate-600 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20"
                   title={t('cloud.disconnect', 'Disconnect')}
                 >
                   <Trash2 size={14} />

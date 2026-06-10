@@ -36,6 +36,7 @@ import {
   resolveIdeaMapHydration,
   useIdeaMapSync,
 } from './canvas/useIdeaMapSync';
+import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {
@@ -126,7 +127,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   isFullscreen: externalIsFullscreen = false,
   onContextMenu: externalOnContextMenu,
 }) => {
-  const { screenToFlowPosition, setViewport } = useReactFlow();
+  const { screenToFlowPosition, setViewport, fitView } = useReactFlow();
   const isDarkCanvas = useIsDark();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [showMiniMap, setShowMiniMap] = React.useState(false);
@@ -179,6 +180,28 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
     rfEl.addEventListener('idea-whiteboard-set-viewport', handler);
     return () => rfEl.removeEventListener('idea-whiteboard-set-viewport', handler);
   }, [setViewport]);
+
+  // A6: zoom-to-fit shortcuts (Cmd/Ctrl+0 and Shift+1) — consistent with the
+  // Mind Map and Process Flow tools. Whiteboard previously had neither.
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName) || t.isContentEditable);
+      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+        e.preventDefault();
+        fitView({ padding: 0.2, duration: 300 });
+        return;
+      }
+      // e.code is layout-independent (Shift+1 yields "!" on most layouts).
+      if (!typing && e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && e.code === 'Digit1') {
+        e.preventDefault();
+        fitView({ padding: 0.2, duration: 300 });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [fitView]);
 
   const getCenter = React.useCallback(() => {
     return screenToFlowPosition({
@@ -340,10 +363,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           event.preventDefault();
           externalOnContextMenu?.(event);
         }}
+        {...getIdeasToolInteractionProps('whiteboard', { locked })}
         fitView
-        selectionOnDrag
-        panOnDrag={[1, 2]}
-        deleteKeyCode={locked ? null : 'Delete'}
         className="bg-slate-100/80 dark:bg-[#0b1020]"
         defaultEdgeOptions={{ type: 'labeled' }}
         onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
@@ -1734,7 +1755,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             position: { x: 120, y: 80 },
             width: 260,
             height: 320,
-            bgColor: 'rgba(139, 92, 246, 0.08)',
+            bgColor: 'rgba(165,28,48, 0.08)',
           });
           make('frame', {
             label: t('myWork.whiteboard.quickStart.affinity.themeB'),

@@ -81,11 +81,11 @@ export const LIFECYCLE_RECOVERY: Record<SourceLifecycleState, string> = {
 
 export const SOURCE_COLORS: Record<CalendarEventSource, string> = {
   task: '#2563eb',
-  initiative: '#7c3aed',
+  initiative: '#A51C30',
   decision: '#d97706',
   google: '#059669',
   outlook: '#4f46e5',
-  consultify: '#6d28d9',
+  consultify: '#D42B3D',
 };
 
 export const SOURCE_LABELS: Record<CalendarEventSource, { en: string; pl: string }> = {

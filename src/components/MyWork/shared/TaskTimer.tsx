@@ -176,7 +176,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             ${
               isRunning
                 ? 'bg-primary-500/20 text-primary-500 hover:bg-primary-500/30'
-                : 'text-slate-400 hover:text-primary-500 hover:bg-primary-500/10'
+                : 'text-slate-600 hover:text-primary-500 hover:bg-primary-500/10'
             }
           `}
           title={isRunning ? (isPolish ? 'Pauza' : 'Pause') : isPolish ? 'Start' : 'Start'}
@@ -200,7 +200,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
         {sessionTime > 0 && (
           <button
             onClick={stopTimer}
-            className="p-1 rounded text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all"
+            className="p-1 rounded text-slate-600 hover:text-emerald-500 hover:bg-emerald-500/10 transition-all"
             title={isPolish ? 'Zapisz' : 'Log time'}
           >
             <Square size={12} />
@@ -297,7 +297,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
             </button>
             <button
               onClick={resetTimer}
-              className="p-2.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+              className="p-2.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
               title={isPolish ? 'Resetuj' : 'Reset'}
             >
               <RotateCcw size={18} />
@@ -317,7 +317,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
               <Clock size={14} />
               {isPolish ? 'Historia' : 'History'} ({entries.length})
             </span>
-            <motion.span animate={{ rotate: showEntries ? 180 : 0 }} className="text-slate-400">
+            <motion.span animate={{ rotate: showEntries ? 180 : 0 }} className="text-slate-600">
               ▼
             </motion.span>
           </button>
@@ -337,7 +337,7 @@ export const TaskTimer: React.FC<TaskTimerProps> = ({
                       className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 dark:bg-navy-800"
                     >
                       <div className="flex items-center gap-2">
-                        <Clock size={12} className="text-slate-400" />
+                        <Clock size={12} className="text-slate-600" />
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           {entry.startTime.toLocaleTimeString(isPolish ? 'pl-PL' : 'en-US', {
                             hour: '2-digit',

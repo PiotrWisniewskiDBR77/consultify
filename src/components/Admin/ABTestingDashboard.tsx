@@ -35,6 +35,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState, StatusChip, type StatusTone } from '@/components/ui/primitives';
+
 import api from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from './AdminState';
@@ -261,21 +264,15 @@ export function ABTestingDashboard() {
   };
 
   const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      DRAFT: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
-      RUNNING: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-      PAUSED: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-      COMPLETED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      ARCHIVED: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    const tones: Record<string, StatusTone> = {
+      DRAFT: 'neutral',
+      RUNNING: 'success',
+      PAUSED: 'warning',
+      COMPLETED: 'info',
+      ARCHIVED: 'neutral',
     };
 
-    return (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || styles.DRAFT}`}
-      >
-        {status}
-      </span>
-    );
+    return <StatusChip label={status} tone={tones[status] || 'neutral'} />;
   };
 
   const formatDate = (dateStr: string) => {
@@ -375,24 +372,23 @@ export function ABTestingDashboard() {
         {/* Experiments List */}
         <div className="space-y-4">
           {loading ? (
-            <div className="flex items-center justify-center py-20 bg-white dark:bg-navy-800 rounded-xl">
-              <Loader2 size={32} className="animate-spin text-primary-500" />
+            <div className="bg-white dark:bg-navy-800 rounded-xl">
+              <LoadingState variant="spinner" className="py-20" />
             </div>
           ) : error ? (
             <div className="bg-white dark:bg-navy-800 rounded-xl p-6">
               <DegradedState title="A/B experiments unavailable" description={error} />
             </div>
           ) : experiments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-navy-800 rounded-xl text-slate-500 dark:text-slate-400">
-              <FlaskConical size={48} className="mb-4 opacity-50" />
-              <p>No experiments found</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                disabled={!!error}
-                className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                Create First Experiment
-              </button>
+            <div className="bg-white dark:bg-navy-800 rounded-xl">
+              <EmptyState
+                icon={<FlaskConical />}
+                title="No experiments found"
+                action={{
+                  label: 'Create First Experiment',
+                  onClick: () => setShowCreateModal(true),
+                }}
+              />
             </div>
           ) : (
             experiments.map((experiment) => (
@@ -406,7 +402,7 @@ export function ABTestingDashboard() {
                   onClick={() => toggleExpanded(experiment.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <button className="text-slate-400 dark:text-slate-500">
+                    <button className="text-slate-600 dark:text-slate-500">
                       {expandedExperiments.has(experiment.id) ? (
                         <ChevronDown size={20} />
                       ) : (
@@ -505,7 +501,7 @@ export function ABTestingDashboard() {
 
                 {/* Expanded Details */}
                 {expandedExperiments.has(experiment.id) && (
-                  <div className="px-6 py-4 border-t border-slate-100 dark:border-navy-700">
+                  <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700">
                     {/* Metadata */}
                     <div className="grid grid-cols-4 gap-4 mb-6 text-sm">
                       <div>
@@ -572,7 +568,7 @@ export function ABTestingDashboard() {
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                        <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                           {experiment.variants.map((variant) => (
                             <tr
                               key={variant.id}
@@ -643,7 +639,7 @@ export function ABTestingDashboard() {
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>

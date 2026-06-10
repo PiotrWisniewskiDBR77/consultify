@@ -269,7 +269,7 @@ export function ProactiveNudgeDisplay({
                       {nudge.dismissible && (
                         <button
                           onClick={() => handleDismiss(nudge.id)}
-                          className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg transition-colors"
+                          className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg transition-colors"
                         >
                           <X size={16} />
                         </button>
@@ -294,14 +294,14 @@ export function ProactiveNudgeDisplay({
                       <>
                         <button
                           onClick={() => handleFeedback(nudge.id, 'positive')}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                           title="Helpful"
                         >
                           <ThumbsUp size={14} />
                         </button>
                         <button
                           onClick={() => handleFeedback(nudge.id, 'negative')}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                           title="Not helpful"
                         >
                           <ThumbsDown size={14} />

@@ -1911,6 +1911,15 @@ export interface InvitationValidation {
   email: string;
   roleToAssign: string;
   expiresAt: string;
+  /** When true, the first-login profile (job title + country) is mandatory. */
+  requireProfile?: boolean;
+  /** When true, this is a shared/open invitation — the user enters their own email. */
+  requireEmail?: boolean;
+  /** Prefilled from a pre-created (pending) account, if any. */
+  firstName?: string;
+  lastName?: string;
+  /** True when this token activates a pre-created pending account. */
+  isFirstLogin?: boolean;
 }
 
 // ==========================================
@@ -2782,6 +2791,9 @@ export interface FullInitiative {
   teamMembers?: InitiativeTeamMember[];
   relatedInitiatives?: RelatedInitiative[];
   versions?: InitiativeVersion[];
+
+  /** Mark Complete — AI signal. { sectionId: boolean, ... }. Persisted in section_completions JSON column. */
+  sectionCompletions?: Record<string, boolean>;
 }
 
 // Alias Initiative to FullInitiative for backend compatibility

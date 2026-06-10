@@ -147,7 +147,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
               abortRef.current?.abort();
               onDismiss();
             }}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-white/[0.06]"
+            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-white/[0.06]"
           >
             <X size={14} />
           </button>
@@ -159,7 +159,7 @@ export const AIInlineResponse: React.FC<AIInlineResponseProps> = ({
           ) : response ? (
             response
           ) : (
-            <span className="text-slate-400 dark:text-slate-500">
+            <span className="text-slate-600 dark:text-slate-500">
               {pl ? 'Generowanie odpowiedzi…' : 'Generating response…'}
             </span>
           )}

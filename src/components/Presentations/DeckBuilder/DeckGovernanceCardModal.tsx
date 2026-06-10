@@ -153,7 +153,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
       aria-labelledby="deck-governance-card-title"
     >
       <div className="max-w-xl w-full mx-4 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-navy-800">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-800">
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-primary-500" />
             <h2
@@ -179,7 +179,7 @@ export const DeckGovernanceCardModal: React.FC<DeckGovernanceCardModalProps> = (
               type="button"
               onClick={onClose}
               aria-label={t('common.close', 'Close')}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
+              className="text-slate-600 hover:text-slate-600 dark:hover:text-white p-1"
             >
               <X size={16} />
             </button>

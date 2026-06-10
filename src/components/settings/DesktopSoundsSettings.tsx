@@ -11,6 +11,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
@@ -166,7 +168,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   return (
     <SettingsSection
@@ -187,14 +189,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
           <DegradedState title="Desktop sound settings unavailable" description={loadError} />
         )}
 
-        {actionError && (
-          <div
-            role="alert"
-            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-          >
-            {actionError}
-          </div>
-        )}
+        {actionError && <Banner variant="danger" title={actionError} />}
 
         {!loadError && (
           <>
@@ -226,15 +221,49 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                       className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm"
                     >
                       <Bell size={14} />
-                      {t('settings.desktopSounds.enablePush', 'Enable Push Notifications')}
+                      {t(
+                        'settings.desktopSounds.enableBrowserAlerts',
+                        'Allow browser notifications'
+                      )}
                     </button>
                   )}
+
+                {'Notification' in window && Notification.permission === 'denied' && (
+                  <p className="text-xs text-amber-300/90">
+                    {t(
+                      'settings.desktopSounds.permissionBlocked',
+                      'Notifications are blocked in your browser. Enable them in your browser settings to receive desktop alerts.'
+                    )}
+                  </p>
+                )}
+
+                {/* Mobile push has no delivery backend yet — surface it as gated
+                    rather than offering a toggle that records a no-op flag. */}
+                <div className="flex items-start justify-between gap-4 p-3.5 bg-navy-900/30 border border-white/5 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Bell size={16} className="text-slate-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {t('settings.desktopSounds.mobilePush', 'Mobile push notifications')}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {t(
+                          'settings.desktopSounds.mobilePushDesc',
+                          'Requires the Consultify mobile app, which is coming soon.'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center rounded-full bg-white/5 px-2.5 py-1 text-xs font-medium text-slate-600 flex-shrink-0">
+                    {t('common.comingSoon', 'Coming soon')}
+                  </span>
+                </div>
 
                 {prefs.desktopEnabled && (
                   <>
                     {/* Position */}
                     <div>
-                      <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5 mb-2">
+                      <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5 mb-2">
                         <Monitor size={12} />
                         {t('settings.desktopSounds.position', 'Notification Position')}
                       </label>
@@ -249,7 +278,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                               'px-3 py-2 rounded-lg border-2 transition-all text-sm',
                               prefs.desktopPosition === opt.value
                                 ? 'border-primary-500 bg-primary-600/10 text-primary-300'
-                                : 'border-white/5 text-slate-400 hover:border-primary-500/30'
+                                : 'border-white/5 text-slate-600 hover:border-primary-500/30'
                             )}
                           >
                             {t(`settings.desktopSounds.pos_${opt.value}`, opt.label)}
@@ -260,7 +289,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
 
                     {/* Duration */}
                     <div>
-                      <label className="text-xs font-medium text-slate-400 mb-2 block">
+                      <label className="text-xs font-medium text-slate-600 mb-2 block">
                         {t('settings.desktopSounds.duration', 'Notification Duration')}
                       </label>
                       <div className="flex items-center gap-4">
@@ -278,7 +307,7 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                           }
                           className="flex-1 accent-primary-500"
                         />
-                        <span className="text-sm text-slate-400 w-12 text-right tabular-nums">
+                        <span className="text-sm text-slate-600 w-12 text-right tabular-nums">
                           {prefs.desktopDuration / 1000}s
                         </span>
                       </div>
@@ -342,12 +371,12 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({ cu
                 {/* Per-type sounds */}
                 {prefs.soundEnabled && (
                   <div className="space-y-3">
-                    <label className="text-xs font-medium text-slate-400 block">
+                    <label className="text-xs font-medium text-slate-600 block">
                       {t('settings.desktopSounds.soundPerType', 'Sound per Notification Type')}
                     </label>
                     {NOTIFICATION_TYPES.map((type) => (
                       <div key={type.id} className="flex items-center justify-between">
-                        <span className="text-sm text-slate-300">
+                        <span className="text-sm text-slate-600">
                           {t(`settings.desktopSounds.type_${type.id}`, type.label)}
                         </span>
                         <select

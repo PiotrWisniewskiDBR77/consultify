@@ -49,6 +49,19 @@ export type RadarImpactType =
   | 'compliance'
   | 'learning';
 
+export type RadarRing = 'NOW' | 'PREPARE' | 'LEARN' | 'OBSERVE';
+export type RadarQuadrant = 'MY_DEVELOPMENT' | 'MY_PROJECTS' | 'MY_INDUSTRY' | 'MY_ROLE';
+export type RadarSignalStatus = 'new' | 'updated' | 'saved' | 'watching' | 'ignored';
+export type RadarSignalType =
+  | 'TECHNOLOGY'
+  | 'SKILL'
+  | 'BUSINESS'
+  | 'RISK'
+  | 'PROCESS'
+  | 'TOOL'
+  | 'TREND'
+  | 'IDEA';
+
 export type RadarActionType =
   | 'view_briefing'
   | 'open_signal'
@@ -214,6 +227,18 @@ export interface RadarSignalCard {
   requestedLanguage?: string;
   isLocalized?: boolean;
   localizationPending?: boolean;
+  ring?: RadarRing;
+  quadrant?: RadarQuadrant;
+  status?: RadarSignalStatus;
+  signalType?: RadarSignalType;
+  preview?: {
+    shortDescription: string;
+    whyItMatters: string;
+    whyItMattersForYou: string;
+    howToThinkAboutIt: string;
+    goodFirstQuestion: string;
+    suggestedNextStep: string;
+  };
 }
 
 export interface RadarRecommendation {
@@ -242,6 +267,36 @@ export interface RadarViewPayload {
   whatToDoNext: RadarRecommendation[];
   learnImprove: RadarSignalCard[];
   watchlist: RadarSignalCard[];
+  radarMap?: {
+    signals: Array<{
+      id: string;
+      name: string;
+      icon?: string;
+      ring: RadarRing;
+      quadrant: RadarQuadrant;
+      status: RadarSignalStatus;
+      signalType: RadarSignalType;
+      importanceLevel: 'small' | 'medium' | 'large';
+      fitLevel: 'low' | 'medium' | 'high';
+      /** Real relevance score (0–120) — drives radius within the ring band. */
+      score: number;
+      /** Model confidence 0–1. */
+      confidence: number;
+      sourceName: string;
+      sourceUrl?: string;
+      topic?: string;
+      entity?: string;
+      publishedAt?: string | null;
+      preview: {
+        shortDescription: string;
+        whyItMatters: string;
+        whyItMattersForYou: string;
+        howToThinkAboutIt: string;
+        goodFirstQuestion: string;
+        suggestedNextStep: string;
+      };
+    }>;
+  };
   metrics: {
     totalSignalsConsidered: number;
     duplicateRate: number;

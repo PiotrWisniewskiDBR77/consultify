@@ -168,7 +168,7 @@ export const ReadingModeToggle: React.FC<ReadingModeToggleProps> = ({ className 
                 </h3>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                  className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -212,7 +212,7 @@ export const ReadingModeToggle: React.FC<ReadingModeToggleProps> = ({ className 
                     <Minus className="w-4 h-4" />
                   </button>
                   <div className="flex-1 flex items-center gap-2">
-                    <Type className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                    <Type className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                     <input
                       type="range"
                       min={minFontSize}
@@ -313,7 +313,7 @@ export const ReadingModeSimpleToggle: React.FC<{
                 ${
                   isEnabled
                     ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                    : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                 }
                 ${className}
             `}

@@ -46,6 +46,60 @@ export interface HomeChatContextPacket {
   contextData?: Record<string, unknown>;
 }
 
+export type RadarRing = 'NOW' | 'PREPARE' | 'LEARN' | 'OBSERVE';
+export type RadarQuadrant = 'MY_DEVELOPMENT' | 'MY_PROJECTS' | 'MY_INDUSTRY' | 'MY_ROLE';
+export type RadarSignalStatus = 'new' | 'updated' | 'saved' | 'watching' | 'ignored';
+export type RadarSignalType =
+  | 'TECHNOLOGY'
+  | 'SKILL'
+  | 'BUSINESS'
+  | 'RISK'
+  | 'PROCESS'
+  | 'TOOL'
+  | 'TREND'
+  | 'IDEA';
+
+export interface RadarSignalPreview {
+  shortDescription: string;
+  whyItMatters: string;
+  whyItMattersForYou: string;
+  howToThinkAboutIt: string;
+  goodFirstQuestion: string;
+  suggestedNextStep: string;
+}
+
+export interface RadarBriefing {
+  signalId: string;
+  whatItIs: string;
+  whyItMattersForYou: string;
+  goodFirstQuestion: string;
+  suggestedNextStep: string;
+  aiGenerated: true;
+  generatedAt: string;
+}
+
+export interface RadarMapSignal {
+  id: string;
+  name: string;
+  icon?: string;
+  ring: RadarRing;
+  quadrant: RadarQuadrant;
+  status: RadarSignalStatus;
+  signalType: RadarSignalType;
+  importanceLevel: 'small' | 'medium' | 'large';
+  fitLevel: 'low' | 'medium' | 'high';
+  /** Real relevance score (0–120) — drives radius within the ring band. */
+  score?: number;
+  /** Model confidence 0–1. */
+  confidence?: number;
+  sourceName?: string;
+  sourceUrl?: string;
+  topic?: string;
+  entity?: string;
+  publishedAt?: string | null;
+  preview: RadarSignalPreview;
+}
+
 export type HomeScreenAction =
   | { type: 'chat'; packet: HomeChatContextPacket }
   | {
@@ -72,6 +126,13 @@ export type HomeScreenAction =
       signalId: string;
       targetModule: TriageTargetModule;
       handoffIntent: TriageHandoffIntent;
+    }
+  | {
+      type: 'radar_feedback';
+      signalId: string;
+      feedback: 'watch' | 'forget';
+      topic?: string;
+      source?: string;
     };
 
 export interface HomePrimaryAction {
@@ -393,6 +454,9 @@ export interface RadarViewPayload {
   whatToDoNext: RadarRecommendation[];
   learnImprove: RadarSignalCard[];
   watchlist: RadarSignalCard[];
+  radarMap?: {
+    signals: RadarMapSignal[];
+  };
   metrics: {
     totalSignalsConsidered: number;
     duplicateRate: number;
@@ -427,7 +491,13 @@ export type TriagePrimaryDriver =
   | 'opportunity';
 export type TriageTimeWindow = 'next_24h' | 'this_week' | 'this_month';
 export type TriageHandoffIntent = 'open' | 'create' | 'append';
-export type TriageTargetModule = 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
+export type TriageTargetModule =
+  | 'initiatives'
+  | 'execution'
+  | 'notebook'
+  | 'Inicjatywy'
+  | 'Wdrożenia'
+  | 'Notatki';
 export type TriageState =
   | 'ready'
   | 'degraded_missing_data'

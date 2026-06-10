@@ -239,6 +239,7 @@ router.post(
       const result = await tableAiEditorService.applyProposal({
         proposalId,
         workspaceId,
+        organizationId: orgId,
         actorUserId,
         idempotent,
       });

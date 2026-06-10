@@ -35,6 +35,11 @@ export const AcceptInvitationSchema = z.object({
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   password: z.string().min(8),
+  // First-login profile (captured on the /join screen). Stored on the user.
+  // Enforced as required only when the invitation carries metadata.requireProfile.
+  jobTitle: z.string().max(150).optional(),
+  siteLocation: z.string().max(150).optional(),
+  department: z.string().max(150).optional(),
 });
 
 // ==========================================

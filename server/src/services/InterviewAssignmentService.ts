@@ -486,7 +486,7 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         (u.first_name || ' ' || u.last_name) as assignee_name,
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
          u.email as assignee_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -709,8 +709,13 @@ class InterviewAssignmentService {
    */
   async getTeamMembers(assignmentId: string): Promise<AssignmentMember[]> {
     const db = await this.getDb();
+    // I2 — the users table has first_name/last_name, NOT a `name` column. The
+    // previous `u.name` threw `column u.name does not exist` on Postgres,
+    // 500-ing the GET /assignments/:id/members route for every team assignment.
     const rows = await db.all<any>(
-      `SELECT m.*, u.name as user_name, u.email as user_email
+      `SELECT m.*,
+              TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name,
+              u.email as user_email
        FROM interview_assignment_members m
        LEFT JOIN users u ON u.id = m.user_id
        WHERE m.assignment_id = ?`,
@@ -758,10 +763,13 @@ class InterviewAssignmentService {
          t.category as template_category,
          s.status as session_status,
          s.answered_questions,
-         s.total_questions
+         s.total_questions,
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
+         u.email as assignee_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN interview_sessions s ON s.id = a.session_id
+       LEFT JOIN users u ON u.id = a.assignee_user_id
        ${where}
        ORDER BY
          CASE a.status WHEN 'assigned' THEN 0 WHEN 'sent_back' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'submitted' THEN 3 ELSE 4 END,
@@ -815,7 +823,7 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         (u.first_name || ' ' || u.last_name) as assignee_name,
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
          u.email as assignee_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -863,9 +871,9 @@ class InterviewAssignmentService {
          s.status as session_status,
          s.answered_questions,
          s.total_questions,
-         (u.first_name || ' ' || u.last_name) as assignee_name,
+         TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
          u.email as assignee_email,
-         (creator.first_name || ' ' || creator.last_name) as creator_name,
+         TRIM(COALESCE(creator.first_name, '') || ' ' || COALESCE(creator.last_name, '')) as creator_name,
          creator.email as creator_email
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
@@ -1027,7 +1035,7 @@ class InterviewAssignmentService {
 
     // Get overdue assignments that need escalation
     const assignments = await db.all<any>(
-      `SELECT a.*, t.name as template_name, (u.first_name || ' ' || u.last_name) as assignee_name, 
+      `SELECT a.*, t.name as template_name, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name, 
               escalation_target.id as escalation_user_id,
               escalation_target.email as escalation_email,
               (escalation_target.first_name || ' ' || escalation_target.last_name) as escalation_name
@@ -1057,7 +1065,7 @@ class InterviewAssignmentService {
             body: `The interview "${row.template_name}" assigned to ${row.assignee_name} is overdue by ${overdueDays} day(s).`,
             entityType: 'interview_assignment',
             entityId: row.id,
-            actionUrl: `/discovery?assignmentId=${row.id}`,
+            actionUrl: `/interview?assignmentId=${row.id}`,
             priority: 'high',
           });
 
@@ -1129,7 +1137,7 @@ class InterviewAssignmentService {
           body: `You have been assigned the interview: ${assignment.template.name}`,
           entityType: 'interview_assignment',
           entityId: assignmentId,
-          actionUrl: `/discovery?assignmentId=${assignmentId}`,
+          actionUrl: `/interview?assignmentId=${assignmentId}`,
           priority: assignment.priority === 'urgent' ? 'urgent' : 'normal',
         });
       } catch (err) {
@@ -1176,7 +1184,7 @@ class InterviewAssignmentService {
           body: bodyMap[reminderType] || `Please complete your interview: ${templateName}`,
           entityType: 'interview_assignment',
           entityId: assignment.id,
-          actionUrl: `/discovery?assignmentId=${assignment.id}`,
+          actionUrl: `/interview?assignmentId=${assignment.id}`,
           priority: reminderType === 'reminder_2h' ? 'urgent' : 'high',
           actorId: senderId,
         });
@@ -1199,14 +1207,21 @@ class InterviewAssignmentService {
 
         // Email (skip for 2h reminder - too late for email)
         if (reminderType !== 'reminder_2h') {
-          const user = await db.get<{ email: string; name: string }>(
-            `SELECT email, name FROM users WHERE id = ?`,
-            [userId]
-          );
+          // I2 — first_name/last_name, not the non-existent `name` column.
+          // Previously this threw on Postgres and the reminder dispatch
+          // aborted in the outer catch (reinforcing the dormant-reminder bug),
+          // or greeted recipients "Hi undefined".
+          const user = await db.get<{
+            email: string;
+            first_name: string;
+            last_name: string;
+          }>(`SELECT email, first_name, last_name FROM users WHERE id = ?`, [userId]);
 
           if (user?.email) {
+            const userName =
+              `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email;
             await this.sendReminderEmail(user.email, {
-              userName: user.name,
+              userName,
               templateName,
               reminderType,
               dueAt: assignment.dueAt,
@@ -1255,7 +1270,7 @@ class InterviewAssignmentService {
         <p>Hi ${data.userName},</p>
         <p>This is a reminder that your interview <strong>"${data.templateName}"</strong> is due on <strong>${dueDate}</strong>.</p>
         <p>Please complete it as soon as possible.</p>
-        <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/discovery?assignmentId=${data.assignmentId}">Click here to continue the interview</a></p>
+        <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/interview?assignmentId=${data.assignmentId}">Click here to continue the interview</a></p>
         <p>Best regards,<br>The Consultify Team</p>
       `,
     });
@@ -1277,7 +1292,7 @@ class InterviewAssignmentService {
         <h2>Interview Assignment Overdue</h2>
         <p>The interview <strong>"${data.templateName}"</strong> assigned to <strong>${data.assigneeName}</strong> is overdue by <strong>${data.overdueDays} day(s)</strong>.</p>
         <p>Please follow up with the assignee or reassign the task.</p>
-        <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/discovery?assignmentId=${data.assignmentId}&scope=managed">View Assignment</a></p>
+        <p><a href="${process.env.APP_URL || 'http://localhost:3000'}/interview?assignmentId=${data.assignmentId}&scope=managed">View Assignment</a></p>
         <p>Best regards,<br>The Consultify Team</p>
       `,
     });
@@ -1407,10 +1422,15 @@ class InterviewAssignmentService {
       };
     }
 
-    if (row.assignee_name) {
+    // V-A S2 — attach the assignee whenever the row carries an assignee_user_id.
+    // Use the trimmed name, falling back to email when the user has no
+    // first/last name (the TRIM(COALESCE(...)) projection yields '' in that
+    // case, which would otherwise drop the assignee and render "Unknown").
+    if (row.assignee_user_id) {
+      const name = (row.assignee_name && String(row.assignee_name).trim()) || row.assignee_email;
       assignment.assignee = {
         id: row.assignee_user_id,
-        name: row.assignee_name,
+        name: name || '',
         email: row.assignee_email,
       };
     }

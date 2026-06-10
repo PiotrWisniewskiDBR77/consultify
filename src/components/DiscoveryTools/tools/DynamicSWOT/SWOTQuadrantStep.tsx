@@ -173,7 +173,7 @@ export const SWOTQuadrantStep: React.FC<SWOTQuadrantStepProps> = ({
                   {/* Delete button */}
                   <button
                     onClick={() => removeSWOTItem(item.id)}
-                    className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-500 transition-colors"
+                    className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-600 hover:text-rose-500 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

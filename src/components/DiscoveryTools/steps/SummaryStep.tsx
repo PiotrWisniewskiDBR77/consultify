@@ -139,7 +139,7 @@ function ContentSelector({
           key={s.id}
           className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all ${
             !s.available
-              ? 'cursor-not-allowed border-slate-100 bg-slate-50/30 opacity-50 dark:border-navy-800 dark:bg-navy-950/20'
+              ? 'cursor-not-allowed border-slate-200 bg-slate-50/30 opacity-50 dark:border-navy-800 dark:bg-navy-950/20'
               : selected.has(s.id)
                 ? 'border-primary-300 bg-primary-50/40 dark:border-primary-800 dark:bg-primary-950/20'
                 : 'border-slate-200/60 bg-white/60 hover:border-slate-300 dark:border-navy-700/50 dark:bg-navy-950/30 dark:hover:border-navy-600'
@@ -373,7 +373,7 @@ function DynamicSwotOutputs({
                   className={
                     item.done
                       ? 'text-slate-700 dark:text-slate-300'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-500'
                   }
                 >
                   {item.label}
@@ -433,7 +433,7 @@ function DynamicSwotOutputs({
         <div className="p-5">
           {allInitiatives.length === 0 ? (
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-navy-700">
-              <Rocket className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <Rocket className="mx-auto h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
                 {isPolish
                   ? 'Brak inicjatyw. Wróć do kroku "Synthesis & Insights" i utwórz inicjatywy z rekomendacji.'
@@ -531,8 +531,8 @@ function DynamicSwotOutputs({
                           </p>
 
                           {isExpanded && (
-                            <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50/60 p-3 dark:border-navy-700/40 dark:bg-navy-950/20">
-                              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-navy-700/40 dark:bg-navy-950/20">
+                              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">
                                 {isPolish ? 'Uzasadnienie' : 'Rationale'}
                               </div>
                               <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
@@ -547,7 +547,7 @@ function DynamicSwotOutputs({
                               onClick={() =>
                                 setExpandedInitiative(isExpanded ? null : initiative.id)
                               }
-                              className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                              className="text-xs text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                             >
                               {isExpanded ? (
                                 <ChevronUp className="inline h-3 w-3" />
@@ -629,7 +629,7 @@ function DynamicSwotOutputs({
               isPolish={isPolish}
             />
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 px-8 py-6 dark:border-navy-700">
-              <BookOpen className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <BookOpen className="h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="text-center text-sm text-slate-500 dark:text-slate-400">
                 {reportSections.size} {isPolish ? 'sekcji wybranych' : 'sections selected'}
               </div>
@@ -673,7 +673,7 @@ function DynamicSwotOutputs({
               isPolish={isPolish}
             />
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 px-8 py-6 dark:border-navy-700">
-              <Presentation className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <Presentation className="h-8 w-8 text-slate-600 dark:text-slate-400" />
               <div className="text-center text-sm text-slate-500 dark:text-slate-400">
                 {presSections.size} {isPolish ? 'sekcji wybranych' : 'sections selected'}
               </div>
@@ -720,7 +720,7 @@ function DynamicSwotOutputs({
             if (!hasIdeas) {
               return (
                 <div className="rounded-xl border-2 border-dashed border-slate-200 p-6 text-center dark:border-navy-700">
-                  <Lightbulb className="mx-auto h-7 w-7 text-slate-300 dark:text-slate-600" />
+                  <Lightbulb className="mx-auto h-7 w-7 text-slate-600 dark:text-slate-400" />
                   <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                     {isPolish
                       ? 'Oznacz inicjatywy jako "Jako idea" w tabeli powyżej, aby dodać je tutaj.'
@@ -1224,7 +1224,7 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600">
             {isPolish
               ? 'Kliknij "Generuj analizę" aby otrzymać rekomendacje inicjatyw.'
               : 'Click "Generate Analysis" to get initiative recommendations.'}

@@ -199,7 +199,7 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
               y2={outer.y}
               stroke="currentColor"
               strokeWidth="1.5"
-              className="text-slate-300 dark:text-white/20"
+              className="text-slate-600 dark:text-white/20"
             />
           );
         })}

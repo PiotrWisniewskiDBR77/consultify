@@ -175,7 +175,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
         >
           <FileText
             size={24}
-            className={`mx-auto mb-2 ${options.format === 'pdf' ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500'}`}
+            className={`mx-auto mb-2 ${options.format === 'pdf' ? 'text-indigo-500' : 'text-slate-600 dark:text-slate-500'}`}
           />
           <p
             className={`text-sm font-medium ${options.format === 'pdf' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}
@@ -193,7 +193,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
         >
           <FileSpreadsheet
             size={24}
-            className={`mx-auto mb-2 ${options.format === 'docx' ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500'}`}
+            className={`mx-auto mb-2 ${options.format === 'docx' ? 'text-indigo-500' : 'text-slate-600 dark:text-slate-500'}`}
           />
           <p
             className={`text-sm font-medium ${options.format === 'docx' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}
@@ -313,7 +313,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       <button
         onClick={handleGenerate}
         disabled={isGenerating || selectedSectionsCount === 0}
-        className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-primary-600 hover:from-indigo-500 hover:to-primary-500
+        className="w-full py-3 px-4 bg-gradient-to-r from-crimson-600 to-primary-600 hover:from-crimson-500 hover:to-primary-500
                     text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed
                     shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30"
       >
@@ -352,7 +352,7 @@ export const BusinessCaseGenerator: React.FC<BusinessCaseGeneratorProps> = ({
       )}
 
       {/* Preview Info */}
-      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
         <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
           Document will contain data from analysis: <strong>{analysisName}</strong>
         </p>

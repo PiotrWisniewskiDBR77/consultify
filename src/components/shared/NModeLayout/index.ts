@@ -29,13 +29,25 @@
 // ── Layout Components ───────────────────────────────────────────────────────
 export { NModeActionBar } from './NModeActionBar';
 export { NModeCanvas } from './NModeCanvas';
+export { NModeCBoard } from './NModeCBoard';
 export { NModeHeader } from './NModeHeader';
 export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export { NModeSectionWrapper } from './NModeSectionWrapper';
 export { NModeShell } from './NModeShell';
+export {
+  NModeToolbar,
+  ToolbarAISolidButton,
+  ToolbarAISplitButton,
+  ToolbarGhostButton,
+  ToolbarIconButton,
+  ToolbarSubtleButton,
+} from './NModeToolbar';
+export { SummaryCard } from './SummaryCard';
 
 // ── Types ───────────────────────────────────────────────────────────────────
+export type { NModeToolbarProps } from './NModeToolbar';
+export type { SummaryCardMetric, SummaryCardMetricTone, SummaryCardProps } from './SummaryCard';
 export type {
   ActionVariant,
   NModeAction,

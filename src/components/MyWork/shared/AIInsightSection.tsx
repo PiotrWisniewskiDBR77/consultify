@@ -119,7 +119,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors duration-200"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-pink-500/10 dark:from-primary-500/20 dark:to-pink-500/20">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20">
             <Brain size={18} className="text-primary-500 dark:text-primary-400" />
           </div>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -162,7 +162,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                     whileTap={{ scale: 0.98 }}
                     onClick={onGenerateInsights}
                     disabled={isGenerating}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary-500 to-pink-500 text-white text-sm font-medium hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary-500 to-crimson-500 text-white text-sm font-medium hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/20"
                   >
                     {isGenerating ? (
                       <RefreshCw size={16} className="animate-spin" />
@@ -193,7 +193,7 @@ export const AIInsightSection: React.FC<AIInsightSectionProps> = ({
                 <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                   <Brain
                     size={32}
-                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish ? 'Brak wskazówek AI' : 'No AI insights yet'}

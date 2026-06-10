@@ -320,7 +320,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                     >
                       <ChevronRight
                         className={`h-4 w-4 ${
-                          isSelected ? 'rotate-90 text-primary-600' : 'text-slate-400'
+                          isSelected ? 'rotate-90 text-primary-600' : 'text-slate-600'
                         }`}
                       />
                     </button>

@@ -266,7 +266,7 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
       </ResponsiveContainer>
 
       {/* Legend explanation */}
-      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
         <div className="flex items-center justify-center gap-8 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded bg-rose-500" />

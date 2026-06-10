@@ -8,7 +8,6 @@
  * - Max tokens per request
  * - Cost tracking per model
  */
-
 import {
   BarChart3,
   Bot,
@@ -30,9 +29,12 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
+import TeresaMark from '../../shared/TeresaMark';
 
 interface AIModelSelectionSettingsProps {
   currentUser: User;
@@ -214,11 +216,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
   const getSelectedModel = (modelId: string) => availableModels.find((m) => m.id === modelId);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-primary-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -229,7 +227,7 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <Bot size={28} className="text-primary-500" />
+            <TeresaMark size={28} className="text-primary-500" />
             {t('settings.ai.models.title', 'AI Model Selection')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">

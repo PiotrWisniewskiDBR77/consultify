@@ -532,7 +532,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
           <button
             onClick={doSendBack}
             disabled={isSubmitting}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-slate-400 border border-slate-700/60 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-all"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium text-slate-600 border border-slate-700/60 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-all"
           >
             <ArrowLeft className="w-3 h-3" /> {isPolish ? 'Popraw' : 'Revise'}
           </button>
@@ -617,9 +617,9 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                 <button
                   key={u.id}
                   onClick={() => toggleReviewer(u.id)}
-                  className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] transition-colors ${sel ? 'bg-blue-900/40 text-blue-300' : 'hover:bg-slate-800 text-slate-400'}`}
+                  className={`w-full flex items-center gap-2 px-2 py-1 rounded text-[10px] transition-colors ${sel ? 'bg-blue-900/40 text-blue-300' : 'hover:bg-slate-800 text-slate-600'}`}
                 >
-                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
                     {userName(u).charAt(0).toUpperCase()}
                   </div>
                   <span className="truncate flex-1">{userName(u)}</span>
@@ -755,7 +755,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                     ISSUE: 'text-rose-400 bg-rose-900/20',
                     QUESTION: 'text-blue-400 bg-blue-900/20',
                     SUGGESTION: 'text-primary-400 bg-primary-900/20',
-                    GENERAL: 'text-slate-400 bg-slate-700/40',
+                    GENERAL: 'text-slate-600 bg-slate-700/40',
                     APPROVAL: 'text-emerald-400 bg-emerald-900/20',
                   };
                   return (
@@ -779,7 +779,7 @@ export const ReviewPanel: React.FC<ReviewPanelProps> = ({
                             )}
                           </div>
                           <p
-                            className={`text-[10px] text-slate-300 mt-0.5 leading-snug ${!exp ? 'line-clamp-1' : ''}`}
+                            className={`text-[10px] text-slate-600 mt-0.5 leading-snug ${!exp ? 'line-clamp-1' : ''}`}
                           >
                             {c.content}
                           </p>

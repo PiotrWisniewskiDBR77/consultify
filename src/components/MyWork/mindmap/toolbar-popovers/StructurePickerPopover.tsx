@@ -83,7 +83,7 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
   return (
     <div className="w-64 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl overflow-hidden">
       <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
-        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
+        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">
           {isPl ? 'Typ struktury' : 'Structure Type'}
         </div>
       </div>
@@ -107,7 +107,7 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
               <Icon
                 size={14}
                 className={`mt-0.5 shrink-0 ${
-                  isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400'
+                  isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600'
                 }`}
               />
               <div className="min-w-0">
@@ -120,7 +120,7 @@ export const StructurePickerPopover: React.FC<StructurePickerPopoverProps> = ({
                 >
                   {isPl ? opt.labelPl : opt.labelEn}
                 </div>
-                <div className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight mt-0.5">
+                <div className="text-[9px] text-slate-600 dark:text-slate-500 leading-tight mt-0.5">
                   {isPl ? opt.descPl : opt.descEn}
                 </div>
               </div>

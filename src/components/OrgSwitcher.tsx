@@ -32,7 +32,7 @@ const getRoleBadgeColor = (role: string): string => {
     case 'CONSULTANT':
       return 'bg-amber-500/20 text-amber-400 dark:text-amber-300 border-amber-500/30';
     default:
-      return 'bg-gray-500/20 text-gray-400 dark:text-gray-300 border-gray-500/30';
+      return 'bg-gray-500/20 text-gray-600 dark:text-gray-300 border-gray-500/30';
   }
 };
 
@@ -75,7 +75,7 @@ const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ className = '', compact = fal
     if (!singleOrg) return null;
     return (
       <div className={`flex items-center gap-2 px-3 py-1.5 ${className}`}>
-        <Building2 size={14} className="text-slate-400 dark:text-slate-500 shrink-0" />
+        <Building2 size={14} className="text-slate-600 dark:text-slate-500 shrink-0" />
         <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
           {singleOrg.name}
         </span>
@@ -108,7 +108,7 @@ const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ className = '', compact = fal
                    border border-slate-200 dark:border-slate-700
                    transition-colors w-full group disabled:opacity-70"
       >
-        <Building2 size={14} className="text-slate-400 dark:text-slate-500 shrink-0" />
+        <Building2 size={14} className="text-slate-600 dark:text-slate-500 shrink-0" />
         <div className="flex-1 text-left min-w-0">
           <div className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
             {currentOrg?.name || t('common.selectOrganization', 'Select Organization')}
@@ -119,7 +119,7 @@ const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ className = '', compact = fal
         ) : (
           <ChevronDown
             size={14}
-            className={`text-slate-400 dark:text-slate-500 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+            className={`text-slate-600 dark:text-slate-500 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`}
           />
         )}
       </button>
@@ -136,8 +136,8 @@ const OrgSwitcher: React.FC<OrgSwitcherProps> = ({ className = '', compact = fal
                        border border-slate-200 dark:border-slate-700
                        rounded-lg shadow-lg overflow-hidden"
           >
-            <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+            <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-600 dark:text-slate-500">
                 {t('common.organizations', 'Organizations')}
               </p>
             </div>

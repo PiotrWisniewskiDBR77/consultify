@@ -319,7 +319,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                 </>
               ) : (
                 <>
-                  <span className="text-3xl font-bold text-slate-700 dark:text-slate-300 dark:text-slate-600">
+                  <span className="text-3xl font-bold text-slate-700 dark:text-slate-300 dark:text-slate-400">
                     —
                   </span>
                   <span className="text-sm font-semibold mt-1 text-slate-500 dark:text-slate-400 dark:text-slate-500">
@@ -371,7 +371,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
               <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                 {t('executive.health.noBreakdown', 'Breakdown data not yet available')}
               </p>
-              <p className="text-xs text-slate-700 dark:text-slate-300 dark:text-slate-600 mt-1">
+              <p className="text-xs text-slate-700 dark:text-slate-300 dark:text-slate-400 mt-1">
                 {t(
                   'executive.health.noBreakdownHint',
                   'Data will appear as tasks and decisions are tracked'
@@ -385,7 +385,7 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
       {/* Footer Status */}
       <div className="px-5 py-2.5">
         <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-400 dark:text-slate-500">
+          <span className="text-slate-600 dark:text-slate-500">
             {t('executive.health.lastUpdated', 'Last updated')}:{' '}
             {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
           </span>

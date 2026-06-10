@@ -315,7 +315,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setStrokeWidth(Math.max(MIN_STROKE, strokeWidth - 1))}
-              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
             >
               <Minus size={10} />
             </button>
@@ -327,7 +327,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
             </div>
             <button
               onClick={() => setStrokeWidth(Math.min(MAX_STROKE, strokeWidth + 1))}
-              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              className="p-1 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
             >
               <Plus size={10} />
             </button>
@@ -339,21 +339,21 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
           <button
             onClick={handleUndo}
             disabled={undoStack.length === 0}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
           >
             <Undo2 size={14} />
           </button>
           <button
             onClick={handleRedo}
             disabled={redoStack.length === 0}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 disabled:opacity-30"
           >
             <Redo2 size={14} />
           </button>
           <button
             onClick={handleClear}
             disabled={paths.length === 0}
-            className="p-1.5 text-slate-400 hover:text-rose-500 disabled:opacity-30"
+            className="p-1.5 text-slate-600 hover:text-rose-500 disabled:opacity-30"
           >
             <Trash2 size={14} />
           </button>
@@ -362,7 +362,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
             <X size={14} />
           </button>
@@ -383,7 +383,7 @@ const ToolBtn: React.FC<{
     className={`p-1.5 rounded-lg transition-all ${
       active
         ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+        : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
     }`}
     title={label}
   >

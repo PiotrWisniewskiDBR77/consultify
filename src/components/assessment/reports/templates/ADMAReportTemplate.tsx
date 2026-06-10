@@ -146,7 +146,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
         </h2>
         <div className="grid grid-cols-6 gap-4">
           {/* Overall Score */}
-          <div className="bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-indigo-900/20 dark:to-primary-900/20 rounded-xl p-4 text-center">
+          <div className="bg-gradient-to-br from-crimson-50 to-primary-50 dark:from-crimson-900/20 dark:to-primary-900/20 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
               {data.overallMaturity?.toFixed(1) || '0.0'}
             </div>
@@ -310,7 +310,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                     <span
                       className={
                         t.gapToFoF === null
-                          ? 'text-slate-400'
+                          ? 'text-slate-600'
                           : t.gapToFoF <= 0
                             ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
                             : 'text-amber-600 dark:text-amber-400 font-semibold'
@@ -353,7 +353,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {dimensionsWithGaps
                 .filter((d) => d.gap > 0)
                 .slice(0, 10)
@@ -625,7 +625,7 @@ export const ADMAReportTemplate: React.FC<ADMAReportTemplateProps> = ({
           <CheckCircle size={20} className="text-blue-600" />
           Assessment Conclusions
         </h2>
-        <div className="bg-gradient-to-br from-indigo-50 to-primary-50 dark:from-indigo-900/20 dark:to-primary-900/20 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-crimson-50 to-primary-50 dark:from-crimson-900/20 dark:to-primary-900/20 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-6">
           <div className="grid grid-cols-4 gap-4 mb-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">

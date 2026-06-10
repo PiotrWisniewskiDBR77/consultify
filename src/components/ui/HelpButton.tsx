@@ -21,8 +21,8 @@ const playbookAnimationStyle = `
         box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
     }
     50% {
-        background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%);
-        box-shadow: 0 0 16px rgba(139, 92, 246, 0.5);
+        background: linear-gradient(135deg, #A51C30 0%, #651120 100%);
+        box-shadow: 0 0 16px rgba(165, 28, 48, 0.5);
     }
 }
 

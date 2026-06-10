@@ -15,6 +15,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import Api, { getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -377,9 +378,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           </span>
         </div>
         {capLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="animate-spin" size={20} />
-          </div>
+          <LoadingState variant="spinner" />
         ) : capabilities.length === 0 ? (
           <p className="text-sm text-slate-500 py-4 text-center">
             {t('capability.empty', 'No capabilities defined yet.')}
@@ -432,7 +431,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               return (
                 <div
                   key={r.id}
-                  className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2"
+                  className="flex items-center justify-between border-b border-slate-200 dark:border-navy-800 pb-2"
                 >
                   <span className="text-sm text-slate-800 dark:text-slate-200">
                     {cap?.name ?? r.capabilityId}
@@ -470,7 +469,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
             {candidates.map((c) => (
               <div
                 key={c.userId}
-                className="flex items-center justify-between border-b border-slate-100 dark:border-navy-800 pb-2"
+                className="flex items-center justify-between border-b border-slate-200 dark:border-navy-800 pb-2"
               >
                 <div>
                   <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
@@ -581,7 +580,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               key={n}
               type="button"
               onClick={() => setPulseRating(n)}
-              className={`p-1.5 rounded-lg transition-colors ${pulseRating >= n ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600'}`}
+              className={`p-1.5 rounded-lg transition-colors ${pulseRating >= n ? 'text-amber-400' : 'text-slate-600 dark:text-slate-400'}`}
             >
               <Star size={24} fill={pulseRating >= n ? 'currentColor' : 'none'} />
             </button>
@@ -666,9 +665,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
           <span className="text-xs text-slate-500">{segments.length}</span>
         </div>
         {commLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="animate-spin" size={20} />
-          </div>
+          <LoadingState variant="spinner" />
         ) : segments.length === 0 ? (
           <p className="text-sm text-slate-500 text-center py-3">
             {t('stakeholder.noSegments', 'No segments defined.')}
@@ -712,7 +709,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               return (
                 <div
                   key={p.id}
-                  className="border-b border-slate-100 dark:border-navy-800 pb-2 last:border-b-0"
+                  className="border-b border-slate-200 dark:border-navy-800 pb-2 last:border-b-0"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -725,7 +722,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
                       {p.isActive ? (
                         <CheckCircle2 size={14} className="text-green-500" />
                       ) : (
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-600">
                           {t('stakeholder.inactive', 'Inactive')}
                         </span>
                       )}
@@ -780,7 +777,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
             {sendLog.map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center justify-between text-sm border-b border-slate-100 dark:border-navy-800 pb-2"
+                className="flex items-center justify-between text-sm border-b border-slate-200 dark:border-navy-800 pb-2"
               >
                 <span className="text-slate-800 dark:text-slate-200">
                   {entry.channel ?? 'email'} · {entry.recipientCount}{' '}
@@ -811,7 +808,7 @@ export const PeopleChangeWorkspace: React.FC<PeopleChangeWorkspaceProps> = ({
               return (
                 <div
                   key={pack.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2 dark:border-navy-800"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-navy-800"
                 >
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-slate-800 dark:text-slate-200">

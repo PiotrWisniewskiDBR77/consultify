@@ -41,6 +41,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
@@ -343,11 +345,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-primary-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   const tabs = [
@@ -440,7 +438,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   {passwordPolicy.policy?.require_uppercase ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-400 dark:text-slate-500" />
+                    <X size={18} className="text-slate-600 dark:text-slate-500" />
                   )}
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
@@ -450,7 +448,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   {passwordPolicy.policy?.require_numbers ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-400 dark:text-slate-500" />
+                    <X size={18} className="text-slate-600 dark:text-slate-500" />
                   )}
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg">
@@ -460,7 +458,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                   {passwordPolicy.policy?.require_special_chars ? (
                     <CheckCircle size={18} className="text-green-500" />
                   ) : (
-                    <X size={18} className="text-slate-400 dark:text-slate-500" />
+                    <X size={18} className="text-slate-600 dark:text-slate-500" />
                   )}
                 </div>
               </div>
@@ -837,7 +835,7 @@ export const AdvancedSecuritySettings: React.FC<AdvancedSecuritySettingsProps> =
                         ? 'text-green-600'
                         : location.risk_score > 50
                           ? 'text-rose-600'
-                          : 'text-slate-400 dark:text-slate-500'
+                          : 'text-slate-600 dark:text-slate-500'
                     }
                   />
                   <div>

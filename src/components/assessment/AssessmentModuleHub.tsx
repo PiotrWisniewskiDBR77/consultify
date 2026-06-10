@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * AssessmentModuleHub
  *
@@ -45,6 +44,7 @@ import { AssessmentFramework, useMultiFrameworkStore } from '../../store/useMult
 import { AppView } from '../../types';
 import { DRDAxis } from '../../types';
 import { SplitLayout } from '../layout/SplitLayout';
+import { LoadingState } from '../ui/primitives';
 import { AssessmentAxisWorkspace } from './AssessmentAxisWorkspace';
 import { AssessmentInitiativesDrawer } from './AssessmentInitiativesDrawer';
 import { AssessmentSummaryWorkspace } from './AssessmentSummaryWorkspace';
@@ -733,9 +733,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
     }
 
     const FallbackLoader = () => (
-      <div className="h-full flex items-center justify-center bg-transparent">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      </div>
+      <LoadingState variant="spinner" className="h-full bg-transparent" />
     );
 
     switch (activeTab) {
@@ -753,14 +751,11 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
         // Show loading spinner while fetching assessment data
         if (isLoadingAssessment) {
           return (
-            <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950/50">
-              <div className="text-center">
-                <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto mb-3" />
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Ładowanie danych assessmentu...' : 'Loading assessment data...'}
-                </p>
-              </div>
-            </div>
+            <LoadingState
+              variant="spinner"
+              className="h-full bg-slate-50 dark:bg-navy-950/50"
+              label={isPolish ? 'Ładowanie danych assessmentu...' : 'Loading assessment data...'}
+            />
           );
         }
 
@@ -775,7 +770,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               </div>
               <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
                 {openAssessments.length === 0 ? (
-                  <div className="text-xs text-slate-400 dark:text-slate-500 px-2 py-2">
+                  <div className="text-xs text-slate-600 dark:text-slate-500 px-2 py-2">
                     Brak aktywnych assessmentow
                   </div>
                 ) : (
@@ -1021,7 +1016,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
   // Safety check - if framework is unknown, show error instead of crashing
   if (!frameworkConfig) {
     return (
-      <SplitLayout title="Assessment" currentView={AppView.ASSESSMENT}>
+      <SplitLayout title="Assessment" currentView={AppView.ASSESSMENT_OVERVIEW}>
         <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950 p-8">
           <div className="text-center max-w-md bg-white dark:bg-navy-900 p-8 rounded-xl shadow-lg border border-rose-200 dark:border-rose-900/30">
             <div className="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-900/20 flex items-center justify-center mx-auto mb-4 text-rose-600 dark:text-rose-400">
@@ -1040,7 +1035,10 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
   }
 
   return (
-    <SplitLayout title={`${framework} - ${frameworkConfig.name}`} currentView={AppView.ASSESSMENT}>
+    <SplitLayout
+      title={`${framework} - ${frameworkConfig.name}`}
+      currentView={AppView.ASSESSMENT_OVERVIEW}
+    >
       <div className="flex flex-col h-full bg-white dark:bg-navy-900">
         {/* Framework Header - Compact on mobile */}
         <div
@@ -1186,17 +1184,17 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
 
               {/* Placeholder for other tabs - module-specific buttons will go here */}
               {activeTab === 'assessment' && (
-                <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <span className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {/* Assessment tab actions placeholder */}
                 </span>
               )}
               {activeTab === 'reports' && (
-                <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <span className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {/* Reports tab actions placeholder */}
                 </span>
               )}
               {activeTab === 'initiatives' && (
-                <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                <span className="text-xs text-slate-600 dark:text-slate-500 italic">
                   {/* Initiatives tab actions placeholder */}
                 </span>
               )}
@@ -1221,7 +1219,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                 selectedAssessmentId
                   ? 'bg-amber-500 text-white hover:bg-amber-400'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
               }`}
             >
               <Lightbulb size={14} />
@@ -1269,7 +1267,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   <span className="text-xs text-amber-500 dark:text-amber-400 flex items-center gap-1">
                     <AlertCircle size={12} />
                     Unsaved changes
-                    <span className="text-slate-400 dark:text-slate-500 ml-1">
+                    <span className="text-slate-600 dark:text-slate-500 ml-1">
                       (auto-save in 30s)
                     </span>
                   </span>
@@ -1289,7 +1287,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                   <span className="text-xs text-rose-500 dark:text-rose-400">{saveError}</span>
                 )}
                 {lastSaved && !saveError && (
-                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                  <span className="text-xs text-slate-600 dark:text-slate-500">
                     Saved:{' '}
                     {lastSaved.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </span>
@@ -1312,7 +1310,7 @@ export const AssessmentModuleHub: React.FC<AssessmentModuleHubProps> = ({
                                     flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all
                                     ${
                                       isSaving
-                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
                                         : hasUnsavedChanges
                                           ? 'bg-green-600 hover:bg-green-500 text-white shadow-md shadow-green-600/20'
                                           : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'

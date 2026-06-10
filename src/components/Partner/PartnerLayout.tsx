@@ -135,7 +135,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
       {/* Main Content - Navy Background */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50 dark:bg-navy-900">
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-white/5">
+        <header className="sticky top-0 z-30 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-white/5 border-t-2 border-t-crimson-600 dark:border-t-crimson-500">
           <div className="flex items-center justify-between px-4 lg:px-6 h-14">
             {/* Left side: Mobile menu + Breadcrumbs/Title */}
             <div className="flex items-center gap-4">
@@ -155,7 +155,7 @@ export const PartnerLayout: React.FC<PartnerLayoutProps> = ({
                   <nav className="flex items-center gap-1 text-sm">
                     {breadcrumbs.map((crumb, index) => (
                       <React.Fragment key={index}>
-                        {index > 0 && <ChevronRight className="w-4 h-4 text-slate-400" />}
+                        {index > 0 && <ChevronRight className="w-4 h-4 text-slate-600" />}
                         {index < breadcrumbs.length - 1 ? (
                           <button
                             onClick={() => crumb.section && onSectionChange(crumb.section)}

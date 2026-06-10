@@ -285,7 +285,7 @@ import {
   getDocumentLifecycleState,
   getDocumentVersionSnapshot,
   insertDocumentContentBlock,
-  listDocumentAuditEntries,
+  listDocumentAuditEntriesAsync,
   listDocumentComments,
   listDocumentCommentThreads,
   listDocumentVersionSnapshots,
@@ -346,6 +346,7 @@ import {
   recordTemplateFeedback,
   recordTemplateUsage,
 } from '../services/documentStudio/documentTemplateService.js';
+import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -460,6 +461,37 @@ router.post(
         useLlm,
         templateId,
       });
+
+      // G5 fix — register the authored document in the Outputs registry so it
+      // appears in the Outputs Library (previously documents only reached Outputs
+      // via the Teresa pipeline). Best-effort: never fail generation on a registry
+      // hiccup.
+      try {
+        await artifactRegistryService.registerArtifactOrigin({
+          organizationId,
+          // outputType enum is ['report','presentation','sheet']; documents register
+          // as 'report' with artifactFamily 'document' (same convention as report-builder).
+          outputType: 'report',
+          artifactFamily: 'document',
+          originRuntime: 'native_artifact',
+          originRecordId: String(result.artifactId),
+          titleSnapshot: String(result.schema?.title || intake.title || 'Untitled document'),
+          ownerUserId: String(userId),
+          createdBy: String(userId),
+          visibilityScope: undefined,
+          projectId,
+          originSummary: {
+            sourceType: 'document_studio',
+            templateId: templateId ? String(templateId) : null,
+            sourceTable: 'document_studio_artifacts',
+          },
+        });
+      } catch (regErr) {
+        logger.warn('[DocumentStudio] Outputs registration failed (document still saved)', {
+          message: regErr instanceof Error ? regErr.message : String(regErr),
+        });
+      }
+
       res.json({ artifactId: result.artifactId, schema: result.schema });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate document artifact';
@@ -3623,7 +3655,7 @@ router.post(
       return;
     }
     try {
-      const proposal = rejectEditProposal({
+      const proposal = await rejectEditProposal({
         artifactId,
         organizationId,
         userId,
@@ -3656,7 +3688,7 @@ router.get(
       res.status(404).json({ error: 'artifact_not_found' });
       return;
     }
-    const auditEntries = listDocumentAuditEntries(artifactId, organizationId);
+    const auditEntries = await listDocumentAuditEntriesAsync(artifactId, organizationId);
     res.json({ auditEntries });
   })
 );

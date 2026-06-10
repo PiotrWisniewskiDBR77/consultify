@@ -9,15 +9,16 @@
  * All section components live in ./sections/ and consume the InitiativeContext.
  */
 
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
-  Archive,
+  ArrowRight,
+  Ban,
+  Calculator,
   Calendar,
   CheckCircle,
+  CheckCircle2,
   CheckSquare,
   ChevronDown,
-  ChevronLeft,
   ChevronUp,
   Clock,
   Copy,
@@ -26,18 +27,28 @@ import {
   Download,
   Edit3,
   ExternalLink,
+  FileDown,
+  FileText,
+  FileType,
   Flag,
   FolderOpen,
   GitBranch,
+  GitFork,
+  GraduationCap,
   History,
+  Layers,
+  Lightbulb,
   Link2,
   ListChecks,
   Loader2,
   MessageSquare,
+  Monitor,
   MoreVertical,
-  Play,
+  NotebookPen,
+  Package,
   Plus,
-  Save,
+  Presentation,
+  RotateCcw,
   Scale,
   Search,
   Shield,
@@ -49,6 +60,7 @@ import {
   Undo2,
   User,
   Users,
+  Wand2,
   X,
   XCircle,
 } from 'lucide-react';
@@ -56,7 +68,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
+import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
@@ -71,10 +86,16 @@ import {
   willChangeModule,
 } from '@/services/initiativeLifecycle';
 import {
+  listSuggestedChanges,
+  resolveSuggestedChange,
+  type SuggestedChange,
+} from '@/services/initiatives/suggestedChanges';
+import {
   getInitiativeStatusPreflightTruth,
   saveInitiativeWriteTruth,
   updateInitiativeStatusWriteTruth,
 } from '@/services/initiativeWriteTruth';
+import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -97,17 +118,26 @@ import {
   type WarningThresholds,
 } from '../MyWork/shared';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
-import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
-  type NModeAction,
   NModeCanvas,
+  NModeCBoard,
   NModeHeader,
   NModeLeftNav,
   NModePropertiesStrip,
   type NModePropertyField,
   type NModeSection,
+  NModeSectionWrapper,
+  ToolbarAISolidButton,
+  ToolbarAISplitButton,
+  ToolbarGhostButton,
+  ToolbarIconButton,
+  ToolbarSubtleButton,
 } from '../shared/NModeLayout';
+import {
+  type AIConsultantAction,
+  AIConsultantPanel,
+} from '../shared/NModeLayout/AIConsultantPanel';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
   ActivityLogCanvas,
@@ -122,16 +152,13 @@ import {
   RaidCanvas as NModeRaidCanvas,
   type SortOrder,
 } from '../shared/NModeSections';
-import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
-import { InitiativeCompactPanel } from './InitiativeCompactPanel';
 import {
   extractInitiativeKpiRows,
   type InitiativeKpiEditorRow,
   toInitiativeKpiEditorRow,
 } from './initiativeKpiContract';
-import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   createInitiativesDemoDataset,
   isShowcaseArtifactId,
@@ -164,6 +191,7 @@ import type {
   UserInfo,
   Watcher,
 } from './sections/types';
+import { SuggestedChangesPanel } from './Wizard/SuggestedChangesPanel';
 
 const unwrapApiList = (response: unknown, listKey?: string): any[] => {
   if (Array.isArray(response)) return response;
@@ -522,13 +550,38 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     syncURL: true,
   });
 
-  // C-mode layout variant (cards = accordion grid, scroll = single column)
-  const cModeLayout = 'cards' as const;
-  const [showAssessmentPanel, setShowAssessmentPanel] = useState(false);
   const [activeNSection, setActiveNSection] = useState<string>('initiative-definition');
   const [nModeSectionOrder, setNModeSectionOrder] = useState<string[] | null>(null);
+  // Canon Toolbar (Warstwa 3) — user-toggled section visibility for the left nav.
+  // Drops section ids from the nav until restored ("Przywróć domyślne").
+  const [hiddenSectionIds, setHiddenSectionIds] = useState<Set<string>>(new Set());
+  // Canon Toolbar dropdown open-state (Sections / New / Export / kebab).
+  const [showSectionsMenu, setShowSectionsMenu] = useState(false);
+  const [showNewMenu, setShowNewMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showToolbarKebab, setShowToolbarKebab] = useState(false);
+
+  // Suggested changes (Formula §5 / Faza 4) — owner-side mini-gate. The Generator
+  // proposes CHANGES to an existing initiative as pending suggested changes; the
+  // owner accepts/rejects them here. Service degrades gracefully (never throws).
+  const [suggestedChanges, setSuggestedChanges] = useState<SuggestedChange[]>([]);
+  const [suggestedChangesLoading, setSuggestedChangesLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null);
+  // Slot 9 — canonical artifact-level AI Consultant right panel (POZIOM 3).
+  // Toggled by the solid-teal toolbar button; replaces the old one-shot generate.
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+
+  // Present mode (Phase A3) — fullscreen card-by-card walk of the canonical sections.
+  const [presentOpen, setPresentOpen] = useState(false);
+  // Fork (Phase A4) — in-flight guard for the toolbar Fork action.
+  const [isForking, setIsForking] = useState(false);
+  // Smart Export dialog (Phase E) — section picker + target chooser.
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportSelectedSectionIds, setExportSelectedSectionIds] = useState<Set<string> | null>(
+    null
+  );
+  const [isExporting, setIsExporting] = useState<null | 'markdown' | 'pdf' | 'notebook'>(null);
 
   // N-mode comment state (for CommentsCanvas — identical to Task)
   const [nCommentDraft, setNCommentDraft] = useState('');
@@ -1116,6 +1169,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     [initiative]
   );
   const primaryActions = statusActions.filter((a) => a.variant === 'primary').slice(0, 2);
+  // Canon Toolbar (Warstwa 3): non-destructive transitions (primary + secondary,
+  // e.g. Start Execution, Mark Complete → Done, Start Tracking, Archive) become
+  // the Properties-Strip STATUS options. Destructive ones (danger: Block /
+  // Cancel / Reject) live in the toolbar kebab only. Both reuse the same
+  // handleStatusAction handler — no new transition semantics are introduced.
+  const stripStatusActions = useMemo(
+    () => statusActions.filter((a) => a.variant === 'primary' || a.variant === 'secondary'),
+    [statusActions]
+  );
+  const destructiveStatusActions = useMemo(
+    () => statusActions.filter((a) => a.variant === 'danger'),
+    [statusActions]
+  );
   const contextActions = useMemo(() => {
     return gateReadiness?.capabilities?.ctaBar?.contextCreateActions || [];
   }, [gateReadiness]);
@@ -1128,6 +1194,166 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const canEditTargetDate = !!topBarCaps?.canEditTargetDate;
   const canEditCards = !!gateReadiness?.capabilities?.cards?.canEditCards;
   const canUseAi = !!gateReadiness?.capabilities?.ctaBar?.canUseAi;
+
+  // ── Mark Complete (Canon Blok C) ────────────────────────────────────────
+  // section_completions is an AI signal only — it never locks fields. Persisted
+  // as a JSON map on the initiatives row (lazy-ALTER'd TEXT column server-side).
+  const sectionCompletions = useMemo<Record<string, boolean>>(() => {
+    const raw = initiative?.sectionCompletions ?? initiative?.section_completions;
+    if (!raw) return {};
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw) || {};
+      } catch {
+        return {};
+      }
+    }
+    return typeof raw === 'object' ? (raw as Record<string, boolean>) : {};
+  }, [initiative]);
+
+  const handleToggleSectionComplete = useCallback(
+    async (sectionId: string) => {
+      const prevMap = sectionCompletions;
+      const next = { ...prevMap, [sectionId]: !prevMap[sectionId] };
+      // Optimistic — reflect immediately in nav badge + section visual.
+      setInitiative((prev: any) => ({
+        ...prev,
+        sectionCompletions: next,
+        section_completions: next,
+      }));
+      try {
+        await saveInitiativeWriteTruth(initiativeId, { sectionCompletions: next });
+      } catch {
+        // Rollback on failure.
+        setInitiative((prev: any) => ({
+          ...prev,
+          sectionCompletions: prevMap,
+          section_completions: prevMap,
+        }));
+        toast.error(
+          isPolish ? 'Nie udało się zapisać statusu sekcji' : 'Failed to save section status'
+        );
+      }
+    },
+    [sectionCompletions, initiativeId, isPolish]
+  );
+
+  // ── Canon sections persisted via lazy-ALTER'd columns (Phase C) ──────────
+  // hypothesis_statement is separate from the legacy `hypothesis` column (which
+  // stores the Initiative Scope narrative via the `description` alias).
+  const savedHypothesis = (initiative?.hypothesisStatement ??
+    initiative?.hypothesis_statement ??
+    '') as string;
+  const savedLessons = (initiative?.lessonsLearned ?? initiative?.lessons_learned ?? '') as string;
+  const parseJsonField = useCallback((raw: unknown): any[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') {
+      try {
+        const v = JSON.parse(raw);
+        return Array.isArray(v) ? v : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, []);
+  const changeLogItems = useMemo(
+    () => parseJsonField(initiative?.changeLog ?? initiative?.change_log),
+    [initiative, parseJsonField]
+  );
+  const okrItems = useMemo(() => parseJsonField(initiative?.okrs), [initiative, parseJsonField]);
+
+  const [hypothesisDraft, setHypothesisDraft] = useState('');
+  const [lessonsDraft, setLessonsDraft] = useState('');
+  const [changeLogDraft, setChangeLogDraft] = useState('');
+  const [okrDraft, setOkrDraft] = useState('');
+  useEffect(() => {
+    setHypothesisDraft(savedHypothesis);
+  }, [savedHypothesis]);
+  useEffect(() => {
+    setLessonsDraft(savedLessons);
+  }, [savedLessons]);
+
+  // Generic persist for the lazy-ALTER'd canon fields. Optimistic + rollback.
+  const persistInitiativeField = useCallback(
+    async (patch: Record<string, unknown>, mirror: Record<string, unknown>) => {
+      const snapshot = { ...mirror };
+      setInitiative((prev: any) => ({ ...prev, ...patch, ...mirror }));
+      try {
+        await saveInitiativeWriteTruth(initiativeId, patch);
+      } catch {
+        setInitiative((prev: any) => ({ ...prev, ...snapshot }));
+        toast.error(isPolish ? 'Nie udało się zapisać' : 'Save failed');
+      }
+    },
+    [initiativeId, isPolish]
+  );
+
+  const saveHypothesis = useCallback(() => {
+    if (hypothesisDraft === savedHypothesis) return;
+    void persistInitiativeField(
+      { hypothesisStatement: hypothesisDraft },
+      { hypothesisStatement: hypothesisDraft, hypothesis_statement: hypothesisDraft }
+    );
+  }, [hypothesisDraft, savedHypothesis, persistInitiativeField]);
+
+  const saveLessons = useCallback(() => {
+    if (lessonsDraft === savedLessons) return;
+    void persistInitiativeField(
+      { lessonsLearned: lessonsDraft },
+      { lessonsLearned: lessonsDraft, lessons_learned: lessonsDraft }
+    );
+  }, [lessonsDraft, savedLessons, persistInitiativeField]);
+
+  const genId = useCallback(() => Math.random().toString(36).slice(2, 10), []);
+  const addChangeLogEntry = useCallback(
+    (entry: { change: string; reason?: string; impact?: string }) => {
+      const cu = currentUser as any;
+      const next = [
+        ...changeLogItems,
+        {
+          id: genId(),
+          date: new Date().toISOString().slice(0, 10),
+          user: cu?.firstName || cu?.email || 'You',
+          change: entry.change,
+          reason: entry.reason || '',
+          impact: entry.impact || '',
+        },
+      ];
+      void persistInitiativeField({ changeLog: next }, { changeLog: next, change_log: next });
+    },
+    [changeLogItems, currentUser, genId, persistInitiativeField]
+  );
+  const removeChangeLogEntry = useCallback(
+    (id: string) => {
+      const next = changeLogItems.filter((e: any) => e.id !== id);
+      void persistInitiativeField({ changeLog: next }, { changeLog: next, change_log: next });
+    },
+    [changeLogItems, persistInitiativeField]
+  );
+
+  const addOkr = useCallback(
+    (objective: string) => {
+      const next = [...okrItems, { id: genId(), objective, keyResults: [], confidence: 'MEDIUM' }];
+      void persistInitiativeField({ okrs: next }, { okrs: next });
+    },
+    [okrItems, genId, persistInitiativeField]
+  );
+  const updateOkr = useCallback(
+    (id: string, patch: Record<string, unknown>) => {
+      const next = okrItems.map((o: any) => (o.id === id ? { ...o, ...patch } : o));
+      void persistInitiativeField({ okrs: next }, { okrs: next });
+    },
+    [okrItems, persistInitiativeField]
+  );
+  const removeOkr = useCallback(
+    (id: string) => {
+      const next = okrItems.filter((o: any) => o.id !== id);
+      void persistInitiativeField({ okrs: next }, { okrs: next });
+    },
+    [okrItems, persistInitiativeField]
+  );
 
   const toggleSection = useCallback((id: string) => {
     setExpandedSections((prev) => {
@@ -1703,6 +1929,36 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     return { leftSections: left, rightSections: right };
   }, [sectionTypes, visibleSections, sectionOrder]);
 
+  // ── Suggested changes (Faza 4) — load + accept/reject (mini-gate) ──────────
+  const loadSuggestedChanges = useCallback(async () => {
+    if (!initiativeId) return;
+    setSuggestedChangesLoading(true);
+    try {
+      const items = await listSuggestedChanges(initiativeId);
+      setSuggestedChanges(items);
+    } finally {
+      setSuggestedChangesLoading(false);
+    }
+  }, [initiativeId]);
+
+  useEffect(() => {
+    void loadSuggestedChanges();
+  }, [loadSuggestedChanges]);
+
+  const handleResolveSuggestedChange = useCallback(
+    async (change: SuggestedChange, accept: boolean) => {
+      if (!change.id) return;
+      await resolveSuggestedChange(change.id, accept);
+      await loadSuggestedChanges();
+    },
+    [loadSuggestedChanges]
+  );
+
+  const pendingSuggestedChangesCount = useMemo(
+    () => suggestedChanges.filter((c) => (c.status ?? 'pending') === 'pending').length,
+    [suggestedChanges]
+  );
+
   // ==========================================
   // DATA FETCHING
   // ==========================================
@@ -1794,8 +2050,18 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           sc.map((t: string, i: number) => ({ id: `sc-${i}`, text: t, done: false }))
         );
         const dl = td.deliverables || data.deliverables || [];
+        // Done flags persist as an index-aligned boolean[] alongside the texts.
+        const dlDone = Array.isArray(data.deliverablesDone)
+          ? data.deliverablesDone
+          : Array.isArray(data.deliverables_done)
+            ? data.deliverables_done
+            : [];
         setDeliverableItems(
-          dl.map((t: string, i: number) => ({ id: `dl-${i}`, text: t, done: false }))
+          dl.map((t: string, i: number) => ({
+            id: `dl-${i}`,
+            text: t,
+            done: !!dlDone[i],
+          }))
         );
       }
       setTags(data.tags || []);
@@ -2510,9 +2776,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             })
           : undefined;
 
-      const normalizedDeliverables = deliverableItems
-        .map((d) => String(d.text || '').trim())
-        .filter(Boolean);
+      // Keep texts + done[] index-aligned: filter on text once, derive both.
+      const keptDeliverables = deliverableItems.filter((d) => String(d.text || '').trim() !== '');
+      const normalizedDeliverables = keptDeliverables.map((d) => String(d.text || '').trim());
+      const normalizedDeliverablesDone = keptDeliverables.map((d) => !!d.done);
       const normalizedSuccessCriteria = successCriteriaItems
         .map((c) => String(c.text || '').trim())
         .filter(Boolean);
@@ -2535,6 +2802,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         problemStatement: problemDefinitionPayload,
         marketContext: marketContextDraft || undefined,
         deliverables: normalizedDeliverables,
+        deliverablesDone: normalizedDeliverablesDone,
         successCriteria: normalizedSuccessCriteria,
         scopeIn: normalizedScopeIn,
         scopeOut: normalizedScopeOut,
@@ -2601,6 +2869,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         resourceTools,
         resource_tools: resourceTools,
         deliverables: normalizedDeliverables,
+        deliverablesDone: normalizedDeliverablesDone,
+        deliverables_done: normalizedDeliverablesDone,
         successCriteria: normalizedSuccessCriteria,
         scopeIn: normalizedScopeIn,
         scopeOut: normalizedScopeOut,
@@ -4427,7 +4697,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       financialImpact: ['financial-impact'],
       raid: ['risk-raid'],
       decisions: ['decisions'],
-      gates: ['gates'],
+      gates: ['gates', 'suggested-changes'],
       comments: ['comments'],
       history: ['activity-log'],
       attachments: ['attachments-links'],
@@ -4469,6 +4739,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: ListChecks,
         label: { en: 'Tasks', pl: 'Zadania' },
         badge: tasks.length > 0 ? tasks.length : undefined,
+        cSpan: 2,
+        cHidden: tasks.length === 0,
         component: null,
       },
       {
@@ -4476,6 +4748,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: Scale,
         label: { en: 'Decisions', pl: 'Decyzje' },
         badge: decisions.length > 0 ? decisions.length : undefined,
+        cSpan: 2,
+        cHidden: decisions.length === 0,
         component: null,
       },
       {
@@ -4488,6 +4762,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'timeline',
         icon: Calendar,
         label: { en: 'Timeline', pl: 'Harmonogram' },
+        cSpan: 3,
         component: null,
       },
       {
@@ -4495,6 +4770,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: Scale,
         label: { en: 'Risk & RAID', pl: 'Ryzyko i RAID' },
         badge: raidItems.length > 0 ? raidItems.length : undefined,
+        cSpan: 2,
+        cHidden: raidItems.length === 0,
         component: null,
       },
       // --- Cele i mierniki ---
@@ -4508,6 +4785,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'kpi',
         icon: TrendingUp,
         label: { en: 'KPIs & Benefits', pl: 'KPI i korzyści' },
+        cSpan: 2,
         component: null,
       },
       {
@@ -4515,6 +4793,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: GitBranch,
         label: { en: 'Dependencies', pl: 'Zależności' },
         badge: dependencies.length > 0 ? dependencies.length : undefined,
+        cSpan: 2,
+        cHidden: dependencies.length === 0,
         component: null,
       },
       // --- Finanse ---
@@ -4522,12 +4802,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: 'financial-analysis',
         icon: DollarSign,
         label: { en: 'Financial Analysis', pl: 'Analiza finansowa' },
+        cSpan: 2,
         component: null,
       },
       {
         id: 'financial-impact',
         icon: DollarSign,
         label: { en: 'Financial Impact', pl: 'Wpływ finansowy' },
+        cSpan: 2,
         component: null,
       },
       // --- Governance (rzadko używane) ---
@@ -4536,6 +4818,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: ShieldCheck,
         label: { en: 'RACI', pl: 'RACI' },
         badge: stakeholders.length > 0 ? stakeholders.length : undefined,
+        cSpan: 2,
+        cHidden: stakeholders.length === 0,
         component: null,
       },
       {
@@ -4543,6 +4827,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: Shield,
         label: { en: 'Gates', pl: 'Bramy' },
         badge: pendingGates.length > 0 ? pendingGates.length : undefined,
+        component: null,
+      },
+      {
+        id: 'suggested-changes',
+        icon: GitBranch,
+        label: { en: 'Suggested changes', pl: 'Sugerowane zmiany' },
+        badge: pendingSuggestedChangesCount > 0 ? pendingSuggestedChangesCount : undefined,
+        cSpan: 2,
         component: null,
       },
       {
@@ -4560,6 +4852,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           attachments.length + linkedItems.length > 0
             ? attachments.length + linkedItems.length
             : undefined,
+        cHidden: attachments.length + linkedItems.length === 0,
         component: null,
       },
       {
@@ -4573,6 +4866,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: MessageSquare,
         label: { en: 'Comments', pl: 'Komentarze' },
         badge: comments.length > 0 ? comments.length : undefined,
+        cHidden: comments.length === 0,
         component: null,
       },
       {
@@ -4580,16 +4874,105 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         icon: History,
         label: { en: 'Activity Log', pl: 'Dziennik aktywności' },
         badge: history.length > 0 ? history.length : undefined,
+        cSpan: 2,
+        cHidden: history.length === 0,
+        component: null,
+      },
+      // ── Canon sections added in Phase C (→ 21/21) ──────────────────────────
+      {
+        id: 'deliverables-milestones',
+        icon: Package,
+        label: { en: 'Deliverables & Milestones', pl: 'Produkty i kamienie milowe' },
+        badge: deliverableItems.length > 0 ? deliverableItems.length : undefined,
+        cSpan: 2,
+        component: null,
+      },
+      {
+        id: 'change-log',
+        icon: FileText,
+        label: { en: 'Change Log', pl: 'Dziennik zmian' },
+        badge: changeLogItems.length > 0 ? changeLogItems.length : undefined,
+        cSpan: 2,
+        component: null,
+      },
+      {
+        id: 'okr',
+        icon: Target,
+        label: { en: 'OKR', pl: 'OKR' },
+        badge: okrItems.length > 0 ? okrItems.length : undefined,
+        cSpan: 2,
+        component: null,
+      },
+      {
+        id: 'hypothesis',
+        icon: Lightbulb,
+        label: { en: 'Hypothesis', pl: 'Hipoteza' },
+        component: null,
+      },
+      {
+        id: 'workstream-owners',
+        icon: Users,
+        label: { en: 'Workstream Owners', pl: 'Właściciele strumieni' },
+        component: null,
+      },
+      {
+        id: 'lessons-learned',
+        icon: GraduationCap,
+        label: { en: 'Lessons Learned', pl: 'Wnioski i lekcje' },
         component: null,
       },
     ];
 
+    // Group tabs (mirrors InsightViewer's bilingual groupLabels + groupIndexById).
+    const groupLabels = isPolish
+      ? ['Zakres i plan', 'Decyzje i ryzyko', 'Rezultaty', 'Ludzie', 'Zapisy']
+      : ['Scope & Plan', 'Decisions & Risk', 'Outcomes', 'People', 'Records'];
+    const groupIndexById: Record<string, number> = {
+      // 0 — Zakres i plan / Scope & Plan
+      'initiative-definition': 0,
+      tasks: 0,
+      timeline: 0,
+      'deliverables-milestones': 0,
+      dependencies: 0,
+      // 1 — Decyzje i ryzyko / Decisions & Risk
+      decisions: 1,
+      'risk-raid': 1,
+      'change-log': 1,
+      gates: 1,
+      'suggested-changes': 1,
+      // 2 — Rezultaty / Outcomes
+      'target-state-scope': 2,
+      kpi: 2,
+      okr: 2,
+      hypothesis: 2,
+      'financial-analysis': 2,
+      'financial-impact': 2,
+      // 3 — Ludzie / People
+      team: 3,
+      'workstream-owners': 3,
+      raci: 3,
+      // 4 — Zapisy / Records
+      resources: 4,
+      'attachments-links': 4,
+      'used-in': 4,
+      'lessons-learned': 4,
+      comments: 4,
+      'activity-log': 4,
+    };
+
+    const withGroup = (sections: NModeSection[]): NModeSection[] =>
+      sections.map((section) => ({
+        ...section,
+        group: groupLabels[groupIndexById[section.id] ?? 4],
+      }));
+
     if (!enabledNModeSectionIds || enabledNModeSectionIds.size === 0) {
-      return allSections;
+      return withGroup(allSections);
     }
 
-    return allSections.filter((section) => enabledNModeSectionIds.has(section.id));
+    return withGroup(allSections.filter((section) => enabledNModeSectionIds.has(section.id)));
   }, [
+    isPolish,
     tasks.length,
     milestones.length,
     dependencies.length,
@@ -4602,6 +4985,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     attachments.length,
     linkedItems.length,
     enabledNModeSectionIds,
+    pendingSuggestedChangesCount,
   ]);
 
   // ==========================================
@@ -4609,22 +4993,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // ==========================================
 
   const nModePropertyFields: NModePropertyField[] = useMemo(() => {
-    const statusOptions = [
-      { value: 'DRAFT', label: { en: 'Draft', pl: 'Szkic' } },
-      { value: 'PENDING_REVIEW', label: { en: 'Pending Review', pl: 'Oczekuje na przegląd' } },
-      { value: 'REVIEW', label: { en: 'Review', pl: 'Przegląd' } },
-      { value: 'PROMOTED', label: { en: 'Promoted', pl: 'Promowana' } },
-      { value: 'PLANNING', label: { en: 'Planning', pl: 'Planowanie' } },
-      { value: 'APPROVED', label: { en: 'Approved', pl: 'Zatwierdzona' } },
-      { value: 'SCHEDULED', label: { en: 'Scheduled', pl: 'Zaplanowana' } },
-      { value: 'EXECUTING', label: { en: 'Executing', pl: 'W realizacji' } },
-      { value: 'BLOCKED', label: { en: 'Blocked', pl: 'Zablokowana' } },
-      { value: 'DONE', label: { en: 'Done', pl: 'Zakończona' } },
-      { value: 'TRACKING', label: { en: 'Tracking', pl: 'Śledzenie' } },
-      { value: 'CANCELLED', label: { en: 'Cancelled', pl: 'Anulowana' } },
-      { value: 'ARCHIVED', label: { en: 'Archived', pl: 'Zarchiwizowana' } },
-    ];
-
     const priorityOptions = [
       { value: 'critical', label: { en: 'Critical', pl: 'Krytyczny' } },
       { value: 'high', label: { en: 'High', pl: 'Wysoki' } },
@@ -4670,7 +5038,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return {
           dot: 'bg-slate-300',
           bg: 'bg-slate-100 dark:bg-navy-800',
-          text: 'text-slate-400 dark:text-slate-500',
+          text: 'text-slate-600 dark:text-slate-500',
         };
       // Map target status to module color
       const targetModule = getModuleFromStatus(gateConf.toStatus);
@@ -4754,31 +5122,59 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         label: { en: 'Status', pl: 'Status' },
         type: 'custom' as const,
         value: status,
-        onChange: () => {},
-        readOnly: true,
+        // Canon: status changes IN the strip. Selecting a valid next-state runs
+        // the SAME transition handler the old toolbar buttons called (with all its
+        // gate/preflight guards). Destructive transitions are excluded (kebab only).
+        onChange: (next: string) => {
+          if (!next || next === status) return;
+          const action = stripStatusActions.find((a) => a.targetStatus === next);
+          if (action) void handleStatusAction(action);
+        },
+        readOnly: stripStatusActions.length === 0,
         alertBorderClass: statusAlertBorder,
-        render: () => (
-          <div className="relative">
-            <div
-              className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentStatusColor}`}
-            >
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentStatusDot}`} />
-              <span className="flex-1 truncate">{currentStatusLabel}</span>
+        render: () => {
+          const canChangeStatus = stripStatusActions.length > 0 && !isMutating;
+          return (
+            <div className="relative">
+              <div
+                className={`flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold ${currentStatusBg} border ${statusAlertBorder || 'border-slate-200/60 dark:border-navy-600/60'} ${currentStatusColor}`}
+              >
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${currentStatusDot}`} />
+                <span className="flex-1 truncate">{currentStatusLabel}</span>
+                {canChangeStatus && <ChevronDown size={12} className="flex-shrink-0 opacity-60" />}
+              </div>
+              <select
+                value={status}
+                disabled={!canChangeStatus}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  if (!next || next === status) return;
+                  const action = stripStatusActions.find((a) => a.targetStatus === next);
+                  if (action) void handleStatusAction(action);
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default"
+                title={
+                  canChangeStatus
+                    ? isPolish
+                      ? 'Zmień status'
+                      : 'Change status'
+                    : isPolish
+                      ? 'Brak dostępnych zmian statusu'
+                      : 'No status changes available'
+                }
+              >
+                {/* Current status — always present so the select reflects state */}
+                <option value={status}>{currentStatusLabel}</option>
+                {/* Valid non-destructive next-states (reuse transition definitions) */}
+                {stripStatusActions.map((action) => (
+                  <option key={action.targetStatus} value={action.targetStatus}>
+                    {isPolish ? action.labelPl : action.label}
+                  </option>
+                ))}
+              </select>
             </div>
-            <select
-              value={status}
-              onChange={() => {}}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              title={isPolish ? 'Podgląd listy statusów' : 'Preview status list'}
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {isPolish ? opt.label.pl : opt.label.en}
-                </option>
-              ))}
-            </select>
-          </div>
-        ),
+          );
+        },
       },
       {
         id: 'phase',
@@ -5024,6 +5420,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     isPolish,
     moduleConfig,
     statusActions,
+    stripStatusActions,
+    isMutating,
     handleStatusAction,
     setPriority,
     setOwnerId,
@@ -5545,7 +5943,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         MAP[type] || {
           icon: <Clock size={12} />,
           label: type.replace(/_/g, ' '),
-          style: 'text-slate-400 bg-slate-400/10 border-slate-300/30',
+          style: 'text-slate-600 bg-slate-400/10 border-slate-300/30',
         }
       );
     },
@@ -5577,7 +5975,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       {isPolish ? 'Problem' : 'Problem'}
                     </label>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {isPolish
                         ? 'Jaki problem rozwiązuje ta inicjatywa'
                         : 'What problem does this initiative solve'}
@@ -5615,7 +6013,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       {isPolish ? 'Opis rozwiązania' : 'Proposed Solution'}
                     </label>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {isPolish
                         ? 'Proponowane podejście i sposób realizacji'
                         : 'Proposed approach and implementation method'}
@@ -5653,7 +6051,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       {isPolish ? 'Koszt bezczynności' : 'Cost of Inaction'}
                     </label>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {isPolish
                         ? 'Konsekwencje braku działania'
                         : 'Consequences of not taking action'}
@@ -5691,7 +6089,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                       {isPolish ? 'Kontekst rynkowy' : 'Market Context'}
                     </label>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                       {isPolish
                         ? 'Otoczenie rynkowe, konkurencja i trendy'
                         : 'Market environment, competition and trends'}
@@ -5790,7 +6188,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 placeholder={placeholder}
                 className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 ${
                   item.done
-                    ? 'line-through text-slate-400 dark:text-slate-500'
+                    ? 'line-through text-slate-600 dark:text-slate-500'
                     : 'text-slate-700 dark:text-slate-300'
                 }`}
               />
@@ -5810,7 +6208,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(item.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -5875,7 +6273,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               </div>
               <div className="min-h-[56px] border-b border-slate-200/70 dark:border-navy-700/60 pb-2">
                 {items.length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                     {isPolish ? 'Brak pozycji' : 'No items yet'}
                   </p>
                 ) : (
@@ -6011,12 +6409,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onChange={(e) => onUpdate(item.id, { text: e.target.value })}
                 placeholder={placeholder}
                 className={`flex-1 bg-transparent text-sm leading-snug focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 transition-colors ${
-                  item.done ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'
+                  item.done ? 'line-through text-slate-600' : 'text-slate-700 dark:text-slate-300'
                 }`}
               />
               <button
                 onClick={() => onRemove(item.id)}
-                className="mt-0.5 opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                className="mt-0.5 opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6044,14 +6442,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                     {isPolish ? labelPL : labelEN}
                   </label>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                     {isPolish ? descPL : descEN}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={onAdd}
-                    className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                    className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                   >
                     <Plus size={14} />
                     {isPolish ? 'Dodaj' : 'Add item'}
@@ -6206,7 +6604,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               />
               <button
                 onClick={() => onRemove(idx)}
-                className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
               >
                 <Trash2 size={12} />
               </button>
@@ -6232,7 +6630,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                           {isPolish ? 'W zakresie' : 'In Scope'}
                         </label>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                           {isPolish
                             ? 'Elementy, procesy i obszary objęte inicjatywą'
                             : 'Elements, processes and areas included in this initiative'}
@@ -6242,7 +6640,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={addInScope}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                       >
                         <Plus size={14} />
                         {isPolish ? 'Dodaj' : 'Add item'}
@@ -6278,7 +6676,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       )
                     )}
                     {inScopeItems.length === 0 && (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                      <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                         {isPolish ? 'Brak elementów' : 'No items yet'}
                       </p>
                     )}
@@ -6297,7 +6695,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                           {isPolish ? 'Poza zakresem' : 'Out of Scope'}
                         </label>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                           {isPolish
                             ? 'Wykluczenia i ograniczenia poza zakresem'
                             : 'Exclusions and boundaries not covered'}
@@ -6307,7 +6705,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={addOutScope}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
                       >
                         <Plus size={14} />
                         {isPolish ? 'Dodaj' : 'Add item'}
@@ -6343,7 +6741,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       )
                     )}
                     {outScopeItems.length === 0 && (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                      <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                         {isPolish ? 'Brak elementów' : 'No items yet'}
                       </p>
                     )}
@@ -6363,7 +6761,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         {isPolish ? 'Kryteria rezygnacji (Kill Criteria)' : 'Kill Criteria'}
                       </label>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                         {isPolish
                           ? 'Warunki, których spełnienie oznacza natychmiastowe zatrzymanie inicjatywy'
                           : 'Conditions that trigger immediate initiative termination'}
@@ -6373,7 +6771,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={addKillCriteria}
-                      className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                      className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                     >
                       <Plus size={14} />
                       {isPolish ? 'Dodaj' : 'Add item'}
@@ -6428,14 +6826,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       />
                       <button
                         onClick={() => removeKill(i)}
-                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-500 transition-all"
                       >
                         <Trash2 size={12} />
                       </button>
                     </div>
                   ))}
                   {killCriteriaItems.length === 0 && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 italic py-2">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 italic py-2">
                       {isPolish ? 'Brak kryteriów' : 'No criteria yet'}
                     </p>
                   )}
@@ -6636,100 +7034,58 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         }
 
         case 'financial-analysis': {
+          // Canon empty-state (BLOCK_TYPES_CANON §1044: no gradient, no emoji).
+          // Mirrors NModeSectionWrapper's empty-state markup exactly so the card
+          // reads as "empty, ready to fill" rather than "coming soon / broken".
           component = (
-            <div className="flex flex-col items-center justify-center py-16 space-y-5">
-              {/* Fun accountant illustration */}
-              <div className="relative">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-100 via-primary-50 to-fuchsia-100 dark:from-primary-500/15 dark:via-primary-500/10 dark:to-fuchsia-500/15 flex items-center justify-center shadow-lg shadow-primary-200/40 dark:shadow-primary-500/10">
-                  <span className="text-5xl" role="img" aria-label="accountant">
-                    🧮
-                  </span>
-                </div>
-                {/* Floating decorations */}
-                <span
-                  className="absolute -top-2 -right-3 text-2xl animate-bounce"
-                  style={{ animationDelay: '0.1s', animationDuration: '2s' }}
-                >
-                  📊
-                </span>
-                <span
-                  className="absolute -bottom-1 -left-3 text-xl animate-bounce"
-                  style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}
-                >
-                  💰
-                </span>
-                <span
-                  className="absolute -top-1 -left-4 text-lg animate-bounce"
-                  style={{ animationDelay: '0.8s', animationDuration: '3s' }}
-                >
-                  ✨
-                </span>
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Analiza finansowa' : 'Financial Analysis'}
-                </h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500">
-                  {isPolish
-                    ? 'Nasz księgowy jeszcze liczy... 🤓'
-                    : 'Our accountant is still crunching numbers... 🤓'}
-                </p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-500/10 border border-primary-200/60 dark:border-primary-500/20">
-                  <span className="text-xs font-medium text-primary-600 dark:text-primary-400">
-                    Coming soon
-                  </span>
-                </div>
-              </div>
+            <div className="text-center py-12">
+              <Calculator size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                {isPolish
+                  ? 'Analiza finansowa nie została jeszcze przygotowana.'
+                  : "Financial analysis isn't set up yet."}
+              </p>
+              <button
+                type="button"
+                disabled
+                title={
+                  isPolish
+                    ? 'Generowanie AI niedostępne dla tej sekcji'
+                    : 'AI generation not available for this section yet'
+                }
+                className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-600/60 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/40 cursor-not-allowed"
+              >
+                <Sparkles size={13} />
+                {isPolish ? 'Wygeneruj z AI' : 'Generate with AI'}
+              </button>
             </div>
           );
           break;
         }
 
         case 'financial-impact': {
+          // Canon empty-state (BLOCK_TYPES_CANON §1044: no gradient, no emoji).
           component = (
-            <div className="flex flex-col items-center justify-center py-16 space-y-5">
-              {/* Fun money impact illustration */}
-              <div className="relative">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-100 via-blue-50 to-blue-100 dark:from-emerald-500/15 dark:via-blue-500/10 dark:to-blue-500/15 flex items-center justify-center shadow-lg shadow-emerald-200/40 dark:shadow-emerald-500/10">
-                  <span className="text-5xl" role="img" aria-label="money chart">
-                    📈
-                  </span>
-                </div>
-                {/* Floating decorations */}
-                <span
-                  className="absolute -top-2 -right-3 text-2xl animate-bounce"
-                  style={{ animationDelay: '0.2s', animationDuration: '2.2s' }}
-                >
-                  🪙
-                </span>
-                <span
-                  className="absolute -bottom-1 -left-3 text-xl animate-bounce"
-                  style={{ animationDelay: '0.6s', animationDuration: '2.8s' }}
-                >
-                  💸
-                </span>
-                <span
-                  className="absolute top-0 -left-4 text-lg animate-bounce"
-                  style={{ animationDelay: '1s', animationDuration: '3s' }}
-                >
-                  🎯
-                </span>
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
-                  {isPolish ? 'Wpływ finansowy' : 'Financial Impact'}
-                </h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500">
-                  {isPolish
-                    ? 'Pieniądze się liczą... dosłownie! 💵'
-                    : 'The money is counting itself... literally! 💵'}
-                </p>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20">
-                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    Coming soon
-                  </span>
-                </div>
-              </div>
+            <div className="text-center py-12">
+              <TrendingUp size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
+              <p className="text-sm text-slate-700 dark:text-slate-300">
+                {isPolish
+                  ? 'Wpływ finansowy nie został jeszcze przygotowany.'
+                  : "Financial impact isn't set up yet."}
+              </p>
+              <button
+                type="button"
+                disabled
+                title={
+                  isPolish
+                    ? 'Generowanie AI niedostępne dla tej sekcji'
+                    : 'AI generation not available for this section yet'
+                }
+                className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-600/60 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/40 cursor-not-allowed"
+              >
+                <Sparkles size={13} />
+                {isPolish ? 'Wygeneruj z AI' : 'Generate with AI'}
+              </button>
             </div>
           );
           break;
@@ -6873,6 +7229,31 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
               {/* Full lifecycle gate workflow table (13 stages) */}
               <InitiativeGatesWorkflowTable />
+            </div>
+          );
+          break;
+        }
+
+        case 'suggested-changes': {
+          component = (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Sugerowane zmiany' : 'Suggested changes'}
+              </h2>
+              {suggestedChangesLoading ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Wczytywanie…' : 'Loading…'}
+                </p>
+              ) : (
+                <div className="min-h-[200px]">
+                  <SuggestedChangesPanel
+                    items={suggestedChanges}
+                    isPolish={isPolish}
+                    onAccept={(c) => void handleResolveSuggestedChange(c, true)}
+                    onReject={(c) => void handleResolveSuggestedChange(c, false)}
+                  />
+                </div>
+              )}
             </div>
           );
           break;
@@ -7321,7 +7702,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         isMutating ||
                         (createKpiMode === 'manual' ? !createKpiName.trim() : !createKpiLibraryId)
                       }
-                      className="px-3 py-1.5 rounded-lg border border-primary-400/50 text-primary-600 dark:text-primary-300 hover:bg-primary-500/10 text-xs font-medium disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:border-teal-700/40 dark:text-teal-300 dark:hover:bg-teal-900/40 text-xs font-medium disabled:opacity-50"
                     >
                       {createKpiMode === 'linked'
                         ? isPolish
@@ -7470,7 +7851,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                 e.stopPropagation();
                                 setKpiMenuId((prev) => (prev === kpi.id ? null : kpi.id));
                               }}
-                              className="inline-flex items-center justify-center p-1 rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
+                              className="inline-flex items-center justify-center p-1 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-navy-700/60 transition-colors"
                               title={isPolish ? 'Akcje KPI' : 'KPI actions'}
                             >
                               <MoreVertical size={14} />
@@ -7497,7 +7878,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   <Copy size={13} />
                                   {isPolish ? 'Duplikuj' : 'Duplicate'}
                                 </button>
-                                <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                                <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                                 <button
                                   onClick={() => {
                                     setKpiMenuId(null);
@@ -7637,7 +8018,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       </div>
                       <button
                         onClick={() => openBacklinkItem(bl.sourceType, bl.sourceId)}
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+                        className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
                       >
                         <ExternalLink size={12} />
                       </button>
@@ -7649,13 +8030,505 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           );
           break;
         }
+
+        // ── Phase C: Canon sections → 21/21 ───────────────────────────────
+        case 'deliverables-milestones': {
+          const persistDeliverables = (items: typeof deliverableItems) => {
+            setDeliverableItems(items);
+            // Keep texts as the canonical string[] shape (exports/badges/other
+            // readers depend on it) and persist an index-aligned done[] alongside
+            // so the checkbox state round-trips on reload. Both arrays are built
+            // from the SAME filtered set to stay aligned.
+            const kept = items.filter((d) => d.text.trim());
+            const texts = kept.map((d) => d.text);
+            const done = kept.map((d) => !!d.done);
+            void persistInitiativeField(
+              { deliverables: texts, deliverablesDone: done },
+              { deliverablesDone: done, deliverables_done: done }
+            );
+          };
+          component = (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  {isPolish ? 'Produkty i kamienie milowe' : 'Deliverables & Milestones'}
+                </h2>
+                {canEditCards && (
+                  <button
+                    onClick={() =>
+                      persistDeliverables([
+                        ...deliverableItems,
+                        { id: genId(), text: '', done: false },
+                      ])
+                    }
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
+                  >
+                    <Plus size={13} /> {isPolish ? 'Dodaj produkt' : 'Add deliverable'}
+                  </button>
+                )}
+              </div>
+              {deliverableItems.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak produktów. Dodaj kluczowe rezultaty inicjatywy; kamienie milowe znajdziesz w sekcji Harmonogram.'
+                    : 'No deliverables yet. Add the initiative’s key outputs; milestones live in the Timeline section.'}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {deliverableItems.map((d) => (
+                    <li
+                      key={d.id}
+                      className="flex items-center gap-2 rounded-lg border border-slate-200/60 dark:border-navy-700/50 px-3 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={d.done}
+                        disabled={!canEditCards}
+                        onChange={() =>
+                          persistDeliverables(
+                            deliverableItems.map((x) =>
+                              x.id === d.id ? { ...x, done: !x.done } : x
+                            )
+                          )
+                        }
+                        className="accent-teal-600"
+                      />
+                      <input
+                        defaultValue={d.text}
+                        readOnly={!canEditCards}
+                        onBlur={(e) =>
+                          persistDeliverables(
+                            deliverableItems.map((x) =>
+                              x.id === d.id ? { ...x, text: e.target.value } : x
+                            )
+                          )
+                        }
+                        placeholder={isPolish ? 'Opis produktu…' : 'Deliverable…'}
+                        className="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-200 focus:outline-none"
+                      />
+                      {canEditCards && (
+                        <button
+                          onClick={() =>
+                            persistDeliverables(deliverableItems.filter((x) => x.id !== d.id))
+                          }
+                          className="text-slate-400 hover:text-rose-500"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'change-log': {
+          component = (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Dziennik zmian' : 'Change Log'}
+              </h2>
+              {canEditCards && (
+                <div className="flex items-center gap-2">
+                  <input
+                    value={changeLogDraft}
+                    onChange={(e) => setChangeLogDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && changeLogDraft.trim()) {
+                        addChangeLogEntry({ change: changeLogDraft.trim() });
+                        setChangeLogDraft('');
+                      }
+                    }}
+                    placeholder={
+                      isPolish
+                        ? 'Opisz zmianę i naciśnij Enter…'
+                        : 'Describe a change, press Enter…'
+                    }
+                    className="flex-1 rounded-lg border border-slate-300/50 dark:border-navy-600/60 bg-transparent px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400"
+                  />
+                  <button
+                    onClick={() => {
+                      if (changeLogDraft.trim()) {
+                        addChangeLogEntry({ change: changeLogDraft.trim() });
+                        setChangeLogDraft('');
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
+                  >
+                    <Plus size={13} /> {isPolish ? 'Dodaj' : 'Add'}
+                  </button>
+                </div>
+              )}
+              {changeLogItems.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak zarejestrowanych zmian strategicznych.'
+                    : 'No strategic changes recorded yet.'}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {changeLogItems.map((e: any) => (
+                    <li
+                      key={e.id}
+                      className="flex items-start gap-3 rounded-lg border border-slate-200/60 dark:border-navy-700/50 px-3 py-2"
+                    >
+                      <span className="text-[11px] font-mono text-slate-400 pt-0.5 shrink-0">
+                        {e.date}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-slate-700 dark:text-slate-200">{e.change}</div>
+                        {e.reason && (
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {e.reason}
+                          </div>
+                        )}
+                        {e.user && (
+                          <div className="text-[11px] text-slate-400 mt-0.5">{e.user}</div>
+                        )}
+                      </div>
+                      {canEditCards && (
+                        <button
+                          onClick={() => removeChangeLogEntry(e.id)}
+                          className="text-slate-400 hover:text-rose-500"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'okr': {
+          component = (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">OKR</h2>
+              {canEditCards && (
+                <div className="flex items-center gap-2">
+                  <input
+                    value={okrDraft}
+                    onChange={(e) => setOkrDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && okrDraft.trim()) {
+                        addOkr(okrDraft.trim());
+                        setOkrDraft('');
+                      }
+                    }}
+                    placeholder={isPolish ? 'Cel (Objective)…' : 'Objective…'}
+                    className="flex-1 rounded-lg border border-slate-300/50 dark:border-navy-600/60 bg-transparent px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400"
+                  />
+                  <button
+                    onClick={() => {
+                      if (okrDraft.trim()) {
+                        addOkr(okrDraft.trim());
+                        setOkrDraft('');
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/60"
+                  >
+                    <Plus size={13} /> {isPolish ? 'Dodaj cel' : 'Add objective'}
+                  </button>
+                </div>
+              )}
+              {okrItems.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak celów OKR. Dodaj cel i kluczowe rezultaty (Key Results).'
+                    : 'No OKRs yet. Add an objective and its key results.'}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {okrItems.map((o: any) => (
+                    <div
+                      key={o.id}
+                      className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 p-3 space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <input
+                          defaultValue={o.objective}
+                          readOnly={!canEditCards}
+                          onBlur={(e) => updateOkr(o.id, { objective: e.target.value })}
+                          className="flex-1 bg-transparent text-sm font-medium text-slate-800 dark:text-slate-100 focus:outline-none"
+                        />
+                        <select
+                          value={o.confidence || 'MEDIUM'}
+                          disabled={!canEditCards}
+                          onChange={(e) => updateOkr(o.id, { confidence: e.target.value })}
+                          className="text-[11px] rounded-md bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5"
+                        >
+                          <option value="LOW">{isPolish ? 'Niska' : 'Low'}</option>
+                          <option value="MEDIUM">{isPolish ? 'Średnia' : 'Medium'}</option>
+                          <option value="HIGH">{isPolish ? 'Wysoka' : 'High'}</option>
+                        </select>
+                        {canEditCards && (
+                          <button
+                            onClick={() => removeOkr(o.id)}
+                            className="text-slate-400 hover:text-rose-500"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                      <textarea
+                        defaultValue={(o.keyResults || []).join('\n')}
+                        readOnly={!canEditCards}
+                        onBlur={(e) =>
+                          updateOkr(o.id, {
+                            keyResults: e.target.value
+                              .split('\n')
+                              .map((s) => s.trim())
+                              .filter(Boolean),
+                          })
+                        }
+                        rows={2}
+                        placeholder={
+                          isPolish
+                            ? 'Kluczowe rezultaty (po jednym w wierszu)…'
+                            : 'Key results (one per line)…'
+                        }
+                        className="w-full bg-transparent text-xs text-slate-600 dark:text-slate-300 focus:outline-none resize-none border-t border-slate-100 dark:border-navy-700/40 pt-2"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'hypothesis': {
+          component = (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Hipoteza' : 'Hypothesis'}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {isPolish
+                  ? 'Wartościowa hipoteza inicjatywy — co zakładamy, że osiągniemy i dlaczego.'
+                  : 'The value hypothesis — what we believe this initiative will achieve and why.'}
+              </p>
+              <textarea
+                value={hypothesisDraft}
+                readOnly={!canEditCards}
+                onChange={(e) => setHypothesisDraft(e.target.value)}
+                onBlur={saveHypothesis}
+                rows={5}
+                placeholder={
+                  isPolish
+                    ? 'Wierzymy, że… ponieważ… Zmierzymy to przez…'
+                    : 'We believe that… because… We will measure this by…'
+                }
+                className="w-full rounded-lg border border-slate-200/60 dark:border-navy-700/50 bg-transparent px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400 resize-y"
+              />
+            </div>
+          );
+          break;
+        }
+
+        case 'workstream-owners': {
+          const owners = [
+            {
+              role: isPolish ? 'Właściciel biznesowy' : 'Business Owner',
+              name:
+                (initiative as any)?.ownerBusinessName ||
+                `${(initiative as any)?.ob_first_name || ''} ${(initiative as any)?.ob_last_name || ''}`.trim(),
+            },
+            {
+              role: isPolish ? 'Właściciel wykonawczy' : 'Execution Owner',
+              name:
+                (initiative as any)?.ownerExecutionName ||
+                `${(initiative as any)?.oe_first_name || ''} ${(initiative as any)?.oe_last_name || ''}`.trim(),
+            },
+          ].filter((o) => o.name);
+          component = (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Właściciele strumieni' : 'Workstream Owners'}
+              </h2>
+              {owners.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak przypisanych właścicieli. Przypisz w sekcji Zespół.'
+                    : 'No owners assigned. Assign them in the Team section.'}
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {owners.map((o, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 p-3"
+                    >
+                      <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                        {o.role}
+                      </div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100 mt-0.5">
+                        {o.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'lessons-learned': {
+          component = (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                {isPolish ? 'Wnioski i lekcje' : 'Lessons Learned'}
+              </h2>
+              <textarea
+                value={lessonsDraft}
+                readOnly={!canEditCards}
+                onChange={(e) => setLessonsDraft(e.target.value)}
+                onBlur={saveLessons}
+                rows={6}
+                placeholder={
+                  isPolish
+                    ? 'Co zadziałało, co nie, co zrobimy inaczej następnym razem…'
+                    : 'What worked, what didn’t, what we’d do differently next time…'
+                }
+                className="w-full rounded-lg border border-slate-200/60 dark:border-navy-700/50 bg-transparent px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-teal-400 resize-y"
+              />
+            </div>
+          );
+          break;
+        }
       }
 
-      return { ...section, component };
+      // Canon Blok C / P0-9: every section is wrapped so it carries a uniform
+      // completion visual (success rail + ✓). Sections self-title internally, so
+      // no `heading` is passed here (avoids a double header). The contextual
+      // section-AI + Mark Complete affordances live in the toolbar.
+      const completed = !!sectionCompletions[section.id];
+
+      // Canon B5: key empty-able sections get a "way forward" CTA in their empty
+      // state. The CTA reuses each section's EXISTING handler (no new endpoints).
+      // teal styling = AI affordance; add-actions reuse local mutators.
+      type EmptyCfg = {
+        isEmpty: boolean;
+        emptyState: NonNullable<React.ComponentProps<typeof NModeSectionWrapper>['emptyState']>;
+      };
+      const aiCta = {
+        label: { en: 'Generate with AI', pl: 'Generuj z AI' },
+        onClick: () => {
+          if (!canUseAi) return;
+          void handleGenerateAI(section.id);
+        },
+      };
+      const emptyConfigById: Record<string, EmptyCfg> = {
+        hypothesis: {
+          isEmpty: !(hypothesisDraft || '').trim(),
+          emptyState: {
+            icon: Lightbulb,
+            message: {
+              en: 'No hypothesis yet — state what you believe and how you’ll test it.',
+              pl: 'Brak hipotezy — opisz, co zakładasz i jak to zweryfikujesz.',
+            },
+            cta: aiCta,
+          },
+        },
+        'lessons-learned': {
+          isEmpty: !(lessonsDraft || '').trim(),
+          emptyState: {
+            icon: GraduationCap,
+            message: {
+              en: 'No lessons captured yet — what worked, what didn’t?',
+              pl: 'Brak wniosków — co zadziałało, a co nie?',
+            },
+            cta: aiCta,
+          },
+        },
+        'change-log': {
+          isEmpty: changeLogItems.length === 0,
+          emptyState: {
+            icon: FileText,
+            message: {
+              en: 'No change-log entries yet.',
+              pl: 'Brak wpisów w dzienniku zmian.',
+            },
+            cta: {
+              label: { en: 'Add entry', pl: 'Dodaj wpis' },
+              onClick: () => setActiveNSection('change-log'),
+            },
+          },
+        },
+        okr: {
+          isEmpty: okrItems.length === 0,
+          emptyState: {
+            icon: Target,
+            message: {
+              en: 'No objectives yet — define an objective and its key results.',
+              pl: 'Brak celów — zdefiniuj cel i kluczowe rezultaty.',
+            },
+            cta: {
+              label: { en: 'Add objective', pl: 'Dodaj cel' },
+              onClick: () => {
+                addOkr(isPolish ? 'Nowy cel' : 'New objective');
+              },
+            },
+          },
+        },
+        'deliverables-milestones': {
+          isEmpty: deliverableItems.length === 0,
+          emptyState: {
+            icon: Package,
+            message: {
+              en: 'No deliverables or milestones yet.',
+              pl: 'Brak produktów ani kamieni milowych.',
+            },
+            cta: {
+              label: { en: 'Add milestone', pl: 'Dodaj kamień milowy' },
+              onClick: () =>
+                setDeliverableItems((prev) => [...prev, { id: genId(), text: '', done: false }]),
+            },
+          },
+        },
+        kpi: {
+          isEmpty: localKpis.length === 0,
+          emptyState: {
+            icon: TrendingUp,
+            message: {
+              en: 'No KPIs yet — generate measurable success metrics.',
+              pl: 'Brak KPI — wygeneruj mierzalne wskaźniki sukcesu.',
+            },
+            cta: aiCta,
+          },
+        },
+      };
+      const emptyCfg = emptyConfigById[section.id];
+      // Don't show the empty state on a section the user marked complete.
+      const showEmpty = !!emptyCfg && emptyCfg.isEmpty && !completed && canEditCards;
+
+      const wrappedComponent =
+        component != null ? (
+          <NModeSectionWrapper
+            completed={completed}
+            isEmpty={showEmpty}
+            emptyState={emptyCfg?.emptyState}
+          >
+            {component}
+          </NModeSectionWrapper>
+        ) : (
+          component
+        );
+
+      return { ...section, completed, component: wrappedComponent };
     });
   }, [
     initiativeNSections,
     initiative,
+    sectionCompletions,
     isPolish,
     summary,
     setSummary,
@@ -7760,21 +8633,51 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     openLinkedItemTarget,
     initiativeBacklinks,
     initiativeBacklinksLoading,
+    // Phase C canon sections — reactive drafts/data + handlers
+    canEditCards,
+    changeLogItems,
+    okrItems,
+    hypothesisDraft,
+    lessonsDraft,
+    changeLogDraft,
+    okrDraft,
+    genId,
+    setDeliverableItems,
+    persistInitiativeField,
+    saveHypothesis,
+    saveLessons,
+    addChangeLogEntry,
+    removeChangeLogEntry,
+    addOkr,
+    updateOkr,
+    removeOkr,
+    canUseAi,
+    handleGenerateAI,
+    setActiveNSection,
+    // Suggested changes (Faza 4)
+    suggestedChanges,
+    suggestedChangesLoading,
+    handleResolveSuggestedChange,
   ]);
 
   const orderedNModeSectionsWithContent: NModeSection[] = useMemo(() => {
-    if (!nModeSectionOrder || nModeSectionOrder.length === 0) return nModeSectionsWithContent;
+    const ordered = (() => {
+      if (!nModeSectionOrder || nModeSectionOrder.length === 0) return nModeSectionsWithContent;
 
-    const byId = new Map(nModeSectionsWithContent.map((section) => [section.id, section]));
-    const ordered = nModeSectionOrder
-      .map((id) => byId.get(id))
-      .filter((section): section is NModeSection => Boolean(section));
-    const missing = nModeSectionsWithContent.filter(
-      (section) => !nModeSectionOrder.includes(section.id)
-    );
+      const byId = new Map(nModeSectionsWithContent.map((section) => [section.id, section]));
+      const inOrder = nModeSectionOrder
+        .map((id) => byId.get(id))
+        .filter((section): section is NModeSection => Boolean(section));
+      const missing = nModeSectionsWithContent.filter(
+        (section) => !nModeSectionOrder.includes(section.id)
+      );
+      return [...inOrder, ...missing];
+    })();
 
-    return [...ordered, ...missing];
-  }, [nModeSectionsWithContent, nModeSectionOrder]);
+    // Canon Toolbar (Slot 1): user-hidden sections drop out of the nav.
+    if (hiddenSectionIds.size === 0) return ordered;
+    return ordered.filter((section) => !hiddenSectionIds.has(section.id));
+  }, [nModeSectionsWithContent, nModeSectionOrder, hiddenSectionIds]);
 
   useEffect(() => {
     if (orderedNModeSectionsWithContent.length === 0) return;
@@ -7783,48 +8686,348 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   }, [orderedNModeSectionsWithContent, activeNSection]);
 
-  // N-mode status actions for NModeActionBar
-  // Dynamically built from statusActions (workflow transitions) + contextActions (create buttons)
-  const nModeActions: NModeAction[] = useMemo(() => {
-    const actions: NModeAction[] = [];
+  // ── Smart Export / Present (Phase A3 + E) ──────────────────────────────────
+  // Canonical, presentable sections in nav order, EXCLUDING Comments + Activity
+  // Log (records, not deliverable content). Drives Present mode, the export
+  // section picker, the markdown builder and the deck-card mapper.
+  const EXPORT_EXCLUDED_SECTION_IDS = useMemo(() => new Set(['comments', 'activity-log']), []);
 
-    // Helper: pick icon based on action variant and target status
-    const getActionIcon = (sa: StatusAction) => {
-      if (sa.variant === 'danger' && sa.targetStatus === InitiativeStatus.CANCELLED) return XCircle;
-      if (sa.variant === 'danger') return AlertTriangle;
-      if (sa.variant === 'secondary' && sa.targetStatus === InitiativeStatus.DRAFT) return Undo2;
-      if (sa.variant === 'secondary' && sa.targetStatus === InitiativeStatus.ARCHIVED)
-        return Archive;
-      if (sa.targetStatus === InitiativeStatus.EXECUTING) return Play;
-      return CheckSquare;
-    };
+  const exportableSections = useMemo(
+    () =>
+      orderedNModeSectionsWithContent.filter(
+        (section) => !EXPORT_EXCLUDED_SECTION_IDS.has(section.id)
+      ),
+    [orderedNModeSectionsWithContent, EXPORT_EXCLUDED_SECTION_IDS]
+  );
 
-    // Helper: map StatusAction variant to NModeAction variant
-    const mapVariant = (sa: StatusAction): 'success' | 'danger' | 'neutral' => {
-      if (sa.variant === 'primary') return 'success';
-      if (sa.variant === 'danger') return 'danger';
-      return 'neutral';
-    };
+  const sectionLabel = useCallback(
+    (section: NModeSection): string => (isPolish ? section.label.pl : section.label.en),
+    [isPolish]
+  );
 
-    // 1. Primary status actions first (forward progress)
-    for (const sa of statusActions.filter((a) => a.variant === 'primary')) {
-      actions.push({
-        id: `status-${sa.targetStatus}`,
-        label: { en: sa.label, pl: sa.labelPl },
-        icon: getActionIcon(sa),
-        variant: 'success',
-        onClick: () => handleStatusAction(sa),
-        disabled: isMutating,
+  // Plain-text body for a single canonical section. Pulls from the same reactive
+  // state the canvas renders, so exports always mirror what the user sees.
+  const buildSectionBody = useCallback(
+    (sectionId: string): string => {
+      const lines = (arr: { text: string; done?: boolean }[]): string =>
+        arr
+          .filter((i) => (i.text || '').trim())
+          .map((i) => `- ${i.text.trim()}`)
+          .join('\n');
+      const strLines = (arr: string[]): string =>
+        arr
+          .filter((s) => (s || '').trim())
+          .map((s) => `- ${s.trim()}`)
+          .join('\n');
+
+      switch (sectionId) {
+        case 'initiative-definition':
+          return [
+            initiative?.title || initiative?.name
+              ? `**${initiative?.title || initiative?.name}**`
+              : '',
+            (summary || initiative?.summary || initiative?.description || '').toString().trim(),
+            inScopeItems.length
+              ? `\n_${isPolish ? 'W zakresie' : 'In scope'}_\n${strLines(inScopeItems)}`
+              : '',
+            outScopeItems.length
+              ? `\n_${isPolish ? 'Poza zakresem' : 'Out of scope'}_\n${strLines(outScopeItems)}`
+              : '',
+            killCriteriaItems.length
+              ? `\n_${isPolish ? 'Kryteria zatrzymania' : 'Kill criteria'}_\n${strLines(killCriteriaItems)}`
+              : '',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        case 'target-state-scope':
+          return targetStateItems.length || successCriteriaItems.length
+            ? [
+                successCriteriaItems.length
+                  ? `_${isPolish ? 'Kryteria sukcesu' : 'Success criteria'}_\n${lines(successCriteriaItems)}`
+                  : '',
+                targetStateItems.length
+                  ? `_${isPolish ? 'Stan docelowy' : 'Target state'}_\n${lines(targetStateItems)}`
+                  : '',
+              ]
+                .filter(Boolean)
+                .join('\n\n')
+            : '';
+        case 'deliverables-milestones':
+          return lines(deliverableItems);
+        case 'kpi':
+          return localKpis
+            .map(
+              (k) => `- ${toEnglishKpiName(k.name || '', isPolish)}${k.unit ? ` (${k.unit})` : ''}`
+            )
+            .join('\n');
+        case 'tasks':
+          return tasks
+            .map((t: any) => `- ${t.title || t.name || ''}`.trim())
+            .filter((l) => l !== '-')
+            .join('\n');
+        case 'decisions':
+          return decisions
+            .map((d: any) => `- ${d.title || d.name || ''}`.trim())
+            .filter((l) => l !== '-')
+            .join('\n');
+        case 'risk-raid':
+          return raidItems
+            .map((r: any) => `- [${r.type || 'RAID'}] ${r.title || r.description || ''}`.trim())
+            .join('\n');
+        case 'okr':
+          return okrItems
+            .map((o: any) => `- ${o.objective || ''}`.trim())
+            .filter((l) => l !== '-')
+            .join('\n');
+        case 'change-log':
+          return changeLogItems
+            .map((e: any) => `- ${e.change || e.text || ''}`.trim())
+            .filter((l) => l !== '-')
+            .join('\n');
+        case 'hypothesis':
+          return (hypothesisDraft || '').trim();
+        case 'lessons-learned':
+          return (lessonsDraft || '').trim();
+        default:
+          return '';
+      }
+    },
+    [
+      initiative,
+      summary,
+      inScopeItems,
+      outScopeItems,
+      killCriteriaItems,
+      targetStateItems,
+      successCriteriaItems,
+      deliverableItems,
+      localKpis,
+      tasks,
+      decisions,
+      raidItems,
+      okrItems,
+      changeLogItems,
+      hypothesisDraft,
+      lessonsDraft,
+      isPolish,
+    ]
+  );
+
+  // Markdown across a chosen set of section ids, in canonical (nav) order.
+  const buildExportMarkdown = useCallback(
+    (sectionIds: Set<string>): string => {
+      const title = String(initiative?.title || initiative?.name || 'Initiative').trim();
+      const parts: string[] = [`# ${title}`, ''];
+      for (const section of exportableSections) {
+        if (!sectionIds.has(section.id)) continue;
+        const body = buildSectionBody(section.id);
+        parts.push(`## ${sectionLabel(section)}`);
+        parts.push(body.trim() ? body : isPolish ? '_(brak treści)_' : '_(no content)_');
+        parts.push('');
+      }
+      return parts.join('\n');
+    },
+    [exportableSections, buildSectionBody, sectionLabel, initiative, isPolish]
+  );
+
+  // Map chosen sections → PresentMode DeckCards (canonical order). Title card +
+  // one card per section; cSpan drives a heading-level hint.
+  const buildDeckCards = useCallback(
+    (sectionIds: Set<string>): DeckCard[] => {
+      const blankBg = { type: 'theme' as const };
+      const blankAnim = { entrance: 'fade' as const, block_stagger: false };
+      const mkCard = (
+        id: string,
+        order: number,
+        title: string,
+        body: string,
+        level: number
+      ): DeckCard => {
+        const blocks: CardBlock[] = [
+          {
+            block_id: `${id}-h`,
+            card_id: id,
+            type: 'heading',
+            content: { text: title, level },
+            is_refreshable: false,
+            position: { area: 'full', order: 0 },
+            ai_editable: false,
+          },
+        ];
+        if (body.trim()) {
+          blocks.push({
+            block_id: `${id}-p`,
+            card_id: id,
+            type: 'paragraph',
+            content: { text: body },
+            is_refreshable: false,
+            position: { area: 'full', order: 1 },
+            ai_editable: false,
+          });
+        }
+        return {
+          card_id: id,
+          deck_id: `initiative-${initiativeId}`,
+          order_index: order,
+          intent: 'content',
+          layout_id: 'default',
+          title,
+          blocks,
+          source_refs: [],
+          has_refreshable_data: false,
+          background: blankBg,
+          animations: blankAnim,
+          is_locked: false,
+        };
+      };
+
+      const title = String(initiative?.title || initiative?.name || 'Initiative').trim();
+      const cards: DeckCard[] = [mkCard('title-card', 0, title, '', 1)];
+      let order = 1;
+      for (const section of exportableSections) {
+        if (!sectionIds.has(section.id)) continue;
+        // cSpan>=3 → "feature" section gets a larger heading hint (level 1), else level 2.
+        const level = (section.cSpan ?? 1) >= 3 ? 1 : 2;
+        cards.push(
+          mkCard(section.id, order++, sectionLabel(section), buildSectionBody(section.id), level)
+        );
+      }
+      return cards;
+    },
+    [exportableSections, buildSectionBody, sectionLabel, initiative, initiativeId]
+  );
+
+  const presentDeckCards = useMemo(() => {
+    const allIds = new Set(exportableSections.map((s) => s.id));
+    return buildDeckCards(allIds);
+  }, [exportableSections, buildDeckCards]);
+
+  // Effective export selection: defaults to all exportable sections until the
+  // user toggles something.
+  const effectiveExportSelection = useMemo(() => {
+    if (exportSelectedSectionIds) return exportSelectedSectionIds;
+    return new Set(exportableSections.map((s) => s.id));
+  }, [exportSelectedSectionIds, exportableSections]);
+
+  const toggleExportSection = useCallback(
+    (id: string) => {
+      setExportSelectedSectionIds((prev) => {
+        const base = prev ?? new Set(exportableSections.map((s) => s.id));
+        const next = new Set(base);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
       });
-    }
+    },
+    [exportableSections]
+  );
 
-    // 2. Context-dependent create actions (between status actions)
+  const handleExportMarkdown = useCallback(() => {
+    setIsExporting('markdown');
+    try {
+      const md = buildExportMarkdown(effectiveExportSelection);
+      const safeName = String(initiative?.title || initiative?.name || 'initiative')
+        .replace(/[^\w.-]+/g, '_')
+        .slice(0, 80);
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName || 'initiative'}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(isPolish ? 'Pobrano Markdown' : 'Markdown downloaded');
+      setShowExportDialog(false);
+    } catch {
+      toast.error(isPolish ? 'Eksport nie powiódł się' : 'Export failed');
+    } finally {
+      setIsExporting(null);
+    }
+  }, [buildExportMarkdown, effectiveExportSelection, initiative, isPolish]);
+
+  const handleExportReportPDF = useCallback(async () => {
+    setIsExporting('pdf');
+    try {
+      const safeName = String(initiative?.title || initiative?.name || 'initiative')
+        .replace(/[^\w.-]+/g, '_')
+        .slice(0, 80);
+      const ok = await exportReportToPDF('initiative-export-printable', safeName || 'initiative');
+      if (ok === false) {
+        toast.error(isPolish ? 'Eksport PDF nie powiódł się' : 'PDF export failed');
+      } else {
+        toast.success(isPolish ? 'Wyeksportowano PDF' : 'PDF exported');
+        setShowExportDialog(false);
+      }
+    } catch {
+      toast.error(isPolish ? 'Eksport PDF nie powiódł się' : 'PDF export failed');
+    } finally {
+      setIsExporting(null);
+    }
+  }, [initiative, isPolish]);
+
+  const handleExportDeck = useCallback(() => {
+    // No server-side deck exists for an ad-hoc initiative, so "Deck" opens the
+    // in-app Present mode walk of the selected sections (reuses the same mapping).
+    setShowExportDialog(false);
+    setPresentOpen(true);
+  }, []);
+
+  const handleExportNotebook = useCallback(async () => {
+    setIsExporting('notebook');
+    try {
+      const md = buildExportMarkdown(effectiveExportSelection);
+      await Api.post('/my-work/notebook/pages', {
+        title: String(initiative?.title || initiative?.name || 'Initiative'),
+        content: md,
+        source: 'initiative',
+        metadata: {
+          initiativeId,
+          sectionIds: Array.from(effectiveExportSelection),
+        },
+      });
+      toast.success(isPolish ? 'Zapisano w Notatniku' : 'Saved to Notebook');
+      setShowExportDialog(false);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się zapisać w Notatniku' : 'Failed to save to Notebook');
+    } finally {
+      setIsExporting(null);
+    }
+  }, [buildExportMarkdown, effectiveExportSelection, initiative, initiativeId, isPolish]);
+
+  // Fork (Phase A4) — clone the initiative server-side, then deep-link to the copy.
+  const handleFork = useCallback(async () => {
+    if (isForking) return;
+    setIsForking(true);
+    try {
+      const forked = await V8PlanningApi.forkInitiative(initiativeId);
+      const newId = String((forked as any)?.id || '');
+      toast.success(isPolish ? 'Inicjatywa sklonowana' : 'Initiative forked');
+      if (newId) {
+        window.location.assign(
+          `${window.location.origin}/initiatives?open=${encodeURIComponent(newId)}&mode=doc`
+        );
+      }
+    } catch (e: any) {
+      toast.error(e?.message || (isPolish ? 'Nie udało się sklonować' : 'Failed to fork'));
+    } finally {
+      setIsForking(false);
+    }
+  }, [isForking, initiativeId, isPolish]);
+
+  // ==========================================
+  // CANON TOOLBAR (Warstwa 3) — derived helpers
+  // ==========================================
+
+  // Slot 2 — "New ▾": the context create action(s) for the active/relevant
+  // section. Reuses the same handlers the old contextGroup buttons called.
+  const newMenuActions = useMemo(() => {
+    const items: Array<{ id: string; label: { en: string; pl: string }; onClick: () => void }> = [];
     if (contextActions.includes('task')) {
-      actions.push({
+      items.push({
         id: 'new-task',
         label: { en: 'New Task', pl: 'Nowe zadanie' },
-        icon: CheckSquare,
-        variant: 'neutral',
         onClick: () => {
           toggleSection('tasks');
           setShowCreateTask(true);
@@ -7832,11 +9035,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       });
     }
     if (contextActions.includes('decision')) {
-      actions.push({
+      items.push({
         id: 'new-decision',
         label: { en: 'New Decision', pl: 'Nowa decyzja' },
-        icon: Scale,
-        variant: 'neutral',
         onClick: () => {
           toggleSection('decisions');
           setShowCreateDecision(true);
@@ -7844,53 +9045,219 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       });
     }
     if (contextActions.includes('raid')) {
-      actions.push({
+      items.push({
         id: 'add-raid',
         label: { en: 'Add RAID', pl: 'Dodaj RAID' },
-        icon: AlertTriangle,
-        variant: 'neutral',
         onClick: () => {
           toggleSection('raid');
           setShowCreateRaid(true);
         },
       });
     }
+    return items;
+  }, [contextActions, toggleSection, setShowCreateTask, setShowCreateDecision, setShowCreateRaid]);
 
-    // 3. Secondary actions (backward/alternative)
-    for (const sa of statusActions.filter((a) => a.variant === 'secondary')) {
-      actions.push({
-        id: `status-${sa.targetStatus}-secondary`,
-        label: { en: sa.label, pl: sa.labelPl },
-        icon: getActionIcon(sa),
-        variant: mapVariant(sa),
-        onClick: () => handleStatusAction(sa),
-        disabled: isMutating,
-      });
+  // Slot 5 — section-level AI: dispatches to the existing per-section request
+  // handler for the active section (same calls the old per-section buttons made).
+  const activeSectionAiBusy = useMemo(() => {
+    switch (activeNSection) {
+      case 'tasks':
+        return !!tasksAiRequest;
+      case 'decisions':
+        return !!decisionsAiRequest;
+      case 'comments':
+        return !!commentsAiRequest;
+      case 'resources':
+        return !!resourcesAiRequest;
+      case 'timeline':
+        return !!timelineAiRequest;
+      case 'dependencies':
+        return !!dependenciesAiRequest;
+      case 'kpi':
+      case 'kpis':
+        return !!kpisAiRequest;
+      case 'team':
+        return !!teamAiRequest;
+      case 'target-state-scope':
+      case 'targetState':
+        return !!targetStateAiRequest;
+      case 'gates':
+        return !!gatesAiRequest;
+      case 'risk-raid':
+        return !!raidAiRequest || isRaidAIProposing;
+      case 'initiative-definition':
+        return isGeneratingAI === 'scope';
+      default:
+        return isGeneratingAI === activeNSection;
     }
-
-    // 4. Danger actions last (block, cancel, reject)
-    for (const sa of statusActions.filter((a) => a.variant === 'danger')) {
-      actions.push({
-        id: `status-${sa.targetStatus}-danger`,
-        label: { en: sa.label, pl: sa.labelPl },
-        icon: getActionIcon(sa),
-        variant: 'danger',
-        onClick: () => handleStatusAction(sa),
-        disabled: isMutating,
-      });
-    }
-
-    return actions;
   }, [
-    statusActions,
-    contextActions,
-    handleStatusAction,
-    isMutating,
-    toggleSection,
-    setShowCreateTask,
-    setShowCreateDecision,
-    setShowCreateRaid,
+    activeNSection,
+    tasksAiRequest,
+    decisionsAiRequest,
+    commentsAiRequest,
+    resourcesAiRequest,
+    timelineAiRequest,
+    dependenciesAiRequest,
+    kpisAiRequest,
+    teamAiRequest,
+    targetStateAiRequest,
+    gatesAiRequest,
+    raidAiRequest,
+    isRaidAIProposing,
+    isGeneratingAI,
   ]);
+
+  // Sections whose section-AI dispatch falls through to handleGenerateAI, which
+  // only toasts a fake "AI generated content" success and writes nothing. We must
+  // NOT fire that no-op in front of a client — the toolbar AI button is disabled
+  // for these instead. Keep this in sync with the real-AI cases in
+  // runActiveSectionAi's switch (tasks/decisions/timeline/dependencies/team/kpi/
+  // gates/risk-raid/resources/initiative-definition/target-state-scope/comments).
+  const SECTION_AI_NOOP = useMemo(
+    () =>
+      new Set<string>([
+        'financial-analysis',
+        'financial-impact',
+        'raci',
+        'okr',
+        'hypothesis',
+        'change-log',
+        'workstream-owners',
+        'lessons-learned',
+        'suggested-changes',
+      ]),
+    []
+  );
+  const activeSectionAiUnavailable = SECTION_AI_NOOP.has(activeNSection);
+
+  const runActiveSectionAi = useCallback(async () => {
+    if (!canUseAi) {
+      toast.error(
+        isPolish
+          ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+          : 'AI is unavailable because you have no edit permissions in this context.'
+      );
+      return;
+    }
+    switch (activeNSection) {
+      case 'tasks':
+        requestTasksAi('analyze');
+        return;
+      case 'decisions':
+        requestDecisionsAi('analyze');
+        return;
+      case 'comments':
+        requestCommentsAi();
+        return;
+      case 'resources':
+        requestResourcesAi();
+        return;
+      case 'timeline':
+        requestTimelineAi();
+        return;
+      case 'dependencies':
+        requestDependenciesAi();
+        return;
+      case 'kpi':
+      case 'kpis':
+        requestKpisAi();
+        return;
+      case 'team':
+        requestTeamAi();
+        return;
+      case 'target-state-scope':
+      case 'targetState':
+        requestTargetStateAi();
+        return;
+      case 'gates':
+        requestGatesAi();
+        return;
+      case 'risk-raid':
+        requestRaidAi();
+        return;
+      case 'initiative-definition':
+        await handleGenerateScopeCard();
+        return;
+      default:
+        await handleGenerateAI(activeNSection);
+    }
+  }, [
+    canUseAi,
+    isPolish,
+    activeNSection,
+    requestTasksAi,
+    requestDecisionsAi,
+    requestCommentsAi,
+    requestResourcesAi,
+    requestTimelineAi,
+    requestDependenciesAi,
+    requestKpisAi,
+    requestTeamAi,
+    requestTargetStateAi,
+    requestGatesAi,
+    requestRaidAi,
+  ]);
+
+  // Slot 9 — canonical AI Consultant (POZIOM 3 / ARTEFAKT) wiring.
+  // contextText = whole-initiative plain-text summary (title + every section
+  // heading + its content, in canonical nav order). Reuses the Smart Export
+  // markdown builder so the panel chat sees the same SSOT the export does.
+  const aiPanelContextText = useMemo(() => {
+    if (!aiPanelOpen) return '';
+    const allIds = new Set(exportableSections.map((s) => s.id));
+    return buildExportMarkdown(allIds);
+  }, [aiPanelOpen, exportableSections, buildExportMarkdown]);
+
+  // The 5 canon actions. Refresh is wired to the real per-section generate
+  // handler (handleGenerateAI) for the active section. Fill empty / Synthesize /
+  // Quality check / Continue route best-effort to the existing section-level AI
+  // dispatcher (runActiveSectionAi) — no new backend endpoints are invented; the
+  // embedded chat (whole-artifact context) carries the richer intent.
+  const aiConsultantActions = useMemo<AIConsultantAction[]>(() => {
+    const sectionBusy = activeSectionAiBusy;
+    return [
+      {
+        id: 'fill-empty',
+        label: 'Fill empty',
+        labelPl: 'Uzupełnij puste',
+        icon: <Wand2 size={14} />,
+        onClick: () => void runActiveSectionAi(),
+        busy: sectionBusy,
+      },
+      {
+        id: 'synthesize',
+        label: 'Synthesize',
+        labelPl: 'Synteza',
+        icon: <Layers size={14} />,
+        onClick: () => void runActiveSectionAi(),
+        busy: sectionBusy,
+      },
+      {
+        id: 'quality-check',
+        label: 'Quality check',
+        labelPl: 'Kontrola jakości',
+        icon: <ShieldCheck size={14} />,
+        onClick: () => void runActiveSectionAi(),
+        busy: sectionBusy,
+      },
+      {
+        id: 'refresh',
+        label: 'Refresh',
+        labelPl: 'Odśwież',
+        icon: <RotateCcw size={14} />,
+        onClick: () => void handleGenerateAI(activeNSection),
+        busy: isGeneratingAI === activeNSection,
+      },
+      {
+        id: 'continue',
+        label: 'Continue',
+        labelPl: 'Kontynuuj',
+        icon: <ArrowRight size={14} />,
+        onClick: () => void runActiveSectionAi(),
+        busy: sectionBusy,
+      },
+    ];
+  }, [activeSectionAiBusy, runActiveSectionAi, handleGenerateAI, activeNSection, isGeneratingAI]);
 
   // ==========================================
   // LOADING & ERROR STATES
@@ -7899,7 +9266,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+        <LoadingState variant="spinner" className="py-0" />
       </div>
     );
   }
@@ -7921,29 +9288,48 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     );
   }
 
-  // C-mode uses the compact panel surface in embedded mode.
+  // C-MODE (ClickUp-style): the LIVE C-mode render. Reached when the NModeHeader
+  // presentation-mode toggle (rendered below in the 'n' branch) switches to 'c'.
+  // PresentationMode is strictly 'n' | 'c', so this early return owns all of C-mode;
+  // the InitiativeCompactPanel renders the compact card/scroll surface. (Verified W2-30c.)
+  // NOTE: the "legacy D-mode cards + scroll" block further down (the ternary's else
+  // branch) is dead code — 'c' is fully handled here before that ternary is reached.
   if (presentationMode === 'c') {
+    // Standard C (ClickUp-style dense board) — unified with the Insight detail
+    // view via the shared NModeCBoard, driven by the SAME section data as the
+    // N-mode left-nav/canvas. Header keeps the mode toggle so the user can flip
+    // back to N. (The legacy InitiativeCompactPanel is retained in the module
+    // for the portfolio quick-peek drawer; this detail surface now uses the
+    // standard board — owner decision 2026-06-06.)
     return (
       <InitiativeContext.Provider value={contextValue}>
-        <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950 p-4">
-          <InitiativeCompactPanel
-            initiative={initiative as any}
-            initiativeId={initiativeId}
-            isOpen
-            onClose={onBack || (() => setPresentationMode('n'))}
-            onOpenFull={(updated) => {
-              setInitiative((prev: any) => ({ ...(prev || {}), ...(updated || {}) }));
-              setPresentationMode('n');
-            }}
-            onUpdate={(updated) => {
-              setInitiative((prev: any) => ({ ...(prev || {}), ...(updated || {}) }));
-              if (updated?.status) {
-                onStatusChange?.(String(updated.status));
-              }
-            }}
-            mode="embedded"
-            users={users as any}
-          />
+        <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+          <div className="min-h-screen">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <NModeHeader
+                title={titleDraft || initiative?.name || ''}
+                onTitleChange={setTitleDraft}
+                titleReadOnly={!canEditCards}
+                titleInputId={titleInputId}
+                artifactId={initiativeId}
+                artifactType="initiative"
+                onSave={() => handleSave(false)}
+                saving={isMutating}
+                isDirty={hasUnsavedChanges}
+                onChat={handleOpenChat}
+                onClose={onBack || (() => {})}
+                statusDotColor={statusMeta.dotColor}
+                presentationMode={presentationMode}
+                onPresentationModeChange={setPresentationMode}
+                buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
+              />
+
+              <div className="col-span-full space-y-0 mt-4">
+                <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
+                <NModeCBoard sections={orderedNModeSectionsWithContent} />
+              </div>
+            </div>
+          </div>
         </div>
       </InitiativeContext.Provider>
     );
@@ -8233,631 +9619,358 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   </Callout>
                 ) : null}
 
-                {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned */}
-                <div className="px-4 py-3 rounded-2xl bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200 dark:border-navy-700/60">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {(() => {
-                      const primaryGroup = nModeActions.filter((a) => a.variant === 'success');
-                      const contextGroup = nModeActions.filter((a) => a.variant === 'neutral');
-                      const dangerGroup = nModeActions.filter((a) => a.variant === 'danger');
-
-                      const renderButton = (action: NModeAction) => {
-                        const Icon = action.icon;
-                        const variantClasses =
-                          action.variant === 'success'
-                            ? 'border-emerald-400/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
-                            : action.variant === 'danger'
-                              ? 'border-rose-400/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10'
-                              : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60';
-                        return (
-                          <button
-                            key={action.id}
-                            onClick={action.onClick}
-                            disabled={action.disabled}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${variantClasses} disabled:opacity-50`}
+                {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
+                    Container matches the shared NModeShell action-bar standard (slate, borderless)
+                    so the Initiative toolbar reads identically to the Insight toolbar. */}
+                <div className="sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 mb-4">
+                  {(() => {
+                    const activeSectionObj = orderedNModeSectionsWithContent.find(
+                      (s) => s.id === activeNSection
+                    );
+                    const activeSectionName = activeSectionObj
+                      ? isPolish
+                        ? activeSectionObj.label.pl
+                        : activeSectionObj.label.en
+                      : '';
+                    // Grouped section list for the Sections dropdown (mirrors left nav).
+                    const sectionGroups: { group: string; sections: NModeSection[] }[] = [];
+                    for (const s of nModeSectionsWithContent) {
+                      const g = s.group || (isPolish ? 'Pozostałe' : 'Other');
+                      let bucket = sectionGroups.find((x) => x.group === g);
+                      if (!bucket) {
+                        bucket = { group: g, sections: [] };
+                        sectionGroups.push(bucket);
+                      }
+                      bucket.sections.push(s);
+                    }
+                    return (
+                      <div className="flex items-center gap-1 flex-wrap min-h-[36px]">
+                        {/* ── Left zone: Sections · New · Export ─────────────── */}
+                        <div className="relative">
+                          <ToolbarGhostButton
+                            icon={<Layers size={14} />}
+                            onClick={() => setShowSectionsMenu((v) => !v)}
+                            aria-expanded={showSectionsMenu}
                           >
-                            <Icon size={13} />
-                            <span>{isPolish ? action.label.pl : action.label.en}</span>
-                          </button>
-                        );
-                      };
-
-                      return (
-                        <>
-                          {primaryGroup.map(renderButton)}
-                          {primaryGroup.length > 0 && contextGroup.length > 0 && (
-                            <div
-                              key="sep-1"
-                              className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5"
-                            />
-                          )}
-                          {contextGroup.map(renderButton)}
-                          {(primaryGroup.length > 0 || contextGroup.length > 0) &&
-                            dangerGroup.length > 0 && (
+                            <span>{isPolish ? 'Sekcje' : 'Sections'}</span>
+                            <ChevronDown size={12} className="opacity-60" />
+                          </ToolbarGhostButton>
+                          {showSectionsMenu && (
+                            <>
                               <div
-                                key="sep-2"
-                                className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5"
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowSectionsMenu(false)}
                               />
-                            )}
-                          {dangerGroup.map(renderButton)}
-
-                          {/* Right-aligned AI Generate button (hidden for activity-log — no analysis) */}
-                          <div className="flex-1" />
-                          {activeNSection !== 'activity-log' &&
-                            (() => {
-                              if (activeNSection === 'tasks') {
-                                return (
-                                  <div className="inline-flex items-center gap-2">
-                                    <button
-                                      onClick={() => {
-                                        if (!canUseAi) {
-                                          toast.error(
-                                            isPolish
-                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                              : 'AI is unavailable because you have no edit permissions in this context.'
-                                          );
-                                          return;
-                                        }
-                                        requestTasksAi('analyze');
-                                      }}
-                                      disabled={!canUseAi || !!tasksAiRequest}
-                                      title={
-                                        !canUseAi
-                                          ? isPolish
-                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                            : 'No permission to use AI in this context.'
-                                          : undefined
-                                      }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                    >
-                                      {tasksAiRequest?.mode === 'analyze' ? (
-                                        <Loader2 size={13} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={13} />
-                                      )}
-                                      <span>
-                                        {tasksAiRequest?.mode === 'analyze'
-                                          ? isPolish
-                                            ? 'Analizuję...'
-                                            : 'Analyzing...'
-                                          : isPolish
-                                            ? 'Analizuj z AI'
-                                            : 'Analyze with AI'}
-                                      </span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        if (!canUseAi) {
-                                          toast.error(
-                                            isPolish
-                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                              : 'AI is unavailable because you have no edit permissions in this context.'
-                                          );
-                                          return;
-                                        }
-                                        requestTasksAi('addOne');
-                                      }}
-                                      disabled={!canUseAi || !!tasksAiRequest}
-                                      title={
-                                        !canUseAi
-                                          ? isPolish
-                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                            : 'No permission to use AI in this context.'
-                                          : undefined
-                                      }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                    >
-                                      {tasksAiRequest?.mode === 'addOne' ? (
-                                        <Loader2 size={13} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={13} />
-                                      )}
-                                      <span>
-                                        {tasksAiRequest?.mode === 'addOne'
-                                          ? isPolish
-                                            ? 'Dodaję...'
-                                            : 'Generating...'
-                                          : isPolish
-                                            ? 'AI: dodaj task'
-                                            : 'AI: Add task'}
-                                      </span>
-                                    </button>
-                                  </div>
-                                );
-                              }
-                              if (activeNSection === 'decisions') {
-                                return (
-                                  <div className="inline-flex items-center gap-2">
-                                    <button
-                                      onClick={() => {
-                                        if (!canUseAi) {
-                                          toast.error(
-                                            isPolish
-                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                              : 'AI is unavailable because you have no edit permissions in this context.'
-                                          );
-                                          return;
-                                        }
-                                        requestDecisionsAi('analyze');
-                                      }}
-                                      disabled={!canUseAi || !!decisionsAiRequest}
-                                      title={
-                                        !canUseAi
-                                          ? isPolish
-                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                            : 'No permission to use AI in this context.'
-                                          : undefined
-                                      }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                    >
-                                      {decisionsAiRequest?.mode === 'analyze' ? (
-                                        <Loader2 size={13} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={13} />
-                                      )}
-                                      <span>
-                                        {decisionsAiRequest?.mode === 'analyze'
-                                          ? isPolish
-                                            ? 'Analizuję...'
-                                            : 'Analyzing...'
-                                          : isPolish
-                                            ? 'Analizuj z AI'
-                                            : 'Analyze with AI'}
-                                      </span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        if (!canUseAi) {
-                                          toast.error(
-                                            isPolish
-                                              ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                              : 'AI is unavailable because you have no edit permissions in this context.'
-                                          );
-                                          return;
-                                        }
-                                        requestDecisionsAi('addOne');
-                                      }}
-                                      disabled={!canUseAi || !!decisionsAiRequest}
-                                      title={
-                                        !canUseAi
-                                          ? isPolish
-                                            ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                            : 'No permission to use AI in this context.'
-                                          : undefined
-                                      }
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                    >
-                                      {decisionsAiRequest?.mode === 'addOne' ? (
-                                        <Loader2 size={13} className="animate-spin" />
-                                      ) : (
-                                        <Sparkles size={13} />
-                                      )}
-                                      <span>
-                                        {decisionsAiRequest?.mode === 'addOne'
-                                          ? isPolish
-                                            ? 'Dodaję...'
-                                            : 'Generating...'
-                                          : isPolish
-                                            ? 'AI: dodaj decyzję'
-                                            : 'AI: Add decision'}
-                                      </span>
-                                    </button>
-                                  </div>
-                                );
-                              }
-                              if (activeNSection === 'comments') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestCommentsAi();
-                                    }}
-                                    disabled={!canUseAi || !!commentsAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                  >
-                                    {commentsAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {commentsAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'resources') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestResourcesAi();
-                                    }}
-                                    disabled={!canUseAi || !!resourcesAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                  >
-                                    {resourcesAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {resourcesAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'timeline') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestTimelineAi();
-                                    }}
-                                    disabled={!canUseAi || !!timelineAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                  >
-                                    {timelineAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {timelineAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'dependencies') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestDependenciesAi();
-                                    }}
-                                    disabled={!canUseAi || !!dependenciesAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                  >
-                                    {dependenciesAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {dependenciesAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'kpis') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestKpisAi();
-                                    }}
-                                    disabled={!canUseAi || !!kpisAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                  >
-                                    {kpisAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {kpisAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'team') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestTeamAi();
-                                    }}
-                                    disabled={!canUseAi || !!teamAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                  >
-                                    {teamAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {teamAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'targetState') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestTargetStateAi();
-                                    }}
-                                    disabled={!canUseAi || !!targetStateAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                  >
-                                    {targetStateAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {targetStateAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-                              if (activeNSection === 'gates') {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          isPolish
-                                            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                            : 'AI is unavailable because you have no edit permissions in this context.'
-                                        );
-                                        return;
-                                      }
-                                      requestGatesAi();
-                                    }}
-                                    disabled={!canUseAi || !!gatesAiRequest}
-                                    title={
-                                      !canUseAi
-                                        ? isPolish
-                                          ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                          : 'No permission to use AI in this context.'
-                                        : undefined
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                  >
-                                    {gatesAiRequest ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )}
-                                    <span>
-                                      {gatesAiRequest
-                                        ? isPolish
-                                          ? 'Analizuję...'
-                                          : 'Analyzing...'
-                                        : isPolish
-                                          ? 'Analizuj z AI'
-                                          : 'Analyze with AI'}
-                                    </span>
-                                  </button>
-                                );
-                              }
-
-                              const aiSectionKey =
-                                activeNSection === 'initiative-definition'
-                                  ? 'scope'
-                                  : activeNSection === 'risk-raid'
-                                    ? 'raid'
-                                    : activeNSection;
-                              const aiLabel =
-                                activeNSection === 'initiative-definition'
-                                  ? isPolish
-                                    ? 'Generuj scope'
-                                    : 'Generate scope'
-                                  : activeNSection === 'risk-raid'
-                                    ? isPolish
-                                      ? 'Analizuj RAID'
-                                      : 'Analyze RAID'
-                                    : isPolish
-                                      ? 'Analyze with AI'
-                                      : 'Analyze with AI';
-                              const isRaidAnalyzing =
-                                activeNSection === 'risk-raid' &&
-                                (!!raidAiRequest || isRaidAIProposing);
-                              return (
-                                <button
-                                  onClick={async () => {
-                                    if (!canUseAi) {
-                                      toast.error(
-                                        isPolish
-                                          ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
-                                          : 'AI is unavailable because you have no edit permissions in this context.'
+                              <div className="absolute left-0 top-full mt-1 z-50 w-72 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                {sectionGroups.map((grp) => (
+                                  <div key={grp.group} className="py-0.5">
+                                    <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                      {grp.group}
+                                    </div>
+                                    {grp.sections.map((s) => {
+                                      const isEmpty = s.cHidden === true;
+                                      const isVisible = !hiddenSectionIds.has(s.id);
+                                      const SectionIcon = s.icon;
+                                      return (
+                                        <button
+                                          key={s.id}
+                                          type="button"
+                                          onClick={() =>
+                                            setHiddenSectionIds((prev) => {
+                                              const next = new Set(prev);
+                                              if (next.has(s.id)) next.delete(s.id);
+                                              else next.add(s.id);
+                                              return next;
+                                            })
+                                          }
+                                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-slate-50 dark:hover:bg-navy-800/60 ${
+                                            isEmpty
+                                              ? 'text-slate-400 dark:text-slate-600'
+                                              : 'text-slate-700 dark:text-slate-200'
+                                          }`}
+                                        >
+                                          <span
+                                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                                              isVisible
+                                                ? 'border-teal-500 bg-teal-500 text-white'
+                                                : 'border-slate-300 dark:border-navy-600'
+                                            }`}
+                                          >
+                                            {isVisible && <CheckCircle size={10} />}
+                                          </span>
+                                          <SectionIcon size={13} className="shrink-0 opacity-70" />
+                                          <span className="flex-1 truncate">
+                                            {isPolish ? s.label.pl : s.label.en}
+                                          </span>
+                                          {isEmpty && (
+                                            <span className="shrink-0 rounded bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-400">
+                                              {isPolish ? 'brak' : 'empty'}
+                                            </span>
+                                          )}
+                                        </button>
                                       );
-                                      return;
-                                    }
-                                    if (activeNSection === 'initiative-definition') {
-                                      await handleGenerateScopeCard();
-                                      return;
-                                    }
-                                    if (activeNSection === 'risk-raid') {
-                                      requestRaidAi();
-                                      return;
-                                    }
-                                    await handleGenerateAI(aiSectionKey);
-                                  }}
-                                  disabled={
-                                    !canUseAi ||
-                                    (activeNSection === 'risk-raid'
-                                      ? isRaidAnalyzing
-                                      : isGeneratingAI === aiSectionKey)
-                                  }
-                                  title={
-                                    !canUseAi
-                                      ? isPolish
-                                        ? 'Brak uprawnień do użycia AI w tym kontekście.'
-                                        : 'No permission to use AI in this context.'
-                                      : undefined
-                                  }
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
-                                >
-                                  {activeNSection === 'risk-raid' ? (
-                                    isRaidAnalyzing ? (
-                                      <Loader2 size={13} className="animate-spin" />
-                                    ) : (
-                                      <Sparkles size={13} />
-                                    )
-                                  ) : isGeneratingAI === aiSectionKey ? (
-                                    <Loader2 size={13} className="animate-spin" />
-                                  ) : (
-                                    <Sparkles size={13} />
-                                  )}
-                                  <span>
-                                    {activeNSection === 'risk-raid' && isRaidAnalyzing
-                                      ? isPolish
-                                        ? 'Analizuję...'
-                                        : 'Analyzing...'
-                                      : aiLabel}
-                                  </span>
-                                </button>
+                                    })}
+                                  </div>
+                                ))}
+                                {hiddenSectionIds.size > 0 && (
+                                  <div className="mt-1 border-t border-slate-100 dark:border-navy-800 pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => setHiddenSectionIds(new Set())}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+                                    >
+                                      <RotateCcw size={13} className="shrink-0" />
+                                      <span>
+                                        {isPolish ? 'Przywróć domyślne' : 'Restore defaults'}
+                                      </span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Slot 2 — New ▾ (context create actions) */}
+                        <div className="relative">
+                          <ToolbarSubtleButton
+                            icon={<Plus size={14} />}
+                            onClick={() => setShowNewMenu((v) => !v)}
+                            disabled={newMenuActions.length === 0}
+                            aria-expanded={showNewMenu}
+                            title={
+                              newMenuActions.length === 0
+                                ? isPolish
+                                  ? 'Brak akcji tworzenia w tym stanie'
+                                  : 'No create actions available in this state'
+                                : undefined
+                            }
+                          >
+                            <span>{isPolish ? 'Nowy' : 'New'}</span>
+                            <ChevronDown size={12} className="opacity-60" />
+                          </ToolbarSubtleButton>
+                          {showNewMenu && newMenuActions.length > 0 && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowNewMenu(false)}
+                              />
+                              <div className="absolute left-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                {newMenuActions.map((item) => (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setShowNewMenu(false);
+                                      item.onClick();
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors"
+                                  >
+                                    <Plus size={13} className="shrink-0 opacity-70" />
+                                    <span>{isPolish ? item.label.pl : item.label.en}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Slot 3 — Export ▾ (destination selector) */}
+                        <div className="relative">
+                          <ToolbarGhostButton
+                            icon={<Download size={14} />}
+                            onClick={() => setShowExportMenu((v) => !v)}
+                            aria-expanded={showExportMenu}
+                          >
+                            <span>{isPolish ? 'Eksport' : 'Export'}</span>
+                            <ChevronDown size={12} className="opacity-60" />
+                          </ToolbarGhostButton>
+                          {showExportMenu && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowExportMenu(false)}
+                              />
+                              <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                {(
+                                  [
+                                    {
+                                      id: 'notebook',
+                                      label: { en: '→ Notebook', pl: '→ Notatnik' },
+                                      icon: NotebookPen,
+                                      onClick: () => void handleExportNotebook(),
+                                    },
+                                    {
+                                      id: 'deck',
+                                      label: { en: '→ Presentation', pl: '→ Prezentacja' },
+                                      icon: Presentation,
+                                      onClick: () => handleExportDeck(),
+                                    },
+                                    {
+                                      id: 'pdf',
+                                      label: { en: '→ PDF', pl: '→ PDF' },
+                                      icon: FileType,
+                                      onClick: () => void handleExportReportPDF(),
+                                    },
+                                    {
+                                      id: 'markdown',
+                                      label: { en: '→ Markdown', pl: '→ Markdown' },
+                                      icon: FileDown,
+                                      onClick: () => handleExportMarkdown(),
+                                    },
+                                    {
+                                      id: 'more',
+                                      label: { en: 'Smart Export…', pl: 'Eksport zaawansowany…' },
+                                      icon: FileText,
+                                      onClick: () => setShowExportDialog(true),
+                                    },
+                                  ] as const
+                                ).map((item) => {
+                                  const ItemIcon = item.icon;
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setShowExportMenu(false);
+                                        item.onClick();
+                                      }}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800/60 transition-colors"
+                                    >
+                                      <ItemIcon size={13} className="shrink-0 opacity-70" />
+                                      <span>{isPolish ? item.label.pl : item.label.en}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* ── Divider · active section · ─────────────────────── */}
+                        <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+                        {activeSectionName && (
+                          <span className="px-1 text-[12px] text-slate-400 dark:text-slate-500 truncate max-w-[160px]">
+                            {activeSectionName}
+                          </span>
+                        )}
+
+                        {/* Slot 5 — section-level AI (teal split) */}
+                        {activeNSection !== 'activity-log' && (
+                          <ToolbarAISplitButton
+                            onClick={() => void runActiveSectionAi()}
+                            disabled={
+                              !canUseAi || activeSectionAiBusy || activeSectionAiUnavailable
+                            }
+                            title={
+                              activeSectionAiUnavailable
+                                ? isPolish
+                                  ? 'Generowanie AI niedostępne dla tej sekcji'
+                                  : 'AI generation not available for this section yet'
+                                : !canUseAi
+                                  ? isPolish
+                                    ? 'Brak uprawnień do użycia AI w tym kontekście.'
+                                    : 'No permission to use AI in this context.'
+                                  : isPolish
+                                    ? 'AI dla tej sekcji'
+                                    : 'AI for this section'
+                            }
+                            icon={
+                              activeSectionAiBusy ? (
+                                <Loader2 size={13} className="animate-spin" />
+                              ) : (
+                                <Sparkles size={13} />
+                              )
+                            }
+                          >
+                            <span>{isPolish ? 'AI sekcja' : 'AI section'}</span>
+                          </ToolbarAISplitButton>
+                        )}
+
+                        {/* ── Spacer ─────────────────────────────────────────── */}
+                        <div className="flex-1 min-w-[8px]" />
+
+                        {/* Slot 6/7 — Fork · Present */}
+                        <ToolbarIconButton
+                          icon={<GitFork size={14} />}
+                          tooltip={isPolish ? 'Forkuj' : 'Fork'}
+                          onClick={() => void handleFork()}
+                        />
+                        <ToolbarIconButton
+                          icon={<Monitor size={14} />}
+                          tooltip={isPolish ? 'Prezentuj' : 'Present'}
+                          onClick={() => setPresentOpen(true)}
+                        />
+
+                        {/* Kebab — destructive actions (Block / Cancel / Archive) */}
+                        {destructiveStatusActions.length > 0 && (
+                          <div className="relative">
+                            <ToolbarIconButton
+                              icon={<MoreVertical size={14} />}
+                              tooltip={isPolish ? 'Więcej' : 'More'}
+                              onClick={() => setShowToolbarKebab((v) => !v)}
+                              aria-expanded={showToolbarKebab}
+                            />
+                            {showToolbarKebab && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-40"
+                                  onClick={() => setShowToolbarKebab(false)}
+                                />
+                                <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1.5">
+                                  {destructiveStatusActions.map((sa) => {
+                                    const KebabIcon =
+                                      sa.targetStatus === InitiativeStatus.CANCELLED
+                                        ? XCircle
+                                        : sa.targetStatus === InitiativeStatus.BLOCKED
+                                          ? Ban
+                                          : AlertTriangle;
+                                    return (
+                                      <button
+                                        key={sa.targetStatus}
+                                        type="button"
+                                        disabled={isMutating}
+                                        onClick={() => {
+                                          setShowToolbarKebab(false);
+                                          void handleStatusAction(sa);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
+                                      >
+                                        <KebabIcon size={13} className="shrink-0" />
+                                        <span>{isPolish ? sa.labelPl : sa.label}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ── Slot 9: artifact-level AI (solid teal) ─────────── */}
+                        <div className="h-4 w-px bg-slate-200 dark:bg-navy-700 mx-1 shrink-0" />
+                        <ToolbarAISolidButton
+                          onClick={() => {
+                            if (!canUseAi) {
+                              toast.error(
+                                isPolish
+                                  ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+                                  : 'AI is unavailable because you have no edit permissions in this context.'
                               );
-                            })()}
-                        </>
-                      );
-                    })()}
-                  </div>
+                              return;
+                            }
+                            setAiPanelOpen((v) => !v);
+                          }}
+                          disabled={!canUseAi}
+                          title={isPolish ? 'Asystent AI' : 'AI Consultant'}
+                          aria-expanded={aiPanelOpen}
+                          icon={<Sparkles size={14} />}
+                        >
+                          <span>{isPolish ? 'AI Konsultant' : 'AI Consultant'}</span>
+                        </ToolbarAISolidButton>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* LeftNav + Canvas */}
@@ -8868,657 +9981,261 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     onSectionChange={setActiveNSection}
                     onSectionReorder={handleNModeSectionReorder}
                   />
-                  <NModeCanvas
-                    sections={orderedNModeSectionsWithContent}
-                    activeSection={activeNSection}
-                  />
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    {/* Active-section header — Mark Complete (Canon Warstwa 4 ·
+                        SectionCard). Moved out of the toolbar; AI-signal only,
+                        success-green, never locks fields. Nav ✓ + progress bar
+                        stay wired via sectionCompletions + handleToggleSectionComplete. */}
+                    {activeNSection !== 'activity-log' && activeNSection !== 'comments' && (
+                      <div className="flex items-center justify-end px-1 pb-3">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSectionComplete(activeNSection)}
+                          title={
+                            sectionCompletions[activeNSection]
+                              ? isPolish
+                                ? 'Oznacz sekcję jako niegotową'
+                                : 'Mark section as not complete'
+                              : isPolish
+                                ? 'Oznacz sekcję jako gotową'
+                                : 'Mark section as complete'
+                          }
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            sectionCompletions[activeNSection]
+                              ? 'border-success-400/50 text-success-700 dark:text-success-400 bg-success-50/60 dark:bg-success-900/20 hover:bg-success-100/60'
+                              : 'border-slate-300/50 dark:border-navy-600/60 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/60'
+                          }`}
+                        >
+                          {sectionCompletions[activeNSection] ? (
+                            <Undo2 size={13} />
+                          ) : (
+                            <CheckCircle2 size={13} />
+                          )}
+                          <span>
+                            {sectionCompletions[activeNSection]
+                              ? isPolish
+                                ? 'Otwórz ponownie'
+                                : 'Reopen'
+                              : isPolish
+                                ? 'Oznacz gotowe'
+                                : 'Mark complete'}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    <NModeCanvas
+                      sections={orderedNModeSectionsWithContent}
+                      activeSection={activeNSection}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        ) : (
-          /* ═══════════════════════════════════════════════════════════════
-            C-MODE RENDER (legacy D-mode cards + scroll)
-            ═══════════════════════════════════════════════════════════════ */
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div
-              className={
-                cModeLayout === 'cards'
-                  ? 'grid grid-cols-1 lg:grid-cols-3 gap-6'
-                  : 'flex flex-col gap-6'
-              }
-            >
-              {/* ====== HEADER - Full Width ====== */}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="lg:col-span-3 bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 p-5"
+        ) : null}
+      </div>
+
+      {/* ── Present mode (Phase A3) — fullscreen card walk of canonical sections ── */}
+      {presentOpen && presentDeckCards.length > 0 && (
+        <PresentMode
+          cards={presentDeckCards}
+          title={String(initiative?.title || initiative?.name || 'Initiative')}
+          onExit={() => setPresentOpen(false)}
+        />
+      )}
+
+      {/* ── Smart Export dialog (Phase E) — section picker + targets ───────────── */}
+      {showExportDialog && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowExportDialog(false)}
+        >
+          <div
+            className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                {isPolish ? 'Eksportuj inicjatywę' : 'Export initiative'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowExportDialog(false)}
+                className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                aria-label={isPolish ? 'Zamknij' : 'Close'}
               >
-                {statusDriftUi ? (
-                  <div className="mb-3">
-                    <Callout
-                      variant="warning"
-                      compact
-                      title={isPolish ? 'Drift statusu' : 'Status drift'}
-                    >
-                      {isPolish
-                        ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
-                        : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}
-                    </Callout>
-                  </div>
-                ) : null}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    {onBack && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={onBack}
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-                      >
-                        <ChevronLeft size={20} className="text-slate-500" />
-                      </motion.button>
-                    )}
-                    <div
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${moduleConfig.bgLight} ${moduleConfig.textColor}`}
-                    >
-                      {isPolish ? moduleConfig.labelPl : moduleConfig.label}
-                    </div>
-                    <input
-                      id={titleInputId}
-                      type="text"
-                      value={titleDraft || initiative.name || ''}
-                      onChange={(e) => setTitleDraft(e.target.value)}
-                      readOnly={!canEditCards}
-                      className={`flex-1 text-xl font-bold text-slate-800 dark:text-white bg-transparent border-none focus:outline-none truncate ${
-                        !canEditCards ? '' : 'cursor-text'
-                      }`}
-                    />
-                    <ArtifactPermalinkButton
-                      artifactType="initiative"
-                      artifactId={initiativeId}
-                      isPolish={isPolish}
-                      size={13}
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border-2 ${statusMeta.bgColor} ${statusMeta.dotColor.replace('bg-', 'border-').replace('-400', '-500/50')} transition-all`}
-                    >
-                      <div
-                        className={`w-2.5 h-2.5 rounded-full ${statusMeta.dotColor} animate-pulse`}
-                      />
-                      <span className={`text-sm font-semibold ${statusMeta.color}`}>
-                        {statusMeta.label}
-                      </span>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleSave(false)}
-                      disabled={isMutating || !hasUnsavedChanges}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {isMutating ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Save size={16} />
-                      )}
-                      <span>
-                        {hasUnsavedChanges
-                          ? isPolish
-                            ? 'Zapisz'
-                            : 'Save'
-                          : isPolish
-                            ? 'Zapisane'
-                            : 'Saved'}
-                      </span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleOpenChat}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-primary-500/40 dark:border-primary-400/30 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 dark:hover:bg-primary-500/10 text-sm font-semibold transition-all shadow-sm"
-                    >
-                      <MessageSquare size={16} />
-                      <span>{isPolish ? 'Czat' : 'Chat'}</span>
-                    </motion.button>
-                    {/* Presentation mode switcher (N/C) */}
-                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700/60">
-                      <button
-                        onClick={() => setPresentationMode('n')}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${(presentationMode as any) === 'n' ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                      >
-                        N
-                      </button>
-                      <button
-                        onClick={() => setPresentationMode('c')}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${(presentationMode as any) === 'c' ? 'bg-primary-500/15 text-primary-600 dark:text-primary-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                      >
-                        C
-                      </button>
-                    </div>
-                    {/* B7.4: Toggle assessment summary panel */}
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setShowAssessmentPanel((p) => !p)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
-                        showAssessmentPanel
-                          ? 'bg-primary-500/15 border-primary-500/40 text-primary-600 dark:text-primary-400'
-                          : 'bg-white/70 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-600'
-                      }`}
-                      title={isPolish ? 'Panel oceny' : 'Assessment panel'}
-                    >
-                      <Sparkles size={16} />
-                    </motion.button>
-                    {/* B7.3: RowActionsMenu — z-50, no overlay issues */}
-                    <RowActionsMenu
-                      actions={
-                        [
-                          {
-                            id: 'new-task',
-                            label: isPolish ? 'Nowe zadanie' : 'New Task',
-                            icon: CheckSquare,
-                            variant: 'primary',
-                            onClick: () => {
-                              toggleSection('tasks');
-                              setShowCreateTask(true);
-                            },
-                          },
-                          {
-                            id: 'new-decision',
-                            label: isPolish ? 'Nowa decyzja' : 'New Decision',
-                            icon: Scale,
-                            onClick: () => {
-                              toggleSection('decisions');
-                              setShowCreateDecision(true);
-                            },
-                          },
-                          {
-                            id: 'add-raid',
-                            label: isPolish ? 'Dodaj RAID' : 'Add RAID',
-                            icon: AlertTriangle,
-                            onClick: () => {
-                              toggleSection('raid');
-                              setShowCreateRaid(true);
-                            },
-                          },
-                          {
-                            id: 'new-tab',
-                            label: isPolish ? 'Nowa karta' : 'New tab',
-                            icon: ExternalLink,
-                            divider: true,
-                            onClick: () => window.open(window.location.href, '_blank'),
-                          },
-                          {
-                            id: 'copy-link',
-                            label: isPolish ? 'Kopiuj link' : 'Copy link',
-                            icon: Copy,
-                            onClick: handleCopyLink,
-                          },
-                          {
-                            id: 'export-pdf',
-                            label: 'PDF',
-                            icon: Download,
-                            onClick: handleExportPDF,
-                          },
-                          {
-                            id: 'archive',
-                            label: isPolish ? 'Archiwizuj' : 'Archive',
-                            icon: Archive,
-                            variant: 'danger' as const,
-                            divider: true,
-                            onClick: handleArchive,
-                          },
-                          ...(status === 'DRAFT'
-                            ? [
-                                {
-                                  id: 'delete',
-                                  label: isPolish ? 'Usuń' : 'Delete',
-                                  icon: Trash2,
-                                  variant: 'danger' as const,
-                                  onClick: handleDelete,
-                                },
-                              ]
-                            : []),
-                        ] as RowAction[]
-                      }
-                      size="md"
-                    />
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* ====== B7.2: Key Info Bar — 5 sections always visible ====== */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
-              >
-                {/* 1. Goal / Objective */}
-                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="p-1 rounded-lg bg-blue-500/10">
-                      <Target size={14} className="text-blue-500" />
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {isPolish ? 'Cel' : 'Goal'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                    {summary ||
-                      initiative?.strategicIntent ||
-                      initiative?.description ||
-                      (isPolish ? 'Brak opisu' : 'No description')}
-                  </p>
-                </div>
-
-                {/* 2. Tasks */}
-                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="p-1 rounded-lg bg-emerald-500/10">
-                      <CheckSquare size={14} className="text-emerald-500" />
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {isPolish ? 'Zadania' : 'Tasks'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-slate-800 dark:text-white">
-                      {tasksDone}/{tasks.length}
-                    </span>
-                    {tasks.length > 0 && (
-                      <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-emerald-500 transition-all"
-                          style={{
-                            width: `${tasks.length > 0 ? Math.round((tasksDone / tasks.length) * 100) : 0}%`,
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  {tasksInProgress > 0 && (
-                    <p className="text-[10px] text-blue-500 mt-0.5">
-                      {tasksInProgress} {isPolish ? 'w toku' : 'in progress'}
-                    </p>
-                  )}
-                </div>
-
-                {/* 3. Team */}
-                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="p-1 rounded-lg bg-primary-500/10">
-                      <Users size={14} className="text-primary-500" />
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {isPolish ? 'Zespół' : 'Team'}
-                    </span>
-                  </div>
-                  <div className="space-y-0.5">
-                    {ownerName ? (
-                      <p className="text-xs text-slate-700 dark:text-slate-300 truncate">
-                        <span className="text-slate-500 dark:text-slate-400">
-                          {isPolish ? 'Właściciel:' : 'Owner:'}
-                        </span>{' '}
-                        {ownerName}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Brak właściciela' : 'No owner'}
-                      </p>
-                    )}
-                    {sponsorName && (
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                        {isPolish ? 'Sponsor:' : 'Sponsor:'} {sponsorName}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* 4. Resources */}
-                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="p-1 rounded-lg bg-blue-500/10">
-                      <Calendar size={14} className="text-blue-500" />
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {isPolish ? 'Zasoby' : 'Resources'}
-                    </span>
-                  </div>
-                  <div className="space-y-0.5">
-                    {startDate || endDate ? (
-                      <p className="text-xs text-slate-700 dark:text-slate-300">
-                        {startDate
-                          ? new Date(startDate).toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                            })
-                          : '?'}
-                        {' → '}
-                        {endDate
-                          ? new Date(endDate).toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                            })
-                          : '?'}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Brak dat' : 'No dates'}
-                      </p>
-                    )}
-                    {milestones.length > 0 && (
-                      <p className="text-[10px] text-primary-500">
-                        {milestones.length} {isPolish ? 'kamieni milowych' : 'milestones'}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* 5. Finances / Risk */}
-                <div className="p-3 rounded-xl bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200 dark:border-navy-700/60 shadow-sm">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="p-1 rounded-lg bg-amber-500/10">
-                      <DollarSign size={14} className="text-amber-500" />
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {isPolish ? 'Finanse / Ryzyko' : 'Finance / Risk'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {initiative?.costCapex || initiative?.cost_capex ? (
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        {(() => {
-                          const amt = initiative.costCapex || initiative.cost_capex || 0;
-                          if (amt >= 1_000_000) return `$${(amt / 1_000_000).toFixed(1)}M`;
-                          if (amt >= 1_000) return `$${(amt / 1_000).toFixed(0)}K`;
-                          return `$${amt}`;
-                        })()}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
-                    )}
-                    {(riskCount > 0 || issueCount > 0) && (
-                      <span
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${criticalRaids > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'}`}
-                      >
-                        {riskCount}R / {issueCount}I
-                      </span>
-                    )}
-                  </div>
-                  {initiative?.expectedRoi || initiative?.expected_roi ? (
-                    <p className="text-[10px] text-emerald-500 mt-0.5">
-                      ROI: {(initiative.expectedRoi || initiative.expected_roi || 0).toFixed(1)}x
-                    </p>
-                  ) : null}
-                </div>
-              </motion.div>
-
-              {cModeLayout === 'cards' ? (
-                <>
-                  {/* ====== LEFT COLUMN - Dynamic Content Sections ====== */}
-                  <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
-                    {leftSections.map((sectionType) => {
-                      const Component = SECTION_REGISTRY[sectionType.componentKey];
-                      if (!Component) return null;
-                      return (
-                        <Component
-                          key={sectionType.key}
-                          sectionType={sectionType}
-                          expanded={expandedSections.has(sectionType.key)}
-                          onToggle={() => toggleSection(sectionType.key)}
-                          readonly={!canEditCards}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {/* ====== RIGHT COLUMN - Dynamic Control/Meta Sections ====== */}
-                  <div className="lg:col-span-1 space-y-4 order-1 lg:order-2">
-                    {/* Gate Alert Banner (always check, regardless of sections) */}
-                    {pendingGates.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20 border border-amber-300/50 dark:border-amber-500/30"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-amber-500/20">
-                            <AlertTriangle size={18} className="text-amber-500" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                              {isPolish ? 'Wymagana decyzja bramkowa' : 'Gate decision required'}
-                            </p>
-                            <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
-                              {pendingGates.map((g) => g.label).join(', ')}
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {rightSections.map((sectionType) => {
-                      const Component = SECTION_REGISTRY[sectionType.componentKey];
-                      if (!Component) return null;
-                      return (
-                        <Component
-                          key={sectionType.key}
-                          sectionType={sectionType}
-                          expanded={expandedSections.has(sectionType.key)}
-                          onToggle={() => toggleSection(sectionType.key)}
-                          readonly={!canEditCards}
-                        />
-                      );
-                    })}
-                  </div>
-                </>
-              ) : (
-                /* ====== SCROLL DOCUMENT VIEW ====== */
-                <InitiativeScrollView
-                  leftSections={leftSections}
-                  rightSections={rightSections}
-                  readonly={!canEditCards}
-                />
-              )}
+                <X size={18} />
+              </button>
             </div>
 
-            {/* ====== B7.4: Assessment Summary Panel (right side, C-mode only) ====== */}
-            <AnimatePresence>
-              {showAssessmentPanel && (
-                <motion.aside
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 40 }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  className="fixed right-0 top-0 h-full w-80 bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200 dark:border-navy-700 shadow-2xl z-40 overflow-y-auto"
+            {/* Section picker */}
+            <div className="px-5 py-4 overflow-y-auto">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Sekcje do eksportu' : 'Sections to export'}
+                </p>
+                <div className="flex gap-2 text-xs">
+                  <button
+                    type="button"
+                    className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    onClick={() =>
+                      setExportSelectedSectionIds(new Set(exportableSections.map((s) => s.id)))
+                    }
+                  >
+                    {isPolish ? 'Wszystkie' : 'All'}
+                  </button>
+                  <span className="text-slate-300 dark:text-navy-600">·</span>
+                  <button
+                    type="button"
+                    className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    onClick={() => setExportSelectedSectionIds(new Set())}
+                  >
+                    {isPolish ? 'Żadne' : 'None'}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                {exportableSections.map((section) => {
+                  const checked = effectiveExportSelection.has(section.id);
+                  return (
+                    <label
+                      key={section.id}
+                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/60 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleExportSection(section.id)}
+                        className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                      />
+                      <span className="text-sm text-slate-700 dark:text-slate-200">
+                        {sectionLabel(section)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Targets */}
+            <div className="px-5 py-4 border-t border-slate-200 dark:border-navy-700 space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Format' : 'Format'}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportMarkdown}
+                  disabled={isExporting !== null || effectiveExportSelection.size === 0}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
                 >
-                  <div className="p-5 space-y-5">
-                    {/* Panel Header */}
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        <Sparkles size={16} className="text-primary-500" />
-                        {isPolish ? 'Podsumowanie oceny' : 'Assessment Summary'}
-                      </h3>
-                      <button
-                        onClick={() => setShowAssessmentPanel(false)}
-                        className="p-1 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-
-                    {/* Readiness Score */}
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-primary-500/5 to-primary-500/5 dark:from-primary-500/10 dark:to-primary-500/10 border border-primary-200/50 dark:border-primary-500/20">
-                      <p className="text-[10px] font-semibold text-primary-500 uppercase tracking-wider mb-2">
-                        {isPolish ? 'Gotowość inicjatywy' : 'Initiative Readiness'}
-                      </p>
-                      <div className="flex items-end gap-2 mb-2">
-                        <span className="text-3xl font-bold text-slate-800 dark:text-white">
-                          {(() => {
-                            let score = 0;
-                            if (summary) score += 15;
-                            if (ownerName) score += 15;
-                            if (sponsorName) score += 10;
-                            if (tasks.length > 0) score += 15;
-                            if (startDate && endDate) score += 10;
-                            if (initiative?.costCapex || initiative?.cost_capex) score += 10;
-                            if (raidItems.length > 0) score += 10;
-                            if (decisions.length > 0) score += 10;
-                            if (stakeholders.length > 0) score += 5;
-                            return Math.min(score, 100);
-                          })()}
-                          %
-                        </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-                          {isPolish ? 'kompletność' : 'completeness'}
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-500 transition-all"
-                          style={{
-                            width: `${(() => {
-                              let score = 0;
-                              if (summary) score += 15;
-                              if (ownerName) score += 15;
-                              if (sponsorName) score += 10;
-                              if (tasks.length > 0) score += 15;
-                              if (startDate && endDate) score += 10;
-                              if (initiative?.costCapex || initiative?.cost_capex) score += 10;
-                              if (raidItems.length > 0) score += 10;
-                              if (decisions.length > 0) score += 10;
-                              if (stakeholders.length > 0) score += 5;
-                              return Math.min(score, 100);
-                            })()}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Checklist */}
-                    <div>
-                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                        {isPolish ? 'Lista kontrolna' : 'Checklist'}
-                      </p>
-                      <div className="space-y-1.5">
-                        {[
-                          {
-                            label: isPolish ? 'Opis / cel' : 'Description / goal',
-                            done: !!summary,
-                          },
-                          { label: isPolish ? 'Właściciel' : 'Owner assigned', done: !!ownerName },
-                          { label: isPolish ? 'Sponsor' : 'Sponsor assigned', done: !!sponsorName },
-                          { label: isPolish ? 'Zadania' : 'Tasks defined', done: tasks.length > 0 },
-                          {
-                            label: isPolish ? 'Harmonogram' : 'Timeline set',
-                            done: !!(startDate && endDate),
-                          },
-                          {
-                            label: isPolish ? 'Budżet' : 'Budget defined',
-                            done: !!(initiative?.costCapex || initiative?.cost_capex),
-                          },
-                          {
-                            label: isPolish ? 'Ryzyka' : 'Risks identified',
-                            done: raidItems.filter((r) => r.type === 'risk').length > 0,
-                          },
-                          {
-                            label: isPolish ? 'Decyzje' : 'Decisions linked',
-                            done: decisions.length > 0,
-                          },
-                          {
-                            label: isPolish ? 'Interesariusze' : 'Stakeholders',
-                            done: stakeholders.length > 0,
-                          },
-                        ].map((item) => (
-                          <div key={item.label} className="flex items-center gap-2 text-xs">
-                            <div
-                              className={`w-4 h-4 rounded-full flex items-center justify-center ${item.done ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400'}`}
-                            >
-                              {item.done ? '✓' : '○'}
-                            </div>
-                            <span
-                              className={
-                                item.done
-                                  ? 'text-slate-700 dark:text-slate-300'
-                                  : 'text-slate-500 dark:text-slate-400'
-                              }
-                            >
-                              {item.label}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div>
-                      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                        {isPolish ? 'Statystyki' : 'Quick Stats'}
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
-                          <p className="text-lg font-bold text-slate-800 dark:text-white">
-                            {tasks.length}
-                          </p>
-                          <p className="text-[9px] text-slate-500 dark:text-slate-400">
-                            {isPolish ? 'Zadania' : 'Tasks'}
-                          </p>
-                        </div>
-                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
-                          <p className="text-lg font-bold text-slate-800 dark:text-white">
-                            {decisions.length}
-                          </p>
-                          <p className="text-[9px] text-slate-500 dark:text-slate-400">
-                            {isPolish ? 'Decyzje' : 'Decisions'}
-                          </p>
-                        </div>
-                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
-                          <p
-                            className={`text-lg font-bold ${criticalRaids > 0 ? 'text-rose-500' : 'text-slate-800 dark:text-white'}`}
-                          >
-                            {raidItems.length}
-                          </p>
-                          <p className="text-[9px] text-slate-500 dark:text-slate-400">RAID</p>
-                        </div>
-                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800/50 text-center">
-                          <p className="text-lg font-bold text-slate-800 dark:text-white">
-                            {stakeholders.length}
-                          </p>
-                          <p className="text-[9px] text-slate-500 dark:text-slate-400">
-                            {isPolish ? 'Interesariusze' : 'Stakeholders'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Pending Gates */}
-                    {pendingGates.length > 0 && (
-                      <div className="p-3 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20">
-                        <p className="text-[10px] font-semibold text-amber-500 uppercase tracking-wider mb-1.5">
-                          {isPolish ? 'Oczekujące bramki' : 'Pending Gates'}
-                        </p>
-                        {pendingGates.map((g) => (
-                          <div
-                            key={g.id}
-                            className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400"
-                          >
-                            <AlertTriangle size={12} />
-                            <span>{g.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </motion.aside>
-              )}
-            </AnimatePresence>
+                  {isExporting === 'markdown' ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <FileType size={15} />
+                  )}
+                  Markdown
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleExportReportPDF()}
+                  disabled={isExporting !== null || effectiveExportSelection.size === 0}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                >
+                  {isExporting === 'pdf' ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <FileDown size={15} />
+                  )}
+                  {isPolish ? 'Raport (PDF)' : 'Report (PDF)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportDeck}
+                  disabled={effectiveExportSelection.size === 0}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                >
+                  <Presentation size={15} />
+                  {isPolish ? 'Prezentacja' : 'Deck'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleExportNotebook()}
+                  disabled={isExporting !== null || effectiveExportSelection.size === 0}
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+                >
+                  {isExporting === 'notebook' ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <NotebookPen size={15} />
+                  )}
+                  {isPolish ? 'Notatnik' : 'Notebook'}
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Off-screen printable container — captured by exportReportToPDF. */}
+          <div
+            id="initiative-export-printable"
+            aria-hidden="true"
+            style={{
+              position: 'fixed',
+              left: '-10000px',
+              top: 0,
+              width: '794px',
+              background: '#ffffff',
+              color: '#0f172a',
+              padding: '40px',
+              fontFamily: 'system-ui, sans-serif',
+            }}
+          >
+            <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '16px' }}>
+              {String(initiative?.title || initiative?.name || 'Initiative')}
+            </h1>
+            {exportableSections
+              .filter((s) => effectiveExportSelection.has(s.id))
+              .map((section) => {
+                const body = buildSectionBody(section.id);
+                return (
+                  <div key={section.id} style={{ marginBottom: '20px' }}>
+                    <h2
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        marginBottom: '6px',
+                        borderBottom: '1px solid #e2e8f0',
+                        paddingBottom: '4px',
+                      }}
+                    >
+                      {sectionLabel(section)}
+                    </h2>
+                    <div style={{ fontSize: '13px', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                      {body.trim() || (isPolish ? '(brak treści)' : '(no content)')}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* Slot 9 — canonical artifact-level AI Consultant right panel (POZIOM 3).
+          Right-side ~360px slide-over with whole-initiative chat context + the
+          5 canon actions. Toggled by the solid-teal toolbar button. */}
+      <AIConsultantPanel
+        open={aiPanelOpen}
+        onClose={() => setAiPanelOpen(false)}
+        artifactType="initiative"
+        artifactId={String(initiative?.id ?? initiativeId)}
+        artifactTitle={String(initiative?.title || initiative?.name || 'Initiative')}
+        contextText={aiPanelContextText}
+        actions={aiConsultantActions}
+        isBusy={!canUseAi}
+        isPolish={isPolish}
+      />
     </InitiativeContext.Provider>
   );
 };

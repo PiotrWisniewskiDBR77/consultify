@@ -189,8 +189,8 @@ export const VectorPage: React.FC = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                 style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                  boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)',
+                  background: 'linear-gradient(135deg, #A51C30, #651120)',
+                  boxShadow: '0 0 24px -8px rgba(165,28,48,0.60)',
                 }}
               >
                 <Download size={16} />
@@ -316,7 +316,7 @@ export const VectorPage: React.FC = () => {
                     <span className="text-xs font-black text-primary-500 bg-primary-100 dark:bg-primary-900/30 rounded-lg px-2.5 py-1">
                       {step.num}
                     </span>
-                    <Icon size={18} className="text-slate-400 dark:text-slate-500" />
+                    <Icon size={18} className="text-slate-600 dark:text-slate-500" />
                   </div>
                   <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">
                     {t(`vector.pipeline.steps.${step.num}.title`, step.title)}
@@ -578,8 +578,8 @@ export const VectorPage: React.FC = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-white transition-all"
                 style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                  boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)',
+                  background: 'linear-gradient(135deg, #A51C30, #651120)',
+                  boxShadow: '0 0 24px -8px rgba(165,28,48,0.60)',
                 }}
               >
                 <Download size={16} />

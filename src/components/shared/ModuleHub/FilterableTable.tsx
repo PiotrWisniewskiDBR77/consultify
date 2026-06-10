@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import { ColumnResizer } from '@/components/ui/ResizableTable';
 
 import { type RowAction, RowActionsMenu } from '../RowActionsMenu';
@@ -18,11 +19,28 @@ export interface TableColumn {
   id: string;
   label: string;
   width?: string;
+  /**
+   * Opt-in leading selection column. When set to 'select', the HEADER renders a
+   * select-all checkbox (driven by the `selection` prop) instead of the plain
+   * `label` text, and the filter/resizer affordances are suppressed for it.
+   * Existing tables that don't set this are completely unaffected.
+   */
+  type?: 'select';
   filterable?: boolean;
   filterOptions?: { value: string; label: string; color?: string }[];
   sortable?: boolean;
+  /**
+   * Canon §3.3 cell alignment by role: title/text = left (default),
+   * counts/metrics = right, rare centered badges = center. Applied to both
+   * the header cell and body cells so header and data never desync.
+   */
+  align?: 'left' | 'center' | 'right';
   render?: (row: any) => React.ReactNode;
 }
+
+// Canon §3.3 — map column.align to a Tailwind text-align utility (left = default).
+const alignToClass = (align?: TableColumn['align']): string =>
+  align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
 
 // Row data
 export interface TableRow {
@@ -51,82 +69,45 @@ interface FilterableTableProps {
   density?: 'comfortable' | 'compact';
   /** Show the table header settings (columns) button. */
   enableColumnSettings?: boolean;
+  /**
+   * Opt-in localStorage persistence of column widths + visibility/order. When
+   * set, resizing / hiding / reordering columns survives reload. Default off,
+   * so existing callers are unaffected. (V-B — the canonical fix for the
+   * module-wide "resize lost on reload" bug; one place instead of per-table.)
+   */
+  persistKey?: string;
+  /**
+   * Opt-in row selection. Drives the leading `type: 'select'` column: the header
+   * renders a select-all checkbox (indeterminate when partial) and each row
+   * renders a row checkbox. Omit to leave existing tables unaffected (canon §3.5).
+   */
+  selection?: {
+    selectedIds: Set<string> | string[];
+    onToggleRow: (id: string) => void;
+    onToggleAll: () => void;
+    isAllSelected: boolean;
+    isIndeterminate: boolean;
+    selectRowLabel?: string;
+    selectAllLabel?: string;
+  };
 }
 
-// Status badge component — uses canonical color palette
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const LABELS: Record<string, string> = {
-    DRAFT: 'Draft',
-    PENDING_REVIEW: 'Pending Review',
-    REVIEW: 'In Review',
-    PROMOTED: 'Promoted',
-    PLANNING: 'Planning',
-    APPROVED: 'Approved',
-    SCHEDULED: 'Scheduled',
-    EXECUTING: 'Executing',
-    BLOCKED: 'Blocked',
-    DONE: 'Done',
-    TRACKING: 'Tracking',
-    CANCELLED: 'Cancelled',
-    ARCHIVED: 'Archived',
-    IN_REVIEW: 'In Review',
-    AWAITING_APPROVAL: 'Awaiting Approval',
-    REJECTED: 'Rejected',
-    GENERATING: 'Generating',
-    FINAL: 'Final',
-    PENDING_APPROVAL: 'Pending Approval',
-    UTILIZED: 'Utilized',
-  };
-
-  const style = (() => {
-    const key = status?.toUpperCase().replace(/[\s-]+/g, '_') || 'DRAFT';
-    const alarm = ['BLOCKED', 'REJECTED'];
-    const success = ['DONE', 'COMPLETED', 'APPROVED', 'TRACKING', 'UTILIZED', 'ACTIVE'];
-    const info = ['IN_PROGRESS', 'EXECUTING', 'SCHEDULED', 'GENERATING', 'PROMOTED'];
-    const warning = [
-      'PENDING_REVIEW',
-      'REVIEW',
-      'PLANNING',
-      'PENDING_APPROVAL',
-      'AWAITING_APPROVAL',
-      'IN_REVIEW',
-      'ESCALATED',
-    ];
-
-    if (alarm.includes(key))
-      return { bg: 'bg-rose-500/20', text: 'text-rose-400', dot: 'bg-rose-500' };
-    if (success.includes(key))
-      return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' };
-    if (info.includes(key))
-      return { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-500' };
-    if (warning.includes(key))
-      return { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-500' };
-    return { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' };
-  })();
-
-  const label = LABELS[status] || status || 'Draft';
-
-  return (
-    <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${style.bg}`}>
-      <span className={`w-2 h-2 rounded-full ${style.dot}`} />
-      <span className={`text-xs font-medium ${style.text}`}>{label}</span>
-    </div>
-  );
-};
+// True when a regular cell value should render as an em-dash placeholder
+// (null / undefined / empty-or-whitespace string).
+const isEmptyCell = (value: unknown): boolean =>
+  value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
 
 // Progress bar component
+// Per Table+Preview canon §4.0/§4.3: progress is NEVER red/crimson. Generic
+// progress uses an info/neutral fill while in-progress and transitions to
+// success (HBS green) at 100%. `warning` (amber) is reserved for modules that
+// explicitly compute an at-risk state — this shared component does not.
 const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
   <div className="flex items-center gap-2">
-    <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+    <div className="flex-1 h-1.5 bg-c-border-subtle rounded-full overflow-hidden">
       <div
         className={`h-full rounded-full transition-all ${
-          progress === 100
-            ? 'bg-emerald-500'
-            : progress >= 75
-              ? 'bg-blue-500'
-              : progress >= 50
-                ? 'bg-amber-500'
-                : 'bg-slate-500'
+          progress === 100 ? 'bg-c-success' : 'bg-c-info'
         }`}
         style={{ width: `${progress}%` }}
       />
@@ -231,10 +212,37 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   canvasClassName = 'p-4',
   density = 'comfortable',
   enableColumnSettings = true,
+  persistKey,
+  selection,
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const cellPadding = density === 'compact' ? 'px-4 py-2' : 'px-4 py-3';
+
+  // Opt-in selection (canon §3.5). Normalize selectedIds to a Set for O(1) lookup.
+  const selectedIdSet = useMemo(() => {
+    if (!selection) return null;
+    return selection.selectedIds instanceof Set
+      ? selection.selectedIds
+      : new Set(selection.selectedIds);
+  }, [selection]);
+
+  // V-B — persisted column layout (widths + visibility/order). Read on mount,
+  // written on change. Keyed by `persistKey`; no-op when unset.
+  const storageKey = persistKey ? `filterableTable.cols.${persistKey}` : null;
+  const readPersisted = useCallback((): {
+    widths?: Record<string, number>;
+    visibility?: Record<string, boolean>;
+    order?: Record<string, number>;
+  } | null => {
+    if (!storageKey || typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, [storageKey]);
 
   const parsePx = useCallback((value?: string, fallback = 140) => {
     if (!value) return fallback;
@@ -257,22 +265,61 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     }));
   }, [columns, parsePx]);
 
-  const [columnConfigs, setColumnConfigs] = useState<ColumnConfig[]>(defaultColumnConfigs);
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
-    const widths: Record<string, number> = {};
-    for (const c of defaultColumnConfigs) widths[c.id] = c.width ?? 140;
-    return widths;
-  });
-
-  // Keep column settings in sync when columns change (e.g., tab switch).
-  useEffect(() => {
-    setColumnConfigs(defaultColumnConfigs);
-    setColumnWidths(() => {
+  // Merge persisted layout onto the column defaults (V-B).
+  const mergePersisted = useCallback(
+    (configs: ColumnConfig[]): { configs: ColumnConfig[]; widths: Record<string, number> } => {
+      const persisted = readPersisted();
       const widths: Record<string, number> = {};
-      for (const c of defaultColumnConfigs) widths[c.id] = c.width ?? 140;
-      return widths;
-    });
-  }, [defaultColumnConfigs]);
+      const merged = configs.map((c) => {
+        const w = persisted?.widths?.[c.id];
+        const vis = persisted?.visibility?.[c.id];
+        const ord = persisted?.order?.[c.id];
+        const width = typeof w === 'number' && w > 0 ? w : (c.width ?? 140);
+        widths[c.id] = width;
+        return {
+          ...c,
+          width,
+          visible: typeof vis === 'boolean' ? vis : c.visible,
+          order: typeof ord === 'number' ? ord : c.order,
+        };
+      });
+      return { configs: merged, widths };
+    },
+    [readPersisted]
+  );
+
+  const [columnConfigs, setColumnConfigs] = useState<ColumnConfig[]>(
+    () => mergePersisted(defaultColumnConfigs).configs
+  );
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(
+    () => mergePersisted(defaultColumnConfigs).widths
+  );
+
+  // Keep column settings in sync when columns change (e.g., tab switch),
+  // re-applying any persisted layout.
+  useEffect(() => {
+    const { configs, widths } = mergePersisted(defaultColumnConfigs);
+    setColumnConfigs(configs);
+    setColumnWidths(widths);
+  }, [defaultColumnConfigs, mergePersisted]);
+
+  // Persist layout whenever it changes (V-B).
+  useEffect(() => {
+    if (!storageKey || typeof window === 'undefined') return;
+    try {
+      const widths: Record<string, number> = {};
+      const visibility: Record<string, boolean> = {};
+      const order: Record<string, number> = {};
+      for (const c of columnConfigs) {
+        widths[c.id] = columnWidths[c.id] ?? c.width ?? 140;
+        visibility[c.id] = c.visible !== false;
+        order[c.id] = c.order ?? 0;
+      }
+      window.localStorage.setItem(storageKey, JSON.stringify({ widths, visibility, order }));
+    } catch {
+      /* quota / SSR — non-fatal */
+    }
+  }, [columnConfigs, columnWidths, storageKey]);
 
   const visibleColumns = useMemo(() => {
     const byId = new Map(columnConfigs.map((c) => [c.id, c]));
@@ -383,27 +430,58 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   const maxWidth =
                     cfg?.maxWidth ?? (column.id === 'title' || column.id === 'name' ? 520 : 320);
                   const isLastDataCol = idx === visibleColumns.length - 1;
+                  const isSelectCol = column.type === 'select' && !!selection;
                   return (
                     <th
                       key={column.id}
-                      className={`${cellPadding} relative text-left text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
+                      className={`${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
                       style={{
                         width: `${width}px`,
                         minWidth: `${minWidth}px`,
                         maxWidth: `${maxWidth}px`,
                       }}
                     >
-                      <div className="flex items-center gap-1">
-                        <span>{column.label}</span>
-                        {column.filterable && (
-                          <FilterDropdown
-                            column={column}
-                            activeValues={getActiveFilterValues(column.id)}
-                            onApply={(values) => handleColumnFilter(column, values)}
+                      {isSelectCol ? (
+                        // Canon §3.5 — select-all lives in the header column.
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={selection!.isAllSelected}
+                            ref={(el) => {
+                              if (el) el.indeterminate = selection!.isIndeterminate;
+                            }}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              selection!.onToggleAll();
+                            }}
+                            aria-label={
+                              selection!.selectAllLabel ??
+                              t('common.selectAll', isPolish ? 'Zaznacz wszystko' : 'Select all')
+                            }
+                            className="h-4 w-4 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
                           />
-                        )}
-                      </div>
-                      {!isLastDataCol ? (
+                        </div>
+                      ) : (
+                        <div
+                          className={`flex items-center gap-1 ${
+                            column.align === 'right'
+                              ? 'justify-end'
+                              : column.align === 'center'
+                                ? 'justify-center'
+                                : ''
+                          }`}
+                        >
+                          <span>{column.label}</span>
+                          {column.filterable && (
+                            <FilterDropdown
+                              column={column}
+                              activeValues={getActiveFilterValues(column.id)}
+                              onApply={(values) => handleColumnFilter(column, values)}
+                            />
+                          )}
+                        </div>
+                      )}
+                      {!isLastDataCol && !isSelectCol ? (
                         <ColumnResizer
                           columnId={column.id}
                           currentWidth={width}
@@ -417,7 +495,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 })}
                 {!hideRowActions ? (
                   <th
-                    className={`${cellPadding} text-right text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
+                    className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
                   >
                     {enableColumnSettings ? (
                       <div className="flex justify-end">
@@ -442,7 +520,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 ) : null}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100/60 dark:divide-white/[0.03]">
+            <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
               {filteredData.length === 0 ? (
                 <tr>
                   <td
@@ -468,17 +546,37 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     ].join(' ')}
                   >
                     {visibleColumns.map((column) => (
-                      <td key={column.id} className={cellPadding}>
-                        {column.render ? (
+                      <td
+                        key={column.id}
+                        className={`${cellPadding} ${column.align ? alignToClass(column.align) : ''}`}
+                      >
+                        {column.type === 'select' && selection ? (
+                          <input
+                            type="checkbox"
+                            checked={selectedIdSet?.has(String(row.id)) ?? false}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              selection.onToggleRow(String(row.id));
+                            }}
+                            aria-label={
+                              selection.selectRowLabel ??
+                              t('common.selectRow', isPolish ? 'Zaznacz wiersz' : 'Select row')
+                            }
+                            className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500 cursor-pointer"
+                          />
+                        ) : column.render ? (
                           column.render(row)
                         ) : column.id === 'status' ? (
-                          <StatusBadge status={row.status} />
+                          <EntityStatusChip status={row.status} />
                         ) : column.id === 'progress' ? (
                           <ProgressBar progress={row.progress} />
                         ) : column.id === 'updatedAt' ? (
                           <span className="text-sm text-slate-500 dark:text-slate-400">
                             {formatRelativeTime(row.updatedAt)}
                           </span>
+                        ) : isEmptyCell(row[column.id]) ? (
+                          <span className="text-sm text-slate-400">—</span>
                         ) : (
                           <div className="min-w-0">
                             <span

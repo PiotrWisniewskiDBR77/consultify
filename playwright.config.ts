@@ -37,11 +37,17 @@ const backendEnv = [
   'DB_MANAGED_SCHEMA=off',
   'MOCK_DB=true',
   'MOCK_REDIS=true',
+  'DB_QUERY_TIMEOUT=15000',
+  'DB_STATEMENT_TIMEOUT=30000',
   'ENABLE_TEST_GATEWAY=true',
   'ENABLE_TEST_SUPPORT=true',
   'POSTGRES_SKIP_INIT_IN_TEST=1',
   'DISABLE_CONNECTION_POOL=true',
   'DISABLE_SCHEDULER=true',
+  'DISABLE_AI_PROVIDER_SENTINEL=true',
+  'DISABLE_AI_HEALTH_MONITOR=true',
+  'DISABLE_STARTUP_HEALTH_MONITOR=true',
+  'SKIP_STARTUP_VALIDATOR=true',
   `TEST_SUPPORT_KEY=${testSupportKey}`,
   `E2E_MODE=${process.env.E2E_MODE || 'false'}`,
 ].join(' ');
@@ -106,14 +112,14 @@ export default defineConfig({
               ? `mkdir -p "${e2eTmpDir}" && cd server && npm run build && TMPDIR="${e2eTmpDir}" ${backendEnv} node dist/src/index.js`
               : `mkdir -p "${e2eTmpDir}" && cd server && TMPDIR="${e2eTmpDir}" ${backendEnv} tsx src/index.ts`,
           url: `${backendUrl.replace(/\/$/, '')}/api/health/ping`,
-          reuseExistingServer: !process.env.CI,
+          reuseExistingServer: false,
           // Cold starts on shared machines can exceed 4 minutes.
           timeout: backendRunner === 'build' ? 600000 : 420000,
         },
         {
           command: `VITE_API_TARGET=${backendUrl} npm run build && VITE_API_TARGET=${backendUrl} npx vite preview --port ${frontendPort} --strictPort`,
           url: frontendUrl,
-          reuseExistingServer: !process.env.CI,
+          reuseExistingServer: false,
           timeout: 420000,
         },
       ]

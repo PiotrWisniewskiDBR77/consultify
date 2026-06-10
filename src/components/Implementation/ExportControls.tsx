@@ -339,7 +339,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-navy-900 rounded-xl shadow-lg border border-slate-200 dark:border-navy-700 py-2 z-50">
-            <div className="px-3 py-1.5 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <div className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase tracking-wider">
               Export Format
             </div>
             {options.map((option) => (

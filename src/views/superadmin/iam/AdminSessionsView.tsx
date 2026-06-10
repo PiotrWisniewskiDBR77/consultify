@@ -24,6 +24,7 @@ import React, { useEffect, useState } from 'react';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -217,11 +218,7 @@ const AdminSessionsView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -406,7 +403,7 @@ const AdminSessionsView: React.FC = () => {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           {getDeviceIcon(session.userAgent)}
-                          <span className="text-sm text-slate-300 truncate max-w-[200px]">
+                          <span className="text-sm text-slate-600 truncate max-w-[200px]">
                             {String(session.userAgent || 'Unknown device').split(' ')[0]}
                           </span>
                         </div>
@@ -431,14 +428,14 @@ const AdminSessionsView: React.FC = () => {
                         )}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-1 text-sm text-slate-300">
+                        <div className="flex items-center gap-1 text-sm text-slate-600">
                           <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
                           {formatDate(session.createdAt)}
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`text-sm ${isExpired(session.expiresAt) ? 'text-rose-400' : 'text-slate-300'}`}
+                          className={`text-sm ${isExpired(session.expiresAt) ? 'text-rose-400' : 'text-slate-600'}`}
                         >
                           {formatDate(session.expiresAt)}
                         </span>

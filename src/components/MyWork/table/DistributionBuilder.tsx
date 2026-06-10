@@ -185,7 +185,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="p-1 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             <X size={16} />
           </button>
@@ -387,10 +387,10 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
           {/* Distribution list */}
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 size={20} className="animate-spin text-slate-400" />
+              <Loader2 size={20} className="animate-spin text-slate-600" />
             </div>
           ) : distributions.length === 0 && !showForm ? (
-            <div className="text-center py-8 text-xs text-slate-400">
+            <div className="text-center py-8 text-xs text-slate-600">
               {isPl ? 'Brak dystrybucji. Utwórz pierwszą!' : 'No distributions yet. Create one!'}
             </div>
           ) : (
@@ -420,7 +420,7 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
                         {dist.format?.toUpperCase()} ·{' '}
                         {isPl ? channelDef?.labelPl : channelDef?.labelEn}
                         {dist.send_count > 0 && (

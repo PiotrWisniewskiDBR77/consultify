@@ -193,7 +193,7 @@ export const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({
         </div>
 
         {collapsible && (
-          <button className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+          <button className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
             {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
         )}

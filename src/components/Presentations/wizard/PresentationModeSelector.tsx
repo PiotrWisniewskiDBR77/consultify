@@ -42,7 +42,7 @@ export const PresentationModeSelector: React.FC<PresentationModeSelectorProps> =
               }`}
             >
               <Icon
-                className={`w-6 h-6 mb-2 ${selected ? 'text-primary-500' : 'text-slate-400'}`}
+                className={`w-6 h-6 mb-2 ${selected ? 'text-primary-500' : 'text-slate-600'}`}
               />
               <p className="font-semibold text-sm text-slate-900 dark:text-white">
                 {t(mode.labelKey, mode.id)}
@@ -51,15 +51,15 @@ export const PresentationModeSelector: React.FC<PresentationModeSelectorProps> =
                 {t(mode.descriptionKey, '')}
               </p>
               <div className="mt-3 space-y-1">
-                <div className="flex items-center justify-between text-[10px] text-slate-400">
+                <div className="flex items-center justify-between text-[10px] text-slate-600">
                   <span>{t('presentations.wizard.wordsPerSlide', 'Words/slide')}</span>
                   <span className="font-mono">{mode.wordsPerSlide}</span>
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-slate-400">
+                <div className="flex items-center justify-between text-[10px] text-slate-600">
                   <span>{t('presentations.wizard.typicalSlides', 'Slides')}</span>
                   <span className="font-mono">{mode.typicalSlides}</span>
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-slate-400">
+                <div className="flex items-center justify-between text-[10px] text-slate-600">
                   <span>{t('presentations.wizard.animations', 'Animations')}</span>
                   <span className="font-mono">{mode.animations ? 'ON' : 'OFF'}</span>
                 </div>

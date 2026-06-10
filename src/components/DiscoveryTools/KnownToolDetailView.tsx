@@ -215,7 +215,7 @@ export function KnownToolDetailView(props: {
             key={item.title}
             className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30"
           >
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
               {isPolish ? 'Case' : 'Case'}
             </div>
             <h3 className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -267,7 +267,7 @@ export function KnownToolDetailView(props: {
     const goalSection = (
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
             {isPolish ? 'Pozycjonowanie narzędzia' : 'Tool positioning'}
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
@@ -434,7 +434,7 @@ export function KnownToolDetailView(props: {
           ? 'Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem.'
           : 'The quality of the full session depends on the opening question. If the brief is vague, the matrix becomes only well-organized chaos.',
         accent: 'bg-primary-500',
-        tone: 'from-primary-500/12 to-fuchsia-500/5',
+        tone: 'from-primary-500/12 to-crimson-700/5',
       },
       {
         id: 2,
@@ -526,7 +526,7 @@ export function KnownToolDetailView(props: {
           ? 'Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania.'
           : 'Dynamic SWOT is only strong when it ends in a decision, a move, or a credible bridge to action.',
         accent: 'bg-primary-600',
-        tone: 'from-primary-500/15 to-indigo-500/5',
+        tone: 'from-primary-500/15 to-crimson-500/5',
       },
     ];
 
@@ -569,7 +569,7 @@ export function KnownToolDetailView(props: {
                     height="14"
                     viewBox="0 0 14 14"
                     fill="none"
-                    className={`shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`shrink-0 text-slate-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                   >
                     <path
                       d="M3 5.5l4 4 4-4"
@@ -968,7 +968,7 @@ export function KnownToolDetailView(props: {
 
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   <div>
-                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
                       {isPolish ? 'Co zawiera' : 'Contains'}
                     </div>
                     <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -976,7 +976,7 @@ export function KnownToolDetailView(props: {
                     </div>
                   </div>
                   <div>
-                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
                       {isPolish ? 'Dlaczego ważne' : 'Why it matters'}
                     </div>
                     <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -984,7 +984,7 @@ export function KnownToolDetailView(props: {
                     </div>
                   </div>
                   <div>
-                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-500">
                       {isPolish ? 'Co uruchamia dalej' : 'Enables next'}
                     </div>
                     <div className="text-sm leading-relaxed text-slate-900 dark:text-white">
@@ -1137,7 +1137,7 @@ export function KnownToolDetailView(props: {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
               {isPolish ? 'Sytuacja i pytanie decyzyjne' : 'Situation and decision question'}
             </div>
             {bullets(
@@ -1155,7 +1155,7 @@ export function KnownToolDetailView(props: {
             )}
           </div>
           <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
               {isPolish ? 'Kluczowe sygnały wejściowe' : 'Key input signals'}
             </div>
             {bullets(
@@ -1178,7 +1178,7 @@ export function KnownToolDetailView(props: {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
               {isPolish ? 'Jak wygląda macierz' : 'How the matrix looks'}
             </div>
             {bullets(
@@ -1220,7 +1220,7 @@ export function KnownToolDetailView(props: {
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Rekomendowane ruchy' : 'Recommended moves'}
               </div>
               {bullets(
@@ -1238,7 +1238,7 @@ export function KnownToolDetailView(props: {
               )}
             </div>
             <div>
-              <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Outputy z sesji' : 'Outputs from the session'}
               </div>
               {bullets(
@@ -1271,7 +1271,7 @@ export function KnownToolDetailView(props: {
     const marketGoalSection = (
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
             {isPolish ? 'Pozycjonowanie narzędzia' : 'Tool positioning'}
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
@@ -1604,7 +1604,7 @@ export function KnownToolDetailView(props: {
     const growthGoalSection = (
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
             {isPolish ? 'Pozycjonowanie narzędzia' : 'Tool positioning'}
           </div>
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
@@ -1837,7 +1837,7 @@ export function KnownToolDetailView(props: {
     const portfolioGoalSection = (
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
             {isPolish ? 'Po co używać' : 'Why use it'}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
@@ -2028,7 +2028,7 @@ export function KnownToolDetailView(props: {
     const riskGoalSection = (
       <div className="space-y-6">
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
             {isPolish ? 'Po co używać' : 'Why use it'}
           </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
@@ -2221,8 +2221,36 @@ export function KnownToolDetailView(props: {
       </div>
     );
 
+    // ── Standard-C group tabs (mirrors InsightViewer/InitiativeDocumentView) ──
+    // Every per-tool branch below returns the same 4 sections (goal / process /
+    // outcomes / example). A bilingual groupLabels array switched on isPolish +
+    // a per-section group assignment makes NModeShell's C-board render top group
+    // tabs; wide narrative sections get cSpan: 2 so they breathe in the dense
+    // 3-column grid. N-mode uses the same group fields for sidebar headers.
+    const groupLabels = isPolish
+      ? ['Przegląd', 'Jak to działa', 'Przykład']
+      : ['Overview', 'How it works', 'Example'];
+    const groupIndexById: Record<string, number> = {
+      goal: 0, // Overview / Przegląd
+      process: 1, // How it works / Jak to działa
+      outcomes: 1,
+      example: 2, // Example / Przykład
+    };
+    const cSpanById: Record<string, 1 | 2 | 3> = {
+      goal: 2, // multi-card positioning grids
+      process: 2, // stepper + decision-situation grids
+      outcomes: 2, // 3-column outcome blocks
+      example: 3, // wide 3-col case grids
+    };
+    const withGroup = (list: NModeSection[]): NModeSection[] =>
+      list.map((section) => ({
+        ...section,
+        group: groupLabels[groupIndexById[section.id] ?? 0],
+        cSpan: cSpanById[section.id] ?? section.cSpan,
+      }));
+
     if (tool?.toolType === 'dynamic-swot') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2247,11 +2275,11 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: exampleSection,
         },
-      ];
+      ]);
     }
 
     if (tool?.toolType === 'market-forces' || toolType === 'market-forces') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2276,11 +2304,11 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: marketExampleSection,
         },
-      ];
+      ]);
     }
 
     if (tool?.toolType === 'growth-paths' || toolType === 'growth-paths') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2305,11 +2333,11 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: growthExampleSection,
         },
-      ];
+      ]);
     }
 
     if (tool?.toolType === 'portfolio-priority' || toolType === 'portfolio-priority') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2334,11 +2362,11 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: portfolioExampleSection,
         },
-      ];
+      ]);
     }
 
     if (tool?.toolType === 'risk-uncertainty' || toolType === 'risk-uncertainty') {
-      return [
+      return withGroup([
         {
           id: 'goal',
           icon: Target,
@@ -2363,10 +2391,10 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: riskExampleSection,
         },
-      ];
+      ]);
     }
 
-    return [
+    return withGroup([
       {
         id: 'goal',
         icon: Target,
@@ -2391,7 +2419,7 @@ export function KnownToolDetailView(props: {
         label: { en: 'Example', pl: 'Przykład' },
         component: exampleSection,
       },
-    ];
+    ]);
   }, [tool, isPolish, toolType]);
 
   return (

@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-05-18T08:48:42.207Z",
+  "baseUrl": "https://demo.consultify.ai/my-work/ideas/946bd583-b11c-4595-99ee-49e80e11c151/workspace/mindmap",
+  "user": "admin@dbr77.com",
+  "checklist": [
+    {
+      "id": "MM-01",
+      "label": "Utwórz nową mapę myśli",
+      "status": "PASS",
+      "details": "ideaId=946bd583-b11c-4595-99ee-49e80e11c151"
+    },
+    {
+      "id": "MM-02",
+      "label": "Dodaj min. 12 węzłów na 3 poziomach",
+      "status": "PASS",
+      "details": "nodes=15 (oczekiwano >=13 razem z root)"
+    },
+    {
+      "id": "MM-03",
+      "label": "Dodaj/edytuj połączenia + drag&drop gałęzi",
+      "status": "PASS",
+      "details": "nodes before op=15"
+    },
+    {
+      "id": "MM-04",
+      "label": "Skróty klawiaturowe enter/tab/delete",
+      "status": "PASS",
+      "details": "Wysłano Enter/Tab/Delete podczas sesji"
+    },
+    {
+      "id": "MM-05",
+      "label": "Zapis, refresh i ponowne otwarcie",
+      "status": "PASS",
+      "details": "before=15, after=15"
+    },
+    {
+      "id": "MM-06",
+      "label": "Import/Eksport (jeśli dostępny)",
+      "status": "PASS",
+      "details": "Widoczne akcje import/export"
+    },
+    {
+      "id": "MM-07",
+      "label": "UI/UX: czytelność etykiet, kolizje, auto-layout",
+      "status": "PASS",
+      "details": "nodeElements=15, layoutHints=0"
+    },
+    {
+      "id": "MM-08",
+      "label": "Console/Network przy większej liczbie elementów",
+      "status": "PASS",
+      "details": "consoleErrors=0, network5xx=0"
+    }
+  ],
+  "defects": [],
+  "metrics": {
+    "beforeRefreshNodeCount": 15,
+    "afterRefreshNodeCount": 15,
+    "consoleErrorCount": 1,
+    "networkErrorCount": 0
+  }
+}

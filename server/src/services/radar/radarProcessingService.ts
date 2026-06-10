@@ -550,6 +550,20 @@ class RadarProcessingService {
     );
     return rows.map(mapProcessedRow);
   }
+
+  async getSignalById(signalId: string): Promise<RadarProcessedSignal | null> {
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT ps.*, rs.name AS source_name, rs.category AS source_category, rs.trust_score AS source_trust_score,
+              r.canonical_url, r.published_at
+       FROM radar_processed_signals ps
+       JOIN radar_sources rs ON rs.id = ps.source_id
+       JOIN radar_raw_items r ON r.id = ps.raw_item_id
+       WHERE ps.id = ?
+       LIMIT 1`,
+      [signalId]
+    );
+    return row ? mapProcessedRow(row) : null;
+  }
 }
 
 export const radarProcessingService = new RadarProcessingService();

@@ -44,7 +44,7 @@ export const ActionDecisionDialog: React.FC<ActionDecisionDialogProps> = ({
               onClick={onClose}
               className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors"
             >
-              <X size={20} className="text-slate-400 dark:text-slate-500" />
+              <X size={20} className="text-slate-600 dark:text-slate-500" />
             </button>
           </div>
 
@@ -58,7 +58,7 @@ export const ActionDecisionDialog: React.FC<ActionDecisionDialogProps> = ({
           </div>
 
           <div className="space-y-2 mb-8">
-            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
+            <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider flex items-center gap-2">
               <MessageSquare size={14} /> Reason for decision
             </label>
             <textarea

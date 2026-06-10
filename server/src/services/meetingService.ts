@@ -229,6 +229,87 @@ export async function createMeeting(input: {
   return created;
 }
 
+export async function updateMeeting(input: {
+  organizationId: string;
+  meetingId: string;
+  title?: string;
+  startAt?: string;
+  endAt?: string;
+  location?: string | null;
+  attendees?: string[];
+  preRead?: string[];
+  agenda?: string[];
+}): Promise<MeetingRecord | null> {
+  await ensureMeetingTables();
+  const existing = await getMeeting({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+  });
+  if (!existing) return null;
+
+  const sets: string[] = [];
+  const params: unknown[] = [];
+
+  if (typeof input.title === 'string' && input.title.trim()) {
+    sets.push('title = ?');
+    params.push(input.title.trim());
+  }
+  if (typeof input.startAt === 'string' && input.startAt.trim()) {
+    sets.push('start_at = ?');
+    params.push(input.startAt.trim());
+  }
+  if (typeof input.endAt === 'string') {
+    sets.push('end_at = ?');
+    params.push(input.endAt.trim() || existing.startAt);
+  }
+  if (input.location !== undefined) {
+    sets.push('location = ?');
+    params.push(String(input.location || '').trim());
+  }
+  if (Array.isArray(input.attendees)) {
+    sets.push('attendees_json = ?');
+    params.push(JSON.stringify(input.attendees.map((x) => String(x || '').trim()).filter(Boolean)));
+  }
+  if (Array.isArray(input.preRead)) {
+    sets.push('pre_read_json = ?');
+    params.push(JSON.stringify(input.preRead.map((x) => String(x || '').trim()).filter(Boolean)));
+  }
+  if (Array.isArray(input.agenda)) {
+    sets.push('agenda_json = ?');
+    params.push(JSON.stringify(input.agenda.map((x) => String(x || '').trim()).filter(Boolean)));
+  }
+
+  if (sets.length === 0) return existing;
+
+  sets.push('updated_at = ?');
+  params.push(new Date().toISOString());
+  params.push(input.meetingId, input.organizationId);
+
+  await dbRun(
+    `UPDATE meetings SET ${sets.join(', ')} WHERE id = ? AND organization_id = ?`,
+    params
+  );
+  return getMeeting({ organizationId: input.organizationId, meetingId: input.meetingId });
+}
+
+export async function deleteMeeting(input: {
+  organizationId: string;
+  meetingId: string;
+}): Promise<boolean> {
+  await ensureMeetingTables();
+  const existing = await getMeeting({
+    organizationId: input.organizationId,
+    meetingId: input.meetingId,
+  });
+  if (!existing) return false;
+  await dbRun(`DELETE FROM meeting_follow_ups WHERE meeting_id = ?`, [input.meetingId]);
+  await dbRun(`DELETE FROM meetings WHERE id = ? AND organization_id = ?`, [
+    input.meetingId,
+    input.organizationId,
+  ]);
+  return true;
+}
+
 export async function updateMeetingStatus(input: {
   organizationId: string;
   meetingId: string;

@@ -38,6 +38,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
+  Archive,
   ArrowRight,
   Calendar,
   CalendarDays,
@@ -45,6 +46,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Edit2,
   GripVertical,
   ListChecks,
   Loader2,
@@ -64,12 +66,15 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { renderIconNode } from '@/components/shared/renderIconNode';
+import { LoadingState } from '@/components/ui/primitives';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useAppStore } from '@/store/useAppStore';
 
 import { Api } from '../../../services/api';
 import type { PMOCategory } from '../../../types/myWork';
-import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
+import { type RowActionSection, RowActionsMenu } from '../../shared/RowActionsMenu';
 import { DueDateIndicator } from '../shared/DueDateIndicator';
 import { EmptyState } from '../shared/EmptyState';
 import { getPMOCategory, PMOPriorityBadge } from '../shared/PMOPriorityBadge';
@@ -155,14 +160,6 @@ const PRIORITY_RANK: Record<string, number> = {
   high: 2,
   medium: 3,
   low: 4,
-};
-
-const priorityBorderColor: Record<string, string> = {
-  urgent: 'border-l-rose-500',
-  critical: 'border-l-amber-500',
-  high: 'border-l-amber-500',
-  medium: 'border-l-blue-400',
-  low: 'border-l-slate-300 dark:border-l-slate-600',
 };
 
 function loadFocusTemplateKey(): keyof typeof FOCUS_RULE_TEMPLATES {
@@ -278,7 +275,7 @@ const SmartSnoozePopover: React.FC<{
       exit={{ opacity: 0, scale: 0.95 }}
       className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[160px]"
     >
-      <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+      <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
         {t('myWork.focus.snooze.moveTo', 'Move to')}
       </div>
       {filtered.map((opt) => (
@@ -351,9 +348,10 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
 
   const isOverdue = item.isOverdue || (item.dueDate && new Date(item.dueDate) < new Date());
   const isBlocked = item.status === 'blocked';
-  const borderLeft = item.priority ? priorityBorderColor[item.priority] || '' : '';
 
   return (
+    // Canon §8.1/§8.2 — neutral kanban card surface; NO colored border-l accent.
+    // Priority is expressed by the PMOPriorityBadge in the meta row, not a side bar.
     <motion.div
       ref={setNodeRef}
       style={style}
@@ -364,16 +362,13 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
       onClick={() => onSelect(item)}
       onDoubleClick={() => onOpenFull(item)}
       className={`
-        group relative bg-white dark:bg-navy-900 rounded-xl border border-l-[3px]
-        ${borderLeft}
+        group relative bg-white dark:bg-navy-900 rounded-xl border
         ${
           item.isCompleted
-            ? 'border-green-200 dark:border-green-800/30 bg-green-50/50 dark:bg-green-900/10'
-            : isOverdue
-              ? 'border-rose-200 dark:border-rose-800/30'
-              : isSelected
-                ? 'border-brand dark:border-brand ring-2 ring-brand/30'
-                : 'border-slate-200 dark:border-navy-700 hover:border-brand/30 dark:hover:border-brand/20'
+            ? 'border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.02]'
+            : isSelected
+              ? 'border-brand dark:border-brand ring-2 ring-brand/30'
+              : 'border-slate-200/60 dark:border-white/[0.06] hover:border-brand/30 dark:hover:border-brand/20'
         }
         ${isDragging || isSortableDragging ? 'shadow-xl ring-2 ring-brand opacity-50' : 'shadow-sm'}
         transition-all duration-200 cursor-pointer
@@ -387,7 +382,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           onClick={(e) => e.stopPropagation()}
           className="shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
         >
-          <GripVertical size={14} className="text-slate-400 dark:text-slate-600" />
+          <GripVertical size={14} className="text-slate-600 dark:text-slate-400" />
         </div>
 
         {/* Type Badge & Completion Toggle */}
@@ -413,21 +408,26 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
             <div className="flex-1 min-w-0">
               {/* Type label + initiative */}
               <div className="flex items-center gap-2 mb-0.5">
-                <span
-                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                    item.type === 'decision'
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                  }`}
+                {/* Type = identity taxonomy → neutral chip + signal dot (§4.0a) */}
+                <ChipBase
+                  size="sm"
+                  leading={
+                    <ChipDot
+                      colorVar={item.type === 'decision' ? CHIP_TONE_VAR.info : undefined}
+                      size="sm"
+                    />
+                  }
                 >
                   {item.type === 'decision'
                     ? t('myWork.focus.decision', 'Decision')
                     : t('myWork.focus.task', 'Task')}
-                </span>
+                </ChipBase>
+                {/* Blocked = status → EntityStatusChip (maps to danger via statusChipTone) */}
                 {isBlocked && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-                    {t('myWork.focus.card.blocked', 'Blocked')}
-                  </span>
+                  <EntityStatusChip
+                    status="blocked"
+                    label={t('myWork.focus.card.blocked', 'Blocked')}
+                  />
                 )}
                 {item.initiativeName && (
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
@@ -440,7 +440,7 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
               <h4
                 className={`text-sm font-semibold leading-snug ${
                   item.isCompleted
-                    ? 'text-slate-400 dark:text-slate-500 line-through'
+                    ? 'text-slate-600 dark:text-slate-500 line-through'
                     : 'text-navy-900 dark:text-white'
                 }`}
               >
@@ -520,36 +520,91 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
           <div className="relative">
             <RowActionsMenu
               size="sm"
-              actions={(() => {
-                const actions: RowAction[] = [
+              sections={(() => {
+                const comingSoon = t('common.comingSoonBackend', 'Wkrótce (backend)');
+                const sections: RowActionSection[] = [
+                  // GÓRA — kontekst (canon §9.1): focus-specific actions.
                   {
-                    id: 'done',
-                    label: t('myWork.focus.actions.done', 'Done'),
-                    icon: Check,
-                    onClick: () => onComplete(item),
-                    variant: 'primary',
+                    id: 'context',
+                    kind: 'context',
+                    actions: [
+                      {
+                        id: 'done',
+                        label: t('myWork.focus.actions.done', 'Done'),
+                        icon: Check,
+                        onClick: () => onComplete(item),
+                        variant: 'primary',
+                      },
+                      {
+                        id: 'snooze',
+                        label: t('myWork.focus.actions.snooze', 'Snooze'),
+                        icon: Clock,
+                        onClick: () => setSnoozeOpen(true),
+                      },
+                      {
+                        id: 'delegate',
+                        label: t('myWork.focus.actions.delegate', 'Delegate'),
+                        icon: UserPlus,
+                        onClick: () => onDelegate(item),
+                      },
+                    ],
                   },
+                  // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2).
                   {
-                    id: 'snooze',
-                    label: t('myWork.focus.actions.snooze', 'Snooze'),
-                    icon: Clock,
-                    onClick: () => setSnoozeOpen(true),
+                    id: 'fixed',
+                    kind: 'manage',
+                    actions: [
+                      {
+                        id: 'open-preview',
+                        label: t('myWork.focus.actions.openPreview', 'Otwórz podgląd'),
+                        icon: ChevronRight,
+                        onClick: () => onSelect(item),
+                      },
+                      {
+                        id: 'edit',
+                        label: t('myWork.focus.actions.edit', 'Edytuj'),
+                        icon: Edit2,
+                        onClick: () => onOpenFull(item),
+                      },
+                      {
+                        id: 'archive',
+                        label: t('myWork.focus.actions.archive', 'Archiwizuj'),
+                        icon: Archive,
+                        disabled: true,
+                        description: comingSoon,
+                        onClick: () => {},
+                      },
+                      // 4 — Delay slot present only when the item has a due date (§9.2).
+                      ...(item.dueDate
+                        ? [
+                            {
+                              id: 'delay',
+                              label: t('myWork.focus.actions.delay', 'Przesuń termin'),
+                              icon: Clock,
+                              disabled: true,
+                              description: comingSoon,
+                              onClick: () => {},
+                            },
+                          ]
+                        : []),
+                    ],
                   },
+                  // DANGER
                   {
-                    id: 'remove',
-                    label: t('myWork.focus.actions.remove', 'Remove from focus'),
-                    icon: X,
-                    onClick: () => onRemove(item),
-                    divider: true,
-                  },
-                  {
-                    id: 'delegate',
-                    label: t('myWork.focus.actions.delegate', 'Delegate'),
-                    icon: UserPlus,
-                    onClick: () => onDelegate(item),
+                    id: 'danger',
+                    kind: 'danger',
+                    actions: [
+                      {
+                        id: 'remove',
+                        label: t('myWork.focus.actions.remove', 'Remove from focus'),
+                        icon: X,
+                        onClick: () => onRemove(item),
+                        variant: 'danger',
+                      },
+                    ],
                   },
                 ];
-                return actions;
+                return sections;
               })()}
             />
             <AnimatePresence>
@@ -573,11 +628,9 @@ const SortableFocusCard: React.FC<SortableFocusCardProps> = ({
 // ============================================================================
 
 const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
-  const borderLeft = item.priority ? priorityBorderColor[item.priority] || '' : '';
   return (
-    <div
-      className={`bg-white dark:bg-navy-900 rounded-xl border border-l-[3px] ${borderLeft} border-brand shadow-2xl p-3 w-[300px] ring-2 ring-brand`}
-    >
+    // Canon §8.2 — neutral surface; no colored border-l accent (parity with the card).
+    <div className="bg-white dark:bg-navy-900 rounded-xl border border-brand shadow-2xl p-3 w-[300px] ring-2 ring-brand">
       <div className="flex items-center gap-3">
         {item.type === 'decision' ? (
           <Zap size={20} className="text-blue-500" />
@@ -585,15 +638,17 @@ const FocusCardOverlay: React.FC<{ item: FocusItem }> = ({ item }) => {
           <div className="w-5 h-5 rounded-full border-2 border-brand" />
         )}
         <div className="flex-1 min-w-0">
-          <span
-            className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-              item.type === 'decision'
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
-                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
-            }`}
+          <ChipBase
+            size="sm"
+            leading={
+              <ChipDot
+                colorVar={item.type === 'decision' ? CHIP_TONE_VAR.info : undefined}
+                size="sm"
+              />
+            }
           >
             {item.type === 'decision' ? 'Decision' : 'Task'}
-          </span>
+          </ChipBase>
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white truncate mt-1">
             {item.title}
           </h4>
@@ -785,7 +840,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
                     </span>
                   </div>
                   {aiLoading ? (
-                    <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
+                    <div className="flex items-center gap-2 text-xs text-slate-600 py-2">
                       <Loader2 size={12} className="animate-spin" />
                       {t('myWork.focus.delegate.analyzing', 'Analyzing team...')}
                     </div>
@@ -837,7 +892,7 @@ const DelegateModal: React.FC<DelegateModalProps> = ({ item, onClose, onDelegate
               {users.filter((u) => !suggestedIds.has(u.id)).length > 0 && (
                 <div>
                   {aiSuggestions.length > 0 && (
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
                       {t('myWork.focus.delegate.allMembers', 'All Team Members')}
                     </span>
                   )}
@@ -1616,11 +1671,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
   const activeItem = activeId ? findItemById(activeId) : null;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 size={32} className="animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-12" />;
   }
 
   return (
@@ -1917,7 +1968,7 @@ export const FocusView: React.FC<FocusViewProps> = ({
                           />
                         </div>
                       ) : (
-                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 italic">
+                        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-500 italic">
                           {t('myWork.focus.noDue', 'No due date')}
                         </span>
                       )}

@@ -9,7 +9,6 @@ import {
   FileText,
   Globe,
   KeyRound,
-  Loader2,
   Lock,
   Plus,
   Shield,
@@ -20,6 +19,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { TablePlatformField } from '@/types/tablePlatform';
 import { isTabeleFormIntakeEnabled } from '@/utils/tabeleFormIntakeFlag';
@@ -219,40 +220,29 @@ export function FormsIndex({
   // ── Loading state ──────────────────────────────────────────────────────────
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-20" />;
   }
 
   // ── Empty state ────────────────────────────────────────────────────────────
 
   if (forms.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="mb-4 rounded-2xl bg-primary-50 p-4 dark:bg-primary-900/20">
-          <FileText className="h-10 w-10 text-primary-500" />
-        </div>
-        <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-          {t('formsIndex.emptyTitle', 'Create a form to collect data')}
-        </h3>
-        <p className="mb-6 max-w-sm text-center text-sm text-gray-500 dark:text-gray-400">
-          {t(
-            'formsIndex.emptyDescription',
-            'Forms let you collect structured data from anyone — no login required for public forms.'
-          )}
-        </p>
-        {!locked && (
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 rounded-xl bg-primary-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700"
-          >
-            <Plus className="h-4 w-4" />
-            {t('formsIndex.createForm', 'Create Form')}
-          </button>
+      <EmptyState
+        icon={<FileText />}
+        title={t('formsIndex.emptyTitle', 'Create a form to collect data')}
+        description={t(
+          'formsIndex.emptyDescription',
+          'Forms let you collect structured data from anyone — no login required for public forms.'
         )}
-      </div>
+        action={
+          !locked
+            ? {
+                label: t('formsIndex.createForm', 'Create Form'),
+                onClick: handleCreate,
+              }
+            : undefined
+        }
+      />
     );
   }
 
@@ -290,7 +280,7 @@ export function FormsIndex({
                 <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${status.color}`}>
                   {status.label}
                 </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
+                <span className="text-xs text-gray-600 dark:text-gray-500">
                   {form.submit_count} {t('formsIndex.responses', 'responses')}
                 </span>
               </div>
@@ -307,7 +297,7 @@ export function FormsIndex({
 
               {/* Created date */}
               {form.created_at && (
-                <p className="mb-4 text-xs text-gray-400 dark:text-gray-500">
+                <p className="mb-4 text-xs text-gray-600 dark:text-gray-500">
                   {t('formsIndex.created', 'Created')}{' '}
                   {new Date(form.created_at).toLocaleDateString()}
                 </p>
@@ -336,7 +326,7 @@ export function FormsIndex({
                 <div className="relative">
                   <button
                     onClick={() => setShareMenuId(shareMenuId === form.id ? null : form.id)}
-                    className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
+                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
                     title={t('formsIndex.sharing', 'Sharing')}
                   >
                     {shareMode === 'public' && <Globe className="h-3.5 w-3.5" />}
@@ -387,7 +377,7 @@ export function FormsIndex({
                     href={`${baseUrl}/forms/${form.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
+                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-navy-700"
                     title={t('formsIndex.preview', 'Preview')}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -398,7 +388,7 @@ export function FormsIndex({
                 {intakeEnabled && (
                   <button
                     onClick={() => setIntakeFormId(form.id)}
-                    className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
+                    className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
                     title={t('formsIndex.manageIntake', 'Manage intake (private link)')}
                     data-testid={`forms-index-manage-intake-${form.id}`}
                   >
@@ -437,7 +427,7 @@ export function FormsIndex({
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(form.id)}
-                        className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
+                        className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20"
                         title={t('formsIndex.delete', 'Delete')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

@@ -233,12 +233,12 @@ export const PROVIDER_TYPE_STYLES: Record<ProviderType, { bg: string; text: stri
   direct: { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
   aggregator: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
   local: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
-  customer_managed: { bg: 'bg-slate-500/10', text: 'text-slate-400' },
+  customer_managed: { bg: 'bg-slate-500/10', text: 'text-slate-600' },
 };
 
 export const HEALTH_STYLES: Record<HealthStatus, { bg: string; text: string; dot: string }> = {
   healthy: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-400' },
   degraded: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
   unhealthy: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-400' },
-  unknown: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
+  unknown: { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };

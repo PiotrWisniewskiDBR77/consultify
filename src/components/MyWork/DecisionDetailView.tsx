@@ -57,6 +57,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import { LoadingState } from '@/components/ui/primitives';
 import { type SmartOpenConditions, useAccordionSections } from '@/hooks/useAccordionSections';
 import {
   type CloudFile,
@@ -1466,7 +1467,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                       </div>
                     )}
                   </div>
-                  <span className="text-[10px] font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 dark:text-slate-600">
+                  <span className="text-[10px] font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 dark:text-slate-400">
                     {entry.type}
                   </span>
                 </div>
@@ -4427,7 +4428,7 @@ Context: ${JSON.stringify(projectContext)}`;
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -4939,7 +4940,7 @@ Context: ${JSON.stringify(projectContext)}`;
                             <div className="py-10 text-center">
                               <Lightbulb
                                 size={28}
-                                className="mx-auto mb-3 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                                className="mx-auto mb-3 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                               />
                               <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-3">
                                 {isPolish

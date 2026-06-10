@@ -190,7 +190,7 @@ export const CompanyProfileModule: React.FC = () => {
             </option>
           ))}
         </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600 dark:text-slate-500">
           <svg
             width="10"
             height="6"
@@ -300,7 +300,7 @@ export const CompanyProfileModule: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Column 1: Firm Context */}
               <div className="space-y-6">
-                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200 dark:border-navy-700">
                   <Briefcase size={18} className="text-primary-500" />
                   <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                     Firm Context
@@ -396,7 +396,7 @@ export const CompanyProfileModule: React.FC = () => {
                         </div>
                       </label>
                     ))}
-                    <button className="px-3 py-1.5 rounded-full border border-dashed border-slate-300 dark:border-navy-700 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-600 hover:border-primary-300 transition-colors">
+                    <button className="px-3 py-1.5 rounded-full border border-dashed border-slate-300 dark:border-navy-700 text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-600 hover:border-primary-300 transition-colors">
                       + Add Custom
                     </button>
                   </div>
@@ -405,14 +405,14 @@ export const CompanyProfileModule: React.FC = () => {
 
               {/* Column 2: Scale & Reach */}
               <div className="space-y-6">
-                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200 dark:border-navy-700">
                   <MapPin size={18} className="text-primary-500" />
                   <h3 className="text-lg font-semibold text-navy-900 dark:text-white">
                     Scale & Reach
                   </h3>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-4 border border-slate-100 dark:border-navy-700 space-y-5">
+                <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-4 border border-slate-200 dark:border-navy-700 space-y-5">
                   <SelectField
                     label="Employees (FTE)"
                     options={['1-50', '51-200', '201-500', '501-1000', '1000-5000', '5000+']}
@@ -453,7 +453,7 @@ export const CompanyProfileModule: React.FC = () => {
 
                   <div className="relative group">
                     <MapPin
-                      className="absolute top-3 left-3 text-slate-400 dark:text-slate-500 group-focus-within:text-primary-500 transition-colors z-10"
+                      className="absolute top-3 left-3 text-slate-600 dark:text-slate-500 group-focus-within:text-primary-500 transition-colors z-10"
                       size={16}
                     />
                     <AITextArea
@@ -464,7 +464,7 @@ export const CompanyProfileModule: React.FC = () => {
                       className="pl-10"
                       aiContext="location"
                     />
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5 px-1">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1.5 px-1">
                       Tip: Listing specific locations helps AI infer regional constraints.
                     </p>
                   </div>
@@ -533,11 +533,11 @@ export const CompanyProfileModule: React.FC = () => {
                 ))}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-slate-100 dark:border-navy-700">
+              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-navy-700">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Clock size={16} className="text-slate-400 dark:text-slate-500" />
+                      <Clock size={16} className="text-slate-600 dark:text-slate-500" />
                       <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
                         Shift Pattern
                       </label>
@@ -561,7 +561,7 @@ export const CompanyProfileModule: React.FC = () => {
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Sparkles size={16} className="text-slate-400 dark:text-slate-500" />
+                      <Sparkles size={16} className="text-slate-600 dark:text-slate-500" />
                       <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
                         Automation Level ({companyProfile.automationLevel}%)
                       </label>
@@ -576,7 +576,7 @@ export const CompanyProfileModule: React.FC = () => {
                         setCompanyProfile({ automationLevel: Number(e.target.value) })
                       }
                     />
-                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase px-1">
+                    <div className="flex justify-between text-[10px] text-slate-600 dark:text-slate-500 font-medium uppercase px-1">
                       <span>Manual</span>
                       <span>Semi-Auto</span>
                       <span>Highly Auto</span>
@@ -981,7 +981,7 @@ export const CompanyProfileModule: React.FC = () => {
 
                     {/* Expandable Description Area */}
                     <div
-                      className={`grid transition-all duration-300 ease-in-out ${companyProfile.activeConstraints.includes(constraint.id) ? 'grid-rows-[1fr] pt-4 mt-2 border-t border-slate-100 dark:border-navy-700' : 'grid-rows-[0fr]'}`}
+                      className={`grid transition-all duration-300 ease-in-out ${companyProfile.activeConstraints.includes(constraint.id) ? 'grid-rows-[1fr] pt-4 mt-2 border-t border-slate-200 dark:border-navy-700' : 'grid-rows-[0fr]'}`}
                     >
                       <div className="overflow-hidden">
                         <AITextArea

@@ -180,7 +180,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800"
+              className="p-1 rounded-lg text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800"
             >
               <X size={14} />
             </button>
@@ -194,7 +194,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             </div>
             {timerSeconds != null && timerSeconds > 0 && (
               <div className="flex items-center gap-1">
-                <Clock size={10} className={timeLeft > 10 ? 'text-slate-400' : 'text-rose-500'} />
+                <Clock size={10} className={timeLeft > 10 ? 'text-slate-600' : 'text-rose-500'} />
                 <span
                   className={`text-[10px] font-semibold ${timeLeft > 10 ? 'text-slate-600 dark:text-slate-400' : 'text-rose-500'}`}
                 >
@@ -218,7 +218,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
                 className="px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-slate-400 w-4">{rank + 1}</span>
+                  <span className="text-[10px] font-bold text-slate-600 w-4">{rank + 1}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">
                       {node.data?.label || node.id}
@@ -231,7 +231,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
                     {!timerExpired && myVoteCount < maxVotes && (
                       <button
                         onClick={() => handleVote(node.id)}
-                        className="p-1 rounded text-slate-400 hover:text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="p-1 rounded text-slate-600 hover:text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <ThumbsUp size={10} />
                       </button>
@@ -319,7 +319,7 @@ export const EmojiReactions: React.FC<EmojiReactionsProps> = ({
       <div className="relative">
         <button
           onClick={() => setShowPicker(!showPicker)}
-          className="w-5 h-5 rounded-full bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 flex items-center justify-center text-[10px] text-slate-400 transition-colors"
+          className="w-5 h-5 rounded-full bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 flex items-center justify-center text-[10px] text-slate-600 transition-colors"
         >
           +
         </button>

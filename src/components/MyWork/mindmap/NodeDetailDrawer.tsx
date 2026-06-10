@@ -38,6 +38,7 @@ import { Callout, EmptyStateInline, ToggleBlock } from '@/components/shared/NMod
 import { Api } from '@/services/api';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
+import TeresaMark from '../../shared/TeresaMark';
 import { AddEvidenceModal } from './AddEvidenceModal';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -380,7 +381,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {isAI ? (
-              <Bot size={14} className="text-primary-500 shrink-0" />
+              <TeresaMark size={14} className="text-primary-500 shrink-0" />
             ) : (
               <Lightbulb size={14} className="text-amber-500 shrink-0" />
             )}
@@ -402,7 +403,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors shrink-0"
+          className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors shrink-0"
         >
           <X size={16} />
         </button>
@@ -420,7 +421,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             <div className="space-y-3 mt-2">
               {/* Status Flow */}
               <div>
-                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
                   Status
                 </div>
                 <div className="flex items-center gap-1 flex-wrap">
@@ -443,7 +444,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                               ? cfg.color + ' ring-1 ring-current/20 shadow-sm'
                               : isPast
                                 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                                : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'
                           } disabled:opacity-40`}
                           title={isPl ? cfg.labelPl : cfg.labelEn}
                         >
@@ -457,7 +458,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
 
               {/* Semantic Type — dropdown */}
               <div>
-                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
                   {isPl ? 'Typ semantyczny' : 'Semantic Type'}
                 </div>
                 <select
@@ -507,7 +508,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           >
             <div className="space-y-2 mt-2">
               <div>
-                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
                   {isPl ? 'Notatki' : 'Notes'}
                 </div>
                 <textarea
@@ -572,7 +573,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                   >
                     <Hash size={9} className="shrink-0" />
                     <span>{tag}</span>
-                    <X size={9} className="text-slate-400 shrink-0" />
+                    <X size={9} className="text-slate-600 shrink-0" />
                   </button>
                 ))}
               </div>
@@ -642,7 +643,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                         </div>
                       )}
                     </div>
-                    {isClickable && <ExternalLink size={11} className="text-slate-400 shrink-0" />}
+                    {isClickable && <ExternalLink size={11} className="text-slate-600 shrink-0" />}
                   </div>
                 );
               })}
@@ -690,11 +691,11 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                       }
                       className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left hover:bg-slate-100/60 dark:hover:bg-white/[0.03] transition-colors"
                     >
-                      <Paperclip size={11} className="text-slate-400 shrink-0" />
+                      <Paperclip size={11} className="text-slate-600 shrink-0" />
                       <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 flex-1 truncate">
                         {link.label || `${artifactType}:${artifactId}`}
                       </span>
-                      <ExternalLink size={10} className="text-slate-300 shrink-0" />
+                      <ExternalLink size={10} className="text-slate-600 shrink-0" />
                     </button>
                   );
                 })}
@@ -713,13 +714,13 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         {/* AI: Expand this topic */}
         {!isProtected && (
           <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
-            <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
+            <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-2">
               {isPl ? 'AI: Rozwiń temat' : 'AI: Expand Topic'}
             </div>
             <button
               onClick={handleAIExpand}
               disabled={locked || aiExpanding}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/10 to-indigo-500/8 hover:from-primary-500/15 hover:to-indigo-500/12 transition-all disabled:opacity-40"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/10 to-crimson-500/8 hover:from-primary-500/15 hover:to-crimson-500/12 transition-all disabled:opacity-40"
             >
               {aiExpanding ? (
                 <Loader2 size={14} className="animate-spin text-primary-500" />
@@ -770,7 +771,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             icon={<FileText size={14} />}
           >
             {loadingContext ? (
-              <div className="flex items-center gap-2 py-4 justify-center text-[11px] text-slate-400">
+              <div className="flex items-center gap-2 py-4 justify-center text-[11px] text-slate-600">
                 <Loader2 size={12} className="animate-spin" />
                 {isPl ? 'Szukam powiązań...' : 'Finding connections...'}
               </div>
@@ -823,7 +824,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                                 style={{ width: `${Math.round(item.confidence * 100)}%` }}
                               />
                             </div>
-                            <span className="text-[8px] text-slate-400">
+                            <span className="text-[8px] text-slate-600">
                               {Math.round(item.confidence * 100)}%
                             </span>
                           </div>
@@ -853,12 +854,12 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     onClick={() => onNavigateToNode(rn.id)}
                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left hover:bg-slate-100/60 dark:hover:bg-white/[0.03] transition-colors"
                   >
-                    <GitBranch size={10} className="text-slate-400 shrink-0" />
+                    <GitBranch size={10} className="text-slate-600 shrink-0" />
                     <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
                       {rn.label}
                     </span>
-                    <span className="text-[9px] text-slate-400">{rn.branchKey}</span>
-                    <ExternalLink size={10} className="text-slate-300" />
+                    <span className="text-[9px] text-slate-600">{rn.branchKey}</span>
+                    <ExternalLink size={10} className="text-slate-600" />
                   </button>
                 ))}
               </div>
@@ -927,7 +928,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             title={isPl ? 'Historia AI' : 'AI history'}
             badge={String(nodeData.aiExpansionHistory?.length || 0)}
             defaultOpen={(nodeData.aiExpansionHistory?.length || 0) > 0}
-            icon={<Bot size={14} />}
+            icon={<TeresaMark size={14} />}
           >
             {nodeData.aiExpansionHistory?.length ? (
               <div className="space-y-2 mt-1">
@@ -936,7 +937,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     key={`${entry.timestamp}-${entry.prompt}`}
                     className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 px-3 py-2 bg-white/40 dark:bg-navy-950/20"
                   >
-                    <div className="text-[10px] text-slate-400 mb-1">
+                    <div className="text-[10px] text-slate-600 mb-1">
                       {new Date(entry.timestamp).toLocaleString()}
                     </div>
                     <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
@@ -1010,7 +1011,7 @@ const DepthField: React.FC<{
       <div className="py-0.5">
         <button
           onClick={() => setExpanded(true)}
-          className="text-[10px] font-semibold text-slate-400 hover:text-primary-500 transition-colors"
+          className="text-[10px] font-semibold text-slate-600 hover:text-primary-500 transition-colors"
         >
           + {label}
         </button>
@@ -1020,7 +1021,7 @@ const DepthField: React.FC<{
 
   return (
     <div>
-      <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+      <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600 mb-1.5">
         {label}
       </div>
       <textarea

@@ -108,7 +108,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 
               {/* Last sync */}
               {connection?.lastSyncAt && (
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                   {t('settings.integrations.lastSync', 'Last sync')}:{' '}
                   {new Date(connection.lastSyncAt).toLocaleString()}
                 </p>
@@ -124,7 +124,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                 <button
                   onClick={onTest}
                   disabled={isTesting}
-                  className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand transition-colors disabled:opacity-50"
+                  className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand transition-colors disabled:opacity-50"
                   title={t('settings.integrations.testConnection', 'Test connection')}
                 >
                   {isTesting ? (
@@ -162,7 +162,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 
         {/* Features */}
         {provider.features.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700">
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
             <div className="flex flex-wrap gap-2">
               {provider.features.map((feature, idx) => (
                 <span

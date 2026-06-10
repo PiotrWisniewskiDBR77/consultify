@@ -7,15 +7,24 @@ import {
   AlertTriangle,
   BarChart3,
   Brain,
+  Check,
+  CheckCircle2,
+  ChevronDown,
   Compass,
+  ExternalLink,
   FileText,
+  Info,
   Lightbulb,
   Loader2,
   MessageSquare,
-  Paperclip,
+  Package,
+  Save,
+  SlidersHorizontal,
   Sparkles,
   Target,
+  Trash2,
   TrendingUp,
+  UploadCloud,
   Users,
   X,
   Zap,
@@ -24,7 +33,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DatePicker, Select } from '@/components/shared/forms';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { TeresaMark } from '@/components/shared/TeresaMark';
+import { type WizardStep, WizardStepper } from '@/components/shared/WizardModal';
+import { Button, LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { type V8ContextDocument, V8InterviewApi } from '@/services/api/v8/interview';
 
@@ -58,7 +71,7 @@ type InsightAnalysisMode =
 type InsightContextMode =
   | 'selected_interview_material_only'
   | 'selected_material_plus_approved_org_knowledge';
-type CreatorStepId = 'goal' | 'people' | 'source' | 'analysis' | 'context';
+type CreatorStepId = 'define' | 'material' | 'refine';
 
 interface CompletedSession {
   id: string;
@@ -79,11 +92,150 @@ interface CompletedSession {
   totalQuestions: number;
 }
 
+/**
+ * Source Basket — a reusable saved set of source sessions (+ optional people
+ * filter) so the consultant builds the selection once and reuses it across many
+ * insights/lenses ("z jednych źródeł różne insighty pod różnym kątem").
+ * Backed by /interview/insight-baskets (insightSourceBasketService).
+ */
+interface InsightSourceBasket {
+  id: string;
+  name: string;
+  description?: string | null;
+  sessionIds: string[];
+  projectId?: string | null;
+  peopleFilter?: { respondentIds?: string[] } | null;
+  filterCriteria?: Record<string, unknown> | null;
+  usageCount: number;
+  lastUsedAt?: string | null;
+}
+
+/**
+ * #28e — Duplicate/similarity hit for the new insight. The primary source is now
+ * the server-backed semantic check (POST /interview/insights/similarity-check,
+ * mirroring POST /initiatives/similarity-check — embeddings cosine with a token
+ * Jaccard fallback). If that endpoint errors we gracefully fall back to a
+ * lightweight client-side title check (token overlap + substring).
+ */
+interface SimilarInsightHit {
+  id: string;
+  title: string;
+  score: number; // 0..1 — semantic/token similarity to an existing insight
+}
+
 interface InsightCreatorModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
+
+// #28 — App-styled checkbox: a custom navy/rounded box replacing the default
+// browser checkbox, consistent with the modal's dark palette. Render it inside a
+// <label> next to the visible content (label handles the click/keyboard).
+const StyledCheck: React.FC<{
+  checked: boolean;
+  disabled?: boolean;
+  className?: string;
+}> = ({ checked, disabled, className = '' }) => (
+  <span
+    aria-hidden="true"
+    className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border transition-all ${
+      checked
+        ? 'border-primary-500 bg-primary-600 text-white shadow-sm shadow-primary-500/30'
+        : 'border-slate-300 bg-white text-transparent dark:border-white/[0.18] dark:bg-navy-900'
+    } ${disabled ? 'opacity-50' : ''} ${className}`}
+  >
+    <Check size={12} strokeWidth={3} className={checked ? 'opacity-100' : 'opacity-0'} />
+  </span>
+);
+
+// #28 — Small info tooltip trigger for controls that need explanation. Uses the
+// native title attribute (no portal dependency) plus a subtle hover ring.
+const InfoHint: React.FC<{ text: string }> = ({ text }) => (
+  <span
+    title={text}
+    className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full text-slate-400 transition-colors hover:text-primary-500"
+    aria-label={text}
+  >
+    <Info size={13} />
+  </span>
+);
+
+// Collapsible disclosure section — used for the optional "Filter" and "Advanced"
+// groups so the long tail of refinement controls stays hidden until requested.
+// An active-count badge keeps hidden choices honest (never a silent surprise).
+const Disclosure: React.FC<{
+  icon: React.ElementType;
+  title: string;
+  hint?: string;
+  count?: number;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}> = ({ icon: Icon, title, hint, count, open, onToggle, children }) => (
+  <div className="rounded-xl border border-slate-200 bg-slate-50/70 dark:border-navy-700/60 dark:bg-navy-950/30">
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className="flex w-full items-center gap-2.5 px-3.5 py-3 text-left"
+    >
+      <Icon size={16} className="shrink-0 text-slate-500 dark:text-slate-400" />
+      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</span>
+      {typeof count === 'number' && count > 0 && (
+        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary-600 px-1.5 text-[11px] font-semibold text-white">
+          {count}
+        </span>
+      )}
+      {hint && <span className="hidden truncate text-xs text-slate-400 sm:inline">{hint}</span>}
+      <ChevronDown
+        size={16}
+        className={`ml-auto shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+      />
+    </button>
+    {open && (
+      <div className="space-y-4 border-t border-slate-200/70 px-3.5 py-3.5 dark:border-navy-700/50">
+        {children}
+      </div>
+    )}
+  </div>
+);
+
+// #28e — Normalize a title into significant tokens for the client-side check.
+const STOPWORDS = new Set([
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'of',
+  'for',
+  'to',
+  'in',
+  'on',
+  'with',
+  'analysis',
+  'insight',
+  'report',
+  'i',
+  'oraz',
+  'dla',
+  'na',
+  'w',
+  'z',
+  'do',
+  'analiza',
+  'analizy',
+  'raport',
+  'wnioski',
+  'wniosek',
+]);
+const tokenizeTitle = (value: string): string[] =>
+  value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 2 && !STOPWORDS.has(token));
 
 const MAX_CONTEXT_FILES = 5;
 const MAX_CONTEXT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -349,41 +501,29 @@ const CREATOR_STEPS: Array<{
   labelEn: string;
   hintPl: string;
   hintEn: string;
+  optional?: boolean;
 }> = [
   {
-    id: 'goal',
-    labelPl: 'Cel',
-    labelEn: 'Goal',
+    id: 'define',
+    labelPl: 'Definicja',
+    labelEn: 'Define',
     hintPl: 'Co chcesz uzyskać?',
     hintEn: 'What should AI produce?',
   },
   {
-    id: 'people',
-    labelPl: 'Osoby',
-    labelEn: 'People',
-    hintPl: 'Kto ma wejść do analizy?',
-    hintEn: 'Whose answers are in scope?',
-  },
-  {
-    id: 'source',
+    id: 'material',
     labelPl: 'Materiał',
     labelEn: 'Source',
     hintPl: 'Z jakich wywiadów korzystamy?',
     hintEn: 'Which interviews should be used?',
   },
   {
-    id: 'analysis',
-    labelPl: 'Analiza',
-    labelEn: 'Analysis',
-    hintPl: 'Jak AI ma czytać materiał?',
-    hintEn: 'How should AI interpret it?',
-  },
-  {
-    id: 'context',
-    labelPl: 'Uwagi',
-    labelEn: 'Context',
-    hintPl: 'Dodatkowy kontekst i read-back',
-    hintEn: 'Extra context and read-back',
+    id: 'refine',
+    labelPl: 'Dostrojenie',
+    labelEn: 'Refine',
+    hintPl: 'Opcjonalne nastrojenie analizy',
+    hintEn: 'Optional analysis fine-tuning',
+    optional: true,
   },
 ];
 
@@ -419,6 +559,9 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const [customPrompt, setCustomPrompt] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
   const [internalArtifactLinks, setInternalArtifactLinks] = useState('');
+  // Collapsible groups for the consolidated 3-step layout.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // E7.3 / E7.4: Auto-fill custom prompt for special analysis types
   const applyPromptPreset = (type: InsightPromptType) => {
@@ -506,6 +649,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [selectedContextDocumentIds, setSelectedContextDocumentIds] = useState<string[]>([]);
   const [isLoadingContextDocuments, setIsLoadingContextDocuments] = useState(false);
   const [isUploadingContextDocument, setIsUploadingContextDocument] = useState(false);
+  const [isContextDragActive, setIsContextDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const sessionSelectionTouchedRef = useRef(false);
 
@@ -513,6 +657,21 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [completedSessions, setCompletedSessions] = useState<CompletedSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // #28e — Existing insights loaded in scope, used for client-side duplicate
+  // detection before Run. Non-fatal if the list cannot be loaded.
+  const [existingInsights, setExistingInsights] = useState<Array<{ id: string; title: string }>>(
+    []
+  );
+  const [similarHits, setSimilarHits] = useState<SimilarInsightHit[]>([]);
+  const [similarDismissed, setSimilarDismissed] = useState(false);
+
+  // Source baskets — reusable saved source selections
+  const [baskets, setBaskets] = useState<InsightSourceBasket[]>([]);
+  const [activeBasketId, setActiveBasketId] = useState<string>('');
+  const [isSavingBasket, setIsSavingBasket] = useState(false);
+  const [showSaveBasket, setShowSaveBasket] = useState(false);
+  const [basketNameDraft, setBasketNameDraft] = useState('');
 
   const fetchContextDocuments = useCallback(async () => {
     setIsLoadingContextDocuments(true);
@@ -535,8 +694,175 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     }
   }, [isPolish]);
 
-  const handleContextFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+  // --- Source baskets ---------------------------------------------------------
+  const fetchBaskets = useCallback(async () => {
+    try {
+      const res = await Api.get('/interview/insight-baskets');
+      // Api.get returns a payload proxy; the route responds { baskets: [...] }.
+      const payload = (res as { data?: { baskets?: InsightSourceBasket[] } })?.data ?? res;
+      const list = Array.isArray((payload as { baskets?: InsightSourceBasket[] })?.baskets)
+        ? (payload as { baskets: InsightSourceBasket[] }).baskets
+        : [];
+      setBaskets(list);
+    } catch (error) {
+      // Non-fatal: the wizard still works without saved baskets.
+      console.error('[InsightCreatorModal] Failed to load source baskets:', error);
+    }
+  }, []);
+
+  // #28e — Load existing insights (titles only) so we can warn about duplicates
+  // before generating. Best-effort: the wizard works without this list.
+  const fetchExistingInsights = useCallback(async () => {
+    try {
+      const res = await V8InterviewApi.listInsights({ limit: 200 });
+      const list = Array.isArray(res?.insights) ? res.insights : [];
+      setExistingInsights(
+        list
+          .filter((insight) => insight?.id && insight?.title)
+          .map((insight) => ({ id: insight.id, title: insight.title }))
+      );
+    } catch (error) {
+      // Non-fatal: duplicate detection is an optional safety net.
+      console.error('[InsightCreatorModal] Failed to load existing insights:', error);
+    }
+  }, []);
+
+  // Apply an existing basket: pre-fill the source sessions (and people filter
+  // when present) into the wizard's existing state. Additive — the user can
+  // still tweak the selection afterwards.
+  const applyBasket = (basketId: string) => {
+    setActiveBasketId(basketId);
+    if (!basketId) return;
+    const basket = baskets.find((b) => b.id === basketId);
+    if (!basket) return;
+    sessionSelectionTouchedRef.current = true;
+    const validIds = new Set(completedSessions.map((s) => s.id));
+    const nextSessions = basket.sessionIds.filter((id) => validIds.has(id));
+    setSelectedSessions(nextSessions);
+    const respondentIds = basket.peopleFilter?.respondentIds;
+    if (Array.isArray(respondentIds)) {
+      const validRespondents = new Set(
+        completedSessions.map((s) => s.respondentId).filter(Boolean) as string[]
+      );
+      setSelectedRespondents(respondentIds.filter((id) => validRespondents.has(id)));
+    }
+    if (nextSessions.length < basket.sessionIds.length) {
+      toast(
+        isPolish
+          ? 'Niektóre sesje z koszyka nie są już dostępne i zostały pominięte.'
+          : 'Some sessions from the basket are no longer available and were skipped.'
+      );
+    }
+    return nextSessions;
+  };
+
+  // #28d — 1-click "new lens from this basket": reuse a saved basket's source
+  // selection, then jump the user straight to the Analysis step so they only pick
+  // a fresh angle + generate ("z jednych źródeł różne insighty pod różnym kątem").
+  // Non-destructive to the basket; it only re-applies the stored selection and
+  // resets the angle pickers so the consultant consciously chooses a new lens.
+  const startNewLensFromBasket = (basketId: string) => {
+    const basket = baskets.find((b) => b.id === basketId);
+    if (!basket) return;
+    const appliedSessions = applyBasket(basketId);
+    if (!appliedSessions || appliedSessions.length === 0) {
+      toast.error(
+        isPolish
+          ? 'Koszyk nie zawiera już dostępnych sesji źródłowych.'
+          : 'This basket has no available source sessions left.'
+      );
+      return;
+    }
+    // Pre-clear the previous angle so the user consciously picks a new lens.
+    setAnalysisMode('general_consulting_synthesis');
+    setSelectedAnalysisModes(['general_consulting_synthesis']);
+    setSelectedTopicFocus([]);
+    setLeadingQuestion('');
+    // Jump straight to the Refine step (sources reused) and open Advanced so the
+    // analysis lens is immediately visible.
+    const refineIndex = CREATOR_STEPS.findIndex((step) => step.id === 'refine');
+    setCurrentStep(refineIndex >= 0 ? refineIndex : currentStep);
+    setAdvancedOpen(true);
+    toast.success(
+      isPolish
+        ? 'Nowy kąt — wybierz soczewkę i wygeneruj.'
+        : 'New lens — pick an angle and generate.'
+    );
+  };
+
+  // Save the current source selection as a reusable basket.
+  const handleSaveBasket = async () => {
+    const name = basketNameDraft.trim();
+    if (!name) {
+      toast.error(isPolish ? 'Podaj nazwę koszyka' : 'Enter a basket name');
+      return;
+    }
+    if (selectedSessions.length === 0) {
+      toast.error(isPolish ? 'Wybierz przynajmniej jedną sesję' : 'Select at least one session');
+      return;
+    }
+    setIsSavingBasket(true);
+    try {
+      const projectIds = Array.from(
+        new Set(
+          completedSessions
+            .filter((s) => selectedSessions.includes(s.id) && s.projectId)
+            .map((s) => String(s.projectId))
+        )
+      );
+      const res = await Api.post('/interview/insight-baskets', {
+        name,
+        sessionIds: selectedSessions,
+        projectId: projectIds.length === 1 ? projectIds[0] : null,
+        peopleFilter:
+          selectedRespondents.length > 0 ? { respondentIds: selectedRespondents } : null,
+      });
+      const payload = (res as { data?: { basket?: InsightSourceBasket } })?.data ?? res;
+      const created = (payload as { basket?: InsightSourceBasket })?.basket;
+      await fetchBaskets();
+      if (created?.id) setActiveBasketId(created.id);
+      setShowSaveBasket(false);
+      setBasketNameDraft('');
+      toast.success(isPolish ? 'Koszyk zapisany' : 'Basket saved');
+    } catch (error) {
+      console.error('[InsightCreatorModal] Failed to save source basket:', error);
+      toast.error(isPolish ? 'Nie udało się zapisać koszyka' : 'Failed to save basket');
+    } finally {
+      setIsSavingBasket(false);
+    }
+  };
+
+  const handleDeleteBasket = async (basketId: string) => {
+    try {
+      await Api.delete(`/interview/insight-baskets/${basketId}`);
+      if (activeBasketId === basketId) setActiveBasketId('');
+      await fetchBaskets();
+      toast.success(isPolish ? 'Koszyk usunięty' : 'Basket deleted');
+    } catch (error) {
+      console.error('[InsightCreatorModal] Failed to delete source basket:', error);
+      toast.error(isPolish ? 'Nie udało się usunąć koszyka' : 'Failed to delete basket');
+    }
+  };
+
+  const defaultBasketName = (): string => {
+    const projectName = completedSessions.find(
+      (s) => selectedSessions.includes(s.id) && s.projectId
+    )?.projectId;
+    const base = projectName ? String(projectName) : isPolish ? 'Wybrane' : 'Selected';
+    return isPolish ? `${base} — sesje` : `${base} sessions`;
+  };
+
+  const openSaveBasket = () => {
+    if (selectedSessions.length === 0) {
+      toast.error(isPolish ? 'Najpierw wybierz sesje źródłowe' : 'Select source sessions first');
+      return;
+    }
+    setBasketNameDraft(defaultBasketName());
+    setShowSaveBasket(true);
+  };
+
+  const uploadContextFiles = async (fileList: File[]) => {
+    const files = fileList;
     if (files.length === 0) return;
     const remainingSlots = MAX_CONTEXT_FILES;
     const toUpload = files.slice(0, remainingSlots);
@@ -589,8 +915,23 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       );
     } finally {
       setIsUploadingContextDocument(false);
-      event.target.value = '';
     }
+  };
+
+  const handleContextFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    await uploadContextFiles(files);
+    event.target.value = '';
+  };
+
+  // #28 — Drag/drop support for the context-document dropzone.
+  const handleContextDrop = async (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsContextDragActive(false);
+    if (isUploadingContextDocument) return;
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length > 0) await uploadContextFiles(files);
   };
 
   const toggleContextDocument = (doc: V8ContextDocument) => {
@@ -689,6 +1030,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
         }
         await fetchContextDocuments();
+        await fetchBaskets();
+        await fetchExistingInsights();
       } catch (error) {
         console.error('[InsightCreatorModal] Failed to load data:', error);
         setLoadError(isPolish ? INSIGHT_LOAD_ERROR_COPY.pl : INSIGHT_LOAD_ERROR_COPY.en);
@@ -698,7 +1041,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     };
 
     loadData();
-  }, [fetchContextDocuments, isOpen, isPolish]);
+  }, [fetchBaskets, fetchContextDocuments, fetchExistingInsights, isOpen, isPolish]);
 
   // Reset on close
   useEffect(() => {
@@ -730,7 +1073,16 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setUseDateFilter(false);
       setContextDocuments([]);
       setSelectedContextDocumentIds([]);
+      setIsContextDragActive(false);
       setLoadError(null);
+      setExistingInsights([]);
+      setSimilarHits([]);
+      setSimilarDismissed(false);
+      setBaskets([]);
+      setActiveBasketId('');
+      setShowSaveBasket(false);
+      setBasketNameDraft('');
+      setIsSavingBasket(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -791,24 +1143,34 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     useTemplateFilter,
   ]);
 
+  // #28b — Build the respondent list for the People step. Previously a session
+  // was dropped whenever respondentName was empty/whitespace, which (combined
+  // with truthy-only filtering) could surface as blank checkbox slots once the
+  // label tried to render an empty string. We now require a real respondentId
+  // and fall back to a clear "Unnamed respondent" label so every row shows text
+  // next to its checkbox rather than an empty slot.
   const respondentOptions = useMemo(() => {
     const respondents = new Map<
       string,
       { id: string; name: string; role?: string; department?: string; sessionCount: number }
     >();
     completedSessions.forEach((session) => {
-      if (!session.respondentId || !session.respondentName) return;
+      if (!session.respondentId) return;
+      const trimmedName = session.respondentName?.trim();
       const existing = respondents.get(session.respondentId);
       respondents.set(session.respondentId, {
         id: session.respondentId,
-        name: session.respondentName,
-        role: existing?.role || session.respondentRole,
-        department: existing?.department || session.department,
+        name:
+          existing?.name ||
+          trimmedName ||
+          (isPolish ? 'Respondent bez nazwy' : 'Unnamed respondent'),
+        role: existing?.role || session.respondentRole?.trim() || undefined,
+        department: existing?.department || session.department?.trim() || undefined,
         sessionCount: (existing?.sessionCount ?? 0) + 1,
       });
     });
     return Array.from(respondents.values());
-  }, [completedSessions]);
+  }, [completedSessions, isPolish]);
 
   const roleOptions = useMemo(
     () =>
@@ -833,6 +1195,84 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       ).sort(),
     [completedSessions]
   );
+
+  // #28e — Client-side fallback duplicate check (token overlap + substring),
+  // used only when the server similarity endpoint is unavailable.
+  const computeClientSideHits = useCallback(
+    (rawTitle: string): SimilarInsightHit[] => {
+      const trimmed = rawTitle.trim();
+      if (trimmed.length < 4 || existingInsights.length === 0) return [];
+      const candidateTokens = tokenizeTitle(trimmed);
+      const candidateLower = trimmed.toLowerCase();
+      const hits: SimilarInsightHit[] = [];
+      for (const insight of existingInsights) {
+        const existingLower = insight.title.trim().toLowerCase();
+        if (!existingLower) continue;
+        const existingTokens = tokenizeTitle(insight.title);
+        let score = 0;
+        // Exact / substring containment is a strong signal.
+        if (existingLower === candidateLower) {
+          score = 1;
+        } else if (
+          existingLower.includes(candidateLower) ||
+          candidateLower.includes(existingLower)
+        ) {
+          score = 0.85;
+        } else if (candidateTokens.length > 0 && existingTokens.length > 0) {
+          const existingSet = new Set(existingTokens);
+          const shared = candidateTokens.filter((token) => existingSet.has(token)).length;
+          const union = new Set([...candidateTokens, ...existingTokens]).size;
+          score = union > 0 ? shared / union : 0;
+        }
+        if (score >= 0.5) hits.push({ id: insight.id, title: insight.title, score });
+      }
+      hits.sort((a, b) => b.score - a.score);
+      return hits.slice(0, 3);
+    },
+    [existingInsights]
+  );
+
+  // #28e — Recompute the duplicate/similarity warning whenever the title changes.
+  // Primary: server-backed semantic check (POST /interview/insights/
+  // similarity-check, mirroring POST /initiatives/similarity-check). Debounced,
+  // and gracefully falls back to the client-side heuristic on any error. The
+  // warning is non-blocking — generation always remains available.
+  useEffect(() => {
+    const trimmed = title.trim();
+    setSimilarDismissed(false);
+    if (trimmed.length < 4) {
+      setSimilarHits([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await V8InterviewApi.checkInsightSimilarity({ title: trimmed });
+        if (cancelled) return;
+        // Surface only matches at/above the "similar" band so the chip stays
+        // meaningful (related-only matches are too weak to warn on).
+        const hits = (result?.matches || [])
+          .filter((match) => match.score >= 0.5)
+          .slice(0, 3)
+          .map((match) => ({ id: match.id, title: match.title, score: match.score }));
+        setSimilarHits(hits);
+      } catch (error) {
+        // Graceful fallback: server check unavailable → client-side heuristic.
+        if (cancelled) return;
+        console.error(
+          '[InsightCreatorModal] Server similarity check failed, using fallback:',
+          error
+        );
+        setSimilarHits(computeClientSideHits(trimmed));
+      }
+    }, 450);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [title, computeClientSideHits]);
 
   useEffect(() => {
     const visibleSessionIds = new Set(filteredSessions.map((session) => session.id));
@@ -987,6 +1427,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         })
       );
 
+      // Bump usage on the basket this insight was generated from (best-effort).
+      if (activeBasketId) {
+        await Api.post(`/interview/insight-baskets/${activeBasketId}/touch`, {}).catch(() => {});
+      }
+
       toast.dismiss(toastId);
       toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
       onSuccess();
@@ -1096,22 +1541,22 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const canCompleteStep = (stepIndex: number): boolean => {
     const stepId = CREATOR_STEPS[stepIndex]?.id;
-    if (stepId === 'goal') return Boolean(title.trim() && selectedTypes.length > 0);
-    if (stepId === 'source') return selectedSessions.length > 0;
+    if (stepId === 'define') return Boolean(title.trim() && selectedTypes.length > 0);
+    if (stepId === 'material') return selectedSessions.length > 0;
     return true;
   };
 
   const getStepBlockerMessage = (stepIndex: number): string | null => {
     const stepId = CREATOR_STEPS[stepIndex]?.id;
-    if (stepId === 'goal' && !title.trim()) {
+    if (stepId === 'define' && !title.trim()) {
       return isPolish ? 'Podaj tytuł wniosków.' : 'Enter an insight title.';
     }
-    if (stepId === 'goal' && selectedTypes.length === 0) {
+    if (stepId === 'define' && selectedTypes.length === 0) {
       return isPolish
         ? 'Wybierz przynajmniej jeden typ wyniku.'
         : 'Select at least one output type.';
     }
-    if (stepId === 'source' && selectedSessions.length === 0) {
+    if (stepId === 'material' && selectedSessions.length === 0) {
       return isPolish
         ? 'Wybierz przynajmniej jedną sesję źródłową.'
         : 'Select at least one source session.';
@@ -1130,6 +1575,21 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const goToPreviousStep = () => {
     setCurrentStep((step) => Math.max(step - 1, 0));
+  };
+
+  // §5 — Pill navigation for the shared stepper. Backward/same jumps are free;
+  // a forward jump runs the same blocker guard as goToNextStep so users can't
+  // skip past an unsatisfied gating step. The stepper already disables pills
+  // beyond maxReachableIndex, so this only fires for reachable targets.
+  const handleStepChange = (index: number) => {
+    if (index > currentStep) {
+      const blocker = getStepBlockerMessage(currentStep);
+      if (blocker) {
+        toast.error(blocker);
+        return;
+      }
+    }
+    setCurrentStep(Math.min(Math.max(index, 0), CREATOR_STEPS.length - 1));
   };
 
   const handleFormSubmit = (event: React.FormEvent) => {
@@ -1196,50 +1656,40 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     }
   };
 
-  const renderStepper = () => (
-    <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
-      <div className="grid grid-cols-5 gap-1.5">
-        {CREATOR_STEPS.map((step, index) => {
-          const isActive = index === currentStep;
-          const isComplete = index < currentStep && canCompleteStep(index);
-          return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={() => setCurrentStep(index)}
-              className={`rounded-xl border px-2 py-1.5 text-left transition-all ${
-                isActive
-                  ? 'border-primary-500/40 bg-primary-50 text-primary-700 ring-1 ring-primary-500/20 dark:bg-primary-500/15 dark:text-primary-200'
-                  : isComplete
-                    ? 'border-slate-200 bg-white text-slate-600 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
-                    : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
-              } hover:border-primary-500/50`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold ${
-                    isActive
-                      ? 'bg-primary-500 text-white'
-                      : isComplete
-                        ? 'bg-slate-200 text-slate-700 dark:bg-navy-700 dark:text-slate-200'
-                        : 'bg-slate-200/80 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
-                  }`}
-                >
-                  {index + 1}
-                </span>
-                <span className="text-xs font-semibold leading-none">
-                  {isPolish ? step.labelPl : step.labelEn}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  // §5 — Map the bespoke CREATOR_STEPS to the shared <WizardStepper> contract.
+  // Per-step status mirrors the old pill logic: the active step is 'ready', any
+  // earlier step that satisfies canCompleteStep is 'complete', everything else is
+  // 'empty'. Labels/hints carry over their EN/PL pairs verbatim.
+  const wizardSteps: WizardStep[] = CREATOR_STEPS.map((step, index) => {
+    let status: WizardStep['status'] = 'empty';
+    if (index < currentStep && canCompleteStep(index)) {
+      status = 'complete';
+    } else if (index === currentStep) {
+      status = 'ready';
+    }
+    return {
+      id: step.id,
+      label: { en: step.labelEn, pl: step.labelPl },
+      hint: { en: step.hintEn, pl: step.hintPl },
+      status,
+      optional: step.optional,
+    };
+  });
+
+  // §5 — Reachability gate for the shared stepper: the user may jump to any
+  // already-visited step, plus exactly one step ahead — and only when every
+  // gating step up to the current one is satisfied (mirrors goToNextStep's
+  // getStepBlockerMessage/canCompleteStep guard, so users can't skip ahead).
+  const maxReachableIndex = (() => {
+    const ahead = Math.min(currentStep + 1, CREATOR_STEPS.length - 1);
+    for (let index = 0; index <= currentStep; index += 1) {
+      if (!canCompleteStep(index)) return currentStep;
+    }
+    return ahead;
+  })();
 
   const renderGlobalLoadError = () => {
-    if (!loadError || CREATOR_STEPS[currentStep]?.id === 'source') return null;
+    if (!loadError || CREATOR_STEPS[currentStep]?.id === 'material') return null;
     return (
       <EmptyStateInline
         icon={AlertTriangle}
@@ -1255,87 +1705,182 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     );
   };
 
-  const renderGoalStep = () => (
-    <div className="space-y-3">
-      <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          {isPolish ? 'Tytuł wniosków' : 'Insight Title'} *
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={
-            isPolish
-              ? 'np. Analiza transformacji cyfrowej Q1 2024'
-              : 'e.g. Digital Transformation Analysis Q1 2024'
-          }
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          {isPolish ? 'Typ wyniku' : 'Output type'} *
-        </label>
-        <div className="space-y-1.5">
-          <div className="max-h-64 space-y-1.5 overflow-auto pr-1">
-            {ANALYSIS_TYPES.map((type) => {
-              const isSelected = selectedTypes.includes(type.id);
-              return (
-                <label
-                  key={type.id}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
-                    isSelected
-                      ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleAnalysisType(type.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
-                  />
-                  <div
-                    className={`flex h-7 w-7 items-center justify-center rounded-md ${getColorClasses(
-                      type.color,
-                      'bg'
-                    )} ${getColorClasses(type.color, 'text')}`}
+  // #28e — Non-blocking warning chip/banner when a similar insight already
+  // exists. The user can ignore it (Run still works) or open the existing one.
+  const renderSimilarWarning = () => {
+    if (similarDismissed || similarHits.length === 0) return null;
+    const top = similarHits[0];
+    return (
+      <div className="rounded-xl border border-amber-300/70 bg-amber-50 px-3 py-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+        <div className="flex items-start gap-2">
+          <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+              {isPolish
+                ? 'Podobny wniosek może już istnieć:'
+                : 'A similar insight may already exist:'}
+            </p>
+            <ul className="mt-1 space-y-1">
+              {similarHits.map((hit) => (
+                <li key={hit.id} className="flex items-center gap-1.5">
+                  <a
+                    href={`/interview?tab=insights&insightId=${encodeURIComponent(hit.id)}`}
+                    onClick={onClose}
+                    className="inline-flex items-center gap-1 truncate text-xs font-medium text-amber-800 underline decoration-amber-400/60 underline-offset-2 transition-colors hover:text-amber-900 dark:text-amber-200 dark:hover:text-amber-100"
+                    title={isPolish ? 'Otwórz istniejący wniosek' : 'Open the existing insight'}
                   >
-                    {type.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {isPolish ? type.namePl : type.name}
-                    </div>
-                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? type.descriptionPl : type.description}
-                    </p>
-                  </div>
-                </label>
+                    <span className="truncate">{hit.title}</span>
+                    <ExternalLink size={11} className="shrink-0" />
+                  </a>
+                  <span className="shrink-0 text-[10px] text-amber-600/80 dark:text-amber-300/70">
+                    {Math.round(hit.score * 100)}%
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-1.5 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSimilarDismissed(true)}
+                className="text-[11px] font-medium text-amber-700 transition-colors hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100"
+              >
+                {isPolish ? 'Generuj mimo to' : 'Proceed anyway'}
+              </button>
+              <a
+                href={`/interview?tab=insights&insightId=${encodeURIComponent(top.id)}`}
+                onClick={onClose}
+                className="text-[11px] font-medium text-amber-700 underline underline-offset-2 transition-colors hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100"
+              >
+                {isPolish ? 'Otwórz najbliższy' : 'Open closest match'}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderTypeRow = (type: AnalysisType) => {
+    const isSelected = selectedTypes.includes(type.id);
+    return (
+      <label
+        key={type.id}
+        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
+          isSelected
+            ? 'border-primary-500/60 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/15'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700/60 dark:bg-navy-800/40 dark:hover:border-white/[0.16]'
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => toggleAnalysisType(type.id)}
+          className="sr-only"
+        />
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getColorClasses(
+            type.color,
+            'bg'
+          )} ${getColorClasses(type.color, 'text')}`}
+        >
+          {type.icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {isPolish ? type.namePl : type.name}
+          </div>
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+            {isPolish ? type.descriptionPl : type.description}
+          </p>
+        </div>
+        <StyledCheck checked={isSelected} />
+      </label>
+    );
+  };
+
+  const renderDefineStep = () => {
+    const categories: Array<{ key: AnalysisType['category']; labelPl: string; labelEn: string }> = [
+      { key: 'basic', labelPl: 'Podstawowe', labelEn: 'Basic' },
+      { key: 'advanced', labelPl: 'Zaawansowane', labelEn: 'Advanced' },
+      { key: 'bcg', labelPl: 'Frameworki BCG', labelEn: 'BCG frameworks' },
+    ];
+    return (
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            {isPolish ? 'Tytuł wniosków' : 'Insight Title'} *
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={
+              isPolish
+                ? 'np. Analiza transformacji cyfrowej Q1 2024'
+                : 'e.g. Digital Transformation Analysis Q1 2024'
+            }
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+          />
+          {renderSimilarWarning()}
+          {title.trim().length >= 4 &&
+            existingInsights.length > 0 &&
+            similarHits.length === 0 &&
+            !similarDismissed && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 size={12} />
+                {isPolish
+                  ? 'Brak podobnych wniosków o tej nazwie.'
+                  : 'No similar insights with this name.'}
+              </p>
+            )}
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {isPolish ? 'Typ wyniku' : 'Output type'} *
+            </label>
+            <span className="text-xs text-primary-500">
+              {isPolish ? `Wybrano: ${selectedTypes.length}` : `Selected: ${selectedTypes.length}`}
+            </span>
+          </div>
+          <div className="max-h-[280px] space-y-3 overflow-auto pr-1">
+            {categories.map((cat) => {
+              const items = ANALYSIS_TYPES.filter((t) => t.category === cat.key);
+              if (items.length === 0) return null;
+              return (
+                <div key={cat.key} className="space-y-1.5">
+                  <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {isPolish ? cat.labelPl : cat.labelEn}
+                  </p>
+                  {items.map(renderTypeRow)}
+                </div>
               );
             })}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             {isPolish
               ? 'Typ wyniku kształtuje zawartość tego insightu. Nie tworzy automatycznie raportu, prezentacji ani obiektu w aplikacji.'
               : 'Output type shapes this insight only. It does not automatically create a report, presentation, or app object.'}
           </p>
-          <p className="text-xs text-primary-400">
-            {isPolish ? `Wybrano: ${selectedTypes.length}` : `Selected: ${selectedTypes.length}`}
-          </p>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
-  const renderPeopleStep = () => (
-    <div className="space-y-3">
+  const renderPeopleBlock = () => (
+    <div>
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="mb-2 flex items-center justify-between">
+          <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
             {isPolish ? 'Wybierz osoby' : 'Select people'}
+            <InfoHint
+              text={
+                isPolish
+                  ? 'Zawęź analizę do odpowiedzi wybranych respondentów. Brak wyboru = wszystkie osoby z wybranego materiału.'
+                  : 'Narrow the analysis to selected respondents. No selection = everyone in the chosen material.'
+              }
+            />
           </label>
           <button
             type="button"
@@ -1349,10 +1894,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         {respondentOptions.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
             <Users size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
               {isPolish
-                ? 'Brak osób w zatwierdzonych wywiadach'
-                : 'No people in approved interviews'}
+                ? 'Nie znaleziono respondentów dla tego materiału'
+                : 'No respondents found for this source'}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {isPolish
+                ? 'Wybrane sesje nie mają przypisanych osób. Analiza obejmie cały wybrany materiał.'
+                : 'The selected sessions have no people attached. The analysis will cover the full selected material.'}
             </p>
           </div>
         ) : (
@@ -1366,12 +1916,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
               }`}
             >
-              <input
-                type="checkbox"
-                checked={selectedRespondents.length === 0}
-                readOnly
-                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
-              />
+              <StyledCheck checked={selectedRespondents.length === 0} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                   {isPolish ? 'Wszystkie osoby' : 'All people'}
@@ -1379,7 +1924,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               </div>
             </button>
 
-            <div className="max-h-72 space-y-1.5 overflow-auto pr-1">
+            <div className="max-h-44 space-y-1.5 overflow-auto pr-1">
               {respondentOptions.map((respondent) => {
                 const isSelected = selectedRespondents.includes(respondent.id);
                 return (
@@ -1395,8 +1940,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleRespondent(respondent.id)}
-                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                      className="sr-only"
                     />
+                    <StyledCheck checked={isSelected} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                         {respondent.name}
@@ -1405,6 +1951,16 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                             {[respondent.role, respondent.department].filter(Boolean).join(' • ')}
                           </span>
                         )}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-slate-400">
+                        {respondent.sessionCount}{' '}
+                        {isPolish
+                          ? respondent.sessionCount === 1
+                            ? 'sesja'
+                            : 'sesji'
+                          : respondent.sessionCount === 1
+                            ? 'session'
+                            : 'sessions'}
                       </div>
                     </div>
                   </label>
@@ -1419,11 +1975,117 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     </div>
   );
 
-  const renderSourceStep = () => (
-    <div className="space-y-3">
+  const renderSourceBasketControl = () => {
+    const activeBasket = baskets.find((b) => b.id === activeBasketId);
+    return (
+      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-white/[0.08] dark:bg-navy-950/30">
+        <div className="mb-1.5 flex items-center gap-2">
+          <Package size={15} className="text-primary-500" />
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            {isPolish ? 'Koszyk źródeł' : 'Source basket'}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? '— zapisz raz, użyj do wielu insightów'
+              : '— save once, reuse across insights'}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-[220px] flex-1">
+            <Select
+              value={activeBasketId}
+              onChange={(value) => applyBasket(value)}
+              aria-label={isPolish ? 'Wybierz koszyk źródeł' : 'Select source basket'}
+              options={[
+                {
+                  value: '',
+                  label: isPolish ? 'Zbuduj nowy (bez koszyka)' : 'Build new (no basket)',
+                },
+                ...baskets.map((basket) => ({
+                  value: basket.id,
+                  label: `${basket.name} · ${basket.sessionIds.length} ${
+                    isPolish ? 'sesji' : 'sessions'
+                  } · ${isPolish ? `użyto ${basket.usageCount}×` : `used ${basket.usageCount}×`}`,
+                })),
+              ]}
+            />
+          </div>
+          {activeBasket && (
+            <button
+              type="button"
+              onClick={() => startNewLensFromBasket(activeBasket.id)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm shadow-primary-500/30 transition-colors hover:bg-primary-500"
+              title={
+                isPolish
+                  ? 'Użyj tych źródeł i przejdź od razu do wyboru kąta analizy'
+                  : 'Reuse these sources and jump straight to choosing the analysis angle'
+              }
+            >
+              <Sparkles size={14} />
+              {isPolish ? 'Nowy kąt' : 'New lens'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={openSaveBasket}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+          >
+            <Save size={14} />
+            {isPolish ? 'Zapisz jako koszyk' : 'Save as basket'}
+          </button>
+          {activeBasket && (
+            <button
+              type="button"
+              onClick={() => handleDeleteBasket(activeBasket.id)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-rose-600 transition-colors hover:bg-rose-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
+              aria-label={isPolish ? 'Usuń koszyk' : 'Delete basket'}
+              title={isPolish ? 'Usuń koszyk' : 'Delete basket'}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+        {showSaveBasket && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-white/[0.08] dark:bg-navy-900/70">
+            <input
+              type="text"
+              value={basketNameDraft}
+              onChange={(event) => setBasketNameDraft(event.target.value)}
+              placeholder={isPolish ? 'Nazwa koszyka' : 'Basket name'}
+              className="min-w-[200px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder-slate-500 focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
+            />
+            <button
+              type="button"
+              onClick={handleSaveBasket}
+              disabled={isSavingBasket}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-500 disabled:opacity-50"
+            >
+              {isSavingBasket ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              {isPolish ? 'Zapisz' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSaveBasket(false);
+                setBasketNameDraft('');
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+            >
+              {isPolish ? 'Anuluj' : 'Cancel'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Date / role / department filters — live inside the "Filter" disclosure on the
+  // Material step (merged from the old standalone Source step).
+  const renderSourceFiltersBlock = () => (
+    <div className="space-y-4">
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
             {isPolish ? 'Zakres dat materiału' : 'Material date range'}
           </label>
           {(filterDateFrom || filterDateTo) && (
@@ -1441,26 +2103,24 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           )}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <input
-            type="date"
+          <DatePicker
             value={filterDateFrom}
-            onChange={(event) => {
-              const nextFrom = event.target.value;
+            isPolish={isPolish}
+            placeholder={isPolish ? 'Data od' : 'Date from'}
+            onChange={(nextFrom) => {
               setFilterDateFrom(nextFrom);
               setUseDateFilter(Boolean(nextFrom || filterDateTo));
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
             aria-label={isPolish ? 'Data od' : 'Date from'}
           />
-          <input
-            type="date"
+          <DatePicker
             value={filterDateTo}
-            onChange={(event) => {
-              const nextTo = event.target.value;
+            isPolish={isPolish}
+            placeholder={isPolish ? 'Data do' : 'Date to'}
+            onChange={(nextTo) => {
               setFilterDateTo(nextTo);
               setUseDateFilter(Boolean(filterDateFrom || nextTo));
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
             aria-label={isPolish ? 'Data do' : 'Date to'}
           />
         </div>
@@ -1468,8 +2128,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
       <div className="grid gap-3 md:grid-cols-2">
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Rola respondenta' : 'Respondent role'}
             </label>
             {filterRole && (
@@ -1485,28 +2145,23 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               </button>
             )}
           </div>
-          <select
+          <Select
             value={filterRole}
-            onChange={(event) => {
-              const nextRole = event.target.value;
+            onChange={(nextRole) => {
               setFilterRole(nextRole);
               setUseRoleFilter(Boolean(nextRole));
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
             aria-label={isPolish ? 'Filtr roli respondenta' : 'Respondent role filter'}
-          >
-            <option value="">{isPolish ? 'Wszystkie role' : 'All roles'}</option>
-            {roleOptions.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: isPolish ? 'Wszystkie role' : 'All roles' },
+              ...roleOptions.map((role) => ({ value: role, label: role })),
+            ]}
+          />
         </div>
 
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               {isPolish ? 'Dział respondenta' : 'Respondent department'}
             </label>
             {filterDepartment && (
@@ -1522,137 +2177,170 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               </button>
             )}
           </div>
-          <select
+          <Select
             value={filterDepartment}
-            onChange={(event) => {
-              const nextDepartment = event.target.value;
+            onChange={(nextDepartment) => {
               setFilterDepartment(nextDepartment);
               setUseDepartmentFilter(Boolean(nextDepartment));
             }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
             aria-label={isPolish ? 'Filtr działu respondenta' : 'Respondent department filter'}
-          >
-            <option value="">{isPolish ? 'Wszystkie działy' : 'All departments'}</option>
-            {departmentOptions.map((department) => (
-              <option key={department} value={department}>
-                {department}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Wybierz sesje źródłowe' : 'Select source sessions'} *
-          </label>
-          {filteredSessions.length > 0 && (
-            <button
-              type="button"
-              onClick={toggleAllSessions}
-              className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
-            >
-              {filteredSessions.every((session) => selectedSessions.includes(session.id))
-                ? isPolish
-                  ? 'Odznacz wszystkie'
-                  : 'Deselect all'
-                : isPolish
-                  ? 'Zaznacz wszystkie'
-                  : 'Select all'}
-            </button>
-          )}
-        </div>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 size={24} className="animate-spin text-primary-400" />
-          </div>
-        ) : loadError ? (
-          <EmptyStateInline
-            icon={AlertTriangle}
-            dashed={false}
-            message={loadError}
-            hint={isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en}
-            action={{
-              label: isPolish ? 'Ponów' : 'Retry',
-              onClick: retryLoadData,
-            }}
-            className="rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
+            options={[
+              { value: '', label: isPolish ? 'Wszystkie działy' : 'All departments' },
+              ...departmentOptions.map((department) => ({
+                value: department,
+                label: department,
+              })),
+            ]}
           />
-        ) : filteredSessions.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
-            <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">
-              {isPolish
-                ? 'Brak zatwierdzonych i zakończonych sesji'
-                : 'No approved completed sessions'}
-            </p>
-            {(filterTemplate ||
-              filterRespondent ||
-              filterRole ||
-              filterDepartment ||
-              filterDateFrom ||
-              filterDateTo) && (
-              <p className="text-xs mt-1">
-                {isPolish ? 'Spróbuj zmienić filtry' : 'Try changing filters'}
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="max-h-80 space-y-1.5 overflow-auto pr-1">
-            {filteredSessions.map((session) => {
-              const isSelected = selectedSessions.includes(session.id);
-              return (
-                <label
-                  key={session.id}
-                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
-                    isSelected
-                      ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
-                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleSession(session.id)}
-                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {session.name || 'Interview Session'}
-                      <span className="ml-2 font-normal text-slate-500">
-                        {session.answeredQuestions}/{session.totalQuestions}{' '}
-                        {isPolish ? 'pytań' : 'questions'}
-                      </span>
-                      {session.templateName && (
-                        <span className="ml-2 font-normal text-slate-500">
-                          • {session.templateName}
-                        </span>
-                      )}
-                      {session.completedAt && (
-                        <span className="ml-2 font-normal text-slate-500">
-                          • {new Date(session.completedAt).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </label>
-              );
-            })}
-          </div>
-        )}
-
-        <p className="text-xs text-primary-400 mt-2">{selectedSourceSummary}</p>
+        </div>
       </div>
     </div>
   );
 
-  const renderAnalysisStep = () => (
-    <div className="space-y-3">
+  const renderSessionsBlock = () => (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {isPolish ? 'Wybierz sesje źródłowe' : 'Select source sessions'} *
+        </label>
+        {filteredSessions.length > 0 && (
+          <button
+            type="button"
+            onClick={toggleAllSessions}
+            className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
+          >
+            {filteredSessions.every((session) => selectedSessions.includes(session.id))
+              ? isPolish
+                ? 'Odznacz wszystkie'
+                : 'Deselect all'
+              : isPolish
+                ? 'Zaznacz wszystkie'
+                : 'Select all'}
+          </button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <LoadingState variant="spinner" className="py-8" />
+      ) : loadError ? (
+        <EmptyStateInline
+          icon={AlertTriangle}
+          dashed={false}
+          message={loadError}
+          hint={isPolish ? INSIGHT_LOAD_ERROR_HINT.pl : INSIGHT_LOAD_ERROR_HINT.en}
+          action={{
+            label: isPolish ? 'Ponów' : 'Retry',
+            onClick: retryLoadData,
+          }}
+          className="rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
+        />
+      ) : filteredSessions.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
+          <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
+          <p className="text-sm">
+            {isPolish
+              ? 'Brak zatwierdzonych i zakończonych sesji'
+              : 'No approved completed sessions'}
+          </p>
+          {(filterTemplate ||
+            filterRespondent ||
+            filterRole ||
+            filterDepartment ||
+            filterDateFrom ||
+            filterDateTo) && (
+            <p className="text-xs mt-1">
+              {isPolish ? 'Spróbuj zmienić filtry' : 'Try changing filters'}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="max-h-[220px] space-y-1.5 overflow-auto pr-1">
+          {filteredSessions.map((session) => {
+            const isSelected = selectedSessions.includes(session.id);
+            return (
+              <label
+                key={session.id}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
+                  isSelected
+                    ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                    : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleSession(session.id)}
+                  className="sr-only"
+                />
+                <StyledCheck checked={isSelected} />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {session.name || 'Interview Session'}
+                    <span className="ml-2 font-normal text-slate-500">
+                      {session.answeredQuestions}/{session.totalQuestions}{' '}
+                      {isPolish ? 'pytań' : 'questions'}
+                    </span>
+                    {session.templateName && (
+                      <span className="ml-2 font-normal text-slate-500">
+                        • {session.templateName}
+                      </span>
+                    )}
+                    {session.completedAt && (
+                      <span className="ml-2 font-normal text-slate-500">
+                        • {new Date(session.completedAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      )}
+
+      <p className="text-xs text-primary-400 mt-2">{selectedSourceSummary}</p>
+    </div>
+  );
+
+  // Active-filter count for the "Filter" disclosure badge — keeps hidden scoping
+  // choices visible so nothing silently narrows the analysis.
+  const activeFilterCount =
+    selectedRespondents.length +
+    (filterDateFrom ? 1 : 0) +
+    (filterDateTo ? 1 : 0) +
+    (filterRole ? 1 : 0) +
+    (filterDepartment ? 1 : 0);
+
+  const renderMaterialStep = () => (
+    <div className="space-y-5">
+      {renderSourceBasketControl()}
+      {renderSessionsBlock()}
+      <Disclosure
+        icon={SlidersHorizontal}
+        title={isPolish ? 'Filtruj' : 'Filter'}
+        hint={isPolish ? 'osoby, daty, rola, dział' : 'people, dates, role, department'}
+        count={activeFilterCount}
+        open={filtersOpen}
+        onToggle={() => setFiltersOpen((v) => !v)}
+      >
+        {renderPeopleBlock()}
+        {renderSourceFiltersBlock()}
+      </Disclosure>
+    </div>
+  );
+
+  const renderAnalysisBlock = () => (
+    <div className="space-y-4">
       <div>
-        <label className="block text-xs font-medium text-slate-500 mb-1">
+        <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {isPolish ? 'Tryb analizy' : 'Analysis mode'}
+          <InfoHint
+            text={
+              isPolish
+                ? 'Soczewka promptu — określa, jak AI czyta materiał. Możesz wybrać kilka.'
+                : 'Prompt lens — controls how the AI reads the material. You may pick several.'
+            }
+          />
         </label>
         <div className="max-h-56 space-y-1.5 overflow-auto pr-1">
           {ANALYSIS_MODE_OPTIONS.map((mode) => {
@@ -1670,8 +2358,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleAnalysisMode(mode.id)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                  className="sr-only"
                 />
+                <StyledCheck checked={isSelected} className="mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                     {isPolish ? mode.labelPl : mode.labelEn}
@@ -1697,8 +2386,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-xs font-medium text-slate-500">
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
             {isPolish ? 'Zakres tematyczny' : 'Topic focus'}
           </label>
           {selectedTopicFocus.length > 0 && (
@@ -1742,8 +2431,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <div className="mb-2 text-xs font-medium text-slate-500">
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
           {isPolish ? 'Zakres kontekstu AI' : 'AI context boundary'}
+          <InfoHint
+            text={
+              isPolish
+                ? 'Decyduje, czy AI może sięgnąć poza wybrane wywiady do zaakceptowanej wiedzy organizacji.'
+                : 'Decides whether the AI may reach beyond the selected interviews into approved organization knowledge.'
+            }
+          />
         </div>
         <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {[
@@ -1777,6 +2473,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {isPolish ? option.titlePl : option.titleEn}
                 </div>
+                <p className="mt-0.5 line-clamp-2 text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                  {isPolish ? option.hintPl : option.hintEn}
+                </p>
               </button>
             );
           })}
@@ -1785,27 +2484,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     </div>
   );
 
-  const renderContextStep = () => (
-    <div className="space-y-3">
+  const renderContextDetailsBlock = () => (
+    <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          {isPolish ? 'Pytanie prowadzące' : 'Leading question'}
-        </label>
-        <input
-          type="text"
-          value={leadingQuestion}
-          onChange={(event) => setLeadingQuestion(event.target.value)}
-          placeholder={
-            isPolish
-              ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
-              : 'e.g. Where do ownership handoffs most often break?'
-          }
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
           {isPolish ? 'Uwagi' : 'Notes'}
         </label>
         <textarea
@@ -1817,43 +2499,77 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Skup się na różnicach między działem IT a biznesem. Użyj języka polskiego.'
               : 'e.g. Focus on differences between IT and business departments. Use formal language.'
           }
-          className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-            <Paperclip size={14} className="text-slate-400" />
-            <span>
-              {isPolish
-                ? 'Dokumenty (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 plików po 10 MB)'
-                : 'Documents (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 files, 10 MB each)'}
-            </span>
-          </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 transition-colors hover:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-200">
-            <Paperclip size={12} />
+        <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {isPolish ? 'Dokumenty kontekstowe' : 'Context documents'}
+          <InfoHint
+            text={
+              isPolish
+                ? 'Pliki dodają kontekst organizacji/projektu do analizy. Wybierz gotowe dokumenty poniżej, aby AI je uwzględniła.'
+                : 'Files add organization/project context to the analysis. Tick ready documents below so the AI uses them.'
+            }
+          />
+        </div>
+        {/* #28 — Proper drag-and-drop zone */}
+        <label
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (!isUploadingContextDocument) setIsContextDragActive(true);
+          }}
+          onDragLeave={(event) => {
+            event.preventDefault();
+            setIsContextDragActive(false);
+          }}
+          onDrop={(event) => void handleContextDrop(event)}
+          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all ${
+            isContextDragActive
+              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-500/20 dark:bg-primary-500/10'
+              : 'border-slate-300 bg-white hover:border-primary-500/60 hover:bg-primary-50/40 dark:border-white/[0.15] dark:bg-navy-900/60 dark:hover:border-primary-500/40'
+          } ${isUploadingContextDocument ? 'pointer-events-none opacity-70' : ''}`}
+        >
+          {isUploadingContextDocument ? (
+            <Loader2 size={20} className="animate-spin text-primary-500" />
+          ) : (
+            <UploadCloud
+              size={22}
+              className={isContextDragActive ? 'text-primary-500' : 'text-slate-400'}
+            />
+          )}
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
             {isUploadingContextDocument
               ? isPolish
                 ? 'Wysyłanie...'
                 : 'Uploading...'
-              : isPolish
-                ? 'Dodaj pliki'
-                : 'Add files'}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept={CONTEXT_FILE_ACCEPT}
-              onChange={handleContextFileUpload}
-              className="hidden"
-              disabled={isUploadingContextDocument}
-            />
-          </label>
-        </div>
+              : isContextDragActive
+                ? isPolish
+                  ? 'Upuść pliki tutaj'
+                  : 'Drop files here'
+                : isPolish
+                  ? 'Przeciągnij pliki lub kliknij, aby wybrać'
+                  : 'Drag files here or click to browse'}
+          </span>
+          <span className="text-[11px] text-slate-400">
+            {isPolish
+              ? 'TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT · max 5 plików · 10 MB każdy'
+              : 'TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT · max 5 files · 10 MB each'}
+          </span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={CONTEXT_FILE_ACCEPT}
+            onChange={handleContextFileUpload}
+            className="hidden"
+            disabled={isUploadingContextDocument}
+          />
+        </label>
         {isLoadingContextDocuments ? (
           <div className="mt-3 flex items-center justify-center py-6">
-            <Loader2 size={18} className="animate-spin text-slate-400" />
+            <Loader2 size={18} className="animate-spin text-slate-600" />
           </div>
         ) : contextDocuments.length === 0 ? (
           <div className="mt-3 rounded-md border border-dashed border-slate-300 bg-white px-3 py-4 text-xs text-slate-500 dark:border-white/[0.15] dark:bg-navy-900/60">
@@ -1881,8 +2597,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     checked={selected}
                     disabled={disabled}
                     onChange={() => toggleContextDocument(doc)}
-                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/[0.18] dark:bg-navy-900"
+                    className="sr-only"
                   />
+                  <StyledCheck checked={selected} disabled={disabled} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-xs font-medium text-slate-900 dark:text-slate-100">
                       {doc.filename}
@@ -1921,7 +2638,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
           {isPolish ? 'Linki do artefaktów wewnętrznych' : 'Internal artifact links'}
         </label>
         <textarea
@@ -1933,19 +2650,75 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'Wklej po jednym linku lub identyfikatorze artefaktu w linii.'
               : 'Paste one link or artifact identifier per line.'
           }
-          className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
     </div>
   );
 
+  // Active-choice count for the "Advanced" disclosure badge.
+  const advancedCount =
+    selectedTopicFocus.length +
+    selectedContextDocumentIds.length +
+    (customPrompt.trim() ? 1 : 0) +
+    (internalArtifactLinks.trim() ? 1 : 0) +
+    (selectedAnalysisModes.length > 1 ? selectedAnalysisModes.length - 1 : 0);
+
+  const renderRefineStep = () => (
+    <div className="space-y-5">
+      {renderSimilarWarning()}
+      <div className="rounded-xl border border-primary-200/60 bg-primary-50/50 p-3.5 dark:border-primary-500/20 dark:bg-primary-500/[0.07]">
+        <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          {isPolish ? 'Pytanie przewodnie / hipoteza' : 'Leading question / hypothesis'}
+          <InfoHint
+            text={
+              isPolish
+                ? 'Opcjonalne. Skieruj analizę na konkretne pytanie lub hipotezę, którą AI ma sprawdzić.'
+                : 'Optional. Point the analysis at a specific question or hypothesis for the AI to test.'
+            }
+          />
+        </label>
+        <input
+          type="text"
+          value={leadingQuestion}
+          onChange={(event) => setLeadingQuestion(event.target.value)}
+          placeholder={
+            isPolish
+              ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
+              : 'e.g. Where do ownership handoffs most often break?'
+          }
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-100 dark:placeholder-slate-500"
+        />
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'To jedyne pole, którego zwykle potrzebujesz. Reszta poniżej jest opcjonalna.'
+            : 'This is usually the only field you need. Everything below is optional.'}
+        </p>
+      </div>
+
+      <Disclosure
+        icon={SlidersHorizontal}
+        title={isPolish ? 'Zaawansowane' : 'Advanced'}
+        hint={
+          isPolish
+            ? 'soczewka, tematy, kontekst AI, dokumenty'
+            : 'lens, topics, AI context, documents'
+        }
+        count={advancedCount}
+        open={advancedOpen}
+        onToggle={() => setAdvancedOpen((v) => !v)}
+      >
+        {renderAnalysisBlock()}
+        {renderContextDetailsBlock()}
+      </Disclosure>
+    </div>
+  );
+
   const renderCurrentStep = () => {
     const stepId = CREATOR_STEPS[currentStep]?.id;
-    if (stepId === 'goal') return renderGoalStep();
-    if (stepId === 'people') return renderPeopleStep();
-    if (stepId === 'source') return renderSourceStep();
-    if (stepId === 'analysis') return renderAnalysisStep();
-    return renderContextStep();
+    if (stepId === 'define') return renderDefineStep();
+    if (stepId === 'material') return renderMaterialStep();
+    return renderRefineStep();
   };
 
   if (!isOpen) return null;
@@ -1956,7 +2729,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-            <Sparkles size={20} className="text-slate-500 dark:text-slate-400" />
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-crimson-50 text-crimson-700 dark:bg-crimson-500/15 dark:text-crimson-300">
+              <TeresaMark size={16} />
+            </span>
             {isPolish ? 'Kreator Wniosków AI' : 'AI Insight Creator'}
           </h2>
           <button
@@ -1967,64 +2742,66 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           </button>
         </div>
 
-        {renderStepper()}
+        <WizardStepper
+          steps={wizardSteps}
+          activeStepIndex={currentStep}
+          maxReachableIndex={maxReachableIndex}
+          onStepChange={handleStepChange}
+          isPolish={isPolish}
+          accentColor="#3b82f6"
+        />
 
         {/* Content */}
-        <form onSubmit={handleFormSubmit} className="flex-1 space-y-4 overflow-auto p-3">
+        <form onSubmit={handleFormSubmit} className="flex-1 overflow-auto px-6 py-5">
           {renderGlobalLoadError()}
           {renderCurrentStep()}
         </form>
 
         {/* Footer */}
-        <div className="flex shrink-0 gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08]">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isGenerating}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
-          >
+        <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isGenerating}>
             {isPolish ? 'Anuluj' : 'Cancel'}
-          </button>
+          </Button>
           <div className="flex-1" />
           {currentStep > 0 && (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={goToPreviousStep}
               disabled={isGenerating}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
             >
               {isPolish ? 'Wstecz' : 'Back'}
-            </button>
+            </Button>
           )}
           {!isLastStep && (
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={goToNextStep}
               disabled={isGenerating}
-              className="min-w-[150px] rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="min-w-[180px]"
             >
               {isPolish ? 'Dalej' : 'Next'}
-            </button>
+            </Button>
           )}
           {isLastStep && (
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={submitInsight}
               disabled={!canGenerate}
-              className="flex min-w-[150px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+              loading={isGenerating}
+              icon={isGenerating ? undefined : <Sparkles size={16} />}
+              className="min-w-[180px]"
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  {isPolish ? 'Wykonywanie...' : 'Running...'}
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} />
-                  {isPolish ? 'Wykonaj' : 'Run'}
-                </>
-              )}
-            </button>
+              {isGenerating
+                ? isPolish
+                  ? 'Wykonywanie...'
+                  : 'Running...'
+                : isPolish
+                  ? 'Wykonaj'
+                  : 'Run'}
+            </Button>
           )}
         </div>
       </div>

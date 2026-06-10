@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * BudgetTrackingView Component
  *
@@ -256,7 +255,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
   // No initiative selected
   if (!initiativeId) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
+      <div className="flex flex-col items-center justify-center h-full text-slate-600 dark:text-slate-500">
         <DollarSign size={48} className="mb-4 opacity-30" />
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">Budget Tracking</h3>
         <p className="text-sm">Select an initiative to view budget</p>
@@ -276,7 +275,7 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
   // No budget configured
   if (!budget) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
+      <div className="flex flex-col items-center justify-center h-full text-slate-600 dark:text-slate-500">
         <DollarSign size={48} className="mb-4 opacity-30" />
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">
           No Budget Configured
@@ -600,13 +599,13 @@ export const BudgetTrackingView: React.FC<BudgetTrackingViewProps> = ({
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700">
           <h4 className="font-semibold text-navy-900 dark:text-white flex items-center gap-2">
-            <Receipt size={18} className="text-slate-400 dark:text-slate-500" />
+            <Receipt size={18} className="text-slate-600 dark:text-slate-500" />
             Recent Transactions
           </h4>
         </div>
-        <div className="divide-y divide-slate-100 dark:divide-white/5 max-h-64 overflow-y-auto">
+        <div className="divide-y divide-slate-200 dark:divide-white/5 max-h-64 overflow-y-auto">
           {budget.transactions.length === 0 ? (
-            <div className="p-6 text-center text-slate-400 dark:text-slate-500">
+            <div className="p-6 text-center text-slate-600 dark:text-slate-500">
               No transactions recorded yet
             </div>
           ) : (

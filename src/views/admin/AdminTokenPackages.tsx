@@ -108,7 +108,7 @@ export const AdminTokenPackages = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
                   Package Name
                 </label>
                 <input
@@ -121,7 +121,7 @@ export const AdminTokenPackages = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
                   Stripe Price ID
                 </label>
                 <input
@@ -135,7 +135,7 @@ export const AdminTokenPackages = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
                   Tokens Amount
                 </label>
                 <div className="relative">
@@ -150,7 +150,7 @@ export const AdminTokenPackages = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
                   Price (USD)
                 </label>
                 <div className="relative">
@@ -168,7 +168,7 @@ export const AdminTokenPackages = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
                   Bonus Tokens (%)
                 </label>
                 <input
@@ -179,7 +179,7 @@ export const AdminTokenPackages = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1.5 uppercase tracking-wider">
                   Sort Order
                 </label>
                 <input
@@ -276,17 +276,17 @@ export const AdminTokenPackages = () => {
 
               <div className="space-y-3 mb-6">
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-slate-400 dark:text-slate-500">Tokens</span>
+                  <span className="text-slate-600 dark:text-slate-500">Tokens</span>
                   <span className="text-white font-mono">{pkg.tokens.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-slate-400 dark:text-slate-500">Total Value</span>
+                  <span className="text-slate-600 dark:text-slate-500">Total Value</span>
                   <span className="text-emerald-400 font-mono font-medium">
                     {(pkg.tokens * (1 + pkg.bonus_percent / 100)).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-2 border-b border-white/5">
-                  <span className="text-slate-400 dark:text-slate-500">Sort Order</span>
+                  <span className="text-slate-600 dark:text-slate-500">Sort Order</span>
                   <span className="text-slate-500 dark:text-slate-400">#{pkg.sort_order}</span>
                 </div>
               </div>

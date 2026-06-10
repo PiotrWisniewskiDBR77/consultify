@@ -241,7 +241,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             <div className="text-lg font-bold text-slate-900 dark:text-white">
               {formatCurrency(initSummary.planned.total, initSummary.currency)}
             </div>
-            <div className="flex gap-3 mt-1 text-xs text-slate-400">
+            <div className="flex gap-3 mt-1 text-xs text-slate-600">
               <span>CAPEX: {formatCurrency(initSummary.planned.capex, initSummary.currency)}</span>
               <span>OPEX: {formatCurrency(initSummary.planned.opex, initSummary.currency)}</span>
             </div>
@@ -253,7 +253,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             <div className={`text-lg font-bold ${style.text}`}>
               {formatCurrency(initSummary.actual.total, initSummary.currency)}
             </div>
-            <div className="flex gap-3 mt-1 text-xs text-slate-400">
+            <div className="flex gap-3 mt-1 text-xs text-slate-600">
               <span>CAPEX: {formatCurrency(initSummary.actual.capex, initSummary.currency)}</span>
               <span>OPEX: {formatCurrency(initSummary.actual.opex, initSummary.currency)}</span>
             </div>
@@ -280,7 +280,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
               style={{ width: `${Math.min(initSummary.burnRate, 100)}%` }}
             />
           </div>
-          <div className="flex justify-between mt-1 text-[10px] text-slate-400">
+          <div className="flex justify-between mt-1 text-[10px] text-slate-600">
             <span>0%</span>
             <span className="text-amber-400">80%</span>
             <span className="text-rose-400">100%</span>
@@ -318,7 +318,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAddEntry(false)}
-                className="text-slate-400 hover:text-slate-300"
+                className="text-slate-600 hover:text-slate-300"
               >
                 <X size={14} />
               </button>
@@ -374,7 +374,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
 
   if (effectiveLoading) {
     return (
-      <div className="flex items-center justify-center h-32 text-slate-400 text-sm">
+      <div className="flex items-center justify-center h-32 text-slate-600 text-sm">
         {t('execution.budget.loading')}
       </div>
     );
@@ -382,7 +382,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
 
   if (!portfolio) {
     return (
-      <div className="flex items-center justify-center h-32 text-slate-400">
+      <div className="flex items-center justify-center h-32 text-slate-600">
         <div className="text-center">
           <DollarSign className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">{t('execution.budget.noData')}</p>
@@ -529,13 +529,13 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                     />
                   </div>
                   {isExpanded ? (
-                    <ChevronUp size={12} className="text-slate-400" />
+                    <ChevronUp size={12} className="text-slate-600" />
                   ) : (
-                    <ChevronDown size={12} className="text-slate-400" />
+                    <ChevronDown size={12} className="text-slate-600" />
                   )}
                 </button>
                 {isExpanded && (
-                  <div className="px-3 pb-3 border-t border-slate-100 dark:border-navy-700/50 pt-2 grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="px-3 pb-3 border-t border-slate-200 dark:border-navy-700/50 pt-2 grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <div>
                       <span className="block text-[10px] uppercase opacity-70">
                         {t('execution.budget.planned')}

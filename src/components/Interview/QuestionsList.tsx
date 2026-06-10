@@ -8,10 +8,8 @@
  * - Tags (risk, opportunity)
  * - Owner (who answered)
  */
-
 import {
   AlertTriangle,
-  Bot,
   Check,
   CheckCircle,
   ChevronRight,
@@ -41,9 +39,11 @@ import {
   PreviewMetaCard,
 } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
 
+import TeresaMark from '../shared/TeresaMark';
 import type { InterviewCategory } from './CategorySidebar';
 
 // Types
@@ -84,7 +84,7 @@ export interface InterviewQuestion {
 export interface QuestionsListProps {
   questions: InterviewQuestion[];
   category: InterviewCategory | undefined;
-  runtimeMode?: 'single_question' | 'task_list';
+  runtimeMode?: 'single_question' | 'task_list' | 'conversational';
   onUpdateQuestion: (questionId: string, updates: Partial<InterviewQuestion>) => Promise<void>;
   onAddQuestion: (category: InterviewCategory, questionText: string) => Promise<void>;
   isLoading?: boolean;
@@ -106,7 +106,7 @@ const STATUS_CONFIG: Record<
     labelEn: 'Not started',
     labelPl: 'Nie rozpoczęte',
     icon: Circle,
-    color: 'text-slate-400',
+    color: 'text-slate-600',
     bgColor: 'bg-slate-100 dark:bg-slate-800',
   },
   in_progress: {
@@ -554,11 +554,7 @@ Rules:
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-48 py-0" />;
   }
 
   return (
@@ -799,7 +795,7 @@ Rules:
                           </div>
                         )}
 
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
                           <Sparkles size={12} />
                           <span>
                             {isPolish
@@ -822,7 +818,7 @@ Rules:
                             <div className="whitespace-pre-wrap">{item.answerText}</div>
                             {item.notes && (
                               <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-navy-700/50">
-                                <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                                <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
                                   {isPolish ? 'Notatki' : 'Notes'}
                                 </span>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 whitespace-pre-wrap">
@@ -844,7 +840,7 @@ Rules:
                   </div>
 
                   {item.answeredBy && item.answeredAt && (
-                    <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
                       <User size={12} />
                       <span>{item.answeredBy}</span>
                       <span>•</span>
@@ -1019,7 +1015,7 @@ Rules:
                                   className={
                                     question.confidenceScore >= score
                                       ? 'text-amber-400 fill-amber-400'
-                                      : 'text-slate-300 dark:text-slate-600'
+                                      : 'text-slate-600 dark:text-slate-400'
                                   }
                                 />
                               ))}
@@ -1040,13 +1036,13 @@ Rules:
                                   ) : null;
                                 })}
                                 {question.tags.length > 2 && (
-                                  <span className="text-[11px] text-slate-400">
+                                  <span className="text-[11px] text-slate-600">
                                     +{question.tags.length - 2}
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                              <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
                             )}
                           </td>
                           <td className="px-4 py-3">
@@ -1083,7 +1079,7 @@ Rules:
                                   className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
                                   title={isPolish ? 'Tagi' : 'Tags'}
                                 >
-                                  <Tag size={14} className="text-slate-400" />
+                                  <Tag size={14} className="text-slate-600" />
                                 </button>
                                 {renderTagMenu(question)}
                               </div>
@@ -1094,7 +1090,7 @@ Rules:
                               >
                                 <ChevronRight
                                   size={16}
-                                  className={`text-slate-400 transition-transform ${
+                                  className={`text-slate-600 transition-transform ${
                                     isSelected ? 'rotate-90' : ''
                                   }`}
                                 />
@@ -1116,12 +1112,12 @@ Rules:
       {categoryQuestions.length === 0 && !showNewQuestion && (
         <div className="flex flex-col items-center justify-center py-8 text-center bg-slate-50/50 dark:bg-navy-950/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700">
           <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-4">
-            <MessageSquare className="w-7 h-7 text-slate-400 dark:text-slate-500" />
+            <MessageSquare className="w-7 h-7 text-slate-600 dark:text-slate-500" />
           </div>
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
             {isPolish ? 'Brak pytań w tej kategorii' : 'No questions in this category'}
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4 max-w-xs">
+          <p className="text-xs text-slate-600 dark:text-slate-500 mb-4 max-w-xs">
             {isPolish
               ? "Pytania pojawią się po przypisaniu template'u lub możesz dodać własne pytania"
               : 'Questions will appear after assigning a template, or you can add custom questions'}
@@ -1226,7 +1222,7 @@ Rules:
             {/* Header */}
             <div className="p-4 bg-white dark:bg-navy-900 flex justify-between items-center text-slate-900 dark:text-white border-b border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-2">
-                <Bot size={18} />
+                <TeresaMark size={18} />
                 <div className="min-w-0">
                   <div className="font-semibold text-sm truncate">
                     {isPolish ? 'Czat do pytania' : 'Chat for question'}
@@ -1259,7 +1255,7 @@ Rules:
                     {m.role === 'user' ? (
                       <User size={12} className="text-slate-600 dark:text-slate-300" />
                     ) : (
-                      <Bot size={12} className="text-white" />
+                      <TeresaMark size={12} className="text-white" />
                     )}
                   </div>
                   <div
@@ -1277,9 +1273,9 @@ Rules:
               {chatLoading && (
                 <div className="flex gap-2">
                   <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center shrink-0">
-                    <Bot size={12} className="text-white" />
+                    <TeresaMark size={12} className="text-white" />
                   </div>
-                  <div className="px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-sm text-slate-400">
+                  <div className="px-3 py-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-sm text-slate-600">
                     {isPolish ? 'Piszę...' : 'Typing...'}
                   </div>
                 </div>

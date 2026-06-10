@@ -30,6 +30,7 @@ import {
   SuperAdminSidebar,
 } from '../../components/layout/SuperAdminSidebar';
 import { UserProfileMenu } from '../../components/layout/UserProfileMenu';
+import { DesktopOnlyGuard } from '../../components/shared/DesktopOnlyGuard';
 import { SuperAdminSignalCenter } from '../../components/SuperAdmin/SuperAdminSignalCenter';
 import { SuperAdminStatusIndicators } from '../../components/SuperAdmin/SuperAdminStatusIndicators';
 import { getRouteFromAppView } from '../../routes/routeConfig';
@@ -248,60 +249,64 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
   };
 
   return (
-    <div className="flex h-screen bg-slate-100 dark:bg-navy-950 text-slate-900 dark:text-white overflow-hidden">
-      {/* Sidebar (Fixed Position) */}
-      <SuperAdminSidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        onLogout={handleLogout}
-        currentUserEmail={currentUser.email}
-      />
+    <DesktopOnlyGuard moduleName="Panel Super Admina">
+      <div className="flex h-screen bg-slate-100 dark:bg-navy-950 text-slate-900 dark:text-white overflow-hidden">
+        {/* Sidebar (Fixed Position) */}
+        <SuperAdminSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          onLogout={handleLogout}
+          currentUserEmail={currentUser.email}
+        />
 
-      {/* Main Content Area */}
-      <div
-        className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ${
-          isSidebarCollapsed ? 'pl-16' : 'pl-72'
-        }`}
-      >
-        {/* SuperAdmin Dedicated Header */}
-        <header className="h-14 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between px-4 shrink-0 shadow-sm relative z-50">
-          {/* Left side - Branding + Status Indicators */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-              <Shield size={20} />
-              <span className="font-semibold text-sm hidden sm:inline">Super Admin Console</span>
+        {/* Main Content Area */}
+        <div
+          className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ${
+            isSidebarCollapsed ? 'pl-16' : 'pl-72'
+          }`}
+        >
+          {/* SuperAdmin Dedicated Header */}
+          <header className="h-14 bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between px-4 shrink-0 shadow-sm relative z-50">
+            {/* Left side - Branding + Status Indicators */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                <Shield size={20} />
+                <span className="font-semibold text-sm hidden sm:inline">Super Admin Console</span>
+              </div>
+              <div className="h-5 w-px bg-slate-200 dark:bg-white/10" />
+              <SuperAdminStatusIndicators />
             </div>
-            <div className="h-5 w-px bg-slate-200 dark:bg-white/10" />
-            <SuperAdminStatusIndicators />
+
+            {/* Right side - Signal Center + Profile */}
+            <div className="flex items-center gap-3">
+              <SuperAdminSignalCenter />
+              <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />
+              <UserProfileMenu showName={true} />
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">
+            {renderContent()}
+          </main>
+        </div>
+
+        {/* Floating Action Buttons - Order: Help, Feedback, Docs */}
+        <div className="fixed right-0 top-[70%] z-50 flex flex-col gap-2 items-end pointer-events-none">
+          <div className="pointer-events-auto">
+            <HelpToggleButton />
           </div>
-
-          {/* Right side - Signal Center + Profile */}
-          <div className="flex items-center gap-3">
-            <SuperAdminSignalCenter />
-            <div className="h-6 w-px bg-slate-200 dark:bg-white/10" />
-            <UserProfileMenu showName={true} />
+          <div className="pointer-events-auto">
+            <FeedbackToggleButton />
           </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">{renderContent()}</main>
+          <div className="pointer-events-auto">
+            <DocumentToggleButton />
+          </div>
+        </div>
+        <HelpSidePanel />
+        <DocumentSidePanel />
+        <FeedbackSidePanel />
       </div>
-
-      {/* Floating Action Buttons - Order: Help, Feedback, Docs */}
-      <div className="fixed right-0 top-[70%] z-50 flex flex-col gap-2 items-end pointer-events-none">
-        <div className="pointer-events-auto">
-          <HelpToggleButton />
-        </div>
-        <div className="pointer-events-auto">
-          <FeedbackToggleButton />
-        </div>
-        <div className="pointer-events-auto">
-          <DocumentToggleButton />
-        </div>
-      </div>
-      <HelpSidePanel />
-      <DocumentSidePanel />
-      <FeedbackSidePanel />
-    </div>
+    </DesktopOnlyGuard>
   );
 };

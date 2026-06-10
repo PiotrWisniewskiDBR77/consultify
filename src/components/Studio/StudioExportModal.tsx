@@ -127,7 +127,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
         <div className="p-4 space-y-4">
           {/* Format Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm font-medium text-slate-600 dark:text-slate-500 mb-2">
               Format
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -145,12 +145,12 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                                     `}
                 >
                   <div
-                    className={`mx-auto mb-2 ${format === f.id ? 'text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}
+                    className={`mx-auto mb-2 ${format === f.id ? 'text-blue-400' : 'text-slate-600 dark:text-slate-500'}`}
                   >
                     {f.icon}
                   </div>
                   <div
-                    className={`text-xs font-medium ${format === f.id ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`}
+                    className={`text-xs font-medium ${format === f.id ? 'text-white' : 'text-slate-600 dark:text-slate-500'}`}
                   >
                     {f.label}
                   </div>
@@ -164,7 +164,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
             <>
               {/* Background */}
               <div className="flex items-center justify-between">
-                <label className="text-sm text-slate-400 dark:text-slate-500">
+                <label className="text-sm text-slate-600 dark:text-slate-500">
                   Include background
                 </label>
                 <button
@@ -186,7 +186,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
               {/* Quality (PNG only) */}
               {format === 'png' && (
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                     Quality
                   </label>
                   <div className="flex gap-2">
@@ -199,7 +199,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
                                                     ${
                                                       quality === q
                                                         ? 'bg-blue-500 text-white'
-                                                        : 'bg-white/5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                                                        : 'bg-white/5 text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'
                                                     }
                                                 `}
                       >
@@ -217,7 +217,7 @@ export const StudioExportModal: React.FC<StudioExportModalProps> = ({
         <div className="flex items-center justify-end gap-3 p-4 border-t border-white/10">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+            className="px-4 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
           >
             Cancel
           </button>

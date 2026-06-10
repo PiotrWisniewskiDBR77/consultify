@@ -1,9 +1,12 @@
 import {
+  Archive,
   CheckCircle,
+  ChevronRight,
   Copy,
   Download,
   Eye,
   MessageCircle,
+  Pencil,
   RefreshCw,
   Trash2,
   TrendingUp,
@@ -69,6 +72,8 @@ async function getModelDetailWithFallback(modelId: string) {
 
 interface UseFinanceRowActionsParams {
   handleOpenFull: (row: FinanceRow) => void;
+  /** Opens the side preview pane for the row (canon §9.2 "Otwórz podgląd"). */
+  handleOpenPreview?: (row: FinanceRow) => void;
   handleExport: (row: FinanceRow) => void;
   handleOpenEntityChat?: (row: FinanceRow) => void;
   handleCreateModelFromStatement: (row: FinanceStatementRow) => void;
@@ -86,6 +91,7 @@ interface UseFinanceRowActionsParams {
 
 export function useFinanceRowActions({
   handleOpenFull,
+  handleOpenPreview,
   handleExport,
   handleOpenEntityChat,
   handleCreateModelFromStatement,
@@ -253,13 +259,8 @@ export function useFinanceRowActions({
 
   const getRowActions = useCallback(
     (row: FinanceRow): RowAction[] => {
-      const common: RowAction[] = [
-        {
-          id: 'open',
-          label: t('common.open', 'Otwórz'),
-          icon: Eye,
-          onClick: () => handleOpenFull(row),
-        },
+      // Contextual extras (chat / duplicate / export) — sit ABOVE the fixed manifest.
+      const contextExtras: RowAction[] = [
         ...(handleOpenEntityChat
           ? [
               {
@@ -295,6 +296,34 @@ export function useFinanceRowActions({
             ]
           : []),
       ];
+
+      // Fixed Bottom Manifest (canon §9.2): Otwórz podgląd → Edytuj → Archiwizuj.
+      // Finance rows have no due_date, so the Delay slot is correctly omitted.
+      const manifest: RowAction[] = [
+        {
+          id: 'preview',
+          label: t('common.openPreview', 'Otwórz podgląd'),
+          icon: ChevronRight,
+          divider: true,
+          onClick: () => (handleOpenPreview ?? handleOpenFull)(row),
+        },
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edytuj'),
+          icon: Pencil,
+          onClick: () => handleOpenFull(row),
+        },
+        {
+          id: 'archive',
+          label: t('common.archive', 'Archiwizuj'),
+          icon: Archive,
+          disabled: true,
+          description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+          onClick: () => undefined,
+        },
+      ];
+
+      const common: RowAction[] = [...contextExtras, ...manifest];
 
       const tabSpecific: RowAction[] = [];
 

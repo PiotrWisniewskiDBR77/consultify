@@ -7,7 +7,7 @@
  * AC (A2, A3, A6): Row actions as "⋯" or dropdown; always readable.
  */
 
-import { MoreHorizontal, MoreVertical } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal, MoreVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -23,6 +23,9 @@ export interface RowAction {
   rightLabel?: string;
   /** If true, shows a divider above this action */
   divider?: boolean;
+  /** Optional inline sub-menu (e.g. Delay ▸ +1/+3/+7). Clicking the parent
+   *  expands these items inline instead of firing onClick. */
+  submenu?: RowAction[];
 }
 
 export type RowActionSectionKind =
@@ -60,12 +63,14 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   iconVariant = 'vertical',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const [panelPos, setPanelPos] = useState<{
     top: number;
-    left: number;
+    right: number;
+    maxWidth: number;
     placement: 'top' | 'bottom';
   } | null>(null);
 
@@ -79,6 +84,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
     if (!isOpen) {
       setAnchorRect(null);
       setPanelPos(null);
+      setExpandedId(null);
       return;
     }
 
@@ -98,6 +104,9 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   }, [isOpen]);
 
   // Position panel (fixed) so it won't be clipped by overflow containers.
+  // Right-anchored to the button's right edge via CSS `right` — robust to panel width
+  // (no width measurement, which mis-fired on first paint and detached the menu). A
+  // ResizeObserver re-runs once the panel settles, so height-based flip is also correct.
   useLayoutEffect(() => {
     if (!isOpen) return;
     if (!anchorRect) return;
@@ -106,22 +115,33 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
 
     const margin = 8;
     const gap = 6; // matches mt-1 (~4px) + a bit of breathing room
-    const panelWidth = panel.offsetWidth || 160;
-    const panelHeight = panel.offsetHeight || 200;
 
-    const canOpenDown = anchorRect.bottom + gap + panelHeight <= window.innerHeight - margin;
-    const canOpenUp = anchorRect.top - gap - panelHeight >= margin;
-    const placement: 'top' | 'bottom' = !canOpenDown && canOpenUp ? 'top' : 'bottom';
+    const reposition = () => {
+      const p = panelRef.current;
+      if (!p) return;
+      const panelHeight = p.offsetHeight || 200;
 
-    const top =
-      placement === 'bottom'
-        ? Math.min(window.innerHeight - margin - panelHeight, anchorRect.bottom + gap)
-        : Math.max(margin, anchorRect.top - gap - panelHeight);
+      const canOpenDown = anchorRect.bottom + gap + panelHeight <= window.innerHeight - margin;
+      const canOpenUp = anchorRect.top - gap - panelHeight >= margin;
+      const placement: 'top' | 'bottom' = !canOpenDown && canOpenUp ? 'top' : 'bottom';
 
-    const desiredLeft = anchorRect.right - panelWidth;
-    const left = Math.max(margin, Math.min(desiredLeft, window.innerWidth - margin - panelWidth));
+      const top =
+        placement === 'bottom'
+          ? Math.min(window.innerHeight - margin - panelHeight, anchorRect.bottom + gap)
+          : Math.max(margin, anchorRect.top - gap - panelHeight);
 
-    setPanelPos({ top, left, placement });
+      // Anchor the panel's RIGHT edge to the button's right edge. The panel grows leftward,
+      // so its width never affects horizontal placement. Clamp width so it can't overflow left.
+      const right = Math.max(margin, Math.round(window.innerWidth - anchorRect.right));
+      const maxWidth = Math.max(160, Math.round(anchorRect.right - margin));
+
+      setPanelPos({ top, right, maxWidth, placement });
+    };
+
+    reposition();
+    const ro = new ResizeObserver(reposition);
+    ro.observe(panel);
+    return () => ro.disconnect();
   }, [isOpen, anchorRect]);
 
   // Close on Escape
@@ -173,7 +193,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className={`${buttonPadding} rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors`}
+        className={`${buttonPadding} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors`}
         title="Actions"
         aria-label="Row actions"
         aria-expanded={isOpen}
@@ -200,10 +220,11 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                 panelPos
                   ? {
                       top: panelPos.top,
-                      left: panelPos.left,
+                      right: panelPos.right,
+                      maxWidth: panelPos.maxWidth,
                       transformOrigin: panelPos.placement === 'top' ? 'bottom right' : 'top right',
                     }
-                  : { top: -9999, left: -9999 }
+                  : { top: -9999, right: -9999 }
               }
               onClick={(e) => {
                 // Prevent row click/selection from firing behind the menu.
@@ -217,12 +238,14 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                       <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
                     )}
                     {section.label ? (
-                      <div className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      <div className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                         {section.label}
                       </div>
                     ) : null}
                     {section.actions.map((action) => {
                       const Icon = action.icon;
+                      const hasSub = !!action.submenu?.length;
+                      const expanded = expandedId === action.id;
                       return (
                         <React.Fragment key={action.id}>
                           {action.divider && (
@@ -232,19 +255,24 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                             onClick={(e) => {
                               e.stopPropagation();
                               if (action.disabled) return;
+                              if (hasSub) {
+                                setExpandedId((prev) => (prev === action.id ? null : action.id));
+                                return;
+                              }
                               action.onClick();
                               setIsOpen(false);
                             }}
                             disabled={action.disabled}
                             className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[action.variant || 'default']}`}
                             role="menuitem"
+                            aria-expanded={hasSub ? expanded : undefined}
                             title={action.description}
                           >
                             {Icon && <Icon size={14} className="shrink-0" />}
                             <span className="min-w-0 flex-1">
                               <span className="block truncate">{action.label}</span>
                               {action.description ? (
-                                <span className="mt-0.5 block truncate text-[10px] font-normal text-slate-400 dark:text-slate-500">
+                                <span className="mt-0.5 block truncate text-[10px] font-normal text-slate-600 dark:text-slate-500">
                                   {action.description}
                                 </span>
                               ) : null}
@@ -254,7 +282,36 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                                 {action.rightLabel}
                               </span>
                             ) : null}
+                            {hasSub ? (
+                              expanded ? (
+                                <ChevronDown size={13} className="shrink-0 opacity-60" />
+                              ) : (
+                                <ChevronRight size={13} className="shrink-0 opacity-60" />
+                              )
+                            ) : null}
                           </button>
+                          {hasSub && expanded
+                            ? action.submenu!.map((sub) => {
+                                const SubIcon = sub.icon;
+                                return (
+                                  <button
+                                    key={sub.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (sub.disabled) return;
+                                      sub.onClick();
+                                      setIsOpen(false);
+                                    }}
+                                    disabled={sub.disabled}
+                                    className={`w-full flex items-center gap-2 py-1.5 pl-8 pr-3 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[sub.variant || 'default']}`}
+                                    role="menuitem"
+                                  >
+                                    {SubIcon && <SubIcon size={13} className="shrink-0" />}
+                                    <span className="min-w-0 flex-1 truncate">{sub.label}</span>
+                                  </button>
+                                );
+                              })
+                            : null}
                         </React.Fragment>
                       );
                     })}

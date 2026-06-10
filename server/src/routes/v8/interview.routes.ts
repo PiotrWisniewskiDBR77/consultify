@@ -18,7 +18,7 @@ import {
   loadManagedInterviewSessionsForManager,
 } from '../../controllers/InterviewController.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { requirePermission } from '../../middleware/permission.middleware.js';
+import { requireAnyPermission, requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   getManagedAssignments,
@@ -194,6 +194,9 @@ router.get(
  */
 router.get(
   '/sessions/accepted',
+  // V-A S1 — mirror the legacy gate (interview.routes.ts:64-68). These are
+  // manager-scoped reads; the V8 path had dropped the capability gate.
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const sessions = await loadAcceptedInterviewSessionsForManager(organizationId, userId);
@@ -203,6 +206,7 @@ router.get(
 
 router.get(
   '/sessions/managed',
+  requireAnyPermission(['INTERVIEW_ASSIGN_VIEW', 'INTERVIEW_ASSIGN_MANAGE']),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId, userRole } = getV8Context(req);
     const scope = await resolveInterviewManagerScope({
@@ -347,23 +351,41 @@ router.get(
   })
 );
 
+// V-A S1 — restore the function-level authorization the legacy /api/interview
+// stack enforces but the V8 production path dropped. Mirror the legacy gates
+// exactly (interview.routes.ts:104-161):
+//   start / submit  → no permission gate; the controller validates the caller
+//                     is the assignee (assignee acts on their own assignment).
+//   remind          → INTERVIEW_REMIND
+//   send-back/approve → INTERVIEW_ASSIGN_MANAGE  (manager-only)
+// Without these, any authenticated org member could approve/send-back any
+// submitted assignment in their org (intra-org privilege escalation).
 router.post('/assignments/:id/start', v8Wrap(InterviewController.startAssignment, interviewMeta));
 
 router.post('/assignments/:id/submit', v8Wrap(InterviewController.submitAssignment, interviewMeta));
 
 router.post(
   '/assignments/:id/remind',
+  requirePermission('INTERVIEW_REMIND'),
   v8Wrap(InterviewController.sendAssignmentReminder, interviewMeta)
 );
 
 router.post(
   '/assignments/:id/send-back',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   v8Wrap(InterviewController.sendBackAssignment, interviewMeta)
 );
 
 router.post(
   '/assignments/:id/approve',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
   v8Wrap(InterviewController.approveAssignment, interviewMeta)
+);
+
+router.patch(
+  '/assignments/:id/manage',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  v8Wrap(InterviewController.updateAssignment, interviewMeta)
 );
 
 router.post(
@@ -511,6 +533,199 @@ router.get(
     }
 
     return res.json({ data: { insight }, meta: insightReadMeta() });
+  })
+);
+
+/**
+ * PATCH /api/v8/interview/insights/:id
+ * Update insight — supports sectionCompletions (Mark Complete), title, status, archived.
+ * Mirrors InterviewController.updateInsight but registered in the v8 namespace so
+ * that v8Patch('/interview/insights/:id') reaches a real route (without this the
+ * request fell through the v8 router without matching → 503 Vite proxy timeout).
+ */
+router.patch(
+  '/insights/:id',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { id } = req.params;
+    const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } =
+      req.body || {};
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const insight = await interviewInsightService.getById(id);
+    if (!insight) {
+      return res
+        .status(404)
+        .json({ data: null, error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(insight.organizationId) !== String(organizationId)) {
+      return res
+        .status(403)
+        .json({ data: null, error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (typeof title === 'string') {
+      updates.push('title = ?');
+      values.push(title.trim());
+    }
+    if (status !== undefined) {
+      updates.push('status = ?');
+      values.push(status);
+    }
+    if (exportedToTools !== undefined) {
+      updates.push('exported_to_tools = ?');
+      values.push(exportedToTools ? 1 : 0);
+    }
+    if (exportedToAssessment !== undefined) {
+      updates.push('exported_to_assessment = ?');
+      values.push(exportedToAssessment ? 1 : 0);
+    }
+    if (archived !== undefined) {
+      // Ensure lifecycle columns exist (lazy-ALTER via IF NOT EXISTS — fast, idempotent).
+      try {
+        await queryHelpers.queryRun(
+          `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP`
+        );
+        await queryHelpers.queryRun(
+          `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS archived_by TEXT`
+        );
+      } catch {
+        /* column already exists */
+      }
+      updates.push('archived_at = ?', 'archived_by = ?');
+      values.push(
+        archived ? new Date().toISOString() : null,
+        archived ? (req as any).userId || organizationId : null
+      );
+    }
+    if (sectionCompletions !== undefined && sectionCompletions !== null) {
+      // Use pg_attribute (no table-lock) to check column existence, then ALTER only if missing.
+      try {
+        const rows = await queryHelpers.queryAll<{ attname: string }>(
+          `SELECT attname FROM pg_attribute
+           WHERE attrelid = 'interview_insights'::regclass
+             AND attname = 'section_completions'
+             AND attnum > 0 AND NOT attisdropped`,
+          []
+        );
+        if (!rows || rows.length === 0) {
+          await queryHelpers.queryRun(
+            `ALTER TABLE interview_insights ADD COLUMN section_completions TEXT`
+          );
+        }
+      } catch {
+        /* best-effort */
+      }
+      updates.push('section_completions = ?');
+      values.push(
+        typeof sectionCompletions === 'string'
+          ? sectionCompletions
+          : JSON.stringify(sectionCompletions)
+      );
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ data: null, error: 'No fields to update' });
+    }
+
+    updates.push('updated_at = ?');
+    values.push(new Date().toISOString());
+    values.push(id);
+    values.push(organizationId);
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_insights SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      values
+    );
+
+    return res.json({ data: { success: true }, meta: insightMutationMeta() });
+  })
+);
+
+/**
+ * POST /api/v8/interview/insights/:id/fork
+ * Duplicate an existing insight into a brand-new record. Copies the source
+ * insight's defining fields (title → "<title> (Fork)", promptType,
+ * sourceSessionIds, filters, analysisScope/mode/contextMode/topicFocus) into a
+ * fresh `create()` so the new insight gets its own generated id, then carries
+ * over the source's content + status so the fork is immediately usable (rather
+ * than re-running generation from scratch). Derived analysis JSON (themes,
+ * issues, evidence map, material quality, etc.) is intentionally not copied —
+ * the fork keeps the rendered `content` + `status` and can be regenerated.
+ */
+router.post(
+  '/insights/:id/fork',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { id } = req.params;
+
+    const interviewInsightService = await import('../../services/InterviewInsightService.js');
+    const source = await interviewInsightService.getById(id);
+    if (!source) {
+      return res
+        .status(404)
+        .json({ data: null, error: 'Insight not found', code: 'INTERVIEW_INSIGHT_NOT_FOUND' });
+    }
+    if (String(source.organizationId) !== String(organizationId)) {
+      return res
+        .status(403)
+        .json({ data: null, error: 'Forbidden', code: 'INTERVIEW_INSIGHT_FORBIDDEN' });
+    }
+
+    const forkTitle = `${String(source.title || 'Interview Insight').trim()} (Fork)`;
+    const created = await interviewInsightService.create({
+      organizationId: String(source.organizationId),
+      title: forkTitle,
+      sessionIds: Array.isArray(source.sourceSessionIds) ? source.sourceSessionIds : [],
+      promptType: source.promptType,
+      filters: source.filters as any,
+      analysisScope: source.analysisScope,
+      analysisMode: source.analysisMode,
+      contextMode: source.contextMode,
+      topicFocus: source.topicFocus,
+      createdBy: userId,
+    });
+
+    // Carry over the rendered content + lifecycle status from the source so the
+    // fork is usable immediately. `create()` starts a fresh generation pass and
+    // sets status='generating'; overwrite that with the source's values.
+    try {
+      await queryHelpers.queryRun(
+        `UPDATE interview_insights
+         SET content = ?, status = ?, updated_at = ?
+         WHERE id = ? AND organization_id = ?`,
+        [
+          source.content ?? null,
+          source.status,
+          new Date().toISOString(),
+          created.id,
+          organizationId,
+        ]
+      );
+    } catch (e) {
+      logger.warn(
+        `[V8 Interview] Fork content carry-over for insight ${created.id} skipped: ${String(
+          (e as Error)?.message || e
+        )}`
+      );
+    }
+
+    const insight = (await interviewInsightService.getById(created.id)) ?? created;
+
+    void logInsightActivity({
+      organizationId,
+      insightId: insight.id,
+      type: 'created',
+      description: `Insight forked from ${id}`,
+      userId,
+    });
+
+    return res.json({ data: { insight }, meta: insightMutationMeta() });
   })
 );
 
@@ -1011,9 +1226,14 @@ router.post(
 
     if (!normalizedTitle) {
       try {
+        // Scope the title lookup by org as well. The id is already validated to
+        // belong to this org via `approvedRows` above, but adding the explicit
+        // organization_id guard keeps this defensive and mirrors sibling
+        // queries (so a future refactor of the validation can't turn this into
+        // a cross-org name leak).
         const sessionRow = await queryHelpers.queryOne(
-          `SELECT name FROM interview_sessions WHERE id = ?`,
-          [normalizedSessionIds[0]]
+          `SELECT name FROM interview_sessions WHERE id = ? AND organization_id = ?`,
+          [normalizedSessionIds[0], organizationId]
         );
         const sessionName = String((sessionRow as any)?.name || '').trim();
         normalizedTitle = sessionName
@@ -1269,9 +1489,11 @@ router.post(
 
     if (existing?.target_id) {
       const column = target === 'tools' ? 'exported_to_tools' : 'exported_to_assessment';
+      // `id` is already org-validated above; the org guard mirrors sibling
+      // writes and keeps this defensive against future refactors.
       await queryHelpers.queryRun(
-        `UPDATE interview_insights SET ${column} = 1, updated_at = ? WHERE id = ?`,
-        [new Date().toISOString(), id]
+        `UPDATE interview_insights SET ${column} = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [new Date().toISOString(), id, organizationId]
       );
       void logInsightActivity({
         organizationId,
@@ -1340,6 +1562,10 @@ router.post(
         },
         boundedInsightPayload,
         organizationContext: orgContext,
+        // D2 — ToolInitiativeService reads `context.org`. Mirror the org context
+        // under that key so the downstream generator actually sees it (the
+        // `organizationContext` key it was written under was never read).
+        org: orgContext,
       };
 
       await queryHelpers.queryRun(
@@ -1365,8 +1591,8 @@ router.post(
 
       try {
         await queryHelpers.queryRun(
-          `UPDATE interview_insights SET exported_to_tools = 1, updated_at = ? WHERE id = ?`,
-          [now, id]
+          `UPDATE interview_insights SET exported_to_tools = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+          [now, id, organizationId]
         );
       } catch {
         /* ignore */
@@ -1418,6 +1644,10 @@ router.post(
       },
       boundedInsightPayload,
       organizationContext: orgContext,
+      // D1 — assessmentInitiativeService reads `contextSnapshot.org`. Mirror
+      // the org context under that key so the DRD assessment generator sees it
+      // (the `organizationContext` key it was written under was never read).
+      org: orgContext,
     };
 
     await queryHelpers.queryRun(
@@ -1453,8 +1683,8 @@ router.post(
 
     try {
       await queryHelpers.queryRun(
-        `UPDATE interview_insights SET exported_to_assessment = 1, updated_at = ? WHERE id = ?`,
-        [now, id]
+        `UPDATE interview_insights SET exported_to_assessment = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [now, id, organizationId]
       );
     } catch {
       /* ignore */

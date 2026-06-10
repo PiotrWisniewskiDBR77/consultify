@@ -11,7 +11,6 @@ import {
   AlertCircle,
   AlertTriangle,
   BarChart3,
-  Bot,
   Briefcase,
   Building2,
   CheckCircle,
@@ -36,6 +35,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import TeresaMark from '../../../components/shared/TeresaMark';
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 
@@ -830,7 +830,7 @@ export const OrganizationProfileModule: React.FC = () => {
       {teresaHint && (
         <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-900 border border-primary-100 dark:border-primary-800/50 rounded-xl p-4 flex items-start gap-3">
           <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 shrink-0">
-            <Bot size={18} />
+            <TeresaMark size={18} />
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
@@ -842,7 +842,7 @@ export const OrganizationProfileModule: React.FC = () => {
             <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
               {teresaHint.message}
             </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+            <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
               Used by: {teresaHint.downstream}
             </p>
           </div>
@@ -858,7 +858,7 @@ export const OrganizationProfileModule: React.FC = () => {
           </button>
           <button
             onClick={() => setShowTeresa(false)}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1"
+            className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 p-1"
           >
             <span className="sr-only">Dismiss</span>&times;
           </button>
@@ -984,7 +984,7 @@ export const OrganizationProfileModule: React.FC = () => {
                 {r.ready ? (
                   <CheckCircle size={14} className="text-green-500 shrink-0" />
                 ) : (
-                  <AlertCircle size={14} className="text-slate-400 shrink-0" />
+                  <AlertCircle size={14} className="text-slate-600 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <span
@@ -993,7 +993,7 @@ export const OrganizationProfileModule: React.FC = () => {
                     {r.label}
                   </span>
                   {!r.ready && r.missing.length > 0 && (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-1">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500 ml-1">
                       needs: {r.missing.join(', ')}
                     </span>
                   )}

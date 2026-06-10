@@ -281,9 +281,10 @@ export async function buildHelpDocsContext(opts: {
 
       const noDocsResult: HelpDocsContextResult = {
         systemInstructionAddon: isProduct
-          ? '\n## HELP / KNOWLEDGE BASE\nNo matching documentation found for this query. ' +
-            'If the user is asking about a product workflow or UI feature, respond: ' +
-            '"Our documentation does not cover this topic yet. I\'ll do my best to help based on general platform knowledge."' +
+          ? '\n## HELP / KNOWLEDGE BASE\nNo matching Knowledge Base article found for this query. ' +
+            'Use the CONSULTIFY MODULES catalog in your system context to explain what a module is and does. ' +
+            'If the question needs detail beyond that, respond: ' +
+            '"Our documentation does not cover this in detail yet. I\'ll help based on general platform knowledge."' +
             collectionHint +
             '\n'
           : '',

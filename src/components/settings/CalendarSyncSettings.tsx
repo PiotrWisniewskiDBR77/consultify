@@ -2,10 +2,13 @@
  * CalendarSyncSettings - Calendar synchronization settings
  */
 
-import { Calendar, Check, ExternalLink, Loader2, RefreshCw, X } from 'lucide-react';
+import { Calendar, Check, ExternalLink, RefreshCw, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Banner } from '@/components/shared/Banner';
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -87,6 +90,22 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
       }
       toast.success(t('settings.integrations.connected', 'Calendar connected'));
     } catch (error: unknown) {
+      // Graceful handling for not-yet-implemented providers (server 501):
+      // show a clear "Coming soon" instead of a scary "Failed to connect".
+      const status =
+        (error as { status?: number; statusCode?: number })?.status ??
+        (error as { statusCode?: number })?.statusCode;
+      const rawMsg = String((error as { message?: string })?.message || '');
+      const isNotImplemented = status === 501 || /501|not implemented|coming soon/i.test(rawMsg);
+      if (isNotImplemented) {
+        const comingSoon = t(
+          'settings.integrations.comingSoon',
+          'This calendar integration is coming soon.'
+        );
+        setActionError(comingSoon);
+        toast(comingSoon, { icon: '🗓️' });
+        return;
+      }
       const message = normalizeApiErrorMessage(
         error,
         t('settings.integrations.connectError', 'Failed to connect calendar')
@@ -148,11 +167,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-48">
-        <Loader2 className="w-6 h-6 animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -172,7 +187,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
         </div>
         <button
           onClick={fetchCalendars}
-          className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
           title={t('common.refresh', 'Refresh')}
         >
           <RefreshCw size={18} />
@@ -181,14 +196,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
 
       {loadError && <DegradedState title="Calendar sync unavailable" description={loadError} />}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Calendar Services */}
       {!loadError && (
@@ -221,7 +229,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
                   </span>
                   <button
                     onClick={() => disconnectCalendar(cal.id)}
-                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded transition-colors"
+                    className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded transition-colors"
                     title={t('common.disconnect', 'Disconnect')}
                   >
                     <X size={16} />

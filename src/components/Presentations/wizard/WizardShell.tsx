@@ -36,7 +36,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({ step, onClose, childre
           {onClose && (
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              className="text-slate-600 hover:text-slate-600 dark:hover:text-white"
             >
               <X size={20} />
             </button>

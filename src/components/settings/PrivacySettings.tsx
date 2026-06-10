@@ -15,6 +15,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
@@ -201,7 +203,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   return (
     <SettingsSection
@@ -222,14 +224,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
           <DegradedState title="Privacy preferences unavailable" description={loadError} />
         )}
 
-        {saveError && (
-          <div
-            role="alert"
-            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-          >
-            {saveError}
-          </div>
-        )}
+        {saveError && <Banner variant="danger" title={saveError} />}
 
         {!loadError && (
           <>
@@ -297,7 +292,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-primary-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}
@@ -347,7 +342,7 @@ export const PrivacySettings: React.FC<PrivacySettingsProps> = ({ currentUser })
                       <div
                         className={cn(
                           'mt-2 text-sm font-medium',
-                          isSelected ? 'text-primary-300' : 'text-slate-300'
+                          isSelected ? 'text-primary-300' : 'text-slate-600'
                         )}
                       >
                         {t(option.labelKey, option.labelDefault)}

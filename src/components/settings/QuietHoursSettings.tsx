@@ -119,7 +119,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
     label: string;
     description: string;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
       <div className="flex-1">
         <p className="text-sm font-medium text-navy-900 dark:text-white">{label}</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
@@ -206,7 +206,7 @@ export const QuietHoursSettings: React.FC<QuietHoursSettingsProps> = ({
               {quietHours.enabled ? (
                 <BellOff size={20} className="text-indigo-600 dark:text-indigo-400" />
               ) : (
-                <Bell size={20} className="text-slate-400 dark:text-slate-500" />
+                <Bell size={20} className="text-slate-600 dark:text-slate-500" />
               )}
             </div>
             <div>

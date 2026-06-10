@@ -5843,7 +5843,15 @@ router.post(
   })
 );
 
-function renderCardToSvg(card: any, index: number, deckTitle: string, theme: string): string {
+// Exported for integration coverage of the PNG export primitive
+// (Module 12 audit gap #5): tests render a real card SVG and rasterize it
+// through `sharp` to confirm valid PNG output before advertising PNG export.
+export function renderCardToSvg(
+  card: any,
+  index: number,
+  deckTitle: string,
+  theme: string
+): string {
   const bgColor = theme === 'minimal' ? '#FFFFFF' : theme === 'modern' ? '#0F172A' : '#1E293B';
   const textColor = theme === 'minimal' ? '#1E293B' : '#F1F5F9';
   const accentColor = theme === 'modern' ? '#8B5CF6' : '#6366F1';

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionsByInitiative - View decisions grouped by initiative/project
  * Shows a hierarchical view of decisions organized by their context
@@ -12,13 +11,15 @@ import {
   Clock,
   FileText,
   FolderKanban,
-  Loader2,
   RefreshCw,
   Search,
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -110,9 +111,9 @@ const GroupHeader: React.FC<{
       <div className="flex items-center gap-3">
         <button onClick={onToggle} className="p-1 -m-1">
           {isExpanded ? (
-            <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+            <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
           ) : (
-            <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+            <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
           )}
         </button>
 
@@ -337,11 +338,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-8" />;
   }
 
   return (
@@ -370,7 +367,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
           <button
             onClick={() => fetchDecisions(true)}
             disabled={refreshing}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           </button>
@@ -380,7 +377,7 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
         <div className="relative">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -433,19 +430,14 @@ export const DecisionsByInitiative: React.FC<DecisionsByInitiativeProps> = ({
             ))}
           </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <Clock size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
-            <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
-              {t('decisions.noGroupedDecisions', 'No pending decisions')}
-            </h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
-              {t('decisions.allInitiativesClear', 'All initiatives are clear of pending decisions')}
-            </p>
-          </motion.div>
+          <EmptyState
+            icon={<Clock />}
+            title={t('decisions.noGroupedDecisions', 'No pending decisions')}
+            description={t(
+              'decisions.allInitiativesClear',
+              'All initiatives are clear of pending decisions'
+            )}
+          />
         )}
       </div>
     </div>

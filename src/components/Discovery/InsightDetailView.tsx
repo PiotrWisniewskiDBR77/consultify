@@ -182,7 +182,7 @@ const INSIGHT_TYPE_CONFIG: Record<
   general: {
     label: 'General',
     icon: <Lightbulb size={16} />,
-    color: 'text-slate-400',
+    color: 'text-slate-600',
     bgColor: 'bg-slate-500/20',
   },
 };
@@ -199,17 +199,17 @@ const IMPACT_CONFIG: Record<string, { label: string; color: string; bgColor: str
   critical: { label: 'Critical', color: 'text-rose-400', bgColor: 'bg-rose-500/20' },
   high: { label: 'High', color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   medium: { label: 'Medium', color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
-  low: { label: 'Low', color: 'text-slate-400', bgColor: 'bg-slate-500/20' },
+  low: { label: 'Low', color: 'text-slate-600', bgColor: 'bg-slate-500/20' },
 };
 
 const CONFIDENCE_CONFIG: Record<string, { label: string; color: string }> = {
   high: { label: 'High Confidence', color: 'text-emerald-400' },
   medium: { label: 'Medium Confidence', color: 'text-amber-400' },
-  low: { label: 'Low Confidence', color: 'text-slate-400' },
+  low: { label: 'Low Confidence', color: 'text-slate-600' },
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
-  draft: { label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500/20' },
+  draft: { label: 'Draft', color: 'text-slate-600', bgColor: 'bg-slate-500/20' },
   approved: { label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   generating: { label: 'Generating...', color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   completed: { label: 'Ready', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
@@ -250,7 +250,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
   const typeConfig = INSIGHT_TYPE_CONFIG[typeKey] || INSIGHT_TYPE_CONFIG.general;
   const categoryConfig = CATEGORY_CONFIG[insight?.category || ''] || {
     label: insight?.category || '',
-    color: 'text-slate-400',
+    color: 'text-slate-600',
   };
   const impactConfig = IMPACT_CONFIG[insight?.impactLevel || 'medium'] || IMPACT_CONFIG.medium;
   const confidenceConfig =
@@ -324,7 +324,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="flex items-center gap-3 text-slate-400">
+        <div className="flex items-center gap-3 text-slate-600">
           <Clock size={20} className="animate-spin" />
           <span>Loading insight...</span>
         </div>
@@ -394,7 +394,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
 
               {/* Confidence */}
               {insight.confidence && (
-                <div className="flex items-center gap-1.5 text-slate-400">
+                <div className="flex items-center gap-1.5 text-slate-600">
                   <CheckCircle size={12} className={confidenceConfig.color} />
                   <span className={confidenceConfig.color}>{confidenceConfig.label}</span>
                 </div>
@@ -410,7 +410,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
 
               {/* Sessions */}
               {(insight.sourceSessionCount || 0) > 0 && (
-                <div className="flex items-center gap-1.5 text-slate-400">
+                <div className="flex items-center gap-1.5 text-slate-600">
                   <FileText size={12} />
                   <span>{insight.sourceSessionCount} sessions analyzed</span>
                 </div>
@@ -439,7 +439,7 @@ export const InsightDetailView: React.FC<InsightDetailViewProps> = ({
             <div className="flex gap-4">
               <Quote size={24} className="text-amber-500/60 flex-shrink-0 mt-1" />
               <div>
-                <p className="text-slate-300 italic text-lg leading-relaxed">
+                <p className="text-slate-600 italic text-lg leading-relaxed">
                   "{insight.sourceQuote}"
                 </p>
                 <p className="text-slate-500 text-sm mt-2">— Source Interview</p>

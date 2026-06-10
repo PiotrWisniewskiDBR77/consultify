@@ -41,7 +41,7 @@ interface GridViewProps {
 // Status config — supports all status families (assessment, report, initiative)
 const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; label: string }> = {
   // Initiative / shared statuses
-  DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400', label: 'Draft' },
+  DRAFT: { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400', label: 'Draft' },
   PENDING_REVIEW: {
     bg: 'bg-amber-500/10',
     text: 'text-amber-400',
@@ -94,13 +94,13 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; lab
   },
   CANCELLED: {
     bg: 'bg-gray-500/10',
-    text: 'text-gray-400',
+    text: 'text-gray-600',
     dot: 'bg-gray-400',
     label: 'Cancelled',
   },
   ARCHIVED: {
     bg: 'bg-slate-500/10',
-    text: 'text-slate-400',
+    text: 'text-slate-600',
     dot: 'bg-slate-500',
     label: 'Archived',
   },

@@ -78,7 +78,7 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
     <div className="flex items-center gap-4 px-4 py-2 border-t border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
       {/* KPI chips */}
       <div className="flex items-center gap-1.5">
-        <Clock size={13} className="text-slate-400" />
+        <Clock size={13} className="text-slate-600" />
         <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
           {isPl ? 'Lead Time' : 'Lead Time'}:
         </span>

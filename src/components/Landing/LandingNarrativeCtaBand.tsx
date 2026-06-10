@@ -61,7 +61,7 @@ export const LandingNarrativeCtaBand: React.FC<LandingNarrativeCtaBandProps> = (
               <button
                 type="button"
                 onClick={onTrialClick}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-fuchsia-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_36px_-14px_rgba(124,58,237,0.7)] transition-all duration-200 hover:shadow-[0_0_42px_-12px_rgba(124,58,237,0.82)]"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-800 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_36px_-14px_rgba(165,28,48,0.7)] transition-all duration-200 hover:shadow-[0_0_42px_-12px_rgba(165,28,48,0.82)]"
               >
                 <span>{t('landing.narrativeCta.startTrial', 'Start trial')}</span>
                 <ArrowRight size={14} />
@@ -69,7 +69,7 @@ export const LandingNarrativeCtaBand: React.FC<LandingNarrativeCtaBandProps> = (
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 dark:border-white/[0.06] bg-slate-100 dark:bg-[#0D0828] p-6">
+          <div className="rounded-[28px] border border-slate-200 dark:border-white/[0.06] bg-slate-100 dark:bg-[#0F172A] p-6">
             <div className="space-y-4">
               {[
                 t(

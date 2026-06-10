@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Conversation Store
  *
@@ -41,7 +40,7 @@ const FETCH_DEDUPE_WINDOW_MS = 1500;
 const FETCH_HARD_TIMEOUT_MS = 20000;
 let _inflightFetchConversations: Promise<void> | null = null;
 let _lastFetchConversationsAt = 0;
-const _inflightFetchConversationById: Record<string, Promise<void>> = {};
+const _inflightFetchConversationById: Record<string, Promise<void> | undefined> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
 const _conversationMessagesCache: Record<string, ConversationMessage[]> = {};
 const MISSING_CONVERSATIONS_STORAGE_KEY = 'consultify-missing-conversations';
@@ -181,6 +180,9 @@ function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 const TITLE_DEDUPE_WINDOW_MS = 5000;
 const TITLE_MAX_RETRIES = 3;
 const _lastTitleAttemptAt: Record<string, number> = {};
+// In-flight guard (#23): collapse rapid duplicate generateTitle calls for the
+// same conversation into a single HTTP request instead of firing 4x.
+const _titleGenerationInFlight: Record<string, Promise<void>> = {};
 
 function getAppLanguageFallback(): SupportedLanguage {
   try {
@@ -317,6 +319,17 @@ export interface ConversationMessage {
       starterId?: string;
       cleanPrompt?: string;
     };
+    /** Attachment pointers carried on the message (§2.3.1) */
+    attachments?: Array<{
+      kind?: string;
+      filename?: string;
+      name?: string;
+      docId?: string;
+      sourceUrl?: string;
+      url?: string;
+      mimeType?: string;
+      size?: number;
+    }>;
     /**
      * Optional diagnostics for persisted AI/system messages.
      * Useful for debugging stream failures without polluting message content.
@@ -743,9 +756,15 @@ export const useConversationStore = create<ConversationState>()(
         // "click does nothing" on conversation items.
         const current = get().activeConversationId;
         if (current !== id) {
+          // Preserve not-yet-persisted optimistic messages belonging to THIS id even on the
+          // up-front sync wipe — otherwise a fetch fired mid-send (route-sync / polling) drops
+          // the user's just-sent bubble before the full-fetch merge path can run.
+          const carriedLocal = get().activeMessages.filter(
+            (m) => String(m.id || '').startsWith('local-') && m.conversationId === id
+          );
           set({
             activeConversationId: id,
-            activeMessages: [],
+            activeMessages: carriedLocal,
             _activeConversationState: null,
             _activeConversationStateMessage: null,
           });
@@ -758,8 +777,23 @@ export const useConversationStore = create<ConversationState>()(
           // stuck in "Loading conversation…" after it eagerly set isLoading=true.
           const cachedMessages = _conversationMessagesCache[id];
           if (cachedMessages && get().activeConversationId === id) {
+            // Merge any pending optimistic (local-*) messages on top of the cached snapshot,
+            // so the dedupe shortcut cannot drop a just-sent user bubble that the cache (taken
+            // before the send) doesn't yet contain.
+            const cachedKeys = new Set(
+              cachedMessages.map(
+                (m: ConversationMessage) => `${m.role}|${String(m.content || '').trim()}`
+              )
+            );
+            const pendingLocal = get().activeMessages.filter(
+              (m) =>
+                String(m.id || '').startsWith('local-') &&
+                m.conversationId === id &&
+                !cachedKeys.has(`${m.role}|${String(m.content || '').trim()}`)
+            );
             set({
-              activeMessages: cachedMessages,
+              activeMessages:
+                pendingLocal.length > 0 ? [...cachedMessages, ...pendingLocal] : cachedMessages,
               isLoading: false,
             });
           } else {
@@ -812,14 +846,24 @@ export const useConversationStore = create<ConversationState>()(
             const existingActiveMessages = get().activeMessages.filter(
               (message) => message.conversationId === id
             );
-            const shouldKeepLocalMessages =
-              messages.length === 0 &&
-              existingActiveMessages.some(
-                (message) =>
-                  String(message.id || '').startsWith('local-') ||
-                  Date.now() - new Date(message.createdAt).getTime() < 30_000
-              );
-            const nextMessages = shouldKeepLocalMessages ? existingActiveMessages : messages;
+            // Preserve NOT-YET-PERSISTED optimistic messages (local-* ids) that the server
+            // snapshot doesn't include yet. Previously a fetch mid-send blindly replaced
+            // activeMessages with the server list, DROPPING the user's just-sent bubble
+            // whenever the conversation already had prior messages (server list non-empty).
+            // The store replaces a local-* id with the real id once the POST is acked, so any
+            // remaining local-* message is genuinely pending and must survive the merge.
+            const serverKeys = new Set(
+              messages.map(
+                (m: ConversationMessage) => `${m.role}|${String(m.content || '').trim()}`
+              )
+            );
+            const pendingLocal = existingActiveMessages.filter(
+              (m: ConversationMessage) =>
+                String(m.id || '').startsWith('local-') &&
+                !serverKeys.has(`${m.role}|${String(m.content || '').trim()}`)
+            );
+            const nextMessages =
+              pendingLocal.length > 0 ? [...messages, ...pendingLocal] : messages;
             _conversationMessagesCache[id] = nextMessages;
             set((state) => {
               const fromApiRaw = result?.language;
@@ -1047,14 +1091,34 @@ export const useConversationStore = create<ConversationState>()(
         });
 
         try {
-          const result = await Api.addConversationMessage(conversationId, {
-            role: message.role,
-            content: message.content,
-            messageType: message.messageType,
-            metadata: messageMetadata,
-            tokenCount: message.tokenCount,
-            modelUsed: message.modelUsed,
-          });
+          // Persist with bounded retry. Safe because the server dedupes on clientMessageId,
+          // so a retried POST never creates a duplicate row — it just returns the existing one.
+          const persistMessage = async () => {
+            const maxAttempts = 3;
+            let lastErr: unknown;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              try {
+                return await Api.addConversationMessage(conversationId, {
+                  role: message.role,
+                  content: message.content,
+                  messageType: message.messageType,
+                  metadata: messageMetadata,
+                  tokenCount: message.tokenCount,
+                  modelUsed: message.modelUsed,
+                  // Reuse the optimistic id as the idempotency key so a network-retried POST
+                  // (fetchWithRetry) or a double-trigger collapses to a single server row.
+                  clientMessageId: optimisticId,
+                });
+              } catch (e) {
+                lastErr = e;
+                if (attempt < maxAttempts) {
+                  await new Promise((r) => setTimeout(r, 600 * attempt));
+                }
+              }
+            }
+            throw lastErr;
+          };
+          const result = await persistMessage();
 
           const newMessage =
             result && typeof result === 'object'
@@ -1222,6 +1286,18 @@ export const useConversationStore = create<ConversationState>()(
           // net, but doing it here avoids a one-frame delay on every click.
           const prev = get().activeConversationId;
           if (prev !== id) {
+            // Chat P0-3 — abort any in-flight stream on the previous
+            // conversation before swapping. Without this the SSE keeps
+            // running and the streamed content (hook-state) leaks into the
+            // new conversation's view. useAIStream listens for this event
+            // and calls abortStream() when in flight.
+            if (typeof window !== 'undefined') {
+              try {
+                window.dispatchEvent(new CustomEvent('chat:abort-stream'));
+              } catch {
+                /* SSR / older WebView — non-fatal */
+              }
+            }
             const cachedMessages = _conversationMessagesCache[id] || [];
             set({
               activeConversationId: id,
@@ -1296,6 +1372,11 @@ export const useConversationStore = create<ConversationState>()(
       // ==================== TITLE ====================
 
       generateTitle: async (id) => {
+        // If a title generation for this conversation is already running, reuse it
+        // rather than issuing a parallel duplicate request.
+        const inFlight = _titleGenerationInFlight[id];
+        if (inFlight) return inFlight;
+
         const attempt = async (tryNo: number) => {
           try {
             const result = await Api.generateConversationTitle(id);
@@ -1390,7 +1471,11 @@ export const useConversationStore = create<ConversationState>()(
         if (now - last < 1000) return;
         _lastTitleAttemptAt[id] = now;
 
-        await attempt(0);
+        const run = attempt(0).finally(() => {
+          delete _titleGenerationInFlight[id];
+        });
+        _titleGenerationInFlight[id] = run;
+        return run;
       },
 
       renameConversation: async (id, title) => {
@@ -1488,9 +1573,9 @@ export const useConversationStore = create<ConversationState>()(
             .map(([projectId, messages]) => ({
               projectId: projectId === 'global' ? undefined : projectId,
               messages: (messages as ChatMessage[]).map((m) => ({
-                role: m.role,
+                role: String(m.role),
                 content: m.content,
-                timestamp: m.timestamp,
+                timestamp: m.timestamp ? new Date(m.timestamp) : undefined,
               })),
             }));
 

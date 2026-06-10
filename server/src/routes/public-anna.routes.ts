@@ -8,6 +8,7 @@ import {
 } from '../services/ai/annaKnowledgeService.js';
 import { resolveAnnaSiteConfig } from '../services/ai/annaSiteConfig.js';
 import llmConfigService from '../services/ai/llmConfigService.js';
+import { buildProductModuleCatalog } from '../services/ai/productModuleCatalog.js';
 import { buildConversationIntelligence } from '../services/ai/virtualWorkerConversationIntelligence.js';
 import {
   findOrCreateConversation,
@@ -21,6 +22,7 @@ import {
 } from '../services/ai/virtualWorkerKnowledgeService.js';
 import { getWorkerWithProfile } from '../services/ai/virtualWorkerService.js';
 import { buildWorkerWebAccessResult } from '../services/ai/virtualWorkerWebAccessService.js';
+import { resolveVoiceRuntime } from '../services/ai/voiceRuntimeService.js';
 import {
   PUBLIC_ANNA_FUNNEL_EVENT_NAMES,
   recordPublicAnnaFunnelEvent,
@@ -163,13 +165,19 @@ APPROVED KNOWLEDGE DOMAINS
 - If the question is unrelated to the current landing-page product, DBR77 Vector, DBR77, transformation, product fit, trial, demo, or public security positioning, redirect politely.
 - If the user asks for private/internal/customer-specific knowledge, say you only provide public product information.
 
-COMMUNICATION RULES
+8. QUALIFY AND CONVERT (your core job — done without pressure)
+- Read intent. If the visitor's goal is unclear, ask ONE sharp qualifying question (their role, the problem they want to solve, or where they are in evaluating) before pitching anything.
+- Match the next step to the signal, do not default to the same CTA: "want to see it" -> demo; "want to try it on our own data" -> trial; enterprise scope, pricing, security/compliance, or custom terms -> contact form or book a call; partner intent -> the partner application flow.
+- Offer exactly one next step at a time, and only when it genuinely fits the conversation. Never stack CTAs, never pressure, never repeat the same CTA twice in a row.
+
+COMMUNICATION RULES (RESPONSE DISCIPLINE — overriding)
 - Always answer in the same language as the user's last message.
-- Keep answers concise: 2-5 sentences for most questions.
-- Structure answers with clarity: what it is, why it matters, what next.
-- Be helpful and sales-capable, but not pushy.
-- When relevant, end with one natural next-step suggestion such as demo, docs, or trial.
-- Never use markdown bullets in the final assistant answer. Use natural prose.
+- ANSWER FIRST: lead with the direct answer in the first sentence. No warm-up, no restating the question, no "great question", no narrating what you are about to say.
+- Keep it tight: 2-4 sentences for most questions. Expand only when the user explicitly asks for depth.
+- One clear thread: what it is, why it matters, what next. No digressions, no filler, no hype, no repetition.
+- Concrete over generic — name the product, the use case, the benefit. Never pad just to sound helpful.
+- End with at most one natural next step (demo, docs, trial, or contact form) only when it genuinely fits.
+- Natural prose, no markdown bullets. Maximum signal per word.
 
 PUBLIC PRODUCT POSITIONING
 - The current DBR77 landing-page product should be explained first, clearly, and in business language.
@@ -579,7 +587,13 @@ export function buildAnnaRuntimeInstruction(args: {
   const conversationContext = String(args.conversationContext || '').trim();
   const surfaceContext = buildAnnaSurfaceContext(args.surfaceContext, args.siteKey);
   const workerSystemPrompt = String(args.workerSystemPrompt || '').trim();
-  const additiveContext = [surfaceContext, conversationContext]
+  // On the Consultify site, give Anna the in-app product module catalog so she can
+  // explain what each Consultify module is and does in text chat (voice already has it).
+  const moduleCatalog =
+    resolveAnnaSiteConfig(args.siteKey).key === 'consultify'
+      ? buildProductModuleCatalog(args.locale)
+      : '';
+  const additiveContext = [moduleCatalog, surfaceContext, conversationContext]
     .filter((item) => Boolean(String(item || '').trim()))
     .join('\n\n');
   const shapedInstruction = additiveContext
@@ -1188,47 +1202,19 @@ router.post(
 
 router.get(
   '/voice-config',
-  asyncHandler(async (_req, res: Response) => {
-    const hasServerKey = Boolean(
-      (process.env.ANNA_GEMINI_LIVE_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim() || '')
-        .length
-    );
-    const clientToken = String(process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN || '').trim();
-    let voiceName: string | null = null;
-    let workerVoiceEnabled = true;
-
-    try {
-      const workerConfig = await getWorkerWithProfile('anna');
-      const configuredVoiceName = String(workerConfig?.worker?.voice_name || '').trim();
-      if (workerConfig?.worker) {
-        const worker = workerConfig.worker;
-        const workerPublicSurface = worker.surface === 'landing_page' || worker.surface === 'both';
-        if (worker.voice_enabled === false || worker.status !== 'active' || !workerPublicSurface) {
-          workerVoiceEnabled = false;
-        }
-      }
-      if (configuredVoiceName) {
-        voiceName = configuredVoiceName;
-      }
-    } catch {
-      // Worker table may not exist yet.
-    }
+  asyncHandler(async (req, res: Response) => {
+    // SSOT: shared voice runtime resolver (DB worker config + env fallback).
+    const runtime = await resolveVoiceRuntime({
+      assistant: 'anna',
+      subjectKey: buildAnnaRateLimitKey(req),
+      requirePublicSurface: true,
+    });
 
     return res.json({
-      enabled: Boolean(clientToken) && workerVoiceEnabled,
-      voiceName,
-      session: clientToken
-        ? {
-            clientToken,
-            tokenType: 'ephemeral',
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-          }
-        : null,
-      unavailableReason: clientToken
-        ? null
-        : hasServerKey
-          ? 'server_voice_proxy_required'
-          : 'server_missing_gemini_live_key',
+      enabled: runtime.enabled,
+      voiceName: runtime.voiceName,
+      session: runtime.session,
+      unavailableReason: runtime.unavailableReason,
     });
   })
 );

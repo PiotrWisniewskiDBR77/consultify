@@ -26,6 +26,7 @@ import {
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
   MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { KPICreateModal } from './KPICreateModal';
 import {
@@ -1102,6 +1103,53 @@ export const ResultsHub: React.FC = () => {
     trackedInitiatives,
   ]);
 
+  // commandRowRightContent — canonical right slot (§3.4 MUST).
+  // NOTE: ModuleNavBar intentionally voids the `commandRowRightContent` prop (deprecated).
+  // We embed these actions inside commandRowContent using the canonical
+  // `flex items-center justify-between` wrapper (Finance hub SSOT pattern §3.4).
+  const commandRowRightActions = useMemo(() => {
+    const scopedExecutionButton = scopedInitiativeId ? (
+      <button type="button" onClick={openScopedExecutionLane} className={MENU_3_ACTION_NEUTRAL}>
+        <span>{t('results.actions.openInExecution', 'Open in Execution')}</span>
+      </button>
+    ) : null;
+
+    if (activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue') {
+      return (
+        <div className={MENU_3_RIGHT_CLASS}>
+          {scopedExecutionButton}
+          <button
+            type="button"
+            onClick={() => setSignalSheetCreateNonce(Date.now())}
+            className={MENU_3_ACTION_NEUTRAL}
+          >
+            <Plus size={14} />
+            <span>{t('results.kpi.signals.addSheet', 'Add sheet')}</span>
+          </button>
+        </div>
+      );
+    }
+
+    const viewInOutputsButton =
+      activeTab === 'results_reports' ? (
+        <button
+          type="button"
+          onClick={() => navigate('/outputs')}
+          className={MENU_3_ACTION_NEUTRAL}
+        >
+          <span>{t('results.actions.viewInOutputs', 'View in Outputs')}</span>
+        </button>
+      ) : null;
+
+    if (!scopedExecutionButton && !viewInOutputsButton) return null;
+    return (
+      <div className={MENU_3_RIGHT_CLASS}>
+        {scopedExecutionButton}
+        {viewInOutputsButton}
+      </div>
+    );
+  }, [activeTab, kpiWorkspaceMode, navigate, openScopedExecutionLane, scopedInitiativeId, t]);
+
   const commandRowContent = useMemo(() => {
     const actionButton = (label: string, onClick: () => void, active = false) => (
       <button
@@ -1113,14 +1161,30 @@ export const ResultsHub: React.FC = () => {
       </button>
     );
 
+    // Canonical Menu 3 layout: justify-between — presets/chips left, actions right (§3.4).
+    // commandRowRightActions embedded here because ModuleNavBar's command-row path
+    // voids the commandRowRightContent prop.
+    const wrapWithLayout = (leftContent: React.ReactNode) =>
+      commandRowRightActions ? (
+        <div className="flex items-center justify-between gap-2 w-full min-w-0">
+          {leftContent}
+          {commandRowRightActions}
+        </div>
+      ) : (
+        leftContent
+      );
+
     if (activeTab === 'results_initiatives') {
-      return governedRuntimeStrip ? (
+      const left = governedRuntimeStrip ? (
         <div className={MENU_3_LEFT_CLASS}>{governedRuntimeStrip}</div>
       ) : null;
+      return commandRowRightActions
+        ? wrapWithLayout(left ?? <div className={MENU_3_LEFT_CLASS} />)
+        : left;
     }
 
     if (activeTab === 'results_kpi') {
-      return (
+      return wrapWithLayout(
         <div className={MENU_3_LEFT_CLASS}>
           {actionButton(
             t('results.kpi.workspace.catalog', 'KPI List'),
@@ -1151,7 +1215,7 @@ export const ResultsHub: React.FC = () => {
     }
 
     if (activeTab === 'roi') {
-      return (
+      return wrapWithLayout(
         <div className={MENU_3_LEFT_CLASS}>
           <button
             type="button"
@@ -1177,7 +1241,7 @@ export const ResultsHub: React.FC = () => {
     }
 
     if (activeTab === 'roi_analysis') {
-      return (
+      return wrapWithLayout(
         <div className={MENU_3_LEFT_CLASS}>
           <button
             type="button"
@@ -1194,7 +1258,7 @@ export const ResultsHub: React.FC = () => {
     }
 
     if (activeTab === 'results_reports') {
-      return (
+      return wrapWithLayout(
         <div className={MENU_3_LEFT_CLASS}>
           {actionButton(
             t('results.reporting.workspace.trackedKpis', 'Tracked KPI'),
@@ -1241,48 +1305,22 @@ export const ResultsHub: React.FC = () => {
       );
     }
 
-    return governedRuntimeStrip ? (
+    const fallbackLeft = governedRuntimeStrip ? (
       <div className={MENU_3_LEFT_CLASS}>{governedRuntimeStrip}</div>
     ) : null;
+    return commandRowRightActions
+      ? wrapWithLayout(fallbackLeft ?? <div className={MENU_3_LEFT_CLASS} />)
+      : fallbackLeft;
   }, [
     activeTab,
+    commandRowRightActions,
     governedRuntimeStrip,
     kpiWorkspaceMode,
-    openScopedExecutionLane,
     openFirstFilteredKpiRecord,
-    observationPhaseFilter,
-    scopedInitiativeId,
     openRoiPicker,
     reportWorkspaceMode,
-    setQueueFilter,
     t,
   ]);
-
-  const commandRowRightContent = useMemo(() => {
-    const scopedExecutionButton = scopedInitiativeId ? (
-      <button type="button" onClick={openScopedExecutionLane} className={MENU_3_ACTION_NEUTRAL}>
-        <span>{t('results.actions.openInExecution', 'Open in Execution')}</span>
-      </button>
-    ) : null;
-
-    if (activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue') {
-      return (
-        <div className="inline-flex items-center gap-2">
-          {scopedExecutionButton}
-          <button
-            type="button"
-            onClick={() => setSignalSheetCreateNonce(Date.now())}
-            className={MENU_3_ACTION_NEUTRAL}
-          >
-            <Plus size={14} />
-            <span>{t('results.kpi.signals.addSheet', 'Add sheet')}</span>
-          </button>
-        </div>
-      );
-    }
-
-    return scopedExecutionButton;
-  }, [activeTab, kpiWorkspaceMode, openScopedExecutionLane, scopedInitiativeId, t]);
 
   return (
     <>
@@ -1362,13 +1400,12 @@ export const ResultsHub: React.FC = () => {
         }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
-        commandRowRightContent={commandRowRightContent}
       >
         {activeDocumentId ? (
           <Suspense
             fallback={
               <div className="flex items-center justify-center py-24">
-                <div className="flex items-center gap-3 text-slate-400">
+                <div className="flex items-center gap-3 text-slate-600">
                   <BarChart3 size={20} className="animate-pulse" />
                   <span className="text-sm text-slate-500 dark:text-slate-300">
                     {t('common.loading', 'Loading...')}
@@ -1462,7 +1499,7 @@ export const ResultsHub: React.FC = () => {
           <ROITrackingView refreshNonce={roiRefreshNonce} />
         ) : loading ? (
           <div className="flex items-center justify-center py-24">
-            <div className="flex items-center gap-3 text-slate-400">
+            <div className="flex items-center gap-3 text-slate-600">
               <BarChart3 size={20} className="animate-pulse" />
               <span className="text-sm text-slate-500 dark:text-slate-300">
                 {t('common.loading', 'Loading...')}

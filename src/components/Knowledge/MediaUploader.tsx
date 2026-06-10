@@ -285,7 +285,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                         ${
                           activeTab === 'upload'
                             ? 'bg-gray-800 text-emerald-400 border-b-2 border-emerald-400'
-                            : 'text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                            : 'text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                         }`}
         >
           <Upload size={18} />
@@ -297,7 +297,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                         ${
                           activeTab === 'youtube'
                             ? 'bg-gray-800 text-rose-400 border-b-2 border-rose-400'
-                            : 'text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                            : 'text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                         }`}
         >
           <Youtube size={18} />
@@ -309,7 +309,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                         ${
                           activeTab === 'url'
                             ? 'bg-gray-800 text-blue-400 border-b-2 border-blue-400'
-                            : 'text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                            : 'text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                         }`}
         >
           <Globe size={18} />
@@ -354,7 +354,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                     className={
                       isDragging
                         ? 'text-emerald-400'
-                        : 'text-gray-400 dark:text-gray-500 dark:text-gray-400'
+                        : 'text-gray-600 dark:text-gray-500 dark:text-gray-400'
                     }
                   />
                 </div>
@@ -372,7 +372,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             {/* Selected Files */}
             {files.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm">
+                <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm">
                   {files.length} file(s) selected
                 </p>
                 <div className="max-h-48 overflow-y-auto space-y-2">
@@ -382,7 +382,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                       className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                        <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
                           {getFileIcon(file.name)}
                         </span>
                         <span className="text-gray-200 text-sm truncate max-w-xs">{file.name}</span>
@@ -395,7 +395,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                           e.stopPropagation();
                           removeFile(index);
                         }}
-                        className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-400 transition-colors"
+                        className="text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-rose-400 transition-colors"
                       >
                         <X size={16} />
                       </button>
@@ -429,7 +429,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         {activeTab === 'youtube' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm mb-2">
+              <label className="block text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm mb-2">
                 YouTube Video URL
               </label>
               <div className="relative">
@@ -476,7 +476,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         {activeTab === 'url' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm mb-2">
+              <label className="block text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm mb-2">
                 Web Page URL
               </label>
               <div className="relative">
@@ -523,14 +523,14 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
         {processing && currentProgress && (
           <div className="mt-4 p-3 bg-gray-800 rounded-lg flex items-center gap-3">
             <Loader2 size={16} className="animate-spin text-emerald-400" />
-            <span className="text-gray-300 text-sm">{currentProgress}</span>
+            <span className="text-gray-600 text-sm">{currentProgress}</span>
           </div>
         )}
 
         {/* Results */}
         {results.length > 0 && (
           <div className="mt-4 space-y-2">
-            <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 text-sm font-medium">
+            <p className="text-gray-600 dark:text-gray-500 dark:text-gray-400 text-sm font-medium">
               Results
             </p>
             {results.map((result, index) => (
@@ -551,7 +551,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                       : result.error || 'Processing failed'}
                   </p>
                   {result.success && result.metadata && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 mt-1">
                       {result.metadata.wordCount?.toLocaleString()} words •
                       {result.metadata.processingTimeMs
                         ? ` ${(result.metadata.processingTimeMs / 1000).toFixed(1)}s`

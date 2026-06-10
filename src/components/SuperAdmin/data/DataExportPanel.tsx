@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DataExportPanel - Data Export Management
  *
@@ -129,7 +128,7 @@ export const DataExportPanel: React.FC = () => {
       pending: {
         icon: <Clock size={14} />,
         bg: 'bg-slate-500/20',
-        text: 'text-slate-400 dark:text-slate-500',
+        text: 'text-slate-600 dark:text-slate-500',
       },
       processing: {
         icon: <Loader2 size={14} className="animate-spin" />,
@@ -211,7 +210,7 @@ export const DataExportPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
           <button
@@ -251,7 +250,7 @@ export const DataExportPanel: React.FC = () => {
                     {getExportTypeBadge(request.export_type)}
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-slate-400 dark:text-slate-500 mb-3">
+                  <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-500 mb-3">
                     {request.organization_name && (
                       <span className="flex items-center gap-1.5">
                         <Building2 size={14} />
@@ -327,7 +326,7 @@ export const DataExportPanel: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Export Type</label>
+                <label className="block text-sm font-medium text-slate-600 mb-2">Export Type</label>
                 <div className="flex gap-3">
                   {(['full', 'partial'] as const).map((type) => (
                     <button
@@ -337,7 +336,7 @@ export const DataExportPanel: React.FC = () => {
                       className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${
                         formData.exportType === type
                           ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
-                          : 'bg-slate-800 border-white/10 text-slate-400 dark:text-slate-500 hover:border-white/20'
+                          : 'bg-slate-800 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/20'
                       }`}
                     >
                       {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -347,7 +346,7 @@ export const DataExportPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Include Data
                 </label>
                 <div className="max-h-64 overflow-y-auto bg-slate-800/50 rounded-lg p-3 space-y-2">
@@ -375,7 +374,7 @@ export const DataExportPanel: React.FC = () => {
                         className="w-4 h-4 mt-0.5 rounded border-slate-600 bg-slate-800 text-primary-500"
                       />
                       <div>
-                        <span className="text-sm text-slate-300 group-hover:text-white">
+                        <span className="text-sm text-slate-600 group-hover:text-white">
                           {dataType.label}
                         </span>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -391,7 +390,7 @@ export const DataExportPanel: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
               >
                 Cancel
               </button>

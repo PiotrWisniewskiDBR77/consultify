@@ -17,15 +17,20 @@
  *     so the two outputs stay in sync;
  *   - cover page lives on its own page (real `addPage()` after the cover);
  *   - manual Table of Contents emitted when `formattingSchema.toc` is true;
- *   - tables auto-emit a `Table N — caption` line; images render as
- *     `Figure N — caption` placeholders (asset embedding still deferred);
+ *   - tables auto-emit a `Table N — caption` line;
+ *   - `image` blocks embed real figures when the block content carries
+ *     inline bytes (`dataBase64` (+ optional `mimeType` / `widthCm`),
+ *     same shape as the cover-logo asset); aspect ratio is preserved and
+ *     the figure is constrained to the usable column width. Blocks
+ *     without bytes degrade to a `Figure N — caption` placeholder line;
+ *   - charts rasterize to PNG via `documentChartRasterizer`;
+ *   - cover-page logo embeds via `coverLogoAsset`;
  *   - source-ref citations follow `formattingSchema.citationStyle`:
  *     `'inline_marker'` appends `[N]` markers; `'footnote'`/`'endnote'`
  *     accumulate a Notes appendix at the end of the document.
  *
- * Still deferred: native bottom-of-page footnote positioning, generic
- * image-asset embedding beyond chart blocks, custom fonts beyond the
- * system stack.
+ * Still deferred: native bottom-of-page footnote positioning, custom
+ * fonts beyond the system stack.
  */
 
 import { imageSize } from 'image-size';
@@ -554,20 +559,84 @@ function drawTable(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRender
   doc.moveDown(0.4);
 }
 
+/**
+ * Decode an `image` block's inline bytes when present. The block content
+ * may carry `dataBase64` (+ optional `mimeType` / `widthCm`) in the same
+ * shape as the cover-logo asset. Returns `null` when there are no bytes
+ * or the base64 is invalid, so the caller falls back to the placeholder.
+ */
+function decodeImageBlockBytes(content: unknown): Buffer | null {
+  if (!content || typeof content !== 'object') return null;
+  const raw = (content as { dataBase64?: unknown }).dataBase64;
+  if (typeof raw !== 'string' || raw.trim().length === 0) return null;
+  // Tolerate a `data:` URI prefix (`data:image/png;base64,...`).
+  const base64 = raw.includes(',') ? raw.slice(raw.indexOf(',') + 1) : raw;
+  try {
+    const buffer = Buffer.from(base64, 'base64');
+    return buffer.length > 0 ? buffer : null;
+  } catch {
+    return null;
+  }
+}
+
 function drawImage(doc: PDFKit.PDFDocument, block: DocumentBlock, ctx: PdfRenderContext): void {
-  const value = (block.content ?? {}) as { caption?: string; alt?: string };
+  const value = (block.content ?? {}) as { caption?: string; alt?: string; widthCm?: number };
   ctx.figureCounter.value += 1;
   const captionLabel = `Figure ${ctx.figureCounter.value}`;
   const description = value.caption ? asString(value.caption) : (value.alt ?? 'Image');
   const captionText = `${captionLabel} — ${description}`;
   const citationSuffix = block.sourceRef ? buildCitationSuffix(ctx, block.sourceRef) : '';
+
+  // Real figure embedding: when the image block carries inline bytes,
+  // embed the figure (constrained to the usable column width) so the PDF
+  // reads as a client-grade deliverable instead of a placeholder line.
+  const imageBytes = decodeImageBlockBytes(block.content);
+  if (imageBytes) {
+    const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    let targetWidth = Math.min(usableWidth, 480);
+    if (typeof value.widthCm === 'number' && value.widthCm > 0) {
+      targetWidth = Math.min(value.widthCm * POINTS_PER_CM, usableWidth);
+    }
+    // Preserve aspect ratio; cap the figure height so a tall image never
+    // overruns a page in a single shot.
+    let targetHeight = targetWidth;
+    try {
+      const size = imageSize(imageBytes);
+      if (typeof size.width === 'number' && size.width > 0 && typeof size.height === 'number') {
+        targetHeight = (targetWidth * size.height) / size.width;
+      }
+    } catch {
+      targetHeight = targetWidth;
+    }
+    targetHeight = Math.min(targetHeight, 360);
+    try {
+      doc.image(imageBytes, {
+        fit: [targetWidth, targetHeight],
+        align: 'center',
+        valign: 'center',
+      });
+      doc.moveDown(0.2);
+      doc
+        .fontSize(ctx.sizing.caption)
+        .fillColor('#64748B')
+        .font('Helvetica-Oblique')
+        .text(`${captionText}${citationSuffix}`, { align: 'center' });
+      doc.font('Helvetica').fillColor('#0F172A');
+      doc.moveDown(0.4);
+      return;
+    } catch {
+      // Bad PNG/JPEG byte sequence → fall through to the placeholder so
+      // the document keeps rendering.
+    }
+  }
+
   doc
     .fontSize(ctx.sizing.caption)
     .fillColor('#64748B')
     .font('Helvetica-Oblique')
-    .text(`[${captionLabel} placeholder — image asset not yet embedded]`);
+    .text(`[${captionLabel} placeholder — no image asset attached]`);
   doc.text(`${captionText}${citationSuffix}`);
-  doc.font('Helvetica');
+  doc.font('Helvetica').fillColor('#0F172A');
   doc.moveDown(0.4);
 }
 

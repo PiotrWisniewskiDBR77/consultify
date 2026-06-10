@@ -371,7 +371,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 Refresh
               </button>
             </div>
-            <div className="mt-3 divide-y divide-slate-100 dark:divide-navy-800">
+            <div className="mt-3 divide-y divide-slate-200 dark:divide-navy-800">
               {artifacts.length === 0 ? (
                 <p className="py-3 text-sm text-slate-500">No Wave 5 artifacts yet.</p>
               ) : (
@@ -499,7 +499,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                             .slice(0, 30)
                             .map((line) => (
                               <div key={`${mutation.mutationId}-${line.line}`}>
-                                <span className="mr-2 text-slate-400">{line.line}</span>
+                                <span className="mr-2 text-slate-600">{line.line}</span>
                                 <span>{line.type}</span>
                                 {line.before && (
                                   <div className="text-rose-600">- {line.before}</div>

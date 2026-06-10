@@ -148,7 +148,7 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
       ? 'text-emerald-500'
       : trend === 'down'
         ? 'text-rose-500'
-        : 'text-slate-400 dark:text-slate-500';
+        : 'text-slate-600 dark:text-slate-500';
 
   // Calculate achievement vs target
   const avgVelocity = chartData.reduce((a, b) => a + b, 0) / chartData.length;
@@ -229,7 +229,7 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-100 dark:border-navy-700">
+      <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-200 dark:border-navy-700">
         <div className="text-center">
           <p className="text-lg font-bold text-navy-900 dark:text-white tabular-nums">
             {Math.round(avgVelocity)}
@@ -238,7 +238,7 @@ export const VelocityTrend: React.FC<VelocityTrendProps> = ({
             {t('team.velocity.average', 'Average')}
           </p>
         </div>
-        <div className="text-center border-x border-slate-100 dark:border-navy-700">
+        <div className="text-center border-x border-slate-200 dark:border-navy-700">
           <p
             className={`text-lg font-bold tabular-nums ${
               achievementRate >= 100

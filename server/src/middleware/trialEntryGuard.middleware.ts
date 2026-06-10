@@ -11,7 +11,7 @@
  * - Access dashboard features
  */
 
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 
 import { get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -193,7 +193,9 @@ const safeRespond = (
  * Check if user is in Trial Entry status
  */
 export async function isTrialEntryUser(userId: string): Promise<boolean> {
-  const userRow = await dbGet<UserRow>(`SELECT user_status FROM users WHERE id = ?`, [userId]);
+  const userRow = await dbGet<UserRow>(`SELECT status AS user_status FROM users WHERE id = ?`, [
+    userId,
+  ]);
   const status = safeRead(() => String(userRow?.user_status || ''), '')
     .trim()
     .toUpperCase();
@@ -216,20 +218,21 @@ function isBlockedRoute(method: string, path: string): boolean {
  *
  * Must be used AFTER auth middleware.
  */
-export const trialEntryGuard = async (
-  req: TrialRequest,
+export const trialEntryGuard: RequestHandler = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const trialReq = req as TrialRequest;
   try {
     // Skip if no user (auth middleware not applied or failed)
-    const userId = normalizeUserId(safeRead(() => req.user?.id, undefined));
+    const userId = normalizeUserId(safeRead(() => trialReq.user?.id, undefined));
     if (!userId || userId.length > MAX_USER_ID_LENGTH) {
       safeNext(next);
       return;
     }
 
-    const method = normalizeMethod(safeRead(() => req.method, ''));
+    const method = normalizeMethod(safeRead(() => trialReq.method, ''));
     if (!method) {
       safeRespond(res, next, 400, { error: 'INVALID_HTTP_METHOD' });
       return;
@@ -243,8 +246,8 @@ export const trialEntryGuard = async (
       return;
     }
 
-    const normalizedPath = normalizeRequestPath(req);
-    const normalizedPaths = getNormalizedRequestPaths(req);
+    const normalizedPath = normalizeRequestPath(trialReq);
+    const normalizedPaths = getNormalizedRequestPaths(trialReq);
     if (normalizedPath.length > MAX_REQUEST_PATH_LENGTH) {
       safeRespond(res, next, 400, { error: 'REQUEST_URI_TOO_LONG' });
       return;
@@ -278,7 +281,7 @@ export const trialEntryGuard = async (
 
     // Attach flag for downstream use only for allowed routes.
     try {
-      req.isTrialEntry = true;
+      trialReq.isTrialEntry = true;
     } catch {
       // non-critical
     }

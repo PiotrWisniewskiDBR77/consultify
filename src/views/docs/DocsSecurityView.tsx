@@ -178,7 +178,7 @@ function CertificationCard({ cert }: { cert: Certification }) {
                 ? 'text-green-400'
                 : cert.status === 'in-progress'
                   ? 'text-yellow-400'
-                  : 'text-zinc-400'
+                  : 'text-zinc-600'
             )}
           />
         </div>
@@ -189,7 +189,7 @@ function CertificationCard({ cert }: { cert: Certification }) {
               ? 'bg-green-500/20 text-green-400'
               : cert.status === 'in-progress'
                 ? 'bg-yellow-500/20 text-yellow-400'
-                : 'bg-zinc-700 text-zinc-400'
+                : 'bg-zinc-700 text-zinc-600'
           )}
         >
           {cert.badge}
@@ -197,7 +197,7 @@ function CertificationCard({ cert }: { cert: Certification }) {
       </div>
 
       <h3 className="text-lg font-semibold text-white mb-2">{cert.name}</h3>
-      <p className="text-sm text-zinc-400 mb-4">{cert.description}</p>
+      <p className="text-sm text-zinc-600 mb-4">{cert.description}</p>
 
       {cert.validUntil && (
         <p className="text-xs text-zinc-500">
@@ -223,7 +223,7 @@ function SecurityFeatureCard({ feature }: { feature: SecurityFeature }) {
       </div>
       <div>
         <h4 className="text-sm font-semibold text-white mb-1">{feature.title}</h4>
-        <p className="text-xs text-zinc-400">{feature.description}</p>
+        <p className="text-xs text-zinc-600">{feature.description}</p>
       </div>
     </div>
   );
@@ -248,7 +248,7 @@ export function DocsSecurityView() {
               <Shield className="text-green-400" size={32} />
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">Security & Compliance</h1>
-            <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
+            <p className="text-xl text-zinc-600 max-w-2xl mx-auto mb-8">
               Enterprise-grade security built into every layer of the Consultify platform. Your data
               protection is our top priority.
             </p>
@@ -316,7 +316,7 @@ export function DocsSecurityView() {
               <Globe className="text-primary-400" />
               GDPR Compliance
             </h2>
-            <p className="text-zinc-400 mb-6">
+            <p className="text-zinc-600 mb-6">
               We are fully compliant with the EU General Data Protection Regulation (GDPR). Here's
               how we protect your rights:
             </p>
@@ -325,7 +325,7 @@ export function DocsSecurityView() {
               {GDPR_RIGHTS.map((right) => (
                 <div key={right} className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-green-400 flex-shrink-0" />
-                  <span className="text-sm text-zinc-300">{right}</span>
+                  <span className="text-sm text-zinc-600">{right}</span>
                 </div>
               ))}
             </div>
@@ -392,7 +392,7 @@ export function DocsSecurityView() {
                 <h3 className="text-xl font-bold text-white mb-2">
                   Responsible Disclosure Program
                 </h3>
-                <p className="text-zinc-400 mb-4">
+                <p className="text-zinc-600 mb-4">
                   Found a security vulnerability? We appreciate your help in keeping Consultify
                   secure. Report issues responsibly and you may be eligible for our bug bounty
                   program.

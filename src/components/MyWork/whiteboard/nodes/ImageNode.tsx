@@ -50,7 +50,7 @@ export const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
         />
       ) : (
         <div
-          className="w-full flex flex-col items-center justify-center bg-slate-100 dark:bg-navy-900/80 text-slate-400"
+          className="w-full flex flex-col items-center justify-center bg-slate-100 dark:bg-navy-900/80 text-slate-600"
           style={{ height: data?.height || 150 }}
         >
           <ImageIcon size={24} />

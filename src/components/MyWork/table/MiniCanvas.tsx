@@ -332,7 +332,7 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
               <button
                 key={t.id}
                 onClick={() => setTool(t.id)}
-                className={`p-1.5 rounded-lg transition-colors ${tool === t.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                className={`p-1.5 rounded-lg transition-colors ${tool === t.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300'}`}
                 title={t.label}
               >
                 <Icon size={13} />
@@ -359,14 +359,14 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
           {/* Stroke width */}
           <button
             onClick={() => setStrokeWidth(Math.max(1, strokeWidth - 1))}
-            className="p-1 rounded text-slate-400 hover:text-slate-600"
+            className="p-1 rounded text-slate-600 hover:text-slate-600"
           >
             <Minus size={11} />
           </button>
           <span className="text-[9px] text-slate-500 w-4 text-center">{strokeWidth}</span>
           <button
             onClick={() => setStrokeWidth(Math.min(8, strokeWidth + 1))}
-            className="p-1 rounded text-slate-400 hover:text-slate-600"
+            className="p-1 rounded text-slate-600 hover:text-slate-600"
           >
             <Plus size={11} />
           </button>
@@ -376,21 +376,21 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
           <button
             onClick={handleUndo}
             disabled={undoStack.length === 0}
-            className="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30"
+            className="p-1 rounded text-slate-600 hover:text-slate-600 disabled:opacity-30"
           >
             <Undo2 size={12} />
           </button>
           <button
             onClick={handleRedo}
             disabled={redoStack.length === 0}
-            className="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30"
+            className="p-1 rounded text-slate-600 hover:text-slate-600 disabled:opacity-30"
           >
             <Redo2 size={12} />
           </button>
           <button
             onClick={handleClear}
             disabled={value.length === 0}
-            className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30"
+            className="p-1 rounded text-slate-600 hover:text-rose-500 disabled:opacity-30"
           >
             <Trash2 size={12} />
           </button>

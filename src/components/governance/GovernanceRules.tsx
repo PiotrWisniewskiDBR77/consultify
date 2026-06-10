@@ -20,10 +20,10 @@ export const GovernanceRules: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div className="relative w-64">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
             <input
               type="text"
               placeholder="Search rules..."
@@ -64,7 +64,7 @@ export const GovernanceRules: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-gray-400 hover:text-gray-600 dark:text-gray-400 p-1">
+                    <button className="text-gray-600 hover:text-gray-600 dark:text-gray-400 p-1">
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
                   </td>

@@ -130,7 +130,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
 
         {/* Rows */}
-        <div className="divide-y divide-slate-100 dark:divide-white/5">
+        <div className="divide-y divide-slate-200 dark:divide-white/5">
           {notificationRows.map((row) => {
             const categoryPrefs =
               preferences.categories[row.category as keyof typeof preferences.categories];

@@ -11,14 +11,17 @@ import {
   Edit2,
   Folder,
   FolderPlus,
+  Link2,
   MoreHorizontal,
   Star,
   StarOff,
   Trash2,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../services/api';
 import { Conversation, useConversationStore } from '../../store/useConversationStore';
 import { MoveToProjectModal } from './MoveToProjectModal';
 
@@ -141,7 +144,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
         }}
         className="
                     p-1.5 rounded-md
-                    text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300
+                    text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300
                     hover:bg-slate-200 dark:hover:bg-navy-700
                     transition-colors
                 "
@@ -270,6 +273,48 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                 {t('aiChat.actions.archive', 'Archive')}
               </>
             )}
+          </button>
+
+          {/* Share link (F4) */}
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+              onOpenChange?.(false);
+              const tid = toast.loading(t('aiChat.share.creating', 'Creating share link…'));
+              try {
+                const res: any = await Api.shareConversation(conversation.id);
+                const token = res?.shareToken || res?.share_token;
+                const url = token
+                  ? `${window.location.origin}/share/${token}`
+                  : res?.shareUrl || '';
+                if (url) {
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    toast.success(t('aiChat.share.copied', 'Share link copied to clipboard'), {
+                      id: tid,
+                    });
+                  } catch {
+                    toast.success(url, { id: tid, duration: 6000 });
+                  }
+                } else {
+                  toast.error(t('aiChat.share.failed', 'Could not create link'), { id: tid });
+                }
+              } catch (err: any) {
+                toast.error(err?.message || t('aiChat.share.failed', 'Could not create link'), {
+                  id: tid,
+                });
+              }
+            }}
+            className="
+                            w-full flex items-center gap-2 px-3 py-2 text-sm
+                            text-slate-700 dark:text-slate-300
+                            hover:bg-slate-100 dark:hover:bg-navy-700
+                            transition-colors
+                        "
+          >
+            <Link2 size={14} />
+            {t('aiChat.actions.shareLink', 'Share link')}
           </button>
 
           {/* Export conversation (§2.3.5 E10) */}

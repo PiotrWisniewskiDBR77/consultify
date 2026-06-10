@@ -26,6 +26,7 @@ import { toast } from 'react-hot-toast';
 import { DIGITIZATION_AXES, getLevelColor } from '../../data/digitizationEvaluationData';
 import { Api } from '../../services/api';
 import { AnalysisDataSeries, ComparisonRadarChart } from '../Charts';
+import { LoadingState } from '../ui/primitives';
 import { DigitizationAnalysis } from './types';
 
 const AXIS_ICONS: Record<string, any> = {
@@ -37,8 +38,14 @@ const AXIS_ICONS: Record<string, any> = {
   cybersecurity: Shield,
 };
 
-// Default color palette for analyses
-const ANALYSIS_COLORS = ['#3b82f6', '#6366f1', '#f59e0b', '#10b981'];
+// Default color palette for analyses — Harvard categorical (HBS complementary).
+// was ['#3b82f6','#6366f1','#f59e0b','#10b981'].
+const ANALYSIS_COLORS = [
+  '#A51C30', // Harvard Crimson
+  '#6578B4', // HBS Blue 2
+  '#52A52E', // HBS Green 2
+  '#E87D1E', // HBS Orange 2
+];
 
 export const AnalysisCompareView: React.FC = () => {
   const [availableAnalyses, setAvailableAnalyses] = useState<DigitizationAnalysis[]>([]);
@@ -107,11 +114,7 @@ export const AnalysisCompareView: React.FC = () => {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -171,7 +174,7 @@ export const AnalysisCompareView: React.FC = () => {
               >
                 <button
                   onClick={() => removeAnalysis(analysis.id)}
-                  className="absolute top-2 right-2 p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                  className="absolute top-2 right-2 p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                 >
                   <X size={16} />
                 </button>
@@ -183,7 +186,7 @@ export const AnalysisCompareView: React.FC = () => {
                     <p className="font-medium text-navy-900 dark:text-white truncate">
                       {analysis.name}
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                    <p className="text-xs text-slate-600 dark:text-slate-500">
                       {new Date(analysis.createdAt).toLocaleDateString('pl-PL')}
                     </p>
                   </div>
@@ -306,7 +309,7 @@ export const AnalysisCompareView: React.FC = () => {
                 onClick={() => setShowSelector(false)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
               >
-                <X size={20} className="text-slate-400 dark:text-slate-500" />
+                <X size={20} className="text-slate-600 dark:text-slate-500" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
@@ -327,7 +330,7 @@ export const AnalysisCompareView: React.FC = () => {
                           <p className="font-medium text-navy-900 dark:text-white truncate">
                             {analysis.name}
                           </p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
                             Wynik: {analysis.overallScore?.toFixed(1) || '0'}/7 •
                             {new Date(analysis.createdAt).toLocaleDateString('pl-PL')}
                           </p>

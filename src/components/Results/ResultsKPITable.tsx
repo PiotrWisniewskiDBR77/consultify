@@ -24,7 +24,7 @@ import type { KPIStatus, KPITrend, ResultsKPI } from './kpiDomain';
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
   below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
-  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
+  'no-data': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
 };
 
 const STATUS_LABELS: Record<KPIStatus, string> = {
@@ -58,7 +58,7 @@ const NeedsEntryBadge: React.FC = () => {
 const TREND_ICON: Record<KPITrend, { Icon: typeof ArrowUp; color: string }> = {
   up: { Icon: ArrowUp, color: 'text-emerald-400' },
   down: { Icon: ArrowDown, color: 'text-rose-400' },
-  stable: { Icon: ArrowRight, color: 'text-slate-400' },
+  stable: { Icon: ArrowRight, color: 'text-slate-600' },
 };
 
 const TrendArrow: React.FC<{ trend: KPITrend }> = ({ trend }) => {
@@ -73,7 +73,7 @@ const TrendArrow: React.FC<{ trend: KPITrend }> = ({ trend }) => {
 const FrequencyBadge: React.FC<{ freq: string }> = ({ freq }) => {
   const label = freq?.charAt(0) + freq?.slice(1).toLowerCase();
   return (
-    <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-400">
+    <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-slate-500/10 text-slate-600">
       {label}
     </span>
   );
@@ -95,8 +95,8 @@ const ValueCell: React.FC<{
       ? 'text-emerald-400'
       : status === 'below'
         ? 'text-rose-400'
-        : 'text-slate-300'
-    : 'text-slate-300';
+        : 'text-slate-600'
+    : 'text-slate-600';
   return (
     <span className={`text-sm font-medium ${color}`}>
       {value.toLocaleString()}
@@ -395,7 +395,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                     className="px-4 py-16 text-center text-slate-500"
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <Target size={24} className="text-slate-400" />
+                      <Target size={24} className="text-slate-600" />
                       <span>{t('results.emptyState', 'No KPIs found')}</span>
                     </div>
                   </td>
@@ -470,7 +470,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                               .join('')
                               .slice(0, 2)}
                           </div>
-                          <span className="text-sm text-slate-300 truncate max-w-[80px]">
+                          <span className="text-sm text-slate-600 truncate max-w-[80px]">
                             {kpi.ownerName}
                           </span>
                         </div>
@@ -595,7 +595,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
   if (kpis.length === 0 && !onNewItem) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-slate-500 gap-2">
-        <Target size={32} className="text-slate-400" />
+        <Target size={32} className="text-slate-600" />
         <span>{t('results.emptyState', 'No KPIs found')}</span>
       </div>
     );

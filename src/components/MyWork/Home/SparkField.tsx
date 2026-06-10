@@ -82,7 +82,7 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
               <Plus size={18} />
             </div>
             <div className="text-sm font-semibold text-amber-50">{t('myWork.radar.newIdea')}</div>
-            <div className="mt-1 text-xs text-slate-300/65">
+            <div className="mt-1 text-xs text-slate-600/65">
               {t('myWork.radar.newIdeaSubtitle')}
             </div>
           </button>
@@ -100,8 +100,8 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
                 {t('myWork.radar.noteLabel')}
               </div>
               <div className="mt-2 text-base font-semibold text-white">{note.title}</div>
-              <div className="mt-1 text-sm leading-7 text-slate-300/72">{note.snippet}</div>
-              <div className="mt-2 text-xs text-slate-400/70">{note.updatedAt}</div>
+              <div className="mt-1 text-sm leading-7 text-slate-600/72">{note.snippet}</div>
+              <div className="mt-2 text-xs text-slate-600/70">{note.updatedAt}</div>
             </button>
           ))}
         </div>
@@ -132,8 +132,8 @@ const IdeaCard: React.FC<{
         <Lightbulb size={15} className="text-amber-200/70" />
       </div>
       <div className="mt-2 text-base font-semibold leading-snug text-white">{item.title}</div>
-      <div className="mt-1 text-xs leading-relaxed text-slate-300/80">{item.snippet}</div>
-      <div className="mt-3 flex items-center justify-between text-xs text-slate-400/70">
+      <div className="mt-1 text-xs leading-relaxed text-slate-600/80">{item.snippet}</div>
+      <div className="mt-3 flex items-center justify-between text-xs text-slate-600/70">
         <span>{item.updatedAt}</span>
         <span>
           {item.nodeCount ?? 0} {t('myWork.radar.nodes')}

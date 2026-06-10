@@ -36,7 +36,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -95,6 +95,14 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [expandedPanel, setExpandedPanel] = useState<ExpandedPanel>(null);
+  const mfaSectionRef = useRef<HTMLDivElement>(null);
+
+  const openMfaPanel = () => {
+    setExpandedPanel('mfa');
+    window.requestAnimationFrame(() => {
+      mfaSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   // Password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -328,12 +336,12 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       case 'suspicious':
         return <AlertTriangle size={14} className="text-amber-500" />;
       default:
-        return <CheckCircle size={14} className="text-slate-400" />;
+        return <CheckCircle size={14} className="text-slate-600" />;
     }
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   return (
     <SettingsSection
@@ -388,7 +396,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               <div className="px-4 pb-4 border-t border-white/5">
                 <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-4 max-w-md">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
                       {t('settings.password.current', 'Current Password')}
                     </label>
                     <div className="relative">
@@ -402,7 +410,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
                       {t('settings.password.new', 'New Password')}
                     </label>
                     <div className="relative">
@@ -440,7 +448,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
                       {t('settings.password.confirm', 'Confirm New Password')}
                     </label>
                     <input
@@ -479,7 +487,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
         <SettingsDivider />
 
         {/* ─── Two-Factor Authentication Section ─── */}
-        <div>
+        <div ref={mfaSectionRef}>
           <h4 className={sectionLabel}>
             <Fingerprint size={14} className="text-primary-400" />
             {t('settings.authAccess.mfaSection', 'Two-Factor Authentication')}
@@ -587,7 +595,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-1.5 bg-white/5 rounded-lg">
-                      <DeviceIcon size={16} className="text-slate-400" />
+                      <DeviceIcon size={16} className="text-slate-600" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -754,7 +762,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           setEditingRecovery(null);
                           setEditValue('');
                         }}
-                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
+                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-600 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>
@@ -820,7 +828,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                           setEditingRecovery(null);
                           setEditValue('');
                         }}
-                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
+                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-600 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>
@@ -844,12 +852,31 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                             ? t('settings.authAccess.codesRemaining', '{{count}} codes remaining', {
                                 count: backupCodesCount,
                               })
-                            : t('settings.authAccess.noCodes', 'No backup codes generated')}
+                            : currentUser?.mfaEnabled
+                              ? t(
+                                  'settings.authAccess.noCodesGenerate',
+                                  'No backup codes — generate a new set from your 2FA settings'
+                                )
+                              : t(
+                                  'settings.authAccess.codesNeedMfa',
+                                  'Backup codes are created when you set up two-factor authentication'
+                                )}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {backupCodesCount > 0 && <Check size={14} className="text-emerald-400" />}
+                      {backupCodesCount > 0 ? (
+                        <Check size={14} className="text-emerald-400" />
+                      ) : (
+                        <button
+                          onClick={openMfaPanel}
+                          className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded-md hover:bg-primary-500/10 transition-colors whitespace-nowrap"
+                        >
+                          {currentUser?.mfaEnabled
+                            ? t('settings.authAccess.generateCodes', 'Generate codes')
+                            : t('settings.authAccess.setUp2fa', 'Set up 2FA')}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

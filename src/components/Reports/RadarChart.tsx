@@ -111,7 +111,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 {entry.value.toFixed(1)}
               </span>
               {axisConfig && (
-                <span className="text-slate-400 dark:text-slate-500">/ {axisConfig.maxLevel}</span>
+                <span className="text-slate-600 dark:text-slate-500">/ {axisConfig.maxLevel}</span>
               )}
             </div>
           ))}

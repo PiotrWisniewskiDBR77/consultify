@@ -281,7 +281,7 @@ export const PolicyEnforcementTab: React.FC = () => {
                   const severity = getDriftSeverity(row);
                   const target = getRepairTarget(row);
                   return (
-                    <tr key={row.id} className="border-b border-slate-100 dark:border-navy-800">
+                    <tr key={row.id} className="border-b border-slate-200 dark:border-navy-800">
                       <td className="px-3 py-3 font-medium text-slate-900 dark:text-white">
                         {row.domain}
                       </td>

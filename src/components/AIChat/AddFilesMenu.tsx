@@ -13,44 +13,17 @@ import { ChevronRight, ExternalLink, Link2, Plus, Upload } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
 import { Button } from '../ui/primitives/Button';
 import { Modal } from '../ui/primitives/Modal';
+import { SUPPORTED_CHAT_ATTACHMENT_ACCEPT } from './chatAttachmentSupport';
 import {
-  SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
-  SUPPORTED_CHAT_ATTACHMENT_LABEL,
-} from './chatAttachmentSupport';
-
-// ─── Recent attachments (localStorage) ───────────────────────────────────────
-
-type RecentAttachment = { name: string; addedAt: number };
-
-const RECENT_KEY = 'consultify-recent-attachments';
-
-function readRecent(): RecentAttachment[] {
-  try {
-    const raw = localStorage.getItem(RECENT_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((x: any) => ({ name: String(x?.name || '').trim(), addedAt: Number(x?.addedAt || 0) }))
-      .filter((x: RecentAttachment) => x.name && Number.isFinite(x.addedAt) && x.addedAt > 0)
-      .sort((a: RecentAttachment, b: RecentAttachment) => b.addedAt - a.addedAt)
-      .slice(0, 5);
-  } catch {
-    return [];
-  }
-}
-
-function writeRecent(items: RecentAttachment[]) {
-  try {
-    localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, 5)));
-  } catch {
-    // ignore
-  }
-}
+  pushRecentAttachment,
+  readRecentAttachments,
+  type RecentAttachment,
+} from './chatRecentAttachments';
 
 // ─── Brand SVG icons (no background, true colours) ──────────────────────────
 
@@ -117,11 +90,11 @@ const FileIcon: React.FC<{ name: string }> = ({ name }) => {
     png: 'text-primary-400',
     jpg: 'text-primary-400',
     jpeg: 'text-primary-400',
-    txt: 'text-slate-400',
-    md: 'text-slate-400',
+    txt: 'text-slate-600',
+    md: 'text-slate-600',
     json: 'text-amber-400',
   };
-  const color = colorMap[ext] || 'text-slate-400';
+  const color = colorMap[ext] || 'text-slate-600';
 
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className={`shrink-0 ${color}`}>
@@ -148,6 +121,7 @@ const FileIcon: React.FC<{ name: string }> = ({ name }) => {
 interface AddFilesMenuProps {
   onFileSelect: (files: File[]) => void;
   onUrlAdd?: (url: string) => void;
+  onRecentSelect?: (recent: { name: string; docId?: string }) => void;
   onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
   onConnectCloud?: (provider: CloudProviderId) => void;
   connectedProviders?: CloudProviderId[];
@@ -172,6 +146,7 @@ const PROVIDERS: ProviderDef[] = [
 export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   onFileSelect,
   onUrlAdd,
+  onRecentSelect,
   onCloudFileSelect,
   onConnectCloud,
   connectedProviders = [],
@@ -179,6 +154,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   disabled = false,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [recentHover, setRecentHover] = useState(false);
   const [recentItems, setRecentItems] = useState<RecentAttachment[]>([]);
@@ -198,7 +174,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setRecentItems(readRecent());
+      setRecentItems(readRecentAttachments());
     } else {
       setRecentHover(false);
     }
@@ -238,18 +214,11 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       { duration: 2000 }
     );
 
-    const now = Date.now();
-    const existing = readRecent();
-    const added = files.map((f) => ({ name: f.name.trim(), addedAt: now }));
-    const merged = [...added, ...existing]
-      .filter((x) => x.name)
-      .reduce<RecentAttachment[]>((acc, item) => {
-        if (acc.some((a) => a.name === item.name)) return acc;
-        acc.push(item);
-        return acc;
-      }, [])
-      .slice(0, 5);
-    writeRecent(merged);
+    // Record the file name immediately so it shows in Recent right away. The
+    // docId isn't known until the upload completes in UnifiedChatPanel, which
+    // upgrades this same entry in place via pushRecentAttachment({name, docId}).
+    let merged: RecentAttachment[] = readRecentAttachments();
+    for (const f of files) merged = pushRecentAttachment({ name: f.name.trim() });
     setRecentItems(merged);
   };
 
@@ -259,9 +228,10 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   };
 
   const openIntegrationsSettings = () => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/settings/integrations');
-    } else {
+    // SPA navigation (A3) — a hard reload would discard the chat draft + scroll.
+    try {
+      navigate('/settings/integrations');
+    } catch {
       onConnectCloud?.('google-drive');
     }
     setIsOpen(false);
@@ -305,7 +275,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       <button
         onClick={() => setIsOpen((v) => !v)}
         disabled={disabled}
-        className={`p-2 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        className={`p-2 rounded-lg transition-colors text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         title={t('aiChat.menu.addFiles', 'Add files')}
       >
         <Plus size={20} />
@@ -324,20 +294,17 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className="absolute left-0 top-full mt-2 z-50 w-[250px] py-1.5
-            bg-white/95 dark:bg-[#1a1d2e]/95 backdrop-blur-xl
+          className="absolute left-0 bottom-full mb-2 z-50 w-[250px] py-1.5
+            bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
-            animate-in fade-in-0 slide-in-from-top-2 duration-150"
+            animate-in fade-in-0 slide-in-from-bottom-2 duration-150"
         >
           {/* Upload file */}
           <MenuItem
             onClick={() => fileInputRef.current?.click()}
             icon={<Upload size={15} className="text-slate-500 dark:text-slate-400" />}
             label={t('aiChat.menu.uploadFile', 'Upload file')}
-            description={t('aiChat.menu.supportedLocalTypes', 'Supported: {{types}}', {
-              types: SUPPORTED_CHAT_ATTACHMENT_LABEL,
-            })}
           />
 
           {/* Add URL */}
@@ -349,13 +316,12 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
               }}
               icon={<Link2 size={15} className="text-slate-500 dark:text-slate-400" />}
               label={t('aiChat.menu.addLink', 'Add link')}
-              description={t('aiChat.menu.addLinkHint', 'Paste a URL to read and cite')}
             />
           )}
 
           {isCloudImplemented && connectedCloudProviders.length > 0 ? (
             <>
-              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+              <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
               {connectedCloudProviders.map((p) => (
                 <CloudMenuItem
                   key={p.id}
@@ -367,27 +333,17 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
             </>
           ) : (
             <>
-              <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
-              <div className="px-3.5 py-2">
-                <p className="text-[12px] leading-5 text-slate-500 dark:text-slate-400">
-                  {t(
-                    'aiChat.menu.cloudSetupHint',
-                    'Cloud files are available only from sources already connected in Integrations.'
-                  )}
-                </p>
-                <button
-                  type="button"
-                  onClick={openIntegrationsSettings}
-                  className="mt-2 text-[12px] font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-                >
-                  {t('aiChat.menu.manageIntegrations', 'Manage cloud sources')}
-                </button>
-              </div>
+              <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
+              <MenuItem
+                onClick={openIntegrationsSettings}
+                icon={<Link2 size={15} className="text-slate-500 dark:text-slate-400" />}
+                label={t('aiChat.menu.manageIntegrations', 'Manage cloud sources')}
+              />
             </>
           )}
 
           {/* Divider */}
-          <div className="mx-3 my-1 border-t border-slate-100 dark:border-white/[0.06]" />
+          <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
 
           {/* Recent — flyout to the right */}
           <div
@@ -400,14 +356,14 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
               className="w-full flex items-center gap-3 px-3.5 py-2 text-[13px] text-slate-500 dark:text-slate-400 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors rounded-lg mx-0"
             >
               <span className="flex-1 text-left">{t('aiChat.menu.recent', 'Recent')}</span>
-              <ChevronRight size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+              <ChevronRight size={13} className="shrink-0 text-slate-600 dark:text-slate-500" />
             </button>
 
             {/* Flyout submenu */}
             {recentHover && (
               <div
                 className="absolute left-full top-0 ml-1 z-50 w-[200px] py-1.5
-                  bg-white/95 dark:bg-[#1a1d2e]/95 backdrop-blur-xl
+                  bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
                   border border-slate-200/40 dark:border-white/[0.08]
                   rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
                   animate-in fade-in-0 slide-in-from-left-1 duration-100"
@@ -415,17 +371,36 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                 onMouseLeave={handleRecentLeave}
               >
                 {recentItems.length === 0 ? (
-                  <p className="px-3.5 py-2.5 text-[12px] text-slate-400 dark:text-slate-500">
+                  <p className="px-3.5 py-2.5 text-[12px] text-slate-600 dark:text-slate-500">
                     {t('aiChat.menu.recentEmpty', 'No recent attachments')}
                   </p>
                 ) : (
                   recentItems.map((r) => (
                     <button
-                      key={`${r.name}-${r.addedAt}`}
+                      key={`${r.docId || r.name}-${r.addedAt}`}
                       type="button"
-                      className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors group"
-                      title={r.name}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-left hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors group disabled:opacity-50"
+                      disabled={!r.docId}
+                      title={
+                        r.docId
+                          ? r.name
+                          : `${r.name} — ${t('aiChat.menu.recentReupload', 're-upload to attach')}`
+                      }
                       onClick={() => {
+                        if (!r.docId) {
+                          // Legacy / pre-docId entry — can't reattach without the
+                          // server doc; prompt a fresh upload instead of lying.
+                          fileInputRef.current?.click();
+                          setIsOpen(false);
+                          return;
+                        }
+                        // Real reattach: hand the existing docId back to the
+                        // composer, which includes it in the next message (the
+                        // RAG vectors already exist server-side — no re-upload).
+                        onRecentSelect?.({ name: r.name, docId: r.docId });
+                        toast.success(t('aiChat.menu.toast.recentReattached', { name: r.name }), {
+                          duration: 1800,
+                        });
                         setIsOpen(false);
                       }}
                     >
@@ -517,7 +492,7 @@ const CloudMenuItem: React.FC<{
       className={`shrink-0 transition-all duration-150 ${
         connected
           ? 'text-emerald-500 dark:text-emerald-400 opacity-100'
-          : 'text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100'
+          : 'text-slate-600 dark:text-slate-400 opacity-0 group-hover:opacity-100'
       }`}
     />
   </button>

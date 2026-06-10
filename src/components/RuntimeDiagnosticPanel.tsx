@@ -12,7 +12,7 @@ export function RuntimeDiagnosticPanel({ mode, title, description }: RuntimeDiag
           Consultify Runtime Diagnostic
         </p>
         <h1 className="mb-3 text-2xl font-semibold leading-tight">{title}</h1>
-        <p className="mb-4 leading-7 text-slate-300">{description}</p>
+        <p className="mb-4 leading-7 text-slate-600">{description}</p>
         <code className="block rounded-xl bg-slate-950 px-4 py-3 text-sm text-sky-200">
           ?diag={mode}
         </code>

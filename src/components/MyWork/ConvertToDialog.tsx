@@ -91,7 +91,7 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             <X size={16} />
           </button>

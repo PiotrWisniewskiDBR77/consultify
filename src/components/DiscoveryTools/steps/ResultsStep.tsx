@@ -42,7 +42,7 @@ function BulletListEditor(props: {
         </button>
       </div>
       {items.length === 0 ? (
-        <div className="p-4 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-400 text-sm">
+        <div className="p-4 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600 text-sm">
           {emptyLabel}
         </div>
       ) : (

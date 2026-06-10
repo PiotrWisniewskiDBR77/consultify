@@ -182,7 +182,7 @@ export const HelpFeedbackWidget: React.FC<HelpFeedbackWidgetProps> = ({
               </span>
               <button
                 onClick={() => setShowComment(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
               >
                 <X size={16} />
               </button>

@@ -142,7 +142,7 @@ export const ExternalDigitalWorkspace: React.FC<ExternalDigitalWorkspaceProps> =
           }`}
         >
           <input {...getInputProps()} />
-          <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+          <Upload className="w-16 h-16 mx-auto mb-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />
           <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
             Drop {selectedFramework} PDF here or click to select
           </p>

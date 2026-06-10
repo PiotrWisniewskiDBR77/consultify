@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * StatusReportBuilder Component
  *
@@ -333,7 +332,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
   // No initiative selected
   if (!initiativeId) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
+      <div className="flex flex-col items-center justify-center h-full text-slate-600 dark:text-slate-500">
         <FileText size={48} className="mb-4 opacity-30" />
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">Status Reports</h3>
         <p className="text-sm">Select an initiative to view or generate reports</p>
@@ -353,7 +352,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
   // No report yet
   if (!currentReport) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
+      <div className="flex flex-col items-center justify-center h-full text-slate-600 dark:text-slate-500">
         <FileText size={48} className="mb-4 opacity-30" />
         <h3 className="text-lg font-medium text-navy-900 dark:text-white mb-2">No Reports Yet</h3>
         <p className="text-sm mb-4">Generate your first status report for this initiative</p>
@@ -543,7 +542,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             <div className="text-lg font-medium text-navy-900 dark:text-white">
               {currentReport.periodLabel}
             </div>
-            <div className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1 justify-end mt-1">
+            <div className="text-xs text-slate-600 dark:text-slate-500 flex items-center gap-1 justify-end mt-1">
               <Calendar size={12} />
               Generated {new Date(currentReport.createdAt).toLocaleDateString('pl-PL')}
             </div>
@@ -620,7 +619,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               No accomplishments recorded
             </p>
           )}
@@ -644,7 +643,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-400 dark:text-slate-500">No next steps defined</p>
+            <p className="text-sm text-slate-600 dark:text-slate-500">No next steps defined</p>
           )}
         </div>
       </div>
@@ -698,7 +697,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
             </div>
             <div className="space-y-2">
               {reportHistory.length === 0 ? (
-                <p className="text-slate-400 dark:text-slate-500 text-center py-8">
+                <p className="text-slate-600 dark:text-slate-500 text-center py-8">
                   No previous reports
                 </p>
               ) : (
@@ -731,7 +730,7 @@ export const StatusReportBuilder: React.FC<StatusReportBuilderProps> = ({
                       >
                         {report.status}
                       </span>
-                      <Eye size={16} className="text-slate-400 dark:text-slate-500" />
+                      <Eye size={16} className="text-slate-600 dark:text-slate-500" />
                     </div>
                   </div>
                 ))

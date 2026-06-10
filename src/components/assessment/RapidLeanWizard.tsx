@@ -487,7 +487,7 @@ export const RapidLeanWizard: React.FC<RapidLeanWizardProps> = ({
             )}
             {/* Last Saved Indicator */}
             {lastSaved && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <span className="text-xs text-gray-600 dark:text-gray-500 dark:text-gray-400 flex items-center gap-1">
                 <Save className="w-3 h-3" />
                 Saved {lastSaved.toLocaleTimeString()}
               </span>

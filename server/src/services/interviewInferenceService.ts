@@ -24,6 +24,51 @@ const INSIGHT_CATEGORIES = [
 ] as const;
 type InsightCategory = (typeof INSIGHT_CATEGORIES)[number];
 
+/**
+ * I4 — interview_insights schema coherence (no-delete fix).
+ *
+ * The `interview_insights` table is written by three generations with disjoint
+ * column sets: the base (305) migration only guarantees the Gen-2 columns; the
+ * Gen-1 inference columns are added by `20260222_interview_conversational_inference.sql`,
+ * which may not have run in an environment where DB_MANAGED_SCHEMA is off. The
+ * blind INSERT below would then throw `column ... does not exist` and mark the
+ * inference run failed. This lazy-ensure ALTERs in every column the inference
+ * INSERT writes, idempotently (`ADD COLUMN IF NOT EXISTS`), so the write is
+ * always safe regardless of migration state. Runs once per process.
+ */
+let inferenceColumnsEnsured = false;
+async function ensureInferenceInsightColumns(): Promise<void> {
+  if (inferenceColumnsEnsured) return;
+  const alters = [
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS category TEXT`,
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS structured_content JSONB`,
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS evidence_links JSONB DEFAULT '[]'::JSONB`,
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS unknowns JSONB DEFAULT '[]'::JSONB`,
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS counterpoints JSONB DEFAULT '[]'::JSONB`,
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS assumptions JSONB DEFAULT '[]'::JSONB`,
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS confidence_score INTEGER`,
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS inference_run_id TEXT`,
+    `ALTER TABLE interview_insights ADD COLUMN IF NOT EXISTS insight_category TEXT`,
+  ];
+  for (const sql of alters) {
+    try {
+      await dbRun(sql, []);
+    } catch (err) {
+      const message = String((err as Error)?.message || err || '');
+      // SQLite doesn't support ADD COLUMN IF NOT EXISTS; tolerate the dupe/
+      // syntax errors so the ensure is portable across both engines.
+      if (
+        !message.includes('duplicate column') &&
+        !message.includes('already exists') &&
+        !message.toLowerCase().includes('syntax')
+      ) {
+        logger.warn('[interviewInference] ensure column failed', { sql, message });
+      }
+    }
+  }
+  inferenceColumnsEnsured = true;
+}
+
 const EvidenceItemSchema = z.object({
   sessionId: z.string(),
   questionId: z.string(),
@@ -165,6 +210,10 @@ Analyze the above interview data and generate structured insights.`;
     const insights = output.insights || [];
     const now = new Date().toISOString();
     const tokensUsed = (result as any).usage?.totalTokens || 0;
+
+    // I4 — guarantee the Gen-1 columns exist before the blind INSERT so the
+    // write never throws on a DB provisioned only for the Gen-2 base schema.
+    await ensureInferenceInsightColumns();
 
     for (const insight of insights) {
       const insightId = uuidv4();

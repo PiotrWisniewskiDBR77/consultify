@@ -10,9 +10,6 @@ export { TabLayout } from './TabLayout';
 
 // Legacy-compatible panels kept for routes that still import the central index.
 // New System module work should prefer `components/SuperAdmin/system/*`.
-export { EmailTemplatesPanel } from './EmailTemplatesPanel';
-export { FeatureFlagsPanel } from './FeatureFlagsPanel';
-export { IntegrationsPanel } from './IntegrationsPanel';
 export { LegalPanel } from './LegalPanel';
 export { UsageStatsPanel } from './UsageStatsPanel';
 
@@ -39,6 +36,3 @@ export * from './integrations';
 
 // Data Management
 export * from './data';
-
-// Email Configuration
-export { EmailConfigurationPanel } from './EmailConfigurationPanel';

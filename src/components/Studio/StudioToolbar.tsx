@@ -113,7 +113,7 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
       {/* Expand/Collapse Toggle */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-slate-800/90 backdrop-blur-sm border border-white/10 rounded-t-lg text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+        className="absolute -top-8 left-1/2 -translate-x-1/2 px-3 py-1 bg-slate-800/90 backdrop-blur-sm border border-white/10 rounded-t-lg text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
       >
         {isExpanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
       </button>
@@ -125,14 +125,14 @@ export const StudioToolbar: React.FC<StudioToolbarProps> = ({
             <button
               key={nodeType.type}
               onClick={() => onAddNode(nodeType.type)}
-              className="group relative flex items-center gap-2 px-3 py-2 text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-all"
+              className="group relative flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-all"
               title={nodeType.description}
             >
               {nodeType.icon}
               <span className="text-xs font-medium">{nodeType.label}</span>
 
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 border border-white/10 rounded text-[10px] text-slate-600 dark:text-slate-500 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 {nodeType.description}
               </div>
             </button>

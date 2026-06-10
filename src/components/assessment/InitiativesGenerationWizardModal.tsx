@@ -702,7 +702,7 @@ export function InitiativesGenerationWizardModal(props: {
                   <div className="px-4 py-2.5 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 text-sm font-medium text-slate-900 dark:text-white">
                     Podgląd ({runInitiatives.length})
                   </div>
-                  <div className="max-h-48 overflow-auto divide-y divide-slate-100 dark:divide-navy-800">
+                  <div className="max-h-48 overflow-auto divide-y divide-slate-200 dark:divide-navy-800">
                     {runInitiatives.slice(0, 10).map((it) => (
                       <div
                         key={it.id}

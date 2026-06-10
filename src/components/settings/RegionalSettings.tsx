@@ -15,6 +15,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { SettingsApi } from '../../services/api/settings.api';
 import { User } from '../../types';
@@ -149,11 +151,9 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
         throw new Error('Regional preferences were not confirmed by the server');
       }
       setPreferences(persisted);
-      // Also update user object for backwards compatibility
-      onUpdateUser({
-        timezone: persisted.timezone,
-        units: persisted.units,
-      });
+      // Note: we intentionally do NOT mirror timezone/units onto the user object.
+      // Nothing in the app consumed that mirror, so it implied an app-wide effect
+      // that does not exist. These remain personal display preferences.
       toast.success(t('settings.regional.saved', 'Regional preferences saved'));
     } catch (error: unknown) {
       toast.error(
@@ -210,11 +210,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   if (loadError) {
@@ -251,8 +247,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             {t(
-              'settings.regional.description',
-              'Configure your locale, timezone, and format preferences'
+              'settings.regional.descriptionPersonal',
+              'Your personal display preferences. The live preview below reflects these choices; broader app-wide formatting will adopt them over time.'
             )}
           </p>
           {organizationDefaults?.profile?.defaultTimezone ||
@@ -434,7 +430,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                         <Clock
                           size={16}
                           className={
-                            isSelected ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'
+                            isSelected ? 'text-primary-500' : 'text-slate-600 dark:text-slate-500'
                           }
                         />
                         <span

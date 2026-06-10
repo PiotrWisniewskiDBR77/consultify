@@ -621,7 +621,7 @@ export function SLADashboard() {
                       }`}
                     >
                       {breach.resolved ? (
-                        <CheckCircle size={16} className="text-slate-400 dark:text-slate-500" />
+                        <CheckCircle size={16} className="text-slate-600 dark:text-slate-500" />
                       ) : breach.severity === 'critical' ? (
                         <XCircle size={16} className="text-rose-400" />
                       ) : (
@@ -643,12 +643,12 @@ export function SLADashboard() {
                           {breach.severity}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                      <div className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                         Threshold: {breach.threshold} | Actual: {breach.actual}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-slate-400 dark:text-slate-500">
+                      <div className="text-xs text-slate-600 dark:text-slate-500">
                         {formatDateTime(breach.timestamp)}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -744,7 +744,7 @@ const StatRow: React.FC<{
   color?: string;
 }> = ({ label, value, color = 'text-slate-900 dark:text-white' }) => (
   <div className="flex justify-between items-center">
-    <span className="text-sm text-slate-400 dark:text-slate-500">{label}</span>
+    <span className="text-sm text-slate-600 dark:text-slate-500">{label}</span>
     <span className={`text-sm font-medium ${color}`}>{value}</span>
   </div>
 );

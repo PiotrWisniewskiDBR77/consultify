@@ -268,7 +268,7 @@ export default function PublicFormView({ slug }: PublicFormViewProps) {
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
+        <p className="mt-4 text-center text-xs text-gray-600 dark:text-gray-500">
           Powered by Table Platform
         </p>
       </div>
@@ -296,7 +296,7 @@ function FormField({ field, config, value, error, onChange }: FormFieldProps) {
         {config.required && <span className="ml-1 text-rose-500">*</span>}
       </label>
       {config.helpText && (
-        <p className="mb-1.5 text-xs text-gray-400 dark:text-gray-500">{config.helpText}</p>
+        <p className="mb-1.5 text-xs text-gray-600 dark:text-gray-500">{config.helpText}</p>
       )}
       <FieldInput
         fieldType={field.field_type}
@@ -372,7 +372,7 @@ function FieldInput({ fieldType, options, value, onChange, hasError }: FieldInpu
           {value ? (
             <CheckSquare className="h-5 w-5 text-blue-600" />
           ) : (
-            <Square className="h-5 w-5 text-gray-400" />
+            <Square className="h-5 w-5 text-gray-600" />
           )}
           {value ? 'Yes' : 'No'}
         </button>

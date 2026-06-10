@@ -1,9 +1,10 @@
-import { ArrowLeft, CreditCard, RefreshCw, Users } from 'lucide-react';
+import { ArrowLeft, CreditCard, ScrollText, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../utils/cn';
 
-export type AdminSettingsSection = 'people' | 'billing' | 'operations';
+export type AdminSettingsSection = 'people' | 'billing' | 'ai' | 'security' | 'audit';
 
 interface AdminSettingsSidebarProps {
   activeSection: AdminSettingsSection;
@@ -12,29 +13,55 @@ interface AdminSettingsSidebarProps {
   onBack?: () => void;
 }
 
-const NAV_ITEMS: Array<{
+interface NavItem {
   id: AdminSettingsSection;
-  label: string;
-  description: string;
+  labelKey: string;
+  labelDefault: string;
+  descriptionKey: string;
+  descriptionDefault: string;
   icon: React.ElementType;
-}> = [
+}
+
+const NAV_ITEMS: NavItem[] = [
   {
     id: 'people',
-    label: 'Team & Access',
-    description: 'Members, roles, ownership, and team invite codes',
+    labelKey: 'admin.nav.people.label',
+    labelDefault: 'Team & Access',
+    descriptionKey: 'admin.nav.people.description',
+    descriptionDefault: 'Members, roles, ownership, and team invite codes',
     icon: Users,
   },
   {
     id: 'billing',
-    label: 'Billing & FinOps',
-    description: 'Plans, invoices, payment methods, and spend controls',
+    labelKey: 'admin.nav.billing.label',
+    labelDefault: 'Billing & Plans',
+    descriptionKey: 'admin.nav.billing.description',
+    descriptionDefault: 'Plan, credit & storage limits, seats, invoices',
     icon: CreditCard,
   },
   {
-    id: 'operations',
-    label: 'Operations',
-    description: 'Context worker queue, processing jobs, and explicit runs',
-    icon: RefreshCw,
+    id: 'ai',
+    labelKey: 'admin.nav.ai.label',
+    labelDefault: 'AI Controls',
+    descriptionKey: 'admin.nav.ai.description',
+    descriptionDefault: 'AI governance, model posture, and operations',
+    icon: Sparkles,
+  },
+  {
+    id: 'security',
+    labelKey: 'admin.nav.security.label',
+    labelDefault: 'Security & Identity',
+    descriptionKey: 'admin.nav.security.description',
+    descriptionDefault: 'Auth policy, SCIM, delegated IAM, API access',
+    icon: ShieldCheck,
+  },
+  {
+    id: 'audit',
+    labelKey: 'admin.nav.audit.label',
+    labelDefault: 'Audit Log',
+    descriptionKey: 'admin.nav.audit.description',
+    descriptionDefault: 'High-risk admin events and compliance evidence',
+    icon: ScrollText,
   },
 ];
 
@@ -44,6 +71,8 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
   className,
   onBack,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <aside
       className={cn(
@@ -58,12 +87,16 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             className="mb-3 inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t('common.back', { defaultValue: 'Back' })}
           </button>
         )}
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Admin Panel</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('admin.shell.title', { defaultValue: 'Team Admin' })}
+        </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Manage team access and commercial controls for your organization.
+          {t('admin.shell.subtitle', {
+            defaultValue: 'Manage team access and commercial controls for your organization.',
+          })}
         </p>
       </div>
 
@@ -76,10 +109,11 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             <button
               key={item.id}
               onClick={() => onSectionChange(item.id)}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'w-full rounded-xl border px-3 py-3 text-left transition',
                 isActive
-                  ? 'border-primary-200 bg-primary-50 text-primary-900 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-100'
+                  ? 'border-primary-200 bg-primary-50 text-primary-900 dark:border-primary-500/30 dark:bg-primary-900/20 dark:text-primary-100'
                   : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 dark:text-slate-300 dark:hover:border-white/10 dark:hover:bg-white/5'
               )}
             >
@@ -95,9 +129,11 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">{item.label}</div>
+                  <div className="truncate text-sm font-medium">
+                    {t(item.labelKey, { defaultValue: item.labelDefault })}
+                  </div>
                   <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    {item.description}
+                    {t(item.descriptionKey, { defaultValue: item.descriptionDefault })}
                   </div>
                 </div>
               </div>

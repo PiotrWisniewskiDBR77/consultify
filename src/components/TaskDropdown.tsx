@@ -140,7 +140,7 @@ export const TaskDropdown = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative text-slate-400 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-primary-500/20"
+        className="relative text-slate-600 dark:text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-primary-500/20"
         title={t('taskDropdown.titleButton', "Today's tasks")}
       >
         <CheckSquare size={20} />
@@ -155,9 +155,9 @@ export const TaskDropdown = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-100 dark:border-navy-700 overflow-hidden z-[100] transform transition-all duration-200 origin-top-right animate-in fade-in zoom-in-95">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-navy-900 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden z-[100] transform transition-all duration-200 origin-top-right animate-in fade-in zoom-in-95">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700 flex items-center justify-between bg-white/50 dark:bg-black/20 backdrop-blur-sm">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between bg-white/50 dark:bg-black/20 backdrop-blur-sm">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-navy-900 dark:text-white text-sm">
                 {t('taskDropdown.title', 'My Action Plan')}
@@ -177,7 +177,7 @@ export const TaskDropdown = () => {
           </div>
 
           {/* Stats Bar */}
-          <div className="grid grid-cols-2 text-center py-2 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-navy-700">
+          <div className="grid grid-cols-2 text-center py-2 bg-slate-50/50 dark:bg-white/5 border-b border-slate-200 dark:border-navy-700">
             <div>
               <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">
                 {t('taskDropdown.overdue', 'Overdue')}
@@ -199,7 +199,7 @@ export const TaskDropdown = () => {
           {/* Task List */}
           <div className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
             {loading ? (
-              <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
+              <div className="p-8 text-center text-slate-600 dark:text-slate-500 text-sm">
                 <Loader2 className="animate-spin w-5 h-5 mx-auto mb-2 text-primary-500" />
                 {t('taskDropdown.loading', 'Loading tasks...')}
               </div>

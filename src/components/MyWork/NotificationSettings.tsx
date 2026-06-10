@@ -30,6 +30,8 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 
 interface NotificationPreferences {
@@ -84,7 +86,7 @@ const SettingToggle: React.FC<{
   icon?: React.ReactNode;
 }> = ({ label, description, value, onChange, icon }) => {
   return (
-    <div className="flex items-start justify-between gap-4 py-3 border-b border-slate-100 dark:border-navy-700 last:border-0">
+    <div className="flex items-start justify-between gap-4 py-3 border-b border-slate-200 dark:border-navy-700 last:border-0">
       <div className="flex items-start gap-3">
         {icon && (
           <div className="p-1.5 bg-slate-100 dark:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 shrink-0">
@@ -127,9 +129,9 @@ const SettingsSection: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden"
     >
-      <div className="p-4 border-b border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+      <div className="p-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-primary-500 to-indigo-600 text-white rounded-lg shadow-sm">
+          <div className="p-2 bg-gradient-to-br from-primary-500 to-crimson-600 text-white rounded-lg shadow-sm">
             {icon}
           </div>
           <div>
@@ -224,11 +226,7 @@ export const NotificationSettings: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-8" />;
   }
 
   return (

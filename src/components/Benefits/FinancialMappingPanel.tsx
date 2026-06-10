@@ -242,33 +242,33 @@ export const FinancialMappingPanel: React.FC = () => {
             >
               <div className="flex items-center gap-3">
                 {isExpanded ? (
-                  <ChevronDown size={16} className="text-slate-400" />
+                  <ChevronDown size={16} className="text-slate-600" />
                 ) : (
-                  <ChevronRight size={16} className="text-slate-400" />
+                  <ChevronRight size={16} className="text-slate-600" />
                 )}
                 <FileText size={18} className={label.color} />
                 <span className="font-semibold text-slate-900 dark:text-white">
                   {isPl ? label.pl : label.en}
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-600">
                   ({stmtLines.length} {t('kpi.financial.lines', 'lines')})
                 </span>
               </div>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-600">
                 {stmtLines.reduce((c, l) => c + (mappingsByLine[l.id]?.length || 0), 0)}{' '}
                 {t('kpi.financial.mappings', 'mappings')}
               </span>
             </button>
 
             {isExpanded && (
-              <div className="border-t border-slate-100 dark:border-navy-700 divide-y divide-slate-50 dark:divide-navy-800">
+              <div className="border-t border-slate-200 dark:border-navy-700 divide-y divide-slate-50 dark:divide-navy-800">
                 {stmtLines.map((line) => {
                   const lineMappings = mappingsByLine[line.id] || [];
                   return (
                     <div key={line.id} className="px-4 py-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="font-mono text-xs text-slate-400 mr-2">
+                          <span className="font-mono text-xs text-slate-600 mr-2">
                             {line.line_code}
                           </span>
                           <span className="text-sm font-medium text-slate-900 dark:text-white">
@@ -289,13 +289,13 @@ export const FinancialMappingPanel: React.FC = () => {
                               className="flex items-center justify-between text-sm group"
                             >
                               <div className="flex items-center gap-2">
-                                <Link size={12} className="text-slate-400" />
+                                <Link size={12} className="text-slate-600" />
                                 <span className="text-slate-600 dark:text-slate-300">
                                   {m.kpi_name}
                                 </span>
-                                <ArrowRight size={12} className="text-slate-300" />
+                                <ArrowRight size={12} className="text-slate-600" />
                                 <span
-                                  className={`text-xs font-medium ${m.direction === 'positive' ? 'text-green-500' : m.direction === 'negative' ? 'text-rose-500' : 'text-slate-400'}`}
+                                  className={`text-xs font-medium ${m.direction === 'positive' ? 'text-green-500' : m.direction === 'negative' ? 'text-rose-500' : 'text-slate-600'}`}
                                 >
                                   {m.direction === 'positive'
                                     ? '↑ improves'
@@ -303,7 +303,7 @@ export const FinancialMappingPanel: React.FC = () => {
                                       ? '↓ worsens'
                                       : '—'}
                                 </span>
-                                <span className="text-xs text-slate-400">×{m.multiplier}</span>
+                                <span className="text-xs text-slate-600">×{m.multiplier}</span>
                                 <ConfBadgeSmall level={m.confidence} />
                               </div>
                               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -353,13 +353,13 @@ export const FinancialMappingPanel: React.FC = () => {
             {impactData.impacts.map((imp, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-slate-400">{imp.lineCode}</span>
+                  <span className="font-mono text-xs text-slate-600">{imp.lineCode}</span>
                   <span className="text-slate-700 dark:text-slate-300">
                     {isPl && imp.lineNamePl ? imp.lineNamePl : imp.lineName}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-400">Δ KPI: {imp.kpiDelta.toFixed(2)}</span>
+                  <span className="text-xs text-slate-600">Δ KPI: {imp.kpiDelta.toFixed(2)}</span>
                   <span
                     className={`font-medium ${imp.estimatedImpact >= 0 ? 'text-green-600' : 'text-rose-600'}`}
                   >
@@ -393,7 +393,7 @@ export const FinancialMappingPanel: React.FC = () => {
                   setShowForm(false);
                   resetForm();
                 }}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600"
               >
                 <X size={20} />
               </button>
@@ -539,7 +539,7 @@ export const FinancialMappingPanel: React.FC = () => {
       )}
 
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 text-xs text-slate-400">
+      <div className="flex items-start gap-2 text-xs text-slate-600">
         <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <p className="italic">
           {t(

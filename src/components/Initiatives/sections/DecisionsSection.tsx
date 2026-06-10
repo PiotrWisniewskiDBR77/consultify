@@ -1394,9 +1394,8 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
 
                     {/* Status */}
                     <td className="py-2.5 pr-2">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs ${statusConfig.bgColor} ${statusConfig.textColor}`}
-                      >
+                      {/* canon §4.2 — neutral shell; colour carried by the signal dot only */}
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs border border-slate-200/70 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300">
                         <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotColor}`} />
                         {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                       </span>
@@ -1471,7 +1470,7 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                           </button>
                           {!readonly && (
                             <>
-                              <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                              <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                               <button
                                 onClick={() => {
                                   closeMenu();
@@ -1499,9 +1498,9 @@ export const DecisionsSection: React.FC<InitiativeSectionProps> = ({ readonly })
                   colSpan={7}
                   className="py-8 text-center text-sm text-slate-500 dark:text-slate-400"
                 >
-                  <Scale size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                  <Scale size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
                   <p>{isPolish ? 'Brak decyzji' : 'No decisions yet'}</p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-600 mt-1">
                     {isPolish
                       ? 'Dodaj decyzje bramkowe lub operacyjne'
                       : 'Add gate or operational decisions'}

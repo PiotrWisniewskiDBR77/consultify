@@ -324,7 +324,7 @@ export const CMPracticeForm: React.FC<CMMIFormProps> = ({
                     ? 'bg-amber-500/20 text-amber-400'
                     : gap < 0
                       ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-slate-500/20 text-slate-400'
+                      : 'bg-slate-500/20 text-slate-600'
                 }`}
               >
                 Gap: {gap > 0 ? '+' : ''}

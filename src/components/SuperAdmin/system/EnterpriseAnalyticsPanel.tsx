@@ -338,7 +338,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-500 pointer-events-none" />
           </div>
         </div>
       </div>
@@ -363,7 +363,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-slate-600 dark:text-slate-500 animate-spin" />
         </div>
       ) : (
         <>
@@ -564,7 +564,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   />
                 </div>
               ) : scheduledReports.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+                <div className="text-center py-12 text-slate-600 dark:text-slate-500">
                   <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No scheduled reports</p>
                   <p className="text-sm mt-1">
@@ -610,10 +610,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
-                            <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <Settings className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                           </button>
                           <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
-                            <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <Mail className="w-4 h-4 text-slate-600 dark:text-slate-500" />
                           </button>
                         </div>
                       </div>
@@ -640,7 +640,7 @@ const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
         {data.datasets.map((dataset) => (
           <div key={dataset.label} className="flex items-center gap-2">
             <div className="w-3 h-3 rounded" style={{ backgroundColor: dataset.color }} />
-            <span className="text-xs text-slate-400 dark:text-slate-500">{dataset.label}</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">{dataset.label}</span>
           </div>
         ))}
       </div>

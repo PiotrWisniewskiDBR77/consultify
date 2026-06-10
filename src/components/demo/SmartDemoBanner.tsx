@@ -104,7 +104,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
       >
         <Sparkles size={16} className="text-primary-400" />
         {t('demo.banner.minimizedLabel', 'Demo')} • {DEMO_ORG_NAME}
-        <span className="text-slate-400 font-mono text-xs">{timeRemaining}</span>
+        <span className="text-slate-600 font-mono text-xs">{timeRemaining}</span>
       </motion.button>
     );
   }
@@ -232,7 +232,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                 {/* Limitations */}
                 <div className="flex flex-wrap items-center gap-6">
                   {LIMITATIONS.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-slate-300 text-xs">
+                    <div key={idx} className="flex items-center gap-2 text-slate-600 text-xs">
                       <item.icon size={14} className="text-slate-500" />
                       <span>{item.text}</span>
                     </div>
@@ -240,7 +240,7 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                 </div>
 
                 {/* CTA */}
-                <div className="text-xs text-slate-400">
+                <div className="text-xs text-slate-600">
                   {isWorkspaceDemo
                     ? t(
                         'demo.banner.readyForMoreWorkspace',

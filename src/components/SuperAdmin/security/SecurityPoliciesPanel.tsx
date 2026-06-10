@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SecurityPoliciesPanel - Organization Security Policy Management
  *
@@ -196,7 +195,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white">Password Policy</h3>
-          <p className="text-sm text-slate-400 dark:text-slate-500">
+          <p className="text-sm text-slate-600 dark:text-slate-500">
             Configure password requirements
           </p>
         </div>
@@ -204,7 +203,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
 
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Minimum Length</label>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Minimum Length</label>
           <input
             type="number"
             min={6}
@@ -215,7 +214,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Password History</label>
+          <label className="block text-sm font-medium text-slate-600 mb-2">Password History</label>
           <input
             type="number"
             min={0}
@@ -231,7 +230,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
       </div>
 
       <div className="mt-6 space-y-4">
-        <h4 className="text-sm font-medium text-slate-300">Character Requirements</h4>
+        <h4 className="text-sm font-medium text-slate-600">Character Requirements</h4>
         <div className="grid grid-cols-2 gap-4">
           {[
             { key: 'passwordRequireUppercase', label: 'Uppercase Letters (A-Z)' },
@@ -246,7 +245,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
                 onChange={(e) => updatePolicy(key as keyof SecurityPolicy, e.target.checked)}
                 className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 focus:ring-primary-500/30"
               />
-              <span className="text-slate-300 group-hover:text-white transition-colors">
+              <span className="text-slate-600 group-hover:text-white transition-colors">
                 {label}
               </span>
             </label>
@@ -255,7 +254,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
       </div>
 
       <div className="mt-6">
-        <label className="block text-sm font-medium text-slate-300 mb-2">
+        <label className="block text-sm font-medium text-slate-600 mb-2">
           Password Expiry (days)
         </label>
         <input
@@ -281,13 +280,13 @@ export const SecurityPoliciesPanel: React.FC = () => {
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white">Session Policy</h3>
-          <p className="text-sm text-slate-400 dark:text-slate-500">Configure session management</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">Configure session management</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 mb-2">
             Session Timeout (minutes)
           </label>
           <input
@@ -303,7 +302,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 mb-2">
             Max Concurrent Sessions
           </label>
           <input
@@ -326,7 +325,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 focus:ring-primary-500/30"
           />
           <div>
-            <span className="text-slate-300 group-hover:text-white transition-colors">
+            <span className="text-slate-600 group-hover:text-white transition-colors">
               Bind Session to Device
             </span>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -346,13 +345,13 @@ export const SecurityPoliciesPanel: React.FC = () => {
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white">Login Policy</h3>
-          <p className="text-sm text-slate-400 dark:text-slate-500">Configure login protection</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">Configure login protection</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 mb-2">
             Max Login Attempts
           </label>
           <input
@@ -365,7 +364,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 mb-2">
             Lockout Duration (minutes)
           </label>
           <input
@@ -389,7 +388,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
         </div>
         <div>
           <h3 className="text-lg font-semibold text-white">Multi-Factor Authentication</h3>
-          <p className="text-sm text-slate-400 dark:text-slate-500">Configure MFA requirements</p>
+          <p className="text-sm text-slate-600 dark:text-slate-500">Configure MFA requirements</p>
         </div>
       </div>
 
@@ -402,7 +401,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
             className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-primary-500 focus:ring-primary-500/30"
           />
           <div>
-            <span className="text-slate-300 group-hover:text-white transition-colors font-medium">
+            <span className="text-slate-600 group-hover:text-white transition-colors font-medium">
               Require MFA for All Users
             </span>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -412,7 +411,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
         </label>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 mb-2">
             Allowed MFA Methods
           </label>
           <div className="flex flex-wrap gap-3">
@@ -440,14 +439,14 @@ export const SecurityPoliciesPanel: React.FC = () => {
                   }}
                   className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-primary-500"
                 />
-                <span className="text-sm text-slate-300">{label}</span>
+                <span className="text-sm text-slate-600">{label}</span>
               </label>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 mb-2">
             Remember Device (days)
           </label>
           <input
@@ -516,7 +515,7 @@ export const SecurityPoliciesPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
           <button

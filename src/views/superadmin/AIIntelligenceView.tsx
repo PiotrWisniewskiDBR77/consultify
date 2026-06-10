@@ -107,7 +107,7 @@ export const AIIntelligenceView: React.FC = () => {
       <div className="shrink-0 px-8 py-6 border-b border-slate-200 dark:border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-pink-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
               <Brain className="text-white" size={24} />
             </div>
             <div>
@@ -127,7 +127,7 @@ export const AIIntelligenceView: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 px-8 py-3 border-b border-slate-100 dark:border-white/5 flex gap-2 overflow-x-auto">
+      <div className="shrink-0 px-8 py-3 border-b border-slate-200 dark:border-white/5 flex gap-2 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -725,7 +725,7 @@ const LearningSystemDashboard: React.FC = () => {
             </p>
           ) : patterns.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-slate-400 dark:text-slate-500">No patterns learned yet</p>
+              <p className="text-slate-600 dark:text-slate-500">No patterns learned yet</p>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Patterns are extracted from user interactions over time
               </p>
@@ -771,7 +771,7 @@ const LearningSystemDashboard: React.FC = () => {
               Loading interactions...
             </p>
           ) : interactions.length === 0 ? (
-            <p className="text-slate-400 dark:text-slate-500 text-center py-8">
+            <p className="text-slate-600 dark:text-slate-500 text-center py-8">
               No interactions recorded
             </p>
           ) : (

@@ -180,7 +180,7 @@ export const MetricCard = forwardRef<HTMLDivElement, MetricCardProps>(
                   <TrendIcon size={12} />
                   {Math.abs(change).toFixed(1)}%
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500">{period}</span>
+                <span className="text-xs text-slate-600 dark:text-slate-500">{period}</span>
               </div>
             )}
           </div>

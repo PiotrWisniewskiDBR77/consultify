@@ -133,7 +133,7 @@ export const LocationFilter: React.FC<LocationFilterProps> = ({
                       </div>
                       {loc.name}
                       {loc.country && (
-                        <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+                        <span className="text-slate-600 dark:text-slate-500 text-xs ml-1">
                           ({loc.country})
                         </span>
                       )}

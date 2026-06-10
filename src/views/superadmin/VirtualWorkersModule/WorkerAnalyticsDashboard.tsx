@@ -1,6 +1,7 @@
 import { BarChart3, Clock, MessageSquare, RefreshCw, TrendingUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 
 interface AnalyticsData {
@@ -100,11 +101,7 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
   }, [workerId, workerSlug]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   if (!data) {

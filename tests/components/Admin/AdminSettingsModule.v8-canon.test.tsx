@@ -14,7 +14,8 @@ const h = vi.hoisted(() => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || _key,
+    t: (_key: string, fallback?: string | { defaultValue?: string }) =>
+      (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key,
     i18n: { language: 'en' },
   }),
 }));
@@ -49,15 +50,8 @@ vi.mock('../../../src/components/Admin/AuditExportPanel', () => ({
 vi.mock('../../../src/components/Admin/BrandingSettingsPanel', () => ({
   BrandingSettingsPanel: () => <div>BrandingSettingsPanel</div>,
 }));
-vi.mock('../../../src/components/Admin/DataGovernancePanel', () => ({
-  DataGovernancePanel: () => <div>DataGovernancePanel</div>,
-}));
-vi.mock('../../../src/components/Admin/IntegrationsManagementPanel', () => ({
-  IntegrationsManagementPanel: () => <div>IntegrationsManagementPanel</div>,
-}));
-vi.mock('../../../src/components/Admin/UnifiedSyncHub', () => ({
-  UnifiedSyncHub: () => <div>UnifiedSyncHub</div>,
-}));
+// DataGovernancePanel / IntegrationsManagementPanel / UnifiedSyncHub were removed
+// as dead-code orphans (admin "to-100" cleanup) — no longer mocked here.
 vi.mock('../../../src/components/billing/PaymentMethodsPanel', () => ({
   PaymentMethodsPanel: () => <div>PaymentMethodsPanel</div>,
 }));

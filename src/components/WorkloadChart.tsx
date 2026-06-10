@@ -75,7 +75,7 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
               <div className="w-2 h-2 rounded-full bg-rose-500"></div>
               <span className="text-slate-500 dark:text-slate-400">Change: {dataPoint.change}</span>
             </div>
-            <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700 font-semibold">
+            <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700 font-semibold">
               Status:{' '}
               <span
                 className={
@@ -102,7 +102,7 @@ export const WorkloadChart: React.FC<WorkloadChartProps> = ({ initiatives, quart
         <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           Workload Distribution
         </h4>
-        <div className="flex gap-3 text-[10px] text-slate-400 dark:text-slate-500">
+        <div className="flex gap-3 text-[10px] text-slate-600 dark:text-slate-500">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-blue-500"></div>Analytical
           </div>

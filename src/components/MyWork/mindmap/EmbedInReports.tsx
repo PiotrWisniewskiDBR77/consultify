@@ -139,7 +139,7 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -154,7 +154,7 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
                 <button
                   key={f.id}
                   onClick={() => setFormat(f.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f.id ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors ${format === f.id ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300' : 'text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                 >
                   <Icon size={12} />
                   {f.label}
@@ -180,7 +180,7 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
             </button>
           </div>
 
-          <p className="text-[9px] text-slate-400 mt-3 text-center">
+          <p className="text-[9px] text-slate-600 mt-3 text-center">
             {isPl
               ? 'Skopiuj i wklej do raportu, prezentacji lub dokumentu.'
               : 'Copy and paste into your report, presentation, or document.'}

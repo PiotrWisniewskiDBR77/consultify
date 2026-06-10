@@ -548,7 +548,7 @@ const LineagePanel: React.FC<LineagePanelProps> = ({ governance }) => {
             >
               {node.lifecycleState}
             </span>
-            {idx < chain.length - 1 ? <ChevronRight size={12} className="text-slate-400" /> : null}
+            {idx < chain.length - 1 ? <ChevronRight size={12} className="text-slate-600" /> : null}
           </li>
         ))}
       </ol>
@@ -750,7 +750,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="rounded p-1 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
             aria-label="Close"
           >
             <X size={16} />

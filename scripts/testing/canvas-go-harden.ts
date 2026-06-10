@@ -6,6 +6,7 @@ type Step = {
   name: string;
   command: string;
   args: string[];
+  retries?: number;
 };
 
 const colors = {
@@ -37,13 +38,6 @@ function runStep(step: Step): number {
   return result.status ?? 1;
 }
 
-function assertEnv(): void {
-  const missing = requiredEnv.filter((name) => !process.env[name]?.trim());
-  if (missing.length > 0) {
-    throw new Error(`Missing required env vars: ${missing.join(', ')}`);
-  }
-}
-
 function runCurl(url: string): number {
   const result = spawnSync('curl', ['-sSf', url], {
     stdio: 'ignore',
@@ -51,6 +45,34 @@ function runCurl(url: string): number {
     env: process.env,
   });
   return result.status ?? 1;
+}
+
+function runStepWithRetry(step: Step, apiHealthUrl: string, uiHealthUrl: string): number {
+  const retries = Math.max(0, step.retries ?? 0);
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    if (runCurl(apiHealthUrl) !== 0 || runCurl(uiHealthUrl) !== 0) {
+      process.stderr.write(
+        `${colors.red}Health precheck failed before "${step.name}" (attempt ${attempt + 1}/${retries + 1})${colors.reset}\n`
+      );
+      if (attempt === retries) return 1;
+      continue;
+    }
+    const status = runStep(step);
+    if (status === 0) return 0;
+    if (attempt < retries) {
+      process.stderr.write(
+        `${colors.yellow}Retrying "${step.name}" (${attempt + 2}/${retries + 1})...${colors.reset}\n`
+      );
+    }
+  }
+  return 1;
+}
+
+function assertEnv(): void {
+  const missing = requiredEnv.filter((name) => !process.env[name]?.trim());
+  if (missing.length > 0) {
+    throw new Error(`Missing required env vars: ${missing.join(', ')}`);
+  }
 }
 
 function main(): void {
@@ -81,34 +103,57 @@ function main(): void {
     process.exit(1);
   }
 
-  const commonEnv = [
-    `E2E_USE_WEB_SERVER=false`,
-    `E2E_APP_URL=${baseUrl}`,
-  ];
-  const envPrefix = commonEnv.join(' ');
-  const playwright = 'npx';
-
+  const envPrefix = [`E2E_USE_WEB_SERVER=false`, `E2E_APP_URL=${baseUrl}`].join(' ');
   const steps: Step[] = [
     {
       name: 'Canvas Core Flow',
       command: 'sh',
       args: [
         '-c',
-        `${envPrefix} ${playwright} playwright test --config playwright.config.ts tests/e2e/smoke/work-canvas-core-flow.spec.ts --project=chromium --workers=1 --reporter=list`,
+        `${envPrefix} npx playwright test --config playwright.config.ts tests/e2e/smoke/work-canvas-core-flow.spec.ts --project=chromium --workers=1 --reporter=list`,
       ],
+      retries: 1,
     },
     {
-      name: 'Canvas Split + Deeplink + Preflight + Editor Flow',
+      name: 'Canvas Split Flow',
       command: 'sh',
       args: [
         '-c',
-        `${envPrefix} ${playwright} playwright test --config playwright.config.ts tests/e2e/smoke/work-canvas-split.spec.ts tests/e2e/smoke/work-canvas-deeplink.spec.ts tests/e2e/smoke/work-canvas-manual-preflight.spec.ts tests/e2e/smoke/work-canvas-editor-flow.spec.ts --project=chromium --workers=1 --reporter=list`,
+        `${envPrefix} npx playwright test --config playwright.config.ts tests/e2e/smoke/work-canvas-split.spec.ts --project=chromium --workers=1 --reporter=list`,
       ],
+      retries: 1,
+    },
+    {
+      name: 'Canvas Deeplink Flow',
+      command: 'sh',
+      args: [
+        '-c',
+        `${envPrefix} npx playwright test --config playwright.config.ts tests/e2e/smoke/work-canvas-deeplink.spec.ts --project=chromium --workers=1 --reporter=list`,
+      ],
+      retries: 1,
+    },
+    {
+      name: 'Canvas Manual Preflight Flow',
+      command: 'sh',
+      args: [
+        '-c',
+        `${envPrefix} npx playwright test --config playwright.config.ts tests/e2e/smoke/work-canvas-manual-preflight.spec.ts --project=chromium --workers=1 --reporter=list`,
+      ],
+      retries: 1,
+    },
+    {
+      name: 'Canvas Editor Flow',
+      command: 'sh',
+      args: [
+        '-c',
+        `${envPrefix} npx playwright test --config playwright.config.ts tests/e2e/smoke/work-canvas-editor-flow.spec.ts --project=chromium --workers=1 --reporter=list`,
+      ],
+      retries: 1,
     },
   ];
 
   for (const step of steps) {
-    const status = runStep(step);
+    const status = runStepWithRetry(step, apiHealth, uiHealth);
     if (status !== 0) {
       process.stderr.write(
         `\n${colors.red}${colors.bold}Canvas GO hardening failed at step: ${step.name}${colors.reset}\n`

@@ -142,7 +142,7 @@ function outcomeIcon(outcome?: string) {
     case 'mixed':
       return <AlertTriangle size={12} className="text-amber-500" />;
     default:
-      return <Clock size={12} className="text-slate-400" />;
+      return <Clock size={12} className="text-slate-600" />;
   }
 }
 
@@ -157,7 +157,7 @@ function typeIcon(type: string) {
     case 'opportunity':
       return <TrendingUp size={12} className="text-green-500" />;
     default:
-      return <Clock size={12} className="text-slate-400" />;
+      return <Clock size={12} className="text-slate-600" />;
   }
 }
 
@@ -247,7 +247,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
             {data.title || (isPl ? 'Linia czasu decyzji' : 'Decision Impact Timeline')}
           </h3>
           {data.timeRange && (
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+            <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
               {data.timeRange.start} → {data.timeRange.end}
             </p>
           )}
@@ -255,14 +255,14 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             title={isPl ? 'Kopiuj' : 'Copy'}
           >
             <Copy size={14} />
           </button>
           <button
             onClick={handleExport}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             title={isPl ? 'Eksportuj' : 'Export'}
           >
             <Download size={14} />
@@ -276,7 +276,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
       </div>
 
       {/* Progress Bar */}
-      <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+      <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-800">
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
             {isPl ? 'Postęp realizacji' : 'Implementation progress'}
@@ -295,7 +295,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
 
       {/* Risk Windows */}
       {data.riskWindows && data.riskWindows.length > 0 && (
-        <div className="px-4 py-2 space-y-1.5 border-b border-slate-100 dark:border-navy-800">
+        <div className="px-4 py-2 space-y-1.5 border-b border-slate-200 dark:border-navy-800">
           {data.riskWindows.map((rw, idx) => (
             <div
               key={idx}
@@ -341,7 +341,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
                   className="w-full text-left group"
                 >
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] font-mono text-slate-600 dark:text-slate-500">
                       {event.date}
                     </span>
                     <span
@@ -359,7 +359,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
 
                 {/* Expanded details */}
                 {isExpanded && (
-                  <div className="mt-2 p-2.5 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-100 dark:border-navy-700 space-y-2 animate-in fade-in duration-200">
+                  <div className="mt-2 p-2.5 bg-slate-50 dark:bg-navy-800/50 rounded-lg border border-slate-200 dark:border-navy-700 space-y-2 animate-in fade-in duration-200">
                     {event.description && (
                       <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                         {event.description}
@@ -373,7 +373,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
                             key={key}
                             className="px-2 py-1 bg-white dark:bg-navy-900 rounded border border-slate-200 dark:border-navy-700"
                           >
-                            <span className="text-[9px] text-slate-400 block">{key}</span>
+                            <span className="text-[9px] text-slate-600 block">{key}</span>
                             <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
                               {value}
                             </span>
@@ -383,7 +383,7 @@ export const DecisionTimelineRenderer: React.FC<DecisionTimelineRendererProps> =
                     )}
 
                     {hasDeps && (
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                      <div className="flex items-center gap-1 text-[10px] text-slate-600">
                         <ArrowRight size={10} />
                         <span>
                           {isPl ? 'Zależy od:' : 'Depends on:'}{' '}

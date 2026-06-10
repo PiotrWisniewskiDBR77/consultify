@@ -114,7 +114,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
           <h4 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {title}
           </h4>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-snug">
+          <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5 leading-snug">
             {description}
           </p>
         </div>
@@ -166,7 +166,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
       {/* ── Resize handle (bottom-right) ───────────────────────────── */}
       <div
         onPointerDown={onPointerDown}
-        className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center cursor-ns-resize text-slate-300 dark:text-navy-600 hover:text-slate-400 dark:hover:text-navy-500 transition-colors"
+        className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center cursor-ns-resize text-slate-600 dark:text-navy-600 hover:text-slate-400 dark:hover:text-navy-500 transition-colors"
         title="Drag to resize"
       >
         <GripVertical size={12} className="rotate-90" />
@@ -206,7 +206,7 @@ const ItemRow: React.FC<ItemRowProps> = ({ children, onRemove, color, badge }) =
       </span>
       <button
         onClick={onRemove}
-        className="text-slate-400 hover:text-rose-500 transition-colors shrink-0"
+        className="text-slate-600 hover:text-rose-500 transition-colors shrink-0"
       >
         <X size={12} />
       </button>
@@ -639,7 +639,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
       onToggle={onToggle}
       badge={
         filledCount > 0 ? (
-          <span className="text-xs text-slate-400">{filledCount}/3</span>
+          <span className="text-xs text-slate-600">{filledCount}/3</span>
         ) : undefined
       }
     >
@@ -1178,7 +1178,7 @@ export const TargetStateSection: React.FC<InitiativeSectionProps> = ({
               readOnly={readonly}
             />
           ) : (
-            <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+            <p className="text-xs text-slate-600 dark:text-slate-500 italic">
               {isPolish
                 ? 'Brak opisu. Kliknij „Edytuj" lub „AI" aby dodać.'
                 : 'No description. Click "Edit" or "AI" to add.'}

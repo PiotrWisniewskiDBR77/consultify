@@ -102,7 +102,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
   const renderColumn = (stats: BranchStats | null) => {
     if (!stats)
       return (
-        <div className="flex-1 flex items-center justify-center text-[11px] text-slate-400">
+        <div className="flex-1 flex items-center justify-center text-[11px] text-slate-600">
           {isPl ? 'Wybierz gałąź' : 'Select a branch'}
         </div>
       );
@@ -117,29 +117,29 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
               <div className="text-[18px] font-bold text-slate-700 dark:text-slate-200">
                 {stats.nodeCount}
               </div>
-              <div className="text-[9px] text-slate-400">{isPl ? 'Pomysłów' : 'Ideas'}</div>
+              <div className="text-[9px] text-slate-600">{isPl ? 'Pomysłów' : 'Ideas'}</div>
             </div>
             <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
               <div className="text-[18px] font-bold text-amber-600">{stats.avgPriority}</div>
-              <div className="text-[9px] text-slate-400">
+              <div className="text-[9px] text-slate-600">
                 {isPl ? 'Śr. priorytet' : 'Avg priority'}
               </div>
             </div>
             <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
               <div className="text-[18px] font-bold text-blue-600">{stats.maxDepth}</div>
-              <div className="text-[9px] text-slate-400">{isPl ? 'Głębokość' : 'Depth'}</div>
+              <div className="text-[9px] text-slate-600">{isPl ? 'Głębokość' : 'Depth'}</div>
             </div>
             <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
               <div className="text-[18px] font-bold text-emerald-600">
                 {stats.statusCounts.converted || 0}
               </div>
-              <div className="text-[9px] text-slate-400">
+              <div className="text-[9px] text-slate-600">
                 {isPl ? 'Skonwertowane' : 'Converted'}
               </div>
             </div>
           </div>
           <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wider mb-1">
               Status
             </div>
             <div className="flex gap-1 h-3 rounded-full overflow-hidden bg-slate-200 dark:bg-navy-700">
@@ -154,7 +154,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
             </div>
           </div>
           <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wider mb-1">
               {isPl ? 'Pomysły' : 'Ideas'}
             </div>
             <div className="space-y-1 max-h-[200px] overflow-y-auto">
@@ -200,7 +200,7 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({
                 </option>
               ))}
             </select>
-            <ArrowLeftRight size={16} className="text-slate-400 shrink-0" />
+            <ArrowLeftRight size={16} className="text-slate-600 shrink-0" />
             <select
               value={rightBranch}
               onChange={(e) => setRightBranch(e.target.value)}

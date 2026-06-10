@@ -7,6 +7,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -198,11 +200,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
     t(`settings.templates.categories.${normalizeTemplateKey(category)}`, category);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (
@@ -318,11 +316,11 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
           </h3>
           {customTemplates.length === 0 ? (
             <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center">
-              <Layout size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+              <Layout size={48} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
               <p className="text-slate-500 dark:text-slate-400">
                 {t('settings.templates.noCustomTemplates', 'No custom templates yet')}
               </p>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+              <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
                 {t(
                   'settings.templates.noCustomTemplatesHint',
                   'Save your current settings as a template to use later'
@@ -357,7 +355,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
+                      className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg"
                     >
                       <Trash2 size={16} />
                     </button>

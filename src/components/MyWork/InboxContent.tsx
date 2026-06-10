@@ -36,8 +36,11 @@ import {
   CheckSquare,
   ChevronDown,
   ChevronRight,
+  ChevronsUpDown,
+  ChevronUp,
   Clock,
   Copy,
+  Edit2,
   Eye,
   FileText,
   Inbox,
@@ -50,7 +53,6 @@ import {
   MoreVertical,
   Pin,
   Scale,
-  Settings2,
   Sparkles,
   Square,
   Star,
@@ -62,6 +64,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
+  type TableSettingsColumn,
+  TableSettingsPopover,
+} from '@/components/shared/ModuleHub/TableSettingsPopover';
+import {
   actionPillClass,
   type ActionRow,
   type ExtraCopyFormat,
@@ -72,7 +78,14 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  type RowAction,
+  type RowActionSection,
+  RowActionsMenu,
+} from '@/components/shared/RowActionsMenu';
+import { ErrorState } from '@/components/ui/primitives';
+import { DueChip } from '@/components/ui/primitives/chips/DueChip';
+import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -513,25 +526,25 @@ const urgencyConfig: Record<
 > = {
   critical: {
     icon: AlertTriangle,
-    pill: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-rose-600 dark:bg-rose-500/15 dark:text-rose-300 dark:border-transparent dark:[&>svg]:text-rose-300',
     label: 'Critical',
     heatColor: 'border-l-rose-500',
   },
   high: {
     icon: AlertCircle,
-    pill: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-amber-600 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent dark:[&>svg]:text-amber-300',
     label: 'High',
     heatColor: 'border-l-amber-500',
   },
   normal: {
     icon: Clock,
-    pill: 'bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-200',
+    pill: 'border border-slate-200 bg-white text-slate-700 [&>svg]:text-slate-500 dark:bg-navy-800 dark:text-slate-200 dark:border-transparent',
     label: 'Normal',
     heatColor: 'border-l-slate-300 dark:border-l-navy-600',
   },
   low: {
     icon: Calendar,
-    pill: 'bg-slate-50 text-slate-600 dark:bg-navy-900/40 dark:text-slate-300',
+    pill: 'border border-slate-200 bg-white text-slate-600 [&>svg]:text-slate-400 dark:bg-navy-900/40 dark:text-slate-300 dark:border-transparent',
     label: 'Low',
     heatColor: 'border-l-slate-200 dark:border-l-navy-700',
   },
@@ -626,7 +639,7 @@ const SMART_SECTIONS: {
     icon: MessageSquare,
     color: 'text-amber-500',
   },
-  { id: 'other', labelEn: 'Other', labelPl: 'Inne', icon: Inbox, color: 'text-slate-400' },
+  { id: 'other', labelEn: 'Other', labelPl: 'Inne', icon: Inbox, color: 'text-slate-600' },
 ];
 
 // ── Relative time formatting ──
@@ -668,8 +681,11 @@ const AGING_STYLES = {
 };
 
 // ── SLA pill ──
-const slaPill = (sla: InboxItem['sla']): { label: string; className: string; title?: string } => {
-  if (!sla) return { label: '-', className: 'text-slate-300 dark:text-slate-600' };
+const slaPill = (
+  sla: InboxItem['sla']
+): { label: string; className: string; dot: string; title?: string } => {
+  if (!sla)
+    return { label: '-', className: 'text-slate-600 dark:text-slate-400', dot: 'bg-slate-400' };
   const abs = Math.abs(sla.remainingMs);
   const days = Math.floor(abs / 86400000);
   const hours = Math.floor((abs % 86400000) / 3600000);
@@ -680,13 +696,15 @@ const slaPill = (sla: InboxItem['sla']): { label: string; className: string; tit
       : sla.isBreached
         ? `${sla.level} +${timeStr}`
         : `${sla.level} ${timeStr}`;
+  const isOverdue = sla.isBreached || sla.level === 'L2' || sla.level === 'L3';
   const className =
     sla.level === 'none'
-      ? 'bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-200'
+      ? 'border border-slate-200 bg-white text-slate-700 dark:bg-navy-800 dark:text-slate-200 dark:border-transparent'
       : sla.level === 'L1'
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-        : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300';
-  return { label, className, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
+        ? 'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent'
+        : 'border border-slate-200 bg-white text-slate-700 dark:bg-rose-500/15 dark:text-rose-300 dark:border-transparent';
+  const dot = sla.level === 'none' ? 'bg-slate-400' : isOverdue ? 'bg-rose-500' : 'bg-amber-500';
+  return { label, className, dot, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
 };
 
 // ── Snooze helpers ──
@@ -709,7 +727,7 @@ const INBOX_URGENCY_FILTER_OPTIONS = [
   { value: 'critical', label: 'Critical', color: 'text-rose-500' },
   { value: 'high', label: 'High', color: 'text-amber-500' },
   { value: 'normal', label: 'Normal', color: 'text-slate-500' },
-  { value: 'low', label: 'Low', color: 'text-slate-400' },
+  { value: 'low', label: 'Low', color: 'text-slate-600' },
 ];
 
 const INBOX_TYPE_FILTER_OPTIONS = [
@@ -858,6 +876,58 @@ type InboxResizableColumn =
   | 'source'
   | 'received'
   | 'sla';
+
+// Per-column sort (canon §5/§27.O) — sortable fields + deterministic ordinals.
+type InboxSortField = 'title' | 'status' | 'urgency' | 'type' | 'section' | 'source' | 'received';
+
+const INBOX_URGENCY_ORDER: Record<InboxUrgency, number> = {
+  critical: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+};
+
+const INBOX_STATUS_ORDER: Record<string, number> = {
+  open: 0,
+  saved: 1,
+  snoozed: 2,
+  done: 3,
+  dismissed: 4,
+};
+
+function compareInboxItems(a: InboxItem, b: InboxItem, field: InboxSortField): number {
+  switch (field) {
+    case 'title':
+      return (a.title || '').localeCompare(b.title || '');
+    case 'status':
+      return (INBOX_STATUS_ORDER[a.itemStatus] ?? 99) - (INBOX_STATUS_ORDER[b.itemStatus] ?? 99);
+    case 'urgency':
+      return INBOX_URGENCY_ORDER[a.urgency] - INBOX_URGENCY_ORDER[b.urgency];
+    case 'type':
+      return (a.type || '').localeCompare(b.type || '');
+    case 'section':
+      return (a.section || '').localeCompare(b.section || '');
+    case 'source':
+      return (a.source?.type || '').localeCompare(b.source?.type || '');
+    case 'received':
+      return new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime();
+    default:
+      return 0;
+  }
+}
+
+const InboxSortIcon: React.FC<{
+  field: InboxSortField;
+  sortConfig: { field: InboxSortField; direction: 'asc' | 'desc' } | null;
+}> = ({ field, sortConfig }) => {
+  if (sortConfig?.field !== field)
+    return <ChevronsUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+  return sortConfig.direction === 'asc' ? (
+    <ChevronUp size={12} className="text-primary-500" />
+  ) : (
+    <ChevronDown size={12} className="text-primary-500" />
+  );
+};
 
 const INBOX_RESIZE_BOUNDS: Record<InboxResizableColumn, { min: number; max: number }> = {
   title: { min: 360, max: 900 },
@@ -1129,10 +1199,11 @@ const PreviewPane: React.FC<{
       <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>{receivedText}</span>
       {item.sla && sla.label !== '-' ? (
         <>
-          <span className="text-slate-300 dark:text-navy-600">·</span>
+          <span className="text-slate-600 dark:text-navy-600">·</span>
           <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${sla.className}`}
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${sla.className}`}
           >
+            <span className={`w-1.5 h-1.5 rounded-full ${sla.dot}`} />
             SLA {sla.label}
           </span>
         </>
@@ -1424,7 +1495,7 @@ const AIHintStrip: React.FC<{
   return (
     <div className="py-1">
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-500">
           <Sparkles size={12} />
           <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
         </div>
@@ -1441,7 +1512,7 @@ const AIHintStrip: React.FC<{
           ) : null}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
+            className="p-1 rounded-md text-slate-600 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
           >
             <MoreVertical size={13} />
           </button>
@@ -1537,6 +1608,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   const [data, setData] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [uncontrolledViewMode, setUncontrolledViewMode] = useState<InboxViewMode>('flat');
   const viewMode = controlledViewMode ?? uncontrolledViewMode;
   const setViewMode = useCallback(
@@ -1568,9 +1640,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // Column widths
   const [columnWidths, setColumnWidths] = useState<ColumnWidths>(getDefaultColumnWidths());
 
-  // View settings (Columns) — persisted
-  const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
-  const viewSettingsRef = useRef<HTMLDivElement | null>(null);
+  // View settings (Columns) — persisted via TableSettingsPopover (canon §16)
   const [hiddenColumns, setHiddenColumns] = useState<string[]>(loadInboxHiddenColumns);
   const [showRowDescription, setShowRowDescription] = useState(loadInboxRowDescriptionSetting);
   const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
@@ -1601,25 +1671,19 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     saveInboxRowDescriptionSetting(next);
   }, []);
 
-  useEffect(() => {
-    if (!isViewSettingsOpen) return;
+  // Per-column sort (canon §5/§27.O) — client-side, flat view.
+  const [sortConfig, setSortConfig] = useState<{
+    field: InboxSortField;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
-    const handlePointerDown = (event: PointerEvent) => {
-      if (viewSettingsRef.current?.contains(event.target as Node)) return;
-      setIsViewSettingsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsViewSettingsOpen(false);
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isViewSettingsOpen]);
+  const handleSort = useCallback((field: InboxSortField) => {
+    setSortConfig((prev) => {
+      if (prev?.field !== field) return { field, direction: 'asc' };
+      if (prev.direction === 'asc') return { field, direction: 'desc' };
+      return null; // asc → desc → none
+    });
+  }, []);
 
   // Filters
   const [tableFilters, setTableFilters] = useState<TableFilters>({});
@@ -1695,6 +1759,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const fetchInbox = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const status =
         statusTab === 'all'
           ? 'all'
@@ -1782,6 +1847,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       });
     } catch (e) {
       console.error('Failed to load inbox', e);
+      setLoadError(isPolish ? 'Nie udało się załadować Inbox' : 'Failed to load Inbox');
       toast.error(isPolish ? 'Nie udało się załadować Inbox' : 'Failed to load Inbox');
     } finally {
       setLoading(false);
@@ -1866,8 +1932,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         return false;
       });
 
+    // Per-column sort (canon §5/§27.O) — applied only when a column is active.
+    if (sortConfig) {
+      const dir = sortConfig.direction === 'asc' ? 1 : -1;
+      result = [...result].sort((a, b) => compareInboxItems(a, b, sortConfig.field) * dir);
+    }
+
     return result;
-  }, [items, tableFilters, actionRequiredOnly, aiOnly, criticalOnly, overdueOnly]);
+  }, [items, tableFilters, actionRequiredOnly, aiOnly, criticalOnly, overdueOnly, sortConfig]);
 
   // ── Deduplicated groups ──
   const groups = useMemo(() => groupItems(filteredItems), [filteredItems]);
@@ -2080,6 +2152,37 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       }
     },
     [onOpenDecision, onOpenNotification, onOpenTask]
+  );
+
+  // ── Fixed Bottom Manifest (canon §9.2): Otwórz podgląd · Edytuj · Archiwizuj ──
+  // Inbox items carry no `due_date`, so the Delay slot (pos. 4) is N/A and omitted.
+  const buildBottomManifest = useCallback(
+    (item: InboxItem): RowAction[] => [
+      {
+        id: 'open-preview',
+        label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+        icon: ChevronRight,
+        divider: true,
+        onClick: () => setPreviewItem(item),
+      },
+      {
+        id: 'edit',
+        label: isPolish ? 'Edytuj' : 'Edit',
+        icon: Edit2,
+        disabled: true,
+        description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+        onClick: () => {},
+      },
+      {
+        // Archive = soft-delete (reversible). For Inbox this maps to the
+        // existing "dismiss" triage (item leaves the active queue, not destroyed).
+        id: 'archive',
+        label: isPolish ? 'Archiwizuj' : 'Archive',
+        icon: Archive,
+        onClick: () => triage(item, 'dismiss'),
+      },
+    ],
+    [isPolish, triage]
   );
 
   // ── Selection ──
@@ -2318,7 +2421,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         data-index={index}
         className={`
           group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
-          border-l-[4px] ${u.heatColor}
           ${
             isSelected
               ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
@@ -2326,7 +2428,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           }
           ${
             isPreviewed
-              ? 'bg-primary-50/70 dark:bg-primary-500/[0.10] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/20 ring-inset border-l-primary-500!'
+              ? 'bg-primary-50/70 dark:bg-primary-500/[0.10] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/20 ring-inset'
               : ''
           }
           ${isFocused && !isPreviewed ? 'ring-2 ring-inset ring-primary-500/35 bg-primary-50/30 dark:bg-primary-500/[0.08]' : ''}
@@ -2406,33 +2508,37 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Status */}
         {!hiddenSet.has('status') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.status }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.status }}>
             {(() => {
               const st = item.itemStatus || (item.triaged ? 'done' : 'open');
               const cfg: Record<string, { color: string; dot: string; label: string }> = {
                 open: {
-                  color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                  color:
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent',
                   dot: 'bg-amber-500',
                   label: isPolish ? 'Otwarte' : 'Open',
                 },
                 done: {
                   color:
-                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-transparent',
                   dot: 'bg-emerald-500',
                   label: isPolish ? 'Gotowe' : 'Done',
                 },
                 saved: {
-                  color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+                  color:
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-blue-500/15 dark:text-blue-300 dark:border-transparent',
                   dot: 'bg-blue-500',
                   label: isPolish ? 'Zapisane' : 'Saved',
                 },
                 snoozed: {
-                  color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                  color:
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent',
                   dot: 'bg-amber-500',
                   label: isPolish ? 'Odłożone' : 'Snoozed',
                 },
                 dismissed: {
-                  color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
+                  color:
+                    'border border-slate-200 bg-white text-slate-600 dark:bg-slate-500/15 dark:text-slate-300 dark:border-transparent',
                   dot: 'bg-slate-400',
                   label: isPolish ? 'Odłożone' : 'Dismissed',
                 },
@@ -2453,7 +2559,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Urgency */}
         {!hiddenSet.has('urgency') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.urgency }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.urgency }}>
             <span
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
             >
@@ -2465,7 +2571,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Type */}
         {!hiddenSet.has('type') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.type }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.type }}>
             <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <span className="truncate">
                 {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
@@ -2476,7 +2582,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Section */}
         {!hiddenSet.has('section') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.section }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.section }}>
             <span className="text-xs text-slate-600 dark:text-slate-400">
               {SMART_SECTIONS.find((s) => s.id === item.section)?.[
                 isPolish ? 'labelPl' : 'labelEn'
@@ -2487,7 +2593,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Source */}
         {!hiddenSet.has('source') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.source }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.source }}>
             {(() => {
               const src = item.source?.type || 'system';
               const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
@@ -2524,18 +2630,23 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           </td>
         )}
 
-        {/* SLA */}
+        {/* SLA / due — single DueChip (canon §4.4) */}
         {!hiddenSet.has('sla') && (
-          <td className="px-3 py-2 text-center" style={{ width: columnWidths.sla }}>
+          <td className="px-3 py-2 text-left" style={{ width: columnWidths.sla }}>
             {sla.label === '-' ? (
-              <span className={sla.className}>{sla.label}</span>
+              <span className="text-slate-400 dark:text-slate-500">—</span>
             ) : (
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${sla.className}`}
+              <DueChip
+                label={sla.label}
+                risk={
+                  item.sla?.isBreached
+                    ? 'overdue'
+                    : item.sla && item.sla.level !== 'none' && item.sla.level !== 'L1'
+                      ? 'soon'
+                      : 'none'
+                }
                 title={sla.title}
-              >
-                {sla.label}
-              </span>
+              />
             )}
           </td>
         )}
@@ -2547,7 +2658,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           {(() => {
-            const actions: RowAction[] = [
+            const contextActions: RowAction[] = [
               {
                 id: 'open',
                 label: isPolish ? 'Otwórz' : 'Open',
@@ -2608,19 +2719,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 icon: FileText,
                 onClick: () => handleSaveAsNote(item),
               },
-              {
-                id: 'dismiss',
-                label: isPolish ? 'Odłóż' : 'Dismiss',
-                icon: Archive,
-                onClick: () => triage(item, 'dismiss'),
-              },
-              {
-                id: 'reject',
-                label: isPolish ? 'Odrzuć' : 'Reject',
-                icon: X,
-                variant: 'danger',
-                onClick: () => triage(item, 'reject'),
-              },
               ...SNOOZE_PRESETS.map((p, idx) => ({
                 id: `snooze-${p.id}`,
                 label: `${isPolish ? 'Odłóż' : 'Snooze'}: ${isPolish ? p.labelPl : p.labelEn}`,
@@ -2629,9 +2727,26 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 onClick: () => handleSnooze(item, p.id),
               })),
             ];
+            const sections: RowActionSection[] = [
+              { id: 'context', kind: 'context', actions: contextActions },
+              { id: 'fixed', kind: 'manage', actions: buildBottomManifest(item) },
+              {
+                id: 'danger',
+                kind: 'danger',
+                actions: [
+                  {
+                    id: 'reject',
+                    label: isPolish ? 'Odrzuć' : 'Reject',
+                    icon: X,
+                    variant: 'danger',
+                    onClick: () => triage(item, 'reject'),
+                  },
+                ],
+              },
+            ];
             return (
               <RowActionsMenu
-                actions={actions}
+                sections={sections}
                 iconVariant="vertical"
                 className="opacity-40 transition-opacity group-hover:opacity-100"
               />
@@ -2647,7 +2762,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     <thead>
       <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
         {/* Select All */}
-        <th className="w-10 px-2 py-2 border-l-[3px] border-l-transparent">
+        <th className="w-10 px-2 py-2">
           <button
             onClick={() => handleSelectAll(!allSelected)}
             className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors ${
@@ -2672,7 +2787,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           className="relative px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
           style={{ width: columnWidths.title }}
         >
-          {isPolish ? 'Tytuł' : 'Title'}
+          <button
+            type="button"
+            onClick={() => handleSort('title')}
+            className="inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200"
+          >
+            {isPolish ? 'Tytuł' : 'Title'}
+            <InboxSortIcon field="title" sortConfig={sortConfig} />
+          </button>
           <ColumnResizer
             columnId="title"
             currentWidth={columnWidths.title}
@@ -2689,18 +2811,37 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const isFilterable = Boolean(col.filterable);
           const hasFilter = isFilterable && col.filterOptions?.length;
           const isResizable = Boolean(col.resizable);
+          // Canon §3.3: chip/text columns left-aligned (status/urgency/type/section/source).
+          const leftAligned = ['status', 'urgency', 'type', 'section', 'source'].includes(colId);
+          // Canon §5/§27.O: every column except SLA is sortable (sla has no stable order).
+          const isSortable = colId !== 'sla';
           return (
             <th
               key={colId}
-              className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+              className={`px-3 py-2 ${leftAligned ? 'text-left' : 'text-center'} text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header`}
               style={{ width: columnWidths[colId] }}
             >
-              <div className="flex items-center justify-center gap-1">
-                <span
-                  className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
-                >
-                  {getColumnLabel(colId)}
-                </span>
+              <div
+                className={`flex items-center gap-1 ${leftAligned ? 'justify-start' : 'justify-center'}`}
+              >
+                {isSortable ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSort(colId as InboxSortField)}
+                    className={`inline-flex items-center gap-1 transition-colors hover:text-slate-700 dark:hover:text-slate-200 ${
+                      (tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''
+                    }`}
+                  >
+                    {getColumnLabel(colId)}
+                    <InboxSortIcon field={colId as InboxSortField} sortConfig={sortConfig} />
+                  </button>
+                ) : (
+                  <span
+                    className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
+                  >
+                    {getColumnLabel(colId)}
+                  </span>
+                )}
                 {hasFilter ? (
                   <FilterDropdown
                     column={col}
@@ -2729,86 +2870,31 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           className="relative px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
           style={{ width: columnWidths.actions }}
         >
-          <div ref={viewSettingsRef} className="flex items-center justify-end">
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                setIsViewSettingsOpen((open) => !open);
-              }}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.06]"
-              aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-              aria-expanded={isViewSettingsOpen}
-              title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-            >
-              <Settings2 size={14} />
-            </button>
-            {isViewSettingsOpen ? (
-              <div
-                className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="px-2 pb-2 pt-1">
-                  <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                    {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                  </div>
-                  <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Wybierz widoczne kolumny.' : 'Choose visible columns.'}
-                  </div>
-                </div>
-                <div className="space-y-0.5">
-                  {INBOX_COLUMNS.filter((c) => c.id !== 'select').map((col) => {
-                    const alwaysVisible = col.id === 'title' || col.id === 'actions';
-                    const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                    return (
-                      <label
-                        key={col.id}
-                        className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                          alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={alwaysVisible}
-                          onChange={() => {
-                            if (alwaysVisible) return;
-                            setHiddenColumns((prev) => {
-                              const set = new Set(prev);
-                              if (set.has(col.id)) set.delete(col.id);
-                              else set.add(col.id);
-                              return Array.from(set);
-                            });
-                          }}
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                        />
-                        <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                          {getColumnLabel(col.id)}
-                        </span>
-                        {alwaysVisible ? (
-                          <span className="text-[10px] font-medium text-slate-400">
-                            {isPolish ? 'Wymagane' : 'Required'}
-                          </span>
-                        ) : null}
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                  <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                    <input
-                      type="checkbox"
-                      checked={showRowDescription}
-                      onChange={(event) => updateRowDescriptionSetting(event.target.checked)}
-                      className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                    />
-                    <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                      {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-                    </span>
-                  </label>
-                </div>
-              </div>
-            ) : null}
+          <div className="flex items-center justify-end normal-case tracking-normal">
+            <TableSettingsPopover
+              columns={INBOX_COLUMNS.filter((c) => c.id !== 'select').map(
+                (col): TableSettingsColumn => ({
+                  id: col.id,
+                  label: getColumnLabel(col.id),
+                  required: col.id === 'title' || col.id === 'actions',
+                  visible:
+                    col.id === 'title' || col.id === 'actions' ? true : !hiddenSet.has(col.id),
+                })
+              )}
+              onToggle={(columnId, visible) =>
+                setHiddenColumns((prev) => {
+                  const set = new Set(prev);
+                  if (visible) set.delete(columnId);
+                  else set.add(columnId);
+                  return Array.from(set);
+                })
+              }
+              showDescription={showRowDescription}
+              onToggleDescription={updateRowDescriptionSetting}
+              label={isPolish ? 'Ustawienia widoku' : 'View settings'}
+              columnsHeading={isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+              descriptionLabel={isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+            />
           </div>
         </th>
       </tr>
@@ -2820,40 +2906,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     if (!sectionGroups) return null;
     const renderStatusPill = (item: InboxItem) => {
       const st = item.itemStatus || (item.triaged ? 'done' : 'open');
-      const cfg: Record<string, { color: string; dot: string; label: string }> = {
-        open: {
-          color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-          dot: 'bg-amber-500',
-          label: isPolish ? 'Otwarte' : 'Open',
-        },
-        done: {
-          color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
-          dot: 'bg-emerald-500',
-          label: isPolish ? 'Gotowe' : 'Done',
-        },
-        saved: {
-          color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
-          dot: 'bg-blue-500',
-          label: isPolish ? 'Zapisane' : 'Saved',
-        },
-        snoozed: {
-          color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-          dot: 'bg-amber-500',
-          label: isPolish ? 'Odłożone' : 'Snoozed',
-        },
-        dismissed: {
-          color: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
-          dot: 'bg-slate-400',
-          label: isPolish ? 'Odłożone' : 'Dismissed',
-        },
+      const labels: Record<string, string> = {
+        open: isPolish ? 'Otwarte' : 'Open',
+        done: isPolish ? 'Gotowe' : 'Done',
+        saved: isPolish ? 'Zapisane' : 'Saved',
+        snoozed: isPolish ? 'Odłożone' : 'Snoozed',
+        dismissed: isPolish ? 'Odłożone' : 'Dismissed',
       };
-      const c = cfg[st] || cfg.open;
       return (
-        <span
-          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${c.color}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-          {c.label}
+        <span className="inline-flex items-center gap-1.5">
+          <EntityStatusChip status={st} label={labels[st] || labels.open} />
           {item.isActionable && <Zap size={10} className="text-amber-500" />}
         </span>
       );
@@ -2885,10 +2947,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         <div
           key={item.id}
           className={[
-            'group relative rounded-xl border-l-[4px] border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
-            kindCfg.borderLeft,
-            'bg-slate-50/80 dark:bg-navy-800/60',
-            'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-sm',
+            'group relative rounded-xl border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
+            'bg-white dark:bg-navy-900',
+            'hover:shadow-md',
             isSelected ? 'ring-2 ring-primary-400/50' : '',
             isPreviewed ? 'ring-2 ring-primary-400/40' : '',
           ].join(' ')}
@@ -2925,7 +2986,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   </h3>
                   <div onClick={(e) => e.stopPropagation()} className="shrink-0">
                     {(() => {
-                      const actions: RowAction[] = [
+                      const contextActions: RowAction[] = [
                         {
                           id: 'open',
                           label: isPolish ? 'Otwórz' : 'Open',
@@ -2964,12 +3025,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           icon: Bookmark,
                           onClick: () => triage(item, 'save'),
                         },
-                        {
-                          id: 'dismiss',
-                          label: isPolish ? 'Odłóż' : 'Dismiss',
-                          icon: Archive,
-                          onClick: () => triage(item, 'dismiss'),
-                        },
                         ...(handleSaveAsNote
                           ? [
                               {
@@ -2989,7 +3044,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           onClick: () => handleSnooze(item, p.id),
                         })),
                       ];
-                      return <RowActionsMenu actions={actions} iconVariant="vertical" />;
+                      const sections: RowActionSection[] = [
+                        { id: 'context', kind: 'context', actions: contextActions },
+                        { id: 'fixed', kind: 'manage', actions: buildBottomManifest(item) },
+                      ];
+                      return <RowActionsMenu sections={sections} iconVariant="vertical" />;
                     })()}
                   </div>
                 </div>
@@ -3024,9 +3083,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               </span>
               {sla.label !== '-' ? (
                 <span
-                  className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${sla.className}`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${sla.className}`}
                   title={sla.title}
                 >
+                  <span className={`w-1.5 h-1.5 rounded-full ${sla.dot}`} />
                   {sla.label}
                 </span>
               ) : null}
@@ -3208,6 +3268,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               <Loader2 className="animate-spin mr-2" size={18} />
               {isPolish ? 'Ładowanie...' : 'Loading...'}
             </div>
+          ) : loadError ? (
+            <ErrorState message={loadError} retry={() => void fetchInbox()} />
           ) : filteredItems.length === 0 ? (
             <div className="py-16 text-center text-slate-600 dark:text-slate-300">
               {statusTab === 'done' ? (
@@ -3236,7 +3298,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 </>
               ) : (
                 <>
-                  <Inbox size={40} className="mx-auto mb-4 text-slate-400" />
+                  <Inbox size={40} className="mx-auto mb-4 text-slate-600" />
                   <p className="text-base font-semibold mb-1">
                     {isPolish
                       ? 'Inbox jest pusty — zero zaległości!'

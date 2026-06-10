@@ -71,7 +71,9 @@ export type ModuleTab =
   | 'inbox'
   | 'readout'
   | 'conversions'
-  | 'documents';
+  | 'documents'
+  // Execution module — Rollout sub-tab (Module 06 Realizacja)
+  | 'rollout';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 

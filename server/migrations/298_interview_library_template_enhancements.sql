@@ -6,7 +6,7 @@
 --  - Add 5 draft \"Coming Soon\" templates (not approved).
 
 -- 1) Add options column (JSON string)
-ALTER TABLE interview_library_template_questions ADD COLUMN answer_options TEXT DEFAULT '[]';
+ALTER TABLE interview_library_template_questions ADD COLUMN IF NOT EXISTS answer_options TEXT DEFAULT '[]';
 
 -- 2) Mark selected questions as closed + set options
 -- Quick Assessment: readiness scale 1-5

@@ -17,7 +17,6 @@ import {
   Eye,
   FileOutput,
   Filter,
-  Loader2,
   Map,
   MoreVertical,
   Plus,
@@ -27,6 +26,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import { WorkflowState } from '../../types';
@@ -231,7 +231,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
         <div className="flex items-center gap-3 mt-4">
           <div className="relative flex-1 max-w-md">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               size={18}
             />
             <input
@@ -245,7 +245,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
           <button
             onClick={fetchAssessments}
             aria-label="Refresh assessments"
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
           >
             <RefreshCw size={18} />
           </button>
@@ -255,12 +255,10 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
       {/* Table */}
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-          </div>
+          <LoadingState variant="spinner" className="h-64" />
         ) : filteredAssessments.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <FileOutput className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+            <FileOutput className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
             <p className="text-slate-500 dark:text-slate-400 mb-4">
               {searchQuery
                 ? t('assessment.emptyState.noMatch', 'No assessments match your search')
@@ -376,7 +374,7 @@ export const AssessmentTable: React.FC<AssessmentTableProps> = ({
                                   activeRowMenu === assessment.id ? null : assessment.id
                                 )
                               }
-                              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+                              className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                             >
                               <MoreVertical size={16} />
                             </button>

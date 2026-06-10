@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { InfoButton } from '../../components/shared/InfoButton';
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
 type FeedbackStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
@@ -710,7 +711,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
               )}
               {item.severity && item.severity !== 'LOW' && (
                 <span
-                  className={`text-[11px] font-bold ${SEVERITY_CONFIG[item.severity]?.color || 'text-slate-400'} flex items-center gap-1`}
+                  className={`text-[11px] font-bold ${SEVERITY_CONFIG[item.severity]?.color || 'text-slate-600'} flex items-center gap-1`}
                 >
                   {SEVERITY_CONFIG[item.severity]?.icon} {item.severity}
                 </span>
@@ -933,7 +934,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 )}
                 {selectedItem.severity && selectedItem.severity !== 'LOW' && (
                   <span
-                    className={`text-xs font-bold ${SEVERITY_CONFIG[selectedItem.severity]?.color || 'text-slate-400'} flex items-center gap-1`}
+                    className={`text-xs font-bold ${SEVERITY_CONFIG[selectedItem.severity]?.color || 'text-slate-600'} flex items-center gap-1`}
                   >
                     {SEVERITY_CONFIG[selectedItem.severity]?.icon} {selectedItem.severity}
                   </span>
@@ -1484,10 +1485,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <ul className="mt-2 space-y-1 text-slate-600 dark:text-slate-400">
                   {breadcrumbs.slice(-20).map((b, idx) => (
                     <li key={idx} className="flex gap-2">
-                      <span className="text-slate-400 text-[10px] shrink-0">
+                      <span className="text-slate-600 text-[10px] shrink-0">
                         {b.at ? format(new Date(b.at), 'HH:mm:ss') : ''}
                       </span>
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400 shrink-0">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-600 shrink-0">
                         {b.kind}
                       </span>
                       <span className="break-all">{b.label}</span>
@@ -1505,7 +1506,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
                 <ul className="mt-2 space-y-1 font-mono text-[11px] text-slate-600 dark:text-slate-300">
                   {networkErrorsList.slice(-15).map((n, idx) => (
                     <li key={idx} className="break-all">
-                      <span className="text-slate-400">
+                      <span className="text-slate-600">
                         {n.at ? format(new Date(n.at), 'HH:mm:ss') : ''}
                       </span>{' '}
                       <span className="text-rose-600 dark:text-rose-400">{n.status ?? 'ERR'}</span>{' '}
@@ -1787,9 +1788,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin text-blue-500">Loading...</div>
-        </div>
+        <LoadingState variant="spinner" className="py-12" />
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs text-slate-600 dark:text-slate-400">

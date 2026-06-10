@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { MarketingLayout } from '../components/Landing/MarketingLayout';
 
 const PERSONA_VISUALS = [
-  { icon: Rocket, color: '#7c3aed', glow: 'rgba(124,58,237,0.28)' },
+  { icon: Rocket, color: '#A51C30', glow: 'rgba(165,28,48,0.28)' },
   { icon: Users, color: '#0891b2', glow: 'rgba(8,145,178,0.25)' },
   { icon: Building2, color: '#059669', glow: 'rgba(5,150,105,0.25)' },
   { icon: Brain, color: '#c026d3', glow: 'rgba(192,38,211,0.25)' },
@@ -31,7 +31,7 @@ export const ForWhomPage: React.FC = () => {
       {/* Hero */}
       <section className="relative px-6 pt-20 pb-24 overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_50%,#12082E_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_50%,#0B1220_100%)]" />
           <div
             className="absolute -top-[20%] right-[10%] w-[55%] h-[55%] rounded-full"
             style={{
@@ -62,7 +62,7 @@ export const ForWhomPage: React.FC = () => {
             <span
               className="block"
               style={{
-                background: 'linear-gradient(90deg, #34d399, #a78bfa)',
+                background: 'linear-gradient(90deg, #34d399, #D42B3D)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -91,8 +91,8 @@ export const ForWhomPage: React.FC = () => {
             <button
               className="inline-flex items-center gap-2 px-7 py-3 rounded-full text-white font-semibold text-sm"
               style={{
-                background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                boxShadow: '0 0 40px -12px rgba(124,58,237,0.65)',
+                background: 'linear-gradient(135deg, #A51C30, #651120)',
+                boxShadow: '0 0 40px -12px rgba(165,28,48,0.65)',
               }}
             >
               {t('pages.forWhom.hero.cta', 'Start for free')} <ArrowRight size={15} />

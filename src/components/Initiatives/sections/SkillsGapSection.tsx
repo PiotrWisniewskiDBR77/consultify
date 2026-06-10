@@ -12,7 +12,6 @@ import {
   BookOpen,
   CheckCircle,
   HelpCircle,
-  Loader2,
   Users,
   UserX,
   XCircle,
@@ -20,6 +19,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { useInitiativeContext } from './InitiativeContext';
@@ -103,7 +103,7 @@ const STATUS_CONFIG = {
   },
   unknown: {
     icon: HelpCircle,
-    color: 'text-slate-400',
+    color: 'text-slate-600',
     bg: 'bg-slate-50 dark:bg-slate-500/10',
     border: 'border-slate-200 dark:border-slate-500/20',
   },
@@ -151,16 +151,12 @@ export const SkillsGapSection: React.FC<InitiativeSectionProps> = () => {
   }, [initiativeId, loadGap]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="animate-spin text-primary-500" size={20} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-8" />;
   }
 
   if (!gap || gap.totalRequirements === 0) {
     return (
-      <div className="text-center py-8 text-slate-400 dark:text-slate-500 text-sm">
+      <div className="text-center py-8 text-slate-600 dark:text-slate-500 text-sm">
         <BarChart3 size={24} className="mx-auto mb-2 opacity-50" />
         {t('skillsGap.empty', 'Add competency requirements to see gap analysis')}
       </div>
@@ -279,7 +275,7 @@ const RequirementsView: React.FC<{ gap: GapSummary; isPl: boolean }> = ({ gap, i
                   {req.capabilityName}
                 </span>
                 {req.categoryName && (
-                  <span className="text-[10px] text-slate-400 px-1.5 py-0.5 rounded bg-white/60 dark:bg-navy-800/60">
+                  <span className="text-[10px] text-slate-600 px-1.5 py-0.5 rounded bg-white/60 dark:bg-navy-800/60">
                     {req.categoryName}
                   </span>
                 )}
@@ -296,7 +292,7 @@ const RequirementsView: React.FC<{ gap: GapSummary; isPl: boolean }> = ({ gap, i
                     level: req.minLevel,
                   })}
                   {req.bestAvailableLevel > 0 && (
-                    <span className="text-slate-400">
+                    <span className="text-slate-600">
                       {' '}
                       / {t('skillsGap.best', 'best')} L{req.bestAvailableLevel}
                     </span>
@@ -354,7 +350,7 @@ const PersonsView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
                   person.hasProfile
                     ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-400'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600'
                 }`}
               >
                 {person.firstName?.[0]}
@@ -365,7 +361,7 @@ const PersonsView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
                   {person.firstName} {person.lastName}
                 </span>
                 {!person.hasProfile && (
-                  <span className="ml-2 text-[10px] text-slate-400 italic">
+                  <span className="ml-2 text-[10px] text-slate-600 italic">
                     {t('skillsGap.noProfile', 'No profile')}
                   </span>
                 )}
@@ -413,7 +409,7 @@ const PersonsView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
       ))}
 
       {gap.persons.length === 0 && (
-        <div className="text-center py-6 text-slate-400 text-xs">
+        <div className="text-center py-6 text-slate-600 text-xs">
           {t('skillsGap.noTeam', 'No team members assigned to this initiative')}
         </div>
       )}
@@ -473,7 +469,7 @@ const SummaryView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
             {t('skillsGap.summary.teamSize', 'Team Size')}
           </div>
           <div className="text-lg font-bold text-navy-900 dark:text-white">{gap.teamSize}</div>
-          <div className="text-[10px] text-slate-400">
+          <div className="text-[10px] text-slate-600">
             {gap.profilesComplete} {t('skillsGap.summary.withProfiles', 'with profiles')}
           </div>
         </div>
@@ -487,7 +483,7 @@ const SummaryView: React.FC<{ gap: GapSummary }> = ({ gap }) => {
                 .length
             }
           </div>
-          <div className="text-[10px] text-slate-400">
+          <div className="text-[10px] text-slate-600">
             {t('skillsGap.summary.ofMustHave', {
               defaultValue: 'of {{total}} must-have',
               total: gap.requirements.filter((r) => r.priority === 'required').length,

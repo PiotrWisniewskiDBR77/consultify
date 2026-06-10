@@ -134,7 +134,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
 
       {hasNodeSelected && (
         <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
-          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
             {isPl ? 'Dla wybranego węzła' : 'For selected node'}
           </div>
           {NODE_SPECIFIC_GENERATORS.map((a) => {
@@ -154,7 +154,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
       )}
 
       <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
-        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
           <Sparkles size={10} className="inline mr-1" />
           {isPl ? 'Generatory AI' : 'AI generators'}
         </div>
@@ -166,7 +166,7 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
               onClick={() => dispatch(a.action)}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
             >
-              <Icon size={12} className="text-slate-400 shrink-0" />
+              <Icon size={12} className="text-slate-600 shrink-0" />
               {isPl ? a.labelPl : a.labelEn}
             </button>
           );

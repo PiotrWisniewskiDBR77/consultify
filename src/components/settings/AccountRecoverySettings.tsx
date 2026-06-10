@@ -13,6 +13,8 @@ import React from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { StatusChip } from '@/components/ui/primitives';
+
 import { User } from '../../types';
 import { ReadOnlyState } from '../Admin/AdminState';
 
@@ -220,14 +222,15 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
               className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg"
             >
               <div className="flex items-center gap-3">
-                <Smartphone className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                <Smartphone className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-slate-900 dark:text-white">{device.name}</p>
                     {device.is_current && (
-                      <span className="px-2 py-0.5 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300 text-xs rounded-full">
-                        {t('settings.recovery.current', 'This device')}
-                      </span>
+                      <StatusChip
+                        tone="success"
+                        label={t('settings.recovery.current', 'This device')}
+                      />
                     )}
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -239,7 +242,7 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
                 <button
                   disabled
                   title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
-                  className="p-2 text-slate-300 dark:text-slate-600 rounded-lg disabled:cursor-not-allowed"
+                  className="p-2 text-slate-600 dark:text-slate-400 rounded-lg disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

@@ -15,6 +15,8 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
@@ -265,14 +267,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
         </p>
       </div>
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Export Section */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
@@ -356,7 +351,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
         {!importFile ? (
           <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-colors">
-            <FileText size={48} className="text-slate-400 dark:text-slate-500 mb-3" />
+            <FileText size={48} className="text-slate-600 dark:text-slate-500 mb-3" />
             <p className="font-medium text-slate-700 dark:text-slate-300">
               {t('settings.importExport.dropFile', 'Drop settings file here or click to browse')}
             </p>
@@ -390,7 +385,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                   setImportFile(null);
                   setImportPreview(null);
                 }}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+                className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
               >
                 ×
               </button>

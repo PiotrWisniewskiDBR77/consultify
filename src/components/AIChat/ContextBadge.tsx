@@ -151,7 +151,7 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
           ${compact ? 'px-2 py-1' : 'px-3 py-1.5'}
           rounded-lg text-xs
           bg-slate-50 dark:bg-navy-800/50
-          border border-slate-100 dark:border-navy-700/50
+          border border-slate-200 dark:border-navy-700/50
           hover:bg-slate-100 dark:hover:bg-navy-800
           text-slate-500 dark:text-slate-400
           transition-all duration-200
@@ -167,7 +167,7 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
         </span>
 
         {contextItems.length > 1 && (
-          <span className="shrink-0 text-slate-400 dark:text-slate-500">
+          <span className="shrink-0 text-slate-600 dark:text-slate-500">
             {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </span>
         )}
@@ -175,13 +175,13 @@ export const ContextBadge: React.FC<ContextBadgeProps> = ({
 
       {/* Expanded details */}
       {isExpanded && contextItems.length > 0 && (
-        <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800/30 border border-slate-100 dark:border-navy-700/30 space-y-1">
+        <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800/30 border border-slate-200 dark:border-navy-700/30 space-y-1">
           {contextItems.map((item, idx) => (
             <div key={idx} className="flex items-center gap-2 text-xs">
               {item.icon && (
-                <span className="text-slate-400 dark:text-slate-500 shrink-0">{item.icon}</span>
+                <span className="text-slate-600 dark:text-slate-500 shrink-0">{item.icon}</span>
               )}
-              <span className="text-slate-400 dark:text-slate-500">{item.label}:</span>
+              <span className="text-slate-600 dark:text-slate-500">{item.label}:</span>
               <span className="text-slate-600 dark:text-slate-300 font-medium truncate">
                 {item.value}
               </span>

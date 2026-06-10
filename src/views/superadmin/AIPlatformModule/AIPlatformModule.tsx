@@ -401,7 +401,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
 
       default:
         return (
-          <div className="flex items-center justify-center h-full text-slate-400">
+          <div className="flex items-center justify-center h-full text-slate-600">
             Select a tab to view content
           </div>
         );

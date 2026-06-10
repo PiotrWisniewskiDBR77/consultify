@@ -164,7 +164,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
   if (error || !article) {
     return (
       <div className="text-center py-12">
-        <BookOpen size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+        <BookOpen size={40} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
         <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('help.knowledge.contentMoved', 'This content has been moved or removed.')}
         </p>
@@ -464,13 +464,13 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
                     <p className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 truncate">
                       {rel.title}
                     </p>
-                    <p className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                    <p className="text-[10px] text-slate-600 flex items-center gap-2 mt-0.5">
                       <Clock size={10} /> {rel.reading_time_minutes} min
                     </p>
                   </div>
                   <ChevronRight
                     size={14}
-                    className="text-slate-400 group-hover:text-primary-500 flex-shrink-0"
+                    className="text-slate-600 group-hover:text-primary-500 flex-shrink-0"
                   />
                 </button>
               ))}
@@ -486,7 +486,7 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
             const deepLink = `${window.location.origin}${window.location.pathname}?help_article=${encodeURIComponent(slug)}${moduleId ? `&help_module=${encodeURIComponent(moduleId)}` : ''}`;
             navigator.clipboard.writeText(deepLink).catch(() => {});
           }}
-          className="w-full py-3 px-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-medium rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-3 px-4 bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-medium rounded-xl hover:from-primary-700 hover:to-crimson-700 transition-all flex items-center justify-center gap-2 shadow-lg"
         >
           <Share2 size={16} />
           {t('help.knowledge.shareArticle', 'Share Article')}

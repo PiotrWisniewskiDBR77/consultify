@@ -25,7 +25,7 @@ const CATEGORY_LABELS: Record<PulseCategory, { en: string; pl: string }> = {
 const CATEGORY_BADGE_STYLES: Record<string, string> = {
   ai_tech: 'bg-gradient-to-br from-indigo-500/20 to-blue-500/20',
   industry: 'bg-gradient-to-br from-emerald-500/20 to-amber-500/20',
-  consulting: 'bg-gradient-to-br from-primary-500/20 to-fuchsia-500/20',
+  consulting: 'bg-gradient-to-br from-primary-500/20 to-crimson-700/20',
   clients: 'bg-gradient-to-br from-rose-500/20 to-amber-500/20',
 };
 
@@ -108,7 +108,7 @@ export const WorldPulse: React.FC<WorldPulseProps> = ({
 
         <div className="flex flex-col gap-4">
           {data.frameworkOfDay && (
-            <div className="p-6 bg-gradient-to-br from-primary-500/[0.08] to-indigo-500/[0.06] border border-primary-500/[0.12] rounded-2xl">
+            <div className="p-6 bg-gradient-to-br from-primary-500/[0.08] to-crimson-500/[0.06] border border-primary-500/[0.12] rounded-2xl">
               <div className="text-[10px] font-bold uppercase tracking-widest text-primary-400 mb-3">
                 {isPolish ? 'Framework dnia' : 'Framework of the Day'}
               </div>
@@ -181,7 +181,7 @@ const ArticleCard: React.FC<{
             e.stopPropagation();
             onSave();
           }}
-          className="text-[11px] text-slate-500 dark:text-slate-600 hover:text-slate-300 flex items-center gap-1 transition-colors"
+          className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-300 flex items-center gap-1 transition-colors"
         >
           <Bookmark size={11} />
           {isPolish ? 'Zapisz do notatnika' : 'Save to notebook'}
@@ -191,7 +191,7 @@ const ArticleCard: React.FC<{
             e.stopPropagation();
             onShare();
           }}
-          className="text-[11px] text-slate-500 dark:text-slate-600 hover:text-slate-300 flex items-center gap-1 transition-colors"
+          className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-300 flex items-center gap-1 transition-colors"
         >
           <Share2 size={11} />
           {isPolish ? 'Udostępnij' : 'Share'}

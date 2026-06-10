@@ -134,14 +134,14 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
           <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex-1">
             {column.header}
           </span>
-          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800">
+          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800">
             {column.type}
           </span>
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={12} className="text-slate-400" />
+            <X size={12} className="text-slate-600" />
           </button>
         </div>
 
@@ -158,7 +158,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 p-3 text-xs text-slate-700 dark:text-slate-300 outline-none resize-none focus:ring-2 focus:ring-primary-500/30 leading-relaxed"
                 placeholder={isPl ? 'Markdown obsługiwany...' : 'Markdown supported...'}
               />
-              <p className="text-[9px] text-slate-400 mt-1.5">
+              <p className="text-[9px] text-slate-600 mt-1.5">
                 <AlignLeft size={8} className="inline mr-0.5" />
                 {isPl
                   ? 'Obsługuje **pogrubienie**, *kursywę*, - listy'
@@ -216,7 +216,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                       {!locked && (
                         <button
                           onClick={() => handleRemoveOption(opt)}
-                          className="p-0.5 rounded text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-0.5 rounded text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <Trash2 size={10} />
                         </button>
@@ -268,7 +268,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 />
               </div>
               <div className="rounded-xl bg-slate-50 dark:bg-navy-900 p-3 mb-3">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+                <label className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1 block">
                   {isPl ? 'Wynik' : 'Result'}
                 </label>
                 <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -309,7 +309,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 px-3 py-2.5 text-sm font-mono text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-primary-500/30"
               />
               {column.type === 'currency' && (
-                <p className="text-[9px] text-slate-400 mt-1.5">{isPl ? 'Waluta' : 'Currency'}</p>
+                <p className="text-[9px] text-slate-600 mt-1.5">{isPl ? 'Waluta' : 'Currency'}</p>
               )}
             </div>
           )}
@@ -324,7 +324,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
                   className={`text-2xl transition-transform hover:scale-110 ${
                     star <= (Number(value) || 0)
                       ? 'text-amber-400'
-                      : 'text-slate-300 dark:text-navy-600'
+                      : 'text-slate-600 dark:text-navy-600'
                   }`}
                 >
                   ★
@@ -353,7 +353,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
               </div>
               <div className="h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-indigo-500 transition-all"
+                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-crimson-500 transition-all"
                   style={{ width: `${Number(value) || 0}%` }}
                 />
               </div>
@@ -421,7 +421,7 @@ export const CellExpandPopover: React.FC<CellExpandPopoverProps> = ({
         <div className="px-4 py-2.5 border-t border-slate-200/60 dark:border-navy-700/60">
           <button
             onClick={() => setShowNote(!showNote)}
-            className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             <StickyNote size={9} />
             {isPl ? 'Notatka do komórki' : 'Cell note'}

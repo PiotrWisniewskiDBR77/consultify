@@ -68,7 +68,7 @@ const ReadbackStepRow: React.FC<{
       >
         <Icon size={14} className={`shrink-0 ${className}`} />
         <span className="min-w-0 flex-1 truncate font-medium">{step.label}</span>
-        <span className="shrink-0 font-mono text-[9px] text-slate-400 dark:text-slate-500">
+        <span className="shrink-0 font-mono text-[9px] text-slate-600 dark:text-slate-500">
           {step.object_id}
         </span>
       </button>

@@ -23,7 +23,6 @@ import { useBreadcrumbs } from '@/hooks/useBreadcrumbs';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
 import { Api } from '@/services/api';
-import { apiGet } from '@/services/api/baseClient';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
@@ -40,103 +39,95 @@ import { ROUTES } from './routeConfig';
 import { WorkCanvasRedirect } from './WorkCanvasRedirect';
 
 // Lazy load views for new routes
-const StudioView = React.lazy(() =>
+const StudioView = lazyWithRetry(() =>
   import('@/views/StudioView').then((m) => ({ default: m.StudioView }))
 );
 const MyWorkView = lazyWithRetry(() =>
   import('@/views/MyWorkView').then((m) => ({ default: m.MyWorkView }))
 );
-const ContextBuilderView = React.lazy(() =>
-  import('@/views/ContextBuilder/ContextBuilderView').then((m) => ({
-    default: m.ContextBuilderView,
-  }))
-);
+// M16 P0-4: ContextBuilderView is no longer routed standalone — /context/* now
+// redirects to the canonical /organization/* workspace. The view file is retained
+// because quick-step entry paths still resolve through these (redirected) routes.
 // Discovery Tools Module - New Hub
-const DiscoveryToolsHub = React.lazy(() =>
+const DiscoveryToolsHub = lazyWithRetry(() =>
   import('@/components/Discovery/DiscoveryToolsHub').then((m) => ({ default: m.DiscoveryToolsHub }))
 );
 
 // T064 — Megatrends canonical workspace
-const MegatrendsWorkspace = React.lazy(() =>
+const MegatrendsWorkspace = lazyWithRetry(() =>
   import('@/components/Megatrend/MegatrendsWorkspace').then((m) => ({
     default: m.MegatrendsWorkspace,
   }))
 );
 
 // Assessment Module - New Hub
-const AssessmentHub = React.lazy(() =>
+const AssessmentHub = lazyWithRetry(() =>
   import('@/components/assessment/AssessmentHub').then((m) => ({ default: m.AssessmentHub }))
 );
-const AssessmentSessionEditorView = React.lazy(() =>
+const AssessmentSessionEditorView = lazyWithRetry(() =>
   import('@/views/AssessmentSessionEditorView').then((m) => ({
     default: m.AssessmentSessionEditorView,
   }))
 );
 
 // Transformation Modules - New Hubs (ModuleHub pattern)
-const InitiativesHub = React.lazy(() =>
+const InitiativesHub = lazyWithRetry(() =>
   import('@/components/Initiatives/InitiativesHub').then((m) => ({ default: m.InitiativesHub }))
 );
-const ExecutionHub = React.lazy(() =>
+const ExecutionHub = lazyWithRetry(() =>
   import('@/components/Execution/ExecutionHub').then((m) => ({ default: m.ExecutionHub }))
 );
-const ResultsHub = React.lazy(() =>
+const ResultsHub = lazyWithRetry(() =>
   import('@/components/Results/ResultsHub').then((m) => ({ default: m.default }))
 );
 
 // Legacy views (kept for backward compatibility)
-const FullInitiativesView = React.lazy(() =>
+const FullInitiativesView = lazyWithRetry(() =>
   import('@/views/FullInitiativesView').then((m) => ({ default: m.FullInitiativesView }))
 );
-const FullRoadmapView = React.lazy(() =>
-  import('@/views/FullRoadmapView').then((m) => ({ default: m.FullRoadmapView }))
-);
-const PortfolioView = React.lazy(() => import('@/views/PortfolioView'));
-const FullROIView = React.lazy(() =>
+// FullRoadmapView (deprecated, @ts-nocheck) is intentionally NOT imported here:
+// /roadmap now redirects to /portfolio (see route below). The file is kept for
+// Wave-2 cleanup only.
+const PortfolioView = lazyWithRetry(() => import('@/views/PortfolioView'));
+const FullROIView = lazyWithRetry(() =>
   import('@/views/FullROIView').then((m) => ({ default: m.FullROIView }))
 );
-const EconomicsView = React.lazy(() =>
+const EconomicsView = lazyWithRetry(() =>
   import('@/views/EconomicsView').then((m) => ({ default: m.EconomicsView }))
 );
-const FullExecutionView = React.lazy(() =>
+const FullExecutionView = lazyWithRetry(() =>
   import('@/views/FullExecutionView').then((m) => ({ default: m.FullExecutionView }))
 );
-const ImplementationView = React.lazy(() =>
+const ImplementationView = lazyWithRetry(() =>
   import('@/views/ImplementationView').then((m) => ({ default: m.ImplementationView }))
 );
-const FullRolloutView = React.lazy(() =>
-  import('@/views/FullRolloutView').then((m) => ({ default: m.FullRolloutView }))
-);
-const ReportBuilderView = React.lazy(() =>
+const ReportBuilderView = lazyWithRetry(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
 );
-const AssessmentReportBuilderView = React.lazy(() =>
+const ManagementReportsHub = lazyWithRetry(() =>
+  import('@/components/Reports/Management/ReportsHub').then((m) => ({ default: m.ReportsHub }))
+);
+const AssessmentReportBuilderView = lazyWithRetry(() =>
   import('@/views/AssessmentReportBuilderView').then((m) => ({
     default: m.AssessmentReportBuilderView,
   }))
 );
-const KpiOkrView = React.lazy(() =>
-  import('@/views/KpiOkrView').then((m) => ({ default: m.KpiOkrView }))
-);
-const BenefitsRealizationView = React.lazy(() =>
+const BenefitsRealizationView = lazyWithRetry(() =>
   import('@/views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView }))
 );
-const V4ComingSoonView = React.lazy(() =>
-  import('@/views/V4ComingSoonView').then((m) => ({ default: m.V4ComingSoonView }))
-);
-const SharedPresentationView = React.lazy(() =>
+const SharedPresentationView = lazyWithRetry(() =>
   import('@/components/Presentations/SharedPresentationView').then((m) => ({
     default: m.SharedPresentationView,
   }))
 );
-const ReportsAndPresentationsHub = React.lazy(() =>
+const ReportsAndPresentationsHub = lazyWithRetry(() =>
   import('@/components/ReportsAndPresentations/ReportsAndPresentationsHub').then((m) => ({
     default: m.ReportsAndPresentationsHub,
   }))
 );
 // Consultify Presentation Studio (Module Delivery Contract S5) — read-only
 // surface that consumes the four /api/presentation-studio/*/preview endpoints.
-const PresentationStudioPage = React.lazy(() =>
+const PresentationStudioPage = lazyWithRetry(() =>
   import('@/components/PresentationStudio/PresentationStudioPage').then((m) => ({
     default: m.PresentationStudioPage,
   }))
@@ -144,332 +135,317 @@ const PresentationStudioPage = React.lazy(() =>
 // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
 // above the V8.1 substrate.
 // See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md.
-const DocumentStudioView = React.lazy(() =>
+const DocumentStudioView = lazyWithRetry(() =>
   import('@/components/DocumentStudio/DocumentStudioView').then((m) => ({
     default: m.DocumentStudioView,
   }))
 );
-const DeckBuilder = React.lazy(() =>
+const DeckBuilder = lazyWithRetry(() =>
   import('@/components/Presentations/DeckBuilder/DeckBuilder').then((m) => ({
     default: m.DeckBuilder,
   }))
 );
-const PresentationWizard = React.lazy(() =>
+const PresentationWizard = lazyWithRetry(() =>
   import('@/components/Presentations/PresentationWizard').then((m) => ({
     default: m.PresentationWizard,
   }))
 );
-const MeetingHub = React.lazy(() =>
+const MeetingHub = lazyWithRetry(() =>
   import('@/components/Meeting/MeetingHub').then((m) => ({ default: m.MeetingHub }))
 );
 // NOTE: Legacy Management Reports UI has been deprecated in favor of the unified
 // Reports & Presentations hub under /presentations (tab=documents).
 
 // Settings
-const SettingsView = React.lazy(() =>
+const SettingsView = lazyWithRetry(() =>
   import('@/views/SettingsView').then((m) => ({ default: m.SettingsView }))
 );
 
 // Organization
-const OrganizationView = React.lazy(() =>
+const OrganizationView = lazyWithRetry(() =>
   import('@/views/OrganizationView').then((m) => ({ default: m.OrganizationView }))
 );
 
 // Admin
-const AdminView = React.lazy(() =>
+const AdminView = lazyWithRetry(() =>
   import('@/views/admin/AdminView').then((m) => ({ default: m.AdminView }))
 );
 
 // SuperAdmin
-const SuperAdminView = React.lazy(() =>
+const SuperAdminView = lazyWithRetry(() =>
   import('@/views/superadmin/SuperAdminView').then((m) => ({ default: m.SuperAdminView }))
 );
 
 // AI Chat (Full Screen Chat View) — Wave 1 canonical shell.
-const UnifiedChatPanel = React.lazy(() =>
+const UnifiedChatPanel = lazyWithRetry(() =>
   import('@/components/AIChat/UnifiedChatPanel').then((m) => ({ default: m.UnifiedChatPanel }))
 );
-const AIOSHub = React.lazy(() =>
+const AIOSHub = lazyWithRetry(() =>
   import('@/components/AIChat/AIOSHub').then((m) => ({ default: m.AIOSHub }))
 );
-const ActionCenter = React.lazy(() =>
+const ActionCenter = lazyWithRetry(() =>
   import('@/components/AIChat/ActionCenter').then((m) => ({ default: m.ActionCenter }))
 );
-const ResearchSessionsDock = React.lazy(() =>
+const ResearchSessionsDock = lazyWithRetry(() =>
   import('@/components/AIChat/ResearchSessionsDock').then((m) => ({
     default: m.ResearchSessionsDock,
   }))
 );
-const Wave5ArtifactRuntimePanel = React.lazy(() =>
+const Wave5ArtifactRuntimePanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave5ArtifactRuntimePanel').then((m) => ({
     default: m.Wave5ArtifactRuntimePanel,
   }))
 );
-const Wave6ContextLearningPanel = React.lazy(() =>
+const Wave6ContextLearningPanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave6ContextLearningPanel').then((m) => ({
     default: m.Wave6ContextLearningPanel,
   }))
 );
-const Wave7ConnectorAdminPanel = React.lazy(() =>
+const Wave7ConnectorAdminPanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave7ConnectorAdminPanel').then((m) => ({
     default: m.Wave7ConnectorAdminPanel,
   }))
 );
-const Wave8AgentCatalogPanel = React.lazy(() =>
+const Wave8AgentCatalogPanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave8AgentCatalogPanel').then((m) => ({
     default: m.Wave8AgentCatalogPanel,
   }))
 );
-const Wave9OutcomeAIOpsPanel = React.lazy(() =>
+const Wave9OutcomeAIOpsPanel = lazyWithRetry(() =>
   import('@/components/AIChat/Wave9OutcomeAIOpsPanel').then((m) => ({
     default: m.Wave9OutcomeAIOpsPanel,
   }))
 );
 
-// KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
-const WordyView = React.lazy(() =>
-  import('@/components/AIChat/KimiWorkspace/WordyView').then((m) => ({ default: m.WordyView }))
-);
-const PrezentacjeView = React.lazy(() =>
+// KIMI-style workspaces (P20 Prezentacje). The P22 Wordy workspace
+// (WordyView) is deprecated — `/wordy` now redirects to the canonical
+// Document Studio (`/document-studio`); see the route below.
+const PrezentacjeView = lazyWithRetry(() =>
   import('@/components/AIChat/KimiWorkspace/PrezentacjeView').then((m) => ({
     default: m.PrezentacjeView,
   }))
 );
 // KIMI-style Tabele workspace (Table Studio Foundation block — sky accent, D1=visible)
-const TabeleView = React.lazy(() =>
+const TabeleView = lazyWithRetry(() =>
   import('@/components/AIChat/KimiWorkspace/TabeleView').then((m) => ({
     default: m.default,
   }))
 );
 
 // Discovery Consultant (AI Discovery with Canvas)
-const DiscoveryConsultantView = React.lazy(() =>
+const DiscoveryConsultantView = lazyWithRetry(() =>
   import('@/components/Discovery/DiscoveryConsultantView').then((m) => ({
     default: m.DiscoveryConsultantView,
   }))
 );
 
 // Become Partner (Public Partner Recruitment Page)
-const BecomePartnerView = React.lazy(() => import('@/views/BecomePartnerView'));
-const PartnerApplicationView = React.lazy(() => import('@/views/PartnerApplicationView'));
+const BecomePartnerView = lazyWithRetry(() => import('@/views/BecomePartnerView'));
+const PartnerApplicationView = lazyWithRetry(() => import('@/views/PartnerApplicationView'));
 
 // Dashboard - DEPRECATED: Removed, redirects to Chat
 
 // Project Intelligence (legacy)
-const ProjectIntelligenceView = React.lazy(() =>
+const ProjectIntelligenceView = lazyWithRetry(() =>
   import('@/views/ProjectIntelligenceView').then((m) => ({ default: m.ProjectIntelligenceView }))
 );
 
 // Interview Module - New Hub (ModuleHub pattern) - BCG Enterprise Level
-const InterviewHub = React.lazy(() =>
+const InterviewHub = lazyWithRetry(() =>
   import('@/components/Interview/InterviewHub').then((m) => ({ default: m.InterviewHub }))
 );
 
 // AI Actions
-const ActionProposalView = React.lazy(() =>
+const ActionProposalView = lazyWithRetry(() =>
   import('@/views/ActionProposalView').then((m) => ({ default: m.ActionProposalView }))
 );
 
 // Partner Portal - New DBR77 Consultify Partner Portal
-const PartnerPortalViewNew = React.lazy(() =>
+const PartnerPortalViewNew = lazyWithRetry(() =>
   import('@/views/partner/PartnerPortalView').then((m) => ({ default: m.PartnerPortalViewNew }))
 );
 
-// Partner Portal - Legacy (to be removed)
-const PartnerPortalView = React.lazy(() =>
-  import('@/views/PartnerPortalView').then((m) => ({ default: m.PartnerPortalView }))
-);
-const PartnerPricingView = React.lazy(() =>
+const PartnerPricingView = lazyWithRetry(() =>
   import('@/views/partner/PartnerPricingView').then((m) => ({ default: m.PartnerPricingView }))
 );
-const PartnerDashboardView = React.lazy(() =>
-  import('@/views/partner/PartnerDashboardView').then((m) => ({ default: m.PartnerDashboardView }))
-);
-const ClientAccessView = React.lazy(() =>
+const ClientAccessView = lazyWithRetry(() =>
   import('@/views/partner/ClientAccessView').then((m) => ({ default: m.ClientAccessView }))
 );
-const CommissionView = React.lazy(() =>
-  import('@/views/partner/CommissionView').then((m) => ({ default: m.CommissionView }))
-);
-const DirectoryView = React.lazy(() =>
-  import('@/views/partner/DirectoryView').then((m) => ({ default: m.DirectoryView }))
-);
-const ResourcesView = React.lazy(() =>
-  import('@/views/partner/ResourcesView').then((m) => ({ default: m.ResourcesView }))
-);
-const ProviderHomeView = React.lazy(() =>
+const ProviderHomeView = lazyWithRetry(() =>
   import('@/views/partner/ProviderHomeView').then((m) => ({ default: m.ProviderHomeView }))
 );
 
 // Consultant
-const ConsultantPanelView = React.lazy(() =>
+const ConsultantPanelView = lazyWithRetry(() =>
   import('@/views/consultant/ConsultantPanelView').then((m) => ({ default: m.ConsultantPanelView }))
 );
-const ConsultantInviteView = React.lazy(() =>
+const ConsultantInviteView = lazyWithRetry(() =>
   import('@/views/consultant/ConsultantInviteView').then((m) => ({
     default: m.ConsultantInviteView,
   }))
 );
 
 // Wizards
-const OrgSetupWizard = React.lazy(() =>
+const OrgSetupWizard = lazyWithRetry(() =>
   import('@/views/OrgSetupWizard').then((m) => ({ default: m.OrgSetupWizard }))
 );
-const OnboardingWizard = React.lazy(() =>
+const OnboardingWizard = lazyWithRetry(() =>
   import('@/views/OnboardingWizard').then((m) => ({ default: m.OnboardingWizard }))
 );
-const EnterpriseOnboardingWizard = React.lazy(() =>
+const EnterpriseOnboardingWizard = lazyWithRetry(() =>
   import('@/components/Onboarding/EnterpriseOnboardingWizard').then((m) => ({
     default: m.EnterpriseOnboardingWizard,
   }))
 );
-const TrialEntryView = React.lazy(() =>
+const TrialEntryView = lazyWithRetry(() =>
   import('@/views/TrialEntryView').then((m) => ({ default: m.TrialEntryView }))
 );
 
 // Affiliate
-const AffiliateDashboardView = React.lazy(() =>
+const AffiliateDashboardView = lazyWithRetry(() =>
   import('@/views/AffiliateDashboardView').then((m) => ({ default: m.AffiliateDashboardView }))
 );
 
 // Legal Pages
-const AboutView = React.lazy(() =>
+const AboutView = lazyWithRetry(() =>
   import('@/views/legal/AboutView').then((m) => ({ default: m.AboutView }))
 );
-const ContactView = React.lazy(() =>
+const ContactView = lazyWithRetry(() =>
   import('@/views/legal/ContactView').then((m) => ({ default: m.ContactView }))
 );
 // Standalone legal views removed — all legal documents served via LegalDocumentView (/legal/:docSlug)
-const VectorPage = React.lazy(() =>
+const VectorPage = lazyWithRetry(() =>
   import('../views/VectorPage').then((m) => ({ default: m.VectorPage }))
 );
-const LegalIndexView = React.lazy(() =>
+const LegalIndexView = lazyWithRetry(() =>
   import('@/views/LegalIndexView').then((m) => ({ default: m.LegalIndexView }))
 );
-const LegalDocumentView = React.lazy(() =>
+const LegalDocumentView = lazyWithRetry(() =>
   import('@/views/LegalDocumentView').then((m) => ({ default: m.LegalDocumentView }))
 );
-const OAuthCallbackView = React.lazy(() => import('@/views/OAuthCallback'));
-const ForgotPasswordView = React.lazy(() =>
+const OAuthCallbackView = lazyWithRetry(() => import('@/views/OAuthCallback'));
+const ForgotPasswordView = lazyWithRetry(() =>
   import('@/views/auth/ForgotPasswordView').then((m) => ({ default: m.ForgotPasswordView }))
 );
-const ResetPasswordView = React.lazy(() =>
+const ResetPasswordView = lazyWithRetry(() =>
   import('@/views/auth/ResetPasswordView').then((m) => ({ default: m.ResetPasswordView }))
 );
 
 // Status & Changelog
-const StatusPageView = React.lazy(() =>
+const StatusPageView = lazyWithRetry(() =>
   import('@/views/StatusPageView').then((m) => ({ default: m.StatusPageView }))
 );
-const ChangelogView = React.lazy(() =>
+const ChangelogView = lazyWithRetry(() =>
   import('@/views/ChangelogView').then((m) => ({ default: m.ChangelogView }))
 );
 
 // Knowledge Base & Pricing
-const KnowledgeBaseEntryView = React.lazy(() =>
+const KnowledgeBaseEntryView = lazyWithRetry(() =>
   import('@/views/KnowledgeBaseEntryView').then((m) => ({ default: m.KnowledgeBaseEntryView }))
 );
-const AppPricingView = React.lazy(() =>
+const AppPricingView = lazyWithRetry(() =>
   import('@/views/AppPricingView').then((m) => ({ default: m.AppPricingView }))
 );
-const ExecutiveView = React.lazy(() =>
+const ExecutiveView = lazyWithRetry(() =>
   import('@/views/ExecutiveView').then((m) => ({ default: m.ExecutiveView }))
 );
-const BusinessCasesPage = React.lazy(() =>
+const BusinessCasesPage = lazyWithRetry(() =>
   import('@/views/BusinessCasesPage').then((m) => ({ default: m.BusinessCasesPage }))
 );
 
 // Documentation Portal (Public)
-const KnowledgeBaseHomePage = React.lazy(() =>
+const KnowledgeBaseHomePage = lazyWithRetry(() =>
   import('@/views/knowledge/KnowledgeBaseHomePage').then((m) => ({
     default: m.KnowledgeBaseHomePage,
   }))
 );
-const KnowledgeBaseCategoryPage = React.lazy(() =>
+const KnowledgeBaseCategoryPage = lazyWithRetry(() =>
   import('@/views/knowledge/KnowledgeBaseCategoryPage').then((m) => ({
     default: m.KnowledgeBaseCategoryPage,
   }))
 );
-const KnowledgeBaseArticlePage = React.lazy(() =>
+const KnowledgeBaseArticlePage = lazyWithRetry(() =>
   import('@/views/knowledge/KnowledgeBaseArticlePage').then((m) => ({
     default: m.KnowledgeBaseArticlePage,
   }))
 );
-const DocsLayout = React.lazy(() =>
+const DocsLayout = lazyWithRetry(() =>
   import('@/layouts/DocsLayout').then((m) => ({ default: m.DocsLayout }))
 );
-const DocsHomeView = React.lazy(() =>
+const DocsHomeView = lazyWithRetry(() =>
   import('@/views/docs/DocsHomeView').then((m) => ({ default: m.DocsHomeView }))
 );
-const DocsCategoryView = React.lazy(() =>
+const DocsCategoryView = lazyWithRetry(() =>
   import('@/views/docs/DocsCategoryView').then((m) => ({ default: m.DocsCategoryView }))
 );
-const DocsArticleView = React.lazy(() =>
+const DocsArticleView = lazyWithRetry(() =>
   import('@/views/docs/DocsArticleView').then((m) => ({ default: m.DocsArticleView }))
 );
-const DocsSearchView = React.lazy(() =>
+const DocsSearchView = lazyWithRetry(() =>
   import('@/views/docs/DocsSearchView').then((m) => ({ default: m.DocsSearchView }))
 );
-const DocsApiReferenceView = React.lazy(() =>
+const DocsApiReferenceView = lazyWithRetry(() =>
   import('@/views/docs/DocsApiReferenceView').then((m) => ({ default: m.DocsApiReferenceView }))
 );
-const DocsChangelogView = React.lazy(() =>
+const DocsChangelogView = lazyWithRetry(() =>
   import('@/views/docs/DocsChangelogView').then((m) => ({ default: m.DocsChangelogView }))
 );
-const DocsSecurityView = React.lazy(() =>
+const DocsSecurityView = lazyWithRetry(() =>
   import('@/views/docs/DocsSecurityView').then((m) => ({ default: m.DocsSecurityView }))
 );
 
 // Public Form Page (Table Platform)
-const PublicFormPage = React.lazy(() =>
+const PublicFormPage = lazyWithRetry(() =>
   import('@/components/MyWork/table/forms/PublicFormPage').then((m) => ({
     default: m.PublicFormPage,
   }))
 );
 
 // Public JWT Form Page (Table Platform · Block D · D-S4)
-const PublicJwtFormPage = React.lazy(() =>
+const PublicJwtFormPage = lazyWithRetry(() =>
   import('@/components/MyWork/table/forms/PublicJwtFormPage').then((m) => ({
     default: m.PublicJwtFormPage,
   }))
 );
 
 // Public Shared View (Table Platform)
-const PublicViewPage = React.lazy(() => import('@/components/MyWork/table/PublicViewPage'));
+const PublicViewPage = lazyWithRetry(() => import('@/components/MyWork/table/PublicViewPage'));
+// Audit Orchestrator hub (audit #19 family) — authenticated module route.
+const AuditProgramsHub = lazyWithRetry(() => import('@/components/Audit/AuditsHub'));
 
 // Public Mini Assessment (T015)
-const PublicMiniAssessmentView = React.lazy(() =>
+const PublicMiniAssessmentView = lazyWithRetry(() =>
   import('@/views/PublicMiniAssessmentView').then((m) => ({ default: m.PublicMiniAssessmentView }))
 );
 
 // Education Hub (Public)
-const ToolsShowcasePage = React.lazy(() =>
+const ToolsShowcasePage = lazyWithRetry(() =>
   import('@/views/ToolsShowcasePage').then((m) => ({ default: m.ToolsShowcasePage }))
 );
-const AuditsShowcasePage = React.lazy(() =>
+const AuditsShowcasePage = lazyWithRetry(() =>
   import('@/views/AuditsShowcasePage').then((m) => ({ default: m.AuditsShowcasePage }))
 );
-const ResourcesPage = React.lazy(() =>
+const ResourcesPage = lazyWithRetry(() =>
   import('@/views/ResourcesPage').then((m) => ({ default: m.ResourcesPage }))
 );
-const HowItWorksPage = React.lazy(() =>
+const HowItWorksPage = lazyWithRetry(() =>
   import('@/views/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage }))
 );
-const AppIntroView = React.lazy(() => import('@/views/AppIntroView'));
+const AppIntroView = lazyWithRetry(() => import('@/views/AppIntroView'));
 
-const ForWhomPage = React.lazy(() =>
+const ForWhomPage = lazyWithRetry(() =>
   import('@/views/ForWhomPage').then((m) => ({ default: m.ForWhomPage }))
 );
 
-const PricingLandingPage = React.lazy(() =>
+const PricingLandingPage = lazyWithRetry(() =>
   import('@/views/PricingLandingPage').then((m) => ({ default: m.PricingLandingPage }))
 );
 
-const EnterprisePage = React.lazy(() =>
+const EnterprisePage = lazyWithRetry(() =>
   import('@/views/EnterprisePage').then((m) => ({ default: m.EnterprisePage }))
 );
 
-const OurStoryPage = React.lazy(() =>
+const OurStoryPage = lazyWithRetry(() =>
   import('@/views/OurStoryPage').then((m) => ({ default: m.OurStoryPage }))
 );
 
@@ -583,12 +559,21 @@ const PublicProductionModuleDisabled: React.FC<{ moduleName: string }> = ({ modu
   </div>
 );
 
+// VTS pilot scope: these route modules stay enabled on public production even
+// when non-core modules are otherwise hidden (sidebar visibility is handled
+// separately in publicProduction.ts / pilotAccess.ts). Keep names in sync with
+// the `moduleName` props below.
+const PUBLIC_PRODUCTION_CORE_ROUTE_MODULES = new Set(['My Work', 'Initiatives', 'Implementation']);
 const ProductionModuleGate: React.FC<{
   enabled: boolean;
   moduleName: string;
   children: React.ReactNode;
 }> = ({ enabled, moduleName, children }) =>
-  enabled ? <>{children}</> : <PublicProductionModuleDisabled moduleName={moduleName} />;
+  enabled || PUBLIC_PRODUCTION_CORE_ROUTE_MODULES.has(moduleName) ? (
+    <>{children}</>
+  ) : (
+    <PublicProductionModuleDisabled moduleName={moduleName} />
+  );
 
 const InternalToolsGate: React.FC<{ enabled: boolean; children: React.ReactNode }> = ({
   enabled,
@@ -632,84 +617,6 @@ export const AppRoutes: React.FC = () => {
     []
   );
   const internalToolsEnabled = canUseInternalTools(currentUser);
-  const directKimiModuleAccess = React.useMemo(() => {
-    if (!currentUser?.isAuthenticated) return false;
-    if (isSuperAdminRole(currentUser?.role)) return true;
-
-    const email = String(currentUser?.email || '')
-      .trim()
-      .toLowerCase();
-    if (!email) return false;
-
-    const defaults = ['piotr.wisniewski@dbr77.com', 'piotrwisniewski@dbr77.com'];
-    const configured = String(
-      import.meta.env.VITE_DIRECT_KIMI_MODULE_ACCESS_EMAILS || 'piotr.wisniewski@dbr77.com'
-    )
-      .split(',')
-      .map((item) => item.trim().toLowerCase())
-      .filter(Boolean);
-    const allowlist = new Set([...defaults, ...configured]);
-    return allowlist.has(email);
-  }, [currentUser?.isAuthenticated, currentUser?.role, currentUser?.email]);
-
-  const KimiModuleGate: React.FC<{
-    moduleKey: 'wordy' | 'excele' | 'prezentacje';
-    children: React.ReactNode;
-  }> = ({ moduleKey, children }) => {
-    const [loading, setLoading] = React.useState(true);
-    const [allowed, setAllowed] = React.useState(false);
-    const MODULE_ACCESS_TIMEOUT_MS = 12000;
-
-    React.useEffect(() => {
-      let cancelled = false;
-      const run = async () => {
-        if (directKimiModuleAccess) {
-          if (!cancelled) {
-            setAllowed(true);
-            setLoading(false);
-          }
-          return;
-        }
-
-        const timeoutId = window.setTimeout(() => {
-          if (cancelled) return;
-          setAllowed(false);
-          setLoading(false);
-        }, MODULE_ACCESS_TIMEOUT_MS);
-
-        try {
-          const data = await apiGet<{ modules?: string[] }>('/module-access/my');
-          const modules = Array.isArray(data?.modules) ? data.modules : [];
-          if (!cancelled) {
-            setAllowed(modules.includes(moduleKey));
-          }
-        } catch {
-          if (!cancelled) {
-            setAllowed(false);
-          }
-        } finally {
-          window.clearTimeout(timeoutId);
-          if (!cancelled) {
-            setLoading(false);
-          }
-        }
-      };
-      void run();
-      return () => {
-        cancelled = true;
-      };
-    }, [moduleKey, directKimiModuleAccess]);
-
-    if (loading) {
-      return (
-        <div className="flex h-[40vh] items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-        </div>
-      );
-    }
-
-    return <>{allowed ? children : <V4ComingSoonView />}</>;
-  };
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
@@ -1285,6 +1192,24 @@ export const AppRoutes: React.FC = () => {
         />
         <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
 
+        {/* Audit Orchestrator (audit #19 family) — authenticated, inside the
+            app shell so it gets nav + bearer token. /audits stays the public
+            showcase; the functional hub lives at /audit-programs. */}
+        <Route
+          path="/audit-programs"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                    <AuditProgramsHub />
+                  </Suspense>
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
         {/* AI Chat - Full Screen Chat View */}
         <Route
           path={ROUTES.AI_CHAT}
@@ -1387,19 +1312,23 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* KIMI Dokumenty — contact-required blocking page */}
+        {/*
+          Legacy /wordy (KimiWorkspace report-builder) route -> canonical
+          Document Studio. Module 10 route-identity resolution: the fully
+          built Document Studio (`/document-studio`, backed by
+          `/api/document-studio`) is the canonical Document module. The
+          old KimiWorkspace `WordyView` (backed by `/api/report-builder`)
+          is deprecated and redirect-only, mirroring the
+          `/excele` -> `/tabele` consolidation.
+        */}
         <Route
           path={ROUTES.WORDY}
           element={
-            <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.wordy', 'Documents')]}>
-                <RouteErrorBoundary>
-                  <KimiModuleGate moduleKey="wordy">
-                    <WordyView />
-                  </KimiModuleGate>
-                </RouteErrorBoundary>
-              </MainLayout>
-            </ProtectedRoute>
+            <RedirectPreservingQuery
+              from={ROUTES.WORDY}
+              to={ROUTES.DOCUMENT_STUDIO}
+              reason="wordy_merged_into_document_studio"
+            />
           }
         />
 
@@ -1415,16 +1344,19 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* KIMI Prezentacje — contact-required blocking page */}
+        {/*
+          KIMI Prezentacje — self-serve presentation generator lane.
+          The contact-required KimiModuleGate was removed (Module 12 audit gap #1):
+          the generator is real and backend-wired, so it must be reachable by every
+          authenticated user without ops intervention — mirroring Tabele/Document Studio.
+        */}
         <Route
           path={ROUTES.PREZENTACJE_GEN}
           element={
             <ProtectedRoute requireAuth={true}>
               <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
                 <RouteErrorBoundary>
-                  <KimiModuleGate moduleKey="prezentacje">
-                    <PrezentacjeView />
-                  </KimiModuleGate>
+                  <PrezentacjeView />
                 </RouteErrorBoundary>
               </MainLayout>
             </ProtectedRoute>
@@ -1452,6 +1384,22 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
                 <InterviewHub />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Discovery revive — the canvas-based Discovery Consultant now has a
+            real backend (persistence + convert-to-project + SPIN extraction).
+            Mounted on a dedicated path so it's reachable for evaluation
+            without disturbing the deliberate DISCOVERY_CONSULTANT → InterviewHub
+            redirect above. */}
+        <Route
+          path="/discovery/canvas"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Discovery']} noPadding>
+              <RouteErrorBoundary>
+                <DiscoveryConsultantView />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1609,30 +1557,80 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Context Builder with nested routes */}
+        {/* M16 P0-4 — Legacy /context/* decommissioned: redirect to canonical /organization/*.
+            ContextBuilderView is retained (referenced by quick-step entry paths) but the
+            standalone /context route group now converges on the unified Organization workspace. */}
         <Route
           path={`${ROUTES.CONTEXT_BUILDER.ROOT}/*`}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Context Builder']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <Routes>
-                    <Route index element={<ContextBuilderView initialTab={1} />} />
-                    <Route path="profile" element={<ContextBuilderView initialTab={1} />} />
-                    <Route path="goals" element={<ContextBuilderView initialTab={2} />} />
-                    <Route path="challenges" element={<ContextBuilderView initialTab={3} />} />
-                    {/* T064 — Redirect to canonical */}
-                    <Route
-                      path="megatrends"
-                      element={
-                        <Navigate to={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS} replace />
-                      }
-                    />
-                    <Route path="strategy" element={<ContextBuilderView initialTab={5} />} />
-                  </Routes>
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
+            <Routes>
+              <Route
+                index
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.ROOT}
+                    to={ROUTES.ORGANIZATION.ROOT}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              <Route
+                path="profile"
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.PROFILE}
+                    to={ROUTES.ORGANIZATION.PROFILE}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              <Route
+                path="goals"
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.GOALS}
+                    to={ROUTES.ORGANIZATION.GOALS}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              <Route
+                path="challenges"
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.CHALLENGES}
+                    to={ROUTES.ORGANIZATION.CHALLENGES}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              {/* T064 — Megatrends redirect to canonical Discovery Tools route */}
+              <Route
+                path="megatrends"
+                element={<Navigate to={ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS} replace />}
+              />
+              <Route
+                path="strategy"
+                element={
+                  <RedirectWithTracking
+                    from={ROUTES.CONTEXT_BUILDER.STRATEGY}
+                    to={ROUTES.ORGANIZATION.STRATEGY}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+              {/* Any other /context/* path → organization root */}
+              <Route
+                path="*"
+                element={
+                  <RedirectWithTracking
+                    from={`${ROUTES.CONTEXT_BUILDER.ROOT}/*`}
+                    to={ROUTES.ORGANIZATION.ROOT}
+                    reason="legacy_context_to_organization"
+                  />
+                }
+              />
+            </Routes>
           }
         />
 
@@ -1712,23 +1710,12 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        <Route
-          path={ROUTES.ROADMAP}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Roadmap']}>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Initiatives"
-              >
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <FullRoadmapView />
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
-          }
-        />
+        {/*
+          Module 05: /roadmap is retired. The deprecated @ts-nocheck FullRoadmapView
+          is no longer reachable; the Portfolio hub's Timeline tab covers the roadmap
+          use case. Redirect to /portfolio so old links/bookmarks land safely.
+        */}
+        <Route path={ROUTES.ROADMAP} element={<Navigate to={ROUTES.PORTFOLIO} replace />} />
         <Route
           path={ROUTES.PORTFOLIO}
           element={
@@ -1874,23 +1861,16 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        {/* Rollout consolidated into ExecutionHub as a tab (Module 06 Realizacja).
+            Legacy FullRolloutView + SplitLayout retired — redirect to the tab. */}
         <Route
           path={ROUTES.ROLLOUT}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Rollout']}>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Implementation"
-              >
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                      <FullRolloutView />
-                    </Suspense>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <RedirectWithTracking
+              from={ROUTES.ROLLOUT}
+              to={`${ROUTES.EXECUTION}?tab=rollout`}
+              reason="rollout_consolidated_into_execution_hub"
+            />
           }
         />
         {/* Reports & Presentations — unified V3 hub (V3-J01) */}
@@ -1899,7 +1879,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <RedirectWithTracking
               from={ROUTES.REPORTS.ROOT}
-              to={`${ROUTES.PRESENTATIONS}?tab=documents`}
+              to={`${ROUTES.PRESENTATIONS}?tab=all`}
               reason="reports_ui_moved_to_presentations"
             />
           }
@@ -1955,32 +1935,40 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        {/* Management Reports — legacy (deprecated) */}
+        {/* Management Reports — PMO reports (Team Meeting / Steering Committee / Portfolio Health / RAID) */}
         <Route
           path={ROUTES.REPORTS.MANAGEMENT}
           element={
-            <RedirectWithTracking
-              from={ROUTES.REPORTS.MANAGEMENT}
-              to={`${ROUTES.PRESENTATIONS}?tab=documents`}
-              reason="reports_management_deprecated"
-            />
-          }
-        />
-        <Route
-          path={ROUTES.KPI_OKR}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
+            <MainLayout
+              breadcrumbs={
+                breadcrumbs || [
+                  t('sidebar.reports', 'Reports'),
+                  t('sidebar.reportsManagement', 'Management Reports'),
+                ]
+              }
+              noPadding
+            >
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Results"
+                moduleName="Management Reports"
               >
                 <RouteErrorBoundary>
-                  <KpiOkrView />
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading reports..." />}>
+                      <ManagementReportsHub />
+                    </Suspense>
+                  </AnimationWrapper>
                 </RouteErrorBoundary>
               </ProductionModuleGate>
             </MainLayout>
           }
         />
+        {/*
+          /kpi-okr is a permanent alias for /benefits (Results). It redirects
+          directly rather than mounting a view, so the router manifest no longer
+          carries a dead view module. See Module 07 audit (route cleanup).
+        */}
+        <Route path={ROUTES.KPI_OKR} element={<Navigate to={ROUTES.BENEFITS} replace />} />
         <Route
           path={ROUTES.PRESENTATIONS}
           element={
@@ -2022,12 +2010,15 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.MEETING}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Meeting"
+              >
+                <RouteErrorBoundary>
+                  <MeetingHub />
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
             </MainLayout>
           }
         />
@@ -2079,50 +2070,50 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        {/*
+          Canonical Document module (Module 10). Reachable for every
+          authenticated user — the public-production hide gate is lifted
+          because Document Studio is now the canonical Document surface
+          (with its own sidebar entry), not a hidden Outputs sub-tool.
+        */}
         <Route
           path="/document-studio"
           element={
-            <MainLayout
-              breadcrumbs={
-                breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
-                  t('documentStudio.breadcrumb', 'Document Studio'),
-                ]
-              }
-              noPadding
-            >
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Outputs"
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.documentStudio', 'Documents'),
+                    t('documentStudio.breadcrumb', 'Document Studio'),
+                  ]
+                }
+                noPadding
               >
                 <RouteErrorBoundary>
                   <DocumentStudioView />
                 </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/document-studio/:artifactId"
           element={
-            <MainLayout
-              breadcrumbs={
-                breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
-                  t('documentStudio.breadcrumb', 'Document Studio'),
-                ]
-              }
-              noPadding
-            >
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Outputs"
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.documentStudio', 'Documents'),
+                    t('documentStudio.breadcrumb', 'Document Studio'),
+                  ]
+                }
+                noPadding
               >
                 <RouteErrorBoundary>
                   <DocumentStudioView />
                 </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
@@ -2156,30 +2147,10 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
-        <Route
-          path={ROUTES.MCP_IRIS}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['MCP IRIS']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
-        <Route
-          path={ROUTES.MCP_MARKETPLACE}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['MCP Marketplace']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
-        />
+        {/* MCP IRIS + Marketplace dropped from navigation (decision D7). Redirect
+            any direct/bookmarked URL access to the canonical home (/chat). */}
+        <Route path={ROUTES.MCP_IRIS} element={<Navigate to={ROUTES.AI_CHAT} replace />} />
+        <Route path={ROUTES.MCP_MARKETPLACE} element={<Navigate to={ROUTES.AI_CHAT} replace />} />
 
         {/* Settings with nested routes - Protected & Error Boundary */}
         <Route
@@ -2257,7 +2228,15 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Partner Portal - New DBR77 Consultify Partner Portal */}
+        {/* Partner Portal - New DBR77 Consultify Partner Portal
+         *
+         * SECURITY (defense-in-depth): This route is intentionally gated only by
+         * requireAuth, NOT by a partner-role/connection check. Un-connected authed
+         * users only ever see the "connect" screen here — no partner data leaks at
+         * the route level — so testers/internal users can reach and inspect the
+         * portal shell. Access to actual partner DATA is enforced SERVER-SIDE via
+         * partner-scoping on every partner API, and self-connect is flag-gated by
+         * the backend. Do NOT add a client-side role block that hides the view. */}
         <Route
           path={`${ROUTES.PARTNER.LANDING}/*`}
           element={

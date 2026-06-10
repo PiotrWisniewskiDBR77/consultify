@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CreditNotesPanel - Credit Notes Management
  *
@@ -125,7 +124,7 @@ export const CreditNotesPanel: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Summary Card */}
-      <div className="bg-gradient-to-br from-primary-500/20 to-fuchsia-500/10 border border-primary-500/20 rounded-xl p-4">
+      <div className="bg-gradient-to-br from-primary-500/20 to-crimson-700/10 border border-primary-500/20 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-primary-300">Total Credits Issued</p>
@@ -143,7 +142,7 @@ export const CreditNotesPanel: React.FC = () => {
         <div className="relative">
           <Search
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
           />
           <input
             type="text"
@@ -161,7 +160,7 @@ export const CreditNotesPanel: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
           <button
@@ -180,7 +179,7 @@ export const CreditNotesPanel: React.FC = () => {
           <Loader2 size={32} className="animate-spin text-primary-500" />
         </div>
       ) : filteredCreditNotes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-600 dark:text-slate-500">
           <Receipt size={48} className="mb-4 opacity-50" />
           <p>No credit notes found</p>
         </div>
@@ -189,22 +188,22 @@ export const CreditNotesPanel: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Credit Note
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Organization
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Reason
                 </th>
-                <th className="text-right p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-right p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Amount
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Status
                 </th>
-                <th className="text-left p-4 text-sm font-medium text-slate-400 dark:text-slate-500">
+                <th className="text-left p-4 text-sm font-medium text-slate-600 dark:text-slate-500">
                   Date
                 </th>
               </tr>
@@ -222,12 +221,12 @@ export const CreditNotesPanel: React.FC = () => {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <Building2 size={14} className="text-slate-400 dark:text-slate-500" />
+                      <Building2 size={14} className="text-slate-600 dark:text-slate-500" />
                       <span className="text-white">{cn.organization_name || 'Unknown'}</span>
                     </div>
                   </td>
                   <td className="p-4">
-                    <span className="text-slate-400 dark:text-slate-500">{cn.reason || '-'}</span>
+                    <span className="text-slate-600 dark:text-slate-500">{cn.reason || '-'}</span>
                   </td>
                   <td className="p-4 text-right">
                     <span className="font-medium text-emerald-400">
@@ -241,7 +240,7 @@ export const CreditNotesPanel: React.FC = () => {
                     </span>
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-500">
                       <Calendar size={14} />
                       <span className="text-sm">
                         {new Date(cn.created_at).toLocaleDateString()}
@@ -263,7 +262,7 @@ export const CreditNotesPanel: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Organization
                 </label>
                 <select
@@ -283,13 +282,13 @@ export const CreditNotesPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Amount (USD)
                 </label>
                 <div className="relative">
                   <DollarSign
                     size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
                   />
                   <input
                     type="number"
@@ -304,7 +303,7 @@ export const CreditNotesPanel: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Reason</label>
+                <label className="block text-sm font-medium text-slate-600 mb-2">Reason</label>
                 <textarea
                   value={createForm.reason}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, reason: e.target.value }))}
@@ -318,7 +317,7 @@ export const CreditNotesPanel: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-600 transition-colors"
               >
                 Cancel
               </button>

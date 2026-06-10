@@ -217,7 +217,7 @@ export const MicroVideoPrompt: React.FC<MicroVideoPromptProps> = ({
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Play size={12} className="text-slate-400 dark:text-slate-500" />
+                            <Play size={12} className="text-slate-600 dark:text-slate-500" />
                           </div>
                         )}
                       </div>

@@ -169,15 +169,78 @@ export const PlaybookExecutor = {
       }
 
       case 'create_entity': {
+        // Teresa last-mile (backlog #12): real writes for supported entities,
+        // delegated to the canonical tool-layer writers (single source of truth).
         const { entityType, data } = step.config as any;
-        logger.info(`[PlaybookExecutor] Would create ${entityType} with data:`, data);
-        return { created: true, entityType, data };
+        const userId = (metadata.userId as string) || '';
+        const organizationId = (metadata.organizationId as string) || '';
+        const et = String(entityType || '').toLowerCase();
+        const d = (data || {}) as Record<string, any>;
+        try {
+          const { executeToolCall } = await import('../../services/ai/toolDefinitions.js');
+          const ctx = { userId, organizationId } as any;
+          if (et === 'task' || et === 'tasks') {
+            const out = await executeToolCall(
+              'create_task',
+              {
+                title: d.title,
+                description: d.description,
+                priority: d.priority,
+                due_date: d.due_date || d.dueDate,
+                assignee_id: d.assignee_id || d.assigneeId,
+              },
+              ctx
+            );
+            return JSON.parse(out);
+          }
+          if (et === 'decision' || et === 'decisions') {
+            const out = await executeToolCall(
+              'create_decision',
+              { title: d.title, description: d.description },
+              ctx
+            );
+            return JSON.parse(out);
+          }
+          logger.warn(
+            `[PlaybookExecutor] create_entity: unsupported entityType '${entityType}' — skipped`
+          );
+          return { created: false, entityType, unsupported: true };
+        } catch (err) {
+          logger.warn(`[PlaybookExecutor] create_entity failed: ${(err as Error).message}`);
+          return { created: false, entityType, error: (err as Error).message };
+        }
       }
 
       case 'update_entity': {
         const { entityType, entityId, updates } = step.config as any;
-        logger.info(`[PlaybookExecutor] Would update ${entityType} ${entityId}:`, updates);
-        return { updated: true, entityType, entityId };
+        const userId = (metadata.userId as string) || '';
+        const organizationId = (metadata.organizationId as string) || '';
+        const et = String(entityType || '').toLowerCase();
+        const u = (updates || {}) as Record<string, any>;
+        try {
+          if (et === 'task' || et === 'tasks') {
+            const { executeToolCall } = await import('../../services/ai/toolDefinitions.js');
+            const out = await executeToolCall(
+              'update_task',
+              {
+                task_id: entityId,
+                status: u.status,
+                title: u.title,
+                priority: u.priority,
+                due_date: u.due_date || u.dueDate,
+              },
+              { userId, organizationId } as any
+            );
+            return JSON.parse(out);
+          }
+          logger.warn(
+            `[PlaybookExecutor] update_entity: unsupported entityType '${entityType}' — skipped`
+          );
+          return { updated: false, entityType, entityId, unsupported: true };
+        } catch (err) {
+          logger.warn(`[PlaybookExecutor] update_entity failed: ${(err as Error).message}`);
+          return { updated: false, entityType, entityId, error: (err as Error).message };
+        }
       }
 
       case 'notify': {

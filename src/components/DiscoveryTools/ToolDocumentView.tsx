@@ -5,7 +5,6 @@ import {
   ExternalLink,
   History,
   Lightbulb,
-  Loader2,
   MessageSquare,
   Send,
   Sparkles,
@@ -16,6 +15,7 @@ import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -908,7 +908,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Visible human + AI loop' : 'Visible human + AI loop'}
               </div>
               <div className="text-sm text-slate-700 dark:text-slate-300">
@@ -945,7 +945,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+            <div className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
               {isPolish ? 'Aktualny etap' : 'Current stage'}:{' '}
               {
                 {
@@ -991,13 +991,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
                       {index + 1}
                     </span>
                     {phase.done ? (
                       <Check size={12} className="text-emerald-500" />
                     ) : (
-                      <span className="text-[11px] text-slate-400">{phase.gapCount}</span>
+                      <span className="text-[11px] text-slate-600">{phase.gapCount}</span>
                     )}
                   </div>
                   <div className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -1122,7 +1122,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                   {isPolish ? 'Status' : 'Status'}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
@@ -1130,13 +1130,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 </div>
               </div>
               <div>
-                <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                   {isPolish ? 'Progress' : 'Progress'}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">{progress}%</div>
               </div>
               <div>
-                <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                   {isPolish ? 'Created' : 'Created'}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
@@ -1144,7 +1144,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 </div>
               </div>
               <div>
-                <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                   {isPolish ? 'Last modified' : 'Last modified'}
                 </div>
                 <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
@@ -1226,7 +1226,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           </h2>
           <div className="grid gap-4 md:grid-cols-3 rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4">
             <label className="space-y-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <span className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Methodology' : 'Methodology'}
               </span>
               <select
@@ -1242,7 +1242,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <span className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Initiatives count' : 'Initiatives count'}
               </span>
               <input
@@ -1308,7 +1308,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               {isPolish ? 'Source artifact' : 'Source artifact'}
             </h2>
             <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-              <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <div className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                 {isPolish ? 'Final source summary' : 'Final source summary'}
               </div>
               <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
@@ -1316,7 +1316,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               </p>
               {(swotData.summary.appliedConclusions?.length || 0) > 0 && (
                 <div className="mt-4">
-                  <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
                     {isPolish ? 'Applied conclusions' : 'Applied conclusions'}
                   </div>
                   <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
@@ -1387,7 +1387,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                     className="flex w-full items-center justify-between rounded-xl bg-white/70 dark:bg-navy-950/40 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300"
                   >
                     <span className="truncate">{initiative.title}</span>
-                    <ExternalLink size={14} className="shrink-0 text-slate-400" />
+                    <ExternalLink size={14} className="shrink-0 text-slate-600" />
                   </button>
                 ))}
               </div>
@@ -1415,7 +1415,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                       <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
                         {move.title}
                       </div>
-                      <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <div className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-500">
                         {move.category}
                       </div>
                       <p className="text-sm text-slate-600 dark:text-slate-400">{move.rationale}</p>
@@ -1443,7 +1443,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                       <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
                         {candidate.title}
                       </div>
-                      <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <div className="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-500">
                         {candidate.outputType}
                       </div>
                       <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -1483,6 +1483,48 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       </div>
     );
 
+    // ── Standard-C group tabs (mirrors InsightViewer/InitiativeDocumentView) ──
+    // A bilingual groupLabels array switched on isPolish, plus a per-section
+    // group + cSpan assignment, so NModeShell's C-board renders top group tabs
+    // and lets wide/table-heavy sections breathe in the dense 3-column grid.
+    const groupLabels = isPolish
+      ? ['Sesja', 'Analiza', 'Outputs', 'Współpraca', 'Zapisy']
+      : ['Session', 'Analysis', 'Outputs', 'Collaboration', 'Records'];
+    const phaseGroupIndex = (stepId: string): number => {
+      if (['mission', 'context', 'input', 'signals'].includes(stepId)) return 0;
+      if (
+        ['insights', 'synthesis', 'swot', 'forces', 'options', 'items', 'assumptions'].includes(
+          stepId
+        )
+      ) {
+        return 1;
+      }
+      if (['outputs', 'report', 'initiatives', 'results', 'summary'].includes(stepId)) return 2;
+      return 0;
+    };
+    // Static (non-phase) sections: group + Standard-C span/hidden hints.
+    const staticGroupIndexById: Record<string, number> = {
+      work: 0,
+      review: 1,
+      outputs: 2,
+      'ai-collaboration': 3,
+      comments: 4,
+      activity: 4,
+      'used-in': 4,
+    };
+    const cSpanById: Record<string, 1 | 2 | 3> = {
+      work: 3, // wide step canvas + tool workspace
+      review: 2, // readiness + generation grids
+      outputs: 3, // output contract grid + initiatives + candidates
+      'ai-collaboration': 2,
+    };
+    const cHiddenById = (id: string): boolean => {
+      if (id === 'comments') return nModeComments.length === 0;
+      if (id === 'activity') return history.length === 0;
+      if (id === 'used-in') return toolBacklinks.length === 0;
+      return false;
+    };
+
     if (isStrategicPhaseTool) {
       const renderPhaseCanvas = (phaseStep: StepDefinition, extras?: React.ReactNode) => {
         const phaseIndex = stepDefs.findIndex((step) => step.id === phaseStep.id) + 1;
@@ -1504,7 +1546,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-2">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-600 dark:text-slate-500">
                       {isPolish ? 'AI consultant flow' : 'AI consultant flow'}
                     </div>
                     <div className="text-sm text-slate-700 dark:text-slate-300">
@@ -1609,6 +1651,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             badge: isOutputs
               ? generatedInitiatives.length + (swotData?.outputCandidates?.length || 0)
               : undefined,
+            group: groupLabels[phaseGroupIndex(step.id)],
+            cSpan: 3 as const, // phase canvases are wide step workspaces
             component: renderPhaseCanvas(step),
           };
         }),
@@ -1616,12 +1660,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           id: 'ai-collaboration',
           icon: Sparkles,
           label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
+          group: groupLabels[3],
+          cSpan: 2 as const,
           component: aiCollaborationSection,
         },
       ] as NModeSection[];
     }
 
-    return [
+    const defaultSections: NModeSection[] = [
       {
         id: 'work',
         icon: Target,
@@ -1731,6 +1777,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         ),
       },
     ];
+
+    return defaultSections.map((section) => ({
+      ...section,
+      group: groupLabels[staticGroupIndexById[section.id] ?? 4],
+      cSpan: cSpanById[section.id] ?? section.cSpan,
+      cHidden: cHiddenById(section.id) || section.cHidden,
+    }));
   }, [
     activeChatMessages,
     activityEntries,
@@ -1936,10 +1989,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-          <p className="text-sm text-slate-500">{isPolish ? 'Ładowanie...' : 'Loading...'}</p>
-        </div>
+        <LoadingState variant="spinner" label={isPolish ? 'Ładowanie...' : 'Loading...'} />
       </div>
     );
   }

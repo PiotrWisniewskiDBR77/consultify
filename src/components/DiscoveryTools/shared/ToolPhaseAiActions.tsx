@@ -38,7 +38,7 @@ export const ToolPhaseAiActions: React.FC<ToolPhaseAiActionsProps> = ({
 
   return (
     <div className={`flex flex-wrap items-center justify-end gap-2 ${className}`}>
-      <span className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400 sm:inline">
+      <span className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-slate-600 sm:inline">
         {isPolish ? 'AI Copilot' : 'AI Copilot'}
       </span>
 

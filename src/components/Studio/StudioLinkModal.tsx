@@ -231,7 +231,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
           <div className="text-xs text-slate-500 dark:text-slate-400">
             Currently linked to:{' '}
             {selectedTaskId || selectedProjectId || selectedInitiativeId ? (
-              <span className="text-slate-400 dark:text-slate-500">
+              <span className="text-slate-600 dark:text-slate-500">
                 {[
                   selectedTaskId && '1 task',
                   selectedProjectId && '1 project',
@@ -250,7 +250,7 @@ export const StudioLinkModal: React.FC<StudioLinkModalProps> = ({
         <div className="flex items-center justify-end gap-3 p-4 border-t border-white/10">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+            className="px-4 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
           >
             Cancel
           </button>

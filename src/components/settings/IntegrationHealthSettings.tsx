@@ -24,6 +24,8 @@ import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+
 import { Api } from '../../services/api';
 
 interface IntegrationHealthSettingsProps {
@@ -199,7 +201,7 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
         </div>
         <button
           onClick={fetchAllHealthStatuses}
-          className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
           title={t('common.refresh', 'Refresh')}
         >
           <RefreshCw size={18} />
@@ -207,15 +209,13 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
       </div>
 
       {integrations.length === 0 ? (
-        <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-xl">
-          <Activity className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <p className="text-slate-500 dark:text-slate-400">
-            {t(
-              'settings.health.noIntegrations',
-              'No integrations available. Connect an integration to monitor health.'
-            )}
-          </p>
-        </div>
+        <EmptyState
+          icon={<Activity />}
+          title={t(
+            'settings.health.noIntegrations',
+            'No integrations available. Connect an integration to monitor health.'
+          )}
+        />
       ) : (
         <>
           {/* Health Status Grid */}
@@ -343,9 +343,11 @@ export const IntegrationHealthSettings: React.FC<IntegrationHealthSettingsProps>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-sm text-slate-500 dark:text-slate-400">
-                      {t('settings.health.noHistory', 'No health check history available')}
-                    </div>
+                    <EmptyState
+                      compact
+                      preset="noData"
+                      title={t('settings.health.noHistory', 'No health check history available')}
+                    />
                   )}
                 </div>
               </div>

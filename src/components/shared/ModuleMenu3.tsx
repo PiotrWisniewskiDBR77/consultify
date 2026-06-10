@@ -31,14 +31,14 @@ export const MENU_3_CHIP_BASE =
 
 export const MENU_3_CHIP_INACTIVE = cn(
   MENU_3_CHIP_BASE,
-  'border-slate-200/60 bg-slate-100 text-slate-600 hover:bg-white/60',
+  'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900',
   'dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-navy-900/50'
 );
 
 export const MENU_3_CHIP_ACTIVE = cn(
   MENU_3_CHIP_BASE,
-  'border-primary-500/40 bg-primary-500/10 text-primary-700 shadow-[inset_0_0_0_1px_rgba(168,85,247,0.10)]',
-  'dark:text-primary-200'
+  'border-primary-500/60 bg-primary-500/15 text-primary-800 shadow-[inset_0_0_0_1px_rgba(168,85,247,0.18)]',
+  'dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-200 dark:shadow-[inset_0_0_0_1px_rgba(168,85,247,0.10)]'
 );
 
 export const MENU_3_BADGE_BASE =
@@ -46,12 +46,12 @@ export const MENU_3_BADGE_BASE =
 
 export const MENU_3_BADGE_INACTIVE = cn(
   MENU_3_BADGE_BASE,
-  'bg-slate-200 text-slate-600 dark:bg-navy-700 dark:text-slate-300'
+  'bg-slate-300 text-slate-700 dark:bg-navy-700 dark:text-slate-300'
 );
 
 export const MENU_3_BADGE_ACTIVE = cn(
   MENU_3_BADGE_BASE,
-  'bg-primary-500/30 text-primary-700 dark:text-primary-200'
+  'bg-primary-500/25 text-primary-800 dark:bg-primary-500/30 dark:text-primary-200'
 );
 
 export const MENU_3_ACTION_BASE =
@@ -59,7 +59,7 @@ export const MENU_3_ACTION_BASE =
 
 export const MENU_3_ACTION_NEUTRAL = cn(
   MENU_3_ACTION_BASE,
-  'border-slate-200/60 bg-slate-100 text-slate-600 hover:bg-white/60',
+  'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900',
   'dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-navy-900/50'
 );
 

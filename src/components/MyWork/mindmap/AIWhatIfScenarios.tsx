@@ -140,7 +140,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -150,7 +150,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {scenarios.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Route size={32} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <Route size={32} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'Wygeneruj alternatywne ścieżki, ryzyka i szanse.'
@@ -159,7 +159,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
               <button
                 onClick={generateScenarios}
                 disabled={loading || locked}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/15 to-indigo-500/10 text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-indigo-500/15 transition-all disabled:opacity-40"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-500/15 to-crimson-500/10 text-[11px] font-bold text-primary-700 dark:text-primary-300 hover:from-primary-500/25 hover:to-crimson-500/15 transition-all disabled:opacity-40"
               >
                 <Sparkles size={14} />
                 {isPl ? 'Generuj scenariusze' : 'Generate scenarios'}

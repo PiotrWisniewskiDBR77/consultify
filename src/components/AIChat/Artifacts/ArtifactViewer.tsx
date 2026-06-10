@@ -54,7 +54,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ artifact, classN
           return (
             <React.Suspense
               fallback={
-                <div className="flex h-64 items-center justify-center text-slate-400 dark:text-slate-500">
+                <div className="flex h-64 items-center justify-center text-slate-600 dark:text-slate-500">
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="h-6 w-6 animate-spin" />
                     <span className="text-sm">Loading diagram...</span>
@@ -70,7 +70,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({ artifact, classN
         return (
           <React.Suspense
             fallback={
-              <div className="flex h-64 items-center justify-center text-slate-400 dark:text-slate-500">
+              <div className="flex h-64 items-center justify-center text-slate-600 dark:text-slate-500">
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="h-6 w-6 animate-spin" />
                   <span className="text-sm">Loading diagram engine...</span>

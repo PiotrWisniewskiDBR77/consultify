@@ -954,7 +954,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   );
                 })}
                 {relatedStatements.length === 0 && (
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-600">
                     {t(
                       'finance.statements.noRelatedDocuments',
                       isPl
@@ -986,7 +986,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   : t('finance.statements.recoveryWorkbench', 'Recovery workbench')}
               </h4>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-600">
                   {isWorkable ? mappedValues.length : editableValues.length}
                 </span>
                 {!isWorkable && (
@@ -1027,7 +1027,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                       <th className="pb-2 text-right">{t('finance.statements.value', 'Value')}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-navy-800">
+                  <tbody className="divide-y divide-slate-200 dark:divide-navy-800">
                     {mappedValues.map((value) => (
                       <tr key={value.id}>
                         <td className="py-2 text-slate-900 dark:text-white">
@@ -1046,7 +1046,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   </tbody>
                 </table>
                 {mappedValues.length === 0 && (
-                  <div className="py-6 text-sm text-slate-400">
+                  <div className="py-6 text-sm text-slate-600">
                     {t('finance.statements.noMappedValues', 'No recognized financial lines yet')}
                   </div>
                 )}
@@ -1101,7 +1101,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   </div>
                 )}
                 {(detail.validationMessages || []).length === 0 && (
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-600">
                     {t('finance.statements.noValidationMessages', 'No validation messages')}
                   </div>
                 )}
@@ -1152,7 +1152,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </h4>
               <div className="mt-4 space-y-2">
                 {(detail.qualityRuns || []).length === 0 && (
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-600">
                     {t('finance.statements.noQualityRuns', 'No quality runs yet')}
                   </div>
                 )}
@@ -1179,7 +1179,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </h4>
               <div className="mt-4 space-y-2">
                 {(detail.ingestRuns || []).length === 0 && (
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-600">
                     {t('finance.statements.noIngestRuns', 'No ingest runs yet')}
                   </div>
                 )}
@@ -1219,7 +1219,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
                   </div>
                 ))}
                 {(detail.extractedSections || []).length === 0 && (
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-600">
                     {t('finance.statements.noExtractedSections', 'No extracted sections yet')}
                   </div>
                 )}
@@ -1247,7 +1247,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </div>
               <div className="mt-4 space-y-2">
                 {docMatches.length === 0 && (
-                  <div className="text-sm text-slate-400">
+                  <div className="text-sm text-slate-600">
                     {t('finance.statements.noDocumentMatches', 'No document matches yet')}
                   </div>
                 )}

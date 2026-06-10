@@ -823,13 +823,13 @@ export const AdminKnowledgeView: React.FC = () => {
                                     Array.isArray(doc.tags) ? doc.tags.join(', ') : ''
                                   );
                                 }}
-                                className="text-slate-400 hover:text-indigo-600 transition-colors"
+                                className="text-slate-600 hover:text-indigo-600 transition-colors"
                                 title="Edit"
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button
-                                className="text-slate-400 hover:text-rose-600 transition-colors"
+                                className="text-slate-600 hover:text-rose-600 transition-colors"
                                 title="Delete (Pending Implementation)"
                               >
                                 <Trash2 size={16} />
@@ -859,7 +859,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     <div className="flex justify-between items-start mb-4">
                       <div className="p-3 rounded-lg bg-slate-100 dark:bg-navy-900">
                         <Target
-                          className={s.is_active ? 'text-primary-600' : 'text-slate-400'}
+                          className={s.is_active ? 'text-primary-600' : 'text-slate-600'}
                           size={24}
                         />
                       </div>
@@ -1367,7 +1367,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   setEditDocCategory('');
                   setEditDocTags('');
                 }}
-                className="text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
+                className="text-slate-600 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -1440,7 +1440,7 @@ export const AdminKnowledgeView: React.FC = () => {
                   setLinkingStrategy(null);
                   setLinkItemId('');
                 }}
-                className="text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
+                className="text-slate-600 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -1524,7 +1524,7 @@ export const AdminKnowledgeView: React.FC = () => {
                     progress_percentage: 0,
                   });
                 }}
-                className="text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
+                className="text-slate-600 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white"
               >
                 <X size={20} />
               </button>

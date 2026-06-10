@@ -20,6 +20,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -108,7 +110,7 @@ const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ acti
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
             active === tab.id
               ? 'bg-primary-600 text-white shadow-sm'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
+              : 'text-slate-600 hover:text-white hover:bg-white/5'
           )}
         >
           <tab.icon size={13} />
@@ -255,14 +257,7 @@ export const SessionsActivitySettings: React.FC = () => {
           {sessionsLoadError && (
             <DegradedState title="Active sessions unavailable" description={sessionsLoadError} />
           )}
-          {sessionActionError && (
-            <div
-              role="alert"
-              className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-            >
-              {sessionActionError}
-            </div>
-          )}
+          {sessionActionError && <Banner variant="danger" title={sessionActionError} />}
           {sessionsLoading ? (
             <LoadingSkeleton rows={3} />
           ) : sessions.length === 0 && !sessionsLoadError ? (
@@ -284,7 +279,7 @@ export const SessionsActivitySettings: React.FC = () => {
                     )}
                   >
                     <div className="p-2 rounded-lg bg-white/[0.05] flex-shrink-0">
-                      <DeviceIcon size={16} className="text-slate-400" />
+                      <DeviceIcon size={16} className="text-slate-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

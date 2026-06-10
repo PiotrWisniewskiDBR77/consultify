@@ -161,7 +161,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
     if (['xls', 'xlsx', 'csv'].includes(type))
       return <FileSpreadsheet size={16} className="text-green-500" />;
     if (['pdf'].includes(type)) return <FileText size={16} className="text-rose-500" />;
-    return <File size={16} className="text-slate-400 dark:text-slate-500" />;
+    return <File size={16} className="text-slate-600 dark:text-slate-500" />;
   };
 
   const formatFileSize = (bytes: number) => {
@@ -356,12 +356,12 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
           ) : currentDocs.length === 0 ? (
             <div className="text-center py-16 px-4">
               <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
-                <FileText size={28} className="text-slate-400 dark:text-slate-500" />
+                <FileText size={28} className="text-slate-600 dark:text-slate-500" />
               </div>
               <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                 {activeTab === 'project' ? t('documents.noProjectDocs') : t('documents.noUserDocs')}
               </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-slate-600 dark:text-slate-500">
                 {t('documents.uploadHint', 'Upload your first document to get started')}
               </p>
             </div>
@@ -378,7 +378,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                       <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
                         {doc.originalName || doc.filename}
                       </p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500">
                         {formatFileSize(getDocumentFileSize(doc))} •{' '}
                         {new Date(doc.createdAt).toLocaleDateString()}
                       </p>
@@ -389,7 +389,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                           {getStatusBadge(doc.status).label}
                         </span>
                         {doc.chunkCount !== undefined && doc.chunkCount > 0 && (
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-600">
                             {doc.chunkCount} chunks
                           </span>
                         )}
@@ -534,7 +534,7 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                     )}
                     <button
                       onClick={() => handleDelete(doc.id)}
-                      className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                       title={t('documents.delete')}
                     >
                       <Trash2 size={12} />
@@ -547,8 +547,8 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
         </div>
 
         {/* Footer hint */}
-        <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 shrink-0">
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
+        <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900 shrink-0">
+          <p className="text-[10px] text-slate-600 dark:text-slate-500 text-center">
             {lastRefreshedAt
               ? t('documents.lastStatusRefresh', 'Last status refresh: {{time}}', {
                   time: new Date(lastRefreshedAt).toLocaleTimeString(),

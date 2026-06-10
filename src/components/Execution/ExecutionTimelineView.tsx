@@ -159,7 +159,7 @@ const STATUS_COLORS: Record<
   [InitiativeStatus.CANCELLED]: {
     bg: 'bg-gray-500/20',
     border: 'border-gray-500/50',
-    text: 'text-gray-400',
+    text: 'text-gray-600',
     progress: 'bg-gray-500',
   },
   [InitiativeStatus.ARCHIVED]: {
@@ -563,7 +563,7 @@ const WarningsStrip: React.FC<{
     critical: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
     high: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
     medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    low: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+    low: 'bg-slate-500/20 text-slate-600 border-slate-500/30',
   };
 
   return (
@@ -632,7 +632,7 @@ const FilterBar: React.FC<{
 
   return (
     <div className="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900">
-      <Filter size={14} className="text-slate-400 shrink-0" />
+      <Filter size={14} className="text-slate-600 shrink-0" />
       <select
         value={filters.status}
         onChange={(e) => onChange({ ...filters, status: e.target.value })}
@@ -672,7 +672,7 @@ const FilterBar: React.FC<{
         </select>
       )}
       <div className="relative ml-auto">
-        <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600" />
         <input
           type="text"
           value={filters.search}
@@ -683,7 +683,7 @@ const FilterBar: React.FC<{
         {filters.search && (
           <button
             onClick={() => onChange({ ...filters, search: '' })}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600"
           >
             <X size={12} />
           </button>

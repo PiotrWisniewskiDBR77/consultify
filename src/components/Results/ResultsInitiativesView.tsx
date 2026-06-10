@@ -2,7 +2,7 @@ import {
   AlertTriangle,
   BarChart3,
   ChevronDown,
-  Eye,
+  ChevronRight,
   FileText,
   ListChecks,
   Maximize2,
@@ -25,6 +25,9 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { CHIP_TONE_VAR, ChipDot } from '@/components/ui/primitives/chips/chipBase';
+import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
+// Neutral preview meta-pill keeps a status-colored signal dot (canon-allowed); chip bg stays neutral.
 import { getStatusStyle } from '@/constants/statusColors';
 import { formatRelativeTime } from '@/utils/initiativeHelpers';
 
@@ -185,8 +188,8 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
     [
       {
         id: 'preview',
-        label: t('common.preview', 'Preview'),
-        icon: Eye,
+        label: t('common.preview', 'Open preview'),
+        icon: ChevronRight,
         onClick: () => setSelectedId(initiative.id),
       },
       {
@@ -489,197 +492,195 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
             </div>
           </div>
 
-          <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full table-fixed" style={{ minWidth: 1100 }}>
-                <colgroup>
-                  <col className="w-10" />
-                  <col className="w-[320px]" />
-                  <col className="w-32" />
-                  <col className="w-28" />
-                  <col className="w-28" />
-                  <col className="w-28" />
-                  <col className="w-44" />
-                  <col className="w-28" />
-                  <col className="w-24" />
-                  <col className="w-10" />
-                </colgroup>
+          <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-x-auto">
+            <table className="w-full table-fixed" style={{ minWidth: 1100 }}>
+              <colgroup>
+                <col className="w-10" />
+                <col className="w-[320px]" />
+                <col className="w-32" />
+                <col className="w-28" />
+                <col className="w-28" />
+                <col className="w-28" />
+                <col className="w-44" />
+                <col className="w-28" />
+                <col className="w-24" />
+                <col className="w-10" />
+              </colgroup>
 
-                <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
-                  <tr>
-                    <th className="w-10 px-4 py-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.size === sortedItems.length && sortedItems.length > 0}
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
-                      />
-                    </th>
-                    <th className="text-left px-4 py-2">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {t('results.initiatives.name', 'Initiative')}
-                      </div>
-                    </th>
-                    <th className="text-left px-4 py-2 w-32">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {t('common.status', 'Status')}
-                      </div>
-                    </th>
-                    <th className="text-left px-4 py-2 w-28">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {t('results.initiatives.lifecycle', 'Lifecycle')}
-                      </div>
-                    </th>
-                    <th className="text-left px-4 py-2 w-28">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {t('results.initiatives.kpis', 'Tracked KPI')}
-                      </div>
-                    </th>
-                    <th className="text-left px-4 py-2 w-28">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {t('results.initiatives.health', 'Health')}
-                      </div>
-                    </th>
-                    <th className="text-left px-4 py-2 w-44">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {t('results.initiatives.nextStep', 'Next step')}
-                      </div>
-                    </th>
-                    <th className="text-left px-4 py-2 w-28">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {t('results.initiatives.alerts', 'Needs attention')}
-                      </div>
-                    </th>
-                    <th className="text-left px-4 py-2 w-24">
-                      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {t('common.updated', 'Updated')}
-                      </div>
-                    </th>
-                    <th className="w-10 px-4 py-2" />
-                  </tr>
-                </thead>
+              <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
+                <tr>
+                  <th className="w-10 px-4 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === sortedItems.length && sortedItems.length > 0}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
+                    />
+                  </th>
+                  <th className="text-left px-4 py-2">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t('results.initiatives.name', 'Initiative')}
+                    </div>
+                  </th>
+                  <th className="text-left px-4 py-2 w-32">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t('common.status', 'Status')}
+                    </div>
+                  </th>
+                  <th className="text-left px-4 py-2 w-28">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t('results.initiatives.lifecycle', 'Lifecycle')}
+                    </div>
+                  </th>
+                  <th className="text-left px-4 py-2 w-28">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t('results.initiatives.kpis', 'Tracked KPI')}
+                    </div>
+                  </th>
+                  <th className="text-left px-4 py-2 w-28">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t('results.initiatives.health', 'Health')}
+                    </div>
+                  </th>
+                  <th className="text-left px-4 py-2 w-44">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t('results.initiatives.nextStep', 'Next step')}
+                    </div>
+                  </th>
+                  <th className="text-left px-4 py-2 w-28">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t('results.initiatives.alerts', 'Needs attention')}
+                    </div>
+                  </th>
+                  <th className="text-left px-4 py-2 w-24">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      {t('common.updated', 'Updated')}
+                    </div>
+                  </th>
+                  <th className="w-10 px-4 py-2" />
+                </tr>
+              </thead>
 
-                <tbody className="divide-y divide-slate-100/60 dark:divide-white/[0.03]">
-                  {sortedItems.map((initiative) => {
-                    const statusStyle = getStatusStyle(initiative.initiativeStatus);
-                    return (
-                      <tr
-                        key={initiative.id}
-                        className="group cursor-pointer transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.03]"
-                        onClick={() => setSelectedId(initiative.id)}
-                        onDoubleClick={() => onOpenInitiativeDocument(initiative)}
-                      >
-                        <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(initiative.id)}
-                            onChange={() => toggleSelect(initiative.id)}
-                            className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
-                          />
-                        </td>
+              <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
+                {sortedItems.map((initiative) => {
+                  const statusTone = statusChipTone(initiative.initiativeStatus);
+                  const statusDotVar =
+                    statusTone === 'neutral' ? undefined : CHIP_TONE_VAR[statusTone];
+                  return (
+                    <tr
+                      key={initiative.id}
+                      className="group cursor-pointer transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.03]"
+                      onClick={() => setSelectedId(initiative.id)}
+                      onDoubleClick={() => onOpenInitiativeDocument(initiative)}
+                    >
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(initiative.id)}
+                          onChange={() => toggleSelect(initiative.id)}
+                          className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
+                        />
+                      </td>
 
-                        <td className="px-4 py-2">
-                          <div className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate whitespace-nowrap">
-                            {initiative.initiativeName}
-                          </div>
-                        </td>
+                      <td className="px-4 py-2">
+                        <div className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate whitespace-nowrap">
+                          {initiative.initiativeName}
+                        </div>
+                      </td>
 
-                        <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                          <div className="relative inline-flex items-center gap-1.5">
-                            <span
-                              className={`w-2 h-2 rounded-full flex-shrink-0 ${statusStyle.dot}`}
-                            />
-                            <select
-                              value={initiative.initiativeStatus}
-                              onChange={(e) =>
-                                void onChangeInitiativeStatus?.(initiative, e.target.value)
-                              }
-                              className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none"
-                            >
-                              {statusOptions.map((status) => (
-                                <option key={status} value={status}>
-                                  {status}
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown
-                              size={12}
-                              className="absolute right-0 text-slate-400 pointer-events-none"
-                            />
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-2">
-                          <span className="text-xs text-slate-600 dark:text-slate-400">
-                            {initiative.lifecycleLabel}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-2">
-                          <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                            {initiative.trackedKpiCount}
-                          </div>
-                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {initiative.realizationKpiCount}/{initiative.postImplementationKpiCount}{' '}
-                            {t('results.initiatives.phaseSplit', 'realization/post')}
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-2">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                initiative.attentionCount > 0
-                                  ? initiative.belowTargetCount > 0 ||
-                                    initiative.openDeviationCount > 0
-                                    ? 'bg-rose-500'
-                                    : 'bg-amber-500'
-                                  : 'bg-emerald-500'
-                              }`}
-                            />
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {getAttentionLabel(initiative)}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-2">
-                          <div
-                            className="text-xs text-slate-600 dark:text-slate-400 truncate"
-                            title={getLifecycleNextStep(initiative)}
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative inline-flex items-center gap-1.5">
+                          <ChipDot colorVar={statusDotVar} />
+                          <select
+                            value={initiative.initiativeStatus}
+                            onChange={(e) =>
+                              void onChangeInitiativeStatus?.(initiative, e.target.value)
+                            }
+                            className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none"
                           >
-                            <span className="font-medium text-slate-700 dark:text-slate-300">
-                              {getLifecycleNextStep(initiative)}
-                            </span>
-                          </div>
-                        </td>
+                            {statusOptions.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            size={12}
+                            className="absolute right-0 text-slate-600 pointer-events-none"
+                          />
+                        </div>
+                      </td>
 
-                        <td className="px-4 py-2">
-                          <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                            {initiative.attentionCount}
-                          </div>
-                          <div className={`mt-1 text-xs truncate ${getAttentionTone(initiative)}`}>
-                            {initiative.belowTargetCount} {t('results.filters.below', 'below')},{' '}
-                            {initiative.needsEntryCount}{' '}
-                            {t('results.filters.needsEntry', 'needs entry')}
-                          </div>
-                        </td>
+                      <td className="px-4 py-2">
+                        <span className="text-xs text-slate-600 dark:text-slate-400">
+                          {initiative.lifecycleLabel}
+                        </span>
+                      </td>
 
-                        <td className="px-4 py-2">
+                      <td className="px-4 py-2">
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          {initiative.trackedKpiCount}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {initiative.realizationKpiCount}/{initiative.postImplementationKpiCount}{' '}
+                          {t('results.initiatives.phaseSplit', 'realization/post')}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-2">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                              initiative.attentionCount > 0
+                                ? initiative.belowTargetCount > 0 ||
+                                  initiative.openDeviationCount > 0
+                                  ? 'bg-rose-500'
+                                  : 'bg-amber-500'
+                                : 'bg-emerald-500'
+                            }`}
+                          />
                           <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {formatRelativeTime(initiative.lastReportCreatedAt || undefined)}
+                            {getAttentionLabel(initiative)}
                           </span>
-                        </td>
+                        </div>
+                      </td>
 
-                        <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                          <RowActionsMenu iconVariant="vertical" actions={rowActions(initiative)} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      <td className="px-4 py-2">
+                        <div
+                          className="text-xs text-slate-600 dark:text-slate-400 truncate"
+                          title={getLifecycleNextStep(initiative)}
+                        >
+                          <span className="font-medium text-slate-700 dark:text-slate-300">
+                            {getLifecycleNextStep(initiative)}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-2">
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          {initiative.attentionCount}
+                        </div>
+                        <div className={`mt-1 text-xs truncate ${getAttentionTone(initiative)}`}>
+                          {initiative.belowTargetCount} {t('results.filters.below', 'below')},{' '}
+                          {initiative.needsEntryCount}{' '}
+                          {t('results.filters.needsEntry', 'needs entry')}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-2">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {formatRelativeTime(initiative.lastReportCreatedAt || undefined)}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                        <RowActionsMenu iconVariant="vertical" actions={rowActions(initiative)} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       </TableWithPreviewLayout>

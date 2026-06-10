@@ -135,7 +135,7 @@ export const SystemHealth = () => {
         >
           <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
           <span>{t('system.data', 'Data')}</span>
-          <ChevronDown size={14} className="text-slate-400" />
+          <ChevronDown size={14} className="text-slate-600" />
         </button>
       </div>
     );
@@ -169,7 +169,7 @@ export const SystemHealth = () => {
         <span>{t('system.data', 'Data')}</span>
         <ChevronDown
           size={14}
-          className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-slate-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -194,7 +194,7 @@ export const SystemHealth = () => {
           </div>
 
           {/* Database Section */}
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700/50">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700/50">
             <div className="flex items-center gap-2 mb-2">
               <Database size={14} className="text-brand" />
               <span className="text-xs font-medium text-navy-900 dark:text-white">
@@ -282,11 +282,11 @@ export const SystemHealth = () => {
           {/* Footer */}
           <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-t border-slate-200 dark:border-navy-700">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500">
                 {t('system.lastUpdate', 'Auto-refresh every 30s')}
               </span>
               {build.version || build.environment || build.gitSha ? (
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                <span className="text-[10px] text-slate-600 dark:text-slate-500 font-mono">
                   {[
                     build.environment ? String(build.environment) : null,
                     build.version ? `v${String(build.version)}` : null,

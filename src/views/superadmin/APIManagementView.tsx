@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * APIManagementView - Super Admin API Keys Management
  *
@@ -60,7 +59,8 @@ interface APIManagementSnapshot {
   keysLoaded: boolean;
 }
 
-type RawAPIKey = Partial<APIKey> & {
+type RawAPIKey = Omit<Partial<APIKey>, 'isActive'> & {
+  isActive?: boolean | number | string;
   key_prefix?: string;
   key_type?: APIKey['keyType'];
   allowed_ips?: string[];
@@ -181,6 +181,9 @@ function parseScopes(value: unknown): string[] {
 function normalizeApiKeys(rawKeys: RawAPIKey[]): APIKey[] {
   return rawKeys.map((k) => ({
     ...k,
+    id: k.id || '',
+    organizationId: k.organizationId || '',
+    name: k.name || '',
     keyPrefix: k.keyPrefix || k.key_prefix || '',
     keyType: k.keyType || k.key_type || 'org',
     scopes: parseScopes(k.scopes),
@@ -190,7 +193,7 @@ function normalizeApiKeys(rawKeys: RawAPIKey[]): APIKey[] {
     rateLimitPerDay: Number(k.rateLimitPerDay ?? k.rate_limit_per_day) || 10000,
     lastUsedAt: k.lastUsedAt || k.last_used_at,
     expiresAt: k.expiresAt || k.expires_at,
-    createdAt: k.createdAt || k.created_at,
+    createdAt: k.createdAt || k.created_at || '',
     isActive: k.isActive === true || k.isActive === 1 || k.isActive === '1',
   }));
 }
@@ -838,7 +841,7 @@ export const APIManagementView: React.FC = () => {
                           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
                           title="View Usage"
                         >
-                          <BarChart3 size={16} className="text-slate-400 dark:text-slate-500" />
+                          <BarChart3 size={16} className="text-slate-600 dark:text-slate-500" />
                         </button>
                         {key.isActive && (
                           <button
@@ -919,7 +922,7 @@ export const APIManagementView: React.FC = () => {
                 {usageData.endpoints?.map((ep, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700"
+                    className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-navy-700"
                   >
                     <div className="flex items-center gap-3">
                       <span
@@ -1011,7 +1014,7 @@ export const APIManagementView: React.FC = () => {
           >
             <RefreshCw
               size={18}
-              className={`text-slate-400 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
+              className={`text-slate-600 dark:text-slate-500 ${loading ? 'animate-spin' : ''}`}
             />
           </button>
         </div>

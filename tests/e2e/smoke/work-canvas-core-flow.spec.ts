@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  API_BASE_URL,
   collectPageSignals,
   createWorkCanvasDraft,
   ensureWorkCanvasVisible,
@@ -11,6 +12,9 @@ import {
 } from './work-canvas-helpers';
 
 test.describe('V10 Work Canvas core flow smoke', () => {
+  // Work Canvas hydration can be slower on shared staging-like runtimes.
+  test.describe.configure({ timeout: 120000 });
+
   test('owner saves canvas and keeps read-back after refresh', async ({
     page,
   }, testInfo) => {
@@ -22,6 +26,7 @@ test.describe('V10 Work Canvas core flow smoke', () => {
 
     await openWorkCanvasDraft(page, draft);
     const titleInput = page.getByLabel('Canvas document title');
+    await page.getByRole('button', { name: 'Canvas menu' }).click();
     await page.getByRole('button', { name: 'Markdown view' }).click();
     const markdownEditor = page.getByTestId('canvas-md-view');
     await expect(page.getByRole('button', { name: 'Save Canvas document' })).toBeVisible();
@@ -44,6 +49,7 @@ test.describe('V10 Work Canvas core flow smoke', () => {
 
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
     await ensureWorkCanvasVisible(page);
+    await page.getByRole('button', { name: 'Canvas menu' }).click();
     await page.getByRole('button', { name: 'Markdown view' }).click();
     await expect(page.getByTestId('canvas-md-view')).toBeVisible();
     await expectNoRawInternals(page);
@@ -58,12 +64,27 @@ test.describe('V10 Work Canvas core flow smoke', () => {
   test('member sees restricted conversion actions disabled', async ({ page }, testInfo) => {
     const signals = collectPageSignals(page);
     const token = await loginAsMember(page);
+    const profileResponse = await page.request.get(`${API_BASE_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    let effectiveRole = 'UNKNOWN';
+    if (profileResponse.ok()) {
+      const profileJson = await profileResponse.json();
+      const normalizedRole = String(profileJson?.data?.role || profileJson?.role || '').trim();
+      if (normalizedRole) {
+        effectiveRole = normalizedRole.toUpperCase();
+      }
+    }
+    // Smoke must be deterministic: loginAsMember bootstraps a USER-role account,
+    // so assert the role instead of conditionally skipping (no .skip() in smoke).
+    expect(effectiveRole, 'Member capability gate requires a USER-role account').toBe('USER');
     const draft = await createWorkCanvasDraft(page.request, token, {
       title: 'Member capability check',
       conversationId: `member-canvas-${Date.now()}`,
     });
 
     await openWorkCanvasDraft(page, draft);
+    await page.getByRole('button', { name: 'Canvas menu' }).click();
 
     await expect(page.getByRole('button', { name: 'Send to idea' })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Save as note' })).toBeDisabled();

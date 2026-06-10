@@ -21,7 +21,7 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
           <h4 className="text-sm font-semibold leading-tight text-white md:text-base">
             {payload.headline}
           </h4>
-          <p className="mt-1 text-[11px] leading-relaxed text-slate-300/80">{payload.summary}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-slate-600/80">{payload.summary}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -36,7 +36,7 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
               <div className="mt-0.5 text-base font-semibold tabular-nums text-white">
                 {stat.value}
               </div>
-              <div className="mt-0.5 text-[10px] text-slate-300/75">{stat.trend}</div>
+              <div className="mt-0.5 text-[10px] text-slate-600/75">{stat.trend}</div>
             </div>
           ))}
         </div>
@@ -73,7 +73,7 @@ export const MomentumBlock: React.FC<MomentumBlockProps> = ({ block, onAction })
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-white">{signal.title}</div>
-                <div className="mt-1 text-xs leading-6 text-slate-300/70">{signal.summary}</div>
+                <div className="mt-1 text-xs leading-6 text-slate-600/70">{signal.summary}</div>
               </div>
               <ArrowUpRight size={16} className="text-white/30" />
             </button>

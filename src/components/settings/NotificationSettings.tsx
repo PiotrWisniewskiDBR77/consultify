@@ -280,7 +280,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           <>
             {/* Channel Headers */}
             <div className="grid grid-cols-12 gap-4 pb-4 border-b border-white/10">
-              <div className="col-span-5 text-sm font-medium text-slate-400 dark:text-slate-500">
+              <div className="col-span-5 text-sm font-medium text-slate-600 dark:text-slate-500">
                 {t('settings.notifications.activity', 'Activity')}
               </div>
               <div
@@ -367,7 +367,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
             {/* Info Box */}
             {integrations.length > 0 && (
               <div className="p-4 bg-primary-600/5 border border-primary-500/20 rounded-lg">
-                <p className="text-sm text-slate-400 dark:text-slate-500">
+                <p className="text-sm text-slate-600 dark:text-slate-500">
                   <Bell size={14} className="inline mr-2 text-primary-400" />
                   {t(
                     'settings.notifications.integrationNote',
@@ -389,7 +389,7 @@ const ChannelHeader: React.FC<{ icon: React.ElementType; label: string }> = ({
   label,
 }) => (
   <div className="text-center">
-    <div className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500">
+    <div className="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-500">
       <Icon size={16} />
       <span className="text-xs font-medium">{label}</span>
     </div>
@@ -424,7 +424,7 @@ const NotificationRow: React.FC<NotificationRowProps> = ({
   >
     <div className="col-span-5 flex items-start gap-3">
       <div className="p-2 bg-navy-700/50 rounded-lg flex-shrink-0">
-        <Icon size={16} className="text-slate-400 dark:text-slate-500" />
+        <Icon size={16} className="text-slate-600 dark:text-slate-500" />
       </div>
       <div>
         <h4 className="text-sm font-medium text-white">{title}</h4>

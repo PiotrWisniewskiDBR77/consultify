@@ -7,6 +7,7 @@ import {
   Archive,
   BookTemplate,
   CheckCircle2,
+  ChevronRight,
   Download,
   ExternalLink,
   FileSpreadsheet,
@@ -14,6 +15,7 @@ import {
   Loader2,
   MessageCircle,
   Presentation,
+  Sparkles,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -27,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button, ErrorState, LoadingState } from '@/components/ui/primitives';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
@@ -183,6 +186,25 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     },
     [isEnabled, isPolish, navigate]
   );
+
+  // Teresa touchpoint: open chat pre-seeded with an output-generation goal so a
+  // brand-new (empty) Outputs Library has a one-click path to its first artifact.
+  const openTeresaForOutput = useCallback(() => {
+    openChatWithContext({
+      entityType: 'outputs_module',
+      entityId: 'outputs_onboarding',
+      entityName: t('rap.hub.entityName', 'Reports & Presentations'),
+      contextData: {
+        intent: 'generate_output',
+        goal: t('rap.onboarding.body', 'Generate a report or deck with Teresa'),
+        // A11/D3: pre-fill the composer with a real opener so the empty-state
+        // CTA is not just "open chat" but "open chat ready to generate."
+        teresaPrompt: isPolish
+          ? 'Pomóż mi wygenerować pierwszy raport/prezentację dla tej organizacji. Zaproponuj typ outputu (raport zarządu, decyzyjny, analiza ROI, prezentacja inicjatyw), dobierz format (PDF/PPTX/XLSX) i strukturę sekcji opartą na danych organizacji.'
+          : 'Help me generate the first report/presentation for this organization. Propose the output type (board report, decision memo, ROI analysis, initiatives deck), pick the format (PDF/PPTX/XLSX), and outline sections grounded in the organization context.',
+      },
+    });
+  }, [isPolish, openChatWithContext, t]);
 
   const resetLineage = useCallback(() => {
     setLineageLoading(false);
@@ -443,6 +465,13 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const getRowActions = (row: AggregateRow): RowAction[] => {
     const isTemplateArtifact = Boolean((row.governance?.originSummary as any)?.template);
     const base: RowAction[] = [
+      // canon §9.2 FIXED BOTTOM MANIFEST position 1
+      {
+        id: 'open_preview',
+        label: t('rap.actions.openPreview', 'Otwórz podgląd'),
+        icon: ChevronRight,
+        onClick: () => setSelectedId(row.id),
+      },
       {
         id: 'open',
         label: t('rap.actions.open', 'Otwórz'),
@@ -571,11 +600,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         onClick: () => actions.exportReportPdf(row),
       });
       base.push({
+        // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
         id: 'archive',
-        label: t('rap.actions.delete', 'Usuń'),
+        label: t('rap.actions.archive', 'Archiwizuj'),
         icon: Archive,
         divider: true,
-        variant: 'danger',
         onClick: async () => {
           const ok = await actions.archiveReport(row);
           if (ok) onRefresh();
@@ -589,11 +618,11 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         onClick: () => actions.exportDeckPptx(row),
       });
       base.push({
+        // canon §14: Archive = soft-delete (reversible) — label "Archiwizuj", NOT "Usuń"
         id: 'archive',
-        label: t('rap.actions.delete', 'Usuń'),
+        label: t('rap.actions.archive', 'Archiwizuj'),
         icon: Archive,
         divider: true,
-        variant: 'danger',
         onClick: async () => {
           const ok = await actions.archiveDeck(row);
           if (ok) onRefresh();
@@ -623,21 +652,42 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
   const itemIds = filteredData.map((i) => i.id);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={24} className="animate-spin text-slate-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   if (error && rows.length === 0 && !searchQuery && activeFilters.length === 0) {
     return (
+      <ErrorState
+        title={t('rap.errors.outputsRegistryTitle', 'Outputs library source needs attention')}
+        message={error}
+        retry={onRefresh}
+      />
+    );
+  }
+
+  // Teresa onboarding empty state — only the truly empty library (no rows, no
+  // error, no active search/filter) gets the "Generate with Teresa" touchpoint.
+  if (!loading && !error && rows.length === 0 && !searchQuery && activeFilters.length === 0) {
+    return (
       <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
-          <div className="text-lg font-semibold text-slate-900 dark:text-white">
-            {t('rap.errors.outputsRegistryTitle', 'Outputs library source needs attention')}
+        <div className="w-full max-w-xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-crimson-50 text-crimson-600 dark:bg-crimson-950/40 dark:text-crimson-400">
+            <Sparkles size={26} />
           </div>
-          <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('rap.onboarding.title', 'Your outputs land here')}
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            {t(
+              'rap.onboarding.body',
+              'Ask Teresa to generate a report or deck — it will appear here for review and export.'
+            )}
+          </p>
+          <div className="mt-5 flex items-center justify-center">
+            <Button variant="brand" onClick={openTeresaForOutput} icon={<Sparkles size={16} />}>
+              {t('rap.onboarding.cta', 'Generate with Teresa')}
+            </Button>
+          </div>
         </div>
       </div>
     );

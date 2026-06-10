@@ -21,7 +21,6 @@ function deny(res: Response) {
 
 function assertEnabled(req: Request, res: Response): boolean {
   if (process.env.NODE_ENV === 'production') return false;
-  if (process.env.NODE_ENV !== 'test') return false;
   if (process.env.ENABLE_TEST_SUPPORT !== 'true') return false;
 
   const expected = process.env.TEST_SUPPORT_KEY;

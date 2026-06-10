@@ -74,21 +74,21 @@ export const MyProjects: React.FC = () => {
           ].map((feature, index) => (
             <div
               key={index}
-              className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-navy-700 text-center"
+              className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 text-center"
             >
               <div className="w-10 h-10 mx-auto mb-2 bg-white dark:bg-navy-800 rounded-lg flex items-center justify-center shadow-sm">
-                <feature.icon size={20} className="text-slate-400 dark:text-slate-500" />
+                <feature.icon size={20} className="text-slate-600 dark:text-slate-500" />
               </div>
               <h4 className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-0.5">
                 {feature.title}
               </h4>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">{feature.desc}</p>
+              <p className="text-[10px] text-slate-600 dark:text-slate-500">{feature.desc}</p>
             </div>
           ))}
         </div>
 
         {/* Status indicator */}
-        <div className="mt-8 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+        <div className="mt-8 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
           <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
           {t('myWork.projects.inProgress', 'In Development')}
         </div>

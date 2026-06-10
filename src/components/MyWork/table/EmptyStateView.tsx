@@ -76,7 +76,7 @@ export const EmptyStateView: React.FC<EmptyStateViewProps> = ({
   return (
     <div className="flex flex-col items-center justify-center text-center px-6 py-14 max-w-md mx-auto">
       <div
-        className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 via-indigo-500/15 to-slate-200/40 dark:from-primary-500/25 dark:via-indigo-500/20 dark:to-navy-800/80 ring-1 ring-slate-200/80 dark:ring-navy-600/50 shadow-inner"
+        className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 via-crimson-500/15 to-slate-200/40 dark:from-primary-500/25 dark:via-crimson-500/20 dark:to-navy-800/80 ring-1 ring-slate-200/80 dark:ring-navy-600/50 shadow-inner"
         aria-hidden
       >
         <Table2 className="h-9 w-9 text-primary-600 dark:text-primary-300" strokeWidth={1.5} />

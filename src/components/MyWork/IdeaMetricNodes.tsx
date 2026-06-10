@@ -42,7 +42,7 @@ export const KPIBadgeNode: React.FC<NodeProps> = ({ data, selected }) => {
     neutral: {
       bg: 'bg-slate-50 dark:bg-navy-800',
       border: 'border-slate-200 dark:border-navy-700',
-      icon: <BarChart3 size={12} className="text-slate-400" />,
+      icon: <BarChart3 size={12} className="text-slate-600" />,
       text: 'text-slate-600 dark:text-slate-400',
     },
   };
@@ -70,7 +70,7 @@ export const KPIBadgeNode: React.FC<NodeProps> = ({ data, selected }) => {
       </div>
 
       {target && (
-        <div className="mt-1 text-[9px] text-slate-400">
+        <div className="mt-1 text-[9px] text-slate-600">
           Target: {target}
           {unit}
         </div>
@@ -115,7 +115,7 @@ export const ScoreNode: React.FC<NodeProps> = ({ data, selected }) => {
     <div
       className={`relative w-[140px] h-[140px] rounded-full flex flex-col items-center justify-center shadow-lg transition-all ${
         selected ? 'ring-4 ring-primary-500/40 scale-105' : ''
-      } bg-white dark:bg-navy-900 border-4 border-slate-100 dark:border-navy-700`}
+      } bg-white dark:bg-navy-900 border-4 border-slate-200 dark:border-navy-700`}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
 
@@ -153,7 +153,7 @@ export const ScoreNode: React.FC<NodeProps> = ({ data, selected }) => {
       </svg>
 
       <div className={`text-2xl font-black ${textColor} leading-none z-10`}>{score}</div>
-      <div className="text-[8px] text-slate-400 mt-0.5 z-10">/ {maxScore}</div>
+      <div className="text-[8px] text-slate-600 mt-0.5 z-10">/ {maxScore}</div>
       <div
         className={`text-[9px] font-bold ${textColor} mt-1 z-10 text-center px-2 truncate max-w-[110px]`}
       >
@@ -216,7 +216,7 @@ export const ProgressNode: React.FC<NodeProps> = ({ data, selected }) => {
         />
       </div>
 
-      {detail && <div className="mt-1.5 text-[9px] text-slate-400 truncate">{detail}</div>}
+      {detail && <div className="mt-1.5 text-[9px] text-slate-600 truncate">{detail}</div>}
 
       <Handle
         type="source"

@@ -397,6 +397,25 @@ export class OrganizationController {
         role: nextRole,
       });
 
+      // Audit proof (ADM-RAW-P1-004): role changes are high-risk admin writes and
+      // must always leave an admin_audit_logs trail with the before/after role.
+      try {
+        const { default: adminAuditService } = await import('../services/adminAuditService.js');
+        await adminAuditService.logAction({
+          adminId: userId,
+          actionType: 'update_member_role',
+          details: {
+            orgId,
+            isSensitive: true,
+            targetUserId: memberId,
+            fromRole: currentTargetRole,
+            toRole: nextRole,
+          },
+        });
+      } catch {
+        // Audit logging is best-effort; never block the membership mutation.
+      }
+
       res.json(result);
     }
   );
@@ -489,6 +508,23 @@ export class OrganizationController {
         organizationId: orgId,
         userId: memberId,
       });
+
+      // Audit proof (ADM-RAW-P1-004): member removals are high-risk admin writes.
+      try {
+        const { default: adminAuditService } = await import('../services/adminAuditService.js');
+        await adminAuditService.logAction({
+          adminId: userId,
+          actionType: 'remove_member',
+          details: {
+            orgId,
+            isSensitive: true,
+            targetUserId: memberId,
+            targetRole,
+          },
+        });
+      } catch {
+        // Audit logging is best-effort; never block the membership mutation.
+      }
 
       res.json({ message: 'Member removed' });
     }

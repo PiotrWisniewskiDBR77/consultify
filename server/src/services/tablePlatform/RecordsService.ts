@@ -6,6 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
+import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import attachmentService from './AttachmentService.js';
 import auditService from './AuditService.js';
@@ -73,6 +74,12 @@ const AUTO_FIELD_TYPES = new Set([
   'lastModifiedBy',
   'autoNumber',
 ]);
+
+async function hasRecordVersionColumn(): Promise<boolean> {
+  return await getTableColumns('tp_records')
+    .then((cols) => cols.has('version'))
+    .catch(() => false);
+}
 
 interface AutoField {
   id: string;
@@ -470,6 +477,7 @@ const recordsService = {
   ): Promise<any> {
     const db = getDatabase();
     try {
+      const versionColumnEnabled = await hasRecordVersionColumn();
       const before = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
       if (!before) return null;
       const tableId = (before as { table_id: string }).table_id;
@@ -527,6 +535,15 @@ const recordsService = {
       const merged = { ...existingData, ...enrichedData };
 
       if (expectedVersion != null) {
+        if (!versionColumnEnabled) {
+          throw new ConflictError(
+            'Optimistic lock is unavailable because tp_records.version is missing',
+            {
+              recordId,
+              expectedVersion,
+            }
+          );
+        }
         const result = await db.query(
           `UPDATE tp_records
            SET data = $2, updated_at = NOW(), version = COALESCE(version, 0) + 1
@@ -540,12 +557,21 @@ const recordsService = {
           });
         }
       } else {
-        await db.query(
-          `UPDATE tp_records
-           SET data = $2, updated_at = NOW(), version = COALESCE(version, 0) + 1
-           WHERE id = $1`,
-          [recordId, JSON.stringify(merged)]
-        );
+        if (versionColumnEnabled) {
+          await db.query(
+            `UPDATE tp_records
+             SET data = $2, updated_at = NOW(), version = COALESCE(version, 0) + 1
+             WHERE id = $1`,
+            [recordId, JSON.stringify(merged)]
+          );
+        } else {
+          await db.query(
+            `UPDATE tp_records
+             SET data = $2, updated_at = NOW()
+             WHERE id = $1`,
+            [recordId, JSON.stringify(merged)]
+          );
+        }
       }
 
       let after = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];

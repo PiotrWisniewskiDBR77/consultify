@@ -412,7 +412,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-slate-600" />
           </button>
         </div>
 
@@ -445,7 +445,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                       {isPl ? fw.descPl : fw.descEn}
                     </div>
-                    <div className="text-[9px] text-slate-400 mt-1">
+                    <div className="text-[9px] text-slate-600 mt-1">
                       {fw.columns.length} {isPl ? 'kolumn' : 'columns'} · {fw.sampleRows.length}{' '}
                       {isPl ? 'wierszy' : 'rows'}
                     </div>
@@ -467,7 +467,7 @@ export const FrameworkGenerator: React.FC<FrameworkGeneratorProps> = ({
                     className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-navy-700/60 text-slate-700 dark:text-slate-300"
                   >
                     {col.header}
-                    <span className="text-slate-400 ml-1">({col.type})</span>
+                    <span className="text-slate-600 ml-1">({col.type})</span>
                   </span>
                 ))}
               </div>

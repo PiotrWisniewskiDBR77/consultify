@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-nocheck
 import {
   AlertTriangle,
   CheckCircle,
@@ -402,12 +400,12 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
 
         {/* Actions */}
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 dark:border-navy-700">
+          <div className="p-6 border-b border-slate-200 dark:border-navy-700">
             <h4 className="font-semibold text-slate-900 dark:text-white">
               {t('security.mfa.manage', 'Manage 2FA')}
             </h4>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-white/5">
+          <div className="divide-y divide-slate-200 dark:divide-white/5">
             {/* Regenerate Backup Codes */}
             <button
               onClick={() => setStep('recovery')}
@@ -429,7 +427,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-500" />
             </button>
 
             {/* Disable 2FA */}
@@ -450,7 +448,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-500" />
             </button>
           </div>
         </div>
@@ -585,9 +583,9 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
       {/* Initial State - Enable 2FA */}
       {step === 'initial' && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 dark:border-navy-700">
+          <div className="p-6 border-b border-slate-200 dark:border-navy-700">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
                 <Lock className="w-7 h-7 text-white" />
               </div>
               <div>
@@ -624,7 +622,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             <button
               onClick={startSetup}
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-primary-600 hover:from-indigo-500 hover:to-primary-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25"
+              className="w-full py-4 bg-gradient-to-r from-crimson-600 to-primary-600 hover:from-crimson-500 hover:to-primary-500 text-white rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -688,7 +686,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                       {method.description}
                     </p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                  <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                 </button>
               ))}
           </div>
@@ -879,7 +877,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                   <img src={qrCode} alt="MFA QR Code" className="w-48 h-48" />
                 ) : (
                   <div className="w-48 h-48 flex items-center justify-center">
-                    <QrCode className="w-12 h-12 text-slate-300" />
+                    <QrCode className="w-12 h-12 text-slate-600" />
                   </div>
                 )}
               </div>
@@ -898,7 +896,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                   </code>
                   <button
                     onClick={() => setShowSecret(!showSecret)}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                    className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                   >
                     {showSecret ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -907,7 +905,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                       navigator.clipboard.writeText(secret);
                       toast.success(t('common.copied', 'Copied!'));
                     }}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                    className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                   >
                     <Copy className="w-5 h-5" />
                   </button>
@@ -915,7 +913,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
               </div>
 
               {/* Verification Code */}
-              <div className="pt-4 border-t border-slate-100 dark:border-navy-700">
+              <div className="pt-4 border-t border-slate-200 dark:border-navy-700">
                 <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
                   {t('security.mfa.verifyTitle', 'Enter Verification Code')}
                 </h4>
@@ -1064,7 +1062,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ number, label, active, co
       {completed ? <CheckCircle className="w-4 h-4" /> : number}
     </div>
     <span
-      className={`text-xs mt-1 ${active || completed ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400'}`}
+      className={`text-xs mt-1 ${active || completed ? 'text-slate-700 dark:text-slate-300' : 'text-slate-600'}`}
     >
       {label}
     </span>
@@ -1102,7 +1100,7 @@ const BackupCodesDisplay: React.FC<BackupCodesDisplayProps> = ({
             {copiedIndex === i ? (
               <CheckCircle className="w-4 h-4 text-emerald-500" />
             ) : (
-              <Copy className="w-4 h-4 text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Copy className="w-4 h-4 text-slate-600 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
           </button>
         ))}

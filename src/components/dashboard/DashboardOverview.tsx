@@ -149,11 +149,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const hasStarted =
     safeSession.step1Completed || safeSession.step2Completed || safeSession.step3Completed;
 
+  // Compact Mode tightens vertical spacing across the dashboard.
+  const compact = dashPrefs.compactMode;
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
-      {/* Welcome/Start Section */}
-      {!hasStarted && (
-        <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg">
+    <div
+      className={`max-w-7xl mx-auto animate-fade-in ${compact ? 'space-y-3 pb-6' : 'space-y-6 pb-12'}`}
+    >
+      {/* Welcome/Start Section — gated by the Show Greeting preference */}
+      {!hasStarted && dashPrefs.showGreeting && (
+        <div className="bg-gradient-to-br from-primary-600 to-crimson-700 rounded-2xl p-8 text-white shadow-lg">
           <h2 className="text-2xl font-bold mb-2">Welcome to Your Transformation Dashboard</h2>
           <p className="text-primary-100 mb-6">
             Start your digital transformation journey by completing the initial assessment and
@@ -183,7 +188,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <span className="text-4xl font-bold text-navy-900 dark:text-white">
               {progressStats.toFixed(0)}%
             </span>
-            <span className="text-slate-400 mb-1 font-medium">completed</span>
+            <span className="text-slate-600 mb-1 font-medium">completed</span>
           </div>
           <div className="w-full bg-slate-100 dark:bg-slate-700 h-3 rounded-full overflow-hidden">
             <div
@@ -201,7 +206,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="text-2xl font-bold text-primary-600 dark:text-primary-400 mb-1">
             {currentPhase}
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600">
             {currentPhase === 'Assessment' && 'Defining baseline maturity and gaps.'}
             {currentPhase === 'Strategy & Roadmap' && 'Planning initiatives and ROI.'}
             {currentPhase === 'Pilot Execution' && 'Testing solutions in controlled environment.'}
@@ -269,13 +274,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               className={`flex items-center gap-3 px-4 py-2 rounded-lg border transition-all ${
                 mod.completed
                   ? 'border-green-200 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                  : 'border-slate-100 bg-slate-50 dark:bg-slate-800 text-slate-500'
+                  : 'border-slate-200 bg-slate-50 dark:bg-slate-800 text-slate-500'
               }`}
             >
               {mod.completed ? (
                 <CheckCircle2 size={18} />
               ) : (
-                <Circle size={18} className="text-slate-300" />
+                <Circle size={18} className="text-slate-600" />
               )}
               <span className="font-medium text-sm">{mod.label}</span>
             </button>
@@ -343,7 +348,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                         <TrendingDown size={14} className="text-rose-500" />
                       )}
                     </div>
-                    <div className="text-[10px] text-slate-400">Baseline: {kpi.baseline}</div>
+                    <div className="text-[10px] text-slate-600">Baseline: {kpi.baseline}</div>
                   </div>
                 ))}
               </div>
@@ -354,7 +359,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         {/* AI Insights */}
         <div className="lg:col-span-2 space-y-6">
           {dashPrefs.widgets.aiInsights && (
-            <div className="bg-gradient-to-br from-indigo-900 to-primary-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
+            <div className="bg-gradient-to-br from-crimson-900 to-primary-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden min-h-[400px]">
               <div className="absolute top-0 right-0 p-8 opacity-20">
                 <BrainCircuit size={180} />
               </div>

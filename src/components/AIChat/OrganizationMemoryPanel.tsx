@@ -67,7 +67,7 @@ function patternIcon(type: string) {
     case 'LESSON_LEARNED':
       return <BookOpen size={12} className="text-blue-500" />;
     default:
-      return <Lightbulb size={12} className="text-slate-400" />;
+      return <Lightbulb size={12} className="text-slate-600" />;
   }
 }
 
@@ -109,7 +109,7 @@ const DecisionCard: React.FC<{
       </div>
 
       <div className="flex items-center gap-2 mt-1">
-        <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+        <span className="text-[10px] text-slate-600 dark:text-slate-500 flex items-center gap-1">
           <Clock size={9} />
           {formatDate(decision.createdAt)}
         </span>
@@ -128,7 +128,7 @@ const DecisionCard: React.FC<{
       </div>
 
       {expanded && (
-        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700 space-y-1.5 animate-in fade-in duration-200">
+        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700 space-y-1.5 animate-in fade-in duration-200">
           {decision.problemFraming && (
             <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed">
               <span className="font-semibold">{isPl ? 'Problem:' : 'Problem:'}</span>{' '}
@@ -172,7 +172,7 @@ const DecisionCard: React.FC<{
       {!expanded && (
         <button
           onClick={() => setExpanded(true)}
-          className="mt-1 text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          className="mt-1 text-[9px] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
         >
           {isPl ? 'Pokaż szczegóły ▾' : 'Show details ▾'}
         </button>
@@ -185,7 +185,7 @@ const PatternCard: React.FC<{
   pattern: OrgPattern;
   isPl: boolean;
 }> = ({ pattern, isPl }) => (
-  <div className="flex items-start gap-2 p-2 rounded-lg bg-slate-50 dark:bg-navy-800/50 border border-slate-100 dark:border-navy-700">
+  <div className="flex items-start gap-2 p-2 rounded-lg bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700">
     <div className="mt-0.5">{patternIcon(pattern.type)}</div>
     <div className="flex-1 min-w-0">
       <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-tight truncate">
@@ -195,10 +195,10 @@ const PatternCard: React.FC<{
         {pattern.content}
       </p>
       <div className="flex items-center gap-2 mt-1">
-        <span className="text-[9px] text-slate-400">
+        <span className="text-[9px] text-slate-600">
           {isPl ? `Użyto ${pattern.usageCount}×` : `Used ${pattern.usageCount}×`}
         </span>
-        <span className="text-[9px] text-slate-400">{formatDate(pattern.createdAt)}</span>
+        <span className="text-[9px] text-slate-600">{formatDate(pattern.createdAt)}</span>
       </div>
     </div>
   </div>
@@ -269,9 +269,9 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
           )}
         </div>
         {isExpanded ? (
-          <ChevronUp size={14} className="text-slate-400" />
+          <ChevronUp size={14} className="text-slate-600" />
         ) : (
-          <ChevronDown size={14} className="text-slate-400" />
+          <ChevronDown size={14} className="text-slate-600" />
         )}
       </button>
 
@@ -307,7 +307,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
               <div className="relative">
                 <Search
                   size={12}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600"
                 />
                 <input
                   type="text"
@@ -341,7 +341,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
               ))}
 
             {activeTab === 'decisions' && !loading && decisions.length === 0 && (
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-3">
+              <p className="text-[10px] text-slate-600 dark:text-slate-500 text-center py-3">
                 {searchQuery
                   ? isPl
                     ? 'Brak wyników dla tego zapytania'
@@ -357,7 +357,7 @@ export const OrganizationMemoryPanel: React.FC<OrganizationMemoryPanelProps> = (
               patterns.map((p) => <PatternCard key={p.id} pattern={p} isPl={isPl} />)}
 
             {activeTab === 'patterns' && !loading && patterns.length === 0 && (
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-3">
+              <p className="text-[10px] text-slate-600 dark:text-slate-500 text-center py-3">
                 {isPl
                   ? 'System uczy się wzorców z Twoich projektów. Pojawią się tutaj automatycznie.'
                   : 'System learns patterns from your projects. They will appear here automatically.'}

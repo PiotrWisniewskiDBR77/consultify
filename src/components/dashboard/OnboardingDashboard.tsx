@@ -1,18 +1,8 @@
-import {
-  Bot,
-  CheckCircle2,
-  ChevronRight,
-  Circle,
-  Flag,
-  Info,
-  Map,
-  Play,
-  Target,
-} from 'lucide-react';
+import { CheckCircle2, ChevronRight, Circle, Flag, Info, Map, Play, Target } from 'lucide-react';
 import React from 'react';
 
 import { AppView, FullSession } from '../../types';
-
+import TeresaMark from '../shared/TeresaMark';
 interface OnboardingDashboardProps {
   onStartModule1: () => void;
   session?: FullSession;
@@ -50,7 +40,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
 
   const steps = [
     { id: 1, label: 'Expectations & Challenges', icon: <Target size={18} /> },
-    { id: 2, label: 'Assessment', icon: <Bot size={18} /> },
+    { id: 2, label: 'Assessment', icon: <TeresaMark size={18} /> },
     { id: 3, label: 'Initiatives & Roadmap', icon: <Map size={18} /> },
     { id: 4, label: 'Pilot Execution', icon: <Flag size={18} /> },
     { id: 5, label: 'Full Rollout (+ Economics & Reports)', icon: <CheckCircle2 size={18} /> },
@@ -91,7 +81,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-md ring-1 ring-primary-500/20'
                       : status === 'completed'
                         ? 'border-green-200 bg-green-50/50 dark:bg-green-900/10'
-                        : 'border-slate-100 bg-slate-50 dark:bg-navy-950 dark:border-white/5 opacity-60'
+                        : 'border-slate-200 bg-slate-50 dark:bg-navy-950 dark:border-white/5 opacity-60'
                   }`}
                 >
                   <div
@@ -100,7 +90,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
                         ? 'bg-green-500 text-white'
                         : isCurrent
                           ? 'bg-primary-600 text-white'
-                          : 'bg-slate-200 text-slate-400 dark:bg-slate-800'
+                          : 'bg-slate-200 text-slate-600 dark:bg-slate-800'
                     }`}
                   >
                     {status === 'completed' ? (
@@ -156,7 +146,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
             {(currentStep === 1 || !session?.step1Completed) && (
               <button
                 onClick={onStartModule1}
-                className="w-full group flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white px-6 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-primary-500/30 transition-all transform hover:-translate-y-0.5"
+                className="w-full group flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-crimson-600 text-white px-6 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-primary-500/30 transition-all transform hover:-translate-y-0.5"
               >
                 <Play size={20} className="fill-current" />
                 Start with Expectations & Challenges
@@ -173,7 +163,7 @@ export const OnboardingDashboard: React.FC<OnboardingDashboardProps> = ({
           {/* Quick Tip */}
           <div className="bg-blue-50 dark:bg-navy-800/50 rounded-2xl p-6 border border-blue-100 dark:border-white/5">
             <h4 className="font-bold text-navy-900 dark:text-white mb-2 flex items-center gap-2">
-              <Bot size={16} className="text-blue-500" />
+              <TeresaMark size={16} className="text-blue-500" />
               AI Assistant
             </h4>
             <p className="text-sm text-slate-600 dark:text-slate-300">

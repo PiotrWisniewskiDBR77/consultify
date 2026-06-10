@@ -22,6 +22,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { LoadingState } from '../ui/primitives';
 
 interface LinkedAnalysis {
   id: string;
@@ -177,9 +178,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
   if (isLoading) {
     return (
       <div className="bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-500/10 dark:to-blue-500/10 rounded-xl border border-emerald-200 dark:border-emerald-500/30 p-6">
-        <div className="flex items-center justify-center py-4">
-          <Loader2 size={24} className="animate-spin text-emerald-500" />
-        </div>
+        <LoadingState variant="spinner" className="py-4" />
       </div>
     );
   }
@@ -323,7 +322,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
             <div className="grid grid-cols-3 gap-2 text-sm">
               {initiative.costCapex && (
                 <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">CAPEX</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-500">CAPEX</p>
                   <p className="font-medium text-navy-900 dark:text-white">
                     {formatCurrency(initiative.costCapex)}
                   </p>
@@ -331,7 +330,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
               )}
               {initiative.costOpex && (
                 <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">OPEX</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-500">OPEX</p>
                   <p className="font-medium text-navy-900 dark:text-white">
                     {formatCurrency(initiative.costOpex)}
                   </p>
@@ -339,7 +338,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
               )}
               {initiative.annualBenefit && (
                 <div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">Annual Benefits</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-500">Annual Benefits</p>
                   <p className="font-medium text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(initiative.annualBenefit)}
                   </p>
@@ -367,7 +366,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
           )}
         </button>
 
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
+        <p className="text-xs text-slate-600 dark:text-slate-500 mt-4">
           Analysis will be linked to this initiative and available w module Economics
         </p>
       </div>

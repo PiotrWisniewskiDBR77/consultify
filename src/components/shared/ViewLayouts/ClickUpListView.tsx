@@ -36,12 +36,12 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           {item.isHighlighted && (
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
           )}
-          {item.icon && <span className="flex-shrink-0 text-slate-400">{item.icon}</span>}
+          {item.icon && <span className="flex-shrink-0 text-slate-600">{item.icon}</span>}
           <span className="text-sm text-slate-900 dark:text-white truncate font-medium">
             {item.title}
           </span>
           {item.secondaryLabel && (
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[100px] hidden xl:inline">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500 truncate max-w-[100px] hidden xl:inline">
               {item.secondaryLabel}
             </span>
           )}
@@ -60,7 +60,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           </span>
         </span>
       ) : (
-        <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
       );
     case 'dueDate':
       return item.dueDate ? (
@@ -72,7 +72,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           {item.dueDate}
         </span>
       ) : (
-        <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
       );
     case 'indicator':
       return item.indicator !== undefined && item.indicator > 0 ? (
@@ -86,7 +86,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           {item.secondaryLabel}
         </span>
       ) : (
-        <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
       );
     case 'tertiaryLabel':
       return item.tertiaryLabel ? (
@@ -94,7 +94,7 @@ const CellContent: React.FC<{ item: GenericListItem; column: ListColumn }> = ({ 
           {item.tertiaryLabel}
         </span>
       ) : (
-        <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
       );
     default:
       return null;
@@ -125,19 +125,19 @@ const SectionGroup: React.FC<{
         className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors rounded-md group"
       >
         {expanded ? (
-          <ChevronDown size={14} className="text-slate-400 flex-shrink-0" />
+          <ChevronDown size={14} className="text-slate-600 flex-shrink-0" />
         ) : (
-          <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+          <ChevronRight size={14} className="text-slate-600 flex-shrink-0" />
         )}
         {section.icon && (
-          <span className={`flex-shrink-0 ${section.accentColor || 'text-slate-400'}`}>
+          <span className={`flex-shrink-0 ${section.accentColor || 'text-slate-600'}`}>
             {section.icon}
           </span>
         )}
         <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           {section.label}
         </span>
-        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+        <span className="text-[10px] text-slate-600 dark:text-slate-500 font-medium">
           {section.items.length}
         </span>
       </button>
@@ -149,7 +149,7 @@ const SectionGroup: React.FC<{
             <button
               key={item.id}
               onClick={() => onItemClick?.(item)}
-              className={`w-full flex items-center gap-0 px-3 py-1.5 text-left border-b border-slate-100 dark:border-navy-800 transition-colors hover:bg-slate-50 dark:hover:bg-navy-800/40 ${
+              className={`w-full flex items-center gap-0 px-3 py-1.5 text-left border-b border-slate-200 dark:border-navy-800 transition-colors hover:bg-slate-50 dark:hover:bg-navy-800/40 ${
                 item.isHighlighted ? 'bg-blue-50/30 dark:bg-blue-900/5' : ''
               }`}
             >
@@ -186,7 +186,7 @@ export const ClickUpListView: React.FC<ClickUpViewProps> = ({
   if (totalItems === 0) {
     return (
       <div
-        className={`flex items-center justify-center py-16 text-slate-400 dark:text-slate-500 ${className}`}
+        className={`flex items-center justify-center py-16 text-slate-600 dark:text-slate-500 ${className}`}
       >
         <Inbox size={20} className="mr-2 opacity-50" />
         <span className="text-sm">{emptyMessage}</span>
@@ -211,7 +211,7 @@ export const ClickUpListView: React.FC<ClickUpViewProps> = ({
       </div>
 
       {/* Sections */}
-      <div className="divide-y divide-slate-100 dark:divide-navy-800">
+      <div className="divide-y divide-slate-200 dark:divide-navy-800">
         {showSectionHeaders
           ? sections.map((section) => (
               <SectionGroup

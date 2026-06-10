@@ -192,7 +192,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <X size={14} className="text-slate-400" />
+            <X size={14} className="text-slate-600" />
           </button>
         </div>
 
@@ -206,7 +206,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             <div className="flex-1" />
             <button
               onClick={handleReset}
-              className="p-1 rounded text-slate-400 hover:text-slate-600 transition-colors"
+              className="p-1 rounded text-slate-600 hover:text-slate-600 transition-colors"
               title="Reset"
             >
               <RotateCcw size={11} />
@@ -222,7 +222,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
           </div>
 
           {scorableColumns.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-3">
+            <p className="text-xs text-slate-600 text-center py-3">
               {isPl ? 'Brak kolumn numerycznych do scoringu' : 'No numeric columns for scoring'}
             </p>
           ) : (
@@ -245,7 +245,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
                   </span>
                   <button
                     onClick={() => handleToggleInvert(w.colKey)}
-                    className={`text-[8px] font-bold px-1.5 py-0.5 rounded transition-colors ${w.invert ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-100 dark:bg-navy-800 text-slate-400'}`}
+                    className={`text-[8px] font-bold px-1.5 py-0.5 rounded transition-colors ${w.invert ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-100 dark:bg-navy-800 text-slate-600'}`}
                     title={isPl ? 'Odwróć (niższe = lepsze)' : 'Invert (lower = better)'}
                   >
                     {w.invert ? '↓' : '↑'}
@@ -279,7 +279,7 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
           </div>
 
           {scoredNodes.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">
+            <p className="text-xs text-slate-600 text-center py-4">
               {isPl ? 'Brak danych do scoringu' : 'No data to score'}
             </p>
           ) : (

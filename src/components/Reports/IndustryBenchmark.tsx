@@ -271,7 +271,7 @@ export const IndustryBenchmark: React.FC<IndustryBenchmarkProps> = ({
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-500 to-indigo-600 rounded-xl p-4 text-white">
+        <div className="bg-gradient-to-br from-primary-500 to-crimson-600 rounded-xl p-4 text-white">
           <div className="flex items-center gap-2 mb-2 opacity-90">
             <Award className="w-4 h-4" />
             <span className="text-xs font-medium uppercase tracking-wider">

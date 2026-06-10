@@ -19,21 +19,21 @@ export const AIOSWave0GateReport: React.FC = () => {
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-navy-900">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200">
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-300">
             <ClipboardCheck size={14} />
-            Wave 0 Gate Report
+            AI OS Build Milestones
           </div>
           <h2 className="mt-3 text-lg font-semibold text-slate-950 dark:text-white">
-            Runtime truth table
+            Build milestones (static reference)
           </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Formal AI OS gate artifact for owners, feature flags, test data and release decision.
-            Product owner: AI OS; backend owner: AI runtime; frontend owner: AI OS panels; QA owner:
-            agent/manual acceptance.
+            Documentation of the AI OS build waves and their acceptance owners —{' '}
+            <strong>not</strong> a live health check. Each row records what was delivered and how it
+            was accepted; the gate values are fixed reference, not a real-time runtime probe.
           </p>
         </div>
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200">
-          PASS
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-300">
+          static
         </span>
       </div>
       <div className="mt-4 overflow-x-auto">
@@ -46,12 +46,14 @@ export const AIOSWave0GateReport: React.FC = () => {
               <th className="py-2 pr-4">Evidence</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
+          <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
             {gateRows.map(([wave, scope, gate, evidence]) => (
               <tr key={wave}>
                 <td className="py-2 pr-4 font-medium text-slate-900 dark:text-white">{wave}</td>
                 <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{scope}</td>
-                <td className="py-2 pr-4 font-semibold text-emerald-600">{gate}</td>
+                <td className="py-2 pr-4 font-semibold text-slate-500 dark:text-slate-400">
+                  {gate}
+                </td>
                 <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{evidence}</td>
               </tr>
             ))}

@@ -17,6 +17,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
@@ -178,14 +180,7 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
 
   return (
     <div className={className}>
-      {actionError && (
-        <div
-          role="alert"
-          className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} className="mb-4" />}
 
       <SettingsSection
         icon={Volume2}
@@ -287,7 +282,7 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
                 <button
                   onClick={testing ? stopTest : testVoice}
                   className="flex items-center gap-2 px-4 py-2
-                    border border-white/10 text-slate-300 rounded-lg
+                    border border-white/10 text-slate-600 rounded-lg
                     hover:bg-white/5 hover:text-white transition-all duration-200"
                 >
                   {testing ? <Square size={16} /> : <Play size={16} />}

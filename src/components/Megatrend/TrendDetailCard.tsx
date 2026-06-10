@@ -157,7 +157,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
 
       <div className="p-6 md:p-8 space-y-8">
         {/* Header */}
-        <div className="flex items-center gap-4 border-b border-slate-100 dark:border-navy-700 pb-6">
+        <div className="flex items-center gap-4 border-b border-slate-200 dark:border-navy-700 pb-6">
           <span className="text-4xl shadow-sm rounded-full bg-slate-50 dark:bg-navy-800 p-2">
             {typeEmoji}
           </span>
@@ -267,7 +267,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                     ></div>
                   </div>
                 </div>
-                <div className="pt-2 border-t border-slate-100 dark:border-navy-700 space-y-3">
+                <div className="pt-2 border-t border-slate-200 dark:border-navy-700 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500 dark:text-slate-400">Likelihood (3-5yr)</span>
                     <span className="font-medium">{likelihood}</span>
@@ -291,7 +291,7 @@ export const TrendDetailCard: React.FC<TrendDetailCardProps> = ({
                 <ul className="mt-4 space-y-3">
                   {documents.map((doc, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
-                      <span className="text-slate-400 dark:text-slate-500 mt-0.5">•</span>
+                      <span className="text-slate-600 dark:text-slate-500 mt-0.5">•</span>
                       <a
                         href={doc.url}
                         target="_blank"

@@ -218,8 +218,8 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       {/* Empty state */}
       {risks.length === 0 ? (
         <div className="py-8 text-center">
-          <AlertTriangle size={24} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm text-slate-400 dark:text-slate-500 mb-3">
+          <AlertTriangle size={24} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
+          <p className="text-sm text-slate-600 dark:text-slate-500 mb-3">
             {isPolish ? 'Brak zidentyfikowanych ryzyk.' : 'No risks identified.'}
           </p>
           <button
@@ -231,7 +231,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
           </button>
         </div>
       ) : (
-        <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
           <span>
             {isPolish
               ? 'Posortowane wg najwyższego risk score (P×I)'
@@ -245,7 +245,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       {risks.length > 0 && (
         <div className="space-y-0 divide-y divide-slate-300/55 dark:divide-navy-600/65">
           {/* Level legend */}
-          <div className="py-2 text-[10px] flex flex-wrap items-center gap-1.5 text-slate-400 dark:text-slate-500">
+          <div className="py-2 text-[10px] flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-500">
             <span>{isPolish ? 'Legenda poziomów:' : 'Level legend:'}</span>
             {RISK_LEVEL_OPTIONS.map((level) => (
               <span
@@ -280,7 +280,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                       <button
                         onClick={() => onRemoveRisk(risk.id)}
                         disabled={locked}
-                        className="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                        className="p-1 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                       >
                         <X size={12} />
                       </button>
@@ -290,7 +290,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     {/* Probability */}
                     <div className="space-y-1">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
                       </span>
                       <select
@@ -310,7 +310,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                     </div>
                     {/* Impact */}
                     <div className="space-y-1">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Wpływ' : 'Impact'}
                       </span>
                       <select
@@ -330,7 +330,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                     </div>
                     {/* Category */}
                     <div className="space-y-1">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Kategoria' : 'Category'}
                       </span>
                       <select
@@ -354,7 +354,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                   {/* Risk (materialized) / Contingency */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Ryzyko (materializacja)' : 'Risk (materialized)'}
                       </span>
                       <AIFieldEnhancer
@@ -401,7 +401,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
                   {/* Mitigation */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                         {isPolish ? 'Mitigacja' : 'Mitigation'}
                       </span>
                       <AIFieldEnhancer
@@ -453,7 +453,7 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       <button
         onClick={onAddRisk}
         disabled={locked}
-        className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 transition-colors disabled:opacity-40"
+        className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 transition-colors disabled:opacity-40"
       >
         + {isPolish ? 'Dodaj ryzyko' : 'Add risk'}
       </button>

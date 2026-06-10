@@ -541,7 +541,7 @@ const ReviewsList: React.FC<{
   if (reviews.length === 0) {
     return (
       <div className="text-center py-8">
-        <Users className="w-10 h-10 mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-2" />
+        <Users className="w-10 h-10 mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-400 mb-2" />
         <p className="text-sm text-slate-500 dark:text-slate-400">No reviews assigned yet</p>
       </div>
     );
@@ -615,7 +615,7 @@ const VersionHistory: React.FC<{
   if (versions.length === 0) {
     return (
       <div className="text-center py-8">
-        <History className="w-10 h-10 mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-2" />
+        <History className="w-10 h-10 mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-400 mb-2" />
         <p className="text-sm text-slate-500 dark:text-slate-400">No version history available</p>
       </div>
     );

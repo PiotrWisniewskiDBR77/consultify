@@ -137,7 +137,7 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
 
       <div className="space-y-3">
         {items.length === 0 ? (
-          <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-400">
+          <div className="p-8 rounded-lg border-2 border-dashed border-slate-200 dark:border-navy-700 text-center text-slate-600">
             {isPolish ? 'Brak elementów' : 'No items yet'}
           </div>
         ) : (
@@ -184,7 +184,7 @@ export const OperationalSectionStep: React.FC<OperationalSectionStepProps> = ({
                   </select>
                   <button
                     onClick={() => handleRemove(item.id)}
-                    className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-500"
+                    className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-600 hover:text-rose-500"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

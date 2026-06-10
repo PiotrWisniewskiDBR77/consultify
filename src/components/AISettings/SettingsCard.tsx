@@ -77,7 +77,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
             )}
             {infoTooltip && (
               <div className="relative group">
-                <Info className="w-4 h-4 text-slate-400 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-400 cursor-help" />
+                <Info className="w-4 h-4 text-slate-600 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-400 cursor-help" />
                 <div
                   className="
                                     absolute left-1/2 -translate-x-1/2 bottom-full mb-2
@@ -99,7 +99,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
 
         {collapsible && (
           <motion.div animate={{ rotate: expanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-500" />
           </motion.div>
         )}
       </div>

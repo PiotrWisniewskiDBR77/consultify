@@ -233,23 +233,23 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
             className={`flex items-start gap-3 p-4 rounded-xl border transition-all ${
               item.enabled
                 ? 'bg-white dark:bg-navy-900 border-slate-200 dark:border-navy-700'
-                : 'bg-slate-50 dark:bg-navy-800/50 border-slate-100 dark:border-navy-800 opacity-60'
+                : 'bg-slate-50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-800 opacity-60'
             }`}
           >
             {/* Drag handle + reorder */}
             <div className="flex flex-col gap-1 pt-1">
-              <GripVertical size={14} className="text-slate-300 cursor-grab" />
+              <GripVertical size={14} className="text-slate-600 cursor-grab" />
               <button
                 onClick={() => moveSlide(index, index - 1)}
                 disabled={index === 0}
-                className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                className="text-slate-600 hover:text-slate-600 disabled:opacity-30"
               >
                 <ChevronRight size={14} className="-rotate-90" />
               </button>
               <button
                 onClick={() => moveSlide(index, index + 1)}
                 disabled={index === outline.length - 1}
-                className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                className="text-slate-600 hover:text-slate-600 disabled:opacity-30"
               >
                 <ChevronRight size={14} className="rotate-90" />
               </button>
@@ -289,7 +289,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                   (() => {
                     const HintIcon = IMAGE_HINT_ICONS[item.imageHint] || Image;
                     return (
-                      <span className="text-slate-400" title={`Image: ${item.imageHint}`}>
+                      <span className="text-slate-600" title={`Image: ${item.imageHint}`}>
                         <HintIcon size={12} />
                       </span>
                     );
@@ -367,7 +367,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                 className={`p-1.5 rounded-lg transition-colors ${
                   item.enabled
                     ? 'bg-green-500/20 text-green-500'
-                    : 'bg-slate-200 dark:bg-navy-700 text-slate-400'
+                    : 'bg-slate-200 dark:bg-navy-700 text-slate-600'
                 }`}
               >
                 {item.enabled ? <Eye size={14} /> : <X size={14} />}

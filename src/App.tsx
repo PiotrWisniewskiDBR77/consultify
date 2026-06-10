@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 
@@ -8,6 +8,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
+import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
 import { isRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from '@/utils/runtimeDiagnostics';
 
 import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
@@ -28,6 +29,7 @@ import { User } from './types';
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicReportBuilderView'));
+const SharedConversationView = React.lazy(() => import('./views/SharedConversationView'));
 // Sprint 13 — read-only Subscriber Dashboard (Bearer-token auth, no JWT).
 // Lives next to the other public, lazy-loaded routes so the main app's
 // auth-bootstrapping path does not gate the page on a logged-in
@@ -188,6 +190,16 @@ function AppContent() {
   useEffect(() => {
     document.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
   }, [i18n.language]);
+
+  // Apply saved accessibility preferences app-wide once the user is known, so
+  // they take effect everywhere — not only while the Settings panel is mounted.
+  // Guarded (runs once), idempotent, and never blocks boot on the fetch.
+  const a11yAppliedRef = useRef(false);
+  useEffect(() => {
+    if (a11yAppliedRef.current || !currentUser?.id) return;
+    a11yAppliedRef.current = true;
+    void bootstrapAccessibilityPreferences(() => Api.getAccessibilitySettings());
+  }, [currentUser?.id]);
 
   // Analytics tracking
   usePageTracking();
@@ -432,6 +444,21 @@ function AppContent() {
             </React.Suspense>
           }
         />
+        {/* F4: public, read-only shared conversation viewer */}
+        <Route
+          path="/share/:token"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <SharedConversationView />
+            </React.Suspense>
+          }
+        />
         <Route
           path="/subscriber/dashboard"
           element={
@@ -446,6 +473,9 @@ function AppContent() {
             </React.Suspense>
           }
         />
+        {/* Audit Orchestrator now lives inside the authenticated app shell
+            (AppRoutes → MainLayout) at /audit-programs, so it gets the nav +
+            auth token. Removed the standalone route that bypassed auth. */}
         <Route path="/*" element={<AppRoutes />} />
       </Routes>
     </>

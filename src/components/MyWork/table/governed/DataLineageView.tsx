@@ -8,7 +8,6 @@ import {
   DollarSign,
   FileSpreadsheet,
   Layers,
-  Loader2,
   Rocket,
   Target,
   X,
@@ -17,6 +16,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import * as Api from '@/services/api/tablePlatform.api';
 
 /* ------------------------------------------------------------------ */
@@ -308,11 +308,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
   }, [tables, models, isPl]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="animate-spin text-slate-400" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-16" />;
   }
 
   return (
@@ -334,7 +330,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-slate-600" />
           </button>
         )}
       </div>
@@ -349,7 +345,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
         ].map((lbl, i) => (
           <div
             key={i}
-            className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider"
+            className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider"
             style={{ width: COL_WIDTH }}
           >
             {lbl}
@@ -400,7 +396,7 @@ export const DataLineageView: React.FC<DataLineageViewProps> = ({ baseId, tables
               onClick={() => setSelectedNode(null)}
               className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
             >
-              <X size={14} className="text-slate-400" />
+              <X size={14} className="text-slate-600" />
             </button>
           </div>
           <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">

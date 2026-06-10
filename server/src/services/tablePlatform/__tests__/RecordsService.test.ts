@@ -33,6 +33,11 @@ vi.mock('../formulaEngine.js', () => ({
   recomputeAffectedFields: (...args: unknown[]) => mockRecomputeAffectedFields(...args),
 }));
 
+const mockGetTableColumns = vi.fn();
+vi.mock('../../../utils/dbSchema.js', () => ({
+  getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
+}));
+
 const mockConfidenceRecompute = vi.fn();
 vi.mock('../ConfidenceScoringService.js', () => ({
   default: { recompute: (...args: unknown[]) => mockConfidenceRecompute(...args) },
@@ -48,6 +53,7 @@ import recordsService from '../RecordsService.js';
 describe('RecordsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetTableColumns.mockResolvedValue(new Set(['version']));
     mockValidateRecord.mockResolvedValue({ valid: true, errors: [] });
     mockValidateRecordSize.mockReturnValue(undefined);
     mockOnRecordDeleted.mockResolvedValue(undefined);
@@ -110,6 +116,42 @@ describe('RecordsService', () => {
     );
     expect(mockValidateRecordSize).toHaveBeenCalledWith({ Name: 'New' });
     expect(result).toEqual(after);
+  });
+
+  it('updateRecord updates without version bump when tp_records.version is missing', async () => {
+    mockGetTableColumns.mockResolvedValueOnce(new Set(['id', 'table_id', 'data']));
+    const before = { id: 'r-1', table_id: 't-1', data: { Name: 'Old' } };
+    const after = { id: 'r-1', table_id: 't-1', data: { Name: 'New' } };
+    mockQuery
+      .mockResolvedValueOnce({ rows: [before] }) // SELECT before
+      .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
+      .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
+      .mockResolvedValueOnce({ rows: [] }) // UPDATE (no version column)
+      .mockResolvedValueOnce({ rows: [after] }); // SELECT after
+
+    const result = await recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1');
+
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining('SET data = $2, updated_at = NOW()'),
+      [
+        'r-1',
+        JSON.stringify({ Name: 'New', __modified_by: 'user-1', __modified_by_name: 'user-1' }),
+      ]
+    );
+    expect(result).toEqual(after);
+  });
+
+  it('updateRecord throws conflict when optimistic lock requested but version column missing', async () => {
+    mockGetTableColumns.mockResolvedValueOnce(new Set(['id', 'table_id', 'data']));
+    const before = { id: 'r-1', table_id: 't-1', data: { Name: 'Old' } };
+    mockQuery
+      .mockResolvedValueOnce({ rows: [before] }) // SELECT before
+      .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
+      .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }); // resolveUserName
+
+    await expect(recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1', 3)).rejects.toThrow(
+      'Optimistic lock is unavailable because tp_records.version is missing'
+    );
   });
 
   // 4. deleteRecord → calls relationService.onRecordDeleted, then deletes

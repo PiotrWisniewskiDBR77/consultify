@@ -24,6 +24,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+
 import {
   type V8AiRecommendation,
   type V8AiStep,
@@ -180,16 +182,16 @@ const CollapsibleSection: React.FC<{
 }> = ({ title, defaultOpen = true, badge, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-slate-100 dark:border-white/[0.04]">
+    <div className="border-b border-slate-200 dark:border-white/[0.04]">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="flex w-full items-center gap-2 px-4 py-2.5 text-left"
       >
         {open ? (
-          <ChevronDown size={14} className="text-slate-400" />
+          <ChevronDown size={14} className="text-slate-600" />
         ) : (
-          <ChevronRight size={14} className="text-slate-400" />
+          <ChevronRight size={14} className="text-slate-600" />
         )}
         <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {title}
@@ -245,7 +247,7 @@ const FocusList: React.FC<{
         >
           <div className="mb-1.5 flex items-center gap-2">
             <SeverityBadge severity={row.severity} />
-            <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
               {row.problemType.replace(/_/g, ' ')}
             </span>
           </div>
@@ -302,7 +304,7 @@ const SuggestionCard: React.FC<{
       Expected outcome: {suggestion.expectedOutcome}
     </div>
     <div className="mt-2 flex items-center justify-between gap-2">
-      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+      <span className="text-[10px] text-slate-600 dark:text-slate-500">
         Cost: {suggestion.cost}
         {suggestion.recommendedOwner ? ` | Suggested owner: ${suggestion.recommendedOwner}` : ''}
       </span>
@@ -476,7 +478,7 @@ const TriageView: React.FC<{
               <span className="text-[12px] font-semibold text-slate-900 dark:text-white">
                 {cluster.theme}
               </span>
-              <span className="ml-auto text-[10px] text-slate-400">
+              <span className="ml-auto text-[10px] text-slate-600">
                 {cluster.problemIds.length} problems
               </span>
             </div>
@@ -803,12 +805,12 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             {MODE_TITLES[mode]}
           </h2>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">{MODE_SUBTITLES[mode]}</p>
+          <p className="text-[10px] text-slate-600 dark:text-slate-500">{MODE_SUBTITLES[mode]}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+          className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
         >
           <X size={16} />
         </button>
@@ -816,26 +818,13 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
 
       <div className="flex-1 overflow-auto">
         {loading && (
-          <div className="flex flex-col items-center justify-center gap-3 py-20">
-            <Loader2 size={28} className="animate-spin text-blue-500" />
-            <p className="text-[12px] text-slate-500 dark:text-slate-400">
-              {t('execution.manager.ai.analyzing', 'AI is analyzing your data…')}
-            </p>
-          </div>
+          <LoadingState
+            variant="spinner"
+            label={t('execution.manager.ai.analyzing', 'AI is analyzing your data…')}
+          />
         )}
 
-        {error && !loading && (
-          <div className="m-4 rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-800/40 dark:bg-rose-900/10">
-            <p className="text-[12px] font-medium text-rose-700 dark:text-rose-400">{error}</p>
-            <button
-              type="button"
-              onClick={fetchData}
-              className="mt-2 rounded-lg bg-rose-100 px-3 py-1 text-[11px] font-medium text-rose-700 hover:bg-rose-200 dark:bg-rose-900/20 dark:text-rose-400"
-            >
-              {t('common.retry', 'Retry')}
-            </button>
-          </div>
-        )}
+        {error && !loading && <ErrorState message={error} retry={fetchData} />}
 
         {!loading && !error && mode === 'recommend' && recommendData && (
           <RecommendView data={recommendData} />

@@ -1,5 +1,7 @@
 # App Table Standard (Golden Standard)
 
+> ⚠️ **SUPERSEDED (2026-06-06) — SSOT to teraz [`TABLE_AND_PREVIEW_CANON.md`](TABLE_AND_PREVIEW_CANON.md).** Ten plik zostaje jako materiał szczegółowy; w razie konfliktu obowiązuje kanon. Nowych tabel buduj wg kanonu.
+
 Ten dokument opisuje **standard tabel aplikacji** (UI/UX), który utrzymujemy konsekwentnie w kolejnych modułach.
 
 ## Referencyjny wzór (SSOT)

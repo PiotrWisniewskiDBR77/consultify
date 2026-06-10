@@ -12,14 +12,30 @@
  * - monochromatic chrome, color only for semantic data
  */
 
-import { ChevronDown, ChevronUp, Eye, Maximize2, Sparkles } from 'lucide-react';
+import {
+  Archive,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Clock,
+  Edit2,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  DueChip,
+  PriorityChip,
+  type PriorityLevel,
+  statusChipTone,
+} from '@/components/ui/primitives/chips';
+import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
+import type { ColumnDef, TableFilters } from '@/components/ui/ResizableTable/types';
 
-import { getPriorityStyle, getStatusStyle } from '../../constants/statusColors';
 import { STATUS_METADATA } from '../../services/initiativeLifecycle';
 import { InitiativeStatus, PortfolioInitiative } from '../../types';
 import {
@@ -30,6 +46,23 @@ import {
 } from '../../utils/initiativeHelpers';
 import { PortfolioAiPanel } from './PortfolioAiPanel';
 
+/** Map raw initiative priority → PriorityChip level (canon §4.2 — dot carries the signal). */
+const PRIORITY_LEVEL: Record<string, PriorityLevel> = {
+  CRITICAL: 'urgent',
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+};
+
+/** Signal-tone dot class for the inline status editor (canon c.* family, §4.1). */
+const STATUS_DOT_CLASS: Record<string, string> = {
+  info: 'bg-c-info',
+  warning: 'bg-c-warning',
+  success: 'bg-c-success',
+  danger: 'bg-c-danger',
+  neutral: 'bg-slate-400 dark:bg-slate-500',
+};
+
 interface PortfolioListViewProps {
   initiatives: PortfolioInitiative[];
   onInitiativeClick: (initiative: PortfolioInitiative) => void;
@@ -39,7 +72,44 @@ interface PortfolioListViewProps {
   onSelectionChange?: (ids: Set<string>) => void;
   /** Table canvas padding (V3 standard: pl-4 pr-1.5 pt-3 pb-4) */
   canvasClassName?: string;
+  /** Called when Archive is clicked (only enabled for DONE/CANCELLED status) */
+  onArchive?: (initiative: PortfolioInitiative) => void;
+  /** Called when Delete is clicked */
+  onDelete?: (initiative: PortfolioInitiative) => void;
+  /**
+   * Canon §27 — localStorage persistence key for table view state.
+   * This is a hand-rolled static table (fixed column widths, no resize/hide
+   * model), so the persisted "column state it manages" is the per-column
+   * filters + sort. Pass e.g. "initiatives.portfolio".
+   */
+  persistKey?: string;
 }
+
+type PersistedTableState = {
+  filters?: TableFilters;
+  sort?: { field: SortField; direction: 'asc' | 'desc' };
+};
+
+const loadPersistedTableState = (persistKey?: string): PersistedTableState | null => {
+  if (!persistKey || typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(`table-state:${persistKey}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedTableState;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const savePersistedTableState = (persistKey: string | undefined, state: PersistedTableState) => {
+  if (!persistKey || typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(`table-state:${persistKey}`, JSON.stringify(state));
+  } catch {
+    // ignore quota / serialization errors
+  }
+};
 
 type SortField = 'name' | 'status' | 'priority' | 'plannedEndDate' | 'updatedAt';
 
@@ -93,15 +163,28 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   onQuickUpdate,
   onSelectionChange,
   canvasClassName = 'pl-4 pr-1.5 pt-3 pb-4',
+  onArchive,
+  onDelete,
+  persistKey,
 }) => {
   const { t } = useTranslation();
-  const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: 'asc' | 'desc' }>({
-    field: 'priority',
-    direction: 'asc',
-  });
+  const persisted = useMemo(() => loadPersistedTableState(persistKey), [persistKey]);
+  const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: 'asc' | 'desc' }>(
+    persisted?.sort ?? {
+      field: 'priority',
+      direction: 'asc',
+    }
+  );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [_activeMenu, _setActiveMenu] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
+  const [tableFilters, setTableFilters] = useState<TableFilters>(persisted?.filters ?? {});
+  const [openFilterId, setOpenFilterId] = useState<string | null>(null);
+
+  // Canon §27: persist per-column filters + sort to localStorage under persistKey.
+  useEffect(() => {
+    savePersistedTableState(persistKey, { filters: tableFilters, sort: sortConfig });
+  }, [persistKey, tableFilters, sortConfig]);
 
   const isDowngrade = (currentStatus: string, newStatus: string): boolean => {
     const currentLevel = LEVEL_ORDER[currentStatus] || 0;
@@ -133,8 +216,74 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     }
   }, [initiatives, onSelectionChange, selectedIds]);
 
+  // Column filter options (canon §5) — derived from the current rows.
+  const statusFilterCol: ColumnDef = useMemo(
+    () => ({
+      id: 'status',
+      label: t('initiatives.table.status', 'Status'),
+      width: 128,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(new Set(initiatives.map((i) => i.status)))
+        .sort((a, b) => (STATUS_ORDER[a] || 99) - (STATUS_ORDER[b] || 99))
+        .map((s) => ({ value: s, label: STATUS_METADATA[s as InitiativeStatus]?.label || s })),
+    }),
+    [initiatives, t]
+  );
+
+  const priorityFilterCol: ColumnDef = useMemo(
+    () => ({
+      id: 'priority',
+      label: t('initiatives.table.priority', 'Priority'),
+      width: 96,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(new Set(initiatives.map((i) => i.priority).filter(Boolean)))
+        .sort((a, b) => (PRIORITY_ORDER[a] || 99) - (PRIORITY_ORDER[b] || 99))
+        .map((p) => ({ value: p, label: p })),
+    }),
+    [initiatives, t]
+  );
+
+  const ownerFilterCol: ColumnDef = useMemo(() => {
+    const owners = new Map<string, string>();
+    initiatives.forEach((i) => {
+      const o = i.ownerBusiness || i.ownerExecution;
+      if (o) owners.set(o.id, `${o.firstName || ''} ${o.lastName || ''}`.trim() || o.id);
+    });
+    return {
+      id: 'owner',
+      label: t('initiatives.table.owner', 'Owner'),
+      width: 144,
+      minWidth: 80,
+      resizable: false,
+      filterable: true,
+      filterType: 'multiselect',
+      filterOptions: Array.from(owners.entries()).map(([value, label]) => ({ value, label })),
+    };
+  }, [initiatives, t]);
+
+  const filteredInitiatives = useMemo(() => {
+    const statusF = tableFilters.status as string[] | undefined;
+    const priorityF = tableFilters.priority as string[] | undefined;
+    const ownerF = tableFilters.owner as string[] | undefined;
+    return initiatives.filter((i) => {
+      if (statusF?.length && !statusF.includes(i.status)) return false;
+      if (priorityF?.length && !priorityF.includes(i.priority)) return false;
+      if (ownerF?.length) {
+        const o = i.ownerBusiness || i.ownerExecution;
+        if (!o || !ownerF.includes(o.id)) return false;
+      }
+      return true;
+    });
+  }, [initiatives, tableFilters]);
+
   const sortedInitiatives = useMemo(() => {
-    return [...initiatives].sort((a, b) => {
+    return [...filteredInitiatives].sort((a, b) => {
       let comparison = 0;
       switch (sortConfig.field) {
         case 'name':
@@ -155,7 +304,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
       }
       return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
-  }, [initiatives, sortConfig]);
+  }, [filteredInitiatives, sortConfig]);
 
   const handleSort = (field: SortField) => {
     setSortConfig((prev) => ({
@@ -201,9 +350,9 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   const SortIcon: React.FC<{ field: SortField }> = ({ field }) => {
     if (sortConfig.field !== field) return <div className="w-4 h-4" />;
     return sortConfig.direction === 'asc' ? (
-      <ChevronUp size={14} className="text-slate-400 dark:text-slate-500" />
+      <ChevronUp size={14} className="text-slate-600 dark:text-slate-500" />
     ) : (
-      <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+      <ChevronDown size={14} className="text-slate-600 dark:text-slate-500" />
     );
   };
 
@@ -212,251 +361,356 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
     field?: SortField;
     children: React.ReactNode;
     className?: string;
-  }> = ({ field, children, className = '' }) => (
-    <th
-      className={`text-left px-4 py-2 ${field ? 'cursor-pointer transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.03]' : ''} ${className}`}
-      onClick={field ? () => handleSort(field) : undefined}
-    >
-      <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-        {children}
-        {field && <SortIcon field={field} />}
+    filter?: { col: ColumnDef; key: keyof TableFilters };
+  }> = ({ field, children, className = '', filter }) => (
+    <th className={`text-left px-4 py-2 ${className}`}>
+      <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        <span
+          className={
+            field
+              ? 'inline-flex items-center gap-1 cursor-pointer transition-colors hover:text-slate-700 dark:hover:text-slate-200'
+              : 'inline-flex items-center gap-1'
+          }
+          onClick={field ? () => handleSort(field) : undefined}
+        >
+          {children}
+          {field && <SortIcon field={field} />}
+        </span>
+        {filter && (
+          <FilterDropdown
+            column={filter.col}
+            value={tableFilters[filter.key] as string[] | undefined}
+            onChange={(v) => setTableFilters((f) => ({ ...f, [filter.key]: v }))}
+            isOpen={openFilterId === String(filter.key)}
+            onToggle={() =>
+              setOpenFilterId((id) => (id === String(filter.key) ? null : String(filter.key)))
+            }
+            onClose={() => setOpenFilterId(null)}
+          />
+        )}
       </div>
     </th>
   );
 
   return (
     <div className={canvasClassName}>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          {t('portfolio.ai.selectionCount', '{{count}} selected', {
-            count: selectedInitiatives.length,
-          })}
-        </div>
-        <button
-          onClick={() => setAiOpen(true)}
-          disabled={selectedInitiatives.length === 0}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium transition-colors bg-hig-primary text-white hover:bg-hig-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Sparkles size={16} />
-          {t('portfolio.ai.analyzeSelection', 'AI: Analyze selection')}
-        </button>
-      </div>
+      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-x-auto">
+        <table className="w-full table-fixed" style={{ minWidth: 1080 }}>
+          <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur border-b border-slate-200/60 dark:border-white/[0.03]">
+            <tr>
+              <th className="w-10 px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.size === initiatives.length && initiatives.length > 0}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
+                />
+              </th>
+              <TH field="name">{t('initiatives.table.initiative', 'Initiative')}</TH>
+              <TH field="status" className="w-32" filter={{ col: statusFilterCol, key: 'status' }}>
+                {t('initiatives.table.status', 'Status')}
+              </TH>
+              <TH
+                field="priority"
+                className="w-24"
+                filter={{ col: priorityFilterCol, key: 'priority' }}
+              >
+                {t('initiatives.table.priority', 'Priority')}
+              </TH>
+              <TH className="w-36" filter={{ col: ownerFilterCol, key: 'owner' }}>
+                {t('initiatives.table.owner', 'Owner')}
+              </TH>
+              <TH field="plannedEndDate" className="w-28">
+                {t('initiatives.table.targetDate', 'Target date')}
+              </TH>
+              <TH className="w-24">{t('initiatives.table.health', 'Health')}</TH>
+              <TH className="w-40">{t('initiatives.table.nextStep', 'Next step')}</TH>
+              <TH className="w-24">{t('initiatives.table.missing', 'Missing')}</TH>
+              <TH field="updatedAt" className="w-24">
+                {t('initiatives.table.updated', 'Updated')}
+              </TH>
+              <th className="w-10 px-4 py-2" />
+            </tr>
+          </thead>
 
-      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full table-fixed" style={{ minWidth: 1080 }}>
-            <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-navy-900/50 backdrop-blur-hig">
-              <tr>
-                <th className="w-10 px-4 py-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.size === initiatives.length && initiatives.length > 0}
-                    onChange={toggleSelectAll}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
-                  />
-                </th>
-                <TH field="name">{t('initiatives.table.initiative', 'Initiative')}</TH>
-                <TH field="status" className="w-32">
-                  {t('initiatives.table.status', 'Status')}
-                </TH>
-                <TH field="priority" className="w-24">
-                  {t('initiatives.table.priority', 'Priority')}
-                </TH>
-                <TH className="w-36">{t('initiatives.table.owner', 'Owner')}</TH>
-                <TH field="plannedEndDate" className="w-28">
-                  {t('initiatives.table.targetDate', 'Target date')}
-                </TH>
-                <TH className="w-24">{t('initiatives.table.health', 'Health')}</TH>
-                <TH className="w-40">{t('initiatives.table.nextStep', 'Next step')}</TH>
-                <TH className="w-24">{t('initiatives.table.missing', 'Missing')}</TH>
-                <TH field="updatedAt" className="w-24">
-                  {t('initiatives.table.updated', 'Updated')}
-                </TH>
-                <th className="w-10 px-4 py-2" />
-              </tr>
-            </thead>
+          <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
+            {sortedInitiatives.map((initiative) => {
+              const terminal = isTerminal(initiative.status);
+              const owner = initiative.ownerBusiness || initiative.ownerExecution;
+              const statusDotClass =
+                STATUS_DOT_CLASS[statusChipTone(initiative.status)] ?? STATUS_DOT_CLASS.neutral;
+              const priorityLevel = PRIORITY_LEVEL[initiative.priority];
+              const health = getHealthInfo(initiative);
+              const nextStep = getNextStep(initiative.status);
+              const selected = selectedIds.has(initiative.id);
 
-            <tbody className="divide-y divide-slate-100/60 dark:divide-white/[0.03]">
-              {sortedInitiatives.map((initiative) => {
-                const terminal = isTerminal(initiative.status);
-                const owner = initiative.ownerBusiness || initiative.ownerExecution;
-                const statusStyle = getStatusStyle(initiative.status);
-                const priorityStyle = getPriorityStyle(initiative.priority);
-                const health = getHealthInfo(initiative);
-                const nextStep = getNextStep(initiative.status);
+              return (
+                <tr
+                  key={initiative.id}
+                  className={`group cursor-pointer transition-colors ${
+                    selected
+                      ? 'bg-primary-500/8 dark:bg-primary-500/10 shadow-[inset_4px_0_0_0_var(--c-accent,theme(colors.primary.500))]'
+                      : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]'
+                  } ${terminal ? 'opacity-50' : ''}`}
+                  onClick={() => onInitiativeClick(initiative)}
+                  onDoubleClick={() => onOpenFull?.(initiative)}
+                >
+                  {/* Checkbox */}
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(initiative.id)}
+                      onChange={() => toggleSelect(initiative.id)}
+                      className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
+                    />
+                  </td>
 
-                return (
-                  <tr
-                    key={initiative.id}
-                    className={`group cursor-pointer transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.03] ${terminal ? 'opacity-50' : ''}`}
-                    onClick={() => onInitiativeClick(initiative)}
-                    onDoubleClick={() => onOpenFull?.(initiative)}
-                  >
-                    {/* Checkbox */}
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(initiative.id)}
-                        onChange={() => toggleSelect(initiative.id)}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-white/10 bg-white/80 dark:bg-navy-950 text-primary-600 focus:ring-primary-500/30"
-                      />
-                    </td>
+                  {/* Initiative (name only, 1 line) */}
+                  <td className="px-4 py-2">
+                    <div className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">
+                      {initiative.name}
+                    </div>
+                  </td>
 
-                    {/* Initiative (name only, 1 line) */}
-                    <td className="px-4 py-2">
-                      <div className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">
-                        {initiative.name}
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative inline-flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusStyle.dot}`} />
-                        <select
-                          value={initiative.status}
-                          onChange={(e) =>
-                            handleStatusChange(
-                              initiative.id,
-                              initiative.status,
-                              e.target.value as InitiativeStatus
-                            )
-                          }
-                          className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none"
-                        >
-                          {ALL_INITIATIVE_STATUSES.map((s) => (
-                            <option key={s} value={s}>
-                              {getStatusLabel(s)}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown
-                          size={12}
-                          className="absolute right-0 text-slate-400 pointer-events-none"
-                        />
-                      </div>
-                    </td>
-
-                    {/* Priority */}
-                    <td className="px-4 py-2">
+                  {/* Status */}
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative inline-flex items-center gap-1.5">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDotClass}`}
+                      />
+                      <select
+                        value={initiative.status}
+                        onChange={(e) =>
+                          handleStatusChange(
+                            initiative.id,
+                            initiative.status,
+                            e.target.value as InitiativeStatus
+                          )
+                        }
+                        className="appearance-none bg-transparent text-xs font-medium cursor-pointer pr-4 text-slate-700 dark:text-slate-300 focus:outline-none"
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
-                        {initiative.priority || '—'}
-                      </span>
-                    </td>
+                        {ALL_INITIATIVE_STATUSES.map((s) => (
+                          <option key={s} value={s}>
+                            {getStatusLabel(s)}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        size={12}
+                        className="absolute right-0 text-slate-600 pointer-events-none"
+                      />
+                    </div>
+                  </td>
 
-                    {/* Owner */}
-                    <td className="px-4 py-2">
-                      {owner ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[10px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
-                            {owner.avatarUrl ? (
-                              <img
-                                src={owner.avatarUrl}
-                                alt=""
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
-                            )}
-                          </div>
-                          <span className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                            {owner.firstName} {owner.lastName}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
+                  {/* Priority */}
+                  <td className="px-4 py-2">
+                    {priorityLevel ? (
+                      <PriorityChip level={priorityLevel} label={initiative.priority} />
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                    )}
+                  </td>
 
-                    {/* Target date */}
-                    <td className="px-4 py-2">
-                      <span className="text-xs text-slate-600 dark:text-slate-400">
-                        {formatShortDate(initiative.plannedEndDate)}
-                      </span>
-                    </td>
-
-                    {/* Health (RAG) */}
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${health.dotClass}`} />
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {health.label}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Next step */}
-                    <td className="px-4 py-2">
-                      {nextStep ? (
-                        <div
-                          className="text-xs text-slate-600 dark:text-slate-400 truncate"
-                          title={
-                            nextStep.role ? `${nextStep.label} (${nextStep.role})` : nextStep.label
-                          }
-                        >
-                          <span className="font-medium text-slate-700 dark:text-slate-300">
-                            {nextStep.label}
-                          </span>
-                          {nextStep.role && (
-                            <span className="text-slate-400 dark:text-slate-500 ml-1">
-                              ({nextStep.role})
-                            </span>
+                  {/* Owner */}
+                  <td className="px-4 py-2">
+                    {owner ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-[10px] font-medium text-slate-600 dark:text-slate-300 overflow-hidden flex-shrink-0">
+                          {owner.avatarUrl ? (
+                            <img
+                              src={owner.avatarUrl}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            `${owner.firstName?.[0] || '?'}${owner.lastName?.[0] || ''}`
                           )}
                         </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
+                        <span className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                          {owner.firstName} {owner.lastName}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                    )}
+                  </td>
 
-                    {/* Missing (blocking) — placeholder, filled when gate readiness is fetched per-row */}
-                    <td className="px-4 py-2">
-                      <span className="text-xs text-slate-400">—</span>
-                    </td>
-
-                    {/* Updated */}
-                    <td className="px-4 py-2">
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {formatRelativeTime(initiative.updatedAt)}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                      <RowActionsMenu
-                        iconVariant="vertical"
-                        actions={
-                          [
-                            {
-                              id: 'preview',
-                              label: t('common.preview', 'Preview'),
-                              icon: Eye,
-                              onClick: () => onInitiativeClick(initiative),
-                            },
-                            {
-                              id: 'open',
-                              label: t('common.openFull', 'Open Full'),
-                              icon: Maximize2,
-                              variant: 'primary',
-                              onClick: () => onOpenFull?.(initiative),
-                            },
-                          ] as RowAction[]
-                        }
+                  {/* Target date — single DueChip (canon §4.4) */}
+                  <td className="px-4 py-2">
+                    {initiative.plannedEndDate ? (
+                      <DueChip
+                        label={formatShortDate(initiative.plannedEndDate)}
+                        due={terminal ? null : initiative.plannedEndDate}
+                        showIcon
                       />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                    )}
+                  </td>
+
+                  {/* Health (RAG) */}
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${health.dotClass}`} />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {health.label}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Next step */}
+                  <td className="px-4 py-2">
+                    {nextStep ? (
+                      <div
+                        className="text-xs text-slate-600 dark:text-slate-400 truncate"
+                        title={
+                          nextStep.role ? `${nextStep.label} (${nextStep.role})` : nextStep.label
+                        }
+                      >
+                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                          {nextStep.label}
+                        </span>
+                        {nextStep.role && (
+                          <span className="text-slate-600 dark:text-slate-500 ml-1">
+                            ({nextStep.role})
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                    )}
+                  </td>
+
+                  {/* Missing (blocking) — placeholder, filled when gate readiness is fetched per-row */}
+                  <td className="px-4 py-2">
+                    <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                  </td>
+
+                  {/* Updated */}
+                  <td className="px-4 py-2">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {formatRelativeTime(initiative.updatedAt)}
+                    </span>
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                    <RowActionsMenu
+                      iconVariant="vertical"
+                      className="opacity-40 transition-opacity group-hover:opacity-100"
+                      sections={
+                        [
+                          // GÓRA — kontekstowe
+                          {
+                            id: 'context',
+                            kind: 'context' as const,
+                            actions: [],
+                          },
+                          // DÓŁ — stały (kanon §9): Open preview · Edit · Archiwizuj/Przywróć
+                          {
+                            id: 'fixed',
+                            kind: 'manage' as const,
+                            actions: [
+                              {
+                                id: 'open-preview',
+                                label: t('common.openPreview', 'Otwórz podgląd'),
+                                icon: ChevronRight,
+                                onClick: () => onInitiativeClick(initiative),
+                              },
+                              ...(onOpenFull
+                                ? [
+                                    {
+                                      id: 'open-full',
+                                      label: t('common.openFull', 'Otwórz pełny widok'),
+                                      icon: ChevronRight,
+                                      onClick: () => onOpenFull(initiative),
+                                    },
+                                  ]
+                                : []),
+                              {
+                                id: 'edit',
+                                label: t('common.edit', 'Edytuj'),
+                                icon: Edit2,
+                                onClick: () => onInitiativeClick(initiative),
+                              },
+                              initiative.status === InitiativeStatus.ARCHIVED
+                                ? {
+                                    id: 'restore',
+                                    label: t('common.restore', 'Przywróć'),
+                                    icon: RotateCcw,
+                                    disabled: true,
+                                    description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+                                    onClick: () => {},
+                                  }
+                                : {
+                                    id: 'archive',
+                                    label: t('common.archive', 'Archiwizuj'),
+                                    icon: Archive,
+                                    disabled:
+                                      !onArchive ||
+                                      ![InitiativeStatus.DONE, InitiativeStatus.CANCELLED].includes(
+                                        initiative.status
+                                      ),
+                                    description:
+                                      !onArchive ||
+                                      ![InitiativeStatus.DONE, InitiativeStatus.CANCELLED].includes(
+                                        initiative.status
+                                      )
+                                        ? t(
+                                            'initiatives.archive.hint',
+                                            'Zakończ lub anuluj najpierw'
+                                          )
+                                        : undefined,
+                                    onClick: () => onArchive?.(initiative),
+                                  },
+                              // 4 — Delay (slot present because initiative has a due date; §9.2)
+                              ...(initiative.plannedEndDate
+                                ? [
+                                    {
+                                      id: 'delay',
+                                      label: t('common.delay', 'Przesuń termin'),
+                                      icon: Clock,
+                                      disabled: true,
+                                      description: t(
+                                        'common.comingSoonBackend',
+                                        'Wkrótce (backend)'
+                                      ),
+                                      onClick: () => {},
+                                    },
+                                  ]
+                                : []),
+                            ],
+                          },
+                          // DANGER
+                          {
+                            id: 'danger',
+                            kind: 'danger' as const,
+                            actions: [
+                              {
+                                id: 'delete',
+                                label: t('common.delete', 'Usuń'),
+                                icon: Trash2,
+                                variant: 'danger' as const,
+                                disabled: true,
+                                description: t('common.comingSoonBackend', 'Wkrótce (backend)'),
+                                onClick: () => {},
+                              },
+                            ],
+                          },
+                        ] as RowActionSection[]
+                      }
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {sortedInitiatives.length === 0 && (
         <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
-          No initiatives found
+          {t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
         </div>
       )}
 

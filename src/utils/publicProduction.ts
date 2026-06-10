@@ -1,5 +1,14 @@
 const PUBLIC_PRODUCTION_HOSTS = new Set(['consultify.ai', 'www.consultify.ai']);
-const PUBLIC_PRODUCTION_CORE_MENU_IDS = new Set(['AI_CHAT', 'INTERVIEW']);
+// VTS pilot scope: surface Chat + Interview plus My Work, Initiatives, Execution
+// and Settings on public production. Everything else stays locked at the sidebar.
+const PUBLIC_PRODUCTION_CORE_MENU_IDS = new Set([
+  'AI_CHAT',
+  'INTERVIEW',
+  'MY_WORK',
+  'MODULE_INITIATIVES',
+  'MODULE_EXECUTION',
+  'SETTINGS',
+]);
 
 type LockableMenuItem<T> = T & {
   id: string;

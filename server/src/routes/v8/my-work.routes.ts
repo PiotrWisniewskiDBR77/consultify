@@ -2247,54 +2247,62 @@ router.get(
       }
     }
 
-    // P02 §2.3.13: Bridge external calendar items from calendarInteropService
-    try {
-      const { getCalendarItems, getCalendarSources } =
-        await import('../../services/v8/calendarInteropService.js');
-      const p02Sources = await getCalendarSources(organizationId);
-      const p02Items = await getCalendarItems(organizationId, {
-        startAt: start ?? undefined,
-        endAt: end ?? undefined,
-      });
-
-      const sourceMap = new Map(p02Sources.map((s: any) => [s.calendarSourceId, s]));
-
-      for (const item of p02Items) {
-        if (item.sourceSystem === 'consultify') continue;
-
-        const source = sourceMap.get(item.sourceId);
-        const eventSource: string =
-          item.sourceSystem === 'google_calendar'
-            ? 'google'
-            : item.sourceSystem === 'outlook_calendar'
-              ? 'outlook'
-              : 'consultify';
-
-        if (!requestedSources.includes(eventSource)) continue;
-
-        events.push({
-          id: item.calendarItemId,
-          title:
-            item.visibilityClass === 'free_busy_only' ? 'Busy' : (item.title ?? 'External event'),
-          start: item.startAt,
-          end: item.endAt || undefined,
-          allDay: item.allDay,
-          source: eventSource,
-          sourceId: item.sourceObjectRef || item.calendarItemId,
-          color: undefined,
-          status: item.syncState,
-          description: item.visibilityClass === 'free_busy_only' ? undefined : undefined,
-          visibilityClass: item.visibilityClass,
-          editAuthority: item.editAuthority,
-          syncState: item.syncState,
-          permissionGradient: source?.permissionGradient ?? 'read',
-          etag: item.etag ?? undefined,
+    const needsP02ExternalBridge = requestedSources.some((source) =>
+      ['google', 'outlook', 'consultify'].includes(source)
+    );
+    if (needsP02ExternalBridge) {
+      // P02 §2.3.13: Bridge external calendar items from calendarInteropService
+      try {
+        const { getCalendarItems, getCalendarSources } =
+          await import('../../services/v8/calendarInteropService.js');
+        const p02Sources = await getCalendarSources(organizationId);
+        const p02Items = await getCalendarItems(organizationId, {
+          startAt: start ?? undefined,
+          endAt: end ?? undefined,
         });
+
+        const sourceMap = new Map(p02Sources.map((s: any) => [s.calendarSourceId, s]));
+
+        for (const item of p02Items) {
+          if (item.sourceSystem === 'consultify') continue;
+
+          const source = sourceMap.get(item.sourceId);
+          const eventSource: string =
+            item.sourceSystem === 'google_calendar'
+              ? 'google'
+              : item.sourceSystem === 'outlook_calendar'
+                ? 'outlook'
+                : 'consultify';
+
+          if (!requestedSources.includes(eventSource)) continue;
+
+          events.push({
+            id: item.calendarItemId,
+            title:
+              item.visibilityClass === 'free_busy_only' ? 'Busy' : (item.title ?? 'External event'),
+            start: item.startAt,
+            end: item.endAt || undefined,
+            allDay: item.allDay,
+            source: eventSource,
+            sourceId: item.sourceObjectRef || item.calendarItemId,
+            color: undefined,
+            status: item.syncState,
+            description: item.visibilityClass === 'free_busy_only' ? undefined : undefined,
+            visibilityClass: item.visibilityClass,
+            editAuthority: item.editAuthority,
+            syncState: item.syncState,
+            permissionGradient: source?.permissionGradient ?? 'read',
+            etag: item.etag ?? undefined,
+          });
+        }
+      } catch (p02Err: any) {
+        // P02 external items are optional; log but don't fail the entire endpoint
+        const p02Logger = await import('../../utils/Logger.js');
+        p02Logger.default.warn(
+          '[MyWork/Calendar] P02 external events unavailable:',
+          p02Err?.message
+        );
       }
-    } catch (p02Err: any) {
-      // P02 external items are optional; log but don't fail the entire endpoint
-      const p02Logger = await import('../../utils/Logger.js');
-      p02Logger.default.warn('[MyWork/Calendar] P02 external events unavailable:', p02Err?.message);
     }
 
     events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());

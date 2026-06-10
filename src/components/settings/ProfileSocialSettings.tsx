@@ -130,7 +130,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
             Twitter
           </label>
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 dark:text-slate-500">twitter.com/</span>
+            <span className="text-slate-600 dark:text-slate-500">twitter.com/</span>
             <input
               type="text"
               value={twitter.replace('https://twitter.com/', '').replace('@', '')}
@@ -148,7 +148,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
             GitHub
           </label>
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 dark:text-slate-500">github.com/</span>
+            <span className="text-slate-600 dark:text-slate-500">github.com/</span>
             <input
               type="text"
               value={github.replace('https://github.com/', '')}
@@ -201,7 +201,7 @@ export const ProfileSocialSettings: React.FC<ProfileSocialSettingsProps> = ({
                 <Icon
                   size={20}
                   className={
-                    isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400'
+                    isSelected ? 'text-primary-600 dark:text-primary-400' : 'text-slate-600'
                   }
                 />
                 <div>

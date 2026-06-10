@@ -96,7 +96,7 @@ const AuditEventCard: React.FC<{ event: AuditEvent }> = ({ event }) => {
   });
 
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
+    <div className="flex items-start gap-3 py-3 border-b border-slate-200 dark:border-slate-800 last:border-0">
       <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
         <Icon size={14} className="text-primary-600 dark:text-primary-400" />
       </div>
@@ -198,7 +198,7 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({
               <p>Brak zapisanych akcji.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
               {events.map((event) => (
                 <AuditEventCard key={event.id} event={event} />
               ))}

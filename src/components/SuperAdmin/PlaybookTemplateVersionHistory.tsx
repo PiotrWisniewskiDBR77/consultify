@@ -97,7 +97,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
       case 'RESTORE':
         return <RotateCcw size={14} className="text-amber-400" />;
       default:
-        return <GitCommit size={14} className="text-slate-400 dark:text-slate-500" />;
+        return <GitCommit size={14} className="text-slate-600 dark:text-slate-500" />;
     }
   };
 
@@ -111,7 +111,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 
     return (
       <span
-        className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border ${styles[type] || 'bg-slate-50 dark:bg-navy-800/300/10 text-slate-400 dark:text-slate-500 border-slate-500/30'}`}
+        className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border ${styles[type] || 'bg-slate-50 dark:bg-navy-800/300/10 text-slate-600 dark:text-slate-500 border-slate-500/30'}`}
       >
         {getChangeTypeIcon(type)}
         {type}
@@ -122,7 +122,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <RefreshCw className="w-6 h-6 text-slate-400 dark:text-slate-500 animate-spin" />
+        <RefreshCw className="w-6 h-6 text-slate-600 dark:text-slate-500 animate-spin" />
       </div>
     );
   }
@@ -133,7 +133,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
       <div className="flex items-center gap-2">
         <History className="w-5 h-5 text-primary-400" />
         <h3 className="font-semibold text-white">Version History</h3>
-        <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
+        <span className="px-2 py-0.5 bg-slate-700 text-slate-600 text-xs rounded-full">
           {versions.length} versions
         </span>
       </div>
@@ -142,7 +142,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
       {versions.length === 0 ? (
         <div className="text-center py-8">
           <History className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-          <p className="text-slate-400 dark:text-slate-500">No version history available</p>
+          <p className="text-slate-600 dark:text-slate-500">No version history available</p>
         </div>
       ) : (
         <div className="relative">
@@ -195,7 +195,7 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
 
                       <div className="flex items-center gap-4">
                         <div className="text-right text-sm">
-                          <div className="text-slate-400 dark:text-slate-500">
+                          <div className="text-slate-600 dark:text-slate-500">
                             {new Date(version.createdAt).toLocaleDateString()}
                           </div>
                           <div className="text-slate-500 dark:text-slate-400 text-xs">
@@ -203,9 +203,9 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                           </div>
                         </div>
                         {isExpanded ? (
-                          <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                          <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
                         ) : (
-                          <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+                          <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
                         )}
                       </div>
                     </button>
@@ -217,23 +217,23 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                           {/* Change notes */}
                           {version.changeNotes && (
                             <div>
-                              <div className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                              <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Change Notes
                               </div>
-                              <p className="text-sm text-slate-300">{version.changeNotes}</p>
+                              <p className="text-sm text-slate-600">{version.changeNotes}</p>
                             </div>
                           )}
 
                           {/* Details grid */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <div className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                              <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Title
                               </div>
                               <p className="text-sm text-white truncate">{version.title}</p>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                              <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Status at Version
                               </div>
                               <p className="text-sm text-white">
@@ -241,13 +241,13 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                               </p>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                              <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Changed By
                               </div>
                               <p className="text-sm text-white">{version.changedBy || 'System'}</p>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                              <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Est. Duration
                               </div>
                               <p className="text-sm text-white">
@@ -261,10 +261,10 @@ export const PlaybookTemplateVersionHistory: React.FC<PlaybookTemplateVersionHis
                           {/* Description */}
                           {version.description && (
                             <div>
-                              <div className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                              <div className="text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                                 Description
                               </div>
-                              <p className="text-sm text-slate-300 line-clamp-3">
+                              <p className="text-sm text-slate-600 line-clamp-3">
                                 {version.description}
                               </p>
                             </div>

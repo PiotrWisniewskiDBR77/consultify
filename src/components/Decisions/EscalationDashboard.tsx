@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * EscalationDashboard - Dashboard for escalation management
  * Shows aging decisions, blocking decisions, overloaded owners, and escalation metrics
@@ -13,7 +12,6 @@ import {
   ChevronRight,
   Clock,
   Flame,
-  Loader2,
   Lock,
   RefreshCw,
   TrendingDown,
@@ -23,6 +21,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -145,7 +145,7 @@ const MetricCard: React.FC<{
       <div className={`text-2xl font-bold ${styles.value}`}>{value}</div>
       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{title}</div>
       {subtitle && (
-        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{subtitle}</div>
+        <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">{subtitle}</div>
       )}
     </motion.div>
   );
@@ -202,7 +202,7 @@ const AlertSection: React.FC<{
         </div>
         <ChevronRight
           size={16}
-          className={`text-slate-400 dark:text-slate-500 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+          className={`text-slate-600 dark:text-slate-500 transition-transform ${isOpen ? 'rotate-90' : ''}`}
         />
       </button>
 
@@ -339,11 +339,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
   }, [decisions]);
 
   if (loading) {
-    return (
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={24} />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-8" />;
   }
 
   return (
@@ -371,7 +367,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
           <button
             onClick={() => fetchData(true)}
             disabled={refreshing}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
           </button>
@@ -487,7 +483,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                     </span>
                   </div>
                   {d.ownerName && (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500">
                       Owner: {d.ownerName}
                     </span>
                   )}
@@ -517,7 +513,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                     </span>
                   </div>
                   {d.ownerName && (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500">
                       Owner: {d.ownerName}
                     </span>
                   )}
@@ -547,7 +543,7 @@ export const EscalationDashboard: React.FC<EscalationDashboardProps> = ({
                       {owner.pendingCount} pending
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                  <span className="text-[10px] text-slate-600 dark:text-slate-500">
                     {owner.email}
                   </span>
                 </button>

@@ -57,7 +57,7 @@ export const ProblemPlatformSection: React.FC = () => {
             {t('landing.problemPlatform.heading', 'What Spotify did for music,')}{' '}
             <span
               style={{
-                background: 'linear-gradient(90deg, #a78bfa, #c084fc, #67e8f9)',
+                background: 'linear-gradient(90deg, #E45868, #D42B3D, #EF8A94)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',

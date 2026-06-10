@@ -15,17 +15,17 @@ import { useTranslation } from 'react-i18next';
 import { MarketingLayout } from '../components/Landing/MarketingLayout';
 
 const STEP_VISUALS = [
-  { number: '01', icon: FileText, color: '#7c3aed', glow: 'rgba(124,58,237,0.30)' },
-  { number: '02', icon: Brain, color: '#a855f7', glow: 'rgba(168,85,247,0.28)' },
+  { number: '01', icon: FileText, color: '#A51C30', glow: 'rgba(165,28,48,0.30)' },
+  { number: '02', icon: Brain, color: '#D42B3D', glow: 'rgba(212,43,61,0.28)' },
   { number: '03', icon: CheckCircle2, color: '#3b82f6', glow: 'rgba(6,182,212,0.25)' },
   { number: '04', icon: Zap, color: '#10b981', glow: 'rgba(16,185,129,0.25)' },
   { number: '05', icon: TrendingUp, color: '#f59e0b', glow: 'rgba(245,158,11,0.25)' },
 ];
 
 const TECH_VISUALS = [
-  { color: '#7c3aed', icon: Brain },
+  { color: '#A51C30', icon: Brain },
   { color: '#3b82f6', icon: Zap },
-  { color: '#a855f7', icon: Cpu },
+  { color: '#D42B3D', icon: Cpu },
   { color: '#10b981', icon: CheckCircle2 },
 ];
 
@@ -54,7 +54,7 @@ export const HowItWorksPage: React.FC = () => {
       {/* Hero */}
       <section className="relative px-6 pt-20 pb-24 overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_50%,#12082E_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_50%,#0B1220_100%)]" />
           <div
             className="absolute -top-[20%] left-[10%] w-[50%] h-[50%] rounded-full"
             style={{
@@ -94,7 +94,7 @@ export const HowItWorksPage: React.FC = () => {
             <span
               className="block"
               style={{
-                background: 'linear-gradient(90deg, #a78bfa, #67e8f9)',
+                background: 'linear-gradient(90deg, #D42B3D, #67e8f9)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -125,8 +125,8 @@ export const HowItWorksPage: React.FC = () => {
             <button
               className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full text-white font-semibold text-sm transition-all"
               style={{
-                background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                boxShadow: '0 0 40px -12px rgba(124,58,237,0.65)',
+                background: 'linear-gradient(135deg, #A51C30, #651120)',
+                boxShadow: '0 0 40px -12px rgba(165,28,48,0.65)',
               }}
             >
               <span>{t('pages.howItWorks.hero.ctaPrimary', 'Open Demo Now')}</span>
@@ -254,14 +254,14 @@ export const HowItWorksPage: React.FC = () => {
             className="relative rounded-2xl p-8 md:p-12 overflow-hidden"
             style={{
               background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(124,58,237,0.25)',
+              border: '1px solid rgba(165,28,48,0.25)',
             }}
           >
             <div
               aria-hidden
               className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none"
               style={{
-                background: 'radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(165,28,48,0.18) 0%, transparent 70%)',
                 filter: 'blur(50px)',
                 transform: 'translate(30%,-30%)',
               }}
@@ -293,8 +293,8 @@ export const HowItWorksPage: React.FC = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white transition-all"
                   style={{
-                    background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                    boxShadow: '0 0 30px -10px rgba(124,58,237,0.60)',
+                    background: 'linear-gradient(135deg, #A51C30, #651120)',
+                    boxShadow: '0 0 30px -10px rgba(165,28,48,0.60)',
                   }}
                 >
                   {t('pages.howItWorks.tech.cta', 'Explore DBR77 Vector')} <ArrowRight size={14} />

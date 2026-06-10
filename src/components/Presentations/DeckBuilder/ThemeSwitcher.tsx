@@ -25,18 +25,18 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
   return (
     <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[420px] bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-navy-800">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-800">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-white">
           {t('presentations.builder.topBar.theme', 'Theme')}
         </h3>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+        <button onClick={onClose} className="text-slate-600 hover:text-slate-600">
           <X size={16} />
         </button>
       </div>
 
       {/* Current theme preview */}
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-800">
-        <p className="text-[10px] text-slate-400 uppercase mb-2">Active theme</p>
+      <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-800">
+        <p className="text-[10px] text-slate-600 uppercase mb-2">Active theme</p>
         <div className="flex items-center gap-3">
           <div className="flex gap-0.5 h-8 w-24 rounded-lg overflow-hidden">
             <div className="flex-1" style={{ backgroundColor: theme.colors.primary }} />
@@ -46,11 +46,11 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
           </div>
           <div>
             <p className="text-sm font-medium text-slate-700 dark:text-white">{theme.name}</p>
-            <p className="text-[10px] text-slate-400">{theme.styleTags.join(' / ')}</p>
+            <p className="text-[10px] text-slate-600">{theme.styleTags.join(' / ')}</p>
           </div>
         </div>
         {/* Font preview */}
-        <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-400">
+        <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-600">
           <span>
             Heading:{' '}
             <strong style={{ fontFamily: theme.fonts.headingFamily }}>
@@ -69,7 +69,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
         {/* Brand Kit first */}
         {brandKit && (
           <div className="mb-3">
-            <p className="text-[10px] text-slate-400 uppercase mb-2">Brand Kit</p>
+            <p className="text-[10px] text-slate-600 uppercase mb-2">Brand Kit</p>
             <ThemeCard
               colorSet={{
                 id: 'brand_kit',
@@ -102,7 +102,7 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ isOpen, onClose })
           </div>
         )}
 
-        <p className="text-[10px] text-slate-400 uppercase mb-2">Curated palettes</p>
+        <p className="text-[10px] text-slate-600 uppercase mb-2">Curated palettes</p>
         <div className="grid grid-cols-3 gap-2">
           {CURATED_COLOR_SETS.map((set) => (
             <ThemeCard

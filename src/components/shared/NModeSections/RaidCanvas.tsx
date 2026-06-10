@@ -570,7 +570,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
           {isPolish ? 'RAID Log' : 'RAID Log'}
-          <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">
+          <span className="ml-2 text-xs font-normal text-slate-600 dark:text-slate-500">
             PMBOK / PRINCE2
           </span>
         </h2>
@@ -689,7 +689,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         <div>
           <button
             onClick={() => setShowHeatmap((p) => !p)}
-            className="text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mb-2"
+            className="text-[11px] font-medium text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mb-2"
           >
             {showHeatmap
               ? isPolish
@@ -701,16 +701,16 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
           </button>
           {showHeatmap && (
             <div className="rounded-xl border border-slate-200/50 dark:border-navy-700/50 p-3 bg-slate-50/20 dark:bg-navy-900/15">
-              <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 mb-2 text-center">
+              <div className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500 mb-2 text-center">
                 {isPolish ? 'Macierz Prawdopodobieństwo × Wpływ' : 'Probability × Impact Matrix'}
               </div>
               <div className="grid grid-cols-[auto_1fr_1fr_1fr_1fr] gap-px">
                 {/* Header row */}
-                <div className="text-[9px] text-slate-400 p-1" />
+                <div className="text-[9px] text-slate-600 p-1" />
                 {(['low', 'medium', 'high', 'critical'] as const).map((i) => (
                   <div
                     key={`h-${i}`}
-                    className="text-[9px] text-center font-semibold text-slate-400 dark:text-slate-500 p-1 uppercase"
+                    className="text-[9px] text-center font-semibold text-slate-600 dark:text-slate-500 p-1 uppercase"
                   >
                     {getLevelLabel(i)}
                   </div>
@@ -718,7 +718,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                 {/* Rows (probability: critical→low) */}
                 {(['critical', 'high', 'medium', 'low'] as const).map((p) => (
                   <React.Fragment key={`row-${p}`}>
-                    <div className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 p-1 uppercase flex items-center">
+                    <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-500 p-1 uppercase flex items-center">
                       {getLevelLabel(p)}
                     </div>
                     {(['low', 'medium', 'high', 'critical'] as const).map((i) => {
@@ -749,7 +749,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                   </React.Fragment>
                 ))}
               </div>
-              <div className="flex items-center justify-between mt-2 text-[9px] text-slate-400 dark:text-slate-500">
+              <div className="flex items-center justify-between mt-2 text-[9px] text-slate-600 dark:text-slate-500">
                 <span>← {isPolish ? 'Wpływ' : 'Impact'} →</span>
                 <span>↑ {isPolish ? 'Prawdopodobieństwo' : 'Probability'}</span>
               </div>
@@ -767,7 +767,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
             className={`px-2.5 py-1.5 text-[11px] font-medium rounded-t-lg transition-colors ${
               typeFilter === tab.key
                 ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                : 'text-slate-600 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
             {tab.label}
@@ -778,7 +778,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
       {/* ── Sort info ───────────────────────────────────────────────────── */}
       {filteredItems.length > 0 && (
-        <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-500">
           <span>
             {isPolish
               ? 'Posortowane wg najwyższego wpływu / score'
@@ -792,7 +792,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
       {/* ── Level legend + Add item ─────────────────────────────────────── */}
       <div className="py-2 flex items-center justify-between">
-        <div className="text-[10px] flex flex-wrap items-center gap-1.5 text-slate-400 dark:text-slate-500">
+        <div className="text-[10px] flex flex-wrap items-center gap-1.5 text-slate-600 dark:text-slate-500">
           <span>{isPolish ? 'Legenda poziomów:' : 'Level legend:'}</span>
           {RAID_LEVEL_OPTIONS.map((level) => (
             <span
@@ -817,11 +817,11 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       {/* ── Empty state ─────────────────────────────────────────────────── */}
       {items.length === 0 && (
         <div className="py-6 text-center rounded-xl border border-dashed border-slate-300/50 dark:border-navy-600/50 bg-slate-50/10 dark:bg-navy-900/10">
-          <AlertTriangle size={20} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-          <p className="text-sm text-slate-400 dark:text-slate-500 mb-1">
+          <AlertTriangle size={20} className="mx-auto mb-2 text-slate-600 dark:text-slate-400" />
+          <p className="text-sm text-slate-600 dark:text-slate-500 mb-1">
             {isPolish ? 'Brak elementów RAID.' : 'No RAID items yet.'}
           </p>
-          <p className="text-xs text-slate-300 dark:text-slate-600">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {isPolish
               ? 'Kliknij „Analizuj RAID" aby AI wygenerował pełną analizę RAID (Ryzyka, Założenia, Problemy, Zależności).'
               : 'Click "Analyze RAID" to let AI generate a full RAID analysis (Risks, Assumptions, Issues, Dependencies).'}
@@ -934,7 +934,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         <button
                           onClick={() => onRemoveItem(item.id)}
                           disabled={locked}
-                          className="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                          className="p-1 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                         >
                           <X size={12} />
                         </button>
@@ -947,7 +947,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                     >
                       {/* Type */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                           {isPolish ? 'Typ' : 'Type'}
                         </span>
                         <select
@@ -972,7 +972,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Probability — Risk only */}
                       {isRisk && (
                         <div className="space-y-1">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Prawdopodobieństwo' : 'Probability'}
                           </span>
                           <select
@@ -994,7 +994,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                       {/* Impact */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                           {isPolish ? 'Wpływ' : 'Impact'}
                         </span>
                         <select
@@ -1015,7 +1015,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                       {/* Category */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                           {isPolish ? 'Kategoria' : 'Category'}
                         </span>
                         <select
@@ -1034,7 +1034,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                       {/* Status — type-specific options */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                           Status
                         </span>
                         <select
@@ -1056,7 +1056,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Response Strategy — Risk only (PMBOK) */}
                       {isRisk && (
                         <div className="space-y-1">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Strategia (PMBOK)' : 'Response (PMBOK)'}
                           </span>
                           <select
@@ -1084,7 +1084,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Owner */}
                       <div className="space-y-1">
                         <span
-                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemUnowned ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}
+                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemUnowned ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}`}
                         >
                           <User size={9} />
                           {isPolish ? 'Właściciel' : 'Owner'}
@@ -1122,7 +1122,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Due Date */}
                       <div className="space-y-1">
                         <span
-                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemOverdue ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}
+                          className={`text-[10px] uppercase tracking-wide flex items-center gap-1 ${itemOverdue ? 'text-amber-500' : 'text-slate-600 dark:text-slate-500'}`}
                         >
                           <Calendar size={9} />
                           {isPolish ? 'Termin' : 'Due Date'}
@@ -1147,7 +1147,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
                       {/* Source */}
                       <div className="space-y-1">
-                        <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                        <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500 flex items-center gap-1">
                           <Shield size={9} />
                           {isPolish ? 'Źródło' : 'Source'}
                         </span>
@@ -1172,7 +1172,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Contingency */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Plan awaryjny (contingency)' : 'Contingency Plan'}
                           </span>
                           <AIFieldEnhancer
@@ -1219,7 +1219,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                       {/* Mitigation */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                             {isPolish ? 'Plan mitigacji' : 'Mitigation Plan'}
                           </span>
                           <AIFieldEnhancer
@@ -1268,7 +1268,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                   {/* ── Proposed Action — ALL types ──────────────────────── */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      <span className="text-[10px] uppercase tracking-wide text-slate-600 dark:text-slate-500">
                         {getActionLabel(item.type)}
                       </span>
                       <AIFieldEnhancer

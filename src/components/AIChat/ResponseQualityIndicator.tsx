@@ -198,9 +198,9 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
           <span className="text-xs text-gray-500 dark:text-gray-400">({animatedScore}%)</span>
         </div>
         {showDetails ? (
-          <ChevronUp size={14} className="text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+          <ChevronUp size={14} className="text-gray-600 dark:text-gray-500 dark:text-gray-400" />
         ) : (
-          <ChevronDown size={14} className="text-gray-400 dark:text-gray-500 dark:text-gray-400" />
+          <ChevronDown size={14} className="text-gray-600 dark:text-gray-500 dark:text-gray-400" />
         )}
       </button>
 
@@ -216,7 +216,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
             <div className="flex items-center gap-2">
               <Target
                 size={12}
-                className="text-gray-400 dark:text-gray-500 dark:text-gray-400 shrink-0"
+                className="text-gray-600 dark:text-gray-500 dark:text-gray-400 shrink-0"
               />
               <span className="text-xs text-gray-600 dark:text-gray-400 w-24">
                 {t('quality.relevance', 'Relevance')}
@@ -241,7 +241,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
             <div className="flex items-center gap-2">
               <Shield
                 size={12}
-                className="text-gray-400 dark:text-gray-500 dark:text-gray-400 shrink-0"
+                className="text-gray-600 dark:text-gray-500 dark:text-gray-400 shrink-0"
               />
               <span className="text-xs text-gray-600 dark:text-gray-400 w-24">
                 {t('quality.groundedness', 'Groundedness')}
@@ -266,7 +266,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
             <div className="flex items-center gap-2">
               <FileCheck
                 size={12}
-                className="text-gray-400 dark:text-gray-500 dark:text-gray-400 shrink-0"
+                className="text-gray-600 dark:text-gray-500 dark:text-gray-400 shrink-0"
               />
               <span className="text-xs text-gray-600 dark:text-gray-400 w-24">
                 {t('quality.completeness', 'Completeness')}
@@ -291,7 +291,7 @@ export const ResponseQualityIndicator: React.FC<ResponseQualityIndicatorProps> =
             <div className="flex items-center gap-2">
               <Sparkles
                 size={12}
-                className="text-gray-400 dark:text-gray-500 dark:text-gray-400 shrink-0"
+                className="text-gray-600 dark:text-gray-500 dark:text-gray-400 shrink-0"
               />
               <span className="text-xs text-gray-600 dark:text-gray-400 w-24">
                 {t('quality.coherence', 'Coherence')}

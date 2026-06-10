@@ -6,6 +6,8 @@ import { Eye, FileText, FolderOpen, Target, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+
 import type { Watcher } from '../../../hooks/useUserNotificationPreferences';
 
 interface WatchingTabProps {
@@ -53,18 +55,14 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
       </div>
 
       {watchers.length === 0 ? (
-        <div className="text-center py-12 bg-slate-50 dark:bg-navy-800/50 rounded-lg">
-          <Eye size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">
-            {t('settings.notifications.noWatchers', "You're not watching anything yet.")}
-          </p>
-          <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-            {t(
-              'settings.notifications.noWatchersHint',
-              'Click the eye icon on tasks, initiatives, or projects to start watching them.'
-            )}
-          </p>
-        </div>
+        <EmptyState
+          icon={<Eye />}
+          title={t('settings.notifications.noWatchers', "You're not watching anything yet.")}
+          description={t(
+            'settings.notifications.noWatchersHint',
+            'Click the eye icon on tasks, initiatives, or projects to start watching them.'
+          )}
+        />
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([type, items]) => {
@@ -85,7 +83,7 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
                       className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg group"
                     >
                       <div className="flex items-center gap-3">
-                        <Icon size={16} className="text-slate-400 dark:text-slate-500" />
+                        <Icon size={16} className="text-slate-600 dark:text-slate-500" />
                         <div>
                           <p className="text-sm font-medium text-slate-900 dark:text-white">
                             {watcher.objectId}
@@ -98,7 +96,7 @@ const WatchingTab: React.FC<WatchingTabProps> = ({ watchers, onAddWatcher, onRem
 
                       <button
                         onClick={() => onRemoveWatcher(watcher.objectType, watcher.objectId)}
-                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                         title={t('settings.notifications.unwatch', 'Stop watching')}
                       >
                         <Trash2 size={16} />

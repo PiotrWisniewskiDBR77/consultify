@@ -130,7 +130,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
         <button
           onClick={scrollToInput}
           disabled={locked}
-          className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+          className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
         >
           <Plus size={13} />
           {isPolish ? 'Dodaj komentarz' : 'Add comment'}
@@ -167,7 +167,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
 
         {/* Comment list */}
         {comments.length === 0 ? (
-          <p className="text-xs text-slate-400 dark:text-slate-500 py-4 text-center">
+          <p className="text-xs text-slate-600 dark:text-slate-500 py-4 text-center">
             {isPolish
               ? 'Brak komentarzy dla wybranego zakresu dat.'
               : 'No comments for selected date range.'}
@@ -193,7 +193,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                             : `Priority: ${getCommentPriority(c)}`
                         }
                       />
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-slate-600">
                         {new Date(c.createdAt).toLocaleDateString()}
                       </span>
                       {c.isAIGenerated && (
@@ -207,7 +207,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                   <button
                     onClick={() => onDeleteComment(c.id)}
                     disabled={locked}
-                    className="p-0.5 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    className="p-0.5 text-slate-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                   >
                     <X size={12} />
                   </button>
@@ -222,7 +222,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             <button
               type="button"
               onClick={() => setShowMoreComments((prev) => !prev)}
-              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+              className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
             >
               {isExpandedComments ? (isPolish ? 'Mniej' : 'Less') : isPolish ? 'Więcej' : 'More'}
             </button>

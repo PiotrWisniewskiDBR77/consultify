@@ -60,7 +60,7 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
             <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
               {whiteboardModeCopy.modeLabel}
             </div>
-            <div className="text-[9px] text-slate-400 dark:text-slate-500">
+            <div className="text-[9px] text-slate-600 dark:text-slate-500">
               {sessionState.timerEndsAt
                 ? `${Math.max(0, Math.ceil((sessionState.timerEndsAt - Date.now()) / 1000))}s`
                 : t('myWork.whiteboard.sessionPanel.timerOff')}

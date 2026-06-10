@@ -60,7 +60,7 @@ export const SignalNode: React.FC<SignalNodeProps> = ({
       {/* Main Icon */}
       <Icon
         size={22}
-        className={`transition-colors duration-300 ${count > 0 ? colorClass : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-200'}`}
+        className={`transition-colors duration-300 ${count > 0 ? colorClass : 'text-slate-600 group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-200'}`}
         strokeWidth={isCritical && count > 0 ? 2.5 : 2}
       />
 

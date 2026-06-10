@@ -116,7 +116,7 @@ const ProposalStepList: React.FC<ProposalStepListProps> = ({ steps, isRtl, t }) 
         </li>
       ))}
       {steps.length > 8 ? (
-        <li className="list-none text-slate-400 dark:text-slate-500 italic">
+        <li className="list-none text-slate-600 dark:text-slate-500 italic">
           {t('chatProposal.step.more', '…and {{count}} more', {
             count: steps.length - 8,
           } as any)}
@@ -552,7 +552,7 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
           </div>
 
           {/* Timestamp row — subtle, kept consistent with regular bubbles */}
-          <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 pl-1">
+          <div className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5 pl-1">
             {new Date(
               (msg.timestamp as string | Date) || (msg as any).createdAt || Date.now()
             ).toLocaleTimeString()}

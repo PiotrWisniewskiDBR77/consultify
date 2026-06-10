@@ -1,5 +1,7 @@
 # Table Preview Pane Standard (Table + Preview)
 
+> ⚠️ **SUPERSEDED (2026-06-06) — scalone w [`TABLE_AND_PREVIEW_CANON.md`](TABLE_AND_PREVIEW_CANON.md) §7.** W razie konfliktu obowiązuje kanon.
+
 > **Status:** Canonical, subordinate to `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`  
 > **Cel:** Jeden kanoniczny wzorzec “tabela + podgląd po prawej” dla wszystkich kolekcji (Decisions, Inbox, Tasks, Initiatives, Reports…).  
 > **SSOT (as‑is):** Decisions preview: `src/components/MyWork/DecisionPreviewPanel.tsx` + table: `src/components/MyWork/DecisionsPanelContent.tsx`  

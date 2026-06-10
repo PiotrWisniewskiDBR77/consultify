@@ -112,7 +112,7 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
             <div className="text-3xl font-bold text-primary-600 dark:text-primary-400">
               {attractiveness.toFixed(1)}
             </div>
-            <div className="text-xs text-slate-400">/ 5</div>
+            <div className="text-xs text-slate-600">/ 5</div>
           </div>
         </div>
 
@@ -124,7 +124,7 @@ export const PorterRadar: React.FC<PorterRadarProps> = ({ data, isPolish }) => {
               style={{ left: `${((attractiveness - 1) / 4) * 100}%`, marginLeft: '-8px' }}
             />
           </div>
-          <div className="flex justify-between mt-1 text-xs text-slate-400">
+          <div className="flex justify-between mt-1 text-xs text-slate-600">
             <span>{isPolish ? 'Niska' : 'Low'}</span>
             <span>{isPolish ? 'Wysoka' : 'High'}</span>
           </div>

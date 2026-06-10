@@ -243,7 +243,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           <div className="relative">
             <CalendarDays
               size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
             />
             <input
               type="date"
@@ -265,7 +265,7 @@ export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> =
           <div className="flex items-start gap-2">
             <AlertTriangle
               size={16}
-              className={hasCalendarWarning ? 'text-amber-500' : 'text-slate-400'}
+              className={hasCalendarWarning ? 'text-amber-500' : 'text-slate-600'}
             />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium">

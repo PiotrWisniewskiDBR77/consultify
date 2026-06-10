@@ -70,7 +70,7 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
                 <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {AXIS_SHORT[s.axis]}
                 </span>
-                <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                <span className="text-[11px] text-slate-600 dark:text-slate-500">
                   → {labelLevel(s.recommendedAction.level)}
                 </span>
               </div>

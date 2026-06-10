@@ -27,13 +27,13 @@ import type {
 
 export type ReportActionTarget =
   | string
-  | Pick<ReportItem, 'id' | 'artifactId' | 'title'>
-  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title'>;
+  | Pick<ReportItem, 'id' | 'artifactId' | 'title' | 'governance'>
+  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title' | 'governance'>;
 
 export type PresentationActionTarget =
   | string
-  | Pick<PresentationItem, 'id' | 'artifactId' | 'title'>
-  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title'>;
+  | Pick<PresentationItem, 'id' | 'artifactId' | 'title' | 'governance'>
+  | Pick<UnifiedOutputRow, 'originRecordId' | 'artifactId' | 'title' | 'governance'>;
 
 type ArtifactOriginActionTarget = ReportActionTarget | PresentationActionTarget;
 
@@ -130,6 +130,44 @@ export function normalizePresentationActionTarget(target: PresentationActionTarg
   return normalizeArtifactOriginActionTarget(target);
 }
 
+/**
+ * Approval-before-export client guard.
+ *
+ * The server already enforces quality/approval gates on the export routes
+ * (`report-builder.routes.ts` → `enforceQualityGatesForExport`,
+ * `presentations.routes.ts` → quality + legal-hold gates). This client-side
+ * pre-flight ensures the hub never *offers* export on an unapproved artifact:
+ * it reads `governance.publishState` from the registry row that the action
+ * was invoked with (already mapped via `mapArtifactGovernance`) and refuses
+ * to call the export endpoint unless the artifact is approved/published.
+ *
+ * Backward-compatible: when the target carries no governance (e.g. a bare
+ * originRecordId string, or a legacy report/deck row without a registry
+ * publishState), the guard is a no-op and export proceeds — the server gate
+ * remains the hard backstop.
+ */
+const EXPORTABLE_PUBLISH_STATES = new Set(['approved', 'published']);
+
+function readTargetPublishState(target: ArtifactOriginActionTarget): string | null {
+  if (!target || typeof target !== 'object') return null;
+  const governance = target.governance;
+  if (!governance) return null;
+  const publishState = governance.publishState;
+  return publishState ? String(publishState).toLowerCase() : null;
+}
+
+/**
+ * Returns true when the artifact is safe to export (no governance signal, or an
+ * approved/published publishState). Returns false only when governance is
+ * present AND the publishState is a non-approved value — i.e. the export must be
+ * blocked at the client.
+ */
+function isExportApproved(target: ArtifactOriginActionTarget): boolean {
+  const publishState = readTargetPublishState(target);
+  if (!publishState) return true;
+  return EXPORTABLE_PUBLISH_STATES.has(publishState);
+}
+
 async function fetchArtifactActionTarget(
   artifactId: string | undefined
 ): Promise<ArtifactActionTargetPayload | null> {
@@ -146,6 +184,11 @@ async function fetchArtifactActionTarget(
   }
 }
 
+/*
+ * Demo fixtures below are intentionally retained as commented reference only.
+ * They are NEVER injected at runtime — demo data is served exclusively by the
+ * canonical Atelier Toys seed when the user explicitly enables the demo toggle.
+ *
 const DEMO_REPORTS: ReportItem[] = [
   {
     id: 'demo-r1',
@@ -343,6 +386,7 @@ const DEMO_TEMPLATES: TemplateItem[] = [
     sectionCount: 7,
   },
 ];
+*/
 
 // ─── Reports ──────────────────────────────────────────────────────
 
@@ -397,7 +441,7 @@ function mapArtifactReport(raw: any): ReportItem {
   return {
     id: raw.originRecordId || raw.origin_record_id || raw.id,
     artifactId: raw.artifactId || raw.artifact_id,
-    title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+    title: resolveArtifactTitle(raw, 'Document'),
     reportType: raw.reportType || 'custom',
     status: reportStatus,
     owner: raw.ownerUserId || raw.createdBy || '—',
@@ -417,9 +461,12 @@ function mapArtifactReport(raw: any): ReportItem {
 }
 
 export function useReports() {
+  // Sample/demo R&P artifacts are gated behind explicit demo mode (shouldAllowDemoData);
+  // for real tenants only canonical artifacts are ever served. In demo mode an empty
+  // canonical load is expected (data arrives via the Atelier Toys seed), not an error.
+  const allowDemoData = shouldAllowDemoData();
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const allowDemoData = shouldAllowDemoData();
   const [error, setError] = useState<string | null>(null);
 
   const fetchReports = useCallback(async () => {
@@ -439,21 +486,15 @@ export function useReports() {
         return;
       }
 
-      if (allowDemoData && (artifactRes.status === 404 || artifactRes.status === 501)) {
-        setReports(DEMO_REPORTS);
-        setError(null);
-        return;
-      }
-
       setReports([]);
-      setError('Canonical artifact registry failed to load reports.');
+      setError(allowDemoData ? null : 'Canonical artifact registry failed to load reports.');
     } catch {
       setReports([]);
-      setError('Canonical artifact registry failed to load reports.');
+      setError(allowDemoData ? null : 'Canonical artifact registry failed to load reports.');
     } finally {
       setLoading(false);
     }
-  }, [allowDemoData]);
+  }, []);
 
   useEffect(() => {
     fetchReports();
@@ -508,12 +549,70 @@ function mapDeck(raw: any): PresentationItem {
   };
 }
 
+const PRESENTATION_SOURCE_TYPES = new Set(['tool', 'assessment', 'finance', 'upload']);
+const UUID_LIKE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const GENERIC_TITLES = new Set([
+  '',
+  'untitled',
+  'untitled artifact',
+  'untitled presentation',
+  'untitled report',
+  'untitled deck',
+  'executive presentation draft',
+]);
+
+/**
+ * Resolve a presentation's SOURCE to one of the known human labels.
+ *
+ * The canonical artifact registry list does NOT expose a top-level
+ * `sourceType`; the real source kind lives in `originSummary.deckType` (e.g.
+ * `tool`, `assessment`, `finance`). Earlier code blindly read `raw.sourceType`
+ * (always undefined), and other call sites surfaced raw record IDs. Guard
+ * against UUID-like values so the SOURCE column never renders an ID.
+ */
+function resolvePresentationSourceType(raw: any): PresentationItem['sourceType'] {
+  const candidates = [
+    raw?.sourceType,
+    raw?.originSummary?.deckType,
+    raw?.originSummary?.sourceType,
+    raw?.deckType,
+  ];
+  for (const candidate of candidates) {
+    const value = String(candidate || '')
+      .trim()
+      .toLowerCase();
+    if (!value || UUID_LIKE.test(value)) continue;
+    if (PRESENTATION_SOURCE_TYPES.has(value)) return value as PresentationItem['sourceType'];
+  }
+  return 'tool';
+}
+
+/**
+ * Resolve a human title, falling back to "<Kind> · <date>" when the registry
+ * only has a generic/placeholder snapshot (never a raw UUID or a shared
+ * constant like "Executive presentation draft").
+ */
+function resolveArtifactTitle(raw: any, kindLabel: string): string {
+  const candidate = String(raw?.resolvedTitle || raw?.titleSnapshot || raw?.title || '').trim();
+  const normalized = candidate.toLowerCase();
+  if (candidate && !UUID_LIKE.test(candidate) && !GENERIC_TITLES.has(normalized)) {
+    return candidate;
+  }
+  const dateRaw = raw?.lastTransitionAt || raw?.updatedAt || raw?.createdAt;
+  const date = dateRaw ? new Date(dateRaw) : null;
+  const dateLabel =
+    date && !Number.isNaN(date.getTime())
+      ? date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+      : '';
+  return dateLabel ? `${kindLabel} · ${dateLabel}` : kindLabel;
+}
+
 function mapArtifactPresentation(raw: any): PresentationItem {
   return {
     id: raw.originRecordId || raw.origin_record_id || raw.id,
     artifactId: raw.artifactId || raw.artifact_id,
-    title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
-    sourceType: (raw.sourceType || 'tool') as PresentationItem['sourceType'],
+    title: resolveArtifactTitle(raw, 'Presentation'),
+    sourceType: resolvePresentationSourceType(raw),
     owner: raw.ownerUserId || raw.createdBy || '—',
     status: (
       raw.originStatus ||
@@ -580,7 +679,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       kind: 'document',
       originRecordId: String(originId),
       artifactId: raw.artifactId || raw.artifact_id,
-      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      title: resolveArtifactTitle(raw, 'Document template'),
       statusKey: delivery,
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
@@ -604,7 +703,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       kind: 'presentation',
       originRecordId: String(originId),
       artifactId: raw.artifactId || raw.artifact_id,
-      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      title: resolveArtifactTitle(raw, 'Presentation template'),
       statusKey: delivery,
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
@@ -624,7 +723,7 @@ function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       kind: 'sheet',
       originRecordId: String(originId),
       artifactId: raw.artifactId || raw.artifact_id,
-      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      title: resolveArtifactTitle(raw, 'Sheet'),
       statusKey: delivery,
       owner: raw.ownerUserId || raw.createdBy || '—',
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
@@ -1059,7 +1158,6 @@ export function useAssessmentOutputsForOrigins(
 export function usePresentations() {
   const [presentations, setPresentations] = useState<PresentationItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const allowDemoData = shouldAllowDemoData();
   const [error, setError] = useState<string | null>(null);
 
   const fetchPresentations = useCallback(async () => {
@@ -1079,12 +1177,6 @@ export function usePresentations() {
         return;
       }
 
-      if (allowDemoData && (artifactRes.status === 404 || artifactRes.status === 501)) {
-        setPresentations(DEMO_PRESENTATIONS);
-        setError(null);
-        return;
-      }
-
       setPresentations([]);
       setError('Canonical artifact registry failed to load presentations.');
     } catch {
@@ -1093,7 +1185,7 @@ export function usePresentations() {
     } finally {
       setLoading(false);
     }
-  }, [allowDemoData]);
+  }, []);
 
   useEffect(() => {
     fetchPresentations();
@@ -1121,7 +1213,6 @@ export function usePresentations() {
 export function useSheetOutputs() {
   const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const allowDemoData = shouldAllowDemoData();
   const [error, setError] = useState<string | null>(null);
 
   const fetchSheets = useCallback(async () => {
@@ -1143,12 +1234,6 @@ export function useSheetOutputs() {
         return;
       }
 
-      if (allowDemoData && (res.status === 404 || res.status === 501)) {
-        setRows([]);
-        setError(null);
-        return;
-      }
-
       setRows([]);
       setError('Canonical artifact registry failed to load sheets.');
     } catch {
@@ -1157,7 +1242,7 @@ export function useSheetOutputs() {
     } finally {
       setLoading(false);
     }
-  }, [allowDemoData]);
+  }, []);
 
   useEffect(() => {
     void fetchSheets();
@@ -1260,7 +1345,6 @@ function mapCanonicalTemplateArtifact(raw: any): TemplateItem | null {
 export function useTemplates() {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const allowDemoData = shouldAllowDemoData();
   const [error, setError] = useState<string | null>(null);
 
   const fetchTemplates = useCallback(async () => {
@@ -1325,7 +1409,7 @@ export function useTemplates() {
     } finally {
       setLoading(false);
     }
-  }, [allowDemoData]);
+  }, []);
 
   useEffect(() => {
     fetchTemplates();
@@ -1341,6 +1425,10 @@ export function useRapActions() {
 
   const exportReportPdf = useCallback(
     async (target: ReportActionTarget) => {
+      if (!isExportApproved(target)) {
+        toast.error(t('rap.toast.exportBlocked', 'Approve the artifact before exporting'));
+        return;
+      }
       const { originRecordId, artifactId } = normalizeReportActionTarget(target);
       const actionTarget = await fetchArtifactActionTarget(artifactId);
       const exportPath =
@@ -1372,6 +1460,10 @@ export function useRapActions() {
 
   const exportDeckPptx = useCallback(
     async (target: PresentationActionTarget) => {
+      if (!isExportApproved(target)) {
+        toast.error(t('rap.toast.exportBlocked', 'Approve the artifact before exporting'));
+        return;
+      }
       const { originRecordId, artifactId } = normalizePresentationActionTarget(target);
       const actionTarget = await fetchArtifactActionTarget(artifactId);
       const exportPath =

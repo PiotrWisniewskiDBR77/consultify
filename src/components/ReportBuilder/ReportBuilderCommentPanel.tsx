@@ -116,12 +116,12 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle2,
     color: 'text-green-500',
   },
-  DISMISSED: { label: 'Dismissed', labelPl: 'Odrzucony', icon: X, color: 'text-slate-400' },
+  DISMISSED: { label: 'Dismissed', labelPl: 'Odrzucony', icon: X, color: 'text-slate-600' },
   WONT_FIX: {
     label: "Won't Fix",
     labelPl: 'Nie będzie naprawiane',
     icon: X,
-    color: 'text-slate-400',
+    color: 'text-slate-600',
   },
 };
 
@@ -244,7 +244,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
             <X size={18} />
           </button>
@@ -318,11 +318,11 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
           </div>
         ) : filteredComments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageCircle className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <MessageCircle className="w-10 h-10 text-slate-600 dark:text-slate-400 mx-auto mb-2" />
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {isPl ? 'Brak komentarzy' : 'No comments yet'}
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-slate-600 dark:text-slate-500">
               {isPl
                 ? 'Dodaj komentarz, aby rozpocząć dyskusję'
                 : 'Add a comment to start the discussion'}
@@ -353,7 +353,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusIcon size={14} className={statusConfig?.color} />
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       {formatDate(comment.createdAt)}
                     </span>
                   </div>
@@ -427,7 +427,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
                     )}
                     <button
                       onClick={() => onDeleteComment(comment.id)}
-                      className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 rounded"
+                      className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 rounded"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -493,7 +493,7 @@ export const ReportBuilderCommentPanel: React.FC<ReportBuilderCommentPanelProps>
             className={`p-2 rounded-lg transition-colors ${
               newComment.trim() && !submitting
                 ? 'bg-primary-600 text-white hover:bg-primary-500'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}

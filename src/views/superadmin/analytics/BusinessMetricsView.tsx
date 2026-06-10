@@ -23,6 +23,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { Card } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
 interface BusinessMetric {
@@ -243,7 +244,7 @@ const BusinessMetricsView: React.FC = () => {
 
   const getTrendIcon = (trend?: number) => {
     if (!trend || trend === 0)
-      return <Minus className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />;
+      return <Minus className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400" />;
     if (trend > 0) return <TrendingUp className="w-4 h-4 text-green-400" />;
     return <TrendingDown className="w-4 h-4 text-rose-400" />;
   };
@@ -264,11 +265,7 @@ const BusinessMetricsView: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -401,7 +398,7 @@ const BusinessMetricsView: React.FC = () => {
         {metrics.length === 0 ? (
           <Card className="col-span-3 p-8">
             <div className="flex flex-col items-center justify-center">
-              <BarChart3 className="w-16 h-16 text-slate-400 dark:text-slate-400 mb-4" />
+              <BarChart3 className="w-16 h-16 text-slate-600 dark:text-slate-400 mb-4" />
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
                 No Metrics Yet
               </h3>

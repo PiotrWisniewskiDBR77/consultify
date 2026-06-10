@@ -111,7 +111,7 @@ export const PreviewRelations: React.FC<PreviewRelationsProps> = ({
   if (!items.length) {
     return (
       <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-        <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
+        <span className="text-xs text-slate-600 dark:text-slate-500 italic py-1.5">
           {emptyLabel ?? (isPolish ? 'Brak powiązań' : 'No linked documents')}
         </span>
       </div>

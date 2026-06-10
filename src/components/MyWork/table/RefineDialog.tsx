@@ -117,7 +117,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
               <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-100">
                 {isPl ? 'Doprecyzuj propozycję' : 'Refine Proposal'}
               </h3>
-              <p className="text-[10px] text-slate-400 dark:text-zinc-500">
+              <p className="text-[10px] text-slate-600 dark:text-zinc-500">
                 {isPl ? `Wersja ${currentVersion}` : `Version ${currentVersion}`} ·{' '}
                 {proposalIntent.replace(/_/g, ' ')}
               </p>
@@ -125,7 +125,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
           >
             <X size={16} />
           </button>
@@ -162,7 +162,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
               className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-sm text-slate-800 dark:text-zinc-200 placeholder-slate-400 focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 outline-none resize-none transition-colors disabled:opacity-50"
             />
             <div className="absolute bottom-2 right-2 flex items-center gap-1">
-              <span className="text-[9px] text-slate-300 dark:text-zinc-600">
+              <span className="text-[9px] text-slate-600 dark:text-zinc-600">
                 {isPl ? '⌘+Enter wyślij' : '⌘+Enter to send'}
               </span>
             </div>
@@ -188,7 +188,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
           <div className="px-5 border-t border-slate-200/40 dark:border-zinc-700/40">
             <button
               onClick={() => setShowHistory((v) => !v)}
-              className="flex items-center gap-1.5 py-2 text-[10px] font-medium text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors w-full"
+              className="flex items-center gap-1.5 py-2 text-[10px] font-medium text-slate-600 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors w-full"
             >
               <History size={12} />
               {isPl ? 'Historia doprecyzowań' : 'Refinement history'} ({refinementHistory.length})
@@ -209,7 +209,7 @@ export const RefineDialog: React.FC<RefineDialogProps> = ({
                     </span>
                     <div className="min-w-0">
                       <p className="truncate">{entry.message}</p>
-                      <p className="text-[9px] text-slate-300 dark:text-zinc-600">
+                      <p className="text-[9px] text-slate-600 dark:text-zinc-600">
                         {new Date(entry.timestamp).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',

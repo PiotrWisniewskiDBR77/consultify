@@ -6,37 +6,45 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
+  Archive,
   Bell,
-  Calendar,
   Check,
   CheckCircle2,
   CheckSquare,
   ChevronRight,
   Clock,
-  Copy,
-  Edit,
-  Eye,
-  Flag,
+  Cpu,
+  DollarSign,
+  Edit2,
   FolderKanban,
   Loader2,
+  type LucideIcon,
   Minus,
-  MoreVertical,
   Scale,
-  Send,
   Settings2,
-  Sparkles,
+  Shield,
   Square,
+  Target,
+  Trash2,
   TrendingUp,
-  User,
   X,
-  Zap,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { LoadingState } from '@/components/ui/primitives';
+import {
+  DueChip,
+  EntityStatusChip,
+  MetaChip,
+  PriorityChip,
+  type PriorityLevel,
+} from '@/components/ui/primitives/chips';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -129,91 +137,69 @@ interface DecisionsPanelContentProps {
   onBulkBarChange?: (payload: DecisionsBulkBarPayload) => void;
 }
 
-// Priority config — 5-color semantic palette
-const getPriorityConfig = (priority?: string) => {
+// Priority raw → canonical PriorityChip level (dot carries the only color).
+const priorityLevel = (priority?: string): PriorityLevel => {
   switch (priority?.toUpperCase()) {
     case 'CRITICAL':
-      return {
-        color: 'text-rose-700 dark:text-rose-400',
-        bg: 'bg-rose-100 dark:bg-rose-500/20',
-        dot: 'bg-rose-500',
-        label: 'Critical',
-        icon: Zap,
-      };
+      return 'urgent';
     case 'HIGH':
-      return {
-        color: 'text-amber-700 dark:text-amber-400',
-        bg: 'bg-amber-100 dark:bg-amber-500/20',
-        dot: 'bg-amber-500',
-        label: 'High',
-        icon: Flag,
-      };
-    case 'MEDIUM':
-      return {
-        color: 'text-blue-600 dark:text-blue-400',
-        bg: 'bg-blue-50/70 dark:bg-blue-500/10',
-        dot: 'bg-blue-500',
-        label: 'Medium',
-        icon: Flag,
-      };
+      return 'high';
     case 'LOW':
-      return {
-        color: 'text-slate-600 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-navy-800/60',
-        dot: 'bg-slate-400',
-        label: 'Low',
-        icon: Flag,
-      };
+      return 'low';
+    case 'MEDIUM':
     default:
-      return {
-        color: 'text-slate-600 dark:text-slate-400',
-        bg: 'bg-slate-100 dark:bg-navy-800/60',
-        dot: 'bg-slate-400',
-        label: 'Normal',
-        icon: Flag,
-      };
+      return 'medium';
   }
 };
 
-// Status config — subtle badges, alarm only for blocked/rejected/escalated
-const getStatusConfig = (status?: string) => {
+const priorityLabel = (priority: string | undefined, isPolish: boolean): string => {
+  switch (priority?.toUpperCase()) {
+    case 'CRITICAL':
+      return isPolish ? 'Krytyczny' : 'Critical';
+    case 'HIGH':
+      return isPolish ? 'Wysoki' : 'High';
+    case 'LOW':
+      return isPolish ? 'Niski' : 'Low';
+    case 'MEDIUM':
+    default:
+      return isPolish ? 'Średni' : 'Medium';
+  }
+};
+
+// Distinct icon per decision type (dot/icon carries the type signal).
+const getDecisionTypeIcon = (type?: string): LucideIcon => {
+  switch (type?.toUpperCase()) {
+    case 'SCOPE':
+      return Target;
+    case 'RISK':
+      return AlertTriangle;
+    case 'TECH':
+    case 'TECHNICAL':
+      return Cpu;
+    case 'APPROVAL':
+      return CheckCircle2;
+    case 'GOVERNANCE':
+      return Shield;
+    case 'BUDGET':
+      return DollarSign;
+    default:
+      return Scale;
+  }
+};
+
+const statusLabel = (status: string | undefined, isPolish: boolean): string => {
   switch (status?.toUpperCase()) {
     case 'APPROVED':
-      return {
-        color: 'text-emerald-600 dark:text-emerald-400',
-        bg: 'bg-emerald-50/70 dark:bg-emerald-500/10',
-        dot: 'bg-emerald-500',
-        label: 'Approved',
-      };
+      return isPolish ? 'Przyjęta' : 'Approved';
     case 'REJECTED':
-      return {
-        color: 'text-rose-700 dark:text-rose-400',
-        bg: 'bg-rose-100 dark:bg-rose-500/20',
-        dot: 'bg-rose-500',
-        label: 'Rejected',
-      };
+      return isPolish ? 'Odrzucona' : 'Rejected';
     case 'DEFERRED':
-      return {
-        color: 'text-amber-600 dark:text-amber-400',
-        bg: 'bg-amber-50/70 dark:bg-amber-500/10',
-        dot: 'bg-amber-500',
-        label: 'Deferred',
-      };
+      return isPolish ? 'Odroczona' : 'Deferred';
     case 'ESCALATED':
-      return {
-        color: 'text-amber-700 dark:text-amber-400',
-        bg: 'bg-amber-100 dark:bg-amber-500/20',
-        dot: 'bg-amber-500',
-        label: 'Escalated',
-      };
+      return isPolish ? 'Eskalowana' : 'Escalated';
     case 'PENDING':
     default:
-      return {
-        color: 'text-blue-600 dark:text-blue-400',
-        bg: 'bg-blue-50/70 dark:bg-blue-500/10',
-        dot: 'bg-blue-500',
-        label: 'Pending',
-      };
+      return isPolish ? 'Oczekuje' : 'Pending';
   }
 };
 
@@ -271,29 +257,20 @@ const DECISION_COLUMNS: ColumnDef[] = [
     filterable: false,
   },
   {
-    id: 'type',
-    label: 'Type',
-    width: 100,
-    minWidth: 80,
-    maxWidth: 140,
-    resizable: true,
-    filterable: false,
-  },
-  {
-    id: 'indicator',
-    label: '',
-    width: 32,
-    minWidth: 32,
-    maxWidth: 32,
-    resizable: false,
-    filterable: false,
-  },
-  {
     id: 'title',
     label: 'Decision',
     width: 560,
     minWidth: 360,
     maxWidth: 900,
+    resizable: true,
+    filterable: false,
+  },
+  {
+    id: 'type',
+    label: 'Type',
+    width: 100,
+    minWidth: 80,
+    maxWidth: 140,
     resizable: true,
     filterable: false,
   },
@@ -407,6 +384,8 @@ const DecisionTableRow: React.FC<{
   onReject: (id: string) => void;
   onClick?: (id: string, decisionData?: Decision) => void;
   onOpenFull?: (id: string, decisionData?: Decision) => void;
+  onOpenPreview: (id: string) => void;
+  onDelete: (id: string) => void;
   columnWidths: ColumnWidths;
   hiddenColumns?: Set<string>;
   showRowDescription: boolean;
@@ -418,52 +397,118 @@ const DecisionTableRow: React.FC<{
   onReject,
   onClick,
   onOpenFull,
+  onOpenPreview,
+  onDelete,
   columnWidths,
   hiddenColumns,
   showRowDescription,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
 
-  const priorityConfig = getPriorityConfig(decision.priority);
-  const statusConfig = getStatusConfig(decision.status);
+  const level = priorityLevel(decision.priority);
   const dueDate = decision.dueDate || decision.deadline;
   const overdue = isOverdue(dueDate) && decision.status?.toUpperCase() === 'PENDING';
   const daysWaiting = getDaysWaiting(decision.createdAt);
   const isPending = decision.status?.toUpperCase() === 'PENDING';
-  const PriorityIcon = priorityConfig.icon;
 
-  const rowActions = useMemo(() => {
-    const actions: RowAction[] = [
-      {
-        id: 'open',
-        label: isPolish ? 'Otwórz' : t('common.open', 'Open'),
-        icon: Eye,
-        variant: 'primary',
-        onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
-      },
-    ];
+  const kebabSections = useMemo<RowActionSection[]>(() => {
+    const sections: RowActionSection[] = [];
+    // GÓRA — kontekst (zależny od statusu)
     if (isPending) {
-      actions.push(
+      sections.push({
+        id: 'context',
+        kind: 'context',
+        actions: [
+          {
+            id: 'approve',
+            label: isPolish ? 'Przyjmij' : 'Approve',
+            icon: Check,
+            variant: 'primary',
+            onClick: () => onApprove(decision.id),
+          },
+          {
+            id: 'reject',
+            label: isPolish ? 'Odrzuć' : 'Reject',
+            icon: X,
+            variant: 'danger',
+            onClick: () => onReject(decision.id),
+          },
+        ],
+      });
+    }
+    // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2): Otwórz podgląd · Edytuj · Archiwizuj · Delay▸
+    sections.push({
+      id: 'fixed',
+      kind: 'manage',
+      actions: [
         {
-          id: 'approve',
-          label: isPolish ? 'Przyjęta' : 'Approve',
-          icon: Check,
-          divider: true,
-          onClick: () => onApprove(decision.id),
-          variant: 'primary',
+          id: 'open',
+          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          icon: ChevronRight,
+          onClick: () => onOpenPreview(decision.id),
         },
         {
-          id: 'reject',
-          label: isPolish ? 'Odrzucona' : 'Reject',
-          icon: X,
-          onClick: () => onReject(decision.id),
+          id: 'edit',
+          label: isPolish ? 'Edytuj' : 'Edit',
+          icon: Edit2,
+          onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
+        },
+        {
+          id: 'archive',
+          label: isPolish ? 'Archiwizuj' : 'Archive',
+          icon: Archive,
+          disabled: true,
+          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          onClick: () => {},
+        },
+        ...(dueDate
+          ? [
+              {
+                id: 'delay',
+                label: isPolish ? 'Odłóż termin' : 'Delay',
+                icon: Clock,
+                onClick: () => {},
+                submenu: [1, 3, 7].map((d) => ({
+                  id: `delay-${d}`,
+                  label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                  icon: Clock,
+                  disabled: true,
+                  description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                  onClick: () => {},
+                })),
+              },
+            ]
+          : []),
+      ],
+    });
+    // DANGER — Usuń
+    sections.push({
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'delete',
+          label: isPolish ? 'Usuń' : 'Delete',
+          icon: Trash2,
           variant: 'danger',
-        }
-      );
-    }
-    return actions;
-  }, [decision, isPending, isPolish, onApprove, onClick, onOpenFull, onReject, t]);
+          onClick: () => onDelete(decision.id),
+        },
+      ],
+    });
+    return sections;
+  }, [
+    decision,
+    dueDate,
+    isPending,
+    isPolish,
+    onApprove,
+    onClick,
+    onDelete,
+    onOpenFull,
+    onOpenPreview,
+    onReject,
+  ]);
 
   return (
     <motion.tr
@@ -474,8 +519,12 @@ const DecisionTableRow: React.FC<{
       onClick={() => onClick?.(decision.id, decision)}
       onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
-        group cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
-        ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+        group relative cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
+        ${
+          isSelected
+            ? 'bg-primary-500/8 dark:bg-primary-500/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary-500'
+            : ''
+        }
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
       `}
@@ -500,24 +549,6 @@ const DecisionTableRow: React.FC<{
         </button>
       </td>
 
-      {/* Type Badge */}
-      {!hiddenColumns?.has('type') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.type }}>
-          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-xs font-medium">
-            <Scale size={12} />
-            {decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
-          </span>
-        </td>
-      )}
-
-      {/* Priority Dot */}
-      <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div
-          className={`w-2.5 h-2.5 rounded-full ${priorityConfig.dot} ${overdue ? 'animate-pulse' : ''}`}
-          title={priorityConfig.label}
-        />
-      </td>
-
       {/* Decision Title */}
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
@@ -532,66 +563,57 @@ const DecisionTableRow: React.FC<{
         </div>
       </td>
 
+      {/* Type Badge */}
+      {!hiddenColumns?.has('type') && (
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.type }}>
+          <MetaChip
+            icon={getDecisionTypeIcon(decision.decisionType || decision.type)}
+            label={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
+          />
+        </td>
+      )}
+
       {/* Status */}
       {!hiddenColumns?.has('status') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.status }}>
-          <span
-            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${statusConfig.bg} ${statusConfig.color}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`} />
-            {statusConfig.label}
-          </span>
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.status }}>
+          <EntityStatusChip
+            status={decision.status}
+            label={statusLabel(decision.status, !!isPolish)}
+          />
         </td>
       )}
 
       {/* Priority */}
       {!hiddenColumns?.has('priority') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.priority }}>
-          <span
-            className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}
-          >
-            <PriorityIcon size={12} />
-            {priorityConfig.label}
-          </span>
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.priority }}>
+          <PriorityChip level={level} label={priorityLabel(decision.priority, !!isPolish)} />
         </td>
       )}
 
       {/* Due Date / Waiting */}
       {!hiddenColumns?.has('date') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.date }}>
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.date }}>
           {dueDate ? (
-            <div
-              className={`flex items-center justify-center gap-1.5 text-xs ${
-                overdue
-                  ? 'text-rose-700 dark:text-rose-400 font-medium'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              {overdue && <AlertTriangle size={12} className="text-rose-600 dark:text-rose-400" />}
-              <Calendar size={12} />
-              <span>{formatDate(dueDate)}</span>
-            </div>
+            <DueChip label={formatDate(dueDate)} risk={overdue ? 'overdue' : 'none'} showIcon />
           ) : (
-            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-              <Clock size={12} />
-              <span>{daysWaiting}d waiting</span>
-            </div>
+            <MetaChip
+              icon={Clock}
+              label={isPolish ? `${daysWaiting}d oczekiwania` : `${daysWaiting}d waiting`}
+            />
           )}
         </td>
       )}
 
       {/* Project */}
       {!hiddenColumns?.has('project') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.project }}>
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.project }}>
           {decision.projectName ? (
-            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <FolderKanban size={12} />
-              <span className="truncate max-w-[100px]">{decision.projectName}</span>
+              <span className="truncate max-w-[120px]">{decision.projectName}</span>
             </div>
           ) : (
-            <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-600">
-              -
-            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">—</span>
           )}
         </td>
       )}
@@ -604,7 +626,7 @@ const DecisionTableRow: React.FC<{
           onClick={(e) => e.stopPropagation()}
         >
           <RowActionsMenu
-            actions={rowActions}
+            sections={kebabSections}
             iconVariant="vertical"
             className="opacity-40 transition-opacity group-hover:opacity-100"
           />
@@ -623,6 +645,8 @@ const AwaitingDecisionTableRow: React.FC<{
   onEscalate: (id: string) => void;
   onClick?: (id: string, decisionData?: Decision) => void;
   onOpenFull?: (id: string, decisionData?: Decision) => void;
+  onOpenPreview: (id: string) => void;
+  onDelete: (id: string) => void;
   columnWidths: ColumnWidths;
   hiddenColumns?: Set<string>;
   showRowDescription: boolean;
@@ -634,15 +658,16 @@ const AwaitingDecisionTableRow: React.FC<{
   onEscalate,
   onClick,
   onOpenFull,
+  onOpenPreview,
+  onDelete,
   columnWidths,
   hiddenColumns,
   showRowDescription,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
 
-  const priorityConfig = getPriorityConfig(decision.priority);
-  const statusConfig = getStatusConfig(decision.status);
+  const level = priorityLevel(decision.priority);
   const dueDate = decision.dueDate || decision.deadline;
   const overdue = isOverdue(dueDate) && decision.status?.toUpperCase() === 'PENDING';
   const daysWaiting = getDaysWaiting(decision.createdAt);
@@ -650,8 +675,6 @@ const AwaitingDecisionTableRow: React.FC<{
   const isDecided = ['APPROVED', 'REJECTED', 'DEFERRED'].includes(
     decision.status?.toUpperCase() || ''
   );
-  const isEscalated = decision.status?.toUpperCase() === 'ESCALATED';
-  const PriorityIcon = priorityConfig.icon;
 
   const getInitials = (name?: string) => {
     if (!name) return '?';
@@ -663,62 +686,106 @@ const AwaitingDecisionTableRow: React.FC<{
       .slice(0, 2);
   };
 
-  const responseConfig = (() => {
-    const answer = String(decision.answer || decision.status || '').toUpperCase();
-    if (answer === 'APPROVED')
-      return {
-        label: 'Approved',
-        color: 'text-emerald-700 dark:text-emerald-400',
-        bg: 'bg-emerald-100 dark:bg-emerald-500/20',
-        icon: Check,
-      };
-    if (answer === 'REJECTED')
-      return {
-        label: 'Rejected',
-        color: 'text-rose-700 dark:text-rose-400',
-        bg: 'bg-rose-100 dark:bg-rose-500/20',
-        icon: X,
-      };
-    if (answer === 'DEFERRED')
-      return {
-        label: 'Deferred',
-        color: 'text-amber-700 dark:text-amber-400',
-        bg: 'bg-amber-100 dark:bg-amber-500/20',
-        icon: Clock,
-      };
-    return null;
-  })();
+  const decidedAnswer = String(decision.answer || decision.status || '').toUpperCase();
+  const showDecidedChip = ['APPROVED', 'REJECTED', 'DEFERRED'].includes(decidedAnswer);
 
-  const rowActions = useMemo(() => {
-    const actions: RowAction[] = [
-      {
-        id: 'open',
-        label: isPolish ? 'Otwórz' : t('common.open', 'Open'),
-        icon: Eye,
-        variant: 'primary',
-        onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
-      },
-    ];
+  const kebabSections = useMemo<RowActionSection[]>(() => {
+    const sections: RowActionSection[] = [];
+    // GÓRA — kontekst (Remind / Escalate dla oczekujących)
     if (isPending) {
-      actions.push(
+      sections.push({
+        id: 'context',
+        kind: 'context',
+        actions: [
+          {
+            id: 'remind',
+            label: isPolish ? 'Przypomnij' : 'Send reminder',
+            icon: Bell,
+            onClick: () => onRemind(decision.id),
+          },
+          {
+            id: 'escalate',
+            label: isPolish ? 'Eskaluj' : overdue ? 'Escalate (urgent)' : 'Escalate',
+            icon: TrendingUp,
+            variant: overdue ? 'danger' : 'default',
+            onClick: () => onEscalate(decision.id),
+          },
+        ],
+      });
+    }
+    // DÓŁ — FIXED BOTTOM MANIFEST (kanon §9.2)
+    sections.push({
+      id: 'fixed',
+      kind: 'manage',
+      actions: [
         {
-          id: 'remind',
-          label: isPolish ? 'Przypomnij' : 'Send reminder',
-          icon: Bell,
-          divider: true,
-          onClick: () => onRemind(decision.id),
+          id: 'open',
+          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          icon: ChevronRight,
+          onClick: () => onOpenPreview(decision.id),
         },
         {
-          id: 'escalate',
-          label: isPolish ? 'Eskaluj' : overdue ? 'Escalate (urgent)' : 'Escalate',
-          icon: TrendingUp,
-          onClick: () => onEscalate(decision.id),
-          variant: overdue ? 'danger' : 'default',
-        }
-      );
-    }
-    return actions;
-  }, [decision, isPending, isPolish, onClick, onEscalate, onOpenFull, onRemind, overdue, t]);
+          id: 'edit',
+          label: isPolish ? 'Edytuj' : 'Edit',
+          icon: Edit2,
+          onClick: () => onOpenFull?.(decision.id, decision) ?? onClick?.(decision.id, decision),
+        },
+        {
+          id: 'archive',
+          label: isPolish ? 'Archiwizuj' : 'Archive',
+          icon: Archive,
+          disabled: true,
+          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          onClick: () => {},
+        },
+        ...(dueDate
+          ? [
+              {
+                id: 'delay',
+                label: isPolish ? 'Odłóż termin' : 'Delay',
+                icon: Clock,
+                onClick: () => {},
+                submenu: [1, 3, 7].map((d) => ({
+                  id: `delay-${d}`,
+                  label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
+                  icon: Clock,
+                  disabled: true,
+                  description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+                  onClick: () => {},
+                })),
+              },
+            ]
+          : []),
+      ],
+    });
+    // DANGER — Usuń
+    sections.push({
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'delete',
+          label: isPolish ? 'Usuń' : 'Delete',
+          icon: Trash2,
+          variant: 'danger',
+          onClick: () => onDelete(decision.id),
+        },
+      ],
+    });
+    return sections;
+  }, [
+    decision,
+    dueDate,
+    isPending,
+    isPolish,
+    onClick,
+    onDelete,
+    onEscalate,
+    onOpenFull,
+    onOpenPreview,
+    onRemind,
+    overdue,
+  ]);
 
   return (
     <motion.tr
@@ -729,11 +796,14 @@ const AwaitingDecisionTableRow: React.FC<{
       onClick={() => onClick?.(decision.id, decision)}
       onDoubleClick={() => onOpenFull?.(decision.id, decision)}
       className={`
-        group cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
-        ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
+        group relative cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
+        ${
+          isSelected
+            ? 'bg-primary-500/8 dark:bg-primary-500/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-primary-500'
+            : ''
+        }
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
-        ${overdue && !isSelected ? 'bg-rose-50 dark:bg-rose-500/5' : ''}
       `}
     >
       <td className="w-10 px-2 py-2.5" style={{ width: columnWidths.select }}>
@@ -755,22 +825,6 @@ const AwaitingDecisionTableRow: React.FC<{
         </button>
       </td>
 
-      {!hiddenColumns?.has('type') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.type }}>
-          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300 text-xs font-medium">
-            <Scale size={12} />
-            {decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
-          </span>
-        </td>
-      )}
-
-      <td className="w-8 px-1 py-2.5" style={{ width: columnWidths.indicator }}>
-        <div
-          className={`w-2.5 h-2.5 rounded-full ${overdue ? 'bg-rose-500 animate-pulse' : priorityConfig.dot}`}
-          title={overdue ? (isPolish ? 'Po terminie' : 'Overdue') : priorityConfig.label}
-        />
-      </td>
-
       <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
           <span className="text-sm font-medium text-slate-900 dark:text-white">
@@ -784,67 +838,56 @@ const AwaitingDecisionTableRow: React.FC<{
         </div>
       </td>
 
+      {!hiddenColumns?.has('type') && (
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.type }}>
+          <MetaChip
+            icon={getDecisionTypeIcon(decision.decisionType || decision.type)}
+            label={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
+          />
+        </td>
+      )}
+
       {!hiddenColumns?.has('status') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.status }}>
-          <span
-            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap leading-none ${statusConfig.bg} ${statusConfig.color}`}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot} ${isEscalated ? 'animate-pulse' : ''}`}
-            />
-            {statusConfig.label}
-          </span>
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.status }}>
+          <EntityStatusChip
+            status={decision.status}
+            label={statusLabel(decision.status, !!isPolish)}
+          />
         </td>
       )}
 
       {!hiddenColumns?.has('priority') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.priority }}>
-          <span
-            className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}
-          >
-            <PriorityIcon size={12} />
-            {priorityConfig.label}
-          </span>
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.priority }}>
+          <PriorityChip level={level} label={priorityLabel(decision.priority, !!isPolish)} />
         </td>
       )}
 
       {!hiddenColumns?.has('date') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.date }}>
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.date }}>
           {dueDate ? (
-            <div
-              className={`flex items-center justify-center gap-1.5 text-xs ${
-                overdue
-                  ? 'text-rose-700 dark:text-rose-400 font-medium'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              {overdue ? (
-                <AlertTriangle
-                  size={12}
-                  className="animate-pulse text-rose-600 dark:text-rose-400"
-                />
-              ) : null}
-              <Calendar size={12} />
-              <span>{formatDate(dueDate)}</span>
-            </div>
+            <DueChip label={formatDate(dueDate)} risk={overdue ? 'overdue' : 'none'} showIcon />
           ) : (
-            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-              <Clock size={12} />
-              <span>{daysWaiting}d waiting</span>
-            </div>
+            <MetaChip
+              icon={Clock}
+              label={isPolish ? `${daysWaiting}d oczekiwania` : `${daysWaiting}d waiting`}
+            />
           )}
         </td>
       )}
 
       {!hiddenColumns?.has('project') && (
-        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.project }}>
-          <div className="flex items-center justify-center gap-2">
+        <td className="px-3 py-2.5 text-left" style={{ width: columnWidths.project }}>
+          <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-xs font-medium text-white">
               {getInitials(decision.ownerName)}
             </div>
             <div className="flex min-w-0 flex-col text-left">
               <span className="text-xs text-slate-900 dark:text-white truncate">
-                {decision.ownerName || (isPolish ? 'Nieznany' : 'Unknown')}
+                {decision.ownerName || (
+                  <span className="italic text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Nieprzypisany' : 'Unassigned'}
+                  </span>
+                )}
               </span>
               {decision.ownerRole && (
                 <span className="text-[10px] text-slate-500 truncate">{decision.ownerRole}</span>
@@ -861,16 +904,14 @@ const AwaitingDecisionTableRow: React.FC<{
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-end gap-2">
-            {isDecided && responseConfig ? (
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${responseConfig.bg} ${responseConfig.color}`}
-              >
-                <responseConfig.icon size={12} />
-                {responseConfig.label}
-              </span>
+            {isDecided && showDecidedChip ? (
+              <EntityStatusChip
+                status={decidedAnswer}
+                label={statusLabel(decidedAnswer, !!isPolish)}
+              />
             ) : null}
             <RowActionsMenu
-              actions={rowActions}
+              sections={kebabSections}
               iconVariant="vertical"
               className="opacity-40 transition-opacity group-hover:opacity-100"
             />
@@ -922,7 +963,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   }, [isColumnVisible]);
   const tableMinWidth = useMemo(() => {
     const visibleWidth = DECISION_COLUMNS.reduce((sum, column) => {
-      if (column.id !== 'select' && column.id !== 'indicator' && hiddenSet.has(column.id)) {
+      if (column.id !== 'select' && hiddenSet.has(column.id)) {
         return sum;
       }
       return sum + (columnWidths[column.id] || column.width);
@@ -932,12 +973,58 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   }, [columnWidths, hiddenSet]);
   const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
   const viewSettingsRef = useRef<HTMLDivElement | null>(null);
+  const viewSettingsTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const viewSettingsPopoverRef = useRef<HTMLDivElement | null>(null);
+  const [viewSettingsPos, setViewSettingsPos] = useState<{
+    top: number;
+    left: number;
+    maxHeight: number;
+  } | null>(null);
+
+  // Portal popover positioning: fixed coords from trigger rect, auto-flip up,
+  // max-height + own scroll so every option stays reachable (canon §16).
+  useLayoutEffect(() => {
+    if (!isViewSettingsOpen) {
+      setViewSettingsPos(null);
+      return;
+    }
+    const compute = () => {
+      const trigger = viewSettingsTriggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const POPOVER_WIDTH = 288; // w-72
+      const GAP = 8;
+      const MARGIN = 12;
+      const viewportH = window.innerHeight;
+      const viewportW = window.innerWidth;
+      const spaceBelow = viewportH - rect.bottom - GAP - MARGIN;
+      const spaceAbove = rect.top - GAP - MARGIN;
+      const flipUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(160, flipUp ? spaceAbove : spaceBelow);
+      // Right-align popover to trigger's right edge, clamp into viewport.
+      let left = rect.right - POPOVER_WIDTH;
+      if (left < MARGIN) left = MARGIN;
+      if (left + POPOVER_WIDTH > viewportW - MARGIN) {
+        left = viewportW - MARGIN - POPOVER_WIDTH;
+      }
+      const top = flipUp ? rect.top - GAP : rect.bottom + GAP;
+      setViewSettingsPos({ top, left, maxHeight });
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    window.addEventListener('scroll', compute, true);
+    return () => {
+      window.removeEventListener('resize', compute);
+      window.removeEventListener('scroll', compute, true);
+    };
+  }, [isViewSettingsOpen]);
 
   useEffect(() => {
     if (!isViewSettingsOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
       if (viewSettingsRef.current?.contains(event.target as Node)) return;
+      if (viewSettingsPopoverRef.current?.contains(event.target as Node)) return;
       setIsViewSettingsOpen(false);
     };
 
@@ -1146,6 +1233,21 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
       toast.success('Decision approved');
     } catch (error) {
       toast.error('Failed to approve decision');
+    }
+  };
+
+  const handleDeleteDecision = async (id: string) => {
+    const confirmMsg = isPolish
+      ? 'Usunąć tę decyzję? Tej operacji nie można cofnąć.'
+      : 'Delete this decision? This cannot be undone.';
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      await Api.delete(`/decisions/${id}`);
+      setDecisions((prev) => prev.filter((d) => d.id !== id));
+      if (previewDecisionId === id) setPreviewDecisionId(null);
+      toast.success(isPolish ? 'Decyzja usunięta' : 'Decision deleted');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się usunąć' : 'Failed to delete decision');
     }
   };
 
@@ -1632,24 +1734,25 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
 
   if (displayedDecisions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <CheckCircle2 size={48} className="text-emerald-500 mb-4" />
-        <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-2">
-          {viewMode === 'my'
+      <EmptyState
+        icon={<CheckCircle2 />}
+        title={
+          viewMode === 'my'
             ? 'No decisions awaiting your action'
             : viewMode === 'awaiting'
               ? 'No requests pending'
-              : 'No decisions'}
-        </h3>
-        <p className="text-sm text-slate-500">All caught up!</p>
-      </div>
+              : 'No decisions'
+        }
+        description="All caught up!"
+        className="h-full"
+      />
     );
   }
 
@@ -1776,7 +1879,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       <button
                         onClick={() => handleSelectAll(!allSelected)}
                         className={`
-                          h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors
+                          h-4 w-4 rounded-[4px] border flex items-center justify-center transition-colors
                           ${
                             allSelected
                               ? 'bg-primary-500 border-primary-500 text-white'
@@ -1796,23 +1899,6 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       </button>
                     </th>
 
-                    {!hiddenSet.has('type') && (
-                      <th
-                        className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
-                        style={{ width: columnWidths.type }}
-                      >
-                        <span>{isPolish ? 'Typ' : 'Type'}</span>
-                        <ColumnResizer
-                          columnId="type"
-                          currentWidth={columnWidths.type}
-                          minWidth={DECISION_RESIZE_BOUNDS.type.min}
-                          maxWidth={DECISION_RESIZE_BOUNDS.type.max}
-                          onResize={handleColumnResize}
-                        />
-                      </th>
-                    )}
-
-                    <th className="w-8 px-1 py-2" />
                     <th
                       className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                       style={{ width: columnWidths.title }}
@@ -1827,12 +1913,28 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       />
                     </th>
 
+                    {!hiddenSet.has('type') && (
+                      <th
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        style={{ width: columnWidths.type }}
+                      >
+                        <span>{isPolish ? 'Typ' : 'Type'}</span>
+                        <ColumnResizer
+                          columnId="type"
+                          currentWidth={columnWidths.type}
+                          minWidth={DECISION_RESIZE_BOUNDS.type.min}
+                          maxWidth={DECISION_RESIZE_BOUNDS.type.max}
+                          onResize={handleColumnResize}
+                        />
+                      </th>
+                    )}
+
                     {!hiddenSet.has('status') && (
                       <th
-                        className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.status }}
                       >
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center gap-1">
                           <span
                             className={
                               (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
@@ -1863,10 +1965,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('priority') && (
                       <th
-                        className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.priority }}
                       >
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center gap-1">
                           <span
                             className={
                               (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
@@ -1897,7 +1999,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('date') && (
                       <th
-                        className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.date }}
                       >
                         <span>{isPolish ? 'Termin' : 'Due date'}</span>
@@ -1913,7 +2015,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
                     {!hiddenSet.has('project') && (
                       <th
-                        className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                        className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.project }}
                       >
                         <span>
@@ -1942,6 +2044,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       >
                         <div ref={viewSettingsRef} className="flex items-center justify-end">
                           <button
+                            ref={viewSettingsTriggerRef}
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
@@ -1956,114 +2059,134 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                           >
                             <Settings2 size={14} />
                           </button>
-                          {isViewSettingsOpen ? (
-                            <div
-                              className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <div className="px-2 pb-2 pt-1">
-                                <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
-                                  {isPolish ? 'Ustawienia widoku' : 'View settings'}
-                                </div>
-                                <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
-                                  {isPolish
-                                    ? 'Wybierz widoczne kolumny.'
-                                    : 'Choose visible columns.'}
-                                </div>
-                              </div>
-                              <div className="space-y-0.5">
-                                {DECISION_COLUMNS.filter(
-                                  (c) => !['select', 'indicator'].includes(c.id)
-                                ).map((col) => {
-                                  const alwaysVisible = col.id === 'title' || col.id === 'actions';
-                                  const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                                  const label =
-                                    col.id === 'type'
-                                      ? isPolish
-                                        ? 'Typ'
-                                        : 'Type'
-                                      : col.id === 'project'
-                                        ? isPolish
-                                          ? 'Projekt / Właściciel'
-                                          : 'Project / Owner'
-                                        : col.id === 'priority'
-                                          ? isPolish
-                                            ? 'Priorytet'
-                                            : 'Priority'
-                                          : col.id === 'date'
+                          {isViewSettingsOpen && viewSettingsPos
+                            ? ReactDOM.createPortal(
+                                <div
+                                  ref={viewSettingsPopoverRef}
+                                  style={{
+                                    position: 'fixed',
+                                    top: viewSettingsPos.top,
+                                    left: viewSettingsPos.left,
+                                    width: 288,
+                                    maxHeight: viewSettingsPos.maxHeight,
+                                    transform:
+                                      viewSettingsPos.top <
+                                      (viewSettingsTriggerRef.current?.getBoundingClientRect()
+                                        .bottom ?? 0)
+                                        ? 'translateY(-100%)'
+                                        : undefined,
+                                  }}
+                                  className="z-[60] flex flex-col overflow-y-auto rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <div className="px-2 pb-2 pt-1">
+                                    <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                                      {isPolish ? 'Ustawienia widoku' : 'View settings'}
+                                    </div>
+                                    <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                      {isPolish
+                                        ? 'Wybierz widoczne kolumny.'
+                                        : 'Choose visible columns.'}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    {DECISION_COLUMNS.filter((c) => c.id !== 'select').map(
+                                      (col) => {
+                                        const alwaysVisible =
+                                          col.id === 'title' || col.id === 'actions';
+                                        const checked = alwaysVisible
+                                          ? true
+                                          : !hiddenSet.has(col.id);
+                                        const label =
+                                          col.id === 'type'
                                             ? isPolish
-                                              ? 'Termin'
-                                              : 'Due date'
-                                            : col.id === 'status'
-                                              ? 'Status'
-                                              : col.id === 'actions'
+                                              ? 'Typ'
+                                              : 'Type'
+                                            : col.id === 'project'
+                                              ? isPolish
+                                                ? 'Projekt / Właściciel'
+                                                : 'Project / Owner'
+                                              : col.id === 'priority'
                                                 ? isPolish
-                                                  ? 'Akcje'
-                                                  : 'Actions'
-                                                : col.label;
+                                                  ? 'Priorytet'
+                                                  : 'Priority'
+                                                : col.id === 'date'
+                                                  ? isPolish
+                                                    ? 'Termin'
+                                                    : 'Due date'
+                                                  : col.id === 'status'
+                                                    ? 'Status'
+                                                    : col.id === 'actions'
+                                                      ? isPolish
+                                                        ? 'Akcje'
+                                                        : 'Actions'
+                                                      : col.label;
 
-                                  return (
-                                    <label
-                                      key={col.id}
-                                      className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
-                                        alwaysVisible ? 'opacity-55' : 'cursor-pointer'
-                                      }`}
-                                    >
+                                        return (
+                                          <label
+                                            key={col.id}
+                                            className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
+                                              alwaysVisible ? 'opacity-55' : 'cursor-pointer'
+                                            }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={checked}
+                                              disabled={alwaysVisible}
+                                              onChange={() => {
+                                                if (alwaysVisible) return;
+                                                setHiddenColumns((prev) => {
+                                                  const set = new Set(prev);
+                                                  if (set.has(col.id)) set.delete(col.id);
+                                                  else set.add(col.id);
+                                                  const next = Array.from(set);
+                                                  try {
+                                                    localStorage.setItem(
+                                                      DECISIONS_TABLE_VIEW_STORAGE_KEY,
+                                                      JSON.stringify(next)
+                                                    );
+                                                  } catch {
+                                                    /* ignore */
+                                                  }
+                                                  return next;
+                                                });
+                                              }}
+                                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                            />
+                                            <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                              {label}
+                                            </span>
+                                            {alwaysVisible ? (
+                                              <span className="text-[10px] font-medium text-slate-600">
+                                                {isPolish ? 'Wymagane' : 'Required'}
+                                              </span>
+                                            ) : null}
+                                          </label>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                  <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
+                                    <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
                                       <input
                                         type="checkbox"
-                                        checked={checked}
-                                        disabled={alwaysVisible}
-                                        onChange={() => {
-                                          if (alwaysVisible) return;
-                                          setHiddenColumns((prev) => {
-                                            const set = new Set(prev);
-                                            if (set.has(col.id)) set.delete(col.id);
-                                            else set.add(col.id);
-                                            const next = Array.from(set);
-                                            try {
-                                              localStorage.setItem(
-                                                DECISIONS_TABLE_VIEW_STORAGE_KEY,
-                                                JSON.stringify(next)
-                                              );
-                                            } catch {
-                                              /* ignore */
-                                            }
-                                            return next;
-                                          });
-                                        }}
+                                        checked={showRowDescription}
+                                        onChange={(event) =>
+                                          updateRowDescriptionSetting(event.target.checked)
+                                        }
                                         className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
                                       />
                                       <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                        {label}
+                                        {isPolish
+                                          ? 'Pokaż opis / uzasadnienie'
+                                          : 'Show row description'}
                                       </span>
-                                      {alwaysVisible ? (
-                                        <span className="text-[10px] font-medium text-slate-400">
-                                          {isPolish ? 'Wymagane' : 'Required'}
-                                        </span>
-                                      ) : null}
                                     </label>
-                                  );
-                                })}
-                              </div>
-                              <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
-                                <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
-                                  <input
-                                    type="checkbox"
-                                    checked={showRowDescription}
-                                    onChange={(event) =>
-                                      updateRowDescriptionSetting(event.target.checked)
-                                    }
-                                    className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
-                                  />
-                                  <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
-                                    {isPolish
-                                      ? 'Pokaż opis / uzasadnienie'
-                                      : 'Show row description'}
-                                  </span>
-                                </label>
-                              </div>
-                            </div>
-                          ) : null}
+                                  </div>
+                                </div>,
+                                document.body
+                              )
+                            : null}
                         </div>
                       </th>
                     )}
@@ -2085,6 +2208,8 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                             onDecisionClick?.(id, data);
                             setPreviewDecisionId(null);
                           }}
+                          onOpenPreview={(id) => openPreview(id)}
+                          onDelete={(id) => void handleDeleteDecision(id)}
                           columnWidths={columnWidths}
                           hiddenColumns={hiddenSet}
                           showRowDescription={showRowDescription}
@@ -2102,6 +2227,8 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                             onDecisionClick?.(id, data);
                             setPreviewDecisionId(null);
                           }}
+                          onOpenPreview={(id) => openPreview(id)}
+                          onDelete={(id) => void handleDeleteDecision(id)}
                           columnWidths={columnWidths}
                           hiddenColumns={hiddenSet}
                           showRowDescription={showRowDescription}

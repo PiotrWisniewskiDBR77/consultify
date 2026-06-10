@@ -137,7 +137,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
             Strategic Initiatives Board
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">
               {filteredInitiatives.length} items
             </span>
             <button
@@ -155,7 +155,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
           <div className="relative">
             <Search
               size={14}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               className="pl-8 pr-3 py-1.5 bg-slate-100 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-md text-xs w-48 focus:outline-none focus:border-blue-500 text-navy-900 dark:text-white"
@@ -217,7 +217,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
                 <button
                   key={g}
                   onClick={() => setGroupBy(g as any)}
-                  className={`px-2 py-1 round text-[10px] font-medium transition-colors ${groupBy === g ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-400 hover:text-navy-900 dark:hover:text-white'}`}
+                  className={`px-2 py-1 round text-[10px] font-medium transition-colors ${groupBy === g ? 'bg-white dark:bg-navy-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-600 hover:text-navy-900 dark:hover:text-white'}`}
                 >
                   {g === 'none'
                     ? 'None'
@@ -257,7 +257,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
             </div>
 
             {groupedInitiatives[groupKey].length === 0 && (
-              <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+              <p className="text-sm text-slate-600 dark:text-slate-500 italic">
                 No initiatives found in this group.
               </p>
             )}
@@ -265,7 +265,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
         ))}
 
         {filteredInitiatives.length === 0 && (
-          <div className="border border-dashed border-slate-300 dark:border-navy-700 rounded-xl p-10 text-center text-slate-400 dark:text-slate-500 text-sm">
+          <div className="border border-dashed border-slate-300 dark:border-navy-700 rounded-xl p-10 text-center text-slate-600 dark:text-slate-500 text-sm">
             <p>No initiatives match your filters.</p>
             <button
               onClick={() => {

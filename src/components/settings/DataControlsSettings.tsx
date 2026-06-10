@@ -21,6 +21,7 @@ import {
   Download,
   ExternalLink,
   FileText,
+  FlaskConical,
   Globe,
   Info,
   Loader2,
@@ -35,6 +36,9 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { Banner } from '@/components/shared/Banner';
+
+import { useDemo } from '../../hooks/useDemo';
 import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
@@ -205,6 +209,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+  const { isDemoMode, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
   const [consents, setConsents] = useState<ConsentSettings>(DEFAULT_CONSENTS);
   const [retention, setRetention] = useState<DataRetention>(DEFAULT_RETENTION);
   const [loading, setLoading] = useState(true);
@@ -213,6 +218,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const [exporting, setExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
   const [requestingDeletion, setRequestingDeletion] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -357,13 +363,20 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       );
       return;
     }
+    if (!deletePassword.trim()) {
+      toast.error(
+        t('settings.data.deletePasswordRequired', 'Please enter your password to confirm deletion')
+      );
+      return;
+    }
     setRequestingDeletion(true);
     try {
       setActionError(null);
-      const response = await Api.requestGdprDeletion();
+      const response = await Api.requestGdprDeletion(deletePassword);
       if (response?.request) {
         setShowDeleteConfirm(false);
         setDeleteConfirmText('');
+        setDeletePassword('');
         toast.success(
           t(
             'settings.data.deletionRequested',
@@ -386,7 +399,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   };
 
   const sectionLabel =
-    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+    'text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4';
   const cardClass = 'bg-navy-900/30 border border-white/5 rounded-lg p-5';
 
   return (
@@ -407,14 +420,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       <div className="space-y-6">
         {loadError && <DegradedState title="Data controls unavailable" description={loadError} />}
 
-        {actionError && (
-          <div
-            role="alert"
-            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-          >
-            {actionError}
-          </div>
-        )}
+        {actionError && <Banner variant="danger" title={actionError} />}
 
         {!loadError && (
           <>
@@ -425,7 +431,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                 <p className="text-sm font-medium text-primary-300">
                   {t('settings.data.gdprTitle', 'GDPR Compliant')}
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 mt-0.5">
                   {t(
                     'settings.data.gdprDesc',
                     'We comply with GDPR regulations. You have full control over your personal data, including the right to access, export, and delete it.'
@@ -497,7 +503,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       'px-4 py-2.5 rounded-lg text-sm font-medium transition-all border',
                       retention.period === option.value
                         ? 'bg-primary-600/20 text-primary-300 border-primary-500 shadow-sm'
-                        : 'bg-navy-800/50 text-slate-400 border-white/5 hover:border-white/20'
+                        : 'bg-navy-800/50 text-slate-600 border-white/5 hover:border-white/20'
                     )}
                   >
                     {t(option.labelKey, option.labelDefault)}
@@ -527,7 +533,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <p className="text-sm font-medium text-white">
                       {t('settings.data.exportData', 'Export Your Data')}
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-600 mt-1">
                       {t(
                         'settings.data.exportDataDesc',
                         'Download a copy of all your personal data including profile, settings, activity history, and documents. Processing typically takes 24-48 hours.'
@@ -571,7 +577,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <p className="text-sm font-medium text-rose-300">
                       {t('settings.data.deleteAccount', 'Delete Account & Data')}
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-600 mt-1">
                       {t(
                         'settings.data.deleteAccountDesc',
                         'Permanently delete your account and all associated data. This action cannot be undone. A 30-day grace period applies before final deletion.'
@@ -597,13 +603,13 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                         {t('settings.data.deleteConfirmTitle', 'Are you absolutely sure?')}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mb-3">
+                    <p className="text-xs text-slate-600 mb-3">
                       {t(
                         'settings.data.deleteConfirmDesc',
                         'This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.'
                       )}
                     </p>
-                    <label className="text-xs font-medium text-slate-400 mb-1.5 block">
+                    <label className="text-xs font-medium text-slate-600 mb-1.5 block">
                       {t('settings.data.deleteConfirmType', 'Type "{{phrase}}" to confirm:', {
                         phrase: deleteConfirmationPhrase,
                       })}
@@ -615,11 +621,26 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       className="w-full px-3 py-2 bg-navy-800 border border-rose-500/30 rounded-lg text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
                       placeholder={deleteConfirmationPhrase}
                     />
+                    <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                      {t('settings.data.deletePasswordLabel', 'Enter your password to confirm:')}
+                    </label>
+                    <input
+                      type="password"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      autoComplete="current-password"
+                      className="w-full px-3 py-2 bg-navy-800 border border-rose-500/30 rounded-lg text-white text-sm focus:ring-2 focus:ring-rose-500/50 outline-none transition-all mb-3"
+                      placeholder={t(
+                        'settings.data.deletePasswordPlaceholder',
+                        'Your account password'
+                      )}
+                    />
                     <div className="flex gap-2">
                       <button
                         onClick={handleDeleteRequest}
                         disabled={
                           requestingDeletion ||
+                          !deletePassword.trim() ||
                           deleteConfirmText.toLowerCase() !== deleteConfirmationPhrase.toLowerCase()
                         }
                         className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
@@ -635,13 +656,53 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                         onClick={() => {
                           setShowDeleteConfirm(false);
                           setDeleteConfirmText('');
+                          setDeletePassword('');
                         }}
-                        className="px-4 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+                        className="px-4 py-2 bg-white/5 border border-white/10 text-slate-600 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
                       >
                         {t('common.cancel', 'Cancel')}
                       </button>
                     </div>
                   </div>
+                )}
+              </div>
+            </div>
+
+            <SettingsDivider />
+
+            {/* ─── Sample / Demo Data ─── */}
+            <div>
+              <h4 className={sectionLabel}>
+                <FlaskConical size={14} className="text-primary-400" />
+                {t('settings.data.sampleWorkspace', 'Sample Workspace')}
+              </h4>
+              <div className={cardClass}>
+                <SettingsToggle
+                  checked={isDemoMode}
+                  disabled={isDemoLoading}
+                  onChange={() => {
+                    void toggleDemoMode(undefined, { source: 'settings_data_controls' });
+                  }}
+                  label={t('settings.data.demoToggle', 'Explore the sample workspace')}
+                  description={
+                    isDemoMode
+                      ? t(
+                          'settings.data.demoToggleOnDesc',
+                          'Sample data is active — you are exploring a read-only demo organization. Toggle off to return to your own workspace.'
+                        )
+                      : t(
+                          'settings.data.demoToggleOffDesc',
+                          'Load a read-only sample organization to explore the product without touching your own data.'
+                        )
+                  }
+                />
+                {isDemoMode && demoOrganization && (
+                  <p className="mt-3 text-[11px] text-amber-300/90 flex items-center gap-1.5">
+                    <Info size={11} />
+                    {t('settings.data.demoActiveOrg', 'Active sample: {{name}} (read only)', {
+                      name: demoOrganization.name,
+                    })}
+                  </p>
                 )}
               </div>
             </div>
@@ -669,7 +730,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
-                          <span className="text-xs font-medium text-slate-300 group-hover:text-primary-300">
+                          <span className="text-xs font-medium text-slate-600 group-hover:text-primary-300">
                             {t(doc.titleKey, doc.titleDefault)}
                           </span>
                           <ExternalLink size={10} className="text-slate-600" />

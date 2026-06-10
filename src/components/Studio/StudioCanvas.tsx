@@ -233,7 +233,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
               className={`p-2 rounded-md transition-colors ${
                 showGridState
                   ? 'bg-blue-500/20 text-blue-400'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                  : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
               }`}
               title="Toggle Grid"
             >
@@ -244,7 +244,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
               className={`p-2 rounded-md transition-colors ${
                 isLockedState
                   ? 'bg-amber-500/20 text-amber-400'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
+                  : 'text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40'
               }`}
               title={isLockedState ? 'Unlock Canvas' : 'Lock Canvas'}
             >
@@ -254,7 +254,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             {onSnapshot && (
               <button
                 onClick={onSnapshot}
-                className="p-2 rounded-md text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+                className="p-2 rounded-md text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
                 title="Save Snapshot"
               >
                 <Camera size={16} />
@@ -263,7 +263,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             {onExport && (
               <button
                 onClick={onExport}
-                className="p-2 rounded-md text-slate-400 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+                className="p-2 rounded-md text-slate-600 dark:text-slate-500 hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
                 title="Export"
               >
                 <Download size={16} />
@@ -288,7 +288,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           showZoom={true}
           showFitView={true}
           showInteractive={false}
-          className="!bg-slate-800/90 !backdrop-blur-sm !border-white/10 !rounded-lg [&>button]:!bg-transparent [&>button]:!border-white/10 [&>button]:!text-slate-400 dark:text-slate-500 [&>button:hover]:!bg-white/10 [&>button:hover]:!text-white"
+          className="!bg-slate-800/90 !backdrop-blur-sm !border-white/10 !rounded-lg [&>button]:!bg-transparent [&>button]:!border-white/10 [&>button]:!text-slate-600 dark:text-slate-500 [&>button:hover]:!bg-white/10 [&>button:hover]:!text-white"
         />
 
         {/* MiniMap */}

@@ -159,13 +159,13 @@ function QuadrantCard({
               className="rounded-2xl border border-white/80 bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.45)] dark:border-navy-700 dark:bg-navy-950/50"
             >
               <div className="mb-2 flex items-start justify-between gap-2">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                   {isPolish ? 'Punkt SWOT' : 'SWOT point'}
                 </div>
                 <button
                   type="button"
                   onClick={() => removeSWOTItem(item.id)}
-                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                  className="rounded-lg p-1.5 text-slate-600 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -183,7 +183,7 @@ function QuadrantCard({
 
       {proposals.length > 0 ? (
         <div className="mt-4 space-y-2 border-t border-white/60 pt-4 dark:border-white/10">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
             {isPolish ? 'Propozycje AI' : 'AI proposals'}
           </div>
           {proposals.map((proposal) => (

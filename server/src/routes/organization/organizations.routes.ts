@@ -9,7 +9,7 @@ import { Router } from 'express';
 
 import OrganizationControllerRaw from '../../controllers/OrganizationController.js';
 const OrganizationController = OrganizationControllerRaw as any;
-import { verifyToken } from '../../middleware/auth.middleware.js';
+import { requireRole, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import adminAuditService from '../../services/adminAuditService.js';
@@ -97,9 +97,14 @@ router.put(
 
 /**
  * GET /api/organizations/:orgId/members
- * Get organization members
+ * Get organization members — ADMIN/OWNER only (the full member list exposes
+ * names + emails; a plain USER must not be able to dump the directory).
  */
-router.get('/:orgId/members', OrganizationController.getMembers);
+router.get(
+  '/:orgId/members',
+  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
+  OrganizationController.getMembers
+);
 
 /**
  * POST /api/organizations/:orgId/members

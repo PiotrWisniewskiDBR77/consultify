@@ -26,7 +26,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
         <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
           {t('myWork.whiteboard.empty.title')}
         </div>
-        <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-3 max-w-[200px]">
+        <div className="text-[11px] text-slate-600 dark:text-slate-500 mb-3 max-w-[200px]">
           {t('myWork.whiteboard.empty.subtitle')}
         </div>
         {!locked && (
@@ -64,7 +64,7 @@ export const WhiteboardEmptyState: React.FC<WhiteboardEmptyStateProps> = ({
               <Plus size={14} />
               {t('myWork.whiteboard.empty.addSticky')}
             </button>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 max-w-[260px]">
+            <div className="text-[10px] text-slate-600 dark:text-slate-500 max-w-[260px]">
               {t('myWork.whiteboard.emptyExtra.toolsHint')}
             </div>
           </div>

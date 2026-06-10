@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import {
   KEBAB_BACKDROP,
@@ -122,6 +124,11 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   const actions = customActions ?? defaultActions;
   const hasMenu = actions.length > 0;
 
+  // Word count — only shown when there is content (canon §7.3)
+  const wordCount = resolvedText.trim()
+    ? resolvedText.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -129,59 +136,69 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
           {title ?? label ?? (isPolish ? 'Szczegóły' : 'Details')}
         </div>
 
-        {hasMenu ? (
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen((v) => !v);
-              }}
-              className={KEBAB_BUTTON}
-              aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
-              title={isPolish ? 'Opcje' : 'Options'}
+        <div className="flex items-center gap-2">
+          {wordCount > 0 ? (
+            <span
+              className="text-[10px] text-slate-400 dark:text-slate-500"
+              aria-label={`${wordCount} ${isPolish ? 'słów' : 'words'}`}
             >
-              <MoreVertical size={14} />
-            </button>
-            {menuOpen ? (
-              <>
-                <div className={KEBAB_BACKDROP} onClick={() => setMenuOpen(false)} />
-                <div className={KEBAB_MENU}>
-                  {actions.map((action, idx) => {
-                    const ActionIcon = action.icon;
-                    return (
-                      <React.Fragment key={action.id}>
-                        {action.id === 'copy' && idx > 0 ? (
-                          <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
-                        ) : null}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMenuOpen(false);
-                            action.onClick();
-                          }}
-                          disabled={action.disabled}
-                          className={`${KEBAB_ITEM}${action.disabled ? ' opacity-40' : ''}`}
-                        >
-                          {ActionIcon ? (
-                            <ActionIcon
-                              size={12}
-                              className={
-                                action.id === 'expand' || action.id === 'summarize'
-                                  ? 'text-primary-500'
-                                  : ''
-                              }
-                            />
+              ~{wordCount} {isPolish ? 'słów' : 'words'}
+            </span>
+          ) : null}
+          {hasMenu ? (
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen((v) => !v);
+                }}
+                className={KEBAB_BUTTON}
+                aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
+                title={isPolish ? 'Opcje' : 'Options'}
+              >
+                <MoreVertical size={14} />
+              </button>
+              {menuOpen ? (
+                <>
+                  <div className={KEBAB_BACKDROP} onClick={() => setMenuOpen(false)} />
+                  <div className={KEBAB_MENU}>
+                    {actions.map((action, idx) => {
+                      const ActionIcon = action.icon;
+                      return (
+                        <React.Fragment key={action.id}>
+                          {action.id === 'copy' && idx > 0 ? (
+                            <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
                           ) : null}
-                          {action.label}
-                        </button>
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              </>
-            ) : null}
-          </div>
-        ) : null}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMenuOpen(false);
+                              action.onClick();
+                            }}
+                            disabled={action.disabled}
+                            className={`${KEBAB_ITEM}${action.disabled ? ' opacity-40' : ''}`}
+                          >
+                            {ActionIcon ? (
+                              <ActionIcon
+                                size={12}
+                                className={
+                                  action.id === 'expand' || action.id === 'summarize'
+                                    ? 'text-primary-500'
+                                    : ''
+                                }
+                              />
+                            ) : null}
+                            {action.label}
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {loading ? (
@@ -197,18 +214,19 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
             <div
               className={[
                 compact
-                  ? 'text-xs text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap'
-                  : 'text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap',
+                  ? 'text-xs text-slate-700 dark:text-slate-200 leading-relaxed'
+                  : 'text-sm text-slate-700 dark:text-slate-200 leading-relaxed',
+                'prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0',
                 expanded === false ? 'line-clamp-6' : '',
               ].join(' ')}
               onClick={onToggleExpanded}
             >
-              {resolvedText}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{resolvedText}</ReactMarkdown>
             </div>
           ) : !children ? (
             <div
               className={
-                compact ? 'text-xs text-slate-400 italic' : 'text-sm text-slate-400 italic'
+                compact ? 'text-xs text-slate-600 italic' : 'text-sm text-slate-600 italic'
               }
             >
               {isPolish ? 'Brak opisu.' : 'No description.'}

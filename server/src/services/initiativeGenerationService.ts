@@ -351,3 +351,29 @@ Return valid JSON array only.`;
 }
 
 export default new InitiativeGenerationService();
+
+/**
+ * Teresa last-mile (backlog #1): create a REAL initiative from a Teresa handoff.
+ *
+ * Exported as a NAMED function because `teresaCopilotService.handleInitiativesHandoff`
+ * looks for `createInitiative` on this module. Previously no such export existed
+ * (the module only default-exports a generation class), so the handoff silently
+ * fell back to a synthetic UUID (`real_entity:false`). This delegates to the
+ * canonical `InitiativeService` so a real `initiatives` row is written.
+ */
+export async function createInitiative(params: {
+  organizationId: string;
+  title?: unknown;
+  description?: unknown;
+  source?: string;
+  proposalId?: string;
+}): Promise<{ id: string }> {
+  const { default: initiativeService } = await import('./initiativeService.js');
+  const created: any = await initiativeService.createInitiative({
+    organization_id: params.organizationId,
+    title: String(params.title || 'Teresa initiative').slice(0, 500),
+    summary: String(params.description || ''),
+    status: 'step3',
+  } as any);
+  return { id: String(created?.id || '') };
+}

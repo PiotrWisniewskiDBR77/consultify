@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CapacityView Component
  *
@@ -284,14 +283,14 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Total Capacity</div>
           <div className="text-2xl font-bold text-navy-900 dark:text-white">{totalCapacity}h</div>
-          <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">per week</div>
+          <div className="text-xs text-slate-600 dark:text-slate-500 mt-1">per week</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Allocated</div>
           <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
             {totalAllocated}h
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">committed</div>
+          <div className="text-xs text-slate-600 dark:text-slate-500 mt-1">committed</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Utilization</div>
@@ -306,7 +305,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
           >
             {utilizationRate}%
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">overall rate</div>
+          <div className="text-xs text-slate-600 dark:text-slate-500 mt-1">overall rate</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Overallocated</div>
@@ -315,7 +314,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
           >
             {overallocatedCount}
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">team members</div>
+          <div className="text-xs text-slate-600 dark:text-slate-500 mt-1">team members</div>
         </div>
       </div>
 
@@ -432,7 +431,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
                     >
                       {member.allocated}h
                     </span>
-                    <span className="text-slate-400 dark:text-slate-500">
+                    <span className="text-slate-600 dark:text-slate-500">
                       {' '}
                       / {member.capacity}h
                     </span>
@@ -447,7 +446,7 @@ export const CapacityView: React.FC<CapacityViewProps> = ({ projectId, initiativ
 
               {/* Expanded Details */}
               {isExpanded && (
-                <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/50">
+                <div className="px-4 pb-4 pt-2 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/50">
                   {member.skills && member.skills.length > 0 && (
                     <div className="mb-3">
                       <h5 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-2">

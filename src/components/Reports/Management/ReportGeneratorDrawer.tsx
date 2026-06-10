@@ -175,7 +175,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 Generate New Report
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-600">
                 AI will analyze your data and generate insights
               </p>
             </div>
@@ -184,7 +184,7 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
           >
-            <X size={20} className="text-slate-400" />
+            <X size={20} className="text-slate-600" />
           </button>
         </div>
 
@@ -330,15 +330,15 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
             </h3>
             <div className="grid grid-cols-3 gap-4 text-xs text-slate-500">
               <div>
-                <span className="font-medium text-slate-400">ISO 21500:2021</span>
+                <span className="font-medium text-slate-600">ISO 21500:2021</span>
                 <p>Project Performance</p>
               </div>
               <div>
-                <span className="font-medium text-slate-400">PMBOK 7</span>
+                <span className="font-medium text-slate-600">PMBOK 7</span>
                 <p>Measurement Domain</p>
               </div>
               <div>
-                <span className="font-medium text-slate-400">PRINCE2</span>
+                <span className="font-medium text-slate-600">PRINCE2</span>
                 <p>Progress Theme</p>
               </div>
             </div>

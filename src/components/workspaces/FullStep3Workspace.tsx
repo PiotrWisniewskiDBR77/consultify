@@ -199,7 +199,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                     isWarning
                       ? 'bg-rose-500/5 border-rose-500/30'
                       : count > 0
-                        ? 'bg-slate-50 dark:bg-navy-900 border-slate-100 dark:border-navy-700 hover:border-blue-500/30'
+                        ? 'bg-slate-50 dark:bg-navy-900 border-slate-200 dark:border-navy-700 hover:border-blue-500/30'
                         : 'bg-transparent border-transparent opacity-50'
                   }`}
                 >
@@ -224,7 +224,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                     >
                       {count}
                     </span>
-                    <span className="text-[9px] text-slate-400 dark:text-slate-500 mb-0.5">
+                    <span className="text-[9px] text-slate-600 dark:text-slate-500 mb-0.5">
                       inits
                     </span>
                   </div>
@@ -301,7 +301,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                 {initiatives.map((init) => (
                   <tr
                     key={init.id}
-                    className="border-b border-slate-100 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                    className="border-b border-slate-200 dark:border-navy-700 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                   >
                     <td className="p-3">
                       <div className="font-medium text-navy-900 dark:text-white text-xs">
@@ -328,7 +328,7 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                           {init.strategicRole}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500">-</span>
+                        <span className="text-[10px] text-slate-600 dark:text-slate-500">-</span>
                       )}
                     </td>
                     {/* Effort Profile Column */}
@@ -356,10 +356,10 @@ export const FullStep3Workspace: React.FC<FullStep3WorkspaceProps> = ({
                           ></div>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500">-</span>
+                        <span className="text-[10px] text-slate-600 dark:text-slate-500">-</span>
                       )}
                     </td>
-                    <td className="p-3 text-[10px] text-slate-400 dark:text-slate-500">
+                    <td className="p-3 text-[10px] text-slate-600 dark:text-slate-500">
                       {getAxisLabel(init.axis)}
                     </td>
                     <td className="p-3">

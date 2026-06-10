@@ -438,6 +438,17 @@ export class BillingCommandService {
     }
 
     if (!deps.stripe) {
+      // B8 fix: never silently activate a paid subscription without a payment processor
+      // in production — that marks an org as "active" without any charge. The mock path
+      // is only acceptable in non-production (dev/demo) environments.
+      const isProd = process.env.NODE_ENV === 'production';
+      const allowMock = !isProd || process.env.ALLOW_MOCK_BILLING === 'true';
+      if (!allowMock) {
+        throw new Error(
+          'Billing is not configured (Stripe unavailable). Cannot activate a subscription. ' +
+            'Configure STRIPE_SECRET_KEY or use manual invoice billing from admin.'
+        );
+      }
       await this.upsertOrgBilling(orgId, {
         subscription_plan_id: planId,
         billing_rail: 'stripe_subscription',
@@ -1196,6 +1207,15 @@ export class BillingCommandService {
   async createSetupIntent(orgId: string, email: string, orgName: string): Promise<SetupIntent> {
     const deps = this.deps();
     if (!deps.stripe) {
+      // B8 fix: mock setup intents are dev/demo-only — never hand a fake client secret
+      // to a production checkout flow (it would silently fail card collection).
+      const isProd = process.env.NODE_ENV === 'production';
+      const allowMock = !isProd || process.env.ALLOW_MOCK_BILLING === 'true';
+      if (!allowMock) {
+        throw new Error(
+          'Billing is not configured (Stripe unavailable). Cannot create setup intent.'
+        );
+      }
       return {
         clientSecret: `mock_secret_${deps.uuidv4()}`,
         id: `mock_seti_${deps.uuidv4()}`,
@@ -1397,14 +1417,73 @@ export class BillingCommandService {
     unitPrice: number;
     totalCost: number;
     paymentMethodId: string;
+    simulated?: boolean;
   }> {
     const cost = await this.calculateSeatCost(orgId, quantity);
+    const deps = this.deps();
+
+    // B8 fix: this previously always returned success WITHOUT charging anything.
+    // If Stripe is configured, actually create a one-off invoice item + invoice
+    // so the seats are really billed. Without Stripe, mark the result as simulated
+    // and refuse silently-successful "purchases" in production.
+    if (deps.stripe) {
+      try {
+        const customer = (await this.getOrCreateStripeCustomer(
+          orgId,
+          '',
+          ''
+        )) as StripeTypes.Customer;
+        const amountCents = Math.round(cost.totalCost * 100);
+        if (amountCents > 0) {
+          await deps.stripe.invoiceItems.create({
+            customer: customer.id,
+            amount: amountCents,
+            currency: 'eur',
+            description: `${quantity} additional seat(s)`,
+            metadata: { organization_id: orgId, seat_quantity: String(quantity) },
+          });
+          const invoice = await deps.stripe.invoices.create({
+            customer: customer.id,
+            collection_method: 'charge_automatically',
+            default_payment_method: paymentMethodId,
+            metadata: { organization_id: orgId, kind: 'seat_purchase' },
+          });
+          if (invoice.id && deps.stripe.invoices.finalizeInvoice) {
+            await deps.stripe.invoices.finalizeInvoice(invoice.id);
+          }
+        }
+        this.eventService.emitEvent('billing.seats.purchased', {
+          orgId,
+          quantity,
+          totalCost: cost.totalCost,
+        });
+        return {
+          success: true,
+          quantity,
+          unitPrice: cost.unitPrice,
+          totalCost: cost.totalCost,
+          paymentMethodId,
+        };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(`Seat purchase failed: ${msg}`);
+      }
+    }
+
+    const isProd = process.env.NODE_ENV === 'production';
+    const allowMock = !isProd || process.env.ALLOW_MOCK_BILLING === 'true';
+    if (!allowMock) {
+      throw new Error(
+        'Billing is not configured (Stripe unavailable). Cannot process seat purchase.'
+      );
+    }
     return {
       success: true,
       quantity,
       unitPrice: cost.unitPrice,
       totalCost: cost.totalCost,
       paymentMethodId,
+      simulated: true,
     };
   }
 }

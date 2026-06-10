@@ -28,6 +28,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '../../components/ui/primitives';
 import Api from '../../services/api';
 
 interface ContentPerformanceData {
@@ -197,14 +198,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-primary-500 mx-auto mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">{t.loading[lang]}</p>
-        </div>
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-96" label={t.loading[lang]} />;
   }
 
   if (error) {
@@ -304,7 +298,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             {data.contentPerformance?.viewsByContent?.slice(0, 10).map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700 last:border-0"
               >
                 <div className="flex items-center gap-3">
                   <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-medium">
@@ -329,7 +323,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             ))}
             {(!data.contentPerformance?.viewsByContent ||
               data.contentPerformance.viewsByContent.length === 0) && (
-              <p className="text-center text-slate-400 dark:text-slate-500 py-4">
+              <p className="text-center text-slate-600 dark:text-slate-500 py-4">
                 {t.noData[lang]}
               </p>
             )}
@@ -346,7 +340,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             {data.searchAnalytics?.topQueries?.slice(0, 10).map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-slate-200 dark:border-slate-700 last:border-0"
               >
                 <span className="text-sm text-slate-900 dark:text-white truncate mr-4">
                   {item.query}
@@ -361,7 +355,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
             ))}
             {(!data.searchAnalytics?.topQueries ||
               data.searchAnalytics.topQueries.length === 0) && (
-              <p className="text-center text-slate-400 dark:text-slate-500 py-4">
+              <p className="text-center text-slate-600 dark:text-slate-500 py-4">
                 {t.noData[lang]}
               </p>
             )}
@@ -369,7 +363,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
 
           {/* Search conversion rate */}
           {data.searchAnalytics?.searchConversion && (
-            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-500 dark:text-slate-400">
                   {t.conversionRate[lang]}
@@ -495,7 +489,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           ))}
           {(!data.contentPerformance?.videoCompletion ||
             data.contentPerformance.videoCompletion.length === 0) && (
-            <p className="col-span-full text-center text-slate-400 dark:text-slate-500 py-4">
+            <p className="col-span-full text-center text-slate-600 dark:text-slate-500 py-4">
               {t.noData[lang]}
             </p>
           )}
@@ -536,7 +530,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
                   )}
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-300">{comment.comment}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                   {new Date(comment.created_at).toLocaleDateString()}
                 </p>
               </div>
@@ -544,7 +538,7 @@ export const HelpAnalyticsDashboard: React.FC = () => {
           ))}
           {(!data.feedbackSummary?.recentComments ||
             data.feedbackSummary.recentComments.length === 0) && (
-            <p className="text-center text-slate-400 dark:text-slate-500 py-4">{t.noData[lang]}</p>
+            <p className="text-center text-slate-600 dark:text-slate-500 py-4">{t.noData[lang]}</p>
           )}
         </div>
       </div>

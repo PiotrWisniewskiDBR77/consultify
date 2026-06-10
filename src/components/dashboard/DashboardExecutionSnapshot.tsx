@@ -117,7 +117,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
             <div className="text-2xl font-bold text-primary-600 dark:text-primary-400 mb-1">
               {currentPhase.name}
             </div>
-            <p className="text-xs text-slate-400">{currentPhase.description}</p>
+            <p className="text-xs text-slate-600">{currentPhase.description}</p>
             <div className="mt-2 text-xs text-slate-500">Phase {currentPhase.number}/6</div>
           </div>
 

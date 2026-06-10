@@ -17,6 +17,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -51,7 +52,7 @@ interface DeckTemplateGalleryProps {
 const DECK_TYPE_COLORS: Record<string, string> = {
   steering_committee: 'from-blue-500 to-indigo-500',
   program_update: 'from-emerald-500 to-blue-500',
-  valuation_pack: 'from-primary-500 to-pink-500',
+  valuation_pack: 'from-primary-500 to-crimson-500',
   tool_workshop: 'from-amber-500 to-amber-500',
   assessment_summary: 'from-blue-500 to-blue-500',
 };
@@ -112,7 +113,7 @@ export const DeckTemplateGallery: React.FC<DeckTemplateGalleryProps> = ({ onSele
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -232,17 +233,17 @@ const TemplateCard: React.FC<{
           <div className="mt-2 space-y-1 pl-2 border-l-2 border-primary-500/20">
             {template.outline_json.map((slide, i) => (
               <div key={i} className="flex items-center gap-2 text-sm">
-                <span className="text-xs text-slate-400 w-4">{i + 1}</span>
-                <FileText size={12} className="text-slate-400" />
+                <span className="text-xs text-slate-600 w-4">{i + 1}</span>
+                <FileText size={12} className="text-slate-600" />
                 <span className="text-slate-600 dark:text-slate-300">{slide.title}</span>
-                <span className="text-xs text-slate-400">({slide.intent})</span>
+                <span className="text-xs text-slate-600">({slide.intent})</span>
               </div>
             ))}
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-navy-700">
+        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-200 dark:border-navy-700">
           {onSelect && (
             <button
               onClick={onSelect}

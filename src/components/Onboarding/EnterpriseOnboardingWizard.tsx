@@ -184,7 +184,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   // Step 1: Terms & Privacy
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-crimson-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white dark:bg-navy-800 rounded-xl shadow-2xl p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -351,7 +351,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
     ];
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-crimson-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
         <div className="max-w-6xl w-full">
           <div className="text-center mb-12">
             <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -451,7 +451,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
   // Step 3: Payout readiness
   if (step === 3) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-crimson-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white dark:bg-navy-800 rounded-xl shadow-2xl p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -495,9 +495,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
           {/* Placeholder for Stripe Elements */}
           <div className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-xl p-12 mb-8 text-center">
-            <CreditCard className="w-16 h-16 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+            <CreditCard className="w-16 h-16 text-slate-600 dark:text-slate-500 mx-auto mb-4" />
             <p className="text-slate-500 dark:text-slate-400 mb-2">Payout and billing setup</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               (Automated payout setup can be expanded in the next rollout)
             </p>
           </div>
@@ -534,7 +534,7 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
   // Step 4: Completion (shouldn't normally reach here, but just in case)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-indigo-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-crimson-100 dark:from-navy-900 dark:to-navy-800 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full bg-white dark:bg-navy-800 rounded-xl shadow-2xl p-8 text-center">
         <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />

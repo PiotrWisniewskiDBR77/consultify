@@ -206,18 +206,19 @@ test.describe('L4 Smoke - Interview to Initiative Wizard [@module:interview] [@m
 
     const wizardDialog = page.getByTestId('initiative-wizard-modal');
     await expect(wizardDialog).toBeVisible({ timeout: 30000 });
-    await expect(
-      wizardDialog.getByRole('heading', {
-        name: /Interaktywny kreator inicjatyw transformacyjnych|Interactive transformation initiative wizard/i,
-      })
-    ).toBeVisible();
+    // Heading copy may evolve; assert wizard identity via stable keywords.
+    await expect(wizardDialog).toContainText(/kreator inicjatyw|initiative wizard/i);
     await expect(
       wizardDialog.getByText(/proposal -> approval -> execution -> audit/i)
     ).toBeVisible();
 
-    await page.getByRole('button', { name: /Wygeneruj kandydatow|Generate candidates/i }).click();
+    await page
+      .getByRole('button', {
+        name: /Wygeneruj kandydatów|Wygeneruj kandydatow|Generate candidates/i,
+      })
+      .click();
 
-    await expect(page.getByText(/Szczegoly kandydata|Candidate details/i)).toBeVisible({
+    await expect(page.getByText(/Szczeg[oó]ły kandydata|Candidate details/i)).toBeVisible({
       timeout: 30000,
     });
     await expect(page.getByText(/Impact:/i).first()).toBeVisible();

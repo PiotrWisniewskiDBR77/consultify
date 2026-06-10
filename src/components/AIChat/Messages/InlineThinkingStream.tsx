@@ -62,7 +62,7 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
           style={{ animationDelay: '300ms' }}
         />
       </div>
-      {label && <span className="text-xs text-slate-400 dark:text-slate-500 italic">{label}</span>}
+      {label && <span className="text-xs text-slate-600 dark:text-slate-500 italic">{label}</span>}
     </div>
   );
 };
@@ -150,13 +150,13 @@ export const InlineThinkingStream: React.FC<InlineThinkingStreamProps> = ({
         {/* Thinking indicator */}
         {isStreaming && (
           <div className="flex-shrink-0 mt-0.5">
-            <Loader2 size={12} className="text-slate-400 dark:text-slate-500 animate-spin" />
+            <Loader2 size={12} className="text-slate-600 dark:text-slate-500 animate-spin" />
           </div>
         )}
 
         {/* Current thinking content - subtle styling */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs italic text-slate-400 dark:text-slate-500 opacity-70 leading-relaxed">
+          <p className="text-xs italic text-slate-600 dark:text-slate-500 opacity-70 leading-relaxed">
             {displayedText || currentStep?.label || t('thinking.analyzing', 'Analyzing...')}
             {/* Cursor indicator when streaming */}
             {isStreaming && displayedText.length < (currentStep?.content?.length || 0) && (

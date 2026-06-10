@@ -432,7 +432,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                    className="inline-block mb-3 p-4 rounded-2xl bg-gradient-to-br from-primary-500/10 to-pink-500/10 dark:from-primary-500/20 dark:to-pink-500/20"
+                    className="inline-block mb-3 p-4 rounded-2xl bg-gradient-to-br from-primary-500/10 to-crimson-500/10 dark:from-primary-500/20 dark:to-crimson-500/20"
                   >
                     <MessageCircle
                       size={40}

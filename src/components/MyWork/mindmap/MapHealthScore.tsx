@@ -267,9 +267,9 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
             <div className={`text-[13px] font-bold ${scoreColor}`}>{overallScore}%</div>
           </div>
           {expanded ? (
-            <ChevronUp size={12} className="text-slate-400" />
+            <ChevronUp size={12} className="text-slate-600" />
           ) : (
-            <ChevronDown size={12} className="text-slate-400" />
+            <ChevronDown size={12} className="text-slate-600" />
           )}
         </button>
 
@@ -294,7 +294,7 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
                       style={{ width: `${m.score}%` }}
                     />
                   </div>
-                  <div className="text-[8px] text-slate-400 mt-0.5">{m.detail}</div>
+                  <div className="text-[8px] text-slate-600 mt-0.5">{m.detail}</div>
                 </div>
               );
             })}

@@ -23,6 +23,7 @@ import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { ErrorState, LoadingState, MetaChip } from '../ui/primitives';
 import { CompetencyCatalog } from './CompetencyCatalog';
 import type { OrganizationSection } from './OrganizationSidebar';
 
@@ -79,12 +80,7 @@ export const OrganizationAdminPanel: React.FC<OrganizationAdminPanelProps> = ({ 
   }, [fetchOrgData]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-        <span className="ml-2 text-sm text-slate-500">{t('common.loading', 'Loading…')}</span>
-      </div>
-    );
+    return <LoadingState variant="spinner" label={t('common.loading', 'Loading…')} />;
   }
 
   switch (section) {
@@ -120,7 +116,9 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
     if (!inviteEmail.trim() || !orgData?.id) return;
     try {
       setInviting(true);
-      await Api.addOrganizationMember(orgData.id, inviteEmail, inviteRole);
+      // M16 P1-2: send a real email invitation via /api/invitations (production route
+      // re-enabled in P0-1) instead of directly adding a membership row.
+      await Api.createOrganizationInvitation(inviteEmail.trim(), inviteRole);
       toast.success(t('organization.members.inviteSent', 'Invitation sent'));
       trackFunnelEvent('org_member_invite_sent', { role: inviteRole });
       setInviteEmail('');
@@ -137,7 +135,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-start gap-3">
-          <Users size={18} className="text-slate-400 mt-0.5" strokeWidth={1.5} />
+          <Users size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('organization.members.title', 'Team Members')}
@@ -152,12 +150,11 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
             onClick={() => setShowInviteForm(!showInviteForm)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
           >
-            <Plus size={14} />
             {t('organization.members.invite', 'Invite')}
           </button>
         </div>
         {showInviteForm && (
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700/60 flex items-end gap-3">
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700/60 flex items-end gap-3">
             <div className="flex-1">
               <label className="block text-xs font-medium text-slate-500 mb-1">
                 {t('organization.members.email', 'Email')}
@@ -201,7 +198,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-100 dark:border-navy-700/60">
+            <tr className="border-b border-slate-200 dark:border-navy-700/60">
               <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 {t('organization.members.name', 'Name')}
               </th>
@@ -216,10 +213,10 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-navy-700/40">
+          <tbody className="divide-y divide-slate-200 dark:divide-navy-700/40">
             {members.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-5 py-12 text-center text-sm text-slate-400">
+                <td colSpan={4} className="px-5 py-12 text-center text-sm text-slate-600">
                   {t(
                     'organization.members.empty',
                     'No members yet. Invite your first team member.'
@@ -237,9 +234,7 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
                   </td>
                   <td className="px-5 py-3 text-slate-600 dark:text-slate-400">{m.email}</td>
                   <td className="px-5 py-3">
-                    <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
-                      {m.role || 'Member'}
-                    </span>
+                    <MetaChip label={m.role || 'Member'} />
                   </td>
                   <td className="px-5 py-3">
                     <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
@@ -258,16 +253,24 @@ const MembersSection: React.FC<{ orgData: any; members: any[]; onRefresh: () => 
 
 const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   const { t } = useTranslation();
-  const plan = orgData?.subscription_plan || 'trial';
-  const tokens = orgData?.token_balance ?? 0;
-  const tokenLimit = orgData?.token_limit ?? 10000;
+  // M16 P2-3: prefer live subscription + token usage from the policy snapshot,
+  // falling back to whatever fields getUserOrganizations happened to expose.
+  const { snapshot } = useLimits(orgData?.id);
+  const livePlan = snapshot
+    ? snapshot.subscriptionStatus ||
+      (snapshot.isPaid ? 'active' : snapshot.isTrial ? 'trial' : null)
+    : null;
+  const plan = livePlan || orgData?.subscription_plan || 'trial';
+  const tokens = snapshot?.usageToday?.tokensUsed ?? orgData?.token_balance ?? 0;
+  const tokenLimit = snapshot?.limits?.maxTotalTokens || orgData?.token_limit || 10000;
   const usagePercent = tokenLimit > 0 ? Math.round((tokens / tokenLimit) * 100) : 0;
+  const isTrialPlan = String(plan).toLowerCase().includes('trial');
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-start gap-3">
-          <CreditCard size={18} className="text-slate-400 mt-0.5" strokeWidth={1.5} />
+          <CreditCard size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('organization.billing.planTitle', 'Current Plan')}
@@ -276,7 +279,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
               {plan}
             </p>
             <p className="text-sm text-slate-500 mt-1">
-              {plan === 'trial'
+              {isTrialPlan
                 ? t(
                     'organization.billing.trialDesc',
                     'You are on a free trial. Upgrade to unlock full features.'
@@ -284,7 +287,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 : t('organization.billing.activeDesc', 'Your subscription is active.')}
             </p>
           </div>
-          {plan === 'trial' && (
+          {isTrialPlan && (
             <button
               onClick={() =>
                 trackFunnelEvent('org_admin_cta_clicked', { action: 'billing_activate' })
@@ -299,7 +302,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
       </div>
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <Gauge size={16} className="text-slate-400" strokeWidth={1.5} />
+          <Gauge size={16} className="text-slate-600" strokeWidth={1.5} />
           {t('organization.billing.tokensTitle', 'Token Balance')}
         </h3>
         <div className="mt-3 flex items-end gap-3">
@@ -316,7 +319,7 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             style={{ width: `${Math.min(usagePercent, 100)}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-slate-400">
+        <p className="mt-2 text-xs text-slate-600">
           {usagePercent}% {t('organization.billing.used', 'used')}
         </p>
       </div>
@@ -324,40 +327,118 @@ const BillingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   );
 };
 
+/**
+ * M16 P0-5: live plan limits + current usage from GET /api/organization/policy-snapshot
+ * (mounted via organization-limits.routes). Returns nullable so the section can show
+ * skeleton/error states instead of fabricated zeros.
+ */
+interface PolicyLimits {
+  maxProjects: number;
+  maxUsers: number;
+  maxAICallsPerDay: number;
+  maxStorageMb: number;
+  maxTotalTokens: number;
+}
+interface PolicyUsage {
+  aiCalls: number;
+  projects: number;
+  users: number;
+  storageMb: number;
+  tokensUsed: number;
+}
+interface PolicySnapshotResponse {
+  limits: PolicyLimits | null;
+  usageToday: PolicyUsage;
+  subscriptionStatus?: string | null;
+  isTrial?: boolean;
+  isPaid?: boolean;
+}
+
+function useLimits(orgId: string | undefined) {
+  const [snapshot, setSnapshot] = useState<PolicySnapshotResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = (await Api.organizationPolicySnapshot()) as PolicySnapshotResponse;
+      setSnapshot(data || null);
+    } catch {
+      setError(true);
+      setSnapshot(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load, orgId]);
+
+  return { snapshot, loading, error, reload: load };
+}
+
 const LimitsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   const { t } = useTranslation();
+  const { snapshot, loading, error, reload } = useLimits(orgData?.id);
+
+  const limitsConfig = snapshot?.limits;
+  const usage = snapshot?.usageToday;
   const limits = [
     {
       key: 'members',
       label: t('organization.limits.members', 'Team Members'),
-      current: orgData?.member_count ?? 1,
-      max: orgData?.member_limit ?? 5,
+      current: usage?.users ?? 0,
+      max: limitsConfig?.maxUsers ?? 0,
     },
     {
       key: 'projects',
       label: t('organization.limits.projects', 'Projects'),
-      current: orgData?.project_count ?? 0,
-      max: orgData?.project_limit ?? 3,
+      current: usage?.projects ?? 0,
+      max: limitsConfig?.maxProjects ?? 0,
     },
     {
       key: 'storage',
-      label: t('organization.limits.storage', 'Storage (GB)'),
-      current: orgData?.storage_used_gb ?? 0,
-      max: orgData?.storage_limit_gb ?? 1,
+      label: t('organization.limits.storage', 'Storage (MB)'),
+      current: usage?.storageMb ?? 0,
+      max: limitsConfig?.maxStorageMb ?? 0,
     },
     {
       key: 'ai_calls',
-      label: t('organization.limits.aiCalls', 'AI Calls / month'),
-      current: orgData?.ai_calls_used ?? 0,
-      max: orgData?.ai_calls_limit ?? 100,
+      label: t('organization.limits.aiCalls', 'AI Calls / day'),
+      current: usage?.aiCalls ?? 0,
+      max: limitsConfig?.maxAICallsPerDay ?? 0,
+    },
+    {
+      key: 'tokens',
+      label: t('organization.limits.tokens', 'Tokens'),
+      current: usage?.tokensUsed ?? 0,
+      max: limitsConfig?.maxTotalTokens ?? 0,
     },
   ];
+
+  if (loading) {
+    return <LoadingState variant="spinner" label={t('common.loading', 'Loading…')} />;
+  }
+
+  if (error || !snapshot) {
+    return (
+      <div className="max-w-4xl rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40">
+        <ErrorState
+          message={t('organization.limits.loadFailed', 'Could not load plan limits.')}
+          retry={() => void reload()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Gauge size={16} className="text-slate-400" strokeWidth={1.5} />
+          <Gauge size={16} className="text-slate-600" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('organization.limits.title', 'Plan Limits & Current Usage')}
           </h3>
@@ -564,7 +645,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
       )}
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-start gap-3">
-          <Globe size={18} className="text-slate-400 mt-0.5" strokeWidth={1.5} />
+          <Globe size={18} className="text-slate-600 mt-0.5" strokeWidth={1.5} />
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               {t('organization.domains.title', 'Custom Domain')}
@@ -609,7 +690,6 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   disabled={savingCustomDomain}
                   className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 disabled:opacity-50 dark:border-white/10 dark:text-slate-300"
                 >
-                  <Plus size={14} />
                   {savingCustomDomain
                     ? t('common.saving', 'Saving...')
                     : t('organization.domains.saveCustomDomain', 'Save domain')}
@@ -645,7 +725,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
             type="button"
             onClick={() => void handleAddApprovedDomain()}
             disabled={savingDomain}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-lg bg-slate-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 transition-colors"
           >
             {savingDomain ? t('common.saving', 'Saving...') : t('common.add', 'Add')}
           </button>
@@ -665,14 +745,14 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                   }}
                   disabled={!d.id}
                   title={!d.id ? 'Cannot remove a domain without a server id' : undefined}
-                  className="text-slate-400 hover:text-rose-500"
+                  className="text-slate-600 hover:text-rose-500"
                 >
                   <Trash2 size={12} />
                 </button>
               </span>
             ))
           ) : (
-            <p className="text-sm text-slate-400 italic">
+            <p className="text-sm text-slate-600 italic">
               {t('organization.domains.noApproved', 'No approved domains set.')}
             </p>
           )}
@@ -761,7 +841,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
     <div className="space-y-6 max-w-4xl">
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Palette size={16} className="text-slate-400" strokeWidth={1.5} />
+          <Palette size={16} className="text-slate-600" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('organization.branding.visualTitle', 'Visual Identity')}
           </h3>
@@ -775,7 +855,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingLogo}
-              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-400 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-700 flex items-center justify-center text-slate-600 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
             >
               {uploadingLogo ? (
                 <Loader2 size={24} className="animate-spin" />
@@ -816,7 +896,7 @@ const BrandingSection: React.FC<{ orgData: any }> = ({ orgData }) => {
       </div>
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Globe size={16} className="text-slate-400" strokeWidth={1.5} />
+          <Globe size={16} className="text-slate-600" strokeWidth={1.5} />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('organization.branding.regionalTitle', 'Regional Settings')}
           </h3>

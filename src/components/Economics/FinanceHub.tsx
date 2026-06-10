@@ -37,6 +37,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { MetaChip } from '@/components/ui/primitives/chips';
 import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
@@ -83,6 +84,7 @@ import { getFinanceErrorMessage } from './financeErrorMap';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
 import { FinanceModelDocumentView } from './FinanceModelDocumentView';
+import { buildFinanceTeresaPrompt } from './financeModelLabels';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
   CANVAS_PADDING,
@@ -240,6 +242,7 @@ export const FinanceHub: React.FC = () => {
         valuation: 'valuation',
         investment: 'financial_analysis',
       };
+      const teresaPrompt = buildFinanceTeresaPrompt(row.kind, t);
       openChatWithContext({
         entityType: entityTypeMap[row.kind] || 'financial_model',
         entityId: row.id,
@@ -249,10 +252,11 @@ export const FinanceHub: React.FC = () => {
           status: row.status,
           tab: activeTab,
           organizationName: currentOrganization?.name,
+          teresaPrompt,
         },
       });
     },
-    [openChatWithContext, activeTab, currentOrganization?.name]
+    [openChatWithContext, activeTab, currentOrganization?.name, t]
   );
 
   const loadV8Dashboard = useCallback(async () => {
@@ -656,6 +660,7 @@ export const FinanceHub: React.FC = () => {
   // ---- Row actions ----
   const { getRowActions } = useFinanceRowActions({
     handleOpenFull,
+    handleOpenPreview: (row) => onSelectRow(row),
     handleExport,
     handleOpenEntityChat,
     handleCreateModelFromStatement,
@@ -1022,17 +1027,17 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.subtype', 'Subtype'),
           width: '130px',
           render: (row: FinanceRow) => {
-            if (row.kind !== 'prediction') return <span className="text-sm text-slate-500">—</span>;
+            if (row.kind !== 'prediction') return <span className="text-sm text-slate-400">—</span>;
             const pRow = row as FinanceModelRow;
             const isBudget = pRow.predictionType === 'budget';
             return (
-              <span
-                className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${isBudget ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}
-              >
-                {isBudget
-                  ? t('finance.prediction.budget', 'Budżet')
-                  : t('finance.prediction.model', 'Model')}
-              </span>
+              <MetaChip
+                label={
+                  isBudget
+                    ? t('finance.prediction.budget', 'Budżet')
+                    : t('finance.prediction.model', 'Model')
+                }
+              />
             );
           },
         },
@@ -1174,9 +1179,8 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary-hover transition-colors duration-150 active:scale-[0.97]"
+        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-150 active:scale-[0.97]"
       >
-        <Plus size={14} strokeWidth={2.5} />
         <span>{labels[currentKind] || labels.models}</span>
       </button>
     );
@@ -1469,7 +1473,7 @@ export const FinanceHub: React.FC = () => {
             className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-lg shadow-xl dark:border-white/[0.08] dark:bg-navy-900/95 p-1.5 z-20"
             role="menu"
           >
-            <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
               {t('finance.analyze.menuTitle', 'Choose next step')}
             </div>
             <div className="space-y-0.5">
@@ -1510,9 +1514,12 @@ export const FinanceHub: React.FC = () => {
     );
   }, [allAnalyzeActions, showAnalyzeMenu, analyzeActionIcons, isPl, t]);
 
+  // commandRowRightContent — canonical right slot for Menu 3 actions.
+  // Rendered inside commandRowContent (justify-between) because ModuleNavBar does not
+  // currently render commandRowRightContent in the command-row path.
   const commandRowRightContent = useMemo(
     () => (
-      <>
+      <div className="flex shrink-0 items-center gap-2">
         {rightControls}
         <button
           type="button"
@@ -1525,6 +1532,10 @@ export const FinanceHub: React.FC = () => {
                 activeTab,
                 organizationName: currentOrganization?.name,
                 laneStatus: lane.activeLaneRun?.currentStep ?? 'idle',
+                teresaPrompt:
+                  activeTab === 'models' || activeTab === 'prediction'
+                    ? buildFinanceTeresaPrompt(activeTab, t)
+                    : undefined,
               },
             })
           }
@@ -1534,7 +1545,7 @@ export const FinanceHub: React.FC = () => {
           <MessageCircle size={12} />
           <span>AI</span>
         </button>
-      </>
+      </div>
     ),
     [
       activeTab,
@@ -1620,82 +1631,90 @@ export const FinanceHub: React.FC = () => {
         dotClassName: 'bg-emerald-400',
       },
     ];
+    // Canonical Menu 3 layout: justify-between — presets left, actions right.
+    // commandRowRightContent is embedded here because ModuleNavBar's command-row
+    // path currently does not render the commandRowRightContent prop.
     return (
-      <div className={MENU_3_LEFT_CLASS}>
-        {chips.map((chip) => (
-          <button
-            key={chip.id}
-            onClick={() => {
-              if (chip.id === 'all') {
-                setActiveFilters((prev) => prev.filter((f) => f.column !== 'status'));
-                return;
-              }
-              const statusValue = chip.id;
-              if (chip.active) {
-                setActiveFilters((prev) =>
-                  prev.filter((f) => !(f.column === 'status' && f.value === statusValue))
-                );
-                return;
-              }
-              setActiveFilters((prev) => [
-                ...prev.filter((f) => f.column !== 'status'),
-                {
-                  id: `status-${statusValue}`,
-                  column: 'status',
-                  value: statusValue,
-                  label: chip.label,
-                },
-              ]);
-            }}
-            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-          >
-            <span
-              className={
-                chip.id === 'all'
-                  ? MENU_3_ALL_DOT_CLASS
-                  : `h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotColors[chip.id] || dotColors.all}`
-              }
+      <div className="flex items-center justify-between gap-2 w-full min-w-0">
+        {/* Left slot — preset filter chips */}
+        <div className={MENU_3_LEFT_CLASS}>
+          {chips.map((chip) => (
+            <button
+              key={chip.id}
+              onClick={() => {
+                if (chip.id === 'all') {
+                  setActiveFilters((prev) => prev.filter((f) => f.column !== 'status'));
+                  return;
+                }
+                const statusValue = chip.id;
+                if (chip.active) {
+                  setActiveFilters((prev) =>
+                    prev.filter((f) => !(f.column === 'status' && f.value === statusValue))
+                  );
+                  return;
+                }
+                setActiveFilters((prev) => [
+                  ...prev.filter((f) => f.column !== 'status'),
+                  {
+                    id: `status-${statusValue}`,
+                    column: 'status',
+                    value: statusValue,
+                    label: chip.label,
+                  },
+                ]);
+              }}
+              className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            >
+              <span
+                className={
+                  chip.id === 'all'
+                    ? MENU_3_ALL_DOT_CLASS
+                    : `h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotColors[chip.id] || dotColors.all}`
+                }
+              />
+              <span>{chip.label}</span>
+              <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                {chip.count}
+              </span>
+            </button>
+          ))}
+          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+          {runtimeChips.map((chip) => (
+            <div key={chip.label} className={MENU_3_CHIP_INACTIVE}>
+              <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
+              <span>{chip.label}</span>
+              <span className={MENU_3_BADGE_INACTIVE}>{chip.value}</span>
+            </div>
+          ))}
+          {isFinanceRuntimeV8 && v8Dashboard && (
+            <>
+              <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+              <div className={MENU_3_CHIP_INACTIVE}>
+                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-rose-400" />
+                <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
+                <span className={MENU_3_BADGE_INACTIVE}>
+                  {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
+                </span>
+              </div>
+              <div className={MENU_3_CHIP_INACTIVE}>
+                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-amber-400" />
+                <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
+                <span className={MENU_3_BADGE_INACTIVE}>
+                  {v8Dashboard.staleSourceRefreshesCount ?? 0}
+                </span>
+              </div>
+            </>
+          )}
+          {isFinanceRuntimeV8 && (
+            <FinanceLaneStrip
+              activeLaneRun={lane.activeLaneRun}
+              degradedAlerts={lane.degradedAlerts}
+              onOpenPanel={() => setLanePanelOpen(true)}
             />
-            <span>{chip.label}</span>
-            <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-              {chip.count}
-            </span>
-          </button>
-        ))}
-        <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-        {runtimeChips.map((chip) => (
-          <div key={chip.label} className={MENU_3_CHIP_INACTIVE}>
-            <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
-            <span>{chip.label}</span>
-            <span className={MENU_3_BADGE_INACTIVE}>{chip.value}</span>
-          </div>
-        ))}
-        {isFinanceRuntimeV8 && v8Dashboard && (
-          <>
-            <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-            <div className={MENU_3_CHIP_INACTIVE}>
-              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-rose-400" />
-              <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
-              <span className={MENU_3_BADGE_INACTIVE}>
-                {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
-              </span>
-            </div>
-            <div className={MENU_3_CHIP_INACTIVE}>
-              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-amber-400" />
-              <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
-              <span className={MENU_3_BADGE_INACTIVE}>
-                {v8Dashboard.staleSourceRefreshesCount ?? 0}
-              </span>
-            </div>
-          </>
-        )}
-        {isFinanceRuntimeV8 && (
-          <FinanceLaneStrip
-            activeLaneRun={lane.activeLaneRun}
-            degradedAlerts={lane.degradedAlerts}
-            onOpenPanel={() => setLanePanelOpen(true)}
-          />
-        )}
+          )}
+        </div>
+        {/* Right slot — contextual AI/action buttons (§3.4 MUST) */}
+        {commandRowRightContent}
       </div>
     );
   }, [
@@ -1708,6 +1727,7 @@ export const FinanceHub: React.FC = () => {
     lane.activeLaneRun,
     lane.degradedAlerts,
     isFinanceRuntimeV8,
+    commandRowRightContent,
   ]);
 
   const emptyMessage = useMemo(() => {
@@ -2000,6 +2020,64 @@ export const FinanceHub: React.FC = () => {
           </div>
         </div>
       );
+    if (!activeDocumentId && activeTab === 'models' && filteredRows.length === 0)
+      return (
+        <div className="flex items-center justify-center h-full p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] p-6">
+            <div className="flex items-start gap-4">
+              <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
+                <Calculator size={20} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {t('finance.model.emptyTitle', 'Build your first financial model')}
+                </div>
+                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  {t(
+                    'finance.model.emptyBody',
+                    'A financial model turns a statement pack into a board-ready business case: P&L, balance sheet, cash flow, and the NPV / ROI / payback story for the client.'
+                  )}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModelModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-crimson-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-crimson-700"
+                  >
+                    <Plus size={14} />
+                    {t('finance.model.createModel', 'Create Financial Model')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openChatWithContext({
+                        entityType: 'finance_module',
+                        entityId: 'finance',
+                        entityName: t('finance.aiChat', 'Finance'),
+                        contextData: {
+                          activeTab,
+                          organizationName: currentOrganization?.name,
+                          teresaPrompt: buildFinanceTeresaPrompt('models', t),
+                        },
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/[0.1] bg-white/70 dark:bg-white/[0.04] px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
+                  >
+                    <Sparkles size={14} />
+                    {t('finance.model.emptyAskTeresa', 'Ask Teresa to start')}
+                  </button>
+                </div>
+                <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t(
+                    'finance.model.emptyHint',
+                    'Seed a model from a statement pack or start from scratch — Teresa proposes the assumptions.'
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
     if (activeDocumentId && activeDocument) return fullView;
     if (viewMode === 'grid') return gridView;
     return tableWithPreview;
@@ -2007,6 +2085,10 @@ export const FinanceHub: React.FC = () => {
     loadingTab,
     loadError,
     t,
+    activeTab,
+    filteredRows.length,
+    currentOrganization?.name,
+    openChatWithContext,
     activeDocumentId,
     activeDocument,
     fullView,
@@ -2069,7 +2151,6 @@ export const FinanceHub: React.FC = () => {
         availableViewModes={['table', 'grid']}
         primaryCta={primaryCta}
         commandRowContent={commandRowContent}
-        commandRowRightContent={commandRowRightContent}
       >
         {isFinanceRuntimeV8 && (
           <FinanceDegradedBanner

@@ -21,7 +21,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_AI_COACH: z.boolean().default(true),
   ENABLE_HELP_SYSTEM: z.boolean().default(true),
   ENABLE_TABLE_PLATFORM_METADATA_FIRST: z.boolean().default(false),
-  ENABLE_TABLE_PLATFORM_RECORDS_API: z.boolean().default(false),
+  ENABLE_TABLE_PLATFORM_RECORDS_API: z.boolean().default(true),
   ENABLE_RECORD_PROVENANCE: z.boolean().default(false),
   ENABLE_TABLE_AI_EDITOR: z.boolean().default(false),
   ENABLE_TABLE_QA_ENGINE: z.boolean().default(false),
@@ -64,7 +64,12 @@ export function loadFeatureFlags(): FeatureFlags {
       process.env.ENABLE_TABLE_PLATFORM_METADATA_FIRST === 'true',
 
     // Table Platform: Records API
-    ENABLE_TABLE_PLATFORM_RECORDS_API: process.env.ENABLE_TABLE_PLATFORM_RECORDS_API === 'true',
+    // Default ON. The table platform (My Work table builder + /tabele lane)
+    // is GA; the route layer still performs a live `tp_*` schema readiness
+    // check (returns 503 SCHEMA_NOT_READY until the date-prefixed migration
+    // runner has applied the 700-series DDL at boot). Set the env var to
+    // 'false' to hard-disable the authenticated table endpoints.
+    ENABLE_TABLE_PLATFORM_RECORDS_API: process.env.ENABLE_TABLE_PLATFORM_RECORDS_API !== 'false',
 
     // Block B (Record Provenance): per-record confidence + validation_status.
     // Gate sits inside ConfidenceScoringService.recompute() and the
@@ -74,25 +79,25 @@ export function loadFeatureFlags(): FeatureFlags {
     // Block C (AI Operator): 8-level AI Editor on top of TableAiEditorService.
     // Disabled by default until C-S2 lands real handlers; route layer still
     // honours the budget gate + audit pipeline so QA can exercise the wiring.
-    ENABLE_TABLE_AI_EDITOR: process.env.ENABLE_TABLE_AI_EDITOR === 'true',
+    ENABLE_TABLE_AI_EDITOR: process.env.ENABLE_TABLE_AI_EDITOR !== 'false',
 
     // Block C (Table QA Engine): deterministic 5-axis health scoring +
     // suggestion synthesis on top of TableQaService. Disabled by default until
     // C-S5 ships TabeleQaPanel; routes still honour cross-tenant defenses so
     // backend QA can exercise the pipeline before the UI lands.
-    ENABLE_TABLE_QA_ENGINE: process.env.ENABLE_TABLE_QA_ENGINE === 'true',
+    ENABLE_TABLE_QA_ENGINE: process.env.ENABLE_TABLE_QA_ENGINE !== 'false',
 
     // Block C (Source Pack Builder): curator-driven bundle of records that the
     // AI Editor can later consume (`payload.sourcePackId`). Disabled by default
     // until C-S6 frontend lands; the route layer still applies cross-tenant
     // defenses so backend QA can exercise the pipeline.
-    ENABLE_TABLE_SOURCE_PACK: process.env.ENABLE_TABLE_SOURCE_PACK === 'true',
+    ENABLE_TABLE_SOURCE_PACK: process.env.ENABLE_TABLE_SOURCE_PACK !== 'false',
 
     // Block D (Table → Doc/Deck Conversion): bridges Tabele tables into
     // Document Studio v1 / DeckBuilder. Disabled by default until D-S3 ships
     // the lane UI; backend route still applies tenant guards so QA can
     // exercise the pipeline before the UI surface lands.
-    ENABLE_TABLE_ARTIFACT_CONVERSION: process.env.ENABLE_TABLE_ARTIFACT_CONVERSION === 'true',
+    ENABLE_TABLE_ARTIFACT_CONVERSION: process.env.ENABLE_TABLE_ARTIFACT_CONVERSION !== 'false',
 
     // Block D (Form Intake JWT): per-recipient JWT links + field allow-list
     // + public submission rate limit on top of the existing slug-based

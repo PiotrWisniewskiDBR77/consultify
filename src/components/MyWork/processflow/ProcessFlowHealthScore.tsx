@@ -178,9 +178,9 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
           </div>
         </div>
         {expanded ? (
-          <ChevronUp size={14} className="text-slate-400" />
+          <ChevronUp size={14} className="text-slate-600" />
         ) : (
-          <ChevronDown size={14} className="text-slate-400" />
+          <ChevronDown size={14} className="text-slate-600" />
         )}
       </button>
 

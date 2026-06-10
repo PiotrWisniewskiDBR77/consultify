@@ -21,6 +21,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { Card } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
 interface PredictiveModel {
@@ -246,11 +247,7 @@ const PredictiveAnalyticsView: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -327,7 +324,7 @@ const PredictiveAnalyticsView: React.FC = () => {
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {models.length === 0 ? (
                 <div className="text-center py-8">
-                  <Brain className="w-12 h-12 text-slate-400 dark:text-slate-400 mx-auto mb-3" />
+                  <Brain className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
                   <p className="text-slate-600 dark:text-slate-400 text-sm">No models yet</p>
                   <button
                     onClick={() => setShowCreateModal(true)}
@@ -593,7 +590,7 @@ const PredictiveAnalyticsView: React.FC = () => {
           ) : (
             <Card className="p-8">
               <div className="flex flex-col items-center justify-center h-64">
-                <Brain className="w-16 h-16 text-slate-400 dark:text-slate-400 mb-4" />
+                <Brain className="w-16 h-16 text-slate-600 dark:text-slate-400 mb-4" />
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
                   Select a Model
                 </h3>

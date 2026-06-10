@@ -318,7 +318,7 @@ export const OrganizationOverviewReport: React.FC<OrganizationOverviewReportProp
 
       {/* Footer */}
       {isPublic && (
-        <div className="text-center text-sm text-gray-400 dark:text-gray-500 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="text-center text-sm text-gray-600 dark:text-gray-500 pt-8 border-t border-gray-200 dark:border-gray-700">
           {t('reports.sharedReport')} • Consultify
         </div>
       )}

@@ -155,10 +155,12 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
     try {
       setIsGeneratingCode(true);
-      const response = await Api.post('/admin/access-codes', {
-        role: generatedInviteRole,
+      const response = await Api.post('/access-codes/generate', {
+        type: 'INVITE',
+        organizationId: orgId,
         maxUses: generatedInviteMaxUses,
         expiresInDays: 7,
+        metadata: { invitedRole: generatedInviteRole },
       });
 
       const code = response?.code?.code || response?.code;
@@ -265,7 +267,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                 <th className="py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/5">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">

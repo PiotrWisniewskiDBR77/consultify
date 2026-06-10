@@ -33,7 +33,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
           <h2 className="max-w-[32ch] text-lg font-semibold leading-tight tracking-tight text-white md:text-xl">
             {payload.headline}
           </h2>
-          <p className="mt-1.5 max-w-[60ch] text-xs leading-relaxed text-slate-300/85">
+          <p className="mt-1.5 max-w-[60ch] text-xs leading-relaxed text-slate-600/85">
             {payload.summary}
           </p>
         </div>
@@ -102,7 +102,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
             <div className="mt-1.5 text-sm font-semibold leading-snug text-white">
               {primaryFocus.title}
             </div>
-            <div className="mt-1 text-[11px] leading-relaxed text-slate-300/75">
+            <div className="mt-1 text-[11px] leading-relaxed text-slate-600/75">
               {primaryFocus.meta}
             </div>
           </button>
@@ -134,7 +134,7 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
             <div className="mt-1 text-[12px] font-semibold leading-snug text-white group-hover:text-primary-200">
               {item.title}
             </div>
-            <div className="mt-0.5 text-[10px] leading-relaxed text-slate-300/70">{item.meta}</div>
+            <div className="mt-0.5 text-[10px] leading-relaxed text-slate-600/70">{item.meta}</div>
           </button>
         ))}
       </div>

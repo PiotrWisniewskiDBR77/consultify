@@ -39,6 +39,7 @@ import { ReportCommentPanel } from '../Reports/ReportCommentPanel';
 import { ReportHeader } from '../Reports/ReportHeader';
 import { StickyNavigation } from '../Reports/StickyNavigation';
 import { TableOfContents } from '../Reports/TableOfContents';
+import { LoadingState } from '../ui/primitives';
 
 interface ReportBuilderWorkspaceProps {
   reportId: string;
@@ -359,14 +360,11 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
   // Loading state
   if (isLoading && !report) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-navy-950">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-400">
-            {isPolish ? 'Ładowanie raportu...' : 'Loading report...'}
-          </p>
-        </div>
-      </div>
+      <LoadingState
+        variant="spinner"
+        className="h-full bg-slate-50 dark:bg-navy-950"
+        label={isPolish ? 'Ładowanie raportu...' : 'Loading report...'}
+      />
     );
   }
 
@@ -440,7 +438,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
             <button
               onClick={handleRegenerate}
               disabled={isRegenerating}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-700 hover:to-crimson-700 text-white font-medium rounded-lg transition-all disabled:opacity-50"
             >
               {isRegenerating ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -619,7 +617,7 @@ export const ReportBuilderWorkspace: React.FC<ReportBuilderWorkspaceProps> = ({
         {/* Chat sidebar - left */}
         {showChat && (
           <div className="w-96 shadow-sm flex flex-col bg-white dark:bg-navy-900 flex-shrink-0">
-            <div className="p-4 border-b border-slate-100 dark:border-navy-800 flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 dark:border-navy-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-primary-500" />
                 <span className="font-semibold text-navy-900 dark:text-white">

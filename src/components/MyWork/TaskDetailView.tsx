@@ -55,6 +55,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
@@ -2444,7 +2445,7 @@ Return ONLY the final comment text.`;
                 <div className="py-10 text-center">
                   <CheckSquare
                     size={28}
-                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                   />
                   <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish
@@ -2491,7 +2492,7 @@ Return ONLY the final comment text.`;
                         <span
                           className={`text-[11px] font-medium mt-0.5 mr-0.5 tabular-nums select-none ${
                             done
-                              ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600'
+                              ? 'text-slate-700 dark:text-slate-300 dark:text-slate-400'
                               : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
                           }`}
                         >
@@ -2604,7 +2605,7 @@ Return ONLY the final comment text.`;
                   <div className="py-8 text-center">
                     <Lightbulb
                       size={28}
-                      className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                      className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                     />
                     <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                       {isPolish
@@ -3453,7 +3454,7 @@ Return ONLY the final comment text.`;
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
-        <Loader2 className="animate-spin text-primary-500" size={32} />
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -4827,7 +4828,7 @@ Return ONLY the final comment text.`;
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/5 to-blue-500/5 dark:from-blue-500/10 dark:to-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-primary-500/5 to-pink-500/5 dark:from-primary-500/10 dark:to-pink-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-primary-500/5 to-crimson-500/5 dark:from-primary-500/10 dark:to-crimson-500/10 rounded-full blur-3xl" />
       </div>
 
       {/* Content - Two columns */}
@@ -5168,7 +5169,7 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <Scale
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak powiązanych decyzji' : 'No related decisions'}
@@ -5695,7 +5696,7 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <CheckSquare
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak elementów' : 'No items'}
@@ -5804,7 +5805,7 @@ Return ONLY the final comment text.`;
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-navy-700 rounded-xl">
                           <History
                             size={24}
-                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-600"
+                            className="mx-auto mb-2 text-slate-700 dark:text-slate-300 dark:text-slate-400"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Brak historii' : 'No activity yet'}
@@ -6026,7 +6027,7 @@ Return ONLY the final comment text.`;
                                   {isPolish ? 'Samodzielne zadanie' : 'Standalone task'}
                                 </span>
                               </button>
-                              <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                              <div className="border-t border-slate-200 dark:border-navy-700 my-1" />
                               {availableInitiatives.map((init) => (
                                 <button
                                   key={init.id}

@@ -108,7 +108,7 @@ const MenuButton: React.FC<{
     title={!showFull ? item.label : undefined}
   >
     <span
-      className={`shrink-0 relative ${activeSection === item.id ? 'text-rose-500 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
+      className={`shrink-0 relative ${activeSection === item.id ? 'text-rose-500 dark:text-rose-400' : 'text-slate-600 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
     >
       {item.icon}
       {/* Badge for collapsed state */}
@@ -204,7 +204,7 @@ export const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({
               toggleSidebarCollapse();
               setIsHovered(false);
             }}
-            className="absolute right-2 p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            className="absolute right-2 p-1.5 text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             title={isSidebarCollapsed ? 'Pin Sidebar (Keep Open)' : 'Unpin Sidebar (Collapse)'}
           >
             {isSidebarCollapsed ? (

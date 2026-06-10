@@ -677,7 +677,7 @@ export const SystemSettings: React.FC = () => {
                     <button
                       onClick={() => handleDeleteAdmin(admin.id)}
                       disabled={savingAdmin}
-                      className="p-1.5 hover:bg-rose-500/20 text-slate-400 dark:text-slate-500 hover:text-rose-400 rounded transition-colors disabled:opacity-60"
+                      className="p-1.5 hover:bg-rose-500/20 text-slate-600 dark:text-slate-500 hover:text-rose-400 rounded transition-colors disabled:opacity-60"
                       title="Remove Admin"
                     >
                       <Trash2 size={16} />
@@ -698,7 +698,7 @@ export const SystemSettings: React.FC = () => {
             <form onSubmit={handleCreateAdmin} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                     First Name
                   </label>
                   <input
@@ -709,7 +709,7 @@ export const SystemSettings: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                     Last Name
                   </label>
                   <input
@@ -721,7 +721,7 @@ export const SystemSettings: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                   Email
                 </label>
                 <input
@@ -733,7 +733,7 @@ export const SystemSettings: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-500 mb-1">
                   Password
                 </label>
                 <input
@@ -749,7 +749,7 @@ export const SystemSettings: React.FC = () => {
                   type="button"
                   onClick={() => setShowAddAdmin(false)}
                   disabled={savingAdmin}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-300 transition-colors disabled:opacity-60"
+                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-600 transition-colors disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -1044,7 +1044,7 @@ export const SystemSettings: React.FC = () => {
 
             <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
               {tableRows.length === 0 ? (
-                <div className="p-12 text-center text-slate-400 dark:text-slate-500">
+                <div className="p-12 text-center text-slate-600 dark:text-slate-500">
                   {selectedTable
                     ? `No rows found in ${selectedTable}`
                     : 'Select a table to view data'}

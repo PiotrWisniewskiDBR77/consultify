@@ -320,7 +320,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
                     e.stopPropagation();
                     setShowSnoozeMenu(!showSnoozeMenu);
                   }}
-                  className="flex items-center gap-1 p-1.5 text-slate-400 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-colors"
+                  className="flex items-center gap-1 p-1.5 text-slate-600 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-colors"
                   title={isPolish ? 'Odłóż' : 'Snooze'}
                 >
                   <Clock size={14} />
@@ -355,7 +355,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
               e.stopPropagation();
               onMarkRead();
             }}
-            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
             title={t('notifications.actions.markRead', 'Mark as read')}
           >
             <Check size={14} />
@@ -368,7 +368,7 @@ export const NotificationQuickActions: React.FC<NotificationQuickActionsProps> =
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-colors"
+          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-colors"
           title={t('notifications.actions.delete', 'Delete')}
         >
           <Trash2 size={14} />

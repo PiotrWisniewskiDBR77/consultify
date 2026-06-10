@@ -76,7 +76,7 @@ export const InputHintStrip: React.FC<InputHintStripProps> = ({
   if (!isEnabled()) return null;
 
   const base =
-    'px-2 pt-1.5 pb-0 text-[10px] leading-tight text-slate-400 dark:text-slate-500 select-none';
+    'px-2 pt-1.5 pb-0 text-[10px] leading-tight text-slate-600 dark:text-slate-500 select-none';
 
   return (
     <div
@@ -87,7 +87,7 @@ export const InputHintStrip: React.FC<InputHintStripProps> = ({
       {HINTS.map((hint, idx) => (
         <React.Fragment key={hint.id}>
           {idx > 0 && (
-            <span aria-hidden className="mx-1.5 text-slate-300 dark:text-slate-600 select-none">
+            <span aria-hidden className="mx-1.5 text-slate-600 dark:text-slate-400 select-none">
               ·
             </span>
           )}

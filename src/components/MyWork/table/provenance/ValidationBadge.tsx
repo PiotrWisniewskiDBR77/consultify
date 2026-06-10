@@ -165,7 +165,7 @@ export const ValidationBadge: React.FC<ValidationBadgeProps> = ({
               <span>{labelFor(next, isPl ?? false)}</span>
               {next === 'unverified' && (
                 <span
-                  className="ml-auto text-[9px] uppercase tracking-wider text-slate-400"
+                  className="ml-auto text-[9px] uppercase tracking-wider text-slate-600"
                   aria-hidden
                 >
                   {isPl ? 'admin' : 'admin'}

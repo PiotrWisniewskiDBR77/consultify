@@ -429,10 +429,24 @@ export class InvitationServiceClass {
     projectId?: string | null;
     role: string;
   }> {
-    const { token, email, firstName, lastName, password } = params;
+    const { token, email, firstName, lastName, password, jobTitle, siteLocation, department } =
+      params;
 
     const invitation = await this.getByToken(token);
     if (!invitation) throw new Error('Invalid invitation token');
+
+    // First-login profile enforcement (only when the invitation opts in)
+    const acceptMeta = JSON.parse(invitation.metadata || '{}') as {
+      requireProfile?: boolean;
+      open?: boolean;
+    };
+    const requireProfile = acceptMeta.requireProfile === true;
+    // Shared/open invitation: one link for a whole cohort. Each user enters their
+    // own email; the link is not bound to a single address and is not consumed.
+    const isOpen = acceptMeta.open === true;
+    if (requireProfile && (!jobTitle?.trim() || !siteLocation?.trim())) {
+      throw new Error('Job title and work location are required to complete your first login.');
+    }
 
     if (invitation.status !== INVITATION_STATUS.PENDING) {
       throw new Error(`Invitation is ${invitation.status}`);
@@ -450,8 +464,8 @@ export class InvitationServiceClass {
       throw new Error('Invitation has expired');
     }
 
-    // Email binding
-    if (email.toLowerCase() !== invitation.email.toLowerCase()) {
+    // Email binding (skipped for shared/open invitations — each user enters their own email)
+    if (!isOpen && email.toLowerCase() !== invitation.email.toLowerCase()) {
       throw new Error(
         'Email address does not match invitation. Please use the email address the invitation was sent to.'
       );
@@ -465,6 +479,65 @@ export class InvitationServiceClass {
 
     if (existingUser) {
       if (existingUser.organization_id === invitation.organization_id) {
+        // First-login activation of a pre-created account (e.g. bulk-imported employees).
+        // The account has no password yet and is still pending — complete it here instead of erroring.
+        const current = await this.deps.db.get<{ status: string; password: string | null }>(
+          `SELECT status, password FROM users WHERE id = ?`,
+          [existingUser.id]
+        );
+        if (current && current.status === 'pending' && !current.password) {
+          const newHash = this.deps.bcrypt.hashSync(password, 10);
+          const activatedRole = invitation.role_to_assign || invitation.role;
+          await this.deps.db.run(
+            `UPDATE users
+               SET password = ?, first_name = ?, last_name = ?, status = 'active',
+                   job_title = COALESCE(?, job_title),
+                   site_location = COALESCE(?, site_location),
+                   department = COALESCE(?, department)
+             WHERE id = ?`,
+            [
+              newHash,
+              firstName,
+              lastName,
+              jobTitle?.trim() || null,
+              siteLocation?.trim() || null,
+              department?.trim() || null,
+              existingUser.id,
+            ]
+          );
+          // Ensure org membership exists (best-effort; was created at import time)
+          try {
+            await this.deps.db.run(
+              `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+               VALUES (?, ?, ?, ?, 'ACTIVE')
+               ON CONFLICT (organization_id, user_id) DO NOTHING`,
+              [this.deps.uuidv4(), invitation.organization_id, existingUser.id, activatedRole]
+            );
+          } catch (memberErr) {
+            logger.warn('[InvitationService] Membership ensure on activation failed:', memberErr);
+          }
+
+          // Shared/open invitations stay reusable for the whole cohort — don't consume.
+          if (!isOpen) {
+            await this.deps.dataService.markAsAccepted(invitation.id, existingUser.id);
+          }
+          await this.deps.dataService.logEvent(
+            invitation.id,
+            INVITATION_EVENT_TYPES.ACCEPTED,
+            existingUser.id,
+            { isNewUser: false, firstLoginActivation: true, orgId: invitation.organization_id },
+            requestInfo
+          );
+
+          return {
+            success: true,
+            userId: existingUser.id,
+            isNewUser: false,
+            organizationId: invitation.organization_id,
+            projectId: invitation.project_id || undefined,
+            role: activatedRole,
+          };
+        }
         throw new Error('You are already a member of this organization');
       }
       throw new Error(
@@ -478,8 +551,8 @@ export class InvitationServiceClass {
     const role = invitation.role_to_assign || invitation.role;
 
     await this.deps.db.run(
-      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
+      `INSERT INTO users (id, organization_id, email, password, first_name, last_name, role, status, job_title, site_location, department)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`,
       [
         userId,
         invitation.organization_id,
@@ -488,8 +561,25 @@ export class InvitationServiceClass {
         firstName,
         lastName,
         role,
+        jobTitle?.trim() || null,
+        siteLocation?.trim() || null,
+        department?.trim() || null,
       ]
     );
+
+    // Org membership for the new account. Without this the access guard returns
+    // 403 ORG_MEMBERSHIP_REVOKED (Chat / Decisions / etc. break) — the user row
+    // alone is not enough; membership is the source of truth for org access.
+    try {
+      await this.deps.db.run(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+               VALUES (?, ?, ?, ?, 'ACTIVE')
+               ON CONFLICT (organization_id, user_id) DO NOTHING`,
+        [this.deps.uuidv4(), invitation.organization_id, userId, role]
+      );
+    } catch (memberErr) {
+      logger.warn('[InvitationService] Membership create on new-user accept failed:', memberErr);
+    }
 
     // Add to project (project invitation)
     if (invitation.invitation_type === INVITATION_TYPES.PROJECT && invitation.project_id) {
@@ -549,10 +639,12 @@ export class InvitationServiceClass {
       }
     }
 
-    // Mark accepted
-    const accepted = await this.deps.dataService.markAsAccepted(invitation.id, userId);
-    if (!accepted) {
-      throw new Error('Invitation has already been accepted or is no longer valid');
+    // Mark accepted — shared/open invitations stay reusable for the cohort, don't consume.
+    if (!isOpen) {
+      const accepted = await this.deps.dataService.markAsAccepted(invitation.id, userId);
+      if (!accepted) {
+        throw new Error('Invitation has already been accepted or is no longer valid');
+      }
     }
 
     // Seat increment
@@ -785,9 +877,27 @@ export class InvitationServiceClass {
       throw new Error('Invitation has expired');
     }
 
+    const validateMeta = JSON.parse(invitation.metadata || '{}') as {
+      requireProfile?: boolean;
+      open?: boolean;
+    };
+    const isOpen = validateMeta.open === true;
+    // Prefill name/profile from a pre-created (pending) account if one exists for this email.
+    // Shared/open invitations have no bound email — each user enters their own.
+    const prefill = isOpen
+      ? null
+      : await this.deps.db.get<{
+          first_name: string | null;
+          last_name: string | null;
+          status: string | null;
+        }>(
+          `SELECT first_name, last_name, status FROM users WHERE email = ? AND organization_id = ?`,
+          [invitation.email.toLowerCase(), invitation.organization_id]
+        );
+
     return {
       id: invitation.id,
-      email: invitation.email,
+      email: isOpen ? '' : invitation.email,
       organizationId: invitation.organization_id,
       organizationName: invitation.organization_name,
       invitationType: invitation.invitation_type,
@@ -795,6 +905,11 @@ export class InvitationServiceClass {
       projectName: invitation.project_name,
       roleToAssign: invitation.role_to_assign || invitation.role,
       expiresAt: invitation.expires_at,
+      requireProfile: validateMeta.requireProfile === true,
+      requireEmail: isOpen,
+      firstName: prefill?.first_name || '',
+      lastName: prefill?.last_name || '',
+      isFirstLogin: isOpen ? true : prefill?.status === 'pending',
     };
   }
 

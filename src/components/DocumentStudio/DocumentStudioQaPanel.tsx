@@ -62,7 +62,7 @@ function CategoryReportView({
           <span className={`text-base font-semibold ${scoreColor(report.score)}`}>
             {report.score}
           </span>
-          <span className="text-slate-400">/ 100</span>
+          <span className="text-slate-600">/ 100</span>
           {report.blocking ? (
             <span className="rounded-full bg-danger-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger-700 dark:text-danger-300">
               {t('documentStudio.qa.blocking', 'blocking')}

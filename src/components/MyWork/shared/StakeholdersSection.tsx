@@ -230,12 +230,12 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {stakeholders.length > 0 && (
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-500">
               {stakeholders.length}
             </span>
           )}
           <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={18} className="text-slate-400" />
+            <ChevronDown size={18} className="text-slate-600" />
           </motion.div>
         </div>
       </motion.button>
@@ -267,10 +267,10 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                         <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                           {isPolish ? config.label.pl : config.label.en}
                         </span>
-                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                        <span className="text-xs text-slate-600 dark:text-slate-500">
                           ({roleStakeholders.length})
                         </span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 italic hidden sm:inline">
+                        <span className="text-[10px] text-slate-600 dark:text-slate-500 italic hidden sm:inline">
                           - {isPolish ? config.description.pl : config.description.en}
                         </span>
                       </div>
@@ -304,7 +304,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                         {stakeholder.userName || stakeholder.userId}
                                       </span>
                                       {stakeholder.userEmail && (
-                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate block">
+                                        <span className="text-[10px] text-slate-600 dark:text-slate-500 truncate block">
                                           {stakeholder.userEmail}
                                         </span>
                                       )}
@@ -318,7 +318,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                       className={`p-1.5 rounded-lg transition-colors ${
                                         stakeholder.notificationSettings.enabled
                                           ? 'text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20'
-                                          : 'text-slate-400 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600'
+                                          : 'text-slate-600 bg-slate-100 dark:bg-navy-700 hover:bg-slate-200 dark:hover:bg-navy-600'
                                       }`}
                                       title={
                                         stakeholder.notificationSettings.enabled
@@ -347,7 +347,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                       className={`p-1.5 rounded-lg transition-colors ${
                                         isStakeholderExpanded
                                           ? 'text-primary-500 bg-primary-500/10'
-                                          : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-700'
+                                          : 'text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-700'
                                       }`}
                                       title={isPolish ? 'Ustawienia' : 'Settings'}
                                     >
@@ -358,7 +358,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                     {!readOnly && (
                                       <button
                                         onClick={() => onRemove(stakeholder.id)}
-                                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors opacity-0 group-hover:opacity-100"
+                                        className="p-1.5 rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors opacity-0 group-hover:opacity-100"
                                         title={isPolish ? 'Usuń' : 'Remove'}
                                       >
                                         <Trash2 size={14} />
@@ -434,7 +434,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                               disabled={readOnly}
                                               className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
                                             />
-                                            <Mail size={12} className="text-slate-400" />
+                                            <Mail size={12} className="text-slate-600" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
                                               Email
                                             </span>
@@ -458,7 +458,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                                               disabled={readOnly}
                                               className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500"
                                             />
-                                            <Bell size={12} className="text-slate-400" />
+                                            <Bell size={12} className="text-slate-600" />
                                             <span className="text-xs text-slate-600 dark:text-slate-400">
                                               {isPolish ? 'W aplikacji' : 'In-app'}
                                             </span>
@@ -489,7 +489,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          className="ml-6 py-2 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500"
+                          className="ml-6 py-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500"
                         >
                           <div className="w-4 h-4 rounded-full border-2 border-dashed border-slate-300 dark:border-navy-600" />
                           <span className="italic">{isPolish ? 'Brak' : 'None'}</span>
@@ -550,7 +550,7 @@ export const StakeholdersSection: React.FC<StakeholdersSectionProps> = ({
                         {isPolish
                           ? ROLE_CONFIG[selectedRole].description.pl
                           : ROLE_CONFIG[selectedRole].description.en}
-                        <span className="block mt-1 text-[10px] text-slate-400">
+                        <span className="block mt-1 text-[10px] text-slate-600">
                           {isPolish ? 'Domyślne powiadomienia: ' : 'Default notifications: '}
                           {ROLE_CONFIG[selectedRole].defaultTriggers
                             .map((t) =>

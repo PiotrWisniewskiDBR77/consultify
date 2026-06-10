@@ -111,7 +111,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
             <button
               type="button"
               onClick={() => setShowPasswords(!showPasswords)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:text-slate-400"
             >
               {showPasswords ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -123,7 +123,7 @@ export const PasswordSettings: React.FC<PasswordSettingsProps> = ({ className = 
             {requirements.map((req, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-2 text-sm ${req.met ? 'text-green-600' : 'text-slate-400 dark:text-slate-500'}`}
+                className={`flex items-center gap-2 text-sm ${req.met ? 'text-green-600' : 'text-slate-600 dark:text-slate-500'}`}
               >
                 {req.met ? <Check size={14} /> : <X size={14} />}
                 {req.text}

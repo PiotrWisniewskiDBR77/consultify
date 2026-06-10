@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import api from '../../services/api';
 import { Button } from '../ui/primitives/Button';
 
@@ -171,11 +173,7 @@ export function AISecuritySettings() {
   };
 
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 animate-spin text-gray-400 dark:text-gray-500 dark:text-gray-400" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-6" />;
   }
 
   return (

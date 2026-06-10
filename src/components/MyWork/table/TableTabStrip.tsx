@@ -158,7 +158,7 @@ export const TableTabStrip: React.FC<TableTabStripProps> = ({
       {/* Add table button */}
       <button
         onClick={onCreateTable}
-        className="flex items-center justify-center h-7 w-7 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-white/60 dark:hover:bg-navy-800/60 transition-colors flex-shrink-0"
+        className="flex items-center justify-center h-7 w-7 rounded text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-white/60 dark:hover:bg-navy-800/60 transition-colors flex-shrink-0"
         title={isPl ? 'Dodaj tabelę' : 'Add table'}
       >
         <Plus size={14} />

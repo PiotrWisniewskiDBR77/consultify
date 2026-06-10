@@ -6,9 +6,13 @@ import type {
   RadarDynamicContext,
   RadarImpactType,
   RadarProcessedSignal,
+  RadarQuadrant,
   RadarRankedSignal,
   RadarRelevanceBreakdown,
+  RadarRing,
   RadarSignalCard,
+  RadarSignalStatus,
+  RadarSignalType,
   UserRadarProfileRecord,
 } from './radarTypes.js';
 
@@ -118,47 +122,153 @@ function classifyImpactType(signal: RadarProcessedSignal): RadarImpactType {
   return signal.contentType === 'how_to' || signal.contentType === 'tool_tip' ? 'learning' : 'risk';
 }
 
+function toRing(signal: RadarProcessedSignal, finalScore: number): RadarRing {
+  if (signal.actionability === 'high' || finalScore >= 60) return 'NOW';
+  if (signal.actionability === 'medium' || finalScore >= 46) return 'PREPARE';
+  if (signal.contentType === 'how_to' || signal.contentType === 'guide') return 'LEARN';
+  return 'OBSERVE';
+}
+
+function toQuadrant(signal: RadarProcessedSignal): RadarQuadrant {
+  if (signal.relevanceScope === 'project_specific') return 'MY_PROJECTS';
+  if (signal.relevanceScope === 'industry_specific') return 'MY_INDUSTRY';
+  if (signal.relevanceScope === 'role_specific') return 'MY_ROLE';
+  return 'MY_DEVELOPMENT';
+}
+
+function toStatus(signal: RadarProcessedSignal): RadarSignalStatus {
+  const ageMs = signal.publishedAt ? Date.now() - Date.parse(signal.publishedAt) : Number.NaN;
+  if (!Number.isNaN(ageMs) && ageMs < 72 * 3600 * 1000) return 'new';
+  if (signal.durability === 'hot') return 'updated';
+  return 'saved';
+}
+
+function toSignalType(signal: RadarProcessedSignal): RadarSignalType {
+  if (signal.contentType === 'tool_tip' || signal.contentType === 'how_to') return 'TOOL';
+  if (signal.contentType === 'competitor_move') return 'BUSINESS';
+  if (signal.contentType === 'regulation') return 'RISK';
+  if (signal.contentType === 'guide') return 'SKILL';
+  if (signal.contentType === 'weak_signal') return 'TREND';
+  return 'TECHNOLOGY';
+}
+
+/** Return the first candidate phrase whose keywords appear in the signal text. */
+function firstContextMatch(candidates: string[], signalText: string[]): string | null {
+  const haystack = signalText.join(' ').toLowerCase();
+  for (const candidate of candidates) {
+    const value = String(candidate || '').trim();
+    if (!value) continue;
+    const tokens = value
+      .toLowerCase()
+      .split(/[^a-z0-9ąćęłńóśźż]+/i)
+      .filter((token) => token.length >= 4);
+    if (tokens.length === 0) continue;
+    if (tokens.some((token) => haystack.includes(token))) return value;
+  }
+  return null;
+}
+
 function deriveWhyYouSeeThis(
   breakdown: RadarRelevanceBreakdown,
   signal: RadarProcessedSignal,
   profile: UserRadarProfileRecord,
+  dynamicContext: RadarDynamicContext,
   isPolish: boolean
 ): string {
   const L = (pl: string, en: string) => (isPolish ? pl : en);
+  const signalText = [
+    signal.normalizedTitle,
+    ...signal.domainTags,
+    ...signal.topicTags,
+    ...signal.entityTags,
+  ];
+
+  // Order strongest → weakest match, and name the concrete thing that matched
+  // so the rationale is signal-specific rather than boilerplate.
   if (breakdown.projectMatch >= 15) {
-    return L(
-      'Bo ten sygnał pasuje do Twoich aktualnych zadań, decyzji albo inicjatyw.',
-      'Because this signal matches your current tasks, decisions, or initiatives.'
+    const project = firstContextMatch(
+      [...dynamicContext.initiativeTitles, ...dynamicContext.ideaTitles],
+      signalText
     );
+    return project
+      ? L(
+          `Bo łączy się z Twoją pracą nad „${project}”.`,
+          `Because it connects to your work on “${project}”.`
+        )
+      : L(
+          'Bo pasuje do Twoich aktywnych inicjatyw i pomysłów.',
+          'Because it matches your active initiatives and ideas.'
+        );
+  }
+  if (breakdown.recentWorkContextMatch >= 8) {
+    const recent = firstContextMatch(
+      [...dynamicContext.taskTitles, ...dynamicContext.decisionTitles],
+      signalText
+    );
+    return recent
+      ? L(
+          `Bo dotyka tego, nad czym ostatnio pracujesz: „${recent}”.`,
+          `Because it touches what you’ve been working on: “${recent}”.`
+        )
+      : L(
+          'Bo łączy się z Twoimi ostatnimi zadaniami i decyzjami.',
+          'Because it connects to your recent tasks and decisions.'
+        );
   }
   if (breakdown.trackedCompanyMatch >= 8) {
-    return L(
-      'Bo dotyczy firmy albo dostawcy, którego obserwujesz.',
-      'Because it involves a company or vendor you track.'
-    );
+    const company = firstContextMatch(profile.trackedCompanies, signalText) || signal.entityTags[0];
+    return company
+      ? L(
+          `Bo dotyczy ${company} — firmy, którą obserwujesz.`,
+          `Because it involves ${company}, a company you track.`
+        )
+      : L(
+          'Bo dotyczy obserwowanego przez Ciebie dostawcy.',
+          'Because it involves a vendor you track.'
+        );
   }
   if (breakdown.trackedTopicMatch >= 10) {
+    const topic = firstContextMatch(profile.trackedTopics, signalText) || signal.topicTags[0];
     return L(
-      `Bo pasuje do obserwowanego tematu: ${profile.trackedTopics[0] || signal.topicTags[0] || 'Radar'}.`,
-      `Because it matches a tracked topic: ${profile.trackedTopics[0] || signal.topicTags[0] || 'Radar'}.`
+      `Bo pasuje do obserwowanego tematu: ${topic || 'Radar'}.`,
+      `Because it matches a tracked topic: ${topic || 'Radar'}.`
     );
   }
   if (breakdown.roleMatch >= 10) {
-    return L(
-      'Bo pasuje do Twojej roli i typu decyzji, które zwykle prowadzisz.',
-      'Because it matches your role and the decisions you usually drive.'
-    );
+    const role = profile.roles[0];
+    return role
+      ? L(
+          `Bo dotyczy decyzji typowych dla roli ${role}.`,
+          `Because it touches decisions typical for a ${role}.`
+        )
+      : L(
+          'Bo pasuje do Twojej roli i typu decyzji, które prowadzisz.',
+          'Because it matches your role and the decisions you drive.'
+        );
   }
   if (breakdown.industryMatch >= 10) {
-    return L(
-      'Bo ten sygnał jest bliski Twojej branży i kontekstowi organizacji.',
-      'Because this signal is close to your industry and organization context.'
-    );
+    const industry = profile.industries[0];
+    return industry
+      ? L(
+          `Bo jest istotny dla branży ${industry}.`,
+          `Because it’s relevant to the ${industry} industry.`
+        )
+      : L(
+          'Bo jest bliski kontekstowi Twojej organizacji.',
+          'Because it’s close to your organization’s context.'
+        );
   }
-  return L(
-    'Bo Radar ocenił go jako świeży, wiarygodny i potencjalnie użyteczny teraz.',
-    'Because Radar rated it as fresh, credible, and potentially useful now.'
-  );
+  // No personalization match — be honest and concrete instead of filler.
+  const subject = signal.entityTags[0] || signal.topicTags[0] || signal.domainTags[0];
+  return subject
+    ? L(
+        `Świeży sygnał o „${subject}” z ${signal.sourceName || 'zaufanego źródła'} — wart Twojej uwagi.`,
+        `A fresh signal about “${subject}” from ${signal.sourceName || 'a trusted source'} — worth your attention.`
+      )
+    : L(
+        `Świeży, wysoko oceniony sygnał z ${signal.sourceName || 'zaufanego źródła'}.`,
+        `A fresh, highly-rated signal from ${signal.sourceName || 'a trusted source'}.`
+      );
 }
 
 function deriveWhyItMatters(
@@ -167,33 +277,49 @@ function deriveWhyItMatters(
   isPolish: boolean
 ): string {
   const L = (pl: string, en: string) => (isPolish ? pl : en);
+  const subject = signal.entityTags[0] || signal.topicTags[0] || null;
+  // Optional concrete hook so two signals of the same impact type don't read identically.
+  const hook = subject
+    ? L(` Szczególnie w kontekście „${subject}”.`, ` Especially around “${subject}”.`)
+    : '';
+
   if (impactType === 'operational') {
-    return L(
-      'Może zmienić sposób sekwencjonowania pracy, rytuałów albo workflowów wykonawczych.',
-      'It can shift sequencing, operating rituals, or execution workflows.'
+    return (
+      L(
+        'Może zmienić sposób sekwencjonowania pracy, rytuałów albo workflowów wykonawczych.',
+        'It can shift sequencing, operating rituals, or execution workflows.'
+      ) + hook
     );
   }
   if (impactType === 'commercial') {
-    return L(
-      'To sygnał, który może zmienić oczekiwania rynku, pozycjonowanie albo tempo konkurencji.',
-      'This may shift market expectations, positioning, or competitive pace.'
+    return (
+      L(
+        'Może zmienić oczekiwania rynku, pozycjonowanie albo tempo konkurencji.',
+        'It may shift market expectations, positioning, or competitive pace.'
+      ) + hook
     );
   }
   if (impactType === 'compliance') {
-    return L(
-      'To ma wpływ na governance, ryzyko albo wymagania zgodności, więc nie powinno zostać tylko “do przeczytania”.',
-      'It affects governance, risk, or compliance requirements, so it should not remain just “interesting reading”.'
+    return (
+      L(
+        'Dotyka governance, ryzyka albo wymagań zgodności — nie powinno zostać tylko „do przeczytania”.',
+        'It touches governance, risk, or compliance — it should not stay just “interesting reading”.'
+      ) + hook
     );
   }
   if (impactType === 'learning') {
-    return L(
-      'To praktyczny materiał, który może podnieść jakość Twojego kolejnego ruchu.',
-      'This is a practical input that can improve the quality of your next move.'
+    return (
+      L(
+        'Praktyczny materiał, który może podnieść jakość Twojego kolejnego ruchu.',
+        'Practical input that can raise the quality of your next move.'
+      ) + hook
     );
   }
-  return L(
-    'To wpływa na kierunek transformacji, framing decyzji albo sposób ustawienia priorytetów.',
-    'It affects transformation direction, decision framing, or the way priorities are set.'
+  return (
+    L(
+      'Wpływa na kierunek transformacji, framing decyzji albo sposób ustawienia priorytetów.',
+      'It affects transformation direction, decision framing, or how priorities get set.'
+    ) + hook
   );
 }
 
@@ -526,7 +652,7 @@ class RadarRankingService {
         signalId: signal.id,
         finalScore,
         relevanceBreakdown: breakdown,
-        whyYouSeeThis: deriveWhyYouSeeThis(breakdown, signal, profile, isPolish),
+        whyYouSeeThis: deriveWhyYouSeeThis(breakdown, signal, profile, dynamicContext, isPolish),
         whyItMatters: deriveWhyItMatters(signal, impactType, isPolish),
         suggestedNextStep: deriveNextStep(signal, isPolish),
         impactType,
@@ -608,6 +734,10 @@ class RadarRankingService {
       localization?.isLocalized && localization?.requestedLanguage
         ? localization.requestedLanguage
         : localization?.sourceLanguage || 'en';
+    const ring = toRing(signal, ranked.finalScore);
+    const quadrant = toQuadrant(signal);
+    const status = toStatus(signal);
+    const signalType = toSignalType(signal);
     return {
       id: ranked.id,
       signalId: signal.id,
@@ -644,6 +774,18 @@ class RadarRankingService {
       requestedLanguage: localization?.requestedLanguage || localization?.sourceLanguage || 'en',
       isLocalized: localization?.isLocalized ?? true,
       localizationPending: localization?.localizationPending ?? false,
+      ring,
+      quadrant,
+      status,
+      signalType,
+      preview: {
+        shortDescription: signal.summaryShort,
+        whyItMatters: ranked.whyItMatters,
+        whyItMattersForYou: ranked.whyYouSeeThis,
+        howToThinkAboutIt: signal.summaryLong || signal.summaryShort,
+        goodFirstQuestion: `What concrete change would ${resolvedTitle} introduce in your current work?`,
+        suggestedNextStep: ranked.suggestedNextStep,
+      },
     };
   }
 }

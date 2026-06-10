@@ -1,41 +1,38 @@
 /**
- * Admin Card Component
+ * Admin Card — COMPATIBILITY ADAPTER (fork retired, X1 Design System)
  *
- * Clean card variants for Admin module
- * Variants: base, bordered, elevated
- *
- * Key principles:
- * - No excessive borders
- * - Consistent padding
- * - Subtle backgrounds
+ * The bespoke Admin card implementation was deleted. This module now delegates
+ * to the canonical primitive `src/components/ui/primitives/Card`, preserving the
+ * legacy Admin API (`variant="base|bordered|elevated"`, `padding`, `onClick`,
+ * plus the `CardWithHeader` / `StatsCard` / `Section` composed helpers) so
+ * existing Admin / SuperAdmin views keep working. Prefer importing directly from
+ * `@/components/ui/primitives` in new code.
  */
 
 import React from 'react';
 
-type CardVariant = 'base' | 'bordered' | 'elevated';
+import {
+  Card as PrimitiveCard,
+  type CardPadding,
+  type CardVariant as PrimitiveCardVariant,
+} from '../../ui/primitives/Card';
+
+type AdminCardVariant = 'base' | 'bordered' | 'elevated';
+
+// Map legacy Admin variants onto canonical primitive variants.
+const variantMap: Record<AdminCardVariant, PrimitiveCardVariant> = {
+  base: 'filled',
+  bordered: 'outlined',
+  elevated: 'elevated',
+};
 
 interface CardProps {
-  variant?: CardVariant;
-  padding?: 'none' | 'sm' | 'md' | 'lg';
+  variant?: AdminCardVariant;
+  padding?: CardPadding;
   className?: string;
   children: React.ReactNode;
   onClick?: () => void;
 }
-
-const variantClasses: Record<CardVariant, string> = {
-  base: 'bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-transparent',
-  bordered:
-    'bg-white dark:bg-transparent border border-slate-200 dark:border-white/[0.06] rounded-xl',
-  elevated:
-    'bg-white dark:bg-slate-800 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-black/20 border border-slate-100 dark:border-transparent',
-};
-
-const paddingClasses: Record<string, string> = {
-  none: '',
-  sm: 'p-4',
-  md: 'p-5',
-  lg: 'p-6',
-};
 
 export const Card: React.FC<CardProps> = ({
   variant = 'base',
@@ -46,8 +43,11 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   const clickable = typeof onClick === 'function';
   return (
-    <div
-      className={`${variantClasses[variant]} ${paddingClasses[padding]} ${className}`}
+    <PrimitiveCard
+      variant={variantMap[variant]}
+      padding={padding}
+      hoverable={clickable}
+      className={className}
       onClick={onClick}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
@@ -60,11 +60,11 @@ export const Card: React.FC<CardProps> = ({
       }
     >
       {children}
-    </div>
+    </PrimitiveCard>
   );
 };
 
-// Card with header
+// Card with header — composed wrapper on the primitive Card.
 interface CardWithHeaderProps extends Omit<CardProps, 'children'> {
   title: string;
   subtitle?: string;
@@ -81,36 +81,34 @@ export const CardWithHeader: React.FC<CardWithHeaderProps> = ({
   children,
 }) => {
   return (
-    <div className={`${variantClasses[variant]} ${className}`}>
-      <div className="flex items-start justify-between p-4 border-b border-slate-200 dark:border-white/[0.06]">
+    <PrimitiveCard variant={variantMap[variant]} padding="none" className={className}>
+      <div className="flex items-start justify-between p-4 border-b border-navy-200 dark:border-white/[0.06]">
         <div>
-          <h3 className="text-base font-medium text-slate-900 dark:text-slate-100">{title}</h3>
+          <h3 className="text-base font-medium text-navy-900 dark:text-navy-100">{title}</h3>
           {subtitle && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+            <p className="text-sm text-navy-500 dark:text-navy-400 mt-0.5">{subtitle}</p>
           )}
         </div>
         {action && <div>{action}</div>}
       </div>
       <div className="p-5">{children}</div>
-    </div>
+    </PrimitiveCard>
   );
 };
 
-// Stats card wrapper - for metric grids
+// Stats card wrapper — for metric grids.
 interface StatsCardProps {
   className?: string;
   children: React.ReactNode;
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({ className = '', children }) => (
-  <div
-    className={`bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-white/[0.04] rounded-lg p-4 ${className}`}
-  >
+  <PrimitiveCard variant="filled" padding="md" className={className}>
     {children}
-  </div>
+  </PrimitiveCard>
 );
 
-// Section wrapper with title
+// Section wrapper with title — pure layout, no card surface.
 interface SectionProps {
   title?: string;
   subtitle?: string;
@@ -132,9 +130,9 @@ export const Section: React.FC<SectionProps> = ({
         <div className="flex items-start justify-between mb-4">
           {title && (
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+              <h2 className="text-lg font-semibold text-navy-900 dark:text-navy-100">{title}</h2>
               {subtitle && (
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+                <p className="text-sm text-navy-500 dark:text-navy-400 mt-0.5">{subtitle}</p>
               )}
             </div>
           )}

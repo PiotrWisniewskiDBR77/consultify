@@ -242,7 +242,7 @@ const KanbanCardContent: React.FC<{
       `}
     >
       <div className="flex items-start gap-1.5">
-        <div className="mt-0.5 text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
+        <div className="mt-0.5 text-slate-700 dark:text-slate-300 dark:text-slate-400 group-hover:text-slate-500 dark:group-hover:text-slate-500 dark:text-slate-400 transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
           <GripVertical size={14} />
         </div>
         <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug flex-1">

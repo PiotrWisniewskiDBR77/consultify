@@ -72,7 +72,7 @@ const LegalDocumentLink: React.FC<LegalDocumentLinkProps> = ({ to, icon, title, 
     to={to}
     className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group"
   >
-    <div className="text-slate-400 dark:text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 mt-0.5">
+    <div className="text-slate-600 dark:text-slate-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 mt-0.5">
       {icon}
     </div>
     <div className="flex-1 min-w-0">
@@ -80,7 +80,7 @@ const LegalDocumentLink: React.FC<LegalDocumentLinkProps> = ({ to, icon, title, 
         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400">
           {title}
         </span>
-        <ExternalLink className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+        <ExternalLink className="w-3 h-3 text-slate-600 dark:text-slate-500" />
       </div>
       <span className="text-xs text-slate-500 dark:text-slate-400">{description}</span>
     </div>

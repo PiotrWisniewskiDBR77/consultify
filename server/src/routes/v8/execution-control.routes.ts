@@ -13,6 +13,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { requirePermission } from '../../middleware/permission.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
@@ -1410,6 +1411,13 @@ const ManagerSuggestionApplySchema = z.object({
 const LaneExecuteSchema = z.object({
   decisionId: z.string().min(1),
 });
+
+// QA-2026-06-08 (BUG-18): the manager-lane endpoints below return org-wide overdue
+// tasks plus real staff names (PII). They were only org-scoped, so any USER could read
+// the whole organisation's action queue. Gate the entire /manager surface behind a
+// manager-level capability (SUPERADMIN/OWNER/ADMIN/PROJECT_MANAGER) — a plain USER now
+// gets 403 instead of seeing colleagues' assignments.
+router.use('/manager', requirePermission('manage_workstreams'));
 
 /**
  * GET /api/v8/execution-control/manager/lanes/:laneId/problems

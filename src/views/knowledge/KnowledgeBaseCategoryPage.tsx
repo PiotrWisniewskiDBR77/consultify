@@ -61,7 +61,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
       <div className="relative">
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0D0828_0%,#0A0A1F_45%,#12082E_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] dark:bg-[linear-gradient(160deg,#0B1220_0%,#0F172A_45%,#0B1220_100%)]" />
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
@@ -204,7 +204,7 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
                     </div>
                     <ChevronRight
                       size={16}
-                      className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all dark:text-white/20 dark:group-hover:text-primary-400"
+                      className="text-slate-600 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all dark:text-white/20 dark:group-hover:text-primary-400"
                     />
                   </Link>
                 ))}
@@ -230,11 +230,11 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
         'group flex flex-col rounded-2xl border transition-all duration-300 overflow-hidden',
         'border-slate-200 bg-white backdrop-blur-sm dark:border-white/[0.06] dark:bg-white/[0.025]',
         'hover:bg-slate-50 hover:border-slate-300 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.12]',
-        'hover:shadow-[0_0_40px_-12px_rgba(124,58,237,0.20)]'
+        'hover:shadow-[0_0_40px_-12px_rgba(165,28,48,0.20)]'
       )}
     >
       {article.thumbnail_url ? (
-        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0D0828]">
+        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-[#0B1220]">
           <img
             src={kbImg(article.thumbnail_url)}
             alt={article.title}
@@ -245,7 +245,7 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
             loading="lazy"
             decoding="async"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A1F]/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/60 via-transparent to-transparent" />
           {article.is_featured && (
             <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-500/90 text-white">
               {t('kb.card.featured', 'Featured')}
@@ -253,8 +253,8 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
           )}
         </div>
       ) : (
-        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0D0828] dark:to-[#12082E]">
-          <BookOpen size={32} className="text-slate-300 dark:text-white/15" />
+        <div className="relative aspect-[16/9] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center dark:from-[#0B1220] dark:to-[#0B1220]">
+          <BookOpen size={32} className="text-slate-600 dark:text-white/15" />
         </div>
       )}
 

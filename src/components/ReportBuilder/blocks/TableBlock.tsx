@@ -91,7 +91,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
           </thead>
           <tbody>
             {rows.map((row, rI) => (
-              <tr key={rI} className="border-b border-slate-100 dark:border-navy-700 last:border-0">
+              <tr key={rI} className="border-b border-slate-200 dark:border-navy-700 last:border-0">
                 {row.map((cell, cI) => (
                   <td key={cI} className="py-2 px-3 text-slate-600 dark:text-slate-300">
                     {cell}
@@ -129,7 +129,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
             <th className="w-8">
               <button
                 onClick={addColumn}
-                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500"
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-500"
               >
                 <Plus size={14} />
               </button>
@@ -140,7 +140,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
           {rows.map((row, rI) => (
             <tr
               key={rI}
-              className="border-b border-slate-100 dark:border-navy-700 last:border-0 group"
+              className="border-b border-slate-200 dark:border-navy-700 last:border-0 group"
             >
               {row.map((cell, cI) => (
                 <td key={cI} className="p-1">
@@ -154,7 +154,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ block, onUpdate }) => {
               <td className="w-8 text-center">
                 <button
                   onClick={() => deleteRow(rI)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500"
                 >
                   <Trash2 size={12} />
                 </button>

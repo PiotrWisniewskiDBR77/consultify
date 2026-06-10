@@ -22,6 +22,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState } from '@/components/ui/primitives';
+
 import {
   type Provider,
   type UserIntegration,
@@ -613,8 +617,39 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
   const [mappingIntegrationId, setMappingIntegrationId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // Availability map from the server: which connectors actually have backend
+  // credentials configured (e.g. *_CLIENT_ID env). OAuth providers without
+  // credentials return 503 on connect, so we gate their Connect button.
+  const [availability, setAvailability] = useState<Record<
+    string,
+    { configured: boolean; authType: string }
+  > | null>(null);
+
   const { integrations, providers, connectedCount, loading, error, disconnect, refresh } =
     useUserIntegrations();
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const resp = await fetch('/api/settings/integrations/oauth/status', {
+          credentials: 'include',
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!cancelled && data?.availability && typeof data.availability === 'object') {
+          setAvailability(
+            data.availability as Record<string, { configured: boolean; authType: string }>
+          );
+        }
+      } catch {
+        // Non-fatal: if we can't load availability, leave buttons enabled (fail open).
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const connectedMap = useMemo(() => {
     const map = new Map<string, UserIntegration>();
@@ -638,6 +673,20 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       return true;
     });
   }, [selectedCategory, searchQuery]);
+
+  // An OAuth/token provider is "unavailable" when the server reports it has no
+  // backend credentials configured — connecting would 503. basic (CalDAV) and
+  // api_key providers use user-supplied credentials, so they're never gated.
+  const isProviderUnavailable = useCallback(
+    (app: CatalogApp): boolean => {
+      if (app.authType === 'basic' || app.authType === 'api_key') return false;
+      if (!availability) return false; // fail open until status loads
+      const entry = availability[app.id];
+      if (!entry) return false; // unknown to backend → don't block optimistically
+      return entry.configured === false;
+    },
+    [availability]
+  );
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: CATALOG.length };
@@ -674,6 +723,26 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           provider.id === providerId &&
           provider.isConnected &&
           provider.connection?.status === 'active'
+      ),
+    []
+  );
+
+  // api_key providers (e.g. Monday.com) are inserted by the server as 'pending'
+  // rather than 'active' — the key is validated asynchronously. Accept either
+  // status as a successful connection so we don't show a false error toast.
+  const snapshotHasConnectedProvider = useCallback(
+    (snapshot: { integrations: UserIntegration[]; providers: Provider[] }, providerId: string) =>
+      snapshot.integrations.some(
+        (integration) =>
+          integration.provider === providerId &&
+          (integration.status === 'active' || integration.status === 'pending')
+      ) ||
+      snapshot.providers.some(
+        (provider) =>
+          provider.id === providerId &&
+          (provider.isConnected ||
+            provider.connection?.status === 'active' ||
+            provider.connection?.status === 'pending')
       ),
     []
   );
@@ -889,7 +958,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               throw new Error(err.error || 'Connection failed');
             }
             const snapshot = await fetchIntegrationSnapshot();
-            if (!snapshotHasActiveProvider(snapshot, connectModalApp.id)) {
+            if (!snapshotHasConnectedProvider(snapshot, connectModalApp.id)) {
               throw new Error('Integration connection was not confirmed by the server');
             }
             toast.success(t('settings.integrations.connected', 'Connected successfully'));
@@ -927,6 +996,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     fetchIntegrationSnapshot,
     refresh,
     snapshotHasActiveProvider,
+    snapshotHasConnectedProvider,
     startOAuthFlow,
     t,
   ]);
@@ -942,9 +1012,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
             {t('settings.integrations.appsTitle', 'Connected Apps')}
           </h3>
         </div>
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-brand" />
-        </div>
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -974,7 +1042,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           )}
           <button
             onClick={refresh}
-            className="p-2 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="p-2 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={16} />
@@ -983,17 +1051,10 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       </div>
 
       {/* Search */}
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
         <input
           type="text"
           value={searchQuery}
@@ -1004,7 +1065,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600"
           >
             <X size={14} />
           </button>
@@ -1025,7 +1086,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           >
             {t(cat.labelKey, cat.fallback)}
             <span
-              className={`ml-1.5 ${selectedCategory === cat.id ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`ml-1.5 ${selectedCategory === cat.id ? 'text-white/70' : 'text-slate-600 dark:text-slate-500'}`}
             >
               {categoryCounts[cat.id] || 0}
             </span>
@@ -1034,21 +1095,11 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       </div>
 
       {/* Error */}
-      {error && (
-        <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm">
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
+      {error && <Banner variant="danger" title={error} />}
 
       {/* App cards */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
-          <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('settings.integrations.noResults', 'No apps found')}
-          </p>
-        </div>
+        <EmptyState preset="search" title={t('settings.integrations.noResults', 'No apps found')} />
       ) : (
         Object.entries(CATEGORY_META)
           .filter(([catId]) => selectedCategory === 'all' || selectedCategory === catId)
@@ -1069,6 +1120,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                     const isError = connection?.status === 'error';
                     const isExpired = connection?.status === 'expired';
                     const needsReauth = isError || isExpired;
+                    const unavailable = isProviderUnavailable(app);
                     const Icon = app.icon;
 
                     return (
@@ -1147,7 +1199,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 <button
                                   onClick={() => handleTest(app.id)}
                                   disabled={testingProvider === app.id}
-                                  className="p-1.5 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+                                  className="p-1.5 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
                                   title="Test connection"
                                 >
                                   {testingProvider === app.id ? (
@@ -1158,7 +1210,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 </button>
                                 <button
                                   onClick={() => setMappingIntegrationId(app.id)}
-                                  className="p-1.5 text-slate-400 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                  className="p-1.5 text-slate-600 hover:text-brand rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                                   title={t('settings.integrations.viewMappings', 'View Mappings')}
                                 >
                                   <GitMerge size={14} />
@@ -1179,7 +1231,19 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
                                 {t('common.reconnect', 'Reconnect')}
                               </button>
                             )}
-                            {!isConnected && !needsReauth && (
+                            {!isConnected && !needsReauth && unavailable && (
+                              <span
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-700/50 rounded-lg cursor-not-allowed"
+                                title={t(
+                                  'settings.integrations.notConfigured',
+                                  'This integration is not available yet — it has not been configured on the server.'
+                                )}
+                              >
+                                <Clock size={12} />
+                                {t('settings.integrations.comingSoon', 'Coming soon')}
+                              </span>
+                            )}
+                            {!isConnected && !needsReauth && !unavailable && (
                               <button
                                 onClick={() => openConnectModal(app)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand hover:bg-brand-dark rounded-lg transition-colors shadow-sm"
@@ -1234,7 +1298,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               </div>
               <button
                 onClick={() => setConnectModalApp(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                className="p-1.5 text-slate-600 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -1343,7 +1407,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         <p className="font-medium text-slate-600 dark:text-slate-300">
           {t('settings.integrations.note', 'Note:')}
         </p>
-        <ul className="list-disc list-inside space-y-0.5 text-slate-400 dark:text-slate-500">
+        <ul className="list-disc list-inside space-y-0.5 text-slate-600 dark:text-slate-500">
           <li>
             {t(
               'settings.integrations.notePersonal',

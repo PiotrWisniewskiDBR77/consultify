@@ -196,7 +196,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
             key={nudge.id}
             className="flex items-center gap-2 bg-white/95 dark:bg-navy-800/95 backdrop-blur-sm border border-primary-200 dark:border-primary-800/40 rounded-2xl shadow-lg px-4 py-2.5 animate-in slide-in-from-bottom-4 duration-300"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500/20 to-indigo-500/15 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500/20 to-crimson-500/15 flex items-center justify-center shrink-0">
               <Icon size={14} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 max-w-[300px] leading-relaxed">
@@ -213,7 +213,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
             <button
               type="button"
               onClick={() => setDismissed((prev) => new Set(prev).add(nudge.id))}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
+              className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
             >
               <X size={12} />
             </button>

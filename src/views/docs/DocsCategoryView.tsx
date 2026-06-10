@@ -58,7 +58,7 @@ export const DocsCategoryView: React.FC = () => {
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
         <input
           type="text"
           value={searchQuery}
@@ -84,7 +84,7 @@ export const DocsCategoryView: React.FC = () => {
           ))
         ) : articles.length === 0 ? (
           <div className="text-center py-12">
-            <Book size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <Book size={48} className="mx-auto text-slate-600 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">
               {t('docs.category.emptyTitle', 'No articles found')}
             </h3>
@@ -134,7 +134,7 @@ export const DocsCategoryView: React.FC = () => {
                   </div>
                   <ChevronRight
                     size={20}
-                    className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
+                    className="text-slate-600 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1"
                   />
                 </div>
               </Link>

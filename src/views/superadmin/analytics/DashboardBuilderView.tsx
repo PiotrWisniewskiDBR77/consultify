@@ -25,6 +25,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Card } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 
 interface Widget {
@@ -347,7 +348,7 @@ const DashboardBuilderView: React.FC = () => {
       case 'line':
         return (
           <div className="flex items-center justify-center h-full">
-            <Icon className="w-16 h-16 text-slate-400 dark:text-slate-400" />
+            <Icon className="w-16 h-16 text-slate-600 dark:text-slate-400" />
             <span className="ml-2 text-slate-600 dark:text-slate-400">Chart Preview</span>
           </div>
         );
@@ -355,7 +356,7 @@ const DashboardBuilderView: React.FC = () => {
       case 'list':
         return (
           <div className="flex items-center justify-center h-full">
-            <Icon className="w-16 h-16 text-slate-400 dark:text-slate-400" />
+            <Icon className="w-16 h-16 text-slate-600 dark:text-slate-400" />
             <span className="ml-2 text-slate-600 dark:text-slate-400">Data Preview</span>
           </div>
         );
@@ -365,11 +366,7 @@ const DashboardBuilderView: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -528,7 +525,7 @@ const DashboardBuilderView: React.FC = () => {
               <div className="grid grid-cols-4 gap-4 min-h-[400px]">
                 {widgets.length === 0 ? (
                   <div className="col-span-4 flex flex-col items-center justify-center h-64 border-2 border-dashed border-slate-300 dark:border-white/10 rounded-lg bg-slate-50/50 dark:bg-white/[0.02]">
-                    <Grid className="w-12 h-12 text-slate-400 dark:text-slate-400 mb-3" />
+                    <Grid className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
                     <p className="text-slate-600 dark:text-slate-400">No widgets yet</p>
                     {isEditing && (
                       <button
@@ -581,7 +578,7 @@ const DashboardBuilderView: React.FC = () => {
           ) : (
             <Card className="p-8">
               <div className="flex flex-col items-center justify-center h-64">
-                <Layout className="w-16 h-16 text-slate-400 dark:text-slate-400 mb-4" />
+                <Layout className="w-16 h-16 text-slate-600 dark:text-slate-400 mb-4" />
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
                   Select a Dashboard
                 </h3>

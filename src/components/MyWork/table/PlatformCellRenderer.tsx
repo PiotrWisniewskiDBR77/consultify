@@ -80,7 +80,7 @@ const NumberDisplay: React.FC<{ value: unknown; precision?: number }> = ({
   precision = 2,
 }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-400 px-1">—</span>;
+    return <span className="text-xs text-slate-600 px-1">—</span>;
   }
   const num = Number(value);
   const formatted = Number.isFinite(num)
@@ -98,7 +98,7 @@ const CurrencyDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, 
   fieldOptions,
 }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-400 px-1">—</span>;
+    return <span className="text-xs text-slate-600 px-1">—</span>;
   }
   const num = Number(value);
   const symbol = getCurrencySymbol(fieldOptions);
@@ -118,7 +118,7 @@ const PercentDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
   fieldOptions,
 }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-400 px-1">—</span>;
+    return <span className="text-xs text-slate-600 px-1">—</span>;
   }
   const num = Number(value);
   const precision = getPrecision(fieldOptions);
@@ -158,7 +158,7 @@ const CheckboxDisplay: React.FC<{ value: unknown; onChange?: (v: unknown) => voi
 };
 
 const DateDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
   const d = new Date(String(value));
   const str = Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
   return (
@@ -170,7 +170,7 @@ const SingleSelectDisplay: React.FC<{ value: unknown; fieldOptions?: Record<stri
   value,
   fieldOptions,
 }) => {
-  if (!value) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
   const options = getSelectOptions(fieldOptions);
   const color = getOptionColor(String(value), options);
   return (
@@ -188,7 +188,7 @@ const MultiSelectDisplay: React.FC<{ value: unknown; fieldOptions?: Record<strin
   fieldOptions,
 }) => {
   const items: string[] = Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
-  if (items.length === 0) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (items.length === 0) return <span className="text-xs text-slate-600 px-1">—</span>;
   const options = getSelectOptions(fieldOptions);
   return (
     <div className="flex items-center gap-0.5 flex-wrap">
@@ -206,7 +206,7 @@ const MultiSelectDisplay: React.FC<{ value: unknown; fieldOptions?: Record<strin
 };
 
 const UrlDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
   const url = String(value);
   return (
     <a
@@ -223,7 +223,7 @@ const UrlDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 };
 
 const EmailDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
   const email = String(value);
   return (
     <a
@@ -238,10 +238,10 @@ const EmailDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 };
 
 const PhoneDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
   return (
     <span className="inline-flex items-center gap-1 text-xs text-slate-800 dark:text-slate-200 px-1">
-      <Phone size={10} className="text-slate-400 flex-shrink-0" />
+      <Phone size={10} className="text-slate-600 flex-shrink-0" />
       {String(value)}
     </span>
   );
@@ -249,7 +249,7 @@ const PhoneDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 
 const LinkedRecordDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   const items: string[] = Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
-  if (items.length === 0) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (items.length === 0) return <span className="text-xs text-slate-600 px-1">—</span>;
   return (
     <div className="flex items-center gap-0.5 flex-wrap">
       {items.map((item) => (
@@ -267,10 +267,10 @@ const LinkedRecordDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 
 const AttachmentDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   const items: unknown[] = Array.isArray(value) ? value : value ? [value] : [];
-  if (items.length === 0) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (items.length === 0) return <span className="text-xs text-slate-600 px-1">—</span>;
   return (
     <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300 px-1">
-      <FileText size={12} className="text-slate-400" />
+      <FileText size={12} className="text-slate-600" />
       <span className="bg-slate-100 dark:bg-navy-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full">
         {items.length}
       </span>
@@ -314,7 +314,7 @@ const FormulaDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, u
   fieldOptions,
 }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-400 px-1">—</span>;
+    return <span className="text-xs text-slate-600 px-1">—</span>;
   }
 
   const resultType = (fieldOptions as { resultType?: string })?.resultType;
@@ -355,7 +355,7 @@ const RatingDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, un
           key={i}
           size={12}
           className={
-            i < rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600'
+            i < rating ? 'text-amber-400 fill-amber-400' : 'text-slate-600 dark:text-navy-600'
           }
         />
       ))}
@@ -365,7 +365,7 @@ const RatingDisplay: React.FC<{ value: unknown; fieldOptions?: Record<string, un
 
 const DurationDisplay: React.FC<{ value: unknown }> = ({ value }) => {
   if (value == null || value === '') {
-    return <span className="text-xs text-slate-400 px-1">—</span>;
+    return <span className="text-xs text-slate-600 px-1">—</span>;
   }
   const totalSeconds = Math.max(0, Math.round(Number(value) || 0));
   const h = Math.floor(totalSeconds / 3600);
@@ -380,10 +380,10 @@ const DurationDisplay: React.FC<{ value: unknown }> = ({ value }) => {
 };
 
 const BarcodeDisplay: React.FC<{ value: unknown }> = ({ value }) => {
-  if (!value) return <span className="text-xs text-slate-400 px-1">—</span>;
+  if (!value) return <span className="text-xs text-slate-600 px-1">—</span>;
   return (
     <span className="inline-flex items-center gap-1 text-xs text-slate-800 dark:text-slate-200 px-1">
-      <Barcode size={12} className="text-slate-400 flex-shrink-0" />
+      <Barcode size={12} className="text-slate-600 flex-shrink-0" />
       <span className="font-mono truncate">{String(value)}</span>
     </span>
   );

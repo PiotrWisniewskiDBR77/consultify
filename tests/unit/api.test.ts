@@ -7,8 +7,22 @@ import {
   normalizeTransportPath
 } from '../../src/services/api';
 
+// The global test setup (tests/setup.ts) auto-mocks `@/services/api` and the
+// relative alias. `vi.unmock` alone is not sufficient here because the global
+// factory still shadows the named circuit-breaker exports for this file, so the
+// import of `clearGlobalTransportFailure` (and friends) resolves to undefined.
+// Re-point both module specifiers at the real implementation so every named
+// export — including `clearGlobalTransportFailure` — resolves correctly.
 vi.unmock('../../src/services/api');
 vi.unmock('@/services/api');
+vi.mock('@/services/api', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/services/api')>();
+  return { ...actual };
+});
+vi.mock('../../src/services/api', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/services/api')>();
+  return { ...actual };
+});
 
 describe('Frontend API Circuit Breaker (Transport Safeguard)', () => {
   beforeEach(() => {

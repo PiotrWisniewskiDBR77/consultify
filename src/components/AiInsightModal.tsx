@@ -28,7 +28,7 @@ export const AiInsightModal: React.FC<AiInsightModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
+        <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950">
           <div className="flex items-center gap-3">
             <div
               className={`p-2 rounded-lg ${
@@ -75,7 +75,7 @@ export const AiInsightModal: React.FC<AiInsightModalProps> = ({
           )}
 
           {data?.analysis && (
-            <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-lg border border-slate-100 dark:border-navy-700">
+            <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-lg border border-slate-200 dark:border-navy-700">
               <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                 {t('common.analysis')}
               </h4>
@@ -135,7 +135,7 @@ export const AiInsightModal: React.FC<AiInsightModalProps> = ({
         </div>
 
         {/* Footer with Actions */}
-        <div className="p-4 border-t border-slate-100 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex justify-end gap-3">
+        <div className="p-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 flex justify-end gap-3">
           <Button variant="outline" onClick={onClose}>
             {t('common.close')}
           </Button>

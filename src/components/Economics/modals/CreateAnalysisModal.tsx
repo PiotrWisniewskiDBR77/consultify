@@ -125,7 +125,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
             <label className="text-xs text-slate-500">
               {t('finance.analysis.sourceStatements', 'Source statement pack')}
             </label>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-600">
               {selectedStatementPackId
                 ? t('finance.analysis.selectedOne', 'selected')
                 : '0 selected'}
@@ -158,7 +158,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
               </button>
             ))}
             {availableStatements.length === 0 && (
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-slate-600">
                 {t('finance.analysis.noStatements', 'No statements available')}
               </div>
             )}

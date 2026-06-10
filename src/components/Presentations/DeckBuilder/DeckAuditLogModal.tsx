@@ -791,7 +791,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
     if (events.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <History size={20} className="text-slate-400" />
+          <History size={20} className="text-slate-600" />
           <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
             No audit events yet
           </p>
@@ -938,7 +938,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                       className="absolute right-0 top-full z-10 mt-1 w-72 rounded-md border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg p-2 text-[12px] text-slate-700 dark:text-slate-200"
                     >
                       {saveDraftOpen ? (
-                        <div className="border-b border-slate-100 dark:border-navy-800 pb-2 mb-2">
+                        <div className="border-b border-slate-200 dark:border-navy-800 pb-2 mb-2">
                           <label
                             htmlFor="audit-saved-view-name"
                             className="block text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1"
@@ -1039,7 +1039,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                         )}
                       </div>
 
-                      <div className="mt-2 border-t border-slate-100 dark:border-navy-800 pt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                      <div className="mt-2 border-t border-slate-200 dark:border-navy-800 pt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
                         <button
                           type="button"
                           onClick={() => setSavedViewsManageOpen((v) => !v)}
@@ -1086,7 +1086,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
                   ) : null}
                 </div>
               ) : (
-                <span className="text-[10px] italic text-slate-400 dark:text-slate-500">
+                <span className="text-[10px] italic text-slate-600 dark:text-slate-500">
                   Saved views require localStorage
                 </span>
               )}
@@ -1109,7 +1109,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
 
         {filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <History size={20} className="text-slate-400" />
+            <History size={20} className="text-slate-600" />
             <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
               No events match the current filters
             </p>
@@ -1123,7 +1123,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
             </button>
           </div>
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-navy-800 -mx-5">
+          <ul className="divide-y divide-slate-200 dark:divide-navy-800 -mx-5">
             {filteredEvents.map((evt) => (
               <AuditEventRow key={evt.id} event={evt} />
             ))}
@@ -1167,7 +1167,7 @@ export const DeckAuditLogModal: React.FC<DeckAuditLogModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <X size={16} />
           </button>

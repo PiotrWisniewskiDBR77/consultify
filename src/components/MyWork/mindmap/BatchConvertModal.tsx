@@ -93,7 +93,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -107,7 +107,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
             {selected.size === eligibleNodes.length ? (
               <CheckSquare size={14} className="text-amber-500" />
             ) : (
-              <Square size={14} className="text-slate-400" />
+              <Square size={14} className="text-slate-600" />
             )}
             {isPl ? 'Zaznacz wszystko' : 'Select all'}
           </button>
@@ -128,7 +128,7 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
                   <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
                     {node.label}
                   </div>
-                  <div className="text-[9px] text-slate-400">{node.branchKey}</div>
+                  <div className="text-[9px] text-slate-600">{node.branchKey}</div>
                 </div>
                 {node.status && node.status !== 'idea' && (
                   <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">

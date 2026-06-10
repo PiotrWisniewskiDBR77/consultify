@@ -25,6 +25,11 @@ import { createWorkspaceContext } from '@/types/workspace';
 
 import { useConversationStore } from '../../../store/useConversationStore';
 import { AppView } from '../../../types';
+// W2-T5 — Canvas convergence: the standalone /work-canvas route now uses the
+// same TipTap-based CanvasRichEditor as the chat-shell, so users get the
+// two-mode editing (manual + AI floating menu + accept/reject) on both
+// entry points. Previously this shell was read-only ReactMarkdown.
+import { CanvasRichEditor } from '../CanvasEditor/CanvasRichEditor';
 import { ResearchSessionsDock, type ResearchSessionView } from '../ResearchSessionsDock';
 import { UnifiedChatPanel } from '../UnifiedChatPanel';
 import { V8ArtifactRunControl } from '../V8ArtifactRunControl';
@@ -341,6 +346,36 @@ function MarkdownCanvas({ content }: { content: string }) {
   );
 }
 
+/**
+ * W2-T5 — Editable markdown canvas with the same TipTap stack the chat-shell
+ * uses. Selecting text reveals the floating AI menu; manual edits live-update
+ * the parent draft state, which the shell's debounced persistence picks up
+ * for `WorkCanvasApi.updateDraft`. Server-side draft assignment may lag the
+ * first edits (a brand-new draft is `work-canvas-…` until persisted) — the
+ * provenance log inside CanvasRichEditor handles that lag with a session
+ * fallback scope (W2-T4).
+ */
+function EditableMarkdownCanvas({
+  draftId,
+  content,
+  onContentChange,
+}: {
+  draftId: string;
+  content: string;
+  onContentChange: (md: string) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-navy-900">
+      <CanvasRichEditor
+        contentMd={content}
+        onContentChange={onContentChange}
+        editable={true}
+        provenanceScope={draftId.startsWith('work-canvas-') ? undefined : draftId}
+      />
+    </div>
+  );
+}
+
 function TableCanvas({ content }: { content: WorkCanvasTableContent }) {
   return (
     <div className="overflow-auto rounded-2xl border border-slate-200 dark:border-white/10">
@@ -357,7 +392,7 @@ function TableCanvas({ content }: { content: WorkCanvasTableContent }) {
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-white/10 bg-white dark:bg-navy-900">
+        <tbody className="divide-y divide-slate-200 dark:divide-white/10 bg-white dark:bg-navy-900">
           {content.rows.map((row, index) => (
             <tr key={`${row[content.columns[0]]}-${index}`}>
               {content.columns.map((column) => (
@@ -537,10 +572,15 @@ function CanvasRenderer({
   draft,
   mode,
   onResearchSessionSelected,
+  onMarkdownChange,
 }: {
   draft: WorkCanvasDraft;
   mode: 'preview' | 'source';
   onResearchSessionSelected: (session: ResearchSessionView | null) => void;
+  // W2-T5 — optional editable callback for kind='markdown'. When provided the
+  // shell drops the read-only ReactMarkdown view and renders the same TipTap
+  // editor the chat-shell uses, so both entry points have the two-mode UX.
+  onMarkdownChange?: (md: string) => void;
 }) {
   if (mode === 'source') return <SourceCanvas draft={draft} />;
   if (draft.kind === 'document' || draft.kind === 'sheet' || draft.kind === 'deck') {
@@ -563,6 +603,15 @@ function CanvasRenderer({
   }
   if (draft.kind === 'decision') {
     return <DecisionCanvas content={draft.content as WorkCanvasDecisionContent} />;
+  }
+  if (onMarkdownChange) {
+    return (
+      <EditableMarkdownCanvas
+        draftId={draft.id}
+        content={String(draft.content)}
+        onContentChange={onMarkdownChange}
+      />
+    );
   }
   return <MarkdownCanvas content={String(draft.content)} />;
 }
@@ -799,6 +848,35 @@ export function WorkCanvasShell() {
   const versionLabel = draft?.artifactVersion
     ? `Version ${draft.artifactVersion}`
     : 'Draft version';
+  // W2-T5 — markdown content updates from the TipTap editor. Updates local
+  // state immediately and debounces a server-side `updateDraft` call so a
+  // burst of keystrokes makes one network round-trip. Skips persistence on a
+  // synthetic `work-canvas-*` draft until `ensurePersistedDraft` upgrades the
+  // id (no point sending updateDraft to a non-existent server row).
+  const markdownPersistTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleMarkdownChange = React.useCallback(
+    (nextMd: string) => {
+      setDraft((current) =>
+        current ? { ...current, content: nextMd, updatedAt: new Date().toISOString() } : current
+      );
+      if (markdownPersistTimer.current) clearTimeout(markdownPersistTimer.current);
+      markdownPersistTimer.current = setTimeout(() => {
+        const persisted = draft;
+        if (!persisted || persisted.id.startsWith('work-canvas-')) return;
+        void WorkCanvasApi.updateDraft(persisted.id, { content: nextMd }).catch((error: any) => {
+          setErrorMessage(workCanvasErrorMessage(error, 'Canvas changes could not be saved.'));
+        });
+      }, 600);
+    },
+    [draft]
+  );
+  React.useEffect(
+    () => () => {
+      if (markdownPersistTimer.current) clearTimeout(markdownPersistTimer.current);
+    },
+    []
+  );
+
   const handleResearchSessionSelected = React.useCallback((session: ResearchSessionView | null) => {
     if (!session) return;
     let draftToPersist: WorkCanvasDraft | null = null;
@@ -958,7 +1036,7 @@ export function WorkCanvasShell() {
                 onClick={() => setVersionIndex((value) => Math.max(0, value - 1))}
                 disabled
                 title="Version history will load from artifact history in a later runtime step."
-                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-400 dark:border-white/10 dark:text-slate-500"
+                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-white/10 dark:text-slate-500"
               >
                 Prev
               </button>
@@ -967,7 +1045,7 @@ export function WorkCanvasShell() {
                 onClick={() => setVersionIndex((value) => value + 1)}
                 disabled
                 title="Version history will load from artifact history in a later runtime step."
-                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-400 dark:border-white/10 dark:text-slate-500"
+                className="rounded-full border border-slate-200 px-2 py-1 font-semibold text-slate-600 dark:border-white/10 dark:text-slate-500"
               >
                 Next
               </button>
@@ -1003,7 +1081,7 @@ export function WorkCanvasShell() {
                 </div>
               ) : null}
               {draft ? (
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-white/10">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3 dark:border-white/10">
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -1069,10 +1147,11 @@ export function WorkCanvasShell() {
                   draft={draft}
                   mode={rendererMode}
                   onResearchSessionSelected={handleResearchSessionSelected}
+                  onMarkdownChange={draft.kind === 'markdown' ? handleMarkdownChange : undefined}
                 />
               ) : (
                 <div className="flex min-h-[420px] flex-col items-center justify-center text-center">
-                  <Sparkles className="text-slate-400" size={32} />
+                  <Sparkles className="text-slate-600" size={32} />
                   <h2 className="mt-3 text-lg font-semibold">Start working with AI</h2>
                   <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
                     Ask the chat to create a note, table, checklist or research brief.

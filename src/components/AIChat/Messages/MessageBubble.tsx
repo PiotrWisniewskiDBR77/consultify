@@ -2,8 +2,7 @@
  * MessageBubble - Enhanced chat message component with actions
  * Renders user and AI messages with hover actions, artifacts, and thinking blocks
  */
-
-import { Bot, Check, ChevronDown, ChevronUp, Copy, FileCode, Sparkles, User } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Copy, FileCode, Sparkles, User } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
@@ -13,6 +12,7 @@ import remarkGfm from 'remark-gfm';
 
 import { Artifact, ChatMessage, MessageFeedback } from '../../../types';
 import { isRtlLanguage, textDirection } from '../../../utils/textDirection';
+import TeresaMark from '../../shared/TeresaMark';
 import { CitationList } from '../CitationList';
 import { MessageActions } from './MessageActions';
 import { ThinkingBlock } from './ThinkingBlock';
@@ -39,10 +39,10 @@ const MarkdownCodeBlock: React.FC<{ code: string; language?: string }> = ({ code
   return (
     <div className="my-2 rounded-lg overflow-hidden border border-slate-200 dark:border-navy-800 bg-slate-900 dark:bg-navy-950">
       <div className="flex items-center justify-between px-3 py-2 bg-slate-800 dark:bg-navy-900 border-b border-slate-700 dark:border-navy-800">
-        <span className="text-[11px] font-mono text-slate-300/80 uppercase">{lang}</span>
+        <span className="text-[11px] font-mono text-slate-600/80 uppercase">{lang}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] text-slate-300/80 hover:text-slate-100 hover:bg-white/10 transition-colors"
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] text-slate-600/80 hover:text-slate-100 hover:bg-white/10 transition-colors"
           title={t('code.copy', 'Copy')}
         >
           {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
@@ -151,7 +151,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         ${isUser ? 'bg-brand/10 text-brand' : 'bg-gradient-to-br from-brand to-brand-dark text-white'}
       `}
       >
-        {isUser ? <User size={16} /> : <Bot size={16} />}
+        {isUser ? <User size={16} /> : <TeresaMark size={16} />}
       </div>
 
       {/* Content */}
@@ -319,7 +319,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Timestamp */}
         <div
           className={`
-          flex items-center gap-2 mt-1 text-xs text-slate-400 dark:text-slate-500
+          flex items-center gap-2 mt-1 text-xs text-slate-600 dark:text-slate-500
           ${isUser ? 'justify-end' : 'justify-start'}
         `}
         >

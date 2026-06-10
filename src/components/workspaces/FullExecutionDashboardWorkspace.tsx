@@ -22,6 +22,7 @@ import { FullInitiative, FullSession, Language } from '../../types';
 import { BenefitsTracker } from '../Execution/BenefitsTracker';
 import { CorrectiveActions } from '../Execution/CorrectiveActions';
 import { KPIDashboard } from '../Execution/KPIDashboard';
+import TeresaMark from '../shared/TeresaMark';
 import { Button } from '../ui/primitives/Button';
 // import { exportReportToPDF } from '../../services/pdf/pdfExport';
 import { AIInsightFeed } from './AIInsightFeed';
@@ -191,7 +192,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                   );
                 })}
                 {fullSession.initiatives.length === 0 && (
-                  <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-4">
+                  <p className="text-slate-600 dark:text-slate-500 text-sm text-center py-4">
                     No initiatives yet
                   </p>
                 )}
@@ -243,7 +244,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                       <p className="text-sm font-medium text-navy-900 dark:text-white leading-tight">
                         {init.name}
                       </p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-1">
                         {String(init.status).replace('_', ' ')} • {timeAgo}
                       </p>
                     </div>
@@ -251,7 +252,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
                 );
               })}
               {fullSession.initiatives.length === 0 && (
-                <p className="text-sm text-slate-400 dark:text-slate-500">No recent activity</p>
+                <p className="text-sm text-slate-600 dark:text-slate-500">No recent activity</p>
               )}
             </div>
           </div>
@@ -383,7 +384,7 @@ export const FullExecutionDashboardWorkspace: React.FC<FullExecutionDashboardWor
 
       <div className="glass-card p-10 flex flex-col items-center justify-center text-center animate-fade-in delay-100">
         <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mb-6 shadow-glow">
-          <Bot size={40} className="text-brand" />
+          <TeresaMark size={40} className="text-brand" />
         </div>
         <h3 className="text-2xl font-bold mb-2 text-navy-900 dark:text-white">AI Command Center</h3>
         <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm leading-relaxed">

@@ -371,6 +371,44 @@ Categories to consider: ${categories.join(', ')}
       }
     }
 
+    // D1 — interview-insight handoff payload. When an interview insight is
+    // exported to this assessment, its governed P10 findings (confidence,
+    // limits, next action, evidence pointers) ride in
+    // `contextSnapshot.boundedInsightPayload`. Previously this key was written
+    // but never read, so the generated initiatives saw zero interview
+    // evidence. This additive branch only fires for interview-sourced
+    // snapshots, so non-interview assessments are unaffected.
+    const insightPayload = (contextSnapshot as any).boundedInsightPayload;
+    if (
+      insightPayload &&
+      Array.isArray(insightPayload.findings) &&
+      insightPayload.findings.length
+    ) {
+      const findingsText = insightPayload.findings
+        .slice(0, 25)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((f: any, i: number) => {
+          const evidence = Array.isArray(f.evidencePointers)
+            ? f.evidencePointers
+                .slice(0, 5)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .map((p: any) => `    - ${String(p.excerpt || p.source_id || '').slice(0, 240)}`)
+                .join('\n')
+            : '';
+          return [
+            `${i + 1}. ${f.findingStatement}`,
+            f.confidenceLevel != null ? `   Confidence: ${f.confidenceLevel}%` : '',
+            f.limits ? `   Limits: ${f.limits}` : '',
+            f.nextAction ? `   Recommended next action: ${f.nextAction}` : '',
+            evidence ? `   Evidence:\n${evidence}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        })
+        .join('\n\n');
+      prompt += `\nInterview findings (evidence-bounded, from a governed stakeholder interview — base the initiatives on these):\n${findingsText}\n`;
+    }
+
     prompt += `
 Return a JSON array with exactly ${count} initiatives in this format:
 [

@@ -66,7 +66,7 @@ export const ToggleBlock: React.FC<ToggleBlockProps> = ({
         onClick={handleToggle}
         className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-slate-50/50 dark:hover:bg-navy-800/30 transition-colors rounded-xl"
       >
-        {icon && <span className="text-slate-400 dark:text-slate-500 flex-shrink-0">{icon}</span>}
+        {icon && <span className="text-slate-600 dark:text-slate-500 flex-shrink-0">{icon}</span>}
         <span className="text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">
           {title}
         </span>
@@ -77,7 +77,7 @@ export const ToggleBlock: React.FC<ToggleBlockProps> = ({
         )}
         <ChevronDown
           size={14}
-          className={`text-slate-400 dark:text-slate-500 transition-transform duration-200 ${
+          className={`text-slate-600 dark:text-slate-500 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />

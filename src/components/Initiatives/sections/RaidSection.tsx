@@ -182,7 +182,7 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
             </span>
           )}
           {raidItems.length > 0 && (
-            <span className="text-xs text-slate-400">{raidItems.length}</span>
+            <span className="text-xs text-slate-600">{raidItems.length}</span>
           )}
         </div>
       }

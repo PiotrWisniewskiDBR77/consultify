@@ -261,8 +261,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 dark:border-navy-800">
-          <Search size={16} className="text-slate-400 flex-shrink-0" />
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-navy-800">
+          <Search size={16} className="text-slate-600 flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
@@ -271,7 +271,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             placeholder={t('presentations.builder.commandPalette.placeholder', 'Type a command...')}
             className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-white placeholder-slate-400"
           />
-          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 border border-slate-200 dark:border-navy-700">
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 border border-slate-200 dark:border-navy-700">
             ESC
           </kbd>
         </div>
@@ -288,7 +288,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           ) : (
             Object.entries(grouped).map(([cat, cmds]) => (
               <div key={cat}>
-                <p className="px-4 py-1 text-[10px] font-semibold uppercase text-slate-400">
+                <p className="px-4 py-1 text-[10px] font-semibold uppercase text-slate-600">
                   {CATEGORY_LABELS[cat as Command['category']] || cat}
                 </p>
                 {cmds.map((cmd) => {
@@ -308,18 +308,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       }`}
                     >
                       <span
-                        className={`flex-shrink-0 ${globalIdx === selectedIndex ? 'text-primary-500' : 'text-slate-400'}`}
+                        className={`flex-shrink-0 ${globalIdx === selectedIndex ? 'text-primary-500' : 'text-slate-600'}`}
                       >
                         {cmd.icon}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-slate-700 dark:text-white">{cmd.label}</p>
                         {cmd.description && (
-                          <p className="text-[10px] text-slate-400 truncate">{cmd.description}</p>
+                          <p className="text-[10px] text-slate-600 truncate">{cmd.description}</p>
                         )}
                       </div>
                       {cmd.shortcut && (
-                        <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 border border-slate-200 dark:border-navy-700">
+                        <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 border border-slate-200 dark:border-navy-700">
                           {cmd.shortcut}
                         </kbd>
                       )}
@@ -332,7 +332,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 px-4 py-2 border-t border-slate-100 dark:border-navy-800 text-[10px] text-slate-400">
+        <div className="flex items-center gap-3 px-4 py-2 border-t border-slate-200 dark:border-navy-800 text-[10px] text-slate-600">
           <span>↑↓ Navigate</span>
           <span>↵ Select</span>
           <span>ESC Close</span>

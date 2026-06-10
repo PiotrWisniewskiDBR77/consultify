@@ -583,11 +583,28 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
       name: 'context_note_knowledge_doc_id',
       sql: `ALTER TABLE interview_questions ADD COLUMN context_note_knowledge_doc_id TEXT`,
     },
+    {
+      name: 'guidance',
+      sql: `ALTER TABLE interview_questions ADD COLUMN guidance TEXT`,
+    },
+    {
+      name: 'example_answer',
+      sql: `ALTER TABLE interview_questions ADD COLUMN example_answer TEXT`,
+    },
   ];
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -631,8 +648,133 @@ async function ensureInterviewSessionV6Columns(): Promise<void> {
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
+  }
+}
+
+/**
+ * Lazy-ensure lifecycle columns on interview_sessions (archive + trash).
+ * DB_MANAGED_SCHEMA is off in dev, so we ADD COLUMN only when missing.
+ */
+async function ensureInterviewSessionLifecycleColumns(): Promise<void> {
+  const cols = await getTableColumns('interview_sessions');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'archived_at',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN archived_at TIMESTAMP`,
+    },
+    {
+      name: 'archived_by',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN archived_by TEXT`,
+    },
+    {
+      name: 'trashed_at',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN trashed_at TIMESTAMP`,
+    },
+    {
+      name: 'trashed_by',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN trashed_by TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
+    }
+  }
+}
+
+/**
+ * Lazy-ensure lifecycle columns on interview_insights (dev schema; DB_MANAGED_SCHEMA=off).
+ * Mirrors the session/assignment lifecycle pattern so Insights can be archived/restored
+ * without a migration. Idempotent + safe under per-process column cache.
+ */
+async function ensureInterviewInsightLifecycleColumns(): Promise<void> {
+  const cols = await getTableColumns('interview_insights');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'archived_at',
+      sql: `ALTER TABLE interview_insights ADD COLUMN archived_at TIMESTAMP`,
+    },
+    {
+      name: 'archived_by',
+      sql: `ALTER TABLE interview_insights ADD COLUMN archived_by TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
+    }
+  }
+}
+
+// Module-level flag: true once we've confirmed section_completions exists (avoids repeated DDL).
+let _insightSectionCompletionsEnsured = false;
+
+/**
+ * Lazy ALTER — adds section_completions JSON column to interview_insights.
+ * Called from updateInsight when the payload includes sectionCompletions.
+ * Stores: { "themes": true, "issues-risks": true, ... } (AI Mark Complete signal).
+ *
+ * Uses pg_attribute (catalog table, no table-lock) to check existence first.
+ * This avoids the ALTER TABLE ACCESS EXCLUSIVE lock that can hang when a prior
+ * DDL on the same table is still queued on the DB server.
+ */
+async function ensureInsightSectionCompletionsColumn(): Promise<void> {
+  if (_insightSectionCompletionsEnsured) return;
+  try {
+    // pg_attribute lookup — much faster than information_schema and does NOT
+    // compete with table-level locks that block ALTER TABLE.
+    const rows = await queryHelpers.queryAll<{ attname: string }>(
+      `SELECT attname FROM pg_attribute
+       WHERE attrelid = 'interview_insights'::regclass
+         AND attname = 'section_completions'
+         AND attnum > 0
+         AND NOT attisdropped`,
+      []
+    );
+    if (rows && rows.length > 0) {
+      // Column already exists — no DDL needed.
+      _insightSectionCompletionsEnsured = true;
+      return;
+    }
+    // Column missing — add it (no IF NOT EXISTS: cleaner error if race condition).
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_insights ADD COLUMN section_completions TEXT`
+    );
+    _insightSectionCompletionsEnsured = true;
+  } catch (err: any) {
+    const m = String(err?.message || err).toLowerCase();
+    if (m.includes('already exists') || m.includes('duplicate column')) {
+      _insightSectionCompletionsEnsured = true;
+      return;
+    }
+    throw err;
   }
 }
 
@@ -684,6 +826,55 @@ async function ensureInterviewAssignmentAiReviewColumns(): Promise<void> {
   }
 }
 
+/**
+ * Lazy-ensure lifecycle columns on interview_assignments (archive/restore).
+ * DB_MANAGED_SCHEMA is off in dev, so we ADD COLUMN only when missing.
+ * Escalation columns (escalated_at, escalation_count, escalate_to) are ensured by
+ * InterviewAssignmentService.ensureSchemaCompatibility; we add only the archive pair here.
+ */
+async function ensureInterviewAssignmentLifecycleColumns(): Promise<void> {
+  const cols = await getTableColumns('interview_assignments');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'archived_at',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN archived_at TIMESTAMP`,
+    },
+    {
+      name: 'archived_by',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN archived_by TEXT`,
+    },
+    // Defensive: ensure escalation columns exist even if the service path has not
+    // run yet (additive, mirrors InterviewAssignmentService DDL names).
+    {
+      name: 'escalated_at',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN escalated_at TIMESTAMP`,
+    },
+    {
+      name: 'escalation_count',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN escalation_count INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'escalate_to',
+      sql: `ALTER TABLE interview_assignments ADD COLUMN escalate_to TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
+    }
+  }
+}
+
 async function ensureInterviewTemplateV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_library_templates');
   const missingColumns: Array<{ name: string; sql: string }> = [
@@ -719,11 +910,24 @@ async function ensureInterviewTemplateV6Columns(): Promise<void> {
       name: 'language',
       sql: `ALTER TABLE interview_library_templates ADD COLUMN language VARCHAR(5) DEFAULT 'en'`,
     },
+    {
+      name: 'is_default',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN is_default INTEGER DEFAULT 0`,
+    },
   ];
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -767,11 +971,32 @@ async function ensureInterviewTemplateQuestionV6Columns(): Promise<void> {
       name: 'allow_context_note',
       sql: `ALTER TABLE interview_library_template_questions ADD COLUMN allow_context_note INTEGER DEFAULT 1`,
     },
+    {
+      name: 'section_title',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN section_title TEXT`,
+    },
+    {
+      name: 'guidance',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN guidance TEXT`,
+    },
+    {
+      name: 'example_answer',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN example_answer TEXT`,
+    },
   ];
 
   for (const column of missingColumns) {
     if (!cols.has(column.name)) {
-      await queryHelpers.queryRun(column.sql);
+      try {
+        await queryHelpers.queryRun(column.sql);
+      } catch (err: any) {
+        // Idempotent guard: getTableColumns() caches the column set per-process, so a
+        // column added earlier in this process (or by another instance) is absent from the
+        // cached set and we re-issue the ALTER. Postgres/SQLite then throw
+        // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
+        const m = String(err?.message || err).toLowerCase();
+        if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+      }
     }
   }
 }
@@ -900,6 +1125,8 @@ const buildQuestionResponse = (row: any) => {
     allowFileUpload: row.allow_file_upload === 1,
     allowUrl: row.allow_url === 1,
     allowContextNote: row.allow_context_note !== 0,
+    guidance: row.guidance || '',
+    exampleAnswer: row.example_answer || '',
     answerKnowledgeDocId: row.answer_knowledge_doc_id || undefined,
     contextNoteKnowledgeDocId: row.context_note_knowledge_doc_id || undefined,
     status: row.status,
@@ -1136,6 +1363,7 @@ const buildTemplateQuestionResponse = (row: any) => {
     sortOrder: row.sort_order || 0,
     answerType: row.answer_type || 'open',
     isRequired: row.is_required === 1,
+    sectionTitle: row.section_title || null,
     helpHint: row.help_hint || null,
     answerOptions: parseJson(row.answer_options, [] as unknown[]),
     expectedAnswerShape: row.expected_answer_shape || '',
@@ -1145,6 +1373,8 @@ const buildTemplateQuestionResponse = (row: any) => {
     allowFileUpload: row.allow_file_upload === 1,
     allowUrl: row.allow_url === 1,
     allowContextNote: row.allow_context_note !== 0,
+    guidance: row.guidance || '',
+    exampleAnswer: row.example_answer || '',
   };
 };
 
@@ -1272,8 +1502,8 @@ async function createSessionFromTemplate(params: {
     const allowContextNoteFlag = toDbFlag(tq.allow_context_note, 1);
     await queryHelpers.queryRun(
       `INSERT INTO interview_questions
-       (id, session_id, organization_id, category, question_text, description, evidence_prompt, status, sort_order, is_template, is_required, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, session_id, organization_id, category, question_text, description, evidence_prompt, status, sort_order, is_template, is_required, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, guidance, example_answer, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         questionId,
         id,
@@ -1294,6 +1524,8 @@ async function createSessionFromTemplate(params: {
         allowUrlFlag,
         allowContextNoteFlag,
         tq.id,
+        tq.guidance || null,
+        tq.example_answer || null,
         now,
         now,
       ]
@@ -1329,9 +1561,13 @@ const isLockedSessionStatus = (status?: string): boolean => {
 };
 
 const normalizeAssignmentStatusForClient = (status?: string): string => {
-  const normalized = String(status || '').toLowerCase();
-  if (normalized === 'sent_back') return 'in_progress';
-  return normalized;
+  // V-A S5 — pass `sent_back` through. It was previously remapped to
+  // `in_progress`, which hid send-back round-trips entirely: the rose
+  // "Sent back" chip never rendered and the sent_back count/filter was
+  // permanently 0, so a manager couldn't see which submissions they'd
+  // bounced back. The frontend AssignmentStatus union already includes
+  // 'sent_back' and has a chip for it.
+  return String(status || '').toLowerCase();
 };
 
 const toDbFlag = (value: unknown, fallback = 0): number => {
@@ -1666,10 +1902,82 @@ export async function loadAcceptedInterviewSessionsForManager(
   }));
 }
 
+export type InterviewSessionLifecycle = 'active' | 'archived' | 'trash' | 'all';
+
+/**
+ * Build a SQL fragment (with leading AND) that filters interview_sessions rows by
+ * their archive/trash lifecycle. `sessionAlias` is the table alias used in the query.
+ * - active   → not archived AND not trashed (default list)
+ * - archived → archived AND not trashed
+ * - trash    → trashed (regardless of archived)
+ * - all      → no filter
+ */
+function buildSessionLifecycleClause(
+  lifecycle: InterviewSessionLifecycle | undefined,
+  sessionAlias: string
+): string {
+  const a = sessionAlias;
+  switch (lifecycle) {
+    case 'archived':
+      return ` AND ${a}.archived_at IS NOT NULL AND ${a}.trashed_at IS NULL`;
+    case 'trash':
+      return ` AND ${a}.trashed_at IS NOT NULL`;
+    case 'all':
+      return '';
+    case 'active':
+    default:
+      return ` AND ${a}.archived_at IS NULL AND ${a}.trashed_at IS NULL`;
+  }
+}
+
+function normalizeSessionLifecycleParam(raw: unknown): InterviewSessionLifecycle {
+  const value = String(raw ?? '').toLowerCase();
+  if (value === 'archived' || value === 'trash' || value === 'all' || value === 'active') {
+    return value;
+  }
+  return 'active';
+}
+
+/**
+ * Assignment lifecycle (archive only — assignments have no trash bin).
+ * - active   → not archived (default list)
+ * - archived → archived only
+ * - all      → no filter
+ */
+export type InterviewAssignmentLifecycle = 'active' | 'archived' | 'all';
+
+function buildAssignmentLifecycleClause(
+  lifecycle: InterviewAssignmentLifecycle | undefined,
+  assignmentAlias: string
+): string {
+  const a = assignmentAlias;
+  switch (lifecycle) {
+    case 'archived':
+      return ` AND ${a}.archived_at IS NOT NULL`;
+    case 'all':
+      return '';
+    case 'active':
+    default:
+      return ` AND ${a}.archived_at IS NULL`;
+  }
+}
+
+function normalizeAssignmentLifecycleParam(raw: unknown): InterviewAssignmentLifecycle {
+  const value = String(raw ?? '').toLowerCase();
+  if (value === 'archived' || value === 'all' || value === 'active') {
+    return value;
+  }
+  return 'active';
+}
+
 export async function loadManagedInterviewSessionsForManager(
   organizationId: string,
   userId: string,
-  options?: { elevated?: boolean; scope?: InterviewManagerScope }
+  options?: {
+    elevated?: boolean;
+    scope?: InterviewManagerScope;
+    lifecycle?: InterviewSessionLifecycle;
+  }
 ): Promise<
   Array<{
     id: string;
@@ -1702,6 +2010,12 @@ export async function loadManagedInterviewSessionsForManager(
     sentBackReason?: string;
   }>
 > {
+  // Ensure lifecycle columns exist before filtering on them (lazy ALTER, dev schema).
+  await ensureInterviewSessionLifecycleColumns();
+
+  const lifecycle = options?.lifecycle || 'active';
+  const lifecycleClause = buildSessionLifecycleClause(lifecycle, 's');
+
   const scope =
     options?.scope ||
     (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: userId });
@@ -1752,6 +2066,7 @@ export async function loadManagedInterviewSessionsForManager(
          p.organization_id = ?
          OR (s.project_id IS NULL AND s.organization_id = ?)
        )
+       ${lifecycleClause}
      ORDER BY
        CASE a.status
          WHEN 'submitted' THEN 0
@@ -1765,7 +2080,7 @@ export async function loadManagedInterviewSessionsForManager(
     params
   );
 
-  return (rows || []).map((row: any) => ({
+  const managed = (rows || []).map((row: any) => ({
     id: row.id,
     organizationId: row.organization_id,
     projectId: row.project_id || undefined,
@@ -1795,6 +2110,82 @@ export async function loadManagedInterviewSessionsForManager(
     sentBackAt: row.sent_back_at || undefined,
     sentBackReason: row.sent_back_reason || undefined,
   }));
+
+  // V-A — include the caller's own ad-hoc sessions (created via the Sessions-tab
+  // "New session" CTA with no template/assignment). The managed query above
+  // INNER JOINs interview_assignments, so an assignment-less session would
+  // vanish on reload — the user creates a session and it disappears. This
+  // second query appends sessions owned by the caller that have NO assignment
+  // row. The managed query is left untouched (zero regression to its scope
+  // semantics); the two result sets can't overlap (ad-hoc = no assignment).
+  let ownedAdHoc: typeof managed = [];
+  try {
+    const ownedRows = await queryHelpers.queryAll(
+      `SELECT
+         s.id,
+         s.organization_id,
+         s.project_id,
+         s.name,
+         s.owner_id,
+         s.status as session_runtime_status,
+         s.template_id,
+         s.started_at,
+         s.completed_at,
+         s.last_activity_at,
+         s.answered_questions,
+         s.total_questions,
+         t.name as template_name,
+         t.category as template_category,
+         TRIM(COALESCE(owner_u.first_name, '') || ' ' || COALESCE(owner_u.last_name, '')) as respondent_name
+       FROM interview_sessions s
+       LEFT JOIN interview_library_templates t ON t.id = s.template_id
+       LEFT JOIN users owner_u ON owner_u.id = s.owner_id
+       WHERE s.organization_id = ?
+         AND s.owner_id = ?
+         AND NOT EXISTS (SELECT 1 FROM interview_assignments a WHERE a.session_id = s.id)
+         ${lifecycleClause}
+       ORDER BY COALESCE(s.last_activity_at, s.started_at) DESC`,
+      [organizationId, userId]
+    );
+    ownedAdHoc = (ownedRows || []).map((row: any) => ({
+      id: row.id,
+      organizationId: row.organization_id,
+      projectId: row.project_id || undefined,
+      name: row.name || 'Discovery Interview',
+      ownerId: row.owner_id,
+      status: String(row.session_runtime_status || 'in_progress'),
+      sessionRuntimeStatus: row.session_runtime_status || undefined,
+      assignmentId: undefined,
+      assignmentStatus: undefined,
+      assignmentPriority: undefined,
+      assignmentCreatedBy: undefined,
+      totalQuestions: row.total_questions || 0,
+      answeredQuestions: row.answered_questions || 0,
+      startedAt: row.started_at,
+      completedAt: row.completed_at || undefined,
+      lastActivityAt: row.last_activity_at || undefined,
+      templateId: row.template_id || undefined,
+      templateName: row.template_name || undefined,
+      templateCategory: row.template_category || undefined,
+      respondentId: row.owner_id || undefined,
+      respondentName: String(row.respondent_name || '').trim() || undefined,
+      assigneeId: undefined,
+      assigneeName: undefined,
+      assigneeEmail: undefined,
+      dueAt: undefined,
+      submittedAt: undefined,
+      sentBackAt: undefined,
+      sentBackReason: undefined,
+    }));
+  } catch {
+    /* ad-hoc augmentation is best-effort; managed list is the floor */
+  }
+
+  // Dedupe defensively (no overlap expected) and surface ad-hoc sessions first
+  // so a just-created one is visible at the top.
+  const seen = new Set(managed.map((m) => m.id));
+  const merged = [...ownedAdHoc.filter((s) => !seen.has(s.id)), ...managed];
+  return merged;
 }
 
 async function evaluateInterviewSessionAnswers(params: {
@@ -1909,6 +2300,200 @@ ${questionsForPrompt}`;
 
   return buildInterviewAiReviewSnapshot(evaluation, questions);
 }
+
+/**
+ * Fetch an interview session scoped to the caller's organization (project-scoped
+ * OR org-scoped). Returns null when not found / cross-org (IDOR-safe). Includes
+ * lifecycle columns so callers can branch on archive/trash state.
+ */
+async function loadOrgScopedSessionForLifecycle(
+  sessionId: string,
+  organizationId: string
+): Promise<{
+  id: string;
+  archived_at: string | null;
+  archived_by: string | null;
+  trashed_at: string | null;
+  trashed_by: string | null;
+} | null> {
+  await ensureInterviewSessionLifecycleColumns();
+  const row = await queryHelpers.queryOne<any>(
+    `SELECT s.id, s.archived_at, s.archived_by, s.trashed_at, s.trashed_by
+       FROM interview_sessions s
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ?
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )`,
+    [sessionId, organizationId, organizationId]
+  );
+  return (row as any) || null;
+}
+
+/**
+ * Apply a single lifecycle action to an org-scoped session. Returns a result code
+ * so both the single-id handlers and the bulk handler can share the logic.
+ */
+async function applySessionLifecycleAction(params: {
+  sessionId: string;
+  organizationId: string;
+  userId: string;
+  action: 'archive' | 'restore' | 'trash' | 'untrash';
+}): Promise<'ok' | 'not_found'> {
+  const { sessionId, organizationId, userId, action } = params;
+  const session = await loadOrgScopedSessionForLifecycle(sessionId, organizationId);
+  if (!session) return 'not_found';
+
+  const now = new Date().toISOString();
+  switch (action) {
+    case 'archive':
+      await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET archived_at = ?, archived_by = ? WHERE id = ?`,
+        [now, userId, sessionId]
+      );
+      break;
+    case 'restore':
+      await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET archived_at = NULL, archived_by = NULL WHERE id = ?`,
+        [sessionId]
+      );
+      break;
+    case 'trash':
+      await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET trashed_at = ?, trashed_by = ? WHERE id = ?`,
+        [now, userId, sessionId]
+      );
+      break;
+    case 'untrash':
+      await queryHelpers.queryRun(
+        `UPDATE interview_sessions SET trashed_at = NULL, trashed_by = NULL WHERE id = ?`,
+        [sessionId]
+      );
+      break;
+  }
+  return 'ok';
+}
+
+/**
+ * Insight export section filter (#25).
+ *
+ * The frontend may pass `sectionIds` to export only a subset of an insight's
+ * content. An insight's structured payload is grouped into top-level "sections"
+ * (executiveSummary, themes, issues, opportunities, signals, evidenceMap,
+ * missingData) and each grouped item is keyed by its title. A sectionId can
+ * therefore be either:
+ *   - a top-level group key (e.g. "themes", "issues", "executiveSummary"), or
+ *   - an item identifier of the form "<group>:<title>" or a bare item title.
+ *
+ * Returns a filtered copy of the insight plus a human-readable filtered content
+ * snapshot. Unknown ids are ignored. If the filter yields nothing, the caller
+ * should fall back to the full insight (handled at the call site).
+ */
+type FilterableInsight = {
+  title?: string;
+  content?: string;
+  description?: string;
+  executiveSummary?: string;
+  themes?: Array<{ title?: string; description?: string }>;
+  issues?: Array<{ title?: string; description?: string }>;
+  opportunities?: Array<{ title?: string; description?: string }>;
+  signals?: Array<{ title?: string; description?: string }>;
+  evidenceMap?: Array<{ question_text?: string }>;
+  missingData?: string[];
+  [key: string]: unknown;
+};
+
+const INSIGHT_SECTION_GROUPS = [
+  'executiveSummary',
+  'themes',
+  'issues',
+  'opportunities',
+  'signals',
+  'evidenceMap',
+  'missingData',
+] as const;
+
+function filterInsightBySectionIds(
+  insight: FilterableInsight,
+  sectionIds: string[]
+): { filtered: FilterableInsight; matched: boolean; markdown: string } {
+  const wanted = new Set(
+    (sectionIds || [])
+      .map((s) =>
+        String(s || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  );
+
+  const groupWanted = (group: string): boolean => wanted.has(group.toLowerCase());
+
+  const itemWanted = (group: string, title: string): boolean => {
+    const t = String(title || '')
+      .trim()
+      .toLowerCase();
+    if (!t) return false;
+    return wanted.has(t) || wanted.has(`${group.toLowerCase()}:${t}`);
+  };
+
+  const filtered: FilterableInsight = { title: insight.title };
+  let matched = false;
+  const mdParts: string[] = [];
+
+  // executiveSummary is a scalar — matched only by its group key.
+  if (insight.executiveSummary && groupWanted('executiveSummary')) {
+    filtered.executiveSummary = insight.executiveSummary;
+    mdParts.push(`## Executive Summary\n\n${insight.executiveSummary}`);
+    matched = true;
+  }
+
+  const listGroups: Array<keyof FilterableInsight> = [
+    'themes',
+    'issues',
+    'opportunities',
+    'signals',
+  ];
+  for (const group of listGroups) {
+    const items = Array.isArray(insight[group])
+      ? (insight[group] as Array<{ title?: string; description?: string }>)
+      : [];
+    if (items.length === 0) continue;
+    const keepWholeGroup = groupWanted(String(group));
+    const kept = items.filter(
+      (item) => keepWholeGroup || itemWanted(String(group), String(item?.title || ''))
+    );
+    if (kept.length > 0) {
+      (filtered as any)[group] = kept;
+      matched = true;
+      const heading = String(group).charAt(0).toUpperCase() + String(group).slice(1);
+      const body = kept
+        .map((item) => {
+          const title = String(item?.title || '').trim();
+          const desc = String(item?.description || '').trim();
+          return `- **${title}**${desc ? `: ${desc}` : ''}`;
+        })
+        .join('\n');
+      mdParts.push(`## ${heading}\n\n${body}`);
+    }
+  }
+
+  if (Array.isArray(insight.evidenceMap) && groupWanted('evidenceMap')) {
+    filtered.evidenceMap = insight.evidenceMap;
+    matched = true;
+  }
+  if (Array.isArray(insight.missingData) && groupWanted('missingData')) {
+    filtered.missingData = insight.missingData;
+    matched = true;
+    if (insight.missingData.length > 0) {
+      mdParts.push(`## Missing Data\n\n${insight.missingData.map((m) => `- ${m}`).join('\n')}`);
+    }
+  }
+
+  return { filtered, matched, markdown: mdParts.join('\n\n') };
+}
+
 export const InterviewController = {
   // ==========================================
   // SESSIONS
@@ -1944,8 +2529,10 @@ export const InterviewController = {
       organizationId: user.organizationId,
       role: user.role,
     });
+    const lifecycle = normalizeSessionLifecycleParam(req.query.lifecycle);
     const sessions = await loadManagedInterviewSessionsForManager(user.organizationId, user.id, {
       scope,
+      lifecycle,
     });
     res.json(sessions);
   }),
@@ -2165,6 +2752,153 @@ export const InterviewController = {
   }),
 
   // ==========================================
+  // SESSION LIFECYCLE (Archive / Trash)
+  // ==========================================
+
+  archiveSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const result = await applySessionLifecycleAction({
+      sessionId: id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'archive',
+    });
+    if (result === 'not_found') {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true, id, archived: true });
+  }),
+
+  restoreSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const result = await applySessionLifecycleAction({
+      sessionId: id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'restore',
+    });
+    if (result === 'not_found') {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true, id, archived: false });
+  }),
+
+  trashSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const result = await applySessionLifecycleAction({
+      sessionId: id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'trash',
+    });
+    if (result === 'not_found') {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true, id, trashed: true });
+  }),
+
+  untrashSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    const result = await applySessionLifecycleAction({
+      sessionId: id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      action: 'untrash',
+    });
+    if (result === 'not_found') {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true, id, trashed: false });
+  }),
+
+  /**
+   * Permanently delete a session. Only allowed once the session has been trashed
+   * (trashed_at IS NOT NULL). Cascade-deletes the session's direct child rows
+   * (questions, notes, evidence, assignments) then the session row itself.
+   */
+  deleteSession: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const session = await loadOrgScopedSessionForLifecycle(id, user.organizationId);
+    if (!session) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    if (!session.trashed_at) {
+      res
+        .status(409)
+        .json({ error: 'Session must be trashed before it can be permanently deleted' });
+      return;
+    }
+
+    // Cascade-delete known session-scoped child rows, then the session row.
+    // Best-effort per table so a missing/legacy table never blocks the delete.
+    for (const sql of [
+      `DELETE FROM interview_questions WHERE session_id = ?`,
+      `DELETE FROM interview_notes WHERE session_id = ?`,
+      `DELETE FROM interview_evidence WHERE session_id = ?`,
+      `DELETE FROM interview_assignments WHERE session_id = ?`,
+    ]) {
+      try {
+        await queryHelpers.queryRun(sql, [id]);
+      } catch {
+        /* best-effort cascade — ignore tables that don't exist or lack session_id */
+      }
+    }
+
+    await queryHelpers.queryRun(`DELETE FROM interview_sessions WHERE id = ?`, [id]);
+
+    res.json({ success: true, deletedId: id });
+  }),
+
+  /**
+   * Bulk lifecycle action over a set of session ids (org-scoped). Applies the
+   * given action to each id in a loop; ids outside the caller's org are skipped.
+   */
+  bulkSessionLifecycle: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { ids, action } = req.body || {};
+
+    const allowedActions = new Set(['archive', 'restore', 'trash', 'untrash']);
+    if (!allowedActions.has(action)) {
+      res.status(400).json({ error: 'Invalid action' });
+      return;
+    }
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({ error: 'ids must be a non-empty array' });
+      return;
+    }
+
+    const updatedIds: string[] = [];
+    const notFoundIds: string[] = [];
+    for (const rawId of ids) {
+      const sessionId = String(rawId);
+      const result = await applySessionLifecycleAction({
+        sessionId,
+        organizationId: user.organizationId,
+        userId: user.id,
+        action,
+      });
+      if (result === 'ok') {
+        updatedIds.push(sessionId);
+      } else {
+        notFoundIds.push(sessionId);
+      }
+    }
+
+    res.json({ success: true, action, updatedIds, notFoundIds });
+  }),
+
+  // ==========================================
   // ASSIGNMENTS (Workflow)
   // ==========================================
 
@@ -2192,11 +2926,14 @@ export const InterviewController = {
            t.category as template_category,
            s.status as session_status,
            s.answered_questions as answered_questions,
-           s.total_questions as total_questions
+           s.total_questions as total_questions,
+           TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
+           u.email as assignee_email
          FROM interview_assignments a
          LEFT JOIN interview_assignment_members m ON m.assignment_id = a.id
          LEFT JOIN interview_library_templates t ON t.id = a.template_id
          LEFT JOIN interview_sessions s ON s.id = a.session_id
+         LEFT JOIN users u ON u.id = a.assignee_user_id
          ${where}
          ORDER BY
            CASE a.status WHEN 'assigned' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'sent_back' THEN 1 WHEN 'submitted' THEN 2 ELSE 3 END,
@@ -2222,10 +2959,13 @@ export const InterviewController = {
            t.category as template_category,
            s.status as session_status,
            s.answered_questions as answered_questions,
-           s.total_questions as total_questions
+           s.total_questions as total_questions,
+           TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as assignee_name,
+           u.email as assignee_email
          FROM interview_assignments a
          LEFT JOIN interview_library_templates t ON t.id = a.template_id
          LEFT JOIN interview_sessions s ON s.id = a.session_id
+         LEFT JOIN users u ON u.id = a.assignee_user_id
          ${fallbackWhere}
          ORDER BY
            CASE a.status WHEN 'assigned' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'sent_back' THEN 1 WHEN 'submitted' THEN 2 ELSE 3 END,
@@ -2274,6 +3014,15 @@ export const InterviewController = {
               completenessPercent: Math.round(completenessRatio * 100),
             }
           : null,
+        // V-A S2 — emit the assignee so the Inbox stops rendering "Unknown".
+        // The legacy REST path previously projected no assignee field at all.
+        assignee: r.assignee_user_id
+          ? {
+              id: r.assignee_user_id,
+              name: (r.assignee_name && String(r.assignee_name).trim()) || r.assignee_email || '',
+              email: r.assignee_email || '',
+            }
+          : undefined,
       };
     });
 
@@ -2386,6 +3135,28 @@ export const InterviewController = {
       }
     }
     // ==========================================
+
+    // V-A — cross-org assignee IDOR guard. The org-role branch above grants
+    // "assign to anyone in org" but never verified the assignees are actually
+    // IN the caller's org — an admin could assign to a user from a DIFFERENT
+    // org by passing their id. Validate every assignee belongs to this org
+    // (applies to all branches; the project branch already checks membership,
+    // this is the org-level backstop).
+    {
+      const orgMembers = await queryHelpers.queryAll(
+        `SELECT user_id FROM organization_members WHERE organization_id = ?`,
+        [admin.organizationId]
+      );
+      const orgMemberIds = new Set((orgMembers || []).map((m: any) => String(m.user_id)));
+      const foreignAssignees = userIds.filter((id) => !orgMemberIds.has(String(id)));
+      if (foreignAssignees.length > 0) {
+        res.status(403).json({
+          error: 'One or more assignees are not members of your organization.',
+          code: 'ASSIGNEE_NOT_IN_ORG',
+        });
+        return;
+      }
+    }
 
     // Validate template
     const template = await queryHelpers.queryOne(
@@ -2785,7 +3556,7 @@ export const InterviewController = {
           body: `An interview assignment has been submitted and is awaiting your review.`,
           entityType: 'interview_assignment',
           entityId: id,
-          actionUrl: `/discovery?assignmentId=${id}&scope=managed`,
+          actionUrl: `/interview?assignmentId=${id}&scope=managed`,
           priority: 'high',
           actorId: user.id,
         });
@@ -2987,7 +3758,7 @@ export const InterviewController = {
           body: `${normalizedReason} (${normalizedMissingItems.length} missing item(s))`,
           entityType: 'interview_assignment',
           entityId: id,
-          actionUrl: `/discovery?assignmentId=${id}`,
+          actionUrl: `/interview?assignmentId=${id}`,
           priority: 'high',
           actorId: admin.id,
         });
@@ -3128,7 +3899,7 @@ export const InterviewController = {
           body: 'Your interview submission has been approved.',
           entityType: 'interview_assignment',
           entityId: id,
-          actionUrl: `/discovery?assignmentId=${id}`,
+          actionUrl: `/interview?assignmentId=${id}`,
           priority: 'normal',
           actorId: reviewer.id,
         });
@@ -3168,6 +3939,9 @@ export const InterviewController = {
   getManagedAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { status, projectId } = req.query as any;
+    // Lazy-ensure lifecycle columns before filtering on archived_at (dev schema).
+    await ensureInterviewAssignmentLifecycleColumns();
+    const lifecycle = normalizeAssignmentLifecycleParam(req.query.lifecycle);
     const scope = await resolveInterviewManagerScope({
       userId: user.id,
       organizationId: user.organizationId,
@@ -3176,6 +3950,8 @@ export const InterviewController = {
     const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
     const params: unknown[] = [user.organizationId, ...scopeClause.params];
     let where = `WHERE a.organization_id = ?${scopeClause.clause}`;
+    // Default excludes archived; ?lifecycle=archived|all to include.
+    where += buildAssignmentLifecycleClause(lifecycle, 'a');
 
     if (status) {
       where += ` AND a.status = ?`;
@@ -3228,6 +4004,8 @@ export const InterviewController = {
         isTeamAssignment: r.is_team_assignment === 1,
         reminderCount: r.reminder_count || 0,
         escalationCount: r.escalation_count || 0,
+        escalatedAt: r.escalated_at || null,
+        archivedAt: r.archived_at || null,
         createdAt: r.created_at,
         template: {
           id: r.template_id,
@@ -3259,6 +4037,184 @@ export const InterviewController = {
     });
 
     res.json(mapped);
+  }),
+
+  /**
+   * Manual "escalate now" (#9b). Advances the escalation counter and notifies the
+   * designated escalation target (escalate_to, falling back to created_by) in-app,
+   * recording the event in interview_notifications. Mirrors the core of
+   * InterviewAssignmentService.checkAndEscalate but for a single org-scoped assignment,
+   * without the overdue/24h gating (the manager is explicitly forcing it).
+   */
+  escalateAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewAssignmentLifecycleColumns();
+
+    const assignment = await queryHelpers.queryOne<any>(
+      `SELECT * FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, admin.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const targetUserId = String(assignment.escalate_to || assignment.created_by || '').trim();
+
+    if (targetUserId) {
+      // Resolve target + template/assignee names for a useful notification body.
+      const target = await queryHelpers.queryOne<any>(
+        `SELECT id, email, first_name, last_name FROM users WHERE id = ?`,
+        [targetUserId]
+      );
+      const template = await queryHelpers.queryOne<any>(
+        `SELECT name FROM interview_library_templates WHERE id = ?`,
+        [assignment.template_id]
+      );
+      const assignee = assignment.assignee_user_id
+        ? await queryHelpers.queryOne<any>(
+            `SELECT first_name, last_name, email FROM users WHERE id = ?`,
+            [assignment.assignee_user_id]
+          )
+        : null;
+      const templateName = String(template?.name || 'Interview');
+      const assigneeName =
+        `${String(assignee?.first_name || '').trim()} ${String(assignee?.last_name || '').trim()}`.trim() ||
+        assignee?.email ||
+        'the assignee';
+
+      if (target?.id) {
+        try {
+          await notificationService.send({
+            userId: target.id,
+            organizationId: admin.organizationId,
+            type: 'interview_escalation',
+            title: 'Interview Assignment Escalated',
+            body: `The interview "${templateName}" assigned to ${assigneeName} has been escalated for your attention.`,
+            entityType: 'interview_assignment',
+            entityId: id,
+            actionUrl: `/interview?assignmentId=${id}`,
+            priority: 'high',
+            actorId: admin.id,
+          });
+        } catch (e) {
+          logger.warn('[InterviewController] Failed to send interview_escalation notification', e);
+        }
+
+        // Best-effort audit row (table is created by InterviewAssignmentService).
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO interview_notifications (id, assignment_id, user_id, type, channel, title, body, sent_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              `in_${uuidv4()}`,
+              id,
+              target.id,
+              'escalation',
+              'in_app',
+              'Interview Assignment Escalated',
+              `Manually escalated by ${admin.id}`,
+              now,
+            ]
+          );
+        } catch {
+          // interview_notifications may not exist yet in some dev schemas — ignore.
+        }
+      }
+    } else {
+      logger.warn(
+        `[InterviewController] escalateAssignment: no escalation target resolved for ${id}`
+      );
+    }
+
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments
+       SET escalated_at = ?, escalation_count = COALESCE(escalation_count, 0) + 1, updated_at = ?
+       WHERE id = ?`,
+      [now, now, id]
+    );
+
+    const updated = await queryHelpers.queryOne<any>(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    res.json({
+      success: true,
+      ...(updated || {}),
+      status: normalizeAssignmentStatusForClient((updated as any)?.status),
+      escalatedAt: (updated as any)?.escalated_at || null,
+      escalationCount: (updated as any)?.escalation_count || 0,
+      archivedAt: (updated as any)?.archived_at || null,
+      escalationTargetId: targetUserId || null,
+    });
+  }),
+
+  /** Archive an assignment (#8) — org-scoped, sets archived_at/by. */
+  archiveAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewAssignmentLifecycleColumns();
+
+    const assignment = await queryHelpers.queryOne<any>(
+      `SELECT id FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, admin.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET archived_at = ?, archived_by = ?, updated_at = ? WHERE id = ?`,
+      [now, admin.id, now, id]
+    );
+
+    const updated = await queryHelpers.queryOne<any>(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    res.json({
+      success: true,
+      ...(updated || {}),
+      status: normalizeAssignmentStatusForClient((updated as any)?.status),
+      archivedAt: (updated as any)?.archived_at || null,
+    });
+  }),
+
+  /** Restore (un-archive) an assignment (#8) — org-scoped, clears archived_at/by. */
+  restoreAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const admin = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewAssignmentLifecycleColumns();
+
+    const assignment = await queryHelpers.queryOne<any>(
+      `SELECT id FROM interview_assignments WHERE id = ? AND organization_id = ?`,
+      [id, admin.organizationId]
+    );
+    if (!assignment) {
+      res.status(404).json({ error: 'Assignment not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_assignments SET archived_at = NULL, archived_by = NULL, updated_at = ? WHERE id = ?`,
+      [now, id]
+    );
+
+    const updated = await queryHelpers.queryOne<any>(
+      `SELECT * FROM interview_assignments WHERE id = ?`,
+      [id]
+    );
+    res.json({
+      success: true,
+      ...(updated || {}),
+      status: normalizeAssignmentStatusForClient((updated as any)?.status),
+      archivedAt: (updated as any)?.archived_at || null,
+    });
   }),
 
   getOverdueAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -3431,7 +4387,7 @@ export const InterviewController = {
     let members: any[] = [];
     if (r.is_team_assignment === 1) {
       members = await queryHelpers.queryAll(
-        `SELECT m.*, u.name as user_name, u.email as user_email
+        `SELECT m.*, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name, u.email as user_email
          FROM interview_assignment_members m
          LEFT JOIN users u ON u.id = m.user_id
          WHERE m.assignment_id = ?`,
@@ -3647,7 +4603,7 @@ export const InterviewController = {
     }
 
     const members = await queryHelpers.queryAll(
-      `SELECT m.*, u.name as user_name, u.email as user_email
+      `SELECT m.*, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name, u.email as user_email
        FROM interview_assignment_members m
        LEFT JOIN users u ON u.id = m.user_id
        WHERE m.assignment_id = ?`,
@@ -3716,7 +4672,7 @@ export const InterviewController = {
     );
 
     const member = await queryHelpers.queryOne(
-      `SELECT m.*, u.name as user_name, u.email as user_email
+      `SELECT m.*, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name, u.email as user_email
        FROM interview_assignment_members m
        LEFT JOIN users u ON u.id = m.user_id
        WHERE m.id = ?`,
@@ -4231,6 +5187,60 @@ export const InterviewController = {
     res.json(buildTemplateResponse(updated));
   }),
 
+  // #15 — Set / unset a template as the organization default. Single default per
+  // org: setting one clears the flag on every other template in the same org.
+  setTemplateDefault: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+    await ensureInterviewTemplateV6Columns();
+
+    const isDefault = Boolean((req.body || {}).isDefault);
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
+    );
+    if (!existing || !canManageTemplate(existing, user)) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+
+    // Org-scoping: only org-owned templates can carry an org default flag. System
+    // templates have no organization_id, so they can't be the org default.
+    if ((existing as any).organization_id !== user.organizationId) {
+      res
+        .status(403)
+        .json({ error: 'Cannot change default for a template outside your organization' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    if (isDefault) {
+      // Single default per org: clear every OTHER org template first, then set this one.
+      await queryHelpers.queryRun(
+        `UPDATE interview_library_templates SET is_default = 0, updated_at = ? WHERE organization_id = ? AND id != ? AND is_default = 1`,
+        [now, user.organizationId, id]
+      );
+      await queryHelpers.queryRun(
+        `UPDATE interview_library_templates SET is_default = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [now, id, user.organizationId]
+      );
+    } else {
+      await queryHelpers.queryRun(
+        `UPDATE interview_library_templates SET is_default = 0, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        [now, id, user.organizationId]
+      );
+    }
+
+    const updated = await queryHelpers.queryOne(
+      `SELECT t.*, (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count
+       FROM interview_library_templates t WHERE t.id = ?`,
+      [id]
+    );
+
+    res.json(buildTemplateResponse(updated));
+  }),
+
   updateTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
@@ -4370,6 +5380,7 @@ export const InterviewController = {
       sortOrder,
       answerType,
       isRequired,
+      sectionTitle,
       helpHint,
       answerOptions,
       expectedAnswerShape,
@@ -4379,6 +5390,8 @@ export const InterviewController = {
       allowFileUpload,
       allowUrl,
       allowContextNote,
+      guidance,
+      exampleAnswer,
     } = req.body || {};
 
     const template = await queryHelpers.queryOne(
@@ -4397,8 +5410,8 @@ export const InterviewController = {
     const qid = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_library_template_questions
-       (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, expected_answer_shape, description, evidence_prompt, allow_voice, allow_file_upload, allow_url, allow_context_note, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, template_id, category, question_text, sort_order, answer_type, is_required, section_title, help_hint, answer_options, expected_answer_shape, description, evidence_prompt, allow_voice, allow_file_upload, allow_url, allow_context_note, guidance, example_answer, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         qid,
         id,
@@ -4407,6 +5420,7 @@ export const InterviewController = {
         typeof sortOrder === 'number' ? sortOrder : 0,
         answerType || 'open',
         isRequired ? 1 : 0,
+        typeof sectionTitle === 'string' && sectionTitle.trim() ? sectionTitle.trim() : null,
         helpHint || null,
         JSON.stringify(Array.isArray(answerOptions) ? answerOptions : []),
         expectedAnswerShape || null,
@@ -4416,6 +5430,8 @@ export const InterviewController = {
         allowFileUpload ? 1 : 0,
         allowUrl ? 1 : 0,
         allowContextNote === false ? 0 : 1,
+        typeof guidance === 'string' && guidance.trim() ? guidance.trim() : null,
+        typeof exampleAnswer === 'string' && exampleAnswer.trim() ? exampleAnswer.trim() : null,
         new Date().toISOString(),
       ]
     );
@@ -4443,6 +5459,7 @@ export const InterviewController = {
       sortOrder,
       answerType,
       isRequired,
+      sectionTitle,
       helpHint,
       answerOptions,
       expectedAnswerShape,
@@ -4452,6 +5469,8 @@ export const InterviewController = {
       allowFileUpload,
       allowUrl,
       allowContextNote,
+      guidance,
+      exampleAnswer,
     } = req.body || {};
 
     const template = await queryHelpers.queryOne(
@@ -4495,6 +5514,12 @@ export const InterviewController = {
       updates.push('is_required = ?');
       params.push(isRequired ? 1 : 0);
     }
+    if (sectionTitle !== undefined) {
+      updates.push('section_title = ?');
+      params.push(
+        typeof sectionTitle === 'string' && sectionTitle.trim() ? sectionTitle.trim() : null
+      );
+    }
     if (helpHint !== undefined) {
       updates.push('help_hint = ?');
       params.push(helpHint);
@@ -4530,6 +5555,16 @@ export const InterviewController = {
     if (allowContextNote !== undefined) {
       updates.push('allow_context_note = ?');
       params.push(allowContextNote ? 1 : 0);
+    }
+    if (guidance !== undefined) {
+      updates.push('guidance = ?');
+      params.push(typeof guidance === 'string' && guidance.trim() ? guidance.trim() : null);
+    }
+    if (exampleAnswer !== undefined) {
+      updates.push('example_answer = ?');
+      params.push(
+        typeof exampleAnswer === 'string' && exampleAnswer.trim() ? exampleAnswer.trim() : null
+      );
     }
 
     if (updates.length === 0) {
@@ -4671,7 +5706,7 @@ export const InterviewController = {
     });
 
     const systemPrompt = `
-You are a senior manufacturing transformation consultant helping fill a structured interview.
+You are a senior management consultant helping fill a structured interview.
 Goal: Draft a concise, factual answer to the question based on provided context and prior answers.
 Rules:
 - Facts only. No recommendations or action plans.
@@ -4860,21 +5895,26 @@ Answer type: ${(question as any).answer_type || 'open'}`;
     const { sessionId } = req.params;
     const { language } = req.body || {};
 
+    // P1-7 — null-safe org predicate so project-less (ad-hoc) sessions can be
+    // evaluated/parsed. The previous inner JOIN on projects excluded them
+    // entirely. Mirror getSummary/createInsight org match.
     let session: any = null;
     try {
       session = await queryHelpers.queryOne(
         `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
-         JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ? AND p.organization_id = ?`,
-        [sessionId, user.organizationId]
+         LEFT JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ?
+           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
+        [sessionId, user.organizationId, user.organizationId]
       );
     } catch {
       // Backward compatibility for environments still using legacy user_id.
       session = await queryHelpers.queryOne(
         `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-         JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ? AND p.organization_id = ?`,
-        [sessionId, user.organizationId]
+         LEFT JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ?
+           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
+        [sessionId, user.organizationId, user.organizationId]
       );
     }
     if (!session) {
@@ -4949,21 +5989,26 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       return;
     }
 
+    // P1-7 — null-safe org predicate so project-less (ad-hoc) sessions can be
+    // evaluated/parsed. The previous inner JOIN on projects excluded them
+    // entirely. Mirror getSummary/createInsight org match.
     let session: any = null;
     try {
       session = await queryHelpers.queryOne(
         `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
-         JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ? AND p.organization_id = ?`,
-        [sessionId, user.organizationId]
+         LEFT JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ?
+           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
+        [sessionId, user.organizationId, user.organizationId]
       );
     } catch {
       // Backward compatibility for environments still using legacy user_id.
       session = await queryHelpers.queryOne(
         `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-         JOIN projects p ON p.id = s.project_id
-         WHERE s.id = ? AND p.organization_id = ?`,
-        [sessionId, user.organizationId]
+         LEFT JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ?
+           AND (p.organization_id = ? OR (s.project_id IS NULL AND s.organization_id = ?))`,
+        [sessionId, user.organizationId, user.organizationId]
       );
     }
     if (!session) {
@@ -6523,12 +7568,18 @@ ${JSON.stringify(questions || [], null, 2)}
 
   listInsights: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    const { limit = 50, offset = 0 } = req.query;
+    const { limit = 50, offset = 0, scope } = req.query;
+
+    // Lifecycle scope: active (default) | archived | all. Ensure the column exists first.
+    const normalizedScope: 'active' | 'archived' | 'all' =
+      scope === 'archived' ? 'archived' : scope === 'all' ? 'all' : 'active';
+    await ensureInterviewInsightLifecycleColumns();
 
     const interviewInsightService = await import('../services/InterviewInsightService.js');
     const insights = await interviewInsightService.list(user.organizationId, {
       limit: Number(limit),
       offset: Number(offset),
+      scope: normalizedScope,
     });
 
     res.json(insights);
@@ -6740,7 +7791,8 @@ ${JSON.stringify(questions || [], null, 2)}
   updateInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { title, status, exportedToTools, exportedToAssessment } = req.body;
+    const { title, status, exportedToTools, exportedToAssessment, archived, sectionCompletions } =
+      req.body;
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -6760,6 +7812,28 @@ ${JSON.stringify(questions || [], null, 2)}
     if (exportedToAssessment !== undefined) {
       updates.push('exported_to_assessment = ?');
       values.push(exportedToAssessment ? 1 : 0);
+    }
+    // Lifecycle: archive / restore (soft, reversible). Ensure columns exist first.
+    if (archived !== undefined) {
+      await ensureInterviewInsightLifecycleColumns();
+      if (archived) {
+        updates.push('archived_at = ?', 'archived_by = ?');
+        values.push(new Date().toISOString(), user.id);
+      } else {
+        updates.push('archived_at = ?', 'archived_by = ?');
+        values.push(null, null);
+      }
+    }
+
+    // Mark Complete — AI signal only; persisted as JSON { sectionId: boolean, ... }
+    if (sectionCompletions !== undefined && sectionCompletions !== null) {
+      await ensureInsightSectionCompletionsColumn();
+      updates.push('section_completions = ?');
+      values.push(
+        typeof sectionCompletions === 'string'
+          ? sectionCompletions
+          : JSON.stringify(sectionCompletions)
+      );
     }
 
     if (updates.length === 0) {
@@ -6786,6 +7860,15 @@ ${JSON.stringify(questions || [], null, 2)}
         userId: user.id,
       });
     }
+    if (archived !== undefined) {
+      void logInterviewInsightActivity({
+        organizationId: user.organizationId,
+        insightId: id,
+        type: 'edit',
+        description: archived ? 'Insight archived' : 'Insight restored',
+        userId: user.id,
+      });
+    }
 
     res.json({ success: true });
   }),
@@ -6794,12 +7877,19 @@ ${JSON.stringify(questions || [], null, 2)}
   exportInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { target } = req.body;
+    const { target, sectionIds } = req.body || {};
 
     if (!target || !['tools', 'assessment'].includes(target)) {
       res.status(400).json({ error: 'target must be "tools" or "assessment"' });
       return;
     }
+
+    // #25 — optional section filter. When provided we export only the selected
+    // sections of the insight; unknown ids are ignored and an empty result falls
+    // back to the full insight (logged). Omitted/empty → unchanged behavior.
+    const requestedSectionIds: string[] = Array.isArray(sectionIds)
+      ? sectionIds.map((s: unknown) => String(s || '').trim()).filter(Boolean)
+      : [];
 
     // Load insight so we can create an actual downstream artifact (Tools/Assessment).
     // NOTE: There are environments with different `interview_insights` schemas.
@@ -6832,6 +7922,42 @@ ${JSON.stringify(questions || [], null, 2)}
     if (!insightRow) {
       res.status(404).json({ error: 'Insight not found' });
       return;
+    }
+
+    // #25 — Build the optional section-filtered snapshot. We load the FULL
+    // structured insight (themes/issues/opportunities/signals/etc.) and filter it
+    // by the requested section ids. Robust: unknown ids ignored; empty match falls
+    // back to the full insight content with a logged note.
+    let sectionFilter: {
+      sectionIds: string[];
+      filtered: FilterableInsight;
+      markdown: string;
+    } | null = null;
+    if (requestedSectionIds.length > 0) {
+      try {
+        const interviewInsightService = await import('../services/InterviewInsightService.js');
+        const fullInsight = (await interviewInsightService.getById(id)) as FilterableInsight | null;
+        if (fullInsight) {
+          const { filtered, matched, markdown } = filterInsightBySectionIds(
+            fullInsight,
+            requestedSectionIds
+          );
+          if (matched) {
+            sectionFilter = { sectionIds: requestedSectionIds, filtered, markdown };
+          } else {
+            logger.warn(
+              `[InterviewController] exportInsight: sectionIds ${JSON.stringify(
+                requestedSectionIds
+              )} matched no sections for insight ${id}; falling back to full content`
+            );
+          }
+        }
+      } catch (e) {
+        logger.warn(
+          '[InterviewController] exportInsight: section filter failed, exporting full',
+          e
+        );
+      }
     }
 
     // Resolve a usable sessionId (optional).
@@ -7003,8 +8129,14 @@ ${JSON.stringify(questions || [], null, 2)}
           sessionId: sessionId || null,
           category: insightRow.category,
           title: insightRow.title,
-          description: insightRow.description || insightRow.content || null,
+          description: sectionFilter
+            ? sectionFilter.markdown || insightRow.description || insightRow.content || null
+            : insightRow.description || insightRow.content || null,
           insightType: insightRow.insight_type || insightRow.prompt_type || null,
+          // #25 — only present when a section filter was applied and matched.
+          sectionFilter: sectionFilter
+            ? { sectionIds: sectionFilter.sectionIds, sections: sectionFilter.filtered }
+            : undefined,
           exportedAt: now,
         },
         organizationContext: orgContext,
@@ -7134,8 +8266,14 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId: sessionId || null,
         category: insightRow.category,
         title: insightRow.title,
-        description: insightRow.description || insightRow.content || null,
+        description: sectionFilter
+          ? sectionFilter.markdown || insightRow.description || insightRow.content || null
+          : insightRow.description || insightRow.content || null,
         insightType: insightRow.insight_type || insightRow.prompt_type || null,
+        // #25 — only present when a section filter was applied and matched.
+        sectionFilter: sectionFilter
+          ? { sectionIds: sectionFilter.sectionIds, sections: sectionFilter.filtered }
+          : undefined,
         exportedAt: now,
       },
       organizationContext: orgContext,

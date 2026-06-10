@@ -29,6 +29,8 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import { cn } from '@/utils/cn';
 
+import { LoadingState } from '../../../components/ui/primitives';
+
 interface CommissionRate {
   tier: string;
   tierName: string;
@@ -335,11 +337,7 @@ export const PartnerProgramConfig: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="py-12" />;
   }
 
   return (
@@ -350,7 +348,7 @@ export const PartnerProgramConfig: React.FC = () => {
           <h1 className="text-2xl font-bold text-white">
             {t('superadmin.partnerConfig.title', 'Partner Program Configuration')}
           </h1>
-          <p className="text-slate-400 dark:text-slate-500">
+          <p className="text-slate-600 dark:text-slate-500">
             {t(
               'superadmin.partnerConfig.subtitle',
               'Configure commission rates, discounts, and payout settings'
@@ -359,7 +357,7 @@ export const PartnerProgramConfig: React.FC = () => {
         </div>
         <button
           onClick={fetchConfig}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-white transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -386,7 +384,7 @@ export const PartnerProgramConfig: React.FC = () => {
             <h2 className="text-lg font-semibold text-white">
               {t('superadmin.partnerConfig.commissionRates', 'Commission Rates by Tier')}
             </h2>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Set commission percentages for each partner tier
             </p>
           </div>
@@ -406,7 +404,7 @@ export const PartnerProgramConfig: React.FC = () => {
                       setEditingTier(tier.tier);
                       setEditRate(tier.rate);
                     }}
-                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-white rounded transition-colors"
+                    className="p-1 text-slate-600 dark:text-slate-500 hover:text-white rounded transition-colors"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
@@ -424,7 +422,7 @@ export const PartnerProgramConfig: React.FC = () => {
                       max={100}
                       className="w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-center"
                     />
-                    <span className="text-slate-400 dark:text-slate-500">%</span>
+                    <span className="text-slate-600 dark:text-slate-500">%</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -437,7 +435,7 @@ export const PartnerProgramConfig: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setEditingTier(null)}
-                      className="px-3 py-1.5 text-slate-400 dark:text-slate-500 hover:text-white text-sm"
+                      className="px-3 py-1.5 text-slate-600 dark:text-slate-500 hover:text-white text-sm"
                     >
                       Cancel
                     </button>
@@ -469,13 +467,13 @@ export const PartnerProgramConfig: React.FC = () => {
               <h2 className="text-lg font-semibold text-white">
                 {t('superadmin.partnerConfig.clientDiscount', 'Client Discount Settings')}
               </h2>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Configure discounts for clients referred by partners
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-400 dark:text-slate-500">
+            <span className="text-sm text-slate-600 dark:text-slate-500">
               {discountConfig.isActive ? 'Active' : 'Disabled'}
             </span>
             <button
@@ -499,7 +497,7 @@ export const PartnerProgramConfig: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
               Discount Type
             </label>
             <select
@@ -515,7 +513,7 @@ export const PartnerProgramConfig: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
               Discount Value {discountConfig.discountType === 'PERCENTAGE' ? '(%)' : '(€)'}
             </label>
             <input
@@ -531,7 +529,7 @@ export const PartnerProgramConfig: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
               Duration (months)
             </label>
             <input
@@ -547,7 +545,7 @@ export const PartnerProgramConfig: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
               Max Discount/Month (€)
             </label>
             <input
@@ -585,7 +583,7 @@ export const PartnerProgramConfig: React.FC = () => {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">Public Partner Applications</h2>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Lightweight qualification leads submitted from the public recruitment page
               </p>
             </div>
@@ -593,7 +591,7 @@ export const PartnerProgramConfig: React.FC = () => {
 
           <div className="space-y-3">
             {partnerApplications.length === 0 ? (
-              <div className="rounded-xl border border-white/5 bg-navy-900/40 p-4 text-sm text-slate-400">
+              <div className="rounded-xl border border-white/5 bg-navy-900/40 p-4 text-sm text-slate-600">
                 No partner applications submitted yet.
               </div>
             ) : (
@@ -605,7 +603,7 @@ export const PartnerProgramConfig: React.FC = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-white font-medium">{item.company}</div>
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-slate-600">
                         {item.full_name} • {item.email}
                       </div>
                     </div>
@@ -614,7 +612,7 @@ export const PartnerProgramConfig: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="text-xs text-slate-400 space-y-1">
+                  <div className="text-xs text-slate-600 space-y-1">
                     {item.role ? <div>Role: {item.role}</div> : null}
                     {item.country ? <div>Country: {item.country}</div> : null}
                     {item.team_size ? <div>Team size: {item.team_size}</div> : null}
@@ -625,7 +623,7 @@ export const PartnerProgramConfig: React.FC = () => {
                   </div>
 
                   {item.message ? (
-                    <div className="rounded-lg bg-black/20 px-3 py-2 text-sm text-slate-300">
+                    <div className="rounded-lg bg-black/20 px-3 py-2 text-sm text-slate-600">
                       {item.message}
                     </div>
                   ) : null}
@@ -671,7 +669,7 @@ export const PartnerProgramConfig: React.FC = () => {
               <h2 className="text-lg font-semibold text-white">
                 {t('superadmin.partnerConfig.reviewQueue', 'Certification Review Queue')}
               </h2>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Review advanced partner certifications that require operator approval
               </p>
             </div>
@@ -679,7 +677,7 @@ export const PartnerProgramConfig: React.FC = () => {
 
           <div className="space-y-3">
             {reviewQueue.length === 0 ? (
-              <div className="rounded-xl border border-white/5 bg-navy-900/40 p-4 text-sm text-slate-400">
+              <div className="rounded-xl border border-white/5 bg-navy-900/40 p-4 text-sm text-slate-600">
                 No certifications are waiting for operator review.
               </div>
             ) : (
@@ -691,7 +689,7 @@ export const PartnerProgramConfig: React.FC = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-white font-medium">{item.certification_name}</div>
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-slate-600">
                         {item.partner_name || 'Partner'} • {item.certification_track} /{' '}
                         {item.certification_level}
                       </div>
@@ -700,7 +698,7 @@ export const PartnerProgramConfig: React.FC = () => {
                       {item.review_state || 'pending'}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-600">
                     Progress: {item.progress_percent || 0}% • Updated:{' '}
                     {item.updated_at ? new Date(item.updated_at).toLocaleString() : 'n/a'}
                   </div>
@@ -737,7 +735,7 @@ export const PartnerProgramConfig: React.FC = () => {
               <h2 className="text-lg font-semibold text-white">
                 {t('superadmin.partnerConfig.programSignals', 'Program Signals')}
               </h2>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Adoption, blockers, and knowledge usage across the partner rollout
               </p>
             </div>
@@ -764,7 +762,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 <div className="text-sm text-white">
                   {item.track} / {item.level}
                 </div>
-                <div className="text-sm text-slate-300">
+                <div className="text-sm text-slate-600">
                   {item.pass_rate || 0}% pass • {item.attempts || 0} attempts
                 </div>
               </div>
@@ -775,7 +773,7 @@ export const PartnerProgramConfig: React.FC = () => {
                 className="flex items-center justify-between rounded-xl border border-white/5 bg-navy-900/40 p-3"
               >
                 <div className="text-sm text-white">{item.slug}</div>
-                <div className="text-sm text-slate-300">{item.views || 0} views</div>
+                <div className="text-sm text-slate-600">{item.views || 0} views</div>
               </div>
             ))}
           </div>
@@ -792,7 +790,7 @@ export const PartnerProgramConfig: React.FC = () => {
             <h2 className="text-lg font-semibold text-white">
               {t('superadmin.partnerConfig.payoutSettings', 'Payout Settings')}
             </h2>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               Configure payout thresholds, schedules, and payment methods
             </p>
           </div>
@@ -800,7 +798,7 @@ export const PartnerProgramConfig: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div>
-            <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
               Minimum Threshold (€)
             </label>
             <input
@@ -815,7 +813,7 @@ export const PartnerProgramConfig: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
               Payout Schedule
             </label>
             <select
@@ -832,7 +830,7 @@ export const PartnerProgramConfig: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
               Processing Fee (%)
             </label>
             <input
@@ -852,7 +850,7 @@ export const PartnerProgramConfig: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+            <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
               Auto-payout
             </label>
             <div className="flex items-center gap-3 h-[42px]">
@@ -875,7 +873,7 @@ export const PartnerProgramConfig: React.FC = () => {
                   )}
                 />
               </button>
-              <span className="text-sm text-slate-400 dark:text-slate-500">
+              <span className="text-sm text-slate-600 dark:text-slate-500">
                 {payoutSettings.autoPayoutEnabled ? 'Enabled' : 'Manual approval'}
               </span>
             </div>
@@ -884,7 +882,7 @@ export const PartnerProgramConfig: React.FC = () => {
 
         {/* Payment Methods */}
         <div className="mb-4">
-          <label className="block text-sm text-slate-400 dark:text-slate-500 mb-3">
+          <label className="block text-sm text-slate-600 dark:text-slate-500 mb-3">
             Enabled Payment Methods
           </label>
           <div className="flex flex-wrap gap-3">
@@ -896,7 +894,7 @@ export const PartnerProgramConfig: React.FC = () => {
                   'flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors',
                   payoutSettings.paymentMethods.includes(method.id)
                     ? 'bg-primary-600/20 border-primary-500 text-white'
-                    : 'bg-navy-900 border-white/10 text-slate-400 dark:text-slate-500 hover:text-white'
+                    : 'bg-navy-900 border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'
                 )}
               >
                 <method.icon className="w-4 h-4" />

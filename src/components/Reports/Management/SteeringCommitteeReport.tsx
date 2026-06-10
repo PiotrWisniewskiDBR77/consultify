@@ -48,7 +48,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
       />
 
       {/* Executive Summary */}
-      <div className="bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-6">
+      <div className="bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles size={18} className="text-primary-500" />
           <h2 className="text-lg font-semibold text-primary-900 dark:text-primary-100">
@@ -137,7 +137,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
       {/* Risks & Issues */}
       {content.risksAndIssues && content.risksAndIssues.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white flex items-center gap-2">
               <AlertTriangle size={20} className="text-amber-500" />
               Risks & Issues
@@ -169,7 +169,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {content.risksAndIssues.slice(0, 10).map((item: any) => (
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
                     <td className="px-4 py-3">
@@ -346,7 +346,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
       {/* Project Statuses (for portfolio reports) */}
       {content.projectStatuses && content.projectStatuses.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700">
             <h2 className="text-lg font-semibold text-navy-900 dark:text-white">
               Project Portfolio Status
             </h2>
@@ -372,7 +372,7 @@ export const SteeringCommitteeReport: React.FC<SteeringCommitteeReportProps> = (
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {content.projectStatuses.map((project) => (
                   <tr key={project.projectId} className="hover:bg-slate-50 dark:hover:bg-white/5">
                     <td className="px-4 py-3 font-medium text-navy-900 dark:text-white">

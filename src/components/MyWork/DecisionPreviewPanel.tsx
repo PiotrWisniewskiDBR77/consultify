@@ -29,6 +29,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { statusChipTone } from '@/components/ui/primitives/chips';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -196,23 +197,14 @@ export const DecisionPreviewBody: React.FC<{
   onCloseDetailsMenu,
   onDetailsAction,
 }) => {
+  // canon §4.1 — status color driven by statusChipTone() on neutral shell, no hardcoded fills.
   const status = String(decision?.status || 'PENDING').toUpperCase();
-  const statusClassName =
-    status === 'APPROVED'
-      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-      : status === 'REJECTED'
-        ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
-        : status === 'DEFERRED' || status === 'ESCALATED'
-          ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-          : 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300';
+  const statusTone = statusChipTone(decision?.status || 'pending');
 
+  // canon §4.0 — priority carries a signal tone only when it warrants attention.
   const pri = String(decision?.priority || 'MEDIUM').toUpperCase();
-  const priClassName =
-    pri === 'CRITICAL'
-      ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
-      : pri === 'HIGH'
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-        : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300';
+  const priTone: MetaPill['tone'] =
+    pri === 'CRITICAL' ? 'danger' : pri === 'HIGH' ? 'warning' : 'neutral';
 
   const priLabel = isPolish
     ? pri === 'CRITICAL'
@@ -224,17 +216,12 @@ export const DecisionPreviewBody: React.FC<{
           : 'Niski'
     : pri[0] + pri.slice(1).toLowerCase();
 
-  const urgencyClassName =
-    brief?.urgency === 'urgent'
-      ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
-      : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300';
-
   const pills: MetaPill[] = [
     {
       label: isPolish ? status : status[0] + status.slice(1).toLowerCase(),
-      className: statusClassName,
+      tone: statusTone,
     },
-    { label: priLabel, className: priClassName },
+    { label: priLabel, tone: priTone },
     ...(brief?.summary
       ? [
           {
@@ -246,7 +233,7 @@ export const DecisionPreviewBody: React.FC<{
                 : isPolish
                   ? 'Normalne'
                   : 'Normal',
-            className: urgencyClassName,
+            tone: brief.urgency === 'urgent' ? 'danger' : 'neutral',
           } as MetaPill,
         ]
       : []),
@@ -254,6 +241,7 @@ export const DecisionPreviewBody: React.FC<{
       ? [
           {
             label: decision.projectName,
+            tone: 'neutral',
             className: 'bg-transparent text-slate-600 dark:text-slate-300 truncate max-w-[120px]',
           } as MetaPill,
         ]
@@ -265,7 +253,7 @@ export const DecisionPreviewBody: React.FC<{
       {formatShortDate(decision.dueDate) || ''}
     </span>
   ) : (
-    <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 italic">
+    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 italic">
       {isPolish ? 'Bez terminu' : 'No due date'}
     </span>
   );
@@ -469,7 +457,8 @@ export const DecisionPreviewFooter: React.FC<{
   ];
 
   return (
-    <div className="space-y-0">
+    // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
+    <div className="space-y-2.5">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip
           hints={hints}
@@ -484,14 +473,10 @@ export const DecisionPreviewFooter: React.FC<{
         />
       </div>
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-
       <PreviewRelations
         items={relationItems}
         emptyLabel={isPolish ? 'Brak powiązań' : 'No relations'}
       />
-
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
       <div className="space-y-2.5 py-1">
         <PreviewActionBar rows={actionRows} />

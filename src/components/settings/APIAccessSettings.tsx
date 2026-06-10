@@ -39,6 +39,10 @@ import {
   YAxis,
 } from 'recharts';
 
+import { Banner } from '@/components/shared/Banner';
+import { EmptyState } from '@/components/ui/composed';
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
@@ -389,9 +393,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
             {t('settings.api.title', 'API Access')}
           </h3>
         </div>
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-brand" />
-        </div>
+        <LoadingState variant="spinner" />
       </div>
     );
   }
@@ -420,31 +422,18 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
 
       {loadError && <DegradedState title="API keys unavailable" description={loadError} />}
 
-      {actionError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
-        >
-          {actionError}
-        </div>
-      )}
+      {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Empty state */}
       {keys.length === 0 && !showNew && !loadError && (
-        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl">
-          <Key className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            {t('settings.api.noKeys', 'No API keys yet. Create one to get started.')}
-          </p>
-          <button
-            onClick={() => setShowNew(true)}
-            disabled={!!loadError}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors text-sm"
-          >
-            <Plus size={16} />
-            {t('settings.api.createKey', 'Create Key')}
-          </button>
-        </div>
+        <EmptyState
+          icon={<Key />}
+          title={t('settings.api.noKeys', 'No API keys yet. Create one to get started.')}
+          action={{
+            label: t('settings.api.createKey', 'Create Key'),
+            onClick: () => setShowNew(true),
+          }}
+        />
       )}
 
       {/* New Key Warning */}
@@ -532,21 +521,20 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-medium text-slate-900 dark:text-white">{key.name}</p>
                     {expired && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 rounded-full">
-                        {t('settings.api.expired', 'Expired')}
-                      </span>
+                      <StatusChip tone="danger" label={t('settings.api.expired', 'Expired')} />
                     )}
                     {expiringSoon && !expired && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">
-                        {t('settings.api.expiringSoon', 'Expiring Soon')}
-                      </span>
+                      <StatusChip
+                        tone="warning"
+                        label={t('settings.api.expiringSoon', 'Expiring Soon')}
+                      />
                     )}
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">
                     {key.prefix}••••••••••••
                   </p>
                   {key.lastUsed && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                       {t('settings.api.lastUsed', 'Last used')}: {key.lastUsed}
                     </p>
                   )}
@@ -557,7 +545,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     className={`p-2 rounded-lg transition-colors ${
                       isSelected
                         ? 'bg-brand text-white'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                        : 'text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                     }`}
                     title={t('settings.api.viewUsage', 'View usage')}
                   >
@@ -568,7 +556,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     className={`p-2 rounded-lg transition-colors ${
                       showKeySettings
                         ? 'bg-brand text-white'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
+                        : 'text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700'
                     }`}
                     title={t('common.settings', 'Settings')}
                   >
@@ -577,7 +565,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                   <button
                     onClick={() => rotateKey(key.id)}
                     disabled={rotatingKey === key.id}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-slate-600 dark:text-slate-500 hover:text-brand hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
                     title={t('settings.api.rotate', 'Rotate key')}
                   >
                     {rotatingKey === key.id ? (
@@ -620,7 +608,7 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className 
                     />
                   </div>
                   {key.quotaResetAt && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                       {t('settings.api.resetsAt', 'Resets')}:{' '}
                       {new Date(key.quotaResetAt).toLocaleDateString()}
                     </p>

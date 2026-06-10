@@ -28,7 +28,7 @@ export const FinanceVersionTimeline: React.FC<FinanceVersionTimelineProps> = ({ 
             {snap.isFinalized ? (
               <CheckCircle2 size={14} className="text-emerald-400" />
             ) : (
-              <GitCommit size={14} className="text-slate-400" />
+              <GitCommit size={14} className="text-slate-600" />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -47,7 +47,7 @@ export const FinanceVersionTimeline: React.FC<FinanceVersionTimelineProps> = ({ 
                   {t('finance.lane.versions.finalized', 'finalized')}
                 </span>
               )}
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto whitespace-nowrap">
+              <span className="text-[10px] text-slate-600 dark:text-slate-500 ml-auto whitespace-nowrap">
                 {new Date(snap.createdAt).toLocaleDateString()}
               </span>
             </div>

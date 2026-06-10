@@ -36,6 +36,7 @@ import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { StatusChip } from '../ui/primitives';
 import { BenefitsTrackingDashboard } from './BenefitsTrackingDashboard';
 import { BusinessCaseGenerator } from './BusinessCaseGenerator';
 import { CashFlowChart } from './CashFlowChart';
@@ -463,9 +464,9 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
         </div>
       </div>
       {expandedSections[section] ? (
-        <ChevronUp size={20} className="text-slate-400 dark:text-slate-500" />
+        <ChevronUp size={20} className="text-slate-600 dark:text-slate-500" />
       ) : (
-        <ChevronDown size={20} className="text-slate-400 dark:text-slate-500" />
+        <ChevronDown size={20} className="text-slate-600 dark:text-slate-500" />
       )}
     </button>
   );
@@ -561,7 +562,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
           badge="Costs i benefits"
         />
         {expandedSections.input && (
-          <div className="p-6 border-t border-slate-100 dark:border-navy-700">
+          <div className="p-6 border-t border-slate-200 dark:border-navy-700">
             <FinancialInputForm
               initialData={financialData || undefined}
               onSave={handleSaveFinancials}
@@ -586,7 +587,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
             badge="NPV, IRR, ROI, Payback"
           />
           {expandedSections.metrics && (
-            <div className="p-6 border-t border-slate-100 dark:border-navy-700">
+            <div className="p-6 border-t border-slate-200 dark:border-navy-700">
               <FinancialMetricsPanel
                 metrics={calculatedMetrics}
                 currency={financialData?.currency}
@@ -674,11 +675,7 @@ export const FinancialAnalysisPanel: React.FC<FinancialAnalysisPanelProps> = ({
                       <h4 className="font-semibold text-navy-900 dark:text-white">
                         {scenario.name || scenario.scenarioType}
                       </h4>
-                      {scenario.isActive && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                          Active
-                        </span>
-                      )}
+                      {scenario.isActive && <StatusChip tone="success" label="Active" />}
                     </div>
                     <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                       <div className="flex items-center justify-between">
@@ -911,7 +908,7 @@ const LinkedOutputsSection: React.FC<{
                 {row.kind} · {row.statusKey} · {row.governance?.visibilityScope || 'private'}
               </div>
             </div>
-            <ExternalLink size={14} className="flex-shrink-0 text-slate-400" />
+            <ExternalLink size={14} className="flex-shrink-0 text-slate-600" />
           </div>
         </button>
       ))}

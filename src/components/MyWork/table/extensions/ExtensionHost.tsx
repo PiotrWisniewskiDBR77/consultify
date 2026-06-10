@@ -182,14 +182,14 @@ export const ExtensionHost: React.FC<ExtensionHostProps> = ({
       <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b">
         <span className="text-sm font-medium text-gray-700">Extension</span>
         <div className="flex items-center gap-2">
-          {!isReady && <span className="text-xs text-gray-400">Loading...</span>}
-          <span className="text-xs text-gray-400">
+          {!isReady && <span className="text-xs text-gray-600">Loading...</span>}
+          <span className="text-xs text-gray-600">
             {scopes.length} scope{scopes.length !== 1 ? 's' : ''}
           </span>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-sm leading-none"
+              className="text-gray-600 hover:text-gray-600 text-sm leading-none"
               aria-label="Close extension"
             >
               &times;

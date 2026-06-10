@@ -3,16 +3,13 @@ import {
   Award,
   BadgeCheck,
   BookOpen,
-  Building2,
   CheckCircle2,
   CreditCard,
   GraduationCap,
   Rocket,
   Shield,
   Sparkles,
-  Target,
   TrendingUp,
-  Users,
 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { ROUTES } from '@/routes/routeConfig';
+import { PARTNER_TIERS } from '@/views/partner/partnerPricingData';
 
 /**
  * BecomePartnerView — Partner Recruitment Landing Page
@@ -48,12 +46,10 @@ export const BecomePartnerView: React.FC = () => {
     { icon: BookOpen, color: 'purple' },
   ];
 
-  const TIER_KEYS = ['registered', 'certified', 'premier'] as const;
-  const TIER_VISUALS = [
-    { icon: Users, color: 'slate' },
-    { icon: Award, color: 'violet' },
-    { icon: Target, color: 'emerald' },
-  ];
+  // SSOT — partnership tiers come from PARTNER_TIERS (shared with the public
+  // pricing page AND the in-product ProviderHomeView), so the public landing
+  // can never advertise a different program than the portal shows inside.
+  const maxCommissionPct = PARTNER_TIERS[PARTNER_TIERS.length - 1].commissionRate;
 
   const STEP_KEYS = ['apply', 'meet', 'onboarding', 'grow'] as const;
 
@@ -97,7 +93,7 @@ export const BecomePartnerView: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={handleApplyClick}
-                className="group relative inline-flex items-center gap-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold text-lg px-8 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)] hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
+                className="group relative inline-flex items-center gap-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold text-lg px-8 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)] hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <span>{t('pages.partner.hero.applyBtn', 'Apply for Partnership')}</span>
@@ -122,6 +118,31 @@ export const BecomePartnerView: React.FC = () => {
                 <Shield size={18} className="text-primary-400" />
                 {t('pages.partner.hero.existingPartner', 'Zaloguj się jako partner')}
               </button>
+            </div>
+
+            {/* Trust / value strip — SSOT-derived, truthful (beta program) */}
+            <div className="mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-white/50">
+              <span className="flex items-center gap-2">
+                <TrendingUp size={16} className="text-primary-400" />
+                {t('pages.partner.hero.stat.commission', 'do {{pct}}% prowizji', {
+                  pct: maxCommissionPct,
+                })}
+              </span>
+              <span className="text-white/15">•</span>
+              <span className="flex items-center gap-2">
+                <Award size={16} className="text-primary-400" />
+                {t('pages.partner.hero.stat.tiers', '4 poziomy partnerstwa')}
+              </span>
+              <span className="text-white/15">•</span>
+              <span className="flex items-center gap-2">
+                <GraduationCap size={16} className="text-primary-400" />
+                {t('pages.partner.hero.stat.academy', 'Partner Academy + certyfikacja')}
+              </span>
+              <span className="text-white/15">•</span>
+              <span className="flex items-center gap-2">
+                <Shield size={16} className="text-primary-400" />
+                {t('pages.partner.hero.stat.standards', 'ISO 21500 / PMBOK 7 / PRINCE2')}
+              </span>
             </div>
           </section>
 
@@ -178,43 +199,52 @@ export const BecomePartnerView: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {TIER_KEYS.map((key, index) => {
-                const visual = TIER_VISUALS[index];
-                const prefix = `pages.partner.tiers.items.${key}`;
-                const requirements = (t(`${prefix}.requirements`, { returnObjects: true }) ||
-                  []) as string[];
-                const tierBenefits = (t(`${prefix}.benefits`, { returnObjects: true }) ||
-                  []) as string[];
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {PARTNER_TIERS.map((tier) => {
+                const TierIcon = tier.icon;
+                const topBenefits = tier.features.filter((f) => f.included).slice(0, 4);
                 return (
                   <div
-                    key={key}
-                    className={`bg-navy-900/30 backdrop-blur-sm p-8 rounded-xl border transition-all duration-500 group ${
-                      key === 'certified'
-                        ? 'border-primary-500/30 shadow-lg shadow-primary-500/10'
+                    key={tier.id}
+                    className={`relative bg-navy-900/30 backdrop-blur-sm p-8 rounded-xl border transition-all duration-500 group ${
+                      tier.highlight
+                        ? 'border-primary-500/40 shadow-lg shadow-primary-500/10'
                         : 'border-white/10 hover:border-primary-500/20'
                     }`}
                   >
-                    <div
-                      className={`w-14 h-14 rounded-xl bg-${visual.color}-600/20 flex items-center justify-center mb-6 group-hover:bg-${visual.color}-600/30 transition-colors`}
-                    >
-                      <visual.icon size={28} className={`text-${visual.color}-400`} />
+                    {tier.badge && (
+                      <span className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-primary-500/20 text-primary-300 text-[10px] font-semibold uppercase tracking-wide">
+                        {tier.badge}
+                      </span>
+                    )}
+                    <div className="w-14 h-14 rounded-xl bg-primary-600/20 flex items-center justify-center mb-6 group-hover:bg-primary-600/30 transition-colors">
+                      <TierIcon size={28} className="text-primary-400" />
                     </div>
-                    <h3 className="text-xl font-bold mb-2">{t(`${prefix}.title`)}</h3>
-                    <p className="text-white/50 text-sm mb-6">{t(`${prefix}.description`)}</p>
+                    <h3 className="text-xl font-bold mb-1">{tier.name}</h3>
+                    <p className="text-white/50 text-sm mb-4">{tier.description}</p>
+
+                    {/* Commission headline — SSOT, matches pricing + portal */}
+                    <div className="flex items-baseline gap-1 mb-6">
+                      <span className="text-3xl font-bold text-white">{tier.commissionRate}%</span>
+                      <span className="text-white/40 text-sm">
+                        {t('pages.partner.tiers.commissionLabel', 'prowizji')}
+                      </span>
+                    </div>
 
                     <div className="mb-6">
                       <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
-                        {t('pages.partner.tiers.requirementsLabel', 'Requirements')}
+                        {t('pages.partner.tiers.requirementsLabel', 'Wymagania')}
                       </h4>
                       <ul className="space-y-1.5">
-                        {(Array.isArray(requirements) ? requirements : []).map((req, rIndex) => (
+                        {tier.requirements.map((req, rIndex) => (
                           <li key={rIndex} className="flex items-start gap-2 text-sm text-white/60">
                             <CheckCircle2
                               size={14}
                               className="mt-0.5 text-white/30 flex-shrink-0"
                             />
-                            {req}
+                            <span>
+                              {req.label}: <span className="text-white/80">{req.value}</span>
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -222,23 +252,18 @@ export const BecomePartnerView: React.FC = () => {
 
                     <div>
                       <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-2">
-                        {t('pages.partner.tiers.benefitsLabel', 'Benefits')}
+                        {t('pages.partner.tiers.benefitsLabel', 'Korzyści')}
                       </h4>
                       <ul className="space-y-1.5">
-                        {(Array.isArray(tierBenefits) ? tierBenefits : []).map(
-                          (benefit, bIndex) => (
-                            <li
-                              key={bIndex}
-                              className="flex items-start gap-2 text-sm text-white/70"
-                            >
-                              <CheckCircle2
-                                size={14}
-                                className={`mt-0.5 text-${visual.color}-400 flex-shrink-0`}
-                              />
-                              {benefit}
-                            </li>
-                          )
-                        )}
+                        {topBenefits.map((benefit, bIndex) => (
+                          <li key={bIndex} className="flex items-start gap-2 text-sm text-white/70">
+                            <CheckCircle2
+                              size={14}
+                              className="mt-0.5 text-primary-400 flex-shrink-0"
+                            />
+                            {benefit.name}
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   </div>
@@ -295,7 +320,7 @@ export const BecomePartnerView: React.FC = () => {
             </p>
             <button
               onClick={handleApplyClick}
-              className="group relative inline-flex items-center gap-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold text-xl px-10 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(124,58,237,0.5)] hover:shadow-[0_0_60px_-12px_rgba(124,58,237,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
+              className="group relative inline-flex items-center gap-3 bg-primary-600 hover:bg-primary-500 text-white font-semibold text-xl px-10 py-4 rounded-xl shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)] hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)] active:scale-[0.98] transition-all duration-500 overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
               <span>{t('pages.partner.cta.applyBtn', 'Start Application')}</span>

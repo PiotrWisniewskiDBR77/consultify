@@ -185,7 +185,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
               rows={4}
               className={inputClass + ' resize-none mt-1.5'}
             />
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
               {t(
                 'settings.profile.email.signatureHint',
                 'This signature will be added to your outgoing emails'
@@ -205,7 +205,7 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
         {/* Primary email */}
         <div className="mb-4 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
           <div className="flex items-center gap-2">
-            <Mail size={14} className="text-slate-400 dark:text-slate-500" />
+            <Mail size={14} className="text-slate-600 dark:text-slate-500" />
             <span className="text-sm text-navy-900 dark:text-white">{currentUser.email}</span>
             <span className="ml-auto text-xs bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-full">
               Primary
@@ -221,11 +221,11 @@ export const EmailCommunicationSettings: React.FC<EmailCommunicationSettingsProp
                 key={alias}
                 className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-navy-950/50 rounded-lg"
               >
-                <Mail size={14} className="text-slate-400 dark:text-slate-500" />
+                <Mail size={14} className="text-slate-600 dark:text-slate-500" />
                 <span className="text-sm text-navy-900 dark:text-white flex-1">{alias}</span>
                 <button
                   onClick={() => removeAlias(alias)}
-                  className="text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
+                  className="text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-colors"
                 >
                   <X size={14} />
                 </button>

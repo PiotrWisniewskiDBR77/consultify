@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionBoard
  *
@@ -234,7 +233,7 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({ initiativeId, onDe
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 dark:border-navy-700">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
           {/* Requested by */}
           <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
             <User size={12} />
@@ -300,7 +299,7 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({ initiativeId, onDe
           >
             <Clock
               size={20}
-              className={pendingCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}
+              className={pendingCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600'}
             />
           </div>
           <div>
@@ -321,7 +320,7 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({ initiativeId, onDe
           >
             <AlertTriangle
               size={20}
-              className={blockingCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}
+              className={blockingCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600'}
             />
           </div>
           <div>
@@ -342,7 +341,7 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({ initiativeId, onDe
           >
             <Clock
               size={20}
-              className={overdueCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}
+              className={overdueCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600'}
             />
           </div>
           <div>
@@ -367,11 +366,11 @@ export const DecisionBoard: React.FC<DecisionBoardProps> = ({ initiativeId, onDe
       {/* Decision cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
-          <div className="col-span-full flex items-center justify-center h-32 text-slate-400 dark:text-slate-500">
+          <div className="col-span-full flex items-center justify-center h-32 text-slate-600 dark:text-slate-500">
             Loading decisions...
           </div>
         ) : filteredDecisions.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center h-32 text-slate-400 dark:text-slate-500">
+          <div className="col-span-full flex flex-col items-center justify-center h-32 text-slate-600 dark:text-slate-500">
             <CheckCircle size={24} className="mb-2 text-green-500" />
             <span>No decisions to display</span>
           </div>

@@ -60,13 +60,13 @@ const MetricCardComponent: React.FC<{
             <div className="flex gap-1">
               <button
                 onClick={() => setIsEditing(false)}
-                className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500"
               >
                 <X className="w-4 h-4" />
               </button>
               <button
                 onClick={handleSave}
-                className="p-1 text-slate-400 dark:text-slate-500 hover:text-green-500"
+                className="p-1 text-slate-600 dark:text-slate-500 hover:text-green-500"
               >
                 <Check className="w-4 h-4" />
               </button>

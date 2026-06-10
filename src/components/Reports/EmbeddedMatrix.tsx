@@ -75,7 +75,7 @@ const GapIndicator: React.FC<{ gap: number }> = ({ gap }) => {
   if (gap < 0) {
     return <TrendingDown className="w-4 h-4 text-green-500" />;
   }
-  return <Minus className="w-4 h-4 text-slate-400 dark:text-slate-500" />;
+  return <Minus className="w-4 h-4 text-slate-600 dark:text-slate-500" />;
 };
 
 // Progress bar component
@@ -167,7 +167,7 @@ const MaturityOverviewMatrix: React.FC<{ axisData: Record<string, AxisData> }> =
               <th className="pb-2 font-medium text-center">{t('reports.priority', 'Priority')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {sortedAxes.map((axis) => (
               <tr key={axis.id} className="group">
                 <td className="py-3">
@@ -275,7 +275,7 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
           <div className="text-2xl font-bold text-navy-900 dark:text-white">
             {data.actual || '-'}
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">/ {axisConfig.maxLevel}</div>
+          <div className="text-xs text-slate-600 dark:text-slate-500">/ {axisConfig.maxLevel}</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-lg p-3 text-center">
           <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
@@ -284,7 +284,7 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
           <div className="text-2xl font-bold text-navy-900 dark:text-white">
             {data.target || '-'}
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">/ {axisConfig.maxLevel}</div>
+          <div className="text-xs text-slate-600 dark:text-slate-500">/ {axisConfig.maxLevel}</div>
         </div>
         <div className="bg-white dark:bg-navy-900 rounded-lg p-3 text-center">
           <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
@@ -301,7 +301,7 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
           >
             {gap > 0 ? `+${gap}` : gap}
           </div>
-          <div className="text-xs text-slate-400 dark:text-slate-500">
+          <div className="text-xs text-slate-600 dark:text-slate-500">
             {t('reports.levels', 'levels')}
           </div>
         </div>
@@ -344,7 +344,7 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
             />
           ))}
         </div>
-        <div className="flex justify-between mt-1 text-xs text-slate-400 dark:text-slate-500">
+        <div className="flex justify-between mt-1 text-xs text-slate-600 dark:text-slate-500">
           <span>1</span>
           <span>{axisConfig.maxLevel}</span>
         </div>
@@ -369,7 +369,7 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
                   <th className="pb-2 font-medium w-24">{t('reports.progress', 'Progress')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {areaScores.map((area) => (
                   <tr key={area.id}>
                     <td className="py-2 font-medium text-navy-900 dark:text-white">{area.id}</td>
@@ -479,7 +479,7 @@ const GapAnalysisMatrix: React.FC<{ axisData: Record<string, AxisData> }> = ({ a
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+          <tbody className="divide-y divide-slate-200 dark:divide-white/5">
             {analysisData.map((axis) => (
               <tr key={axis.id} className={axis.gap > 0 ? '' : 'opacity-50'}>
                 <td className="py-3">
@@ -487,7 +487,7 @@ const GapAnalysisMatrix: React.FC<{ axisData: Record<string, AxisData> }> = ({ a
                 </td>
                 <td className="py-3 text-center font-mono">
                   <span className="text-slate-600 dark:text-slate-400">{axis.actual}</span>
-                  <span className="mx-2 text-slate-400 dark:text-slate-500">→</span>
+                  <span className="mx-2 text-slate-600 dark:text-slate-500">→</span>
                   <span className="text-navy-900 dark:text-white font-medium">{axis.target}</span>
                 </td>
                 <td className="py-3 text-center">

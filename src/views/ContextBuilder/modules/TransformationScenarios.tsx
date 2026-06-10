@@ -95,7 +95,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-navy-900 w-full max-w-5xl h-[85vh] rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
               <div>
                 <h2 className="text-2xl font-bold text-navy-900 dark:text-white flex items-center gap-3">
                   {getScenarioText(viewedScenario.id, 'name')}
@@ -128,7 +128,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
             </div>
 
             {/* Modal Footer (Actions) */}
-            <div className="p-6 border-t border-slate-100 dark:border-navy-700 bg-white dark:bg-navy-900 flex justify-end gap-4">
+            <div className="p-6 border-t border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex justify-end gap-4">
               <button
                 onClick={() => setViewedScenarioId(null)}
                 className="px-6 py-3 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors"

@@ -71,7 +71,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   critical: 'text-rose-500',
   high: 'text-amber-500',
   medium: 'text-blue-500',
-  low: 'text-slate-400',
+  low: 'text-slate-600',
 };
 
 interface PriorityDotProps {

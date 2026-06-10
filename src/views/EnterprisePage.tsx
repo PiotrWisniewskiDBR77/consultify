@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { MarketingLayout } from '../components/Landing/MarketingLayout';
 
 const CAPABILITY_VISUALS = [
-  { icon: Zap, color: '#7c3aed' },
+  { icon: Zap, color: '#A51C30' },
   { icon: Globe, color: '#3b82f6' },
   { icon: Lock, color: '#10b981' },
   { icon: Shield, color: '#f59e0b' },
@@ -35,7 +35,7 @@ export const EnterprisePage: React.FC = () => {
       {/* Hero */}
       <section className="relative px-6 pt-20 pb-24 overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828,#0A0A1F,#12082E)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0B1220,#0F172A,#0B1220)]" />
           <div
             className="absolute -top-[20%] left-[20%] w-[60%] h-[60%] rounded-full"
             style={{
@@ -46,7 +46,7 @@ export const EnterprisePage: React.FC = () => {
           <div
             className="absolute bottom-0 right-0 w-[40%] h-[40%] rounded-full"
             style={{
-              background: 'radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 65%)',
+              background: 'radial-gradient(circle, rgba(165,28,48,0.18) 0%, transparent 65%)',
               filter: 'blur(80px)',
             }}
           />
@@ -134,7 +134,7 @@ export const EnterprisePage: React.FC = () => {
             className="p-8 rounded-2xl"
             style={{
               background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(124,58,237,0.25)',
+              border: '1px solid rgba(165,28,48,0.25)',
             }}
           >
             {sent ? (
@@ -192,7 +192,7 @@ export const EnterprisePage: React.FC = () => {
                         border: '1px solid rgba(255,255,255,0.10)',
                       }}
                       onFocus={(e) => {
-                        (e.target as HTMLInputElement).style.borderColor = 'rgba(124,58,237,0.50)';
+                        (e.target as HTMLInputElement).style.borderColor = 'rgba(165,28,48,0.50)';
                       }}
                       onBlur={(e) => {
                         (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.10)';
@@ -213,7 +213,7 @@ export const EnterprisePage: React.FC = () => {
                       border: '1px solid rgba(255,255,255,0.10)',
                     }}
                     onFocus={(e) => {
-                      (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(124,58,237,0.50)';
+                      (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(165,28,48,0.50)';
                     }}
                     onBlur={(e) => {
                       (e.target as HTMLTextAreaElement).style.borderColor =
@@ -224,8 +224,8 @@ export const EnterprisePage: React.FC = () => {
                     type="submit"
                     className="w-full py-3 rounded-full text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all"
                     style={{
-                      background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                      boxShadow: '0 0 30px -10px rgba(124,58,237,0.55)',
+                      background: 'linear-gradient(135deg, #A51C30, #651120)',
+                      boxShadow: '0 0 30px -10px rgba(165,28,48,0.55)',
                     }}
                   >
                     {t('pages.enterprise.form.submit', 'Send message')} <ArrowRight size={14} />

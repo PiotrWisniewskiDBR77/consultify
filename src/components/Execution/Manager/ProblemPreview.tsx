@@ -6,7 +6,7 @@
  * Footer: action buttons matching the problem's actions list
  */
 
-import { ChevronRight, ExternalLink, Info, Link2, X } from 'lucide-react';
+import { CheckCircle2, ChevronRight, ExternalLink, Info, Link2, X, XCircle } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +17,8 @@ interface ProblemPreviewProps {
   onAction: (action: ProblemAction) => void;
   onClose: () => void;
   onOpenEntity?: (type: string, id: string) => void;
+  /** Read-back state after a manager decision write-back (P0-7). */
+  confirmedOutcome?: 'approved' | 'rejected';
 }
 
 const SEVERITY_COLORS: Record<
@@ -54,7 +56,7 @@ const SOURCE_ICONS: Record<string, React.ReactNode> = {
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-2 py-1.5">
-      <span className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 whitespace-nowrap">
+      <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 whitespace-nowrap">
         {label}
       </span>
       <span className="text-xs text-right text-slate-700 dark:text-slate-300">{value}</span>
@@ -77,7 +79,13 @@ function ActionButton({ action, onClick }: { action: ProblemAction; onClick: () 
   );
 }
 
-export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: ProblemPreviewProps) {
+export function ProblemPreview({
+  problem,
+  onAction,
+  onClose,
+  onOpenEntity,
+  confirmedOutcome,
+}: ProblemPreviewProps) {
   const { t } = useTranslation();
   const sev = SEVERITY_COLORS[problem.severity];
   const typeLabel = problem.problemType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -107,7 +115,7 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
             onClick={onClose}
             className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-slate-600" />
           </button>
         </div>
 
@@ -124,7 +132,7 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Source entity */}
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-2">
             {t('manager.preview.sourceEntity', 'Source Entity')}
           </h4>
           <button
@@ -137,23 +145,23 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
               <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
                 {problem.sourceEntityName}
               </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">
+              <p className="text-[10px] text-slate-600 dark:text-slate-500">
                 {problem.sourceEntityType.replace(/_/g, ' ')}
               </p>
             </div>
             <ExternalLink
               size={12}
-              className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors shrink-0"
+              className="text-slate-600 dark:text-slate-400 group-hover:text-blue-500 transition-colors shrink-0"
             />
           </button>
         </div>
 
         {/* Details */}
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-2">
             {t('manager.preview.details', 'Details')}
           </h4>
-          <div className="divide-y divide-slate-100 dark:divide-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
+          <div className="divide-y divide-slate-200 dark:divide-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg p-3">
             {problem.ownerName && <DetailRow label="Owner" value={problem.ownerName} />}
             {problem.daysOverdue !== null && (
               <DetailRow
@@ -192,7 +200,7 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
         {/* Affected entities */}
         {problem.affectedEntities.length > 0 && (
           <div>
-            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-2">
               {t('manager.preview.affected', 'Affected Entities')} (
               {problem.affectedEntities.length})
             </h4>
@@ -202,7 +210,7 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
                   key={ent.id}
                   type="button"
                   onClick={() => onOpenEntity?.(ent.type, ent.id)}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg border border-slate-100 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group text-left"
+                  className="w-full flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group text-left"
                 >
                   {SOURCE_ICONS[ent.type] || <Link2 size={12} />}
                   <span className="text-xs text-slate-700 dark:text-slate-300 truncate flex-1">
@@ -210,7 +218,7 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
                   </span>
                   <ChevronRight
                     size={12}
-                    className="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 shrink-0"
+                    className="text-slate-600 dark:text-slate-400 group-hover:text-blue-500 shrink-0"
                   />
                 </button>
               ))}
@@ -219,15 +227,33 @@ export function ProblemPreview({ problem, onAction, onClose, onOpenEntity }: Pro
         )}
       </div>
 
-      {/* ─── Footer — Actions ─── */}
-      {problem.actions.length > 0 && (
+      {/* ─── Footer — Confirmed read-back badge OR Actions ─── */}
+      {confirmedOutcome ? (
         <div className="p-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
-          <div className="flex flex-wrap gap-2">
-            {problem.actions.map((action) => (
-              <ActionButton key={action.id} action={action} onClick={() => onAction(action)} />
-            ))}
-          </div>
+          <span
+            data-testid="decision-confirmed-badge"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
+              confirmedOutcome === 'approved'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                : 'bg-crimson-50 text-crimson-700 dark:bg-crimson-900/30 dark:text-crimson-300'
+            }`}
+          >
+            {confirmedOutcome === 'approved' ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
+            {confirmedOutcome === 'approved'
+              ? t('execution.manager.decision.approvedBadge', 'APPROVED')
+              : t('execution.manager.decision.rejectedBadge', 'REJECTED')}
+          </span>
         </div>
+      ) : (
+        problem.actions.length > 0 && (
+          <div className="p-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+            <div className="flex flex-wrap gap-2">
+              {problem.actions.map((action) => (
+                <ActionButton key={action.id} action={action} onClick={() => onAction(action)} />
+              ))}
+            </div>
+          </div>
+        )
       )}
     </div>
   );

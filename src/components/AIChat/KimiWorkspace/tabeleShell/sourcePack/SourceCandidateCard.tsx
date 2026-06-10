@@ -89,7 +89,7 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
             >
               {STATUS_LABEL[status] ?? status}
             </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500">
+            <span className="text-[11px] text-slate-600 dark:text-slate-500">
               {formatRelative(candidate.updatedAt)}
             </span>
           </div>

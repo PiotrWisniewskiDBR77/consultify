@@ -675,4 +675,158 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     revokeSpy.mockRestore();
     objectUrlSpy.mockRestore();
   });
+
+  // ─── No silent demo fallback in the paid path (P0-1 / P1-2) ───────
+
+  it('useReports returns an empty list (never demo rows) when the registry 404s', async () => {
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      } as Response)
+    ) as typeof fetch;
+
+    const { result } = renderHook(() => useReports());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.reports).toEqual([]);
+    expect(result.current.error).toBeTruthy();
+  });
+
+  it('usePresentations returns an empty list (never demo rows) when the registry 501s', async () => {
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 501,
+        json: async () => ({}),
+      } as Response)
+    ) as typeof fetch;
+
+    const { result } = renderHook(() => usePresentations());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.presentations).toEqual([]);
+    expect(result.current.error).toBeTruthy();
+  });
+
+  // ─── Approval-before-export client guard (P0-2) ───────────────────
+
+  it('exportReportPdf blocks export on a draft artifact and never fetches the export URL', async () => {
+    const fetchSpy = vi.fn(() => jsonResponse({}, false)) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    const { result } = renderHook(() => useRapActions());
+    await result.current.exportReportPdf({
+      originRecordId: 'report-draft',
+      artifactId: 'art-report-draft',
+      title: 'Draft report',
+      governance: { publishState: 'draft' },
+    });
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(toastErrorMock).toHaveBeenCalledWith('Approve the artifact before exporting');
+    expect(toastSuccessMock).not.toHaveBeenCalled();
+  });
+
+  it('exportDeckPptx blocks export on an in_review artifact and never fetches the export URL', async () => {
+    const fetchSpy = vi.fn(() => jsonResponse({}, false)) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    const { result } = renderHook(() => useRapActions());
+    await result.current.exportDeckPptx({
+      originRecordId: 'deck-review',
+      artifactId: 'art-deck-review',
+      title: 'Deck in review',
+      governance: { publishState: 'in_review' },
+    });
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(toastErrorMock).toHaveBeenCalledWith('Approve the artifact before exporting');
+  });
+
+  it('exportReportPdf proceeds when the artifact is approved', async () => {
+    const calls: string[] = [];
+    const blobMock = new Blob(['pdf-data'], { type: 'application/pdf' });
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      calls.push(url);
+      if (url.includes('/api/artifacts/art-report-approved/action-target')) {
+        return jsonResponse({
+          data: {
+            artifactId: 'art-report-approved',
+            originRuntime: 'report',
+            originRecordId: 'report-approved',
+            exportPath: '/api/report-builder/report-approved/export/pdf',
+          },
+        });
+      }
+      if (url === '/api/report-builder/report-approved/export/pdf') {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          blob: async () => blobMock,
+        }) as Promise<Response>;
+      }
+      return jsonResponse({}, false);
+    }) as typeof fetch;
+    const objectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob://report');
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useRapActions());
+    await result.current.exportReportPdf({
+      originRecordId: 'report-approved',
+      artifactId: 'art-report-approved',
+      title: 'Approved report',
+      governance: { publishState: 'approved' },
+    });
+
+    expect(calls).toContain('/api/report-builder/report-approved/export/pdf');
+    expect(clickSpy).toHaveBeenCalled();
+    expect(toastSuccessMock).toHaveBeenCalled();
+
+    clickSpy.mockRestore();
+    revokeSpy.mockRestore();
+    objectUrlSpy.mockRestore();
+  });
+
+  it('exportReportPdf proceeds when the target carries no governance (server gate is the backstop)', async () => {
+    const calls: string[] = [];
+    const blobMock = new Blob(['pdf-data'], { type: 'application/pdf' });
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      calls.push(url);
+      if (url.includes('/action-target')) return jsonResponse({}, false);
+      if (url === '/api/report-builder/report-nogov/export/pdf') {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          blob: async () => blobMock,
+        }) as Promise<Response>;
+      }
+      return jsonResponse({}, false);
+    }) as typeof fetch;
+    const objectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob://report');
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    const { result } = renderHook(() => useRapActions());
+    await result.current.exportReportPdf({
+      originRecordId: 'report-nogov',
+      artifactId: 'art-report-nogov',
+      title: 'Legacy report',
+    });
+
+    expect(calls).toContain('/api/report-builder/report-nogov/export/pdf');
+    expect(clickSpy).toHaveBeenCalled();
+
+    clickSpy.mockRestore();
+    revokeSpy.mockRestore();
+    objectUrlSpy.mockRestore();
+  });
 });

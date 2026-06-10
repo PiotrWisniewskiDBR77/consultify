@@ -64,11 +64,11 @@ export const DynamicTabBarOverflow: React.FC<DynamicTabBarOverflowProps> = ({
       <button
         type="button"
         onClick={onToggle}
-        className="flex items-center gap-1 px-2 py-1.5 rounded-t-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors"
+        className="flex items-center gap-1 px-2 py-1.5 rounded-t-lg text-sm font-medium text-slate-600 hover:text-slate-200 hover:bg-white/5 transition-colors"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
-        <span className="text-xs font-semibold bg-navy-700 text-slate-300 px-1.5 py-0.5 rounded">
+        <span className="text-xs font-semibold bg-navy-700 text-slate-600 px-1.5 py-0.5 rounded">
           +{documents.length}
         </span>
         <ChevronDown size={14} className={isOpen ? 'rotate-180' : ''} />
@@ -94,7 +94,7 @@ export const DynamicTabBarOverflow: React.FC<DynamicTabBarOverflowProps> = ({
                   }}
                   className={`
                     flex items-center gap-2 px-3 py-2 cursor-pointer group
-                    ${isActive ? 'bg-navy-700 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}
+                    ${isActive ? 'bg-navy-700 text-white' : 'text-slate-600 hover:text-slate-200 hover:bg-white/5'}
                   `}
                 >
                   {doc.dirty && (
@@ -103,7 +103,7 @@ export const DynamicTabBarOverflow: React.FC<DynamicTabBarOverflowProps> = ({
                       title={t('dynamicTabBar.unsaved', 'Unsaved changes')}
                     />
                   )}
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-navy-700/80 text-slate-400 shrink-0">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-navy-700/80 text-slate-600 shrink-0">
                     {getTypeBadge(doc.type)}
                   </span>
                   <span className="flex-1 truncate min-w-0">{doc.title}</span>
@@ -113,7 +113,7 @@ export const DynamicTabBarOverflow: React.FC<DynamicTabBarOverflowProps> = ({
                       e.stopPropagation();
                       onClose(doc.id);
                     }}
-                    className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-slate-400 hover:text-white hover:bg-white/10 transition-opacity"
+                    className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-slate-600 hover:text-white hover:bg-white/10 transition-opacity"
                     aria-label={t('dynamicTabBar.closeTab', 'Close tab')}
                   >
                     <X size={14} />
@@ -128,7 +128,7 @@ export const DynamicTabBarOverflow: React.FC<DynamicTabBarOverflowProps> = ({
                   onCloseAll();
                   onToggle();
                 }}
-                className="w-full px-3 py-2 text-sm text-slate-400 hover:text-slate-200 hover:bg-white/5 text-left"
+                className="w-full px-3 py-2 text-sm text-slate-600 hover:text-slate-200 hover:bg-white/5 text-left"
               >
                 {t('dynamicTabBar.closeAll', 'Close all')}
               </button>

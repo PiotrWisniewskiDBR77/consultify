@@ -436,7 +436,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
       )}
       {presenceStatus !== 'degraded' && (
         <>
-          <Users size={11} className="text-slate-400" />
+          <Users size={11} className="text-slate-600" />
           <div className="flex items-center -space-x-1.5">
             {activeUsers.slice(0, 5).map((user) => (
               <div
@@ -470,7 +470,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
               </div>
             )}
           </div>
-          <span className="text-[9px] text-slate-400 ml-1">
+          <span className="text-[9px] text-slate-600 ml-1">
             {activeUsers.length} {isPl ? 'online' : 'online'}
           </span>
         </>

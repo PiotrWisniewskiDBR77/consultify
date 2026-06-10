@@ -4,9 +4,6 @@
  * Export all components for the Economics module
  */
 
-// Main Hub (ModuleHub pattern)
-export { EconomicsHub } from './EconomicsHub';
-
 // Core Components
 export { AIRecommendationsPanel } from './AIRecommendationsPanel';
 export { AnalysisCatalog } from './AnalysisCatalog';

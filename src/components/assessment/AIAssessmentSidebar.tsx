@@ -212,7 +212,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
               <div className="text-center py-8">
                 <Lightbulb
                   size={32}
-                  className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-3"
+                  className="text-slate-700 dark:text-slate-300 dark:text-slate-400 mx-auto mb-3"
                 />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Brak insightów do wyświetlenia
@@ -442,7 +442,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
               <div className="text-center py-8">
                 <TrendingUp
                   size={32}
-                  className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-3"
+                  className="text-slate-700 dark:text-slate-300 dark:text-slate-400 mx-auto mb-3"
                 />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Wybierz ocenę i cel, aby zobaczyć analizę luki
@@ -616,7 +616,7 @@ export const AIAssessmentSidebar: React.FC<AIAssessmentSidebarProps> = ({
               <div className="text-center py-8">
                 <AlertTriangle
                   size={32}
-                  className="text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-3"
+                  className="text-slate-700 dark:text-slate-300 dark:text-slate-400 mx-auto mb-3"
                 />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   Nie udało się wczytać analizy

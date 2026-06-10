@@ -2,6 +2,19 @@
  * useVersionHistory — auto-save and version snapshot management for decks.
  * Auto-saves every 30s, creates named snapshots every 5 min.
  * Provides undo to any previous version with diff highlighting.
+ *
+ * Server-side persistence (Module 12 audit gap #3)
+ * ------------------------------------------------
+ * Server-side snapshots (rows in `presentation_deck_versions`, written on
+ * every autosave / agent-edit) are the durable source of truth — they
+ * survive page refresh. On mount the hook fetches them from
+ * `GET /presentations/decks/:deckId/versions` and merges them with the
+ * ephemeral in-session snapshots (manual checkpoints + auto-saves) so the
+ * panel shows a complete timeline. Restore of a server snapshot is
+ * performed server-side via
+ * `POST /presentations/decks/:deckId/versions/:versionId/restore`, then the
+ * canonical deck is re-fetched and returned to the editor. Ephemeral
+ * in-session snapshots still restore instantly from their cached JSON.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,7 +28,10 @@ export interface VersionSnapshot {
   type: 'auto' | 'manual' | 'checkpoint';
   cardCount: number;
   summary: string;
+  /** Cached deck JSON for instant local restore. Empty for server-only snapshots. */
   deckData: string;
+  /** True when the snapshot lives in `presentation_deck_versions` and survives refresh. */
+  persisted?: boolean;
 }
 
 interface VersionHistoryState {
@@ -25,11 +41,56 @@ interface VersionHistoryState {
   hasUnsavedChanges: boolean;
 }
 
+interface ServerVersionRow {
+  id: string;
+  deck_id?: string;
+  version: number;
+  slide_count?: number;
+  created_by?: string;
+  created_at?: string;
+}
+
 const AUTO_SAVE_INTERVAL_MS = 30_000;
 const SNAPSHOT_INTERVAL_MS = 300_000;
 const MAX_VERSIONS = 50;
 
-export function useVersionHistory(deck: Deck | null) {
+function authHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  try {
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) headers.Authorization = `Bearer ${token}`;
+  } catch {
+    /* localStorage unavailable (SSR / sandboxed) — proceed without auth header */
+  }
+  return headers;
+}
+
+function parseTimestamp(value?: string): number {
+  if (!value) return Date.now();
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? ms : Date.now();
+}
+
+/**
+ * Parse a builder-native `deck_json` payload (the shape autosave stores) into a
+ * {@link Deck}. Returns null when the payload is not a recognizable deck.
+ */
+function parseRestoredDeck(deckJsonRaw: unknown, deckId: string): Deck | null {
+  let parsed: unknown = deckJsonRaw;
+  if (typeof deckJsonRaw === 'string') {
+    try {
+      parsed = JSON.parse(deckJsonRaw);
+    } catch {
+      return null;
+    }
+  }
+  if (!parsed || typeof parsed !== 'object') return null;
+  const candidate = parsed as Record<string, unknown>;
+  if (!Array.isArray(candidate.cards)) return null;
+  return { ...(candidate as unknown as Deck), deck_id: deckId };
+}
+
+export function useVersionHistory(deck: Deck | null, deckId?: string | null) {
   const [state, setState] = useState<VersionHistoryState>({
     versions: [],
     isSaving: false,
@@ -40,6 +101,54 @@ export function useVersionHistory(deck: Deck | null) {
   const lastSavedDeckRef = useRef<string>('');
   const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const snapshotTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const resolvedDeckId = deckId ?? deck?.deck_id ?? null;
+
+  /** Merge persisted server snapshots into the timeline, de-duped by id. */
+  const mergeServerVersions = useCallback((rows: ServerVersionRow[]) => {
+    setState((prev) => {
+      const localOnly = prev.versions.filter((v) => !v.persisted);
+      const serverSnapshots: VersionSnapshot[] = rows
+        .filter((row) => row && row.id != null)
+        .map((row) => ({
+          id: String(row.id),
+          timestamp: parseTimestamp(row.created_at),
+          label: `Version ${row.version}`,
+          type: 'auto' as const,
+          cardCount: Number(row.slide_count) || 0,
+          summary: `${Number(row.slide_count) || 0} slides`,
+          deckData: '',
+          persisted: true,
+        }));
+      const merged = [...localOnly, ...serverSnapshots]
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, MAX_VERSIONS);
+      return { ...prev, versions: merged };
+    });
+  }, []);
+
+  const fetchServerVersions = useCallback(async () => {
+    if (!resolvedDeckId) return;
+    try {
+      const res = await fetch(`/api/presentations/decks/${resolvedDeckId}/versions`, {
+        method: 'GET',
+        headers: authHeaders(),
+      });
+      if (!res.ok) return;
+      const body = (await res.json().catch(() => null)) as
+        | { data?: ServerVersionRow[] }
+        | ServerVersionRow[]
+        | null;
+      const rows = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
+      mergeServerVersions(rows);
+    } catch {
+      /* non-blocking: fall back to in-session timeline only */
+    }
+  }, [resolvedDeckId, mergeServerVersions]);
+
+  // Hydrate persisted version history on mount / deck change so it survives refresh.
+  useEffect(() => {
+    void fetchServerVersions();
+  }, [fetchServerVersions]);
 
   const createSnapshot = useCallback(
     (type: 'auto' | 'manual' | 'checkpoint', label?: string): VersionSnapshot | null => {
@@ -120,23 +229,64 @@ export function useVersionHistory(deck: Deck | null) {
         lastSavedAt: Date.now(),
         hasUnsavedChanges: false,
       }));
+      // Each autosave writes a server-side snapshot row; refresh the
+      // persisted timeline so the panel reflects durable history.
+      void fetchServerVersions();
     } catch {
       setState((prev) => ({ ...prev, isSaving: false }));
     }
-  }, [deck]);
+  }, [deck, fetchServerVersions]);
 
   const restoreVersion = useCallback(
-    (versionId: string): Deck | null => {
+    async (versionId: string): Promise<Deck | null> => {
       const version = state.versions.find((v) => v.id === versionId);
       if (!version) return null;
 
+      // Ephemeral in-session snapshot — restore instantly from cached JSON.
+      if (!version.persisted) {
+        try {
+          return JSON.parse(version.deckData) as Deck;
+        } catch {
+          return null;
+        }
+      }
+
+      // Persisted server snapshot — restore server-side, then re-fetch the
+      // canonical deck so the editor reflects exactly what was written.
+      if (!resolvedDeckId) return null;
       try {
-        return JSON.parse(version.deckData) as Deck;
+        const restoreRes = await fetch(
+          `/api/presentations/decks/${resolvedDeckId}/versions/${versionId}/restore`,
+          { method: 'POST', headers: authHeaders() }
+        );
+        if (!restoreRes.ok) return null;
+        const restoreBody = (await restoreRes.json().catch(() => ({}))) as { version?: number };
+        if (restoreBody?.version) {
+          serverVersionRef.current = restoreBody.version;
+        }
+
+        const deckRes = await fetch(`/api/presentations/decks/${resolvedDeckId}`, {
+          method: 'GET',
+          headers: authHeaders(),
+        });
+        if (!deckRes.ok) return null;
+        const deckBody = (await deckRes.json().catch(() => null)) as
+          | { data?: Record<string, unknown> }
+          | Record<string, unknown>
+          | null;
+        const row =
+          deckBody && typeof deckBody === 'object' && 'data' in deckBody
+            ? (deckBody.data as Record<string, unknown>)
+            : (deckBody as Record<string, unknown> | null);
+        const restored = parseRestoredDeck(row?.deck_json, resolvedDeckId);
+        // Refresh the timeline — restore also writes a new snapshot row.
+        void fetchServerVersions();
+        return restored;
       } catch {
         return null;
       }
     },
-    [state.versions]
+    [state.versions, resolvedDeckId, fetchServerVersions]
   );
 
   const saveManualCheckpoint = useCallback(
@@ -186,6 +336,7 @@ export function useVersionHistory(deck: Deck | null) {
     restoreVersion,
     saveManualCheckpoint,
     autoSave,
+    refreshVersions: fetchServerVersions,
   };
 }
 

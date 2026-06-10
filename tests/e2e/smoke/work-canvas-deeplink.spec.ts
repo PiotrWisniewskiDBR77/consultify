@@ -22,15 +22,16 @@ test.describe('V10 Work Canvas deep-link and persistence smoke', () => {
 
     const deepLink = `/ai/work-canvas?draftId=${draft.id}&conversationId=${draft.conversationId}`;
     await page.goto(deepLink, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await ensureWorkCanvasVisible(page, 'Deep linked Playwright draft');
+    await ensureWorkCanvasVisible(page);
 
     await expect(page.getByLabel('Canvas document title')).toHaveValue(/Deep linked Playwright draft/);
     await expect(page.getByRole('button', { name: 'Save Canvas document' })).toBeVisible();
 
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
-    await ensureWorkCanvasVisible(page, 'Deep linked Playwright draft');
+    await ensureWorkCanvasVisible(page);
     await expect(page.getByLabel('Canvas document title')).toHaveValue(/Deep linked Playwright draft/);
 
+    await page.getByRole('button', { name: 'Canvas menu' }).click();
     await page.getByRole('button', { name: 'Markdown view' }).click();
     await expect(page.getByTestId('canvas-md-view')).toBeVisible();
     await page.getByRole('button', { name: 'Dock view' }).click();
@@ -38,7 +39,7 @@ test.describe('V10 Work Canvas deep-link and persistence smoke', () => {
 
     await page.getByRole('button', { name: 'Copy Markdown' }).click();
     const downloadPromise = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Export Markdown' }).click();
+    await page.getByRole('button', { name: 'Download Markdown' }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename().toLowerCase()).toContain('deep-linked-playwright-draft');
 

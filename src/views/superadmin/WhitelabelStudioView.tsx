@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * WhitelabelStudioView - Super Admin White-label & Branding
  *
@@ -130,7 +129,10 @@ export const WhitelabelStudioView: React.FC = () => {
   const [uploadingLogo, setUploadingLogo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error' | 'warning';
+    text: string;
+  } | null>(null);
   const [brandingLoadError, setBrandingLoadError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -345,7 +347,7 @@ export const WhitelabelStudioView: React.FC = () => {
           >
             <Image
               size={type === 'favicon' ? 12 : 20}
-              className="text-slate-400 dark:text-slate-500"
+              className="text-slate-600 dark:text-slate-500"
             />
           </div>
         )}
@@ -440,13 +442,13 @@ export const WhitelabelStudioView: React.FC = () => {
       <div className="flex items-center justify-end gap-2">
         <button
           onClick={() => setPreviewMode('light')}
-          className={`p-2 rounded-lg ${previewMode === 'light' ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`p-2 rounded-lg ${previewMode === 'light' ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600' : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
         >
           <Sun size={18} />
         </button>
         <button
           onClick={() => setPreviewMode('dark')}
-          className={`p-2 rounded-lg ${previewMode === 'dark' ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
+          className={`p-2 rounded-lg ${previewMode === 'dark' ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-600' : 'text-slate-600 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/40'}`}
         >
           <Moon size={18} />
         </button>
@@ -871,7 +873,7 @@ export const WhitelabelStudioView: React.FC = () => {
                           e.stopPropagation();
                           handleDelete(org.id);
                         }}
-                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
+                        className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-colors"
                         title="Reset to defaults"
                       >
                         <Trash2 size={16} />
@@ -883,7 +885,7 @@ export const WhitelabelStudioView: React.FC = () => {
                     >
                       <ChevronRight
                         size={20}
-                        className="text-slate-400 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
+                        className="text-slate-600 dark:text-slate-500 group-hover:text-primary-500 transition-colors"
                       />
                     </button>
                   </div>
@@ -921,7 +923,7 @@ export const WhitelabelStudioView: React.FC = () => {
             onClick={() => setSelectedOrg(null)}
             className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
           >
-            <ChevronRight size={20} className="rotate-180 text-slate-400 dark:text-slate-500" />
+            <ChevronRight size={20} className="rotate-180 text-slate-600 dark:text-slate-500" />
           </button>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">

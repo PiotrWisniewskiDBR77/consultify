@@ -1,0 +1,142 @@
+/**
+ * @vitest-environment jsdom
+ *
+ * EnhancedChatInput — Teresa voice CTA (Module 01, P1-4).
+ *
+ * Asserts the composer's "talking Teresa" affordances:
+ * - The voice button renders and fires `onTeresaVoiceToggle` when clicked.
+ * - When voice is unavailable, the button is disabled and surfaces the reason.
+ * - When voice is live, the button switches to a stop affordance.
+ */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+
+import { EnhancedChatInput } from '../../../components/AIChat/EnhancedChatInput';
+
+const renderInput = (ui: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+};
+
+vi.mock('react-hot-toast', () => ({
+  default: { error: vi.fn(), custom: vi.fn(), success: vi.fn() },
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    i18n: { language: 'en' },
+    t: (_k: string, fallback?: string) => fallback || _k,
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+vi.mock('../../../store/useAppStore', () => ({
+  useAppStore: () => ({ aiFreezeStatus: { isFrozen: false } }),
+}));
+
+const conversationState = {
+  activeConversationId: null,
+  conversations: [],
+  activeMessages: [],
+};
+vi.mock('../../../store/useConversationStore', () => ({
+  useConversationStore: (selector?: (s: typeof conversationState) => unknown) =>
+    selector ? selector(conversationState) : conversationState,
+}));
+
+const chatProjectState = { projects: [] };
+vi.mock('../../../store/useChatProjectStore', () => ({
+  useChatProjectStore: (selector?: (s: typeof chatProjectState) => unknown) =>
+    selector ? selector(chatProjectState) : chatProjectState,
+}));
+
+vi.mock('../../../hooks/useKnowledgeSearch', () => ({
+  useKnowledgeSearch: () => ({ data: [] }),
+}));
+
+vi.mock('../../../hooks/useCloudIntegrations', () => ({
+  useCloudIntegrations: () => ({
+    connectedProviderIds: [],
+    openFilePicker: vi.fn(),
+    connectProvider: vi.fn(),
+    isPickerOpen: false,
+    activeProvider: null,
+    closeFilePicker: vi.fn(),
+    selectFile: vi.fn(),
+    isImplemented: false,
+  }),
+}));
+
+vi.mock('../../../components/AIChat/AddFilesMenu', () => ({ AddFilesMenu: () => null }));
+vi.mock('../../../components/AIChat/CloudFilePicker', () => ({ CloudFilePicker: () => null }));
+vi.mock('../../../components/AIChat/CoThinkerMenu', () => ({ CoThinkerMenu: () => null }));
+vi.mock('../../../components/AIChat/MoveToProjectModal', () => ({
+  MoveToProjectModal: () => null,
+}));
+vi.mock('../../../components/AIChat/ToolsMenu', () => ({ ToolsMenu: () => null }));
+vi.mock('../../../components/AIChat/InputCharCounter', () => ({ InputCharCounter: () => null }));
+vi.mock('../../../components/AIChat/InputSoftLimitToast', () => ({
+  InputSoftLimitToast: () => null,
+}));
+vi.mock('../../../components/AIChat/InputHintStrip', () => ({ InputHintStrip: () => null }));
+vi.mock('../../../components/AIChat/NextModelChip', () => ({ NextModelChip: () => null }));
+vi.mock('../../../components/AIChat/VoiceModeLegend', () => ({ VoiceModeLegend: () => null }));
+
+describe('EnhancedChatInput — Teresa voice CTA', () => {
+  it('renders the voice button and fires onTeresaVoiceToggle when clicked', async () => {
+    const onTeresaVoiceToggle = vi.fn();
+    renderInput(
+      <EnhancedChatInput
+        onSend={vi.fn()}
+        onTeresaVoiceToggle={onTeresaVoiceToggle}
+        teresaVoiceAvailable
+        teresaVoiceStatus="idle"
+      />
+    );
+
+    const button = screen.getByTitle('Start voice conversation with Teresa');
+    expect(button).toBeTruthy();
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+
+    await userEvent.click(button);
+    expect(onTeresaVoiceToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the voice button and surfaces the reason when unavailable', () => {
+    renderInput(
+      <EnhancedChatInput
+        onSend={vi.fn()}
+        onTeresaVoiceToggle={vi.fn()}
+        teresaVoiceAvailable={false}
+        teresaVoiceStatus="idle"
+        teresaVoiceUnavailableReason="Voice needs a server key"
+      />
+    );
+
+    const button = screen.getByTitle('Voice needs a server key');
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('switches to a stop affordance while voice is live', async () => {
+    const onTeresaVoiceToggle = vi.fn();
+    renderInput(
+      <EnhancedChatInput
+        onSend={vi.fn()}
+        onTeresaVoiceToggle={onTeresaVoiceToggle}
+        teresaVoiceAvailable
+        teresaVoiceStatus="live"
+      />
+    );
+
+    const stopButton = screen.getByTitle('Stop voice conversation');
+    expect(stopButton).toBeTruthy();
+
+    await userEvent.click(stopButton);
+    expect(onTeresaVoiceToggle).toHaveBeenCalledTimes(1);
+  });
+});

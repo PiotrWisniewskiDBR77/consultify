@@ -21,6 +21,7 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -408,7 +409,7 @@ const DLPView: React.FC = () => {
         );
       default:
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs font-medium">
+          <span className="flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs font-medium">
             <AlertTriangle className="w-3 h-3" />
             Unknown
           </span>
@@ -425,11 +426,7 @@ const DLPView: React.FC = () => {
   };
 
   if (loading && policies.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -637,7 +634,7 @@ const DLPView: React.FC = () => {
                                 ? 'bg-rose-500/10 text-rose-400'
                                 : policy.enforcementAction === 'warn'
                                   ? 'bg-amber-500/10 text-amber-400'
-                                  : 'bg-slate-500/10 text-slate-400 dark:text-slate-500'
+                                  : 'bg-slate-500/10 text-slate-600 dark:text-slate-500'
                             }`}
                           >
                             {getEnforcementLabel(policy.enforcementAction)}
@@ -650,7 +647,7 @@ const DLPView: React.FC = () => {
                               Active
                             </span>
                           ) : (
-                            <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs">
+                            <span className="px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-600 dark:text-slate-500 rounded text-xs">
                               Inactive
                             </span>
                           )}
@@ -763,7 +760,7 @@ const DLPView: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-3 px-4">{getSeverityBadge(violation.severity)}</td>
-                        <td className="py-3 px-4 text-sm text-slate-300">
+                        <td className="py-3 px-4 text-sm text-slate-600">
                           {formatDateTime(violation.detectedAt)}
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -794,7 +791,7 @@ const DLPView: React.FC = () => {
             <div className="space-y-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                     Name
                   </label>
                   <input
@@ -806,7 +803,7 @@ const DLPView: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                     Policy Type
                   </label>
                   <select
@@ -823,7 +820,7 @@ const DLPView: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Description
                 </label>
                 <textarea
@@ -834,7 +831,7 @@ const DLPView: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                   Enforcement Action
                 </label>
                 <select
@@ -864,7 +861,7 @@ const DLPView: React.FC = () => {
                       >
                         <div>
                           <p className="font-medium">{rule.name}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
                             {rule.pattern && `Pattern: ${rule.pattern}`}
                             {rule.keywords && ` Keywords: ${rule.keywords.join(', ')}`}
                           </p>
@@ -884,7 +881,7 @@ const DLPView: React.FC = () => {
                 <div className="p-3 bg-slate-800/50 rounded-lg space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                      <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                         Rule Name
                       </label>
                       <input
@@ -896,7 +893,7 @@ const DLPView: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                      <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                         Severity
                       </label>
                       <select
@@ -913,7 +910,7 @@ const DLPView: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                    <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                       Regex Pattern (optional)
                     </label>
                     <input
@@ -925,7 +922,7 @@ const DLPView: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 dark:text-slate-500 mb-1">
+                    <label className="block text-xs text-slate-600 dark:text-slate-500 mb-1">
                       Keywords (comma-separated, optional)
                     </label>
                     <input

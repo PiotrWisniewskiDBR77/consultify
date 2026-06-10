@@ -149,7 +149,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
         </div>
       ) : insights.length === 0 ? (
         <div className="text-center py-16">
-          <Sparkles className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <Sparkles className="w-10 h-10 mx-auto text-slate-600 dark:text-slate-400 mb-3" />
           <p className="text-sm text-slate-500 dark:text-slate-400">
             No insights yet. Click "Generate Insights" to analyze recent conversations.
           </p>
@@ -165,7 +165,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
                 <div className="flex items-start gap-3 flex-1">
                   <div className="mt-0.5">
                     {TYPE_ICONS[insight.insight_type] || (
-                      <Lightbulb size={16} className="text-slate-400" />
+                      <Lightbulb size={16} className="text-slate-600" />
                     )}
                   </div>
                   <div className="flex-1">
@@ -188,7 +188,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
                       >
                         {insight.status}
                       </span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                      <span className="text-xs text-slate-600 dark:text-slate-500">
                         {insight.insight_type.replace(/_/g, ' ')}
                       </span>
                     </div>
@@ -207,7 +207,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ workerId }) => {
                     <button
                       onClick={() => handleReview(insight.id, 'dismissed')}
                       title="Dismiss"
-                      className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                     >
                       <X size={16} />
                     </button>

@@ -381,7 +381,7 @@ export const HealthMonitoringTab: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="divide-y divide-slate-100 dark:divide-white/5">
+            <div className="divide-y divide-slate-200 dark:divide-white/5">
               {capabilities.map((cap) => (
                 <div
                   key={cap.id}
@@ -445,7 +445,7 @@ export const HealthMonitoringTab: React.FC = () => {
           {Object.keys(results).length > 0 && (
             <div className="bg-gray-900 rounded-xl p-6 font-mono text-xs text-green-400 overflow-auto max-h-80">
               <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
-                <span className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <span className="text-gray-600 dark:text-gray-500 dark:text-gray-400">
                   DIAGNOSTIC LOGS
                 </span>
                 <button
@@ -577,7 +577,7 @@ export const HealthMonitoringTab: React.FC = () => {
 
           {/* Placeholder for charts */}
           <div className="bg-white dark:bg-navy-900/50 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center shadow-sm dark:shadow-none">
-            <TrendingUp className="w-12 h-12 text-slate-500 dark:text-slate-400 dark:text-slate-600 mx-auto mb-4" />
+            <TrendingUp className="w-12 h-12 text-slate-500 dark:text-slate-400 dark:text-slate-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-navy-900 dark:text-white">Usage Trends</h3>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               Interactive usage charts are available in the Analytics tab
@@ -614,7 +614,7 @@ export const HealthMonitoringTab: React.FC = () => {
                   <th className="px-4 py-3">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {logs.map((log: LogEntry) => (
                   <tr
                     key={log.id}
@@ -659,7 +659,7 @@ export const HealthMonitoringTab: React.FC = () => {
                           {log.error}
                         </span>
                       ) : (
-                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-600 text-xs italic">
+                        <span className="text-slate-500 dark:text-slate-400 dark:text-slate-400 text-xs italic">
                           Success
                         </span>
                       )}

@@ -430,7 +430,7 @@ const PresentationGovernanceAlertSubscriptionsView: React.FC = () => {
             Verify your HMAC verifier without affecting subscriptions or audit trail
           </span>
         </summary>
-        <div className="border-t border-slate-100 p-3 dark:border-slate-800">
+        <div className="border-t border-slate-200 p-3 dark:border-slate-800">
           <AlertPlaygroundTester />
         </div>
       </details>
@@ -523,7 +523,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+      <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
         <thead className="bg-slate-50 dark:bg-slate-900/60">
           <tr>
             <th className="px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -549,7 +549,7 @@ const SubscriptionsTable: React.FC<SubscriptionsTableProps> = ({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+        <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
           {subscriptions.map((sub) => {
             const rotateOpen = rotateState?.subscriptionId === sub.id;
             const testOpen = testState?.subscriptionId === sub.id;

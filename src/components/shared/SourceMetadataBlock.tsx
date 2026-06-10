@@ -26,7 +26,7 @@ const BADGE_STYLES: Record<SourceType, string> = {
   assessment: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   financial_analysis: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   interview: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
-  manual: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  manual: 'bg-slate-500/20 text-slate-600 border-slate-500/30',
 };
 
 function resolveSourceRoute(sourceType: SourceType, sourceId: string): string | null {
@@ -98,7 +98,7 @@ export const SourceMetadataBlock: React.FC<SourceMetadataBlockProps> = ({
       }`}
     >
       <div className={`flex items-center gap-2 ${compact ? 'flex-wrap' : ''}`}>
-        <span className="text-xs text-slate-400 shrink-0">
+        <span className="text-xs text-slate-600 shrink-0">
           {t('traceability.source', 'Source')}
         </span>
         <span
@@ -108,7 +108,7 @@ export const SourceMetadataBlock: React.FC<SourceMetadataBlockProps> = ({
         </span>
         {source.sourceTitle && (
           <span
-            className={`truncate text-slate-300 ${compact ? 'max-w-[120px]' : 'max-w-[200px]'}`}
+            className={`truncate text-slate-600 ${compact ? 'max-w-[120px]' : 'max-w-[200px]'}`}
             title={source.sourceTitle}
           >
             {source.sourceTitle}

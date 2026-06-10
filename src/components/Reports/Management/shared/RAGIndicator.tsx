@@ -36,7 +36,7 @@ const statusConfig = {
   },
   GREY: {
     bg: 'bg-slate-400',
-    text: 'text-slate-400 dark:text-slate-500',
+    text: 'text-slate-600 dark:text-slate-500',
     label: 'Not Started',
     ring: 'ring-slate-400/30',
   },
@@ -113,7 +113,7 @@ export const RAGStatusGrid: React.FC<RAGStatusGridProps> = ({
           </span>
           <RAGIndicator status={item.status} size="lg" />
           <span
-            className={`mt-2 text-sm font-semibold ${statusConfig[item.status]?.text || 'text-slate-400 dark:text-slate-500'}`}
+            className={`mt-2 text-sm font-semibold ${statusConfig[item.status]?.text || 'text-slate-600 dark:text-slate-500'}`}
           >
             {statusConfig[item.status]?.label || 'N/A'}
           </span>

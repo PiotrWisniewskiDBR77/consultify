@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import {
   ArrowRight,
   BarChart3,
-  Bot,
   Building2,
   Calendar,
   Check,
@@ -23,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
-
+import TeresaMark from '../components/shared/TeresaMark';
 const CALENDAR_URL =
   'https://meetings.hubspot.com/piotr-wisniewski1?uuid=a2976570-a2d2-4682-9e5f-c3958a7af017';
 
@@ -217,7 +216,7 @@ export const PricingView: React.FC = () => {
 
             <h1 className="text-4xl md:text-5xl font-black text-navy-950 dark:text-white mb-6 tracking-tight">
               AI Strategic Consulting,{' '}
-              <span className="bg-gradient-to-r from-primary-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 to-crimson-600 bg-clip-text text-transparent">
                 priced for scale
               </span>
             </h1>
@@ -397,7 +396,7 @@ export const PricingView: React.FC = () => {
                             className={`flex-shrink-0 ${
                               tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-300 dark:text-slate-600'
+                                : 'text-slate-600 dark:text-slate-400'
                             }`}
                           />
                         )}
@@ -409,7 +408,7 @@ export const PricingView: React.FC = () => {
                                 : 'text-slate-600 dark:text-slate-300'
                               : tier.highlight
                                 ? 'text-primary-300/50'
-                                : 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-600 dark:text-slate-500'
                           }`}
                         >
                           {feature.name}
@@ -479,7 +478,7 @@ export const PricingView: React.FC = () => {
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
-                  <Bot size={24} className="text-primary-600 dark:text-primary-400" />
+                  <TeresaMark size={24} className="text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-navy-950 dark:text-white">Managed AI</h3>
@@ -493,11 +492,11 @@ export const PricingView: React.FC = () => {
                 providers.
               </p>
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">Growth overage</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.05/credit</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">Scale overage</span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.04/credit</span>
                 </div>
@@ -533,13 +532,13 @@ export const PricingView: React.FC = () => {
                 orchestration fee.
               </p>
               <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     Scale orchestration
                   </span>
                   <span className="font-bold text-navy-950 dark:text-white">€0.015/credit</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-navy-700">
+                <div className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-navy-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">
                     Enterprise orchestration
                   </span>

@@ -198,13 +198,13 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
           className="absolute left-0 top-full mt-1 z-50 w-64 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-navy-700">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700">
             <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
               {isPl ? 'Łańcuch pochodzenia' : 'Provenance Chain'}
             </span>
             <button
               onClick={() => setShowChain(false)}
-              className="text-slate-400 hover:text-slate-600"
+              className="text-slate-600 hover:text-slate-600"
             >
               <X size={10} />
             </button>
@@ -246,10 +246,10 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
                     {step.label}
                   </p>
                   {step.detail && (
-                    <p className="text-[9px] text-slate-400 truncate">{step.detail}</p>
+                    <p className="text-[9px] text-slate-600 truncate">{step.detail}</p>
                   )}
                   {step.timestamp && (
-                    <p className="text-[9px] text-slate-400">
+                    <p className="text-[9px] text-slate-600">
                       {formatTimeAgo(new Date(step.timestamp))}
                     </p>
                   )}
@@ -258,7 +258,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
             ))}
           </div>
           {(connectorRunId || recordId) && (
-            <div className="px-3 py-1.5 border-t border-slate-100 dark:border-navy-700 text-[9px] text-slate-400 space-y-0.5">
+            <div className="px-3 py-1.5 border-t border-slate-200 dark:border-navy-700 text-[9px] text-slate-600 space-y-0.5">
               {connectorRunId && <p>Run: {connectorRunId.slice(0, 12)}…</p>}
               {recordId && <p>Record: {recordId.slice(0, 12)}…</p>}
             </div>

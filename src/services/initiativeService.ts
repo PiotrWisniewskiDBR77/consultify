@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { FullInitiative } from '../types';
 import { Api } from './api';
 

@@ -15,6 +15,7 @@ import { toast } from 'react-hot-toast';
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card } from '../../../components/Admin/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -361,11 +362,7 @@ const CustomerLifecycleView: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -697,7 +694,7 @@ const CustomerLifecycleView: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-600 mb-1">
                       Description
                     </label>
                     <textarea
@@ -710,7 +707,7 @@ const CustomerLifecycleView: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Color</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-2">Color</label>
                     <div className="flex gap-2">
                       {STAGE_COLORS.map((color) => (
                         <button
@@ -734,7 +731,7 @@ const CustomerLifecycleView: React.FC = () => {
                       }
                       className="w-4 h-4 rounded bg-gray-700 border-gray-600"
                     />
-                    <label htmlFor="stage-active" className="text-sm text-gray-300">
+                    <label htmlFor="stage-active" className="text-sm text-gray-600">
                       Active
                     </label>
                   </div>
@@ -765,7 +762,7 @@ const CustomerLifecycleView: React.FC = () => {
                 <h3 className="text-xl font-bold text-white mb-4">Transition Customer</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-600 mb-1">
                       Organization ID
                     </label>
                     <input
@@ -779,7 +776,7 @@ const CustomerLifecycleView: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-600 mb-1">
                       From Stage (optional)
                     </label>
                     <select
@@ -798,7 +795,7 @@ const CustomerLifecycleView: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">To Stage</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">To Stage</label>
                     <select
                       value={newTransition.toStageId}
                       onChange={(e) =>
@@ -815,7 +812,7 @@ const CustomerLifecycleView: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Notes</label>
                     <textarea
                       value={newTransition.notes}
                       onChange={(e) =>

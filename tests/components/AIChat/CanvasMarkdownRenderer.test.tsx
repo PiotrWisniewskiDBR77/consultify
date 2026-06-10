@@ -42,4 +42,28 @@ const signal = 'growing';
     expect(screen.getByText('Important context')).toBeInTheDocument();
     expect(screen.queryByText('{"contentJson"')).not.toBeInTheDocument();
   });
+
+  it('routes a ```mermaid fence to the diagram renderer, not a raw code block', () => {
+    const { container } = render(
+      <CanvasMarkdownRenderer
+        text={`# Flow
+
+\`\`\`js
+const x = 1;
+\`\`\`
+
+\`\`\`mermaid
+flowchart LR
+  A[Input] --> B[Process] --> C[Output]
+\`\`\`
+`}
+      />
+    );
+
+    // A normal fenced block still renders as a syntax-highlighted code block.
+    expect(container.querySelector('code.language-js')).not.toBeNull();
+    // The mermaid fence takes the diagram branch (lazy DiagramRenderer / Suspense
+    // fallback) — it must NOT render as a <code class="language-mermaid"> block.
+    expect(container.querySelector('code.language-mermaid')).toBeNull();
+  });
 });

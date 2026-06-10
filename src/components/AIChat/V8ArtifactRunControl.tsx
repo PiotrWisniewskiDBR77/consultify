@@ -467,7 +467,7 @@ export function V8ArtifactRunControl({
             </div>
             <button
               type="button"
-              className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+              className="rounded-md p-1 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
               onClick={() => setIsOpen(false)}
               aria-label={t('common.close', 'Close')}
             >
@@ -803,23 +803,27 @@ export function V8ArtifactRunControl({
               )}
 
               {effectiveRunStatus === 'completed' &&
-                currentRun.plan.outputType === 'report' &&
-                currentRun.materializationOrigin?.originRecordId && (
+                (currentRun.plan.outputType === 'report' ||
+                  currentRun.plan.outputType === 'presentation') &&
+                (currentRun.artifactId || currentRun.materializationOrigin?.originRecordId) && (
                   <div className="mt-3">
                     <button
                       type="button"
-                      data-testid="v8-artifact-run-open-wordy"
+                      data-testid="v8-artifact-run-open-outputs"
                       onClick={() => {
-                        const reportId = currentRun.materializationOrigin?.originRecordId;
-                        if (reportId) {
-                          navigate(`/wordy?artifactId=${reportId}`);
+                        // End of the Teresa spine: a materialized report/deck lands
+                        // in the canonical Outputs Library, pre-selected via deep link.
+                        const outputId =
+                          currentRun.artifactId || currentRun.materializationOrigin?.originRecordId;
+                        if (outputId) {
+                          navigate(`/presentations?tab=all&artifactId=${outputId}`);
                           setIsOpen(false);
                         }
                       }}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand/30 bg-brand/5 px-3 py-2 text-sm font-medium text-brand transition hover:bg-brand/10 dark:border-brand/40 dark:bg-brand/10 dark:text-brand dark:hover:bg-brand/20"
                     >
                       <ExternalLink size={16} />
-                      {t('v8.artifactRun.openInWordy', 'Continue in Wordy')}
+                      {t('v8.artifactRun.openInOutputs', 'View in Outputs')}
                     </button>
                   </div>
                 )}

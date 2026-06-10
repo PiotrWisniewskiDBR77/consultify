@@ -163,7 +163,7 @@ export const GateStatus: React.FC<GateStatusProps> = ({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-t border-slate-200 dark:border-navy-700 divide-y divide-slate-100 dark:divide-white/5">
+        <div className="border-t border-slate-200 dark:border-navy-700 divide-y divide-slate-200 dark:divide-white/5">
           {/* Missing Items */}
           {unmetCriteria.length > 0 && (
             <div className="p-4">

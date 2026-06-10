@@ -30,6 +30,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { Api, getHeaders } from '../../../services/api';
+import { LoadingState } from '../../ui/primitives';
 
 // ============================================
 // Types
@@ -264,7 +265,7 @@ const ReportRow: FC<{
               {report.assessmentName}
             </div>
             {report.provenance?.assessmentRunId ? (
-              <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+              <div className="text-[10px] text-slate-600 dark:text-slate-500 truncate">
                 run {report.provenance.assessmentRunId}
                 {report.provenance.workbenchReviewState
                   ? ` • review ${String(report.provenance.workbenchReviewState).replace(/_/g, ' ')}`
@@ -312,7 +313,7 @@ const ReportRow: FC<{
             {report.initiativesCount} generated
           </span>
         ) : (
-          <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
         )}
       </td>
 
@@ -699,7 +700,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
                   {stats.inReview} in review • {stats.approved} approved
                 </p>
                 {latestRunReadback?.assessmentRunId ? (
-                  <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                  <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500">
                     Current report lane readback: run {latestRunReadback.assessmentRunId}
                     {latestRunReadback.workbenchReviewState
                       ? ` • review ${String(latestRunReadback.workbenchReviewState).replace(/_/g, ' ')}`
@@ -800,9 +801,7 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
         {/* Table */}
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-            </div>
+            <LoadingState variant="spinner" />
           ) : filteredReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="p-4 rounded-full bg-slate-100 dark:bg-navy-800 mb-3">

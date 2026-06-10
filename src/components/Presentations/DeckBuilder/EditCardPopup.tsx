@@ -142,20 +142,20 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
   return (
     <div className="absolute bottom-4 left-4 w-72 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl z-40 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-navy-700">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-1.5">
           <Sparkles size={14} className="text-primary-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-white">
             {t('presentations.builder.editCard.title', 'Edit this card')}
           </span>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xs">
+        <button onClick={onClose} className="text-slate-600 hover:text-slate-600 text-xs">
           ESC
         </button>
       </div>
 
       {/* Prompt field */}
-      <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-700">
+      <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
         <div className="flex gap-2">
           <input
             value={prompt}
@@ -178,7 +178,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
       </div>
 
       {/* Category tabs */}
-      <div className="flex border-b border-slate-100 dark:border-navy-700">
+      <div className="flex border-b border-slate-200 dark:border-navy-700">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}
@@ -186,7 +186,7 @@ export const EditCardPopup: React.FC<EditCardPopupProps> = ({
             className={`flex-1 px-2 py-1.5 text-[10px] font-medium transition-colors ${
               activeCategory === cat.id
                 ? 'text-primary-600 border-b-2 border-primary-500'
-                : 'text-slate-400 hover:text-slate-600'
+                : 'text-slate-600 hover:text-slate-600'
             }`}
           >
             {cat.label}

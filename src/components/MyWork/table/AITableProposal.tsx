@@ -157,7 +157,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
           onClick={onReject}
           className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
         >
-          <X size={14} className="text-slate-400" />
+          <X size={14} className="text-slate-600" />
         </button>
       </div>
 
@@ -196,7 +196,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
                 {isPl ? 'Kolumny' : 'Columns'}
               </span>
-              <span className="text-[9px] text-slate-400">
+              <span className="text-[9px] text-slate-600">
                 {acceptedColumns.size}/{proposal.columns.length}
               </span>
               {renderCheckbox(acceptedColumns.size === proposal.columns.length, toggleAllColumns)}
@@ -214,7 +214,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                     <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 flex-1">
                       {col.header}
                     </span>
-                    <span className="text-[8px] text-slate-400 bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
+                    <span className="text-[8px] text-slate-600 bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
                       {col.type}
                     </span>
                   </div>
@@ -240,7 +240,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
                 {isPl ? 'Widoki' : 'Views'}
               </span>
-              <span className="text-[9px] text-slate-400">
+              <span className="text-[9px] text-slate-600">
                 {acceptedViews.size}/{proposal.views.length}
               </span>
               {renderCheckbox(acceptedViews.size === proposal.views.length, toggleAllViews)}
@@ -258,7 +258,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
                     <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 flex-1">
                       {v.icon || '📋'} {v.name}
                     </span>
-                    {v.layout && <span className="text-[8px] text-slate-400">{v.layout}</span>}
+                    {v.layout && <span className="text-[8px] text-slate-600">{v.layout}</span>}
                   </div>
                 ))}
               </div>
@@ -282,7 +282,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 flex-1 text-left">
                 {isPl ? 'Wiersze startowe' : 'Starter rows'}
               </span>
-              <span className="text-[9px] text-slate-400">
+              <span className="text-[9px] text-slate-600">
                 {acceptedRows.size}/{proposal.rows.length}
               </span>
               {renderCheckbox(acceptedRows.size === proposal.rows.length, toggleAllRows)}
@@ -309,7 +309,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
 
         {proposal.contextHints && proposal.contextHints.length > 0 && (
           <div className="pt-2 border-t border-slate-200/30 dark:border-white/[0.04]">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-slate-600 mb-1">
               {isPl ? 'Kontekst AI' : 'AI Context'}
             </div>
             <div className="space-y-0.5">
@@ -324,7 +324,7 @@ export const AITableProposal: React.FC<AITableProposalProps> = ({
       </div>
 
       <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
-        <span className="text-[9px] text-slate-400">
+        <span className="text-[9px] text-slate-600">
           {totalAccepted} {isPl ? 'elementów zaznaczonych' : 'items selected'}
         </span>
         <div className="flex items-center gap-2">

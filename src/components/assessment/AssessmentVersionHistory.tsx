@@ -19,6 +19,8 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { AssessmentVersion, useAssessmentWorkflow } from '../../hooks/useAssessmentWorkflow';
+import { EmptyState } from '../ui/composed/EmptyState';
+import { ErrorState, LoadingState } from '../ui/primitives';
 
 interface AssessmentVersionHistoryProps {
   assessmentId: string;
@@ -93,29 +95,15 @@ export const AssessmentVersionHistory: React.FC<AssessmentVersionHistoryProps> =
   };
 
   if (isLoading && versions.length === 0) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center py-12 text-rose-500">
-        <AlertCircle className="w-5 h-5 mr-2" />
-        <span>{error}</span>
-      </div>
-    );
+    return <ErrorState message={error} />;
   }
 
   if (versions.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <History className="w-12 h-12 text-slate-700 dark:text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-        <p className="text-slate-500 dark:text-slate-400">No version history</p>
-      </div>
-    );
+    return <EmptyState icon={<History />} title="No version history" />;
   }
 
   return (

@@ -4,10 +4,8 @@
  * AI-powered help assistant that answers questions using
  * the help content knowledge base.
  */
-
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bot,
   ExternalLink,
   HelpCircle,
   Maximize2,
@@ -25,6 +23,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
+import TeresaMark from '../shared/TeresaMark';
 
 interface Message {
   id: string;
@@ -322,10 +321,10 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 text-white">
+      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary-600 to-crimson-600 text-white">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <Bot size={18} />
+            <TeresaMark size={18} />
           </div>
           <div>
             <h3 className="font-semibold">{t.title[lang]}</h3>
@@ -383,7 +382,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                         : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600'
                     }`}
                   >
-                    {message.role === 'user' ? <User size={14} /> : <Bot size={14} />}
+                    {message.role === 'user' ? <User size={14} /> : <TeresaMark size={14} />}
                   </div>
 
                   <div
@@ -438,18 +437,18 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                       message.id !== 'welcome' &&
                       !message.feedback && (
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs text-slate-400 dark:text-slate-500">
+                          <span className="text-xs text-slate-600 dark:text-slate-500">
                             {t.helpful[lang]}
                           </span>
                           <button
                             onClick={() => handleFeedback(message.id, true)}
-                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-green-500 transition-colors"
+                            className="p-1 text-slate-600 dark:text-slate-500 hover:text-green-500 transition-colors"
                           >
                             <ThumbsUp size={14} />
                           </button>
                           <button
                             onClick={() => handleFeedback(message.id, false)}
-                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-500 transition-colors"
+                            className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-500 transition-colors"
                           >
                             <ThumbsDown size={14} />
                           </button>
@@ -482,7 +481,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                     )}
 
                     {/* Timestamp */}
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                    <span className="text-[10px] text-slate-600 dark:text-slate-500 mt-1">
                       {message.timestamp.toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -503,7 +502,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             className="flex items-start gap-2"
           >
             <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
-              <Bot size={14} />
+              <TeresaMark size={14} />
             </div>
             <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl rounded-tl-md">
               <div className="flex items-center gap-1">
@@ -564,7 +563,7 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
             className={`p-3 rounded-xl transition-all ${
               input.trim() && !isLoading
                 ? 'bg-primary-600 text-white hover:bg-primary-700'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             <Send size={18} />

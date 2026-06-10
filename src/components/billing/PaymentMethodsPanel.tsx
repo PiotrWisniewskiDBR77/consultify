@@ -14,6 +14,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { isBillingSelfServeEnabled } from '../../utils/billingSelfServeFlag';
 import { AddCardModal } from './AddCardModal';
 
 interface PaymentMethod {
@@ -64,6 +65,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
   compact = false,
 }) => {
   const { t } = useTranslation();
+  const selfServeEnabled = isBillingSelfServeEnabled();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -157,22 +159,29 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-crimson-600 hover:bg-crimson-700 text-white rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
-          {t('billing.paymentMethods.add', 'Add Card')}
+          {selfServeEnabled
+            ? t('billing.paymentMethods.add', 'Add Card')
+            : t('billing.paymentMethods.manage', 'Billing info')}
         </button>
       </div>
 
-      {/* Security Note */}
+      {/* Security / billing-mode note */}
       {!compact && (
-        <div className="flex items-start gap-3 p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-200 dark:border-emerald-500/20">
-          <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-emerald-700 dark:text-emerald-300">
-            {t(
-              'billing.paymentMethods.securityNote',
-              'Your payment information is securely processed by Stripe. We never store your full card details.'
-            )}
+        <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-navy-700">
+          <Shield className="w-5 h-5 text-crimson-600 dark:text-crimson-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            {selfServeEnabled
+              ? t(
+                  'billing.paymentMethods.securityNote',
+                  'Your payment information is securely processed by Stripe. We never store your full card details.'
+                )
+              : t(
+                  'billing.paymentMethods.manualNote',
+                  'Billing is currently handled manually by our team. No card is required.'
+                )}
           </p>
         </div>
       )}
@@ -180,15 +189,19 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
       {/* Payment Methods List */}
       {paymentMethods.length === 0 ? (
         <div className="text-center py-8 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700">
-          <CreditCard className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+          <CreditCard className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-400 mb-3" />
           <p className="text-slate-500 dark:text-slate-400 mb-4">
-            {t('billing.paymentMethods.empty', 'No payment methods saved')}
+            {selfServeEnabled
+              ? t('billing.paymentMethods.empty', 'No payment methods saved')
+              : t('billing.paymentMethods.emptyManual', 'Billing is handled manually')}
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-crimson-600 hover:bg-crimson-700 text-white rounded-lg transition-colors"
           >
-            {t('billing.paymentMethods.addFirst', 'Add Your First Card')}
+            {selfServeEnabled
+              ? t('billing.paymentMethods.addFirst', 'Add Your First Card')
+              : t('billing.paymentMethods.learnMore', 'Learn more')}
           </button>
         </div>
       ) : (
@@ -248,7 +261,7 @@ export const PaymentMethodsPanel: React.FC<PaymentMethodsPanelProps> = ({
                   <button
                     onClick={() => handleRemove(pm.id)}
                     disabled={removing === pm.id}
-                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-slate-600 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {removing === pm.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

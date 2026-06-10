@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   ArrowRight,
   BookOpen,
-  Bot,
   Check,
   CheckCircle,
   CheckSquare,
@@ -37,7 +36,7 @@ import {
 
 import { Api } from '../../services/api';
 import { Notification } from '../../types';
-
+import TeresaMark from '../shared/TeresaMark';
 export const NotificationDropdown = () => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -250,7 +249,7 @@ export const NotificationDropdown = () => {
     if (t === 'AI_RISK_DETECTED' || t === 'AI_OVERLOAD_DETECTED')
       return <AlertTriangle size={16} className="text-amber-400" />;
     if (t === 'AI_RECOMMENDATION' || t === 'AI_DEPENDENCY_CONFLICT')
-      return <Bot size={16} className="text-primary-400" />;
+      return <TeresaMark size={16} className="text-primary-400" />;
     if (t.includes('AI')) return <Sparkles size={16} className="text-indigo-500" />;
     if (t === 'SYSTEM_ALERT') return <AlertCircle size={16} className="text-rose-500" />;
     if (t === 'PAYMENT_FAILED') return <CreditCard size={16} className="text-rose-500" />;
@@ -265,7 +264,7 @@ export const NotificationDropdown = () => {
     if (t.includes('TASK')) return <CheckSquare size={16} className="text-blue-400" />;
     if (t.includes('FEEDBACK') || t.includes('TICKET'))
       return <MessageSquare size={16} className="text-amber-400" />;
-    return <Inbox size={16} className="text-slate-400" />;
+    return <Inbox size={16} className="text-slate-600" />;
   };
 
   // Severity color dot
@@ -329,7 +328,7 @@ export const NotificationDropdown = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-primary-500/20"
+        className="relative text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 outline-none focus:ring-2 focus:ring-primary-500/20"
         title={isPolish ? 'Inbox' : 'Inbox'}
       >
         <Inbox size={20} />
@@ -388,7 +387,7 @@ export const NotificationDropdown = () => {
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                className="p-1 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                 title={isPolish ? 'Zamknij' : 'Close'}
               >
                 <X size={14} />
@@ -399,19 +398,19 @@ export const NotificationDropdown = () => {
           {/* List */}
           <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent">
             {loading && notifications.length === 0 ? (
-              <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
+              <div className="p-8 text-center text-slate-600 dark:text-slate-500 text-sm">
                 <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-2"></div>
                 {isPolish ? 'Ładowanie...' : 'Loading...'}
               </div>
             ) : notifications.filter((n) => !isSnoozed(n.id)).length === 0 ? (
               <div className="p-8 text-center flex flex-col items-center">
                 <div className="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-3">
-                  <Inbox size={20} className="text-slate-300" />
+                  <Inbox size={20} className="text-slate-600" />
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                   {isPolish ? 'Brak powiadomień' : 'No notifications yet'}
                 </p>
-                <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
+                <p className="text-slate-600 dark:text-slate-500 text-xs mt-1">
                   {isPolish ? 'Wszystko załatwione!' : "You're all caught up!"}
                 </p>
               </div>
@@ -459,7 +458,7 @@ export const NotificationDropdown = () => {
                                 >
                                   {notification.title}
                                 </p>
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 whitespace-nowrap mt-0.5">
+                                <span className="text-[10px] text-slate-600 dark:text-slate-500 shrink-0 whitespace-nowrap mt-0.5">
                                   {formatTime(notification.createdAt)}
                                 </span>
                               </div>
@@ -482,11 +481,11 @@ export const NotificationDropdown = () => {
                           </div>
 
                           {/* Actions - Always visible for better UX */}
-                          <div className="absolute right-2 top-2 flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:border-navy-700">
+                          <div className="absolute right-2 top-2 flex items-center gap-1 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-200 dark:border-navy-700">
                             {/* Chat button */}
                             <button
                               onClick={(e) => handleOpenChat(notification, e)}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/20 rounded-md transition-colors"
+                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-500/20 rounded-md transition-colors"
                               title={isPolish ? 'Otwórz czat' : 'Open chat'}
                             >
                               <MessageSquare size={14} />
@@ -501,7 +500,7 @@ export const NotificationDropdown = () => {
                                     showSnoozeMenu === notification.id ? null : notification.id
                                   );
                                 }}
-                                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/20 rounded-md transition-colors"
+                                className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/20 rounded-md transition-colors"
                                 title={isPolish ? 'Odłóż' : 'Snooze'}
                               >
                                 <Clock size={14} />
@@ -550,7 +549,7 @@ export const NotificationDropdown = () => {
                             {!notification.isRead && (
                               <button
                                 onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/20 rounded-md transition-colors"
+                                className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/20 rounded-md transition-colors"
                                 title={isPolish ? 'Oznacz jako przeczytane' : 'Mark as read'}
                               >
                                 <Check size={14} />
@@ -558,7 +557,7 @@ export const NotificationDropdown = () => {
                             )}
                             <button
                               onClick={(e) => handleDelete(notification.id, e)}
-                              className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-md transition-colors"
+                              className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-md transition-colors"
                               title={isPolish ? 'Usuń' : 'Delete'}
                             >
                               <Trash2 size={14} />
@@ -580,7 +579,7 @@ export const NotificationDropdown = () => {
 
           {/* Footer with management actions */}
           {notifications.length > 0 && (
-            <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
+            <div className="px-4 py-3 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
               <div className="text-xs text-slate-500 dark:text-slate-400">
                 {notifications.filter((n) => !isSnoozed(n.id)).length}{' '}
                 {isPolish

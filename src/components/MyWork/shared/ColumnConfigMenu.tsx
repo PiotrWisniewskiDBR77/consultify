@@ -68,7 +68,7 @@ export const ColumnConfigMenu: React.FC<ColumnConfigMenuProps> = ({
             transition={{ duration: 0.12 }}
             className="absolute top-full left-0 mt-1 z-50 w-52 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl shadow-xl overflow-hidden"
           >
-            <div className="px-3 py-2 border-b border-slate-100 dark:border-navy-700">
+            <div className="px-3 py-2 border-b border-slate-200 dark:border-navy-700">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {t('myWork.personalTasks.toggleColumns', 'Toggle columns')}
               </p>
@@ -90,11 +90,11 @@ export const ColumnConfigMenu: React.FC<ColumnConfigMenuProps> = ({
                     className={`
                       w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors
                       ${col.alwaysVisible ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-navy-700 cursor-pointer'}
-                      ${isHidden ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}
+                      ${isHidden ? 'text-slate-600 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}
                     `}
                   >
                     {isHidden ? (
-                      <EyeOff size={14} className="text-slate-400 dark:text-slate-500" />
+                      <EyeOff size={14} className="text-slate-600 dark:text-slate-500" />
                     ) : (
                       <Eye size={14} className="text-primary-500" />
                     )}

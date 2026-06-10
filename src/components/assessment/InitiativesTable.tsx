@@ -13,7 +13,6 @@ import {
   Edit,
   Eye,
   Lightbulb,
-  Loader2,
   MapPin,
   MoreVertical,
   RefreshCw,
@@ -23,6 +22,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+
+import { LoadingState, StatusChip } from '@/components/ui/primitives';
 
 import { getStatusesForModule, getStatusMeta } from '../../services/initiativeLifecycle';
 import { InitiativeStatus } from '../../types';
@@ -133,11 +134,11 @@ interface InitiativesTableProps {
   onOpenInitiative?: (initiativeId: string, initiativeName: string, status?: string) => void;
 }
 
-const PRIORITY_CONFIG = {
-  LOW: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  MEDIUM: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  HIGH: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  CRITICAL: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+const PRIORITY_TONE: Record<string, 'neutral' | 'warning' | 'danger'> = {
+  LOW: 'neutral',
+  MEDIUM: 'warning',
+  HIGH: 'warning',
+  CRITICAL: 'danger',
 };
 
 export const InitiativesTable: React.FC<InitiativesTableProps> = ({
@@ -387,7 +388,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
           {/* Search */}
           <div className="relative w-64">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
               size={16}
             />
             <input
@@ -401,7 +402,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
 
           <button
             onClick={fetchInitiatives}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"
             title="Refresh"
           >
             <RefreshCw size={16} />
@@ -412,16 +413,14 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
       {/* Table */}
       <div className="flex-1 overflow-auto p-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-          </div>
+          <LoadingState variant="spinner" className="h-64" />
         ) : filteredInitiatives.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
-            <Lightbulb className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
+            <Lightbulb className="w-12 h-12 text-slate-600 dark:text-slate-400 mb-3" />
             <p className="text-slate-500 dark:text-slate-400 mb-2">
               {searchQuery ? 'No initiatives match your search' : 'No initiatives yet'}
             </p>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
               Generate initiatives from a finalized report
             </p>
           </div>
@@ -495,7 +494,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                     setViewingInitiativeId(initiative.id);
                                   }
                                 }}
-                                className="p-1 text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded transition-colors shrink-0"
+                                className="p-1 text-slate-600 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded transition-colors shrink-0"
                                 title="Open initiative details"
                               >
                                 <ArrowRight size={14} />
@@ -504,7 +503,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                             <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">
                               {initiative.description}
                             </p>
-                            <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 mt-1">
+                            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500 mt-1">
                               <span>{initiative.axis}</span>
                               {initiative.projectName && (
                                 <>
@@ -568,17 +567,16 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                             </span>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500 italic">
+                          <span className="text-xs text-slate-600 dark:text-slate-500 italic">
                             Unassigned
                           </span>
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium ${PRIORITY_CONFIG[initiative.priority]}`}
-                        >
-                          {initiative.priority}
-                        </span>
+                        <StatusChip
+                          label={initiative.priority}
+                          tone={PRIORITY_TONE[initiative.priority] ?? 'neutral'}
+                        />
                       </td>
                       <td className="px-4 py-4">
                         <div className="text-sm">
@@ -618,7 +616,7 @@ export const InitiativesTable: React.FC<InitiativesTableProps> = ({
                                   activeRowMenu === initiative.id ? null : initiative.id
                                 )
                               }
-                              className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+                              className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                             >
                               <MoreVertical size={16} />
                             </button>

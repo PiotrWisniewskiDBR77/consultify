@@ -1,5 +1,7 @@
 # View Modes Standard (Table / Cards / Kanban / Timeline(Gantt) / Calendar)
 
+> ⚠️ **SUPERSEDED (2026-06-06) — skonsolidowane w [`TABLE_AND_PREVIEW_CANON.md`](TABLE_AND_PREVIEW_CANON.md) §8.** Reguły lock widoków obowiązują nadal; w razie konfliktu obowiązuje kanon.
+
 > **Status:** Canonical, subordinate to `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`  
 > **Cel:** Jeden kanon przełącznika “układ zestawień” w całej aplikacji.  
 > **SSOT w kodzie:** `src/components/shared/ModuleHub/types.ts` (`ViewMode`) + `src/components/shared/ModuleHub/ModuleNavBar.tsx` (UI toggle)

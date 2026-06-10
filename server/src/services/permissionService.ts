@@ -342,6 +342,12 @@ export async function hasPermission(
       'INTERVIEW_ASSIGN_VIEW',
       'INTERVIEW_ASSIGN_MANAGE',
       'INTERVIEW_REMIND',
+      // Insights suite — org admins fully manage interview insights.
+      'INTERVIEW_INSIGHTS_VIEW',
+      'INTERVIEW_INSIGHTS_CREATE',
+      'INTERVIEW_INSIGHTS_REVIEW',
+      'INTERVIEW_INSIGHTS_PUBLISH',
+      'INTERVIEW_INSIGHTS_HANDOFF',
     ],
     [ROLES.PROJECT_MANAGER]: [
       'INTERVIEW_TEMPLATE_VIEW',
@@ -349,6 +355,9 @@ export async function hasPermission(
       'INTERVIEW_ASSIGN_VIEW',
       'INTERVIEW_ASSIGN_MANAGE',
       'INTERVIEW_REMIND',
+      // PMs run analyses on their projects' interviews.
+      'INTERVIEW_INSIGHTS_VIEW',
+      'INTERVIEW_INSIGHTS_CREATE',
     ],
     [ROLES.TEAM_MEMBER]: [],
     [ROLES.VIEWER]: [],
@@ -383,22 +392,15 @@ export async function hasPermission(
 
     if (rolePermission) return true;
 
-    // If the role has no permissions seeded at all, try role_permissions (legacy schema) and use fallback mapping.
-    let hasAnyRolePerm: { '1'?: number } | null = null;
-    try {
-      hasAnyRolePerm = await DbPromise.get<{ '1'?: number }>(
-        db,
-        `SELECT 1 FROM builtin_role_permissions WHERE role = ? LIMIT 1`,
-        [userRole]
-      );
-    } catch {
-      hasAnyRolePerm = null;
-    }
-    if (!hasAnyRolePerm) {
-      return allowFallbackInterview(permissionKey);
-    }
-
-    return false;
+    // No explicit builtin grant for this specific permission. Apply the narrow
+    // Interview fallback map as a PER-PERMISSION safety net — not just when the
+    // role has zero rows. This fixes partial seeding (e.g. ADMIN seeded with some
+    // INTERVIEW_* rows but missing INTERVIEW_INSIGHTS_CREATE), which previously
+    // skipped the fallback entirely and denied intended permissions.
+    // allowFallbackInterview only ever returns true for INTERVIEW_* keys in the
+    // role's map; every other permission key still resolves to false here, and an
+    // explicit org-user DENY (checked above) always wins.
+    return allowFallbackInterview(permissionKey);
   } catch (err: any) {
     logger.error('[PermissionService] Permission query error:', err as Error);
     // If permissions tables are missing (migration not applied), use narrow fallback.

@@ -7,6 +7,11 @@ import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/f
 
 import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
 import {
+  deriveAnalyticalDepthLabel,
+  deriveForecastWindowLabel,
+  deriveVariantLabel,
+} from '../financeModelLabels';
+import {
   deriveStatementReadinessStatus,
   type FinanceKind,
   type FinanceModelRow,
@@ -325,8 +330,6 @@ export function useFinanceData(
         const sourcePack = (statements || []).find(
           (statement: any) => String(statement.id) === String(m.source_statement_pack_id || '')
         );
-        const forecastStartYear =
-          Number.parseInt(String(m.start_date || '').slice(0, 4), 10) || new Date().getFullYear();
         return {
           id: String(m.id),
           title: String(m.name || t('common.untitled', 'Untitled')),
@@ -351,9 +354,9 @@ export function useFinanceData(
             : m.source_statement_pack_id
               ? t('finance.model.seededFromPack', 'Seeded statement pack')
               : t('finance.model.seededManuallyShort', 'Manual'),
-          forecastWindowLabel: `${forecastStartYear}-${forecastStartYear + 2}`,
-          variantLabel: 'base / optimistic / conservative',
-          analyticalDepthLabel: 'L1-L3',
+          forecastWindowLabel: deriveForecastWindowLabel(m.start_date, m.horizon_months),
+          variantLabel: deriveVariantLabel(m.scenario, t),
+          analyticalDepthLabel: deriveAnalyticalDepthLabel(m.event_count, t),
           updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
         };
       });
@@ -379,9 +382,9 @@ export function useFinanceData(
             ? 'statement'
             : 'manual',
         sourceDocumentTitle: t('finance.model.seededFromPack', 'Seeded statement pack'),
-        forecastWindowLabel: `${Number.parseInt(String(m.start_date || '').slice(0, 4), 10) || new Date().getFullYear()}-${(Number.parseInt(String(m.start_date || '').slice(0, 4), 10) || new Date().getFullYear()) + 2}`,
-        variantLabel: 'base / optimistic / conservative',
-        analyticalDepthLabel: 'L1-L3',
+        forecastWindowLabel: deriveForecastWindowLabel(m.start_date, m.horizon_months),
+        variantLabel: deriveVariantLabel(m.scenario, t),
+        analyticalDepthLabel: deriveAnalyticalDepthLabel(m.event_count, t),
         updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
       }));
       const budgetRows: FinanceModelRow[] = (budgets || []).map((b: any) => ({

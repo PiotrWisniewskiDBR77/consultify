@@ -15,8 +15,7 @@ import { OrganizationAdminPanel } from '../components/Organization/OrganizationA
 import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
-import { OrganizationV8CanonPanel } from '../components/Organization/OrganizationV8CanonPanel';
-import { OrganizationContextOverview } from '../components/settings/OrganizationContextOverview';
+import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
 import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 import { useAppStore } from '../store/useAppStore';
@@ -249,15 +248,11 @@ export const OrganizationView: React.FC = () => {
           </div>
         </div>
         <div className="px-4 lg:px-6 pb-0">
-          <OrganizationV8CanonPanel compact className="mb-4" />
-          {currentOrganization?.id ? (
-            <div className="mb-4">
-              <OrganizationContextOverview
-                organizationId={currentOrganization.id}
-                canRebuild={ADMIN_SECTIONS.includes(activeSection)}
-              />
-            </div>
-          ) : null}
+          <OrgContextSummaryBanner
+            organizationId={currentOrganization?.id}
+            isAdmin={ADMIN_SECTIONS.includes(activeSection)}
+            className="mb-4"
+          />
         </div>
         <div className="px-4 lg:px-6 pb-6 pt-0">{renderContent()}</div>
       </div>

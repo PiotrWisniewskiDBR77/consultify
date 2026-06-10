@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Portfolio Timeline View
  *
@@ -143,7 +142,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({ initiative, startCol, endCol,
       {/* Tooltip on hover */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-navy-900 text-slate-900 dark:text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl">
         <div className="font-medium mb-1">{initiative.name}</div>
-        <div className="text-slate-400 dark:text-slate-500">
+        <div className="text-slate-600 dark:text-slate-500">
           {initiative.targetQuarter || 'No timeline'} • {initiative.progress}% complete
         </div>
       </div>
@@ -269,7 +268,7 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateTimeline('prev')}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
           >
             <ChevronLeft size={18} />
           </button>
@@ -278,7 +277,7 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
           </span>
           <button
             onClick={() => navigateTimeline('next')}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
+            className="p-1.5 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
           >
             <ChevronRight size={18} />
           </button>
@@ -308,7 +307,7 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
             {quarters.map((q, idx) => (
               <div
                 key={`${q.year}-${q.quarter}`}
-                className="flex-1 px-4 py-3 text-center border-r border-slate-100 dark:border-navy-700 last:border-r-0"
+                className="flex-1 px-4 py-3 text-center border-r border-slate-200 dark:border-navy-700 last:border-r-0"
               >
                 <div className="text-sm font-semibold text-navy-900 dark:text-white">
                   Q{q.quarter}
@@ -337,14 +336,14 @@ export const PortfolioTimelineView: React.FC<PortfolioTimelineViewProps> = ({
               {quarters.map((q, idx) => (
                 <div
                   key={`grid-${q.year}-${q.quarter}`}
-                  className="flex-1 border-r border-slate-100 dark:border-navy-700 last:border-r-0"
+                  className="flex-1 border-r border-slate-200 dark:border-navy-700 last:border-r-0"
                 />
               ))}
             </div>
 
             {/* Initiative rows */}
             {initiativeRows.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500">
+              <div className="flex items-center justify-center h-48 text-slate-600 dark:text-slate-500">
                 <div className="text-center">
                   <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No initiatives with timeline data</p>

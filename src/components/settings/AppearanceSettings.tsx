@@ -24,6 +24,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import {
   changeLanguage,
   LANGUAGE_NAMES,
@@ -203,11 +205,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
     'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6';
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-primary-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   return (

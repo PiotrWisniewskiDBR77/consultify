@@ -136,13 +136,13 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
         {/* Operations list */}
         <div className="px-5 py-4 max-h-[55vh] overflow-y-auto">
           {ops.length === 0 ? (
-            <div className="text-center py-8 text-sm text-slate-400 dark:text-slate-500">
+            <div className="text-center py-8 text-sm text-slate-600 dark:text-slate-500">
               {isPl ? 'Brak proponowanych zmian.' : 'No changes proposed.'}
             </div>
           ) : (
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200/40 dark:border-navy-700/40">
+                <tr className="text-left text-[10px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200/40 dark:border-navy-700/40">
                   <th className="py-1.5 w-8" />
                   <th className="py-1.5 w-16">{isPl ? 'Typ' : 'Type'}</th>
                   <th className="py-1.5">{isPl ? 'Węzeł' : 'Node'}</th>
@@ -156,7 +156,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                   return (
                     <tr
                       key={i}
-                      className={`border-b border-slate-100/40 dark:border-navy-700/20 transition-colors ${
+                      className={`border-b border-slate-200/40 dark:border-navy-700/20 transition-colors ${
                         isChecked ? '' : 'opacity-40'
                       }`}
                     >
@@ -174,7 +174,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                             className="rounded"
                           />
                         ) : (
-                          <Check size={12} className="text-slate-400" />
+                          <Check size={12} className="text-slate-600" />
                         )}
                       </td>
                       <td className="py-2">
@@ -192,7 +192,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
                       <td className="py-2 font-medium text-slate-700 dark:text-slate-200">
                         {op.label}
                       </td>
-                      <td className="py-2 text-slate-400 dark:text-slate-500">{op.detail}</td>
+                      <td className="py-2 text-slate-600 dark:text-slate-500">{op.detail}</td>
                     </tr>
                   );
                 })}
@@ -215,7 +215,7 @@ export const AIProposalDiffModal: React.FC<AIProposalDiffModalProps> = ({
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-between">
-          <span className="text-[11px] text-slate-400 dark:text-slate-500">
+          <span className="text-[11px] text-slate-600 dark:text-slate-500">
             {isPl
               ? `${selectedCount} z ${addCount} zaznaczonych`
               : `${selectedCount} of ${addCount} selected`}

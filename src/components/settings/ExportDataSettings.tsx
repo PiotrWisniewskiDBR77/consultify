@@ -29,6 +29,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/ui/composed';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -271,10 +273,10 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
           {historyLoadError ? (
             <DegradedState title="Export history unavailable" description={historyLoadError} />
           ) : exportRequests.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-              <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>{t('settings.export.noHistory', 'No export requests yet')}</p>
-            </div>
+            <EmptyState
+              icon={<FileText />}
+              title={t('settings.export.noHistory', 'No export requests yet')}
+            />
           ) : (
             <div className="space-y-3">
               {exportRequests.map((request) => (
@@ -284,7 +286,7 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({
                 >
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-white dark:bg-navy-700 rounded-lg shadow-sm">
-                      <FileArchive className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                      <FileArchive className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">

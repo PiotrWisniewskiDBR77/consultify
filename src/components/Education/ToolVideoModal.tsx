@@ -74,7 +74,7 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-crimson-600 flex items-center justify-center">
                   <DynamicIcon name={tool.icon} size={20} className="text-white" />
                 </div>
                 <div>
@@ -146,7 +146,7 @@ export const ToolVideoModal: React.FC<ToolVideoModalProps> = ({
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={onTryTool}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all shadow-lg"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-crimson-700 transition-all shadow-lg"
                 >
                   Try It Free
                   <ArrowRight size={18} />

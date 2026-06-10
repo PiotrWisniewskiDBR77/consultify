@@ -749,7 +749,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                                 )}
                                 {!readOnly && (
                                   <>
-                                    <div className="my-1 border-t border-slate-100 dark:border-navy-700/50" />
+                                    <div className="my-1 border-t border-slate-200 dark:border-navy-700/50" />
                                     <button
                                       onClick={() => {
                                         setOpenMenuId(null);
@@ -789,7 +789,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               )}
 
               {/* ── Legend ─────────────────────────────── */}
-              <div className="pt-2 border-t border-slate-100 dark:border-navy-700/50">
+              <div className="pt-2 border-t border-slate-200 dark:border-navy-700/50">
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-1.5">
                   {isPolish ? 'Typy zależności:' : 'Dependency types:'}
                 </p>
@@ -831,7 +831,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               {/* ── Header ─────────────────────────────── */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-navy-700/70 bg-gradient-to-r from-indigo-50/40 via-white to-white dark:from-indigo-500/5 dark:via-navy-900 dark:to-navy-900">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700/70 bg-gradient-to-r from-indigo-50/40 via-white to-white dark:from-indigo-500/5 dark:via-navy-900 dark:to-navy-900">
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center ${
@@ -879,7 +879,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
               <div className="overflow-y-auto max-h-[calc(80vh-140px)]">
                 {/* ── Section: Source task (initiative mode) ─── */}
                 {!taskId && initiativeTasks.length > 0 && !editingDependency && (
-                  <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                  <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-2 block">
                       {isPolish ? 'Zadanie źródłowe' : 'Source task'}
                     </label>
@@ -898,7 +898,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 )}
                 {/* ── Section: Linked Task (edit mode) ─── */}
                 {editingDependency && (
-                  <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                  <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                     <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2 block">
                       {isPolish ? 'Powiązane zadanie' : 'Linked Task'}
                     </label>
@@ -953,7 +953,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 )}
 
                 {/* ── Section: Direction ────────────────── */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
                     {isPolish ? 'Kierunek' : 'Direction'}
                   </label>
@@ -1016,7 +1016,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 </div>
 
                 {/* ── Section: Relationship Type ───────── */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
                     {isPolish ? 'Typ relacji' : 'Relationship Type'}
                   </label>
@@ -1045,7 +1045,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                     ))}
                   </div>
                   {/* Type description */}
-                  <p className="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 rounded-lg px-3 py-2 border border-slate-100 dark:border-navy-700/30">
+                  <p className="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-800/30 rounded-lg px-3 py-2 border border-slate-200 dark:border-navy-700/30">
                     {isPolish
                       ? DEP_TYPE_LABELS[selectedDepType].desc_pl
                       : DEP_TYPE_LABELS[selectedDepType].desc_en}
@@ -1053,7 +1053,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 </div>
 
                 {/* ── Section: Lag / Lead ───────────────── */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 block">
                     {isPolish ? 'Opóźnienie / Wyprzedzenie' : 'Lag / Lead'}
                   </label>
@@ -1093,7 +1093,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                         ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20'
                         : lagDays < 0
                           ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20'
-                          : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/30 border border-slate-100 dark:border-navy-700/30'
+                          : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/30 border border-slate-200 dark:border-navy-700/30'
                     }`}
                   >
                     <span>
@@ -1124,11 +1124,11 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                 </div>
 
                 {/* ── Section: Notes ────────────────────── */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-navy-700/50">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700/50">
                   <label className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500 mb-2.5 flex items-center gap-1.5">
                     <MessageSquare size={11} />
                     {isPolish ? 'Notatki' : 'Notes'}
-                    <span className="text-[9px] font-normal text-slate-700 dark:text-slate-300 dark:text-slate-600 ml-1">
+                    <span className="text-[9px] font-normal text-slate-700 dark:text-slate-300 dark:text-slate-400 ml-1">
                       ({isPolish ? 'opcjonalne' : 'optional'})
                     </span>
                     <span className="ml-auto">
@@ -1247,12 +1247,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
                       <div className="mt-4 text-center py-4">
                         <Search
                           size={20}
-                          className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-600 mb-2"
+                          className="mx-auto text-slate-700 dark:text-slate-300 dark:text-slate-400 mb-2"
                         />
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                           {isPolish ? 'Nie znaleziono zadań' : 'No tasks found'}
                         </p>
-                        <p className="text-[11px] text-slate-700 dark:text-slate-300 dark:text-slate-600 mt-0.5">
+                        <p className="text-[11px] text-slate-700 dark:text-slate-300 dark:text-slate-400 mt-0.5">
                           {isPolish ? 'Spróbuj innej frazy' : 'Try a different search term'}
                         </p>
                       </div>
@@ -1269,12 +1269,12 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
                     {/* Connected tasks quick-add */}
                     {availableConnectedTasks.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-slate-100 dark:border-navy-700/40">
+                      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700/40">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
                             {isPolish ? 'Połączone zadania' : 'Connected Tasks'}
                           </span>
-                          <span className="text-[10px] text-slate-700 dark:text-slate-300 dark:text-slate-600">
+                          <span className="text-[10px] text-slate-700 dark:text-slate-300 dark:text-slate-400">
                             {isPolish ? 'szybkie dodawanie' : 'quick add'}
                           </span>
                         </div>
@@ -1317,7 +1317,7 @@ export const DependenciesSection: React.FC<DependenciesSectionProps> = ({
 
               {/* ── Footer (edit mode) ─────────────────── */}
               {editingDependency && (
-                <div className="px-6 py-3.5 border-t border-slate-100 dark:border-navy-700/70 bg-slate-50/30 dark:bg-navy-800/20 flex items-center justify-between">
+                <div className="px-6 py-3.5 border-t border-slate-200 dark:border-navy-700/70 bg-slate-50/30 dark:bg-navy-800/20 flex items-center justify-between">
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 dark:text-slate-500">
                     {isPolish
                       ? 'Zmiany zostaną zapisane natychmiast'

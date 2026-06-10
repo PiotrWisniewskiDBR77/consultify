@@ -188,7 +188,7 @@ const ToolCard: React.FC<ToolCardProps> = ({ tool, blockColor, onWatchVideo, onT
           </button>
           <button
             onClick={onTryTool}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-primary-700 hover:to-indigo-700 transition-all"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-primary-600 to-crimson-600 text-white text-sm font-semibold rounded-lg hover:from-primary-700 hover:to-crimson-700 transition-all"
           >
             {t('showcase.common.tryFree')}
             <ArrowRight size={14} />
@@ -352,7 +352,7 @@ export const ToolsShowcasePage: React.FC = () => {
             <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-6">
               {t('showcase.tools.hero.title1')}
               <br />
-              <span className="bg-gradient-to-r from-primary-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-400 to-crimson-400 bg-clip-text text-transparent">
                 {t('showcase.tools.hero.title2')}
               </span>
             </h1>
@@ -364,7 +364,7 @@ export const ToolsShowcasePage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigate('/trial')}
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-indigo-700 transition-all shadow-lg text-lg"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-crimson-700 transition-all shadow-lg text-lg"
               >
                 {t('showcase.common.startTrial')}
                 <ArrowRight size={20} />
@@ -411,7 +411,7 @@ export const ToolsShowcasePage: React.FC = () => {
       </div>
 
       {/* Bottom CTA */}
-      <section className="bg-gradient-to-r from-primary-600 to-indigo-600 py-16">
+      <section className="bg-gradient-to-r from-primary-600 to-crimson-600 py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
             {t('showcase.common.readyToTry')}

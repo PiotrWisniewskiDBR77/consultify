@@ -1,17 +1,10 @@
 import type { TFunction } from 'i18next';
-import {
-  AlertTriangle,
-  Building2,
-  ExternalLink,
-  Loader2,
-  Settings2,
-  Shield,
-  Sparkles,
-} from 'lucide-react';
+import { AlertTriangle, Building2, ExternalLink, Settings2, Shield, Sparkles } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { ROUTES } from '@/routes/routeConfig';
 
 import { Api } from '../../services/api';
@@ -519,11 +512,7 @@ export const SettingsOwnershipPanels: React.FC<SettingsOwnershipPanelsProps> = (
   const openAdminSecurity = () => navigate(`${ROUTES.ADMIN.ROOT}?tab=security`);
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 size={28} className="animate-spin text-primary-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" />;
   }
 
   if (error) {

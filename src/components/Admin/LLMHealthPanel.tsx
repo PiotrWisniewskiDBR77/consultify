@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { InfoButton } from '../shared/InfoButton';
 import { DegradedState } from './AdminState';
@@ -303,12 +305,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
   };
 
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <RefreshCw className="w-6 h-6 animate-spin text-primary-500" />
-        <span className="ml-2 text-slate-400 dark:text-slate-500">Sprawdzanie stanu LLM...</span>
-      </div>
-    );
+    return <LoadingState variant="spinner" label="Sprawdzanie stanu LLM..." />;
   }
 
   if (error) {
@@ -484,9 +481,9 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
                     {provider.statusLabel.text}
                   </span>
                   {expandedProvider === provider.id ? (
-                    <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                    <ChevronDown className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                    <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-500" />
                   )}
                 </div>
               </div>
@@ -547,7 +544,7 @@ export const LLMHealthPanel: React.FC<LLMHealthPanelProps> = ({
 
       {/* Last Update Info */}
       {summary?.lastCheck && (
-        <p className="text-sm text-center text-slate-400 dark:text-slate-500">
+        <p className="text-sm text-center text-slate-600 dark:text-slate-500">
           Ostatnia aktualizacja: {formatDateTime(summary.lastCheck)}
         </p>
       )}

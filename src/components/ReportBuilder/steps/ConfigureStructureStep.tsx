@@ -122,7 +122,7 @@ const SectionOptionsModal: React.FC<SectionOptionsModalProps> = ({
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            className="text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
           >
             <X className="w-5 h-5" />
           </button>
@@ -532,12 +532,12 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               ${
                 section.enabled
                   ? 'border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900'
-                  : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 opacity-60'
+                  : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 opacity-60'
               }
             `}
           >
             {/* Drag Handle */}
-            <div className="cursor-grab text-slate-400 hover:text-slate-600">
+            <div className="cursor-grab text-slate-600 hover:text-slate-600">
               <GripVertical className="w-5 h-5" />
             </div>
 
@@ -584,7 +584,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               <button
                 onClick={() => handleMove(index, 'up')}
                 disabled={index === 0}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
+                className="p-1.5 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
               >
                 <ChevronUp className="w-4 h-4" />
               </button>
@@ -593,7 +593,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               <button
                 onClick={() => handleMove(index, 'down')}
                 disabled={index === sortedSections.length - 1}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
+                className="p-1.5 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30"
               >
                 <ChevronDown className="w-4 h-4" />
               </button>
@@ -601,7 +601,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               {/* Options */}
               <button
                 onClick={() => setOptionsSection(section)}
-                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
               >
                 <Settings className="w-4 h-4" />
               </button>
@@ -610,7 +610,7 @@ export const ConfigureStructureStep: React.FC<ConfigureStructureStepProps> = ({
               {!section.required && section.sectionKey.startsWith('custom_') && (
                 <button
                   onClick={() => handleRemoveSection(section.sectionKey)}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
+                  className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

@@ -1,23 +1,53 @@
+/**
+ * InitiativeWizardModal — the CANONICAL initiative-creation surface (#29).
+ *
+ * This modal consolidates the four prior, divergent entry points for creating
+ * initiatives (ad-hoc "+ New initiative" buttons, the assessment → initiative
+ * generator, the portfolio-hygiene generator, and the standalone evidence
+ * importer) into a single, governed flow:
+ *
+ *   Insights → Intent → Candidates (triage + similarity) → Governance → Result
+ *
+ * All new initiative creation should route through here so the lineage
+ * (source → initiative), capacity signal, similarity/duplicate gate, and
+ * shortlist evidence gate are applied uniformly.
+ *
+ * NOTE: a shared <WizardModal> shell (header / stepper / footer extracted for
+ * reuse across modules) is a SEPARATE future task (§5) and is intentionally NOT
+ * built here. This file keeps its header / stepper / footer structure clean and
+ * self-contained so that extraction stays mechanical when §5 happens.
+ */
 import {
   AlertTriangle,
   ArrowRight,
   Check,
   CheckCircle2,
+  ExternalLink,
+  GitMerge,
   Link2,
   Loader2,
+  Plus,
   Sparkles,
+  Wand2,
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { Select } from '@/components/shared/forms';
+import {
+  type WizardStep as SharedWizardStep,
+  WizardStepper,
+} from '@/components/shared/WizardModal';
+import { Button } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
+import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 
 import { InitiativeStatus, type PortfolioInitiative } from '../../../types';
 
-type WizardStep = 'intent' | 'candidates' | 'governance' | 'result';
+type WizardStep = 'insights' | 'intent' | 'candidates' | 'governance' | 'result';
 
 type CandidateStatus =
   | 'new_candidate'
@@ -64,13 +94,28 @@ interface WizardAuditEvent {
 
 const AUDIT_EVENT_LABELS: Record<
   string,
-  { label: string; tone: 'info' | 'success' | 'warn' | 'block' }
+  { label: Record<WizardLanguage, string>; tone: 'info' | 'success' | 'warn' | 'block' }
 > = {
-  wizard_session_created: { label: 'Sesja kreatora utworzona', tone: 'info' },
-  wizard_candidates_generated: { label: 'Wygenerowano kandydatow', tone: 'info' },
-  wizard_candidate_triaged: { label: 'Decyzja triage', tone: 'info' },
-  wizard_shortlist_gate_blocked: { label: 'Shortlist gate zablokowal promote', tone: 'block' },
-  wizard_drafts_created: { label: 'Utworzono drafty inicjatyw', tone: 'success' },
+  wizard_session_created: {
+    label: { pl: 'Sesja kreatora utworzona', en: 'Wizard session created' },
+    tone: 'info',
+  },
+  wizard_candidates_generated: {
+    label: { pl: 'Wygenerowano kandydatow', en: 'Candidates generated' },
+    tone: 'info',
+  },
+  wizard_candidate_triaged: {
+    label: { pl: 'Decyzja triage', en: 'Triage decision' },
+    tone: 'info',
+  },
+  wizard_shortlist_gate_blocked: {
+    label: { pl: 'Shortlist gate zablokowal promote', en: 'Shortlist gate blocked promote' },
+    tone: 'block',
+  },
+  wizard_drafts_created: {
+    label: { pl: 'Utworzono drafty inicjatyw', en: 'Initiative drafts created' },
+    tone: 'success',
+  },
 };
 
 function formatAuditTimestamp(value: string): string {
@@ -89,34 +134,44 @@ function formatAuditTimestamp(value: string): string {
   }
 }
 
-function describeAuditEvent(event: WizardAuditEvent): string {
+function describeAuditEvent(event: WizardAuditEvent, language: WizardLanguage): string {
   const payload = event.eventPayload || {};
+  const pl = language === 'pl';
   switch (event.eventType) {
     case 'wizard_candidates_generated': {
       const total = Number(payload.candidateCount ?? 0);
       const evidence = Number(payload.evidenceCount ?? 0);
       const hygiene = Number(payload.hygieneCount ?? 0);
       const mode = String(payload.generationMode ?? 'unknown');
-      return `Lacznie ${total} kandydatow (${evidence} z evidence, ${hygiene} hygieny). Tryb: ${mode}.`;
+      return pl
+        ? `Lacznie ${total} kandydatow (${evidence} z evidence, ${hygiene} hygieny). Tryb: ${mode}.`
+        : `${total} candidates total (${evidence} from evidence, ${hygiene} hygiene). Mode: ${mode}.`;
     }
     case 'wizard_candidate_triaged': {
       const status = String(payload.triageStatus ?? '');
       const reason = String(payload.triageReason ?? '');
-      return reason ? `Status: ${status}. Powod: ${reason}` : `Status: ${status}.`;
+      if (pl) return reason ? `Status: ${status}. Powod: ${reason}` : `Status: ${status}.`;
+      return reason ? `Status: ${status}. Reason: ${reason}` : `Status: ${status}.`;
     }
     case 'wizard_shortlist_gate_blocked': {
       const blocked = Number(payload.blockedCount ?? 0);
       const total = Number(payload.shortlistCount ?? 0);
-      return `Blokada: ${blocked} z ${total} kandydatow nie przeszlo gate evidence.`;
+      return pl
+        ? `Blokada: ${blocked} z ${total} kandydatow nie przeszlo gate evidence.`
+        : `Blocked: ${blocked} of ${total} candidates did not pass the evidence gate.`;
     }
     case 'wizard_drafts_created': {
       const drafts = Number(payload.draftCount ?? 0);
-      return `Utworzono ${drafts} draftow inicjatyw na podstawie zaakceptowanych kandydatow.`;
+      return pl
+        ? `Utworzono ${drafts} draftow inicjatyw na podstawie zaakceptowanych kandydatow.`
+        : `Created ${drafts} initiative drafts from the accepted candidates.`;
     }
     case 'wizard_session_created': {
       const mode = String(payload.mode ?? '');
       const sources = Number(payload.sourceCount ?? 0);
-      return `Tryb: ${mode}. Zrodel w basket: ${sources}.`;
+      return pl
+        ? `Tryb: ${mode}. Zrodel w basket: ${sources}.`
+        : `Mode: ${mode}. Sources in basket: ${sources}.`;
     }
     default:
       return JSON.stringify(payload);
@@ -126,6 +181,401 @@ function describeAuditEvent(event: WizardAuditEvent): string {
 type ExistingInitiativeMatch = Pick<PortfolioInitiative, 'id' | 'name' | 'status'> & {
   title?: string;
 };
+
+// ---- Initiative similarity / duplicate check (audit #29d) -------------------
+// Backend POST /initiatives/similarity-check verdict + top match per candidate.
+type SimilarityVerdict = 'duplicate' | 'similar' | 'related' | 'new';
+
+interface SimilarityMatch {
+  id: string;
+  title: string;
+  status: string;
+  owner?: string | null;
+  score: number;
+}
+
+interface SimilarityCandidateResult {
+  candidateIndex: number;
+  matches: SimilarityMatch[];
+  topScore: number;
+  verdict: SimilarityVerdict;
+}
+
+interface SimilarityCheckResponse {
+  results: SimilarityCandidateResult[];
+  method?: 'embeddings' | 'token-overlap';
+  comparedCount?: number;
+  truncated?: boolean;
+}
+
+type WizardLanguage = 'pl' | 'en';
+
+// ---- #29e similar-candidate resolution choice -------------------------------
+// When a candidate is flagged SIMILAR / DUPLICATE against an existing
+// initiative, the user picks how to resolve the overlap. "create_anyway" wires
+// to the existing create path; "merge" / "extend" are real and POST to the
+// backend endpoints `/initiatives/:id/merge-from-insight` and
+// `/initiatives/:id/extend-from-insight` respectively.
+type SimilarResolution = 'merge' | 'extend' | 'create_anyway';
+
+// ---- #29h progressive fill: the four CORE fields (rdzeń) ---------------------
+// Pre-filled from the selected insight; the rest is left to AI-assist / manual.
+// sectionKey maps to a server-side initiative section type with a configured AI
+// prompt (migrations 529/530), so "Fill with AI" hits POST
+// /initiatives/generate-section honestly (degrades when AI is unconfigured).
+type CoreFieldKey = 'problem' | 'solution' | 'scope' | 'kpi';
+
+const CORE_FIELD_DEFS: Array<{
+  key: CoreFieldKey;
+  labelKey: string;
+  sectionKey: string;
+  rows: number;
+}> = [
+  { key: 'problem', labelKey: 'fieldProblem', sectionKey: 'problem_definition', rows: 3 },
+  { key: 'solution', labelKey: 'fieldSolution', sectionKey: 'target_state', rows: 3 },
+  { key: 'scope', labelKey: 'fieldScope', sectionKey: 'scope', rows: 3 },
+  { key: 'kpi', labelKey: 'fieldKpi', sectionKey: 'kpis', rows: 2 },
+];
+
+type CoreFields = Record<CoreFieldKey, string>;
+type CorePrefilled = Record<CoreFieldKey, boolean>;
+
+const EMPTY_CORE: CoreFields = { problem: '', solution: '', scope: '', kpi: '' };
+
+const SIMILARITY_CHIP_CONFIG: Record<
+  Exclude<SimilarityVerdict, 'new'> | 'new',
+  { className: string; label: Record<WizardLanguage, string> }
+> = {
+  new: {
+    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+    label: { pl: 'NOWA', en: 'NEW' },
+  },
+  related: {
+    className: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
+    label: { pl: 'POWIĄZANA', en: 'RELATED' },
+  },
+  similar: {
+    className: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+    label: { pl: 'PODOBNA', en: 'SIMILAR' },
+  },
+  duplicate: {
+    className: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+    label: { pl: 'DUPLIKAT', en: 'DUPLICATE' },
+  },
+};
+
+const SIMILARITY_HINT: Record<WizardLanguage, string> = {
+  pl: 'podobna inicjatywa już istnieje',
+  en: 'a similar initiative already exists',
+};
+
+const SIMILARITY_TOP_MATCH_LABEL: Record<WizardLanguage, string> = {
+  pl: 'Najbliższa',
+  en: 'Closest',
+};
+
+// ---- #29c capacity (overload) signal -----------------------------------------
+interface CapacitySignal {
+  activeCount: number;
+  suggestedCount: number;
+  overload: 'green' | 'amber' | 'red';
+}
+
+// ---- Localized copy for the additive steps (#29b, #29c, #29f) ----------------
+const WIZARD_COPY: Record<WizardLanguage, Record<string, string>> = {
+  pl: {
+    wizardTitle: 'Kreator Inicjatyw AI',
+    stepInsights: 'Wnioski',
+    selectInsightsTitle: 'Wybierz wnioski do analizy',
+    selectInsightsHint:
+      'Zaznacz 1 lub więcej wniosków z wywiadów. Inicjatywy zostaną wygenerowane na ich podstawie, a lineage (źródło → inicjatywa) będzie zapisany.',
+    insightsLoading: 'Ładowanie wniosków…',
+    insightsEmpty: 'Brak dostępnych wniosków z wywiadów.',
+    insightsError: 'Nie udało się pobrać wniosków. Spróbuj ponownie.',
+    findings: 'obserwacji',
+    selectedSummary: 'Wybrano',
+    none: 'Brak wyboru — przejdź dalej, aby skorzystać z hygieny portfolio.',
+    capacityPrefix: 'zespół ma',
+    capacityActive: 'aktywnych inicjatyw',
+    capacitySuggested: 'sugerowane',
+    capacityOverloadAmber: 'Portfolio zaczyna być obciążone — rozważ mniejszą liczbę.',
+    capacityOverloadRed: 'Portfolio jest przeciążone — utwórz tylko 1–2 nowe inicjatywy.',
+    bulkSelectTitle: 'Wybierz inicjatywy do utworzenia',
+    bulkSelectHint: 'Komfortowo twórz 1–3 inicjatywy naraz. Każda to ciężki obiekt.',
+    bulkSoftLimit: 'Tworzysz {n} inicjatyw — rozważ mniej; każda to ciężki obiekt.',
+    bulkProgress: 'Tworzenie inicjatyw…',
+    next: 'Dalej',
+    back: 'Wstecz',
+    // #29e — merge / extend / create-anyway for similar candidates
+    similarChoiceTitle: 'Ten kandydat przypomina istniejącą inicjatywę',
+    similarChoiceHint: 'Wybierz, jak rozwiązać podobieństwo przed utworzeniem draftu.',
+    mergeOption: 'Scal z istniejącą',
+    extendOption: 'Rozszerz istniejącą (dodaj zakres)',
+    createAnywayOption: 'Utwórz mimo to',
+    openExisting: 'Otwórz istniejącą',
+    mergeWorking: 'Scalanie z istniejącą inicjatywą…',
+    extendWorking: 'Rozszerzanie zakresu istniejącej inicjatywy…',
+    mergeDone: 'Scalono z istniejącą inicjatywą (lineage + notatka zapisane).',
+    extendDone: 'Rozszerzono zakres istniejącej inicjatywy (lineage + notatka zapisane).',
+    mergeExtendFailed: 'Nie udało się scalić/rozszerzyć istniejącej inicjatywy.',
+    mergedBadge: 'Scalono z istniejącą',
+    extendedBadge: 'Rozszerzono istniejącą',
+    createAnywayPicked: 'Utworzysz osobną inicjatywę mimo podobieństwa.',
+    // #29h — progressive fill / AI assist
+    coreTitle: 'Rdzeń inicjatywy (auto-uzupełniony z wniosku)',
+    coreHint:
+      'Pola rdzenia uzupełniliśmy z wybranego wniosku. Przejrzyj je, a puste sekcje uzupełnij z pomocą AI.',
+    fieldProblem: 'Problem',
+    fieldSolution: 'Rozwiązanie',
+    fieldScope: 'Zakres',
+    fieldKpi: 'KPI',
+    fillWithAi: 'Uzupełnij z AI',
+    aiFilling: 'AI uzupełnia…',
+    aiFilled: 'Uzupełniono z AI.',
+    aiUnavailable: 'Asystent AI nie jest skonfigurowany dla tej sekcji.',
+    aiFailed: 'Nie udało się uzupełnić sekcji z AI.',
+    prefilledFromInsight: 'z wniosku',
+    // footer
+    cancel: 'Anuluj',
+    setIntentHint: 'Ustaw intencję i wygeneruj kandydatów.',
+    shortlistGateOk: 'Shortlist gate OK',
+    generateCandidates: 'Wygeneruj kandydatów',
+    governancePreview: 'Governance preview',
+    shortlistGateTitle:
+      'Shortlist gate: rozstrzygnij contradicted / uzupełnij evidence przed Utwórz drafty.',
+    // intent step
+    transformDecision: 'Decyzja transformacyjna',
+    modeCreateFirstPortfolio: 'Stwórz pierwsze portfolio',
+    modeGenerateFromEvidence: 'Wygeneruj z wybranych evidence',
+    modePrioritizeByGoal: 'Priorytetyzuj wg celu biznesowego',
+    modeMatchExisting: 'Dopasuj do istniejących inicjatyw',
+    modeRefreshPortfolio: 'Odśwież portfolio nowymi evidence',
+    modeBuildWaves: 'Buduj fale (sekwencja w roadmapę)',
+    modeImprovePortfolio: 'Popraw istniejące portfolio (gap closure)',
+    businessPriorities: 'Priorytety biznesowe',
+    countLabel: 'Liczba',
+    horizonLabel: 'Horyzont',
+    horizon30Days: '30 dni',
+    horizon90Days: '90 dni',
+    horizon6Months: '6 miesięcy',
+    horizon12Months: '12 miesięcy',
+    riskLabel: 'Ryzyko',
+    riskConservative: 'Szybkie i pewne',
+    riskBalanced: 'Mieszany portfel',
+    riskBold: 'Strategic bets',
+    consultantNote: 'Notatka konsultanta / kontekst',
+    consultantNotePlaceholder:
+      'Np. po assessment chcemy wybrać 3 inicjatywy o największym efekcie na marżę, terminowość i jakość danych...',
+    // candidates step
+    noCandidatesTitle: 'Brak kandydatów do triage',
+    noCandidatesHint:
+      'Wróć do kroku Intencja i wygeneruj kandydatów. Jeżeli sourceBasket jest pusty, system zaproponuje kandydatów z portfolio hygieny (oznaczonych niższym confidence).',
+    similarInitiative: 'Podobna inicjatywa',
+    candidateDetails: 'Szczegóły kandydata',
+    needsEvidence: 'Brak evidence',
+    ready: 'Gotowy',
+    linkAlreadyCovered: 'Powiąż jako już pokryty',
+    // governance step
+    shortlistGateBlockedTitle: 'Shortlist gate zablokował „Utwórz drafty”',
+    shortlistGateBlockedBody:
+      'Zgodnie z kanonem (FINAL_IMPLEMENTATION_PLAN_10) kandydaci z confidence „contradicted”, statusem „needs_evidence” lub bez evidenceRefs nie mogą zostać promowani do draftu.',
+    willLinkExisting: 'Zostanie zlinkowana z istniejącą inicjatywą.',
+    willCreateDraft: 'Zostanie utworzony draft inicjatywy (DRAFT).',
+    willBeSkipped: 'Pominięta — nie zostanie utworzona.',
+    // result step
+    wizardDone: 'Kreator zakończył pracę',
+    newDraftsLabel: 'Nowe drafty inicjatyw',
+    auditTimelineLabel: 'Audyt sesji – proposal → approval → execution → audit',
+    noAuditEvents: 'Brak zdarzeń audytu dla tej sesji.',
+    close: 'Zamknij',
+  },
+  en: {
+    wizardTitle: 'AI Initiative Wizard',
+    stepInsights: 'Insights',
+    selectInsightsTitle: 'Select insights to analyze',
+    selectInsightsHint:
+      'Pick 1 or more interview insights. Initiatives will be generated from them, and the lineage (source → initiative) will be recorded.',
+    insightsLoading: 'Loading insights…',
+    insightsEmpty: 'No interview insights available.',
+    insightsError: 'Failed to load insights. Try again.',
+    findings: 'findings',
+    selectedSummary: 'Selected',
+    none: 'Nothing selected — continue to use portfolio hygiene instead.',
+    capacityPrefix: 'the team has',
+    capacityActive: 'active initiatives',
+    capacitySuggested: 'suggested',
+    capacityOverloadAmber: 'Portfolio is getting loaded — consider fewer.',
+    capacityOverloadRed: 'Portfolio is overloaded — create only 1–2 new initiatives.',
+    bulkSelectTitle: 'Select initiatives to create',
+    bulkSelectHint: 'Comfortably create 1–3 initiatives at a time. Each is a heavy object.',
+    bulkSoftLimit: 'You are creating {n} initiatives — consider fewer; each is a heavy object.',
+    bulkProgress: 'Creating initiatives…',
+    next: 'Next',
+    back: 'Back',
+    // #29e — merge / extend / create-anyway for similar candidates
+    similarChoiceTitle: 'This candidate resembles an existing initiative',
+    similarChoiceHint: 'Choose how to resolve the overlap before creating a draft.',
+    mergeOption: 'Merge into existing',
+    extendOption: 'Extend existing (add scope)',
+    createAnywayOption: 'Create anyway',
+    openExisting: 'Open existing',
+    mergeWorking: 'Merging into the existing initiative…',
+    extendWorking: 'Extending the scope of the existing initiative…',
+    mergeDone: 'Merged into the existing initiative (lineage + note recorded).',
+    extendDone: 'Extended the existing initiative scope (lineage + note recorded).',
+    mergeExtendFailed: 'Failed to merge/extend the existing initiative.',
+    mergedBadge: 'Merged into existing',
+    extendedBadge: 'Extended existing',
+    createAnywayPicked: 'You will create a separate initiative despite the overlap.',
+    // #29h — progressive fill / AI assist
+    coreTitle: 'Initiative core (auto-filled from the insight)',
+    coreHint:
+      'We pre-filled the core fields from the selected insight. Review them and use AI to fill the empty sections.',
+    fieldProblem: 'Problem',
+    fieldSolution: 'Solution',
+    fieldScope: 'Scope',
+    fieldKpi: 'KPI',
+    fillWithAi: 'Fill with AI',
+    aiFilling: 'AI filling…',
+    aiFilled: 'Filled with AI.',
+    aiUnavailable: 'AI assist is not configured for this section.',
+    aiFailed: 'Failed to fill the section with AI.',
+    prefilledFromInsight: 'from insight',
+    // footer
+    cancel: 'Cancel',
+    setIntentHint: 'Set the intent and generate candidates.',
+    shortlistGateOk: 'Shortlist gate OK',
+    generateCandidates: 'Generate candidates',
+    governancePreview: 'Governance preview',
+    shortlistGateTitle: 'Shortlist gate: resolve contradicted / add evidence before Create drafts.',
+    // intent step
+    transformDecision: 'Transformation decision',
+    modeCreateFirstPortfolio: 'Create the first portfolio',
+    modeGenerateFromEvidence: 'Generate from selected evidence',
+    modePrioritizeByGoal: 'Prioritize by business goal',
+    modeMatchExisting: 'Match to existing initiatives',
+    modeRefreshPortfolio: 'Refresh portfolio with new evidence',
+    modeBuildWaves: 'Build waves (sequence into a roadmap)',
+    modeImprovePortfolio: 'Improve existing portfolio (gap closure)',
+    businessPriorities: 'Business priorities',
+    countLabel: 'Count',
+    horizonLabel: 'Horizon',
+    horizon30Days: '30 days',
+    horizon90Days: '90 days',
+    horizon6Months: '6 months',
+    horizon12Months: '12 months',
+    riskLabel: 'Risk',
+    riskConservative: 'Fast and safe',
+    riskBalanced: 'Balanced portfolio',
+    riskBold: 'Strategic bets',
+    consultantNote: 'Consultant note / context',
+    consultantNotePlaceholder:
+      'E.g. after the assessment we want to pick 3 initiatives with the biggest impact on margin, on-time delivery and data quality...',
+    // candidates step
+    noCandidatesTitle: 'No candidates to triage',
+    noCandidatesHint:
+      'Go back to the Intent step and generate candidates. If the sourceBasket is empty, the system will propose candidates from portfolio hygiene (flagged with lower confidence).',
+    similarInitiative: 'Similar initiative',
+    candidateDetails: 'Candidate details',
+    needsEvidence: 'Needs evidence',
+    ready: 'Ready',
+    linkAlreadyCovered: 'Link as already covered',
+    // governance step
+    shortlistGateBlockedTitle: 'Shortlist gate blocked “Create drafts”',
+    shortlistGateBlockedBody:
+      'Per canon (FINAL_IMPLEMENTATION_PLAN_10) candidates with “contradicted” confidence, “needs_evidence” status or without evidenceRefs cannot be promoted to a draft.',
+    willLinkExisting: 'Will be linked to an existing initiative.',
+    willCreateDraft: 'An initiative draft (DRAFT) will be created.',
+    willBeSkipped: 'Skipped — will not be created.',
+    // result step
+    wizardDone: 'The wizard has finished',
+    newDraftsLabel: 'New initiative drafts',
+    auditTimelineLabel: 'Session audit – proposal → approval → execution → audit',
+    noAuditEvents: 'No audit events for this session.',
+    close: 'Close',
+  },
+};
+
+// #29h — derive the CORE fields (Problem / Solution / Scope / KPI) from an
+// interview insight already loaded in the wizard (Step 0). Best-effort: only
+// fills what the insight actually carries, leaving the rest empty for AI-assist.
+function deriveCoreFromInsight(insight: V8InterviewInsight | undefined): {
+  fields: CoreFields;
+  prefilled: CorePrefilled;
+} {
+  const fields: CoreFields = { ...EMPTY_CORE };
+  const prefilled: CorePrefilled = {
+    problem: false,
+    solution: false,
+    scope: false,
+    kpi: false,
+  };
+  if (!insight) return { fields, prefilled };
+
+  const joinItems = (
+    items: Array<{ title?: string; description?: string }> | undefined,
+    max: number
+  ): string =>
+    (Array.isArray(items) ? items : [])
+      .slice(0, max)
+      .map((item) => {
+        const title = (item?.title || '').trim();
+        const description = (item?.description || '').trim();
+        if (title && description) return `${title} — ${description}`;
+        return title || description;
+      })
+      .filter(Boolean)
+      .join('\n');
+
+  // Problem ← issues (or executive summary as a fallback).
+  const problem = joinItems(insight.issues, 3) || (insight.executiveSummary || '').trim();
+  if (problem) {
+    fields.problem = problem;
+    prefilled.problem = true;
+  }
+
+  // Solution ← opportunities.
+  const solution = joinItems(insight.opportunities, 3);
+  if (solution) {
+    fields.solution = solution;
+    prefilled.solution = true;
+  }
+
+  // Scope ← themes + topic focus.
+  const themeScope = joinItems(insight.themes, 3);
+  const topicScope = Array.isArray(insight.topicFocus) ? insight.topicFocus.join(', ') : '';
+  const scope = [themeScope, topicScope ? `Focus: ${topicScope}` : ''].filter(Boolean).join('\n');
+  if (scope) {
+    fields.scope = scope;
+    prefilled.scope = true;
+  }
+
+  // KPI is intentionally left empty — insights rarely carry a measurable KPI,
+  // so this is the canonical "AI-assist fills the rest" affordance.
+  return { fields, prefilled };
+}
+
+function countInsightFindings(insight: V8InterviewInsight): number {
+  const themes = Array.isArray(insight.themes) ? insight.themes.length : 0;
+  const issues = Array.isArray(insight.issues) ? insight.issues.length : 0;
+  const opportunities = Array.isArray(insight.opportunities) ? insight.opportunities.length : 0;
+  return themes + issues + opportunities;
+}
+
+function formatInsightDate(value: string | undefined, language: WizardLanguage): string {
+  if (!value) return '';
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return value;
+  }
+}
 
 interface InitiativeWizardModalProps {
   isOpen: boolean;
@@ -140,29 +590,30 @@ interface InitiativeWizardModalProps {
   initialSourceBasket?: unknown[];
   creationSourceType?: string;
   creationSourceId?: string | null;
+  language?: WizardLanguage;
   onClose: () => void;
   onCreated: (created: PortfolioInitiative[]) => void;
 }
 
-const BUSINESS_PRIORITIES = [
-  { id: 'margin', label: 'Marza / EBITDA' },
-  { id: 'quality', label: 'Jakosc' },
-  { id: 'speed', label: 'Terminowosc' },
-  { id: 'automation', label: 'Automatyzacja' },
-  { id: 'governance', label: 'Governance' },
-  { id: 'risk', label: 'Redukcja ryzyka' },
+const BUSINESS_PRIORITIES: Array<{ id: string; label: Record<WizardLanguage, string> }> = [
+  { id: 'margin', label: { pl: 'Marza / EBITDA', en: 'Margin / EBITDA' } },
+  { id: 'quality', label: { pl: 'Jakosc', en: 'Quality' } },
+  { id: 'speed', label: { pl: 'Terminowosc', en: 'On-time delivery' } },
+  { id: 'automation', label: { pl: 'Automatyzacja', en: 'Automation' } },
+  { id: 'governance', label: { pl: 'Governance', en: 'Governance' } },
+  { id: 'risk', label: { pl: 'Redukcja ryzyka', en: 'Risk reduction' } },
 ];
 
-const STATUS_LABELS: Record<CandidateStatus, string> = {
-  new_candidate: 'Nowy',
-  accepted_for_shortlist: 'Zaakceptowany',
-  rejected: 'Odrzucony',
-  needs_evidence: 'Brak evidence',
-  needs_split: 'Do podzialu',
-  needs_merge: 'Do scalenia',
-  needs_rewrite: 'Do przepisania',
-  already_covered: 'Juz pokryty',
-  ready_for_charter: 'Gotowy do charteru',
+const STATUS_LABELS: Record<CandidateStatus, Record<WizardLanguage, string>> = {
+  new_candidate: { pl: 'Nowy', en: 'New' },
+  accepted_for_shortlist: { pl: 'Zaakceptowany', en: 'Accepted' },
+  rejected: { pl: 'Odrzucony', en: 'Rejected' },
+  needs_evidence: { pl: 'Brak evidence', en: 'Needs evidence' },
+  needs_split: { pl: 'Do podzialu', en: 'Needs split' },
+  needs_merge: { pl: 'Do scalenia', en: 'Needs merge' },
+  needs_rewrite: { pl: 'Do przepisania', en: 'Needs rewrite' },
+  already_covered: { pl: 'Juz pokryty', en: 'Already covered' },
+  ready_for_charter: { pl: 'Gotowy do charteru', en: 'Ready for charter' },
 };
 
 function findExistingMatch(candidate: WizardCandidate, existing: ExistingInitiativeMatch[]) {
@@ -222,12 +673,27 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   initialSourceBasket = [],
   creationSourceType = 'initiative_wizard',
   creationSourceId,
+  language = 'pl',
   onClose,
   onCreated,
 }) => {
-  const [step, setStep] = useState<WizardStep>('intent');
+  const [step, setStep] = useState<WizardStep>('insights');
   const [mode, setMode] = useState(initialMode);
   const [targetCount, setTargetCount] = useState(initialTargetCount);
+  // #29b — Step 0: insight selection. The user picks 1-N interview insights the
+  // initiatives are generated from; selection carries into the generation
+  // request and tags created initiatives (1:N lineage).
+  const [insights, setInsights] = useState<V8InterviewInsight[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [selectedInsightIds, setSelectedInsightIds] = useState<string[]>([]);
+  // #29c — capacity / overload signal fetched in the Intent step.
+  const [capacity, setCapacity] = useState<CapacitySignal | null>(null);
+  // #29f — which actionable candidates the user wants to actually create.
+  const [selectedCreateIds, setSelectedCreateIds] = useState<string[]>([]);
+  const [createProgress, setCreateProgress] = useState<{ done: number; total: number } | null>(
+    null
+  );
   const [timeHorizon, setTimeHorizon] = useState(initialTimeHorizon);
   const [riskAppetite, setRiskAppetite] = useState(initialRiskAppetite);
   const [businessPriorities, setBusinessPriorities] = useState<string[]>(initialBusinessPriorities);
@@ -235,12 +701,41 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<WizardCandidate[]>([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  // Audit #29d: per-candidate duplicate/similarity verdict from the backend,
+  // keyed by candidate id. Informational only — never blocks selection.
+  const [similarityByCandidate, setSimilarityByCandidate] = useState<
+    Record<string, SimilarityCandidateResult>
+  >({});
   const [createdInitiatives, setCreatedInitiatives] = useState<PortfolioInitiative[]>([]);
+  // #29h — progressive-fill CORE fields (rdzeń) auto-derived from the selected
+  // insight; user reviews + AI fills the empty sections.
+  const [coreFields, setCoreFields] = useState<CoreFields>({ ...EMPTY_CORE });
+  const [corePrefilled, setCorePrefilled] = useState<CorePrefilled>({
+    problem: false,
+    solution: false,
+    scope: false,
+    kpi: false,
+  });
+  const [coreTouched, setCoreTouched] = useState(false);
+  const [aiFillingField, setAiFillingField] = useState<CoreFieldKey | null>(null);
+  // #29e — per-candidate resolution choice for SIMILAR / DUPLICATE candidates.
+  const [similarResolutions, setSimilarResolutions] = useState<Record<string, SimilarResolution>>(
+    {}
+  );
+  // #29e — candidates that have been REALLY merged/extended into an existing
+  // initiative (not newly created). Keyed by candidate id; drives the success
+  // badge, the "open existing" link, and removal from the create-shortlist.
+  const [resolvedExisting, setResolvedExisting] = useState<
+    Record<string, { mode: 'merge' | 'extend'; initiativeId: string; title: string }>
+  >({});
+  const [resolvingCandidateId, setResolvingCandidateId] = useState<string | null>(null);
   const [isWorking, setIsWorking] = useState(false);
   const [auditEvents, setAuditEvents] = useState<WizardAuditEvent[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
   const wasOpenRef = useRef(false);
+
+  const t = useMemo(() => WIZARD_COPY[language] ?? WIZARD_COPY.pl, [language]);
 
   const selectedCandidate = useMemo(
     () => candidates.find((candidate) => candidate.id === selectedCandidateId) || candidates[0],
@@ -250,6 +745,27 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const actionableCandidates = candidates.filter((candidate) =>
     ['accepted_for_shortlist', 'ready_for_charter'].includes(candidate.triageStatus)
   );
+
+  // #29b — aggregate selection summary for Step 0.
+  const selectedInsightSummary = useMemo(() => {
+    const chosen = insights.filter((insight) => selectedInsightIds.includes(insight.id));
+    const findings = chosen.reduce((sum, insight) => sum + countInsightFindings(insight), 0);
+    return { count: chosen.length, findings };
+  }, [insights, selectedInsightIds]);
+
+  // #29f — candidates the user has chosen to materialize (defaults to all
+  // actionable candidates the first time the governance step is reached).
+  const candidatesToCreate = useMemo(
+    () =>
+      actionableCandidates.filter(
+        (candidate) =>
+          !candidate.linkedInitiativeId &&
+          !resolvedExisting[candidate.id] &&
+          selectedCreateIds.includes(candidate.id)
+      ),
+    [actionableCandidates, selectedCreateIds, resolvedExisting]
+  );
+  const overSoftLimit = candidatesToCreate.length > 3;
 
   // Shortlist gate (P0 #7): mirrors backend evaluateShortlistGate so the user
   // sees a clear blocker BEFORE clicking Utworz drafty. Backend remains the
@@ -273,7 +789,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           title: candidate.title,
           reason: 'contradicted_confidence',
           message:
-            'Confidence ze zrodla "contradicted" - rozstrzygnij sprzeczne obserwacje przed promote.',
+            language === 'pl'
+              ? 'Confidence ze zrodla "contradicted" - rozstrzygnij sprzeczne obserwacje przed promote.'
+              : 'Source confidence is "contradicted" - resolve conflicting findings before promote.',
         });
         continue;
       }
@@ -283,7 +801,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           title: candidate.title,
           reason: 'needs_evidence_status',
           message:
-            'Kandydat oznaczony jako "Brak evidence" - uzupelnij evidence przed utworzeniem draftu.',
+            language === 'pl'
+              ? 'Kandydat oznaczony jako "Brak evidence" - uzupelnij evidence przed utworzeniem draftu.'
+              : 'Candidate flagged "Needs evidence" - add evidence before creating a draft.',
         });
         continue;
       }
@@ -295,12 +815,15 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           candidateId: candidate.id,
           title: candidate.title,
           reason: 'missing_evidence',
-          message: 'Kandydat ma sourceRefs ale brak evidenceRefs - zlamana lineage do zrodla.',
+          message:
+            language === 'pl'
+              ? 'Kandydat ma sourceRefs ale brak evidenceRefs - zlamana lineage do zrodla.'
+              : 'Candidate has sourceRefs but no evidenceRefs - broken lineage to the source.',
         });
       }
     }
     return blockers;
-  }, [actionableCandidates]);
+  }, [actionableCandidates, language]);
 
   const shortlistGateOk = shortlistGateBlockers.length === 0;
 
@@ -312,7 +835,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     if (wasOpenRef.current) return;
     wasOpenRef.current = true;
 
-    setStep('intent');
+    setStep('insights');
     setMode(initialMode);
     setTargetCount(initialTargetCount);
     setTimeHorizon(initialTimeHorizon);
@@ -322,10 +845,22 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     setSessionId(null);
     setCandidates([]);
     setSelectedCandidateId(null);
+    setSimilarityByCandidate({});
     setCreatedInitiatives([]);
     setAuditEvents([]);
     setAuditError(null);
     setAuditLoading(false);
+    setSelectedInsightIds([]);
+    setCapacity(null);
+    setSelectedCreateIds([]);
+    setCreateProgress(null);
+    setCoreFields({ ...EMPTY_CORE });
+    setCorePrefilled({ problem: false, solution: false, scope: false, kpi: false });
+    setCoreTouched(false);
+    setAiFillingField(null);
+    setSimilarResolutions({});
+    setResolvedExisting({});
+    setResolvingCandidateId(null);
   }, [
     initialBusinessPriorities,
     initialManualNotes,
@@ -335,6 +870,112 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     initialTimeHorizon,
     isOpen,
   ]);
+
+  // #29b — load interview insights for Step 0 when the modal opens.
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    const loadInsights = async () => {
+      setInsightsLoading(true);
+      setInsightsError(null);
+      try {
+        const response = await V8InterviewApi.listInsights().catch(() =>
+          Api.get('/interview/insights')
+        );
+        const list = Array.isArray(response?.insights)
+          ? (response.insights as V8InterviewInsight[])
+          : Array.isArray(response)
+            ? (response as V8InterviewInsight[])
+            : [];
+        if (!cancelled) setInsights(list);
+      } catch (error) {
+        console.error('[InitiativeWizardModal] Failed to load insights:', error);
+        if (!cancelled) {
+          setInsights([]);
+          setInsightsError(t.insightsError);
+        }
+      } finally {
+        if (!cancelled) setInsightsLoading(false);
+      }
+    };
+    void loadInsights();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // #29c — fetch the capacity / overload signal when entering the Intent step.
+  // Defaults the count field to the suggested number unless the user has
+  // already touched it (we only apply on the first successful fetch).
+  const capacityFetchedRef = useRef(false);
+  useEffect(() => {
+    if (!isOpen) {
+      capacityFetchedRef.current = false;
+      return;
+    }
+    if (step !== 'intent' || capacityFetchedRef.current) return;
+    capacityFetchedRef.current = true;
+    let cancelled = false;
+    const loadCapacity = async () => {
+      try {
+        const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+        const response = await Api.get(`/initiatives/capacity${query}`);
+        if (cancelled || !response) return;
+        const signal: CapacitySignal = {
+          activeCount: Number(response.activeCount ?? 0),
+          suggestedCount: Number(response.suggestedCount ?? initialTargetCount),
+          overload: (response.overload as CapacitySignal['overload']) ?? 'green',
+        };
+        setCapacity(signal);
+        if (Number.isFinite(signal.suggestedCount) && signal.suggestedCount > 0) {
+          setTargetCount(signal.suggestedCount);
+        }
+      } catch (error) {
+        console.warn('[InitiativeWizardModal] Failed to load capacity signal:', error);
+      }
+    };
+    void loadCapacity();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, step, projectId]);
+
+  // #29f — default the bulk-create selection to every actionable, non-linked
+  // candidate, but keep it in sync as candidates are (re)triaged. We only ever
+  // narrow to currently-actionable ids so stale selections can't leak through.
+  useEffect(() => {
+    const actionableIds = candidates
+      .filter(
+        (candidate) =>
+          ['accepted_for_shortlist', 'ready_for_charter'].includes(candidate.triageStatus) &&
+          !candidate.linkedInitiativeId
+      )
+      .map((candidate) => candidate.id);
+    setSelectedCreateIds((prev) => {
+      const kept = prev.filter((id) => actionableIds.includes(id));
+      // Newly-actionable candidates default to selected.
+      const additions = actionableIds.filter((id) => !prev.includes(id));
+      // If nothing was ever selected, select all actionable by default.
+      if (prev.length === 0) return actionableIds;
+      return [...kept, ...additions];
+    });
+  }, [candidates]);
+
+  // #29h — progressively fill the CORE fields from the first selected insight.
+  // We only auto-fill until the user manually edits a field (coreTouched), so we
+  // never clobber human edits. Re-runs as the insight selection changes.
+  const firstSelectedInsight = useMemo(
+    () => insights.find((insight) => insight.id === selectedInsightIds[0]),
+    [insights, selectedInsightIds]
+  );
+  useEffect(() => {
+    if (coreTouched) return;
+    const { fields, prefilled } = deriveCoreFromInsight(firstSelectedInsight);
+    setCoreFields(fields);
+    setCorePrefilled(prefilled);
+  }, [firstSelectedInsight, coreTouched]);
 
   useEffect(() => {
     if (step !== 'result' || !sessionId) return;
@@ -354,7 +995,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         console.error('[InitiativeWizardModal] Failed to load audit timeline:', error);
         if (!cancelled) {
           setAuditError(
-            'Nie udalo sie pobrac sladu audytu sesji. Inicjatywy zostaly utworzone, ale timeline jest niedostepny.'
+            language === 'pl'
+              ? 'Nie udalo sie pobrac sladu audytu sesji. Inicjatywy zostaly utworzone, ale timeline jest niedostepny.'
+              : 'Failed to load the session audit trail. The initiatives were created, but the timeline is unavailable.'
           );
         }
       } finally {
@@ -367,7 +1010,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [step, sessionId]);
+  }, [step, sessionId, language]);
 
   if (!isOpen) return null;
 
@@ -377,9 +1020,57 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     );
   };
 
+  // Audit #29d: after candidates are generated, ask the backend whether any
+  // already-existing active initiative duplicates / closely resembles each one.
+  // Best-effort and non-blocking — failures leave the wizard fully usable.
+  const runSimilarityCheck = async (generated: WizardCandidate[]) => {
+    const payloadCandidates = generated.map((candidate) => ({
+      title: candidate.title || '',
+      description: [candidate.problemStatement, candidate.opportunityStatement]
+        .filter(Boolean)
+        .join(' '),
+    }));
+    if (payloadCandidates.length === 0) {
+      setSimilarityByCandidate({});
+      return;
+    }
+    try {
+      const response: SimilarityCheckResponse = await Api.post('/initiatives/similarity-check', {
+        projectId: projectId || undefined,
+        candidates: payloadCandidates,
+      });
+      const results = Array.isArray(response?.results) ? response.results : [];
+      const mapped: Record<string, SimilarityCandidateResult> = {};
+      for (const result of results) {
+        const candidate = generated[result.candidateIndex];
+        if (candidate) mapped[candidate.id] = result;
+      }
+      setSimilarityByCandidate(mapped);
+    } catch (error) {
+      console.error('[InitiativeWizardModal] Similarity check failed:', error);
+      setSimilarityByCandidate({});
+    }
+  };
+
   const startWizard = async () => {
     setIsWorking(true);
     try {
+      // #29b — selected insights become the evidence sourceBasket so the backend
+      // generates candidates from them (1:N lineage carried through).
+      const insightSources = selectedInsightIds.map((id) => {
+        const insight = insights.find((item) => item.id === id);
+        return {
+          type: 'interview_insight',
+          id,
+          label: insight?.title || 'Interview insight',
+        };
+      });
+      const sourceBasket =
+        insightSources.length > 0
+          ? insightSources
+          : initialSourceBasket.length > 0
+            ? initialSourceBasket
+            : [{ type: 'manual_note', label: 'Consultant wizard input' }];
       const sessionResponse = await Api.post('/initiatives/wizard/sessions', {
         projectId: projectId || undefined,
         mode,
@@ -388,10 +1079,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         timeHorizon,
         riskAppetite,
         manualNotes,
-        sourceBasket:
-          initialSourceBasket.length > 0
-            ? initialSourceBasket
-            : [{ type: 'manual_note', label: 'Consultant wizard input' }],
+        sourceBasket,
       });
       const nextSessionId = sessionResponse?.session?.id;
       if (!nextSessionId) throw new Error('Wizard session was not created');
@@ -405,10 +1093,20 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       setCandidates(nextCandidates);
       setSelectedCandidateId(nextCandidates[0]?.id || null);
       setStep('candidates');
-      toast.success('Kandydaci inicjatyw sa gotowi do triage.', { duration: 1800 });
+      toast.success(
+        language === 'pl'
+          ? 'Kandydaci inicjatyw sa gotowi do triage.'
+          : 'Initiative candidates are ready to triage.',
+        { duration: 1800 }
+      );
+      void runSimilarityCheck(nextCandidates);
     } catch (error) {
       console.error('[InitiativeWizardModal] Failed to start wizard:', error);
-      toast.error('Nie udalo sie uruchomic kreatora inicjatyw.');
+      toast.error(
+        language === 'pl'
+          ? 'Nie udalo sie uruchomic kreatora inicjatyw.'
+          : 'Failed to start the initiative wizard.'
+      );
     } finally {
       setIsWorking(false);
     }
@@ -429,11 +1127,18 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       if (!updated) throw new Error('Candidate was not updated');
       setCandidates((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       setSelectedCandidateId(updated.id);
-      const label = STATUS_LABELS[triageStatus] || triageStatus;
-      toast.success(`Decyzja zapisana: ${label}.`, { duration: 1500 });
+      const label = STATUS_LABELS[triageStatus]?.[language] || triageStatus;
+      toast.success(
+        language === 'pl' ? `Decyzja zapisana: ${label}.` : `Decision saved: ${label}.`,
+        { duration: 1500 }
+      );
     } catch (error) {
       console.error('[InitiativeWizardModal] Candidate triage failed:', error);
-      toast.error('Nie udalo sie zapisac decyzji dla kandydata.');
+      toast.error(
+        language === 'pl'
+          ? 'Nie udalo sie zapisac decyzji dla kandydata.'
+          : 'Failed to save the candidate decision.'
+      );
     } finally {
       setIsWorking(false);
     }
@@ -443,30 +1148,73 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     if (!sessionId) return;
     if (!shortlistGateOk) {
       const firstBlocker = shortlistGateBlockers[0];
-      toast.error(`Nie mozna utworzyc draftow: ${firstBlocker?.message || 'wymagane evidence'}.`, {
-        duration: 4000,
-      });
+      toast.error(
+        language === 'pl'
+          ? `Nie mozna utworzyc draftow: ${firstBlocker?.message || 'wymagane evidence'}.`
+          : `Cannot create drafts: ${firstBlocker?.message || 'evidence required'}.`,
+        { duration: 4000 }
+      );
       return;
     }
-    const toCreate = actionableCandidates.filter((candidate) => !candidate.linkedInitiativeId);
+    // #29f — only materialize the candidates the user explicitly selected
+    // (soft limit of 1-3 is a warning, never a hard block).
+    const toCreate = candidatesToCreate;
     if (toCreate.length === 0) {
       setStep('result');
       return;
     }
 
     setIsWorking(true);
+    setCreateProgress({ done: 0, total: toCreate.length });
     const created: PortfolioInitiative[] = [];
+    // #29h — the reviewed CORE fields (rdzeń) represent the user's edited /
+    // AI-assisted core for the initiative built from the first selected insight.
+    // Apply them to the candidate anchored to that insight, or — when a single
+    // candidate is being created — to that candidate. Other candidates keep
+    // their own generated fields.
+    const firstInsightId = selectedInsightIds[0] || null;
+    const coreTargetId =
+      toCreate.find((candidate) => extractCandidateAnchoredSource(candidate)?.id === firstInsightId)
+        ?.id || (toCreate.length === 1 ? toCreate[0]?.id : null);
+    const hasCoreOverrides =
+      coreFields.problem.trim() !== '' ||
+      coreFields.solution.trim() !== '' ||
+      coreFields.scope.trim() !== '' ||
+      coreFields.kpi.trim() !== '';
     try {
       for (const candidate of toCreate) {
+        const applyCore = hasCoreOverrides && candidate.id === coreTargetId;
         const anchored = extractCandidateAnchoredSource(candidate);
-        const candidateSourceType = anchored?.type || creationSourceType;
-        const candidateSourceId = anchored?.id || creationSourceId || sessionId;
+        // #29b — 1:N insight → initiative lineage: prefer a candidate-anchored
+        // source, then the first selected insight, then the wizard fallbacks.
+        const firstSelectedInsightId = selectedInsightIds[0] || null;
+        const candidateSourceType =
+          anchored?.type || (firstSelectedInsightId ? 'interview_insight' : creationSourceType);
+        const candidateSourceId =
+          anchored?.id || firstSelectedInsightId || creationSourceId || sessionId;
+        // All selected insight ids ride along as evidence refs (1:N), merged
+        // with whatever evidence the candidate already carries.
+        const insightEvidenceRefs = selectedInsightIds.map((id) => `interview_insight:${id}`);
+        const mergedEvidenceRefs = Array.from(
+          new Set([...(candidate.evidenceRefs || []), ...insightEvidenceRefs])
+        );
         const result = await createInitiativeWriteTruth({
           projectId: projectId || undefined,
           title: candidate.title,
-          summary: candidate.opportunityStatement,
-          description: candidate.rationale,
-          problemStatement: candidate.problemStatement,
+          summary:
+            applyCore && coreFields.solution.trim()
+              ? coreFields.solution.trim()
+              : candidate.opportunityStatement,
+          description:
+            applyCore && coreFields.scope.trim()
+              ? [candidate.rationale, `Scope: ${coreFields.scope.trim()}`]
+                  .filter(Boolean)
+                  .join('\n\n')
+              : candidate.rationale,
+          problemStatement:
+            applyCore && coreFields.problem.trim()
+              ? coreFields.problem.trim()
+              : candidate.problemStatement,
           axis: 'transformational',
           status: 'DRAFT',
           priority:
@@ -481,6 +1229,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             candidateId: candidate.id,
             sourceRefs: candidate.sourceRefs,
             anchoredSource: anchored,
+            selectedInsightIds,
             limits: candidate.limits,
           },
           actionContract: {
@@ -489,9 +1238,14 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             proposalOnly: true,
             approvedCandidateStatus: candidate.triageStatus,
           },
-          evidenceRefs: candidate.evidenceRefs,
+          evidenceRefs: mergedEvidenceRefs,
           tags: ['initiative-wizard', candidate.initiativeLevel],
-          successCriteria: candidate.suggestedKpi ? [candidate.suggestedKpi] : [],
+          successCriteria:
+            applyCore && coreFields.kpi.trim()
+              ? [coreFields.kpi.trim()]
+              : candidate.suggestedKpi
+                ? [candidate.suggestedKpi]
+                : [],
           keyRisks: candidate.limits,
         });
         const initiative = result.truth?.initiative || result.created?.initiative || result.created;
@@ -510,6 +1264,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             updatedAt: initiative.updatedAt || initiative.updated_at || new Date().toISOString(),
           } as PortfolioInitiative);
         }
+        setCreateProgress((prev) =>
+          prev ? { done: prev.done + 1, total: prev.total } : { done: 1, total: toCreate.length }
+        );
       }
       setCreatedInitiatives(created);
       onCreated(created);
@@ -525,39 +1282,418 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         );
       }
       setStep('result');
-      toast.success(`Utworzono drafty inicjatyw: ${created.length}`, { duration: 1800 });
+      const names = created
+        .map((initiative) => initiative.name || initiative.id)
+        .slice(0, 3)
+        .join(', ');
+      const suffix = created.length > 3 ? '…' : '';
+      toast.success(
+        language === 'pl'
+          ? `Utworzono ${created.length} inicjatyw (DRAFT): ${names}${suffix}`
+          : `Created ${created.length} initiatives (DRAFT): ${names}${suffix}`,
+        { duration: 2600 }
+      );
     } catch (error) {
       console.error('[InitiativeWizardModal] Draft creation failed:', error);
-      toast.error('Nie udalo sie utworzyc draftow inicjatyw.');
+      toast.error(
+        language === 'pl'
+          ? 'Nie udalo sie utworzyc draftow inicjatyw.'
+          : 'Failed to create the initiative drafts.'
+      );
     } finally {
       setIsWorking(false);
+      setCreateProgress(null);
     }
+  };
+
+  const toggleInsight = (id: string) => {
+    setSelectedInsightIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // #29h — manual edit of a CORE field. Marks the section as user-authored so
+  // the auto-fill effect stops overwriting it.
+  const setCoreField = (key: CoreFieldKey, value: string) => {
+    setCoreTouched(true);
+    setCoreFields((prev) => ({ ...prev, [key]: value }));
+    setCorePrefilled((prev) => ({ ...prev, [key]: false }));
+  };
+
+  // #29h — "Fill with AI" for a single CORE section. Wires the existing
+  // POST /initiatives/generate-section endpoint (initiativeId optional, so it
+  // works pre-creation). Honest degrade: a 503 / FEATURE_UNAVAILABLE surfaces an
+  // "AI not configured" toast and leaves the field untouched.
+  const fillFieldWithAi = async (key: CoreFieldKey) => {
+    const def = CORE_FIELD_DEFS.find((entry) => entry.key === key);
+    if (!def || aiFillingField) return;
+    setAiFillingField(key);
+    try {
+      const initiativeName =
+        coreFields.problem.split('\n')[0]?.slice(0, 120) ||
+        firstSelectedInsight?.title ||
+        manualNotes.slice(0, 120) ||
+        'Initiative';
+      const response = await Api.post('/initiatives/generate-section', {
+        sectionKey: def.sectionKey,
+        initiativeName,
+        summary: coreFields.solution || firstSelectedInsight?.executiveSummary || manualNotes,
+        problemStatement: coreFields.problem,
+        scope: coreFields.scope,
+        kpis: coreFields.kpi,
+        language,
+      });
+      const content =
+        typeof response?.content === 'string'
+          ? response.content.trim()
+          : typeof response?.parsedContent === 'string'
+            ? String(response.parsedContent).trim()
+            : '';
+      // The backend returns a clearly-marked placeholder string when the LLM is
+      // not configured — treat that as "unavailable" instead of pasting it.
+      const isPlaceholder = /placeholder/i.test(content) || content.length === 0;
+      if (isPlaceholder) {
+        toast(t.aiUnavailable, { duration: 3200, icon: 'ℹ️' });
+        return;
+      }
+      setCoreFields((prev) => ({ ...prev, [key]: content }));
+      setCorePrefilled((prev) => ({ ...prev, [key]: false }));
+      setCoreTouched(true);
+      toast.success(t.aiFilled, { duration: 1600 });
+    } catch (error) {
+      const status = Number(
+        (error as { status?: number; statusCode?: number })?.status ??
+          (error as { statusCode?: number })?.statusCode ??
+          0
+      );
+      if (status === 503) {
+        toast(t.aiUnavailable, { duration: 3200, icon: 'ℹ️' });
+      } else {
+        console.error('[InitiativeWizardModal] Fill-with-AI failed:', error);
+        toast.error(t.aiFailed);
+      }
+    } finally {
+      setAiFillingField(null);
+    }
+  };
+
+  // #29e — collect the source insight ids that should be attached to the
+  // existing initiative when merging/extending. Prefer the candidate's anchored
+  // interview insight; fall back to the insights selected in Step 0.
+  const collectCandidateInsightIds = (candidate: WizardCandidate): string[] => {
+    const ids: string[] = [];
+    const anchored = extractCandidateAnchoredSource(candidate);
+    if (anchored && anchored.type === 'interview_insight' && anchored.id) {
+      ids.push(anchored.id);
+    }
+    for (const id of selectedInsightIds) {
+      if (id) ids.push(id);
+    }
+    return Array.from(new Set(ids));
+  };
+
+  // #29e — record the user's resolution choice for a SIMILAR / DUPLICATE
+  // candidate. "create_anyway" keeps the candidate in the create-shortlist;
+  // "merge" / "extend" call the REAL backend endpoint to additively fold the
+  // candidate's insight(s) + scope into the existing top-matched initiative,
+  // then drop the candidate from the shortlist (it is no longer newly created).
+  const setSimilarResolution = async (
+    candidateId: string,
+    resolution: SimilarResolution
+  ): Promise<void> => {
+    setSimilarResolutions((prev) => ({ ...prev, [candidateId]: resolution }));
+
+    if (resolution === 'create_anyway') {
+      toast(t.createAnywayPicked, { duration: 1800 });
+      return;
+    }
+
+    const candidate = candidates.find((item) => item.id === candidateId);
+    const topMatch = candidate ? similarTopMatch(candidate) : null;
+    if (!candidate || !topMatch) {
+      toast.error(t.mergeExtendFailed, { duration: 3200 });
+      return;
+    }
+
+    const insightIds = collectCandidateInsightIds(candidate);
+    const summary = [
+      candidate.problemStatement,
+      candidate.opportunityStatement,
+      candidate.rationale,
+    ]
+      .map((part) => (part || '').trim())
+      .filter(Boolean)
+      .join('\n');
+    const scopeText =
+      resolution === 'extend'
+        ? [candidate.opportunityStatement, candidate.rationale]
+            .map((part) => (part || '').trim())
+            .filter(Boolean)
+            .join('\n')
+        : undefined;
+
+    const endpoint =
+      resolution === 'merge'
+        ? `/initiatives/${topMatch.id}/merge-from-insight`
+        : `/initiatives/${topMatch.id}/extend-from-insight`;
+
+    setResolvingCandidateId(candidateId);
+    const loadingId = toast.loading(resolution === 'merge' ? t.mergeWorking : t.extendWorking);
+    try {
+      await Api.post(endpoint, {
+        mode: resolution,
+        sourceInsightIds: insightIds,
+        summary: summary || candidate.title,
+        scopeText,
+      });
+      toast.dismiss(loadingId);
+      toast.success(resolution === 'merge' ? t.mergeDone : t.extendDone, { duration: 2600 });
+      setResolvedExisting((prev) => ({
+        ...prev,
+        [candidateId]: { mode: resolution, initiativeId: topMatch.id, title: topMatch.title },
+      }));
+      // Drop the candidate from the create-shortlist — it has been folded into
+      // an existing initiative, not newly created.
+      setSelectedCreateIds((prev) => prev.filter((id) => id !== candidateId));
+    } catch (error) {
+      toast.dismiss(loadingId);
+      console.error('[InitiativeWizardModal] merge/extend failed:', error);
+      toast.error(t.mergeExtendFailed, { duration: 3200 });
+    } finally {
+      setResolvingCandidateId(null);
+    }
+  };
+
+  // #29e — the existing top match (in the live portfolio) for a candidate, used
+  // to surface a deep link to the existing initiative.
+  const similarTopMatch = (candidate: WizardCandidate): SimilarityMatch | null => {
+    const similarity = similarityByCandidate[candidate.id];
+    if (
+      similarity &&
+      (similarity.verdict === 'similar' || similarity.verdict === 'duplicate') &&
+      similarity.matches[0]
+    ) {
+      return similarity.matches[0];
+    }
+    return null;
+  };
+
+  // #29b — Step 0: multi-select interview insights the initiatives derive from.
+  const renderInsights = () => (
+    <div className="flex min-h-[440px] flex-col space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t.selectInsightsTitle}
+        </h3>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.selectInsightsHint}</p>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl border border-primary-300/60 bg-primary-50 px-3 py-2 text-xs text-primary-900 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
+        <span className="font-medium">
+          {t.selectedSummary}: {selectedInsightSummary.count} · {selectedInsightSummary.findings}{' '}
+          {t.findings}
+        </span>
+        {selectedInsightSummary.count === 0 && (
+          <span className="text-[11px] text-primary-700/80 dark:text-primary-200/70">{t.none}</span>
+        )}
+      </div>
+
+      <div className="flex-1 space-y-1.5 overflow-auto pr-1">
+        {insightsLoading && (
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {t.insightsLoading}
+          </div>
+        )}
+        {!insightsLoading && insightsError && (
+          <div className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100">
+            {insightsError}
+          </div>
+        )}
+        {!insightsLoading && !insightsError && insights.length === 0 && (
+          <div
+            data-testid="initiative-wizard-empty-insights"
+            className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-white/[0.1] dark:bg-navy-900/50"
+          >
+            <Sparkles className="h-8 w-8 text-slate-600" />
+            <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+              {t.insightsEmpty}
+            </p>
+          </div>
+        )}
+        {!insightsLoading &&
+          !insightsError &&
+          insights.map((insight) => {
+            const checked = selectedInsightIds.includes(insight.id);
+            const findings = countInsightFindings(insight);
+            return (
+              <button
+                key={insight.id}
+                type="button"
+                onClick={() => toggleInsight(insight.id)}
+                aria-pressed={checked}
+                className={`flex w-full items-start gap-2.5 rounded-xl border p-2.5 text-left transition-all ${
+                  checked
+                    ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                    : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+                }`}
+              >
+                <span
+                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                    checked
+                      ? 'border-primary-500 bg-primary-500 text-white'
+                      : 'border-slate-300 bg-white dark:border-white/[0.2] dark:bg-navy-900'
+                  }`}
+                >
+                  {checked && <Check className="h-3 w-3" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {insight.title}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 dark:bg-white/[0.08]">
+                      {insight.promptType || insight.analysisMode || 'insight'}
+                    </span>
+                    <span>·</span>
+                    <span>
+                      {findings} {t.findings}
+                    </span>
+                    {insight.createdAt && (
+                      <>
+                        <span>·</span>
+                        <span>{formatInsightDate(insight.createdAt, language)}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+      </div>
+    </div>
+  );
+
+  // #29h — progressive-fill CORE panel. Shown in the Intent step once at least
+  // one insight is selected, so the user reviews the auto-filled rdzeń and can
+  // fill empty sections with AI before generating candidates.
+  const renderCorePanel = () => {
+    if (selectedInsightIds.length === 0) return null;
+    return (
+      <div
+        data-testid="initiative-wizard-core-panel"
+        className="rounded-2xl border border-primary-300/60 bg-primary-50/60 p-3 dark:border-primary-400/20 dark:bg-primary-500/10"
+      >
+        <div className="flex items-start gap-2">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-300" />
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-primary-900 dark:text-primary-100">
+              {t.coreTitle}
+            </div>
+            <p className="mt-0.5 text-xs text-primary-800/80 dark:text-primary-100/70">
+              {t.coreHint}
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          {CORE_FIELD_DEFS.map((def) => {
+            const value = coreFields[def.key];
+            const isEmpty = value.trim().length === 0;
+            const isPrefilled = corePrefilled[def.key];
+            const isFilling = aiFillingField === def.key;
+            return (
+              <div key={def.key} className="flex flex-col">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {t[def.labelKey]}
+                    {isPrefilled && (
+                      <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                        {t.prefilledFromInsight}
+                      </span>
+                    )}
+                  </label>
+                  <button
+                    type="button"
+                    data-testid={`initiative-wizard-ai-fill-${def.key}`}
+                    onClick={() => void fillFieldWithAi(def.key)}
+                    disabled={aiFillingField !== null}
+                    title={t.fillWithAi}
+                    className="inline-flex items-center gap-1 rounded-lg border border-primary-300 bg-white px-1.5 py-0.5 text-[10px] font-medium text-primary-700 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-400/30 dark:bg-navy-900/60 dark:text-primary-200 dark:hover:bg-primary-500/10"
+                  >
+                    {isFilling ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3 w-3" />
+                    )}
+                    {isFilling ? t.aiFilling : t.fillWithAi}
+                  </button>
+                </div>
+                <textarea
+                  value={value}
+                  onChange={(event) => setCoreField(def.key, event.target.value)}
+                  rows={def.rows}
+                  placeholder={isEmpty ? `${t[def.labelKey]}…` : undefined}
+                  className="w-full resize-none rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   const renderIntent = () => (
     <div className="space-y-3">
+      {renderCorePanel()}
+      {/* #29c — capacity / overload signal */}
+      {capacity && (
+        <div
+          data-testid="initiative-wizard-capacity"
+          className={`rounded-xl border px-3 py-2 text-xs ${
+            capacity.overload === 'red'
+              ? 'border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100'
+              : capacity.overload === 'amber'
+                ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-100'
+          }`}
+        >
+          <div className="flex items-center gap-1.5 font-medium">
+            {capacity.overload !== 'green' && <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
+            {t.capacityPrefix} {capacity.activeCount} {t.capacityActive} — {t.capacitySuggested}:{' '}
+            {capacity.suggestedCount}
+          </div>
+          {capacity.overload === 'amber' && (
+            <div className="mt-1 text-[11px]">{t.capacityOverloadAmber}</div>
+          )}
+          {capacity.overload === 'red' && (
+            <div className="mt-1 text-[11px]">{t.capacityOverloadRed}</div>
+          )}
+        </div>
+      )}
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          Decyzja transformacyjna
+          {t.transformDecision}
         </label>
-        <select
+        <Select
           value={mode}
-          onChange={(event) => setMode(event.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-        >
-          <option value="create_first_portfolio">Stwórz pierwsze portfolio</option>
-          <option value="generate_from_evidence">Wygeneruj z wybranych evidence</option>
-          <option value="prioritize_by_goal">Priorytetyzuj wg celu biznesowego</option>
-          <option value="match_existing">Dopasuj do istniejących inicjatyw</option>
-          <option value="refresh_portfolio">Odśwież portfolio nowymi evidence</option>
-          <option value="build_waves">Buduj fale (sekwencja w roadmapę)</option>
-          <option value="improve_portfolio">Popraw istniejące portfolio (gap closure)</option>
-        </select>
+          onChange={setMode}
+          aria-label={t.transformDecision}
+          options={[
+            { value: 'create_first_portfolio', label: t.modeCreateFirstPortfolio },
+            { value: 'generate_from_evidence', label: t.modeGenerateFromEvidence },
+            { value: 'prioritize_by_goal', label: t.modePrioritizeByGoal },
+            { value: 'match_existing', label: t.modeMatchExisting },
+            { value: 'refresh_portfolio', label: t.modeRefreshPortfolio },
+            { value: 'build_waves', label: t.modeBuildWaves },
+            { value: 'improve_portfolio', label: t.modeImprovePortfolio },
+          ]}
+        />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          Priorytety biznesowe
+          {t.businessPriorities}
         </label>
         <div className="flex flex-wrap gap-1.5">
           {BUSINESS_PRIORITIES.map((priority) => {
@@ -573,7 +1709,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                     : 'border-slate-200 bg-white text-slate-600 hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
                 }`}
               >
-                {priority.label}
+                {priority.label[language]}
               </button>
             );
           })}
@@ -582,7 +1718,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
 
       <div className="grid grid-cols-3 gap-2">
         <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          Liczba
+          {t.countLabel}
           <input
             type="number"
             min={1}
@@ -592,47 +1728,188 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
           />
         </label>
-        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          Horyzont
-          <select
-            value={timeHorizon}
-            onChange={(event) => setTimeHorizon(event.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-          >
-            <option value="30_days">30 dni</option>
-            <option value="90_days">90 dni</option>
-            <option value="6_months">6 miesięcy</option>
-            <option value="12_months">12 miesięcy</option>
-          </select>
-        </label>
-        <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          Ryzyko
-          <select
-            value={riskAppetite}
-            onChange={(event) => setRiskAppetite(event.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-          >
-            <option value="conservative">Szybkie i pewne</option>
-            <option value="balanced">Mieszany portfel</option>
-            <option value="bold">Strategic bets</option>
-          </select>
-        </label>
+        <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          {t.horizonLabel}
+          <div className="mt-1.5">
+            <Select
+              value={timeHorizon}
+              onChange={setTimeHorizon}
+              aria-label={t.horizonLabel}
+              options={[
+                { value: '30_days', label: t.horizon30Days },
+                { value: '90_days', label: t.horizon90Days },
+                { value: '6_months', label: t.horizon6Months },
+                { value: '12_months', label: t.horizon12Months },
+              ]}
+            />
+          </div>
+        </div>
+        <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          {t.riskLabel}
+          <div className="mt-1.5">
+            <Select
+              value={riskAppetite}
+              onChange={setRiskAppetite}
+              aria-label={t.riskLabel}
+              options={[
+                { value: 'conservative', label: t.riskConservative },
+                { value: 'balanced', label: t.riskBalanced },
+                { value: 'bold', label: t.riskBold },
+              ]}
+            />
+          </div>
+        </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          Notatka konsultanta / kontekst
+          {t.consultantNote}
         </label>
         <textarea
           value={manualNotes}
           onChange={(event) => setManualNotes(event.target.value)}
           rows={4}
-          placeholder="Np. po assessment chcemy wybrać 3 inicjatywy o największym efekcie na marżę, terminowość i jakość danych..."
+          placeholder={t.consultantNotePlaceholder}
           className="w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
       </div>
     </div>
   );
+
+  // Audit #29d: render the duplicate/similarity verdict chip for a candidate.
+  const renderSimilarityChip = (candidate: WizardCandidate) => {
+    const similarity = similarityByCandidate[candidate.id];
+    if (!similarity) return null;
+    const config = SIMILARITY_CHIP_CONFIG[similarity.verdict];
+    const topMatch = similarity.matches[0];
+    const showTopMatch =
+      (similarity.verdict === 'similar' || similarity.verdict === 'duplicate') && topMatch;
+    return (
+      <div className="mt-1.5 space-y-1">
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${config.className}`}
+        >
+          {config.label[language]}
+        </span>
+        {showTopMatch && (
+          <div className="flex items-start gap-1 text-[11px] text-amber-600 dark:text-amber-300">
+            <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
+            <span className="min-w-0">
+              {SIMILARITY_HINT[language]} — {SIMILARITY_TOP_MATCH_LABEL[language]}:{' '}
+              <span className="font-medium">{topMatch.title}</span>
+              {topMatch.status ? ` (${topMatch.status})` : ''}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // #29e — Merge / Extend / Create-anyway choice for a SIMILAR / DUPLICATE
+  // candidate. Surfaces a deep link to the existing initiative so the user can
+  // open it. merge / extend call the real backend endpoints (additive, non-
+  // destructive) and drop the candidate from the create-shortlist; create-anyway
+  // wires to the existing create path (the candidate stays in the shortlist).
+  const renderSimilarResolution = (candidate: WizardCandidate) => {
+    const topMatch = similarTopMatch(candidate);
+    if (!topMatch) return null;
+    const chosen = similarResolutions[candidate.id];
+    const resolved = resolvedExisting[candidate.id];
+    const resolving = resolvingCandidateId === candidate.id;
+    const options: Array<{ value: SimilarResolution; label: string; icon: typeof GitMerge }> = [
+      { value: 'merge', label: t.mergeOption, icon: GitMerge },
+      { value: 'extend', label: t.extendOption, icon: Plus },
+      { value: 'create_anyway', label: t.createAnywayOption, icon: Check },
+    ];
+    return (
+      <div
+        data-testid="initiative-wizard-similar-resolution"
+        className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-2.5 dark:border-amber-400/30 dark:bg-amber-500/10"
+      >
+        <div className="flex items-start gap-1.5">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-amber-900 dark:text-amber-100">
+              {t.similarChoiceTitle}
+            </div>
+            <p className="mt-0.5 text-[11px] text-amber-800/80 dark:text-amber-100/70">
+              {t.similarChoiceHint}
+            </p>
+          </div>
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-900 dark:text-amber-100">
+          <span className="truncate font-medium">{topMatch.title}</span>
+          {topMatch.status ? (
+            <span className="shrink-0 rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] dark:bg-amber-500/20">
+              {topMatch.status}
+            </span>
+          ) : null}
+          <a
+            href={`/initiatives/${topMatch.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="initiative-wizard-open-existing"
+            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-400 bg-white px-1.5 py-0.5 text-[10px] font-medium text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-400/40 dark:bg-navy-900/60 dark:text-amber-200 dark:hover:bg-amber-500/10"
+          >
+            <ExternalLink className="h-3 w-3" />
+            {t.openExisting}
+          </a>
+        </div>
+        <div className="mt-2 grid grid-cols-1 gap-1.5">
+          {options.map((option) => {
+            const Icon = option.icon;
+            const active = chosen === option.value;
+            const disabled = resolving || Boolean(resolved);
+            return (
+              <button
+                key={option.value}
+                type="button"
+                disabled={disabled}
+                data-testid={`initiative-wizard-resolution-${option.value}`}
+                onClick={() => {
+                  void setSimilarResolution(candidate.id, option.value);
+                }}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  active
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400/40 dark:bg-primary-500/15 dark:text-primary-200'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-primary-400/50 dark:border-white/[0.12] dark:bg-navy-900/60 dark:text-slate-200'
+                }`}
+              >
+                {resolving && active ? (
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                )}
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        {resolved && (
+          <div
+            data-testid="initiative-wizard-resolution-success"
+            className="mt-2 flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-[11px] font-medium text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200"
+          >
+            <Check className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">
+              {resolved.mode === 'merge' ? t.mergedBadge : t.extendedBadge}: {resolved.title}
+            </span>
+            <a
+              href={`/initiatives/${resolved.initiativeId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="initiative-wizard-open-resolved"
+              className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-lg border border-emerald-400 bg-white px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-400/40 dark:bg-navy-900/60 dark:text-emerald-200 dark:hover:bg-emerald-500/10"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {t.openExisting}
+            </a>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderCandidates = () => (
     <div className="grid min-h-[440px] grid-cols-[minmax(0,1fr)_360px] gap-3">
@@ -642,14 +1919,11 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             data-testid="initiative-wizard-empty-candidates"
             className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-white/[0.1] dark:bg-navy-900/50"
           >
-            <Sparkles className="h-8 w-8 text-slate-400" />
+            <Sparkles className="h-8 w-8 text-slate-600" />
             <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-              Brak kandydatów do triage
+              {t.noCandidatesTitle}
             </p>
-            <p className="mt-1 max-w-md text-xs text-slate-500">
-              Wróć do kroku Intencja i wygeneruj kandydatów. Jeżeli sourceBasket jest pusty, system
-              zaproponuje kandydatów z portfolio hygieny (oznaczonych niższym confidence).
-            </p>
+            <p className="mt-1 max-w-md text-xs text-slate-500">{t.noCandidatesHint}</p>
           </div>
         )}
         {candidates.map((candidate) => {
@@ -676,13 +1950,14 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-white/[0.08] dark:text-slate-300">
-                  {STATUS_LABELS[candidate.triageStatus]}
+                  {STATUS_LABELS[candidate.triageStatus]?.[language] ?? candidate.triageStatus}
                 </span>
               </div>
-              {match && (
+              {renderSimilarityChip(candidate)}
+              {!similarityByCandidate[candidate.id] && match && (
                 <div className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-300">
                   <AlertTriangle className="h-3 w-3" />
-                  Podobna inicjatywa: {match.name || match.title}
+                  {t.similarInitiative}: {match.name || match.title}
                 </div>
               )}
             </button>
@@ -693,7 +1968,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       {selectedCandidate && (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
           <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-            Szczegóły kandydata
+            {t.candidateDetails}
           </div>
           <h3 className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">
             {selectedCandidate.title}
@@ -818,20 +2093,41 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               className="mt-1.5 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-primary-300 bg-white px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-50 dark:border-primary-400/30 dark:bg-navy-900/50 dark:text-primary-200 dark:hover:bg-primary-500/10"
             >
               <Link2 className="h-3 w-3" />
-              Powiąż jako już pokryty
+              {t.linkAlreadyCovered}
             </button>
           )}
+
+          {/* #29e — merge / extend / create-anyway for SIMILAR / DUPLICATE */}
+          {renderSimilarResolution(selectedCandidate)}
         </div>
       )}
     </div>
   );
 
+  const toggleCreate = (id: string) => {
+    setSelectedCreateIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   const renderGovernance = () => (
     <div className="space-y-3">
       <div className="rounded-2xl border border-primary-300/60 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-400/20 dark:bg-primary-500/10 dark:text-primary-100">
-        Proposal preview: system utworzy drafty tylko dla zaakceptowanych kandydatów bez linku do
-        istniejącej inicjatywy. Odrzucone i „already covered” nie tworzą trwałych obiektów.
+        <div className="font-medium">{t.bulkSelectTitle}</div>
+        <div className="mt-0.5 text-xs text-primary-800/80 dark:text-primary-100/70">
+          {t.bulkSelectHint}
+        </div>
       </div>
+      {/* #29f — soft 1-3 limit (warning only, never a hard block) */}
+      {overSoftLimit && (
+        <div
+          data-testid="initiative-wizard-soft-limit"
+          className="flex items-start gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{t.bulkSoftLimit.replace('{n}', String(candidatesToCreate.length))}</span>
+        </div>
+      )}
       {!shortlistGateOk && (
         <div
           data-testid="initiative-wizard-shortlist-gate-blocked"
@@ -839,11 +2135,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
         >
           <div className="flex items-center gap-2 font-semibold">
             <AlertTriangle className="h-4 w-4" />
-            Shortlist gate zablokował „Utwórz drafty”
+            {t.shortlistGateBlockedTitle}
           </div>
           <p className="mt-1 text-xs text-rose-800 dark:text-rose-100/80">
-            Zgodnie z kanonem (FINAL_IMPLEMENTATION_PLAN_10) kandydaci z confidence „contradicted”,
-            statusem „needs_evidence” lub bez evidenceRefs nie mogą zostać promowani do draftu.
+            {t.shortlistGateBlockedBody}
           </p>
           <ul className="mt-2 space-y-1 text-xs">
             {shortlistGateBlockers.map((blocker) => (
@@ -858,6 +2153,12 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       <div className="space-y-1.5">
         {actionableCandidates.map((candidate) => {
           const blocker = shortlistGateBlockers.find((entry) => entry.candidateId === candidate.id);
+          const resolved = resolvedExisting[candidate.id];
+          // #29f — only non-linked, non-blocked, non-merged/extended candidates are
+          // creatable and get a selection checkbox. Linked / blocked / resolved
+          // rows stay informational.
+          const creatable = !candidate.linkedInitiativeId && !blocker && !resolved;
+          const checked = selectedCreateIds.includes(candidate.id);
           return (
             <div
               key={candidate.id}
@@ -868,6 +2169,21 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               }`}
             >
               <div className="flex items-center justify-between gap-3">
+                {creatable && (
+                  <button
+                    type="button"
+                    onClick={() => toggleCreate(candidate.id)}
+                    aria-pressed={checked}
+                    data-testid="initiative-wizard-create-toggle"
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                      checked
+                        ? 'border-primary-500 bg-primary-500 text-white'
+                        : 'border-slate-300 bg-white dark:border-white/[0.2] dark:bg-navy-900'
+                    }`}
+                  >
+                    {checked && <Check className="h-3 w-3" />}
+                  </button>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {candidate.title}
@@ -875,10 +2191,58 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {blocker
                       ? blocker.message
-                      : candidate.linkedInitiativeId
-                        ? 'Zostanie zlinkowana z istniejącą inicjatywą.'
-                        : 'Zostanie utworzony draft inicjatywy.'}
+                      : resolved
+                        ? resolved.mode === 'merge'
+                          ? t.mergeDone
+                          : t.extendDone
+                        : candidate.linkedInitiativeId
+                          ? t.willLinkExisting
+                          : checked
+                            ? t.willCreateDraft
+                            : t.willBeSkipped}
                   </div>
+                  {/* #29e — surface a resolved (merged/extended) badge with deep link */}
+                  {resolved && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
+                        <Check className="h-2.5 w-2.5" />
+                        {resolved.mode === 'merge' ? t.mergedBadge : t.extendedBadge}
+                      </span>
+                      <a
+                        href={`/initiatives/${resolved.initiativeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full border border-emerald-300 px-1.5 py-0.5 font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-400/30 dark:text-emerald-200"
+                      >
+                        <ExternalLink className="h-2.5 w-2.5" />
+                        {t.openExisting}
+                      </a>
+                    </div>
+                  )}
+                  {/* #29e — show the chosen similar-resolution for context */}
+                  {!resolved && similarTopMatch(candidate) && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
+                      {similarResolutions[candidate.id] === 'create_anyway' ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-1.5 py-0.5 font-medium text-primary-700 dark:bg-primary-500/15 dark:text-primary-200">
+                          <Check className="h-2.5 w-2.5" />
+                          {t.createAnywayOption}
+                        </span>
+                      ) : similarResolutions[candidate.id] === 'merge' ||
+                        similarResolutions[candidate.id] === 'extend' ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                          <GitMerge className="h-2.5 w-2.5" />
+                          {similarResolutions[candidate.id] === 'merge'
+                            ? t.mergeOption
+                            : t.extendOption}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          {t.similarChoiceTitle}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <span
                   className={`rounded-full px-2 py-0.5 text-[11px] ${
@@ -902,18 +2266,19 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       <div className="flex flex-col items-center text-center">
         <CheckCircle2 className="h-12 w-12 text-emerald-500" />
         <h3 className="mt-3 text-lg font-semibold text-slate-900 dark:text-slate-100">
-          Kreator zakończył pracę
+          {t.wizardDone}
         </h3>
         <p className="mt-1.5 max-w-xl text-sm text-slate-500 dark:text-slate-400">
-          Utworzone drafty: {createdInitiatives.length}. Kandydaci odrzuceni lub oznaczeni jako
-          pokryci nie zostali utworzeni jako nowe inicjatywy.
+          {language === 'pl'
+            ? `Utworzone drafty: ${createdInitiatives.length}. Kandydaci odrzuceni lub oznaczeni jako pokryci nie zostali utworzeni jako nowe inicjatywy.`
+            : `Drafts created: ${createdInitiatives.length}. Rejected or already-covered candidates were not created as new initiatives.`}
         </p>
       </div>
 
       {createdInitiatives.length > 0 && (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-100">
           <div className="text-[10px] font-semibold uppercase tracking-wide">
-            Nowe drafty inicjatyw
+            {t.newDraftsLabel}
           </div>
           <ul className="mt-2 space-y-1">
             {createdInitiatives.map((initiative) => (
@@ -937,9 +2302,9 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       >
         <div className="flex items-center justify-between">
           <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-            Audyt sesji – proposal → approval → execution → audit
+            {t.auditTimelineLabel}
           </div>
-          {auditLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+          {auditLoading && <Loader2 className="h-4 w-4 animate-spin text-slate-600" />}
         </div>
         {auditError && (
           <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-100">
@@ -947,13 +2312,13 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           </div>
         )}
         {!auditLoading && !auditError && auditEvents.length === 0 && (
-          <div className="mt-2 text-xs text-slate-500">Brak zdarzeń audytu dla tej sesji.</div>
+          <div className="mt-2 text-xs text-slate-500">{t.noAuditEvents}</div>
         )}
         {auditEvents.length > 0 && (
           <ol className="mt-3 space-y-1.5">
             {auditEvents.map((event) => {
               const meta = AUDIT_EVENT_LABELS[event.eventType] || {
-                label: event.eventType,
+                label: { pl: event.eventType, en: event.eventType },
                 tone: 'info' as const,
               };
               const toneClasses =
@@ -971,13 +2336,13 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   data-event-type={event.eventType}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold">{meta.label}</span>
+                    <span className="font-semibold">{meta.label[language] ?? event.eventType}</span>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400">
                       {formatAuditTimestamp(event.createdAt)}
                     </span>
                   </div>
                   <div className="mt-1 text-[11px] text-slate-700 dark:text-slate-300">
-                    {describeAuditEvent(event)}
+                    {describeAuditEvent(event, language)}
                   </div>
                 </li>
               );
@@ -987,77 +2352,94 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       </div>
 
       <div className="mt-5 flex justify-center">
-        <button
-          type="button"
-          onClick={onClose}
-          className="min-w-[180px] rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-500"
-        >
-          Zamknij
-        </button>
+        <Button type="button" variant="primary" onClick={onClose} className="min-w-[180px]">
+          {t.close}
+        </Button>
       </div>
     </div>
   );
 
-  const STEP_DEFS: Array<{ id: WizardStep; label: string }> = [
-    { id: 'intent', label: 'Intencja' },
-    { id: 'candidates', label: 'Kandydaci' },
-    { id: 'governance', label: 'Governance' },
-    { id: 'result', label: 'Wynik' },
-  ];
-  const currentStepIndex = STEP_DEFS.findIndex((entry) => entry.id === step);
+  // §5 wizard harmonization — map the bespoke step model onto the shared
+  // <WizardStepper>. The ordered step ids drive index↔id translation; per-step
+  // status mirrors the prior completed/active logic, and reachability (so users
+  // can't skip ahead) is carried from the old stepReachable gate.
+  const STEP_ORDER: WizardStep[] = ['insights', 'intent', 'candidates', 'governance', 'result'];
+  const currentStepIndex = STEP_ORDER.indexOf(step);
+  // Reachability gate (unchanged semantics): a step is reachable when its
+  // prerequisite content exists. We collapse this to a single maxReachableIndex
+  // (the highest contiguously-reachable step) so the shared stepper can gate
+  // forward jumps while still allowing the user to step back freely.
   const stepReachable: Record<WizardStep, boolean> = {
+    insights: true,
     intent: true,
     candidates: candidates.length > 0,
     governance: actionableCandidates.length > 0,
     result: createdInitiatives.length > 0,
   };
+  const maxReachableIndex = (() => {
+    let reach = currentStepIndex; // already-visited steps stay reachable
+    for (let i = 0; i < STEP_ORDER.length; i += 1) {
+      if (stepReachable[STEP_ORDER[i]]) reach = Math.max(reach, i);
+      else break;
+    }
+    return reach;
+  })();
 
-  const renderStepper = () => (
-    <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
-      <div className="grid grid-cols-4 gap-1.5">
-        {STEP_DEFS.map((entry, index) => {
-          const isActive = entry.id === step;
-          const isComplete = index < currentStepIndex;
-          const canJump = stepReachable[entry.id];
-          return (
-            <button
-              key={entry.id}
-              type="button"
-              onClick={() => {
-                if (canJump) setStep(entry.id);
-              }}
-              disabled={!canJump}
-              className={`rounded-xl border px-2 py-1.5 text-left transition-all hover:border-primary-500/50 disabled:cursor-not-allowed disabled:opacity-60 ${
-                isActive
-                  ? 'border-primary-500/40 bg-primary-50 text-primary-700 ring-1 ring-primary-500/20 dark:bg-primary-500/15 dark:text-primary-200'
-                  : isComplete
-                    ? 'border-slate-200 bg-white text-slate-600 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-300'
-                    : 'border-slate-200 bg-slate-100/70 text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50 dark:text-slate-400'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold ${
-                    isActive
-                      ? 'bg-primary-500 text-white'
-                      : isComplete
-                        ? 'bg-slate-200 text-slate-700 dark:bg-navy-700 dark:text-slate-200'
-                        : 'bg-slate-200/80 text-slate-500 dark:bg-navy-800 dark:text-slate-400'
-                  }`}
-                >
-                  {index + 1}
-                </span>
-                <span className="text-xs font-semibold leading-none">{entry.label}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  // Per-step status: a step before the active one (or whose downstream content
+  // already exists) is 'complete'; the active/next reachable step is 'ready';
+  // everything else is 'empty'. Mirrors the old isComplete/active styling.
+  const stepStatusFor = (id: WizardStep, index: number): SharedWizardStep['status'] => {
+    if (index < currentStepIndex) return 'complete';
+    if (id === 'result' && createdInitiatives.length > 0) return 'complete';
+    if (index === currentStepIndex) return 'ready';
+    return index <= maxReachableIndex ? 'ready' : 'empty';
+  };
+
+  const stepperSteps: SharedWizardStep[] = [
+    {
+      id: 'insights',
+      label: { pl: t.stepInsights, en: WIZARD_COPY.en.stepInsights },
+      hint: {
+        pl: 'Wybierz wnioski z wywiadów',
+        en: 'Pick interview insights',
+      },
+      status: stepStatusFor('insights', 0),
+      optional: true,
+    },
+    {
+      id: 'intent',
+      label: { pl: 'Intencja', en: 'Intent' },
+      hint: { pl: 'Cel, priorytety, rdzeń', en: 'Goal, priorities, core' },
+      status: stepStatusFor('intent', 1),
+    },
+    {
+      id: 'candidates',
+      label: { pl: 'Kandydaci', en: 'Candidates' },
+      hint: { pl: 'Triage i podobieństwa', en: 'Triage & similarity' },
+      status: stepStatusFor('candidates', 2),
+    },
+    {
+      id: 'governance',
+      label: { pl: 'Governance', en: 'Governance' },
+      hint: { pl: 'Wybór i shortlist gate', en: 'Selection & shortlist gate' },
+      status: stepStatusFor('governance', 3),
+    },
+    {
+      id: 'result',
+      label: { pl: 'Wynik', en: 'Result' },
+      hint: { pl: 'Drafty i ślad audytu', en: 'Drafts & audit trail' },
+      status: stepStatusFor('result', 4),
+    },
+  ];
+
+  const handleStepperChange = (index: number) => {
+    const target = STEP_ORDER[index];
+    if (target && index <= maxReachableIndex) setStep(target);
+  };
 
   const goToPreviousStep = () => {
-    if (step === 'candidates') setStep('intent');
+    if (step === 'intent') setStep('insights');
+    else if (step === 'candidates') setStep('intent');
     else if (step === 'governance') setStep('candidates');
   };
 
@@ -1077,7 +2459,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100"
           >
             <Sparkles size={20} className="text-slate-500 dark:text-slate-400" />
-            AI Initiative Wizard
+            {t.wizardTitle}
           </h2>
           <button
             type="button"
@@ -1088,10 +2470,23 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           </button>
         </div>
 
-        {renderStepper()}
+        {/* §5 — shared stepper (managed violet accent) replaces the bespoke header */}
+        <WizardStepper
+          steps={stepperSteps}
+          activeStepIndex={currentStepIndex}
+          maxReachableIndex={maxReachableIndex}
+          onStepChange={handleStepperChange}
+          isPolish={language === 'pl'}
+          // Managed accent for the INITIATIVE wizard (violet) — distinct from
+          // insight (blue) and survey (emerald), same family. The hex is a
+          // managed design token passed to the shared stepper's inline style.
+          // eslint-disable-next-line no-restricted-syntax
+          accentColor="#8b5cf6"
+        />
 
         {/* Content */}
         <div className="flex-1 space-y-4 overflow-auto p-3">
+          {step === 'insights' && renderInsights()}
           {step === 'intent' && renderIntent()}
           {step === 'candidates' && renderCandidates()}
           {step === 'governance' && renderGovernance()}
@@ -1107,13 +2502,15 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               disabled={isWorking}
               className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
             >
-              Anuluj
+              {t.cancel}
             </button>
 
             <div className="flex flex-1 items-center justify-center text-xs text-slate-500">
               {candidates.length > 0
-                ? `${actionableCandidates.length} kandydatów w shortlist / ${candidates.length} łącznie`
-                : 'Ustaw intencję i wygeneruj kandydatów.'}
+                ? language === 'pl'
+                  ? `${actionableCandidates.length} kandydatów w shortlist / ${candidates.length} łącznie`
+                  : `${actionableCandidates.length} shortlisted / ${candidates.length} total`
+                : t.setIntentHint}
               {step === 'governance' && actionableCandidates.length > 0 ? (
                 <span
                   className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -1123,66 +2520,83 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
                   }`}
                 >
                   {shortlistGateOk
-                    ? 'Shortlist gate OK'
-                    : `Shortlist gate blokuje (${shortlistGateBlockers.length})`}
+                    ? t.shortlistGateOk
+                    : language === 'pl'
+                      ? `Shortlist gate blokuje (${shortlistGateBlockers.length})`
+                      : `Shortlist gate blocks (${shortlistGateBlockers.length})`}
                 </span>
               ) : null}
             </div>
 
-            {step !== 'intent' && (
-              <button
+            {step !== 'insights' && (
+              <Button
                 type="button"
+                variant="outline"
                 onClick={goToPreviousStep}
                 disabled={isWorking}
-                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
               >
-                Wstecz
-              </button>
+                {t.back}
+              </Button>
+            )}
+
+            {step === 'insights' && (
+              <Button
+                type="button"
+                variant="primary"
+                data-testid="initiative-wizard-insights-next"
+                disabled={isWorking}
+                onClick={() => setStep('intent')}
+                className="min-w-[180px]"
+              >
+                {t.next}
+                <ArrowRight size={16} />
+              </Button>
             )}
 
             {step === 'intent' && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 disabled={isWorking}
                 onClick={startWizard}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+                loading={isWorking}
+                icon={isWorking ? undefined : <Sparkles size={16} />}
+                className="min-w-[180px]"
               >
-                {isWorking ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Sparkles size={16} />
-                )}
-                Wygeneruj kandydatów
-              </button>
+                {t.generateCandidates}
+              </Button>
             )}
             {step === 'candidates' && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 data-testid="initiative-wizard-governance-preview"
                 disabled={actionableCandidates.length === 0}
                 onClick={() => setStep('governance')}
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-w-[180px]"
               >
-                Governance preview
+                {t.governancePreview}
                 <ArrowRight size={16} />
-              </button>
+              </Button>
             )}
             {step === 'governance' && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 data-testid="initiative-wizard-create-drafts"
-                disabled={isWorking || !shortlistGateOk}
+                disabled={isWorking || !shortlistGateOk || candidatesToCreate.length === 0}
                 onClick={createDrafts}
-                title={
-                  !shortlistGateOk
-                    ? 'Shortlist gate: rozstrzygnij contradicted / uzupełnij evidence przed Utwórz drafty.'
-                    : undefined
-                }
-                className="flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+                title={!shortlistGateOk ? t.shortlistGateTitle : undefined}
+                loading={isWorking}
+                icon={isWorking ? undefined : <Check size={16} />}
+                className="min-w-[180px]"
               >
-                {isWorking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                Utwórz drafty
-              </button>
+                {createProgress
+                  ? `${t.bulkProgress} ${createProgress.done}/${createProgress.total}`
+                  : language === 'pl'
+                    ? `Utwórz drafty (${candidatesToCreate.length})`
+                    : `Create drafts (${candidatesToCreate.length})`}
+              </Button>
             )}
           </div>
         )}

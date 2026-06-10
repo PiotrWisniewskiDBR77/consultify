@@ -512,7 +512,7 @@ export const SuperAdminAISettings: React.FC = () => {
                       </span>
                       <button
                         onClick={() => removeFromFallbackChain(providerId)}
-                        className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-400 transition-colors"
+                        className="p-1 text-slate-600 dark:text-slate-500 hover:text-rose-400 transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -528,7 +528,7 @@ export const SuperAdminAISettings: React.FC = () => {
               onChange={(e) => {
                 if (e.target.value) addToFallbackChain(e.target.value);
               }}
-              className="w-full px-4 py-2 bg-navy-900/30 border border-dashed border-white/20 rounded-xl text-slate-400 dark:text-slate-500 text-sm"
+              className="w-full px-4 py-2 bg-navy-900/30 border border-dashed border-white/20 rounded-xl text-slate-600 dark:text-slate-500 text-sm"
             >
               <option value="">+ Add provider to fallback chain</option>
               {providers
@@ -550,7 +550,7 @@ export const SuperAdminAISettings: React.FC = () => {
             </div>
             <div>
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">Rate Limits</h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Global request throttling
               </p>
             </div>
@@ -647,7 +647,7 @@ export const SuperAdminAISettings: React.FC = () => {
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                 Security & Privacy
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 PII detection and encryption
               </p>
             </div>
@@ -687,7 +687,7 @@ export const SuperAdminAISettings: React.FC = () => {
                     />
                     <div className="flex-1">
                       <div className={`font-medium ${option.color}`}>{option.label}</div>
-                      <div className="text-sm text-slate-400 dark:text-slate-500">
+                      <div className="text-sm text-slate-600 dark:text-slate-500">
                         {option.description}
                       </div>
                     </div>
@@ -705,7 +705,7 @@ export const SuperAdminAISettings: React.FC = () => {
                 <Lock size={20} className="text-emerald-400" />
                 <div>
                   <div className="font-medium text-white">Require Encryption</div>
-                  <div className="text-sm text-slate-400 dark:text-slate-500">
+                  <div className="text-sm text-slate-600 dark:text-slate-500">
                     Encrypt all AI requests/responses
                   </div>
                 </div>
@@ -733,7 +733,7 @@ export const SuperAdminAISettings: React.FC = () => {
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                 Resilience & Compliance
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 Circuit breaker and data residency
               </p>
             </div>
@@ -749,7 +749,7 @@ export const SuperAdminAISettings: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                     Failure Threshold
                   </label>
                   <input
@@ -769,7 +769,7 @@ export const SuperAdminAISettings: React.FC = () => {
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-1">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-1">
                     Cooldown (seconds)
                   </label>
                   <input
@@ -818,12 +818,12 @@ export const SuperAdminAISettings: React.FC = () => {
                         className={
                           settings.dataResidency === option.value
                             ? 'text-primary-400'
-                            : 'text-slate-400 dark:text-slate-500'
+                            : 'text-slate-600 dark:text-slate-500'
                         }
                       />
                       <span className="font-medium text-white">{option.label}</span>
                     </div>
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-xs text-slate-600 dark:text-slate-500">
                       {option.description}
                     </span>
                   </label>

@@ -37,7 +37,7 @@ export const ToolWizardHeader: React.FC<ToolWizardHeaderProps> = ({
   const progressPercent = Math.round(((stepIdx + 1) / totalSteps) * 100);
 
   const statusColors: Record<string, string> = {
-    DRAFT: 'bg-slate-500/20 text-slate-400',
+    DRAFT: 'bg-slate-500/20 text-slate-600',
     IN_PROGRESS: 'bg-blue-500/20 text-blue-400',
     REVIEW: 'bg-amber-500/20 text-amber-400',
     FINALIZED: 'bg-emerald-500/20 text-emerald-400',
@@ -72,7 +72,7 @@ export const ToolWizardHeader: React.FC<ToolWizardHeaderProps> = ({
           {sessionData.status}
         </span>
 
-        {locked && <Lock size={14} className="text-slate-400 dark:text-slate-500" />}
+        {locked && <Lock size={14} className="text-slate-600 dark:text-slate-500" />}
 
         {/* Spacer */}
         <div className="flex-1" />

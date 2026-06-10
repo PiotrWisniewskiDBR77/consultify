@@ -128,7 +128,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             <X size={16} />
           </button>
@@ -174,7 +174,7 @@ export const ConvertChecklistModal: React.FC<ConvertChecklistModalProps> = ({
                       className="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                     />
                     <span
-                      className={`text-sm ${item.checked ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}
+                      className={`text-sm ${item.checked ? 'line-through text-slate-600 dark:text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}
                     >
                       {item.text}
                     </span>

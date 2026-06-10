@@ -244,7 +244,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                         className={`p-2 rounded-lg ${
                           formData.category === key
                             ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-navy-700 text-slate-400'
+                            : 'bg-navy-700 text-slate-600'
                         }`}
                       >
                         {config.icon}
@@ -303,7 +303,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                       className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                         formData.unit === unit
                           ? 'bg-blue-500 text-white'
-                          : 'bg-navy-800 text-slate-400 hover:bg-navy-700'
+                          : 'bg-navy-800 text-slate-600 hover:bg-navy-700'
                       }`}
                     >
                       {unit}
@@ -324,7 +324,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
                       className={`flex-1 py-2 rounded-lg text-sm transition-colors ${
                         formData.measurementFrequency === option.value
                           ? 'bg-blue-500 text-white'
-                          : 'bg-navy-800 text-slate-400 hover:bg-navy-700'
+                          : 'bg-navy-800 text-slate-600 hover:bg-navy-700'
                       }`}
                     >
                       {option.label}

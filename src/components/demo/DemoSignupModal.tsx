@@ -96,12 +96,12 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
             className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl max-w-md w-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="h-1 bg-gradient-to-r from-primary-500 to-indigo-500" />
+            <div className="h-1 bg-gradient-to-r from-primary-500 to-crimson-500" />
 
             <div className="p-6 relative">
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-slate-600 hover:text-slate-600 dark:hover:text-white transition-colors"
                 aria-label="Close"
               >
                 <X size={18} />
@@ -184,7 +184,7 @@ export const DemoSignupModal: React.FC<DemoSignupModalProps> = ({
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 px-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-primary-500 hover:to-indigo-500 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 text-sm"
+                      className="w-full py-2.5 px-4 bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-semibold rounded-lg hover:from-primary-500 hover:to-crimson-500 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 text-sm"
                     >
                       {t('demo.signup.submit', 'Create Account & Start Trial')}
                       <ArrowRight size={16} />

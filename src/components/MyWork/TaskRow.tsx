@@ -85,7 +85,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
       onClick={() => onClick(task.id)}
       className={`
                 group h-12 flex items-center gap-3 px-3 cursor-pointer
-                border-b border-slate-100 dark:border-navy-700
+                border-b border-slate-200 dark:border-navy-700
                 transition-colors duration-150
                 ${
                   isCompleted
@@ -155,7 +155,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
               ? overdue
                 ? 'text-rose-500 font-medium'
                 : 'text-slate-500 dark:text-slate-400 dark:text-slate-500'
-              : 'text-slate-700 dark:text-slate-300 dark:text-slate-600'
+              : 'text-slate-700 dark:text-slate-300 dark:text-slate-400'
           }`}
         >
           <Calendar size={12} />
@@ -172,7 +172,7 @@ export const TaskRow: React.FC<TaskRowProps> = ({
           </div>
         ) : (
           <div
-            className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-600"
+            className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-medium text-slate-500 dark:text-slate-400 dark:text-slate-400"
             title="Unassigned"
           >
             <User size={10} />

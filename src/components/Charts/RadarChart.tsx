@@ -54,15 +54,15 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
       <p className="font-medium text-white text-sm mb-2">{data.axis}</p>
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-slate-400 dark:text-slate-500 text-xs">Aktualny:</span>
+          <span className="text-slate-600 dark:text-slate-500 text-xs">Aktualny:</span>
           <span className="text-blue-400 font-semibold">{data.current.toFixed(1)}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="text-slate-400 dark:text-slate-500 text-xs">Docelowy:</span>
+          <span className="text-slate-600 dark:text-slate-500 text-xs">Docelowy:</span>
           <span className="text-emerald-400 font-semibold">{data.target.toFixed(1)}</span>
         </div>
         <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-700">
-          <span className="text-slate-400 dark:text-slate-500 text-xs">Luka:</span>
+          <span className="text-slate-600 dark:text-slate-500 text-xs">Luka:</span>
           <span
             className={`font-semibold ${data.target - data.current > 0 ? 'text-amber-400' : 'text-emerald-400'}`}
           >
@@ -113,7 +113,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
       <div className="absolute top-0 left-0 z-10 flex gap-4 text-xs">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: currentColor }} />
-          <span className="text-slate-400 dark:text-slate-500">Średnia:</span>
+          <span className="text-slate-600 dark:text-slate-500">Średnia:</span>
           <span className="font-semibold text-white">{overallCurrent.toFixed(1)}</span>
         </div>
         {showTarget && (
@@ -122,7 +122,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               className="w-3 h-3 rounded-full border-2"
               style={{ borderColor: targetColor, backgroundColor: 'transparent' }}
             />
-            <span className="text-slate-400 dark:text-slate-500">Cel:</span>
+            <span className="text-slate-600 dark:text-slate-500">Cel:</span>
             <span className="font-semibold text-white">{overallTarget.toFixed(1)}</span>
           </div>
         )}
@@ -181,7 +181,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
           {showLegend && (
             <Legend
               wrapperStyle={{ paddingTop: 20 }}
-              formatter={(value) => <span className="text-slate-300 text-sm">{value}</span>}
+              formatter={(value) => <span className="text-slate-600 text-sm">{value}</span>}
             />
           )}
         </RechartsRadarChart>

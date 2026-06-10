@@ -7,8 +7,10 @@
 import {
   AlertTriangle,
   BarChart3,
+  CheckCircle2,
   ChevronDown,
   DollarSign,
+  Lock,
   Maximize2,
   MoreVertical,
   Plus,
@@ -19,6 +21,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
@@ -79,7 +82,7 @@ function normalizePortfolioSummary(
 }
 
 const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }> = {
-  'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
+  'on-track': { bg: 'bg-slate-500/10', text: 'text-slate-600', dot: 'bg-slate-400' },
   below: { bg: 'bg-rose-500/10', text: 'text-rose-400', dot: 'bg-rose-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
 };
@@ -93,6 +96,39 @@ function deriveROIStatus(item: ROIInitiativeItem): ROIStatus {
   if (pct > 10) return 'above';
   if (pct < -10) return 'below';
   return 'on-track';
+}
+
+/**
+ * ROI assumption lock state derived from the initiative lifecycle status.
+ * Once an initiative reaches a terminal lifecycle status its ROI assumptions are
+ * frozen as benefits-realization evidence — they must not be edited in place.
+ * `approved` reflects a formal sign-off; `locked` reflects a terminal/closed
+ * lifecycle. This mirrors the backend definition/target lock in resultsROIService.
+ */
+export type ROILockState = 'open' | 'locked' | 'approved';
+
+const ROI_APPROVED_STATUSES = new Set(['APPROVED', 'SIGNED_OFF', 'TRACKING', 'REALIZED']);
+const ROI_LOCKED_STATUSES = new Set([
+  'COMPLETED',
+  'DONE',
+  'CLOSED',
+  'ARCHIVED',
+  'CANCELLED',
+  'FINALIZED',
+  'LOCKED',
+]);
+
+export function deriveROILockState(status: string | null | undefined): ROILockState {
+  const normalized = String(status || '')
+    .trim()
+    .toUpperCase();
+  if (ROI_LOCKED_STATUSES.has(normalized)) return 'locked';
+  if (ROI_APPROVED_STATUSES.has(normalized)) return 'approved';
+  return 'open';
+}
+
+function isRoiEditable(lockState: ROILockState): boolean {
+  return lockState === 'open';
 }
 
 function formatCurrency(value: number): string {
@@ -124,8 +160,10 @@ const ColumnFilterDropdown: React.FC<{
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className={`h-9 px-2 rounded-lg border border-navy-600 hover:bg-navy-700 transition-colors flex items-center gap-1 ${
-          activeValues.length > 0 ? 'text-primary-400 border-primary-500/40' : 'text-slate-500'
+        className={`h-8 px-2 rounded-lg border transition-colors flex items-center gap-1 ${
+          activeValues.length > 0
+            ? 'text-primary-600 dark:text-primary-400 border-primary-500/40'
+            : 'text-slate-500 border-slate-200/60 dark:border-navy-600 hover:bg-slate-100 dark:hover:bg-navy-700'
         }`}
       >
         <ChevronDown size={14} />
@@ -133,32 +171,32 @@ const ColumnFilterDropdown: React.FC<{
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-navy-800 border border-navy-700 rounded-lg shadow-xl overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-800 border border-slate-200/70 dark:border-navy-700 rounded-lg shadow-xl overflow-hidden">
             <div className="max-h-[200px] overflow-y-auto p-2">
               {options.map((o) => (
                 <label
                   key={o.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-navy-700 cursor-pointer"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-navy-700 cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={selected.includes(o.value)}
                     onChange={() => toggle(o.value)}
-                    className="rounded border-navy-600 bg-navy-800 text-primary-500 focus:ring-primary-500"
+                    className="rounded border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-primary-500 focus:ring-primary-500"
                   />
                   {o.color && <span className={`w-2 h-2 rounded-full ${o.color}`} />}
-                  <span className="text-sm text-slate-300">{o.label}</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300">{o.label}</span>
                 </label>
               ))}
             </div>
-            <div className="flex items-center justify-between p-2 border-t border-navy-700">
+            <div className="flex items-center justify-between p-2 border-t border-slate-200/60 dark:border-navy-700">
               <button
                 onClick={() => {
                   setSelected([]);
                   onApply([]);
                   setOpen(false);
                 }}
-                className="text-xs text-slate-500 hover:text-white transition-colors"
+                className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 Clear
               </button>
@@ -167,7 +205,7 @@ const ColumnFilterDropdown: React.FC<{
                   onApply(selected);
                   setOpen(false);
                 }}
-                className="h-9 px-3 text-xs font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 transition-colors"
+                className="h-8 px-3 text-xs font-medium rounded-full bg-primary-500 text-white hover:bg-primary-400 transition-colors"
               >
                 Apply
               </button>
@@ -191,11 +229,43 @@ const StatusBadge: React.FC<{ status: ROIStatus }> = ({ status }) => {
   );
 };
 
+const LockBadge: React.FC<{ lockState: ROILockState }> = ({ lockState }) => {
+  const { t } = useTranslation();
+  if (lockState === 'open') return null;
+  if (lockState === 'approved') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400"
+        title={t(
+          'results.roiAnalysis.approvedHint',
+          'Assumptions approved — editing is restricted'
+        )}
+      >
+        <CheckCircle2 size={12} />
+        {t('results.roiAnalysis.approved', 'Approved')}
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/15 text-slate-600"
+      title={t(
+        'results.roiAnalysis.lockedHint',
+        'Assumptions are finalized and locked for editing'
+      )}
+    >
+      <Lock size={12} />
+      {t('results.roiAnalysis.locked', 'Locked')}
+    </span>
+  );
+};
+
 export const ROIAnalysisView: React.FC = () => {
   const { t } = useTranslation();
   const [items, setItems] = useState<ROIInitiativeItem[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary['summary'] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [sortCol, setSortCol] = useState<string | null>('variance');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -204,6 +274,7 @@ export const ROIAnalysisView: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       let payload: {
         items: PortfolioSummary['items'];
@@ -230,6 +301,7 @@ export const ROIAnalysisView: React.FC = () => {
     } catch {
       setItems([]);
       setSummary(null);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -294,6 +366,11 @@ export const ROIAnalysisView: React.FC = () => {
     summary?.totalRealized ?? filteredItems.reduce((s, i) => s + i.realizedBenefit, 0);
   const totalVariance = summary?.totalVariance ?? filteredItems.reduce((s, i) => s + i.variance, 0);
   const variancePct = totalPlanned !== 0 ? (totalVariance / Math.abs(totalPlanned)) * 100 : 0;
+
+  const lockedCount = filteredItems.filter((i) => deriveROILockState(i.status) === 'locked').length;
+  const approvedCount = filteredItems.filter(
+    (i) => deriveROILockState(i.status) === 'approved'
+  ).length;
 
   const belowPlanCount = filteredItems.filter((i) => deriveROIStatus(i) === 'below').length;
   const anomalyMessage =
@@ -360,38 +437,67 @@ export const ROIAnalysisView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-slate-400">
-          <BarChart3 size={20} className="animate-pulse" />
-          <span className="text-sm">{t('common.loading', 'Loading...')}</span>
-        </div>
+      <div className="p-4">
+        <LoadingState variant="skeleton" rows={6} label={t('common.loading', 'Loading...')} />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-4">
+        <ErrorState
+          title={t('results.roiAnalysis.errorTitle', 'Could not load ROI analysis')}
+          message={t(
+            'results.roiAnalysis.errorMessage',
+            'The ROI portfolio could not be loaded. Please try again.'
+          )}
+          retry={fetchData}
+        />
       </div>
     );
   }
 
   return (
     <div className="p-4 space-y-4">
+      {/* Lock / approval governance banner */}
+      {(lockedCount > 0 || approvedCount > 0) && (
+        <div className="rounded-xl bg-slate-50 dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-3 flex flex-wrap items-center gap-3">
+          <Lock size={16} className="text-slate-600 shrink-0" />
+          <span className="text-sm text-slate-600 dark:text-slate-300">
+            {t(
+              'results.roiAnalysis.lockBanner',
+              '{{locked}} locked · {{approved}} approved — finalized assumptions are read-only',
+              { locked: lockedCount, approved: approvedCount }
+            )}
+          </span>
+        </div>
+      )}
       {/* Portfolio summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <DollarSign size={16} className="text-slate-400" />
+            <DollarSign size={16} className="text-slate-600" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roiAnalysis.totalPlanned', 'Total Planned Value')}
             </span>
           </div>
-          <p className="text-lg font-semibold text-white">{formatCurrency(totalPlanned)}</p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">
+            {formatCurrency(totalPlanned)}
+          </p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Target size={16} className="text-slate-400" />
+            <Target size={16} className="text-slate-600" />
             <span className="text-xs font-medium text-slate-500 uppercase">
               {t('results.roiAnalysis.totalRealized', 'Total Realized Value')}
             </span>
           </div>
-          <p className="text-lg font-semibold text-white">{formatCurrency(totalRealized)}</p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">
+            {formatCurrency(totalRealized)}
+          </p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-navy-900 to-navy-800 border border-navy-700 p-4">
+        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
           <div className="flex items-center gap-2 mb-1">
             {totalVariance >= 0 ? (
               <TrendingUp size={16} className="text-emerald-400" />
@@ -408,7 +514,7 @@ export const ROIAnalysisView: React.FC = () => {
                 ? 'text-emerald-400'
                 : totalVariance < 0
                   ? 'text-rose-400'
-                  : 'text-slate-400'
+                  : 'text-slate-600'
             }`}
           >
             {formatCurrency(totalVariance)} ({formatPercent(variancePct)})
@@ -424,15 +530,15 @@ export const ROIAnalysisView: React.FC = () => {
             <h4 className="text-sm font-medium text-amber-400">
               {t('results.roiAnalysis.anomalyTitle', 'AI-suggested insights')}
             </h4>
-            <p className="text-sm text-slate-300 mt-1">{anomalyMessage}</p>
+            <p className="text-sm text-slate-600 mt-1">{anomalyMessage}</p>
           </div>
         </div>
       )}
 
       {/* Waterfall/bar chart - initiative contributions sorted by variance */}
       {filteredItems.length > 0 && (
-        <div className="rounded-xl bg-navy-900 border border-navy-700 p-4">
-          <h3 className="text-sm font-medium text-slate-300 mb-3">
+        <div className="rounded-xl bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 p-4">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
             {t('results.roiAnalysis.contributionsChart', 'Initiative Contributions to ROI')}
           </h3>
           <div className="flex items-end gap-1 h-32">
@@ -466,15 +572,15 @@ export const ROIAnalysisView: React.FC = () => {
       )}
 
       {/* Initiative list table */}
-      <div className="bg-navy-900 border border-navy-700 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-navy-700 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-navy-900/50 border-b border-navy-700/50">
+              <tr className="bg-slate-50/80 dark:bg-navy-900/50 border-b border-slate-200/60 dark:border-navy-700/50">
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[20%]">
                   <button
                     onClick={() => handleSort('initiativeName')}
-                    className="hover:text-white transition-colors flex items-center gap-1"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1"
                   >
                     {t('results.roi.columns.initiative', 'Initiative')}
                     {sortCol === 'initiativeName' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
@@ -483,7 +589,7 @@ export const ROIAnalysisView: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
                   <button
                     onClick={() => handleSort('projectedBenefit')}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     {t('results.roiAnalysis.plannedRoi', 'Planned ROI')}
                     {sortCol === 'projectedBenefit' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
@@ -492,7 +598,7 @@ export const ROIAnalysisView: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[12%]">
                   <button
                     onClick={() => handleSort('realizedBenefit')}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     {t('results.roiAnalysis.realizedRoi', 'Realized ROI')}
                     {sortCol === 'realizedBenefit' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
@@ -501,7 +607,7 @@ export const ROIAnalysisView: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
                   <button
                     onClick={() => handleSort('variance')}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     {t('results.roi.columns.variance', 'Variance')}
                     {sortCol === 'variance' && (sortDir === 'asc' ? ' ↑' : ' ↓')}
@@ -518,19 +624,25 @@ export const ROIAnalysisView: React.FC = () => {
                   </div>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
+                  {t('results.roiAnalysis.columns.lock', 'Lock')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]">
                   {t('results.roi.columns.owner', 'Owner')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
-                  {t('common.actions', 'Actions')}
+                <th
+                  className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-16"
+                  aria-label="Row actions"
+                >
+                  <span className="sr-only">{t('common.actions', 'Actions')}</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-navy-700/50">
+            <tbody className="divide-y divide-slate-200/60 dark:divide-navy-700/50">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-16 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-2">
-                      <BarChart3 size={24} className="text-slate-400" />
+                      <BarChart3 size={24} className="text-slate-600" />
                       <span>{t('results.roi.emptyState', 'No initiatives with ROI data')}</span>
                     </div>
                   </td>
@@ -538,6 +650,8 @@ export const ROIAnalysisView: React.FC = () => {
               ) : (
                 filteredItems.map((item) => {
                   const roiStatus = deriveROIStatus(item);
+                  const lockState = deriveROILockState(item.status);
+                  const editable = isRoiEditable(lockState);
                   const varPct =
                     item.projectedBenefit !== 0
                       ? ((item.realizedBenefit - item.projectedBenefit) /
@@ -549,23 +663,23 @@ export const ROIAnalysisView: React.FC = () => {
                       ? 'text-emerald-400'
                       : varPct < 0
                         ? 'text-rose-400'
-                        : 'text-slate-400';
+                        : 'text-slate-600';
 
                   return (
                     <tr
                       key={item.initiativeId}
                       onClick={() => setDrawerInitiativeId(item.initiativeId)}
-                      className="group hover:bg-navy-800/50 cursor-pointer transition-colors"
+                      className="group hover:bg-slate-50/80 dark:hover:bg-navy-800/50 cursor-pointer transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <span className="text-sm font-medium text-white">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
                           {item.initiativeName || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                         {formatCurrency(item.projectedBenefit)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-300">
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                         {formatCurrency(item.realizedBenefit)}
                       </td>
                       <td className={`px-4 py-3 text-sm font-medium ${varColor}`}>
@@ -573,6 +687,13 @@ export const ROIAnalysisView: React.FC = () => {
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={roiStatus} />
+                      </td>
+                      <td className="px-4 py-3">
+                        {lockState === 'open' ? (
+                          <span className="text-xs text-slate-600">—</span>
+                        ) : (
+                          <LockBadge lockState={lockState} />
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-500">{item.ownerName || '—'}</td>
                       <td className="px-4 py-3 text-right">
@@ -584,7 +705,7 @@ export const ROIAnalysisView: React.FC = () => {
                                 menuRowId === item.initiativeId ? null : item.initiativeId
                               );
                             }}
-                            className="p-1.5 rounded hover:bg-navy-700 text-slate-500 hover:text-white transition-colors h-9"
+                            className="h-8 w-8 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                           >
                             <MoreVertical size={14} />
                           </button>
@@ -594,25 +715,39 @@ export const ROIAnalysisView: React.FC = () => {
                                 className="fixed inset-0 z-40"
                                 onClick={() => setMenuRowId(null)}
                               />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-navy-800 border border-navy-700 rounded-lg shadow-xl overflow-hidden">
+                              <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white dark:bg-navy-800 border border-slate-200/70 dark:border-navy-700 rounded-lg shadow-xl overflow-hidden">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleRowAction('open', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                                 >
                                   <Maximize2 size={14} />
                                   {t('results.roi.actions.openDetail', 'Open detail')}
                                 </button>
                                 <button
+                                  disabled={!editable}
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    if (!editable) return;
                                     handleRowAction('record', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  title={
+                                    editable
+                                      ? undefined
+                                      : t(
+                                          'results.roiAnalysis.lockedActionHint',
+                                          'Assumptions are finalized — editing is blocked'
+                                        )
+                                  }
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${
+                                    editable
+                                      ? 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
+                                      : 'text-slate-600 dark:text-slate-400 cursor-not-allowed'
+                                  }`}
                                 >
-                                  <Plus size={14} />
+                                  {editable ? <Plus size={14} /> : <Lock size={14} />}
                                   {t('results.roi.actions.recordActual', 'Record actual')}
                                 </button>
                                 <button
@@ -620,7 +755,7 @@ export const ROIAnalysisView: React.FC = () => {
                                     e.stopPropagation();
                                     handleRowAction('history', item);
                                   }}
-                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:bg-navy-700"
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
                                 >
                                   {t('results.roi.actions.viewHistory', 'View history')}
                                 </button>
@@ -644,6 +779,9 @@ export const ROIAnalysisView: React.FC = () => {
           initiativeName={
             items.find((i) => i.initiativeId === drawerInitiativeId)?.initiativeName || ''
           }
+          lockState={deriveROILockState(
+            items.find((i) => i.initiativeId === drawerInitiativeId)?.status
+          )}
           onClose={() => setDrawerInitiativeId(null)}
           onSaved={fetchData}
         />

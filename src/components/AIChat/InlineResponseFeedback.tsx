@@ -31,6 +31,7 @@ interface InlineResponseFeedbackProps {
   screenContext?: string;
   onFeedback: (feedback: ResponseFeedback) => void;
   compact?: boolean;
+  thumbsOnly?: boolean;
 }
 
 type LengthFeedback = 'too-short' | 'just-right' | 'too-long';
@@ -48,6 +49,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
   screenContext,
   onFeedback,
   compact = false,
+  thumbsOnly = false,
 }) => {
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
@@ -68,6 +70,11 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
 
   const handleInitialRating = (r: 'positive' | 'negative') => {
     setRating(r);
+
+    if (thumbsOnly) {
+      submitFeedback(r);
+      return;
+    }
 
     // C8.1 / C8.2: Both positive and negative feedback show detail options
     if (r === 'positive') {
@@ -133,7 +140,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
     <div className="space-y-1">
       <span className="text-[10px] text-slate-500 dark:text-slate-400">{label}</span>
       <div className="flex items-center gap-1">
-        <span className="text-[9px] text-slate-400 w-12">{lowLabel}</span>
+        <span className="text-[9px] text-slate-600 w-12">{lowLabel}</span>
         <div className="flex gap-0.5 flex-1 justify-center">
           {[1, 2, 3, 4, 5].map((n) => (
             <button
@@ -149,7 +156,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
             </button>
           ))}
         </div>
-        <span className="text-[9px] text-slate-400 w-12 text-right">{highLabel}</span>
+        <span className="text-[9px] text-slate-600 w-12 text-right">{highLabel}</span>
       </div>
     </div>
   );
@@ -174,7 +181,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
             className={`p-1 rounded transition-colors ${
               rating === 'positive'
                 ? 'bg-green-100 dark:bg-green-900/30 text-green-500'
-                : 'hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-400 dark:text-slate-500 hover:text-green-500'
+                : 'hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-600 dark:text-slate-500 hover:text-green-500'
             }`}
             title={t('aiChat.actions.helpful', 'Pomocne')}
           >
@@ -182,7 +189,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
           </button>
           <button
             onClick={() => handleInitialRating('negative')}
-            className="p-1 rounded transition-colors hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 dark:text-slate-500 hover:text-rose-500"
+            className="p-1 rounded transition-colors hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-600 dark:text-slate-500 hover:text-rose-500"
             title={t('aiChat.actions.notHelpful', 'Niepomocne')}
           >
             <ThumbsDown size={12} />
@@ -208,7 +215,7 @@ export const InlineResponseFeedback: React.FC<InlineResponseFeedbackProps> = ({
             setShowDetails(false);
             setShowAdvanced(false);
           }}
-          className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+          className="text-[10px] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
         >
           {t('common.cancel', 'Anuluj')}
         </button>

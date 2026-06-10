@@ -172,13 +172,13 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
-            <ChevronLeft size={16} className="text-slate-400" />
+            <ChevronLeft size={16} className="text-slate-600" />
           </button>
           <Webhook size={18} className="text-indigo-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
             {isPl ? 'Webhook Relay' : 'Webhook Relays'}
             {relays.length > 0 && (
-              <span className="text-slate-400 font-normal ml-1">({relays.length})</span>
+              <span className="text-slate-600 font-normal ml-1">({relays.length})</span>
             )}
           </h3>
         </div>
@@ -194,7 +194,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 size={20} className="animate-spin text-slate-400" />
+          <Loader2 size={20} className="animate-spin text-slate-600" />
         </div>
       )}
 
@@ -202,7 +202,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
       {!loading && relays.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="rounded-2xl bg-slate-100 dark:bg-navy-800 p-4 mb-4">
-            <Webhook size={28} className="text-slate-400 dark:text-slate-500" />
+            <Webhook size={28} className="text-slate-600 dark:text-slate-500" />
           </div>
           <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             {isPl ? 'Brak skonfigurowanych webhooków' : 'No webhook relays configured'}
@@ -242,7 +242,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                     {relay.name}
                   </span>
                   {!relay.is_active && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600">
                       {isPl ? 'Wył.' : 'Off'}
                     </span>
                   )}
@@ -252,7 +252,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                     {truncateUrl(relay.target_url)}
                   </span>
                 </div>
-                <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-600 dark:text-slate-500">
                   <span>
                     {isPl ? 'Ostatnio:' : 'Last:'} {formatTime(relay.last_triggered_at)}
                   </span>
@@ -264,7 +264,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
               <div className="relative flex-shrink-0">
                 <button
                   onClick={() => setMenuOpen(menuOpen === relay.id ? null : relay.id)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 >
                   <MoreHorizontal size={16} />
                 </button>
@@ -311,7 +311,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                           setEditingRelay(relay);
                         }}
                       />
-                      <div className="my-1 border-t border-slate-100 dark:border-navy-800" />
+                      <div className="my-1 border-t border-slate-200 dark:border-navy-800" />
                       <MenuBtn
                         icon={<Trash2 size={13} />}
                         label={isPl ? 'Usuń' : 'Delete'}
@@ -411,7 +411,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
           onClick={onBack}
           className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
-          <ChevronLeft size={16} className="text-slate-400" />
+          <ChevronLeft size={16} className="text-slate-600" />
         </button>
         <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
           {relay
@@ -465,7 +465,7 @@ const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSa
             autoComplete="off"
             className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
           />
-          <p className="mt-1 text-[10px] text-slate-400">
+          <p className="mt-1 text-[10px] text-slate-600">
             {isPl
               ? 'Nagłówek X-Consultify-Signature zostanie dodany do żądań.'
               : 'X-Consultify-Signature header will be added to requests.'}

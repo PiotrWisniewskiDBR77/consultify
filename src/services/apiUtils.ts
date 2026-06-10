@@ -1,3 +1,8 @@
+import {
+  dispatchAccessBlocked,
+  getAccessBlockedCode,
+  isAccessBlockedCode,
+} from '../utils/accessBlocked';
 import { tokenService } from './tokenService';
 
 export const API_URL = '/api';
@@ -69,6 +74,14 @@ export const handleResponse = async (res: Response, defaultError: string) => {
       scope: data.budgetStatus?.scope || 'Global',
     });
     throw new Error(data.error || 'AI Budget Exhausted');
+  }
+
+  if (res.status === 403) {
+    const code = getAccessBlockedCode(data);
+    if (isAccessBlockedCode(code)) {
+      dispatchAccessBlocked(data, data.error || data.message || defaultError);
+      throw new Error(data.error || data.message || defaultError);
+    }
   }
 
   throw new Error(data.error || data.message || defaultError);

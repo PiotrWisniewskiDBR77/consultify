@@ -7,7 +7,6 @@
 
 import {
   BookTemplate,
-  CircleHelp,
   FileText,
   Filter,
   Inbox,
@@ -22,9 +21,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
+import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
@@ -35,7 +34,9 @@ import {
   MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
+  MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
@@ -66,11 +67,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const location = useLocation();
   const openChatWithContext = useOpenChatWithContext();
   const isPolish = i18n.language?.startsWith('pl');
-  const {
-    setOpen: setHelpOpen,
-    setActiveTab: setHelpTab,
-    setKnowledgeModuleIdOverride,
-  } = useHelpSidePanel();
 
   const { initialTab, initialArtifactId } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
@@ -102,12 +98,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     }
   }, [location.pathname, location.search, navigate]);
-
-  const openContextualHelp = useCallback(() => {
-    setKnowledgeModuleIdOverride(activeTab === 'templates' ? 'templates' : 'outputs');
-    setHelpTab('knowledge');
-    setHelpOpen(true);
-  }, [activeTab, setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('reports_presentations');
@@ -696,7 +686,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     );
   }, [activeFilters, activeTab, filtersOpen, setSinglePreset, t, toggleFilter]);
 
-  const commandRowContent = useMemo(() => {
+  const commandRowLeftSlot = useMemo(() => {
     const chipBase = '';
     const chipActive = MENU_3_CHIP_ACTIVE;
     const chipInactive = MENU_3_CHIP_INACTIVE;
@@ -901,18 +891,25 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     templates,
   ]);
 
-  const commandRowRightContent = useMemo(
+  // Document Studio is a Wave-2 format-lane. On public production where non-core
+  // modules are hidden, do NOT surface its entry point (avoids leading the paid
+  // path to a blocked module view — no "coming soon" in the hub).
+  const documentStudioAvailable = useMemo(() => !shouldHideNonCoreModulesInPublicProduction(), []);
+
+  const commandRowRightSlot = useMemo(
     () => (
       <>
-        <button
-          type="button"
-          onClick={() => navigate('/document-studio')}
-          className={`${getMenu3AiButtonClass(false)} !border-sky-300/60 !bg-sky-500/10 !text-sky-800 dark:!border-sky-400/30 dark:!bg-sky-500/20 dark:!text-sky-200`}
-          title={t('rap.actions.newDocumentStudio', 'New AI document (Document Studio)')}
-        >
-          <Plus size={12} />
-          <span>{t('rap.actions.newDocumentStudio', 'New AI document')}</span>
-        </button>
+        {documentStudioAvailable ? (
+          <button
+            type="button"
+            onClick={() => navigate('/document-studio')}
+            className={`${getMenu3AiButtonClass(false)} !border-sky-300/60 !bg-sky-500/10 !text-sky-800 dark:!border-sky-400/30 dark:!bg-sky-500/20 dark:!text-sky-200`}
+            title={t('rap.actions.newDocumentStudio', 'New AI document (Document Studio)')}
+          >
+            <Plus size={12} />
+            <span>{t('rap.actions.newDocumentStudio', 'New AI document')}</span>
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() =>
@@ -939,12 +936,25 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     [
       activeFilters.length,
       activeTab,
+      documentStudioAvailable,
       navigate,
       openChatWithContext,
       openDocuments.length,
       t,
       viewMode,
     ]
+  );
+
+  // Canonical Menu 3: one flex row (MENU_3_INNER_CLASS = flex items-center justify-between).
+  // ModuleNavBar voids commandRowRightContent; merge both sides into commandRowContent.
+  const commandRowContent = useMemo(
+    () => (
+      <div className={MENU_3_INNER_CLASS}>
+        {commandRowLeftSlot}
+        <div className={MENU_3_RIGHT_CLASS}>{commandRowRightSlot}</div>
+      </div>
+    ),
+    [commandRowLeftSlot, commandRowRightSlot]
   );
 
   const handleShowList = useCallback(() => {
@@ -1074,21 +1084,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         onNewItem={activeTab === 'outputs_sheets' ? undefined : handleNewItem}
         newItemLabel={ctaLabels[activeTab]}
         availableViewModes={['table', 'grid']}
-        toolControl={
-          <button
-            type="button"
-            onClick={openContextualHelp}
-            className="inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-            data-testid="contextual-help-entry-outputs"
-            title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
-          >
-            <CircleHelp size={16} />
-            <span>{t('help.entrypoint.contextual', 'Help')}</span>
-          </button>
-        }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
-        commandRowRightContent={commandRowRightContent}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>
       </ModuleHub>

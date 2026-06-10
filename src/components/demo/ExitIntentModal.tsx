@@ -73,7 +73,7 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
             {/* Content */}
             <div className="p-8 md:p-10">
               {/* Icon */}
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-xl flex items-center justify-center mb-6 mx-auto shadow-lg shadow-primary-500/30">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-crimson-600 rounded-xl flex items-center justify-center mb-6 mx-auto shadow-lg shadow-primary-500/30">
                 <Sparkles size={32} className="text-white" />
               </div>
 
@@ -108,7 +108,7 @@ export const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ isOpen, onClos
               <div className="flex flex-col gap-3">
                 <button
                   onClick={handleScheduleDemo}
-                  className="w-full py-4 px-6 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 group"
+                  className="w-full py-4 px-6 bg-gradient-to-r from-primary-600 to-crimson-600 hover:from-primary-500 hover:to-crimson-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 group"
                 >
                   <Calendar size={18} />
                   {t('demo.exit.scheduleDemo', 'Schedule a Personal Demo')}

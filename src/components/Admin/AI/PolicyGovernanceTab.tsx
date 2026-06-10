@@ -25,6 +25,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
 import { ProactivitySelector, SettingsCard } from '../../AISettings';
@@ -36,7 +38,7 @@ const POLICY_LEVELS = [
     title: 'Advisory',
     description: 'AI can only explain and suggest. No modifications.',
     icon: MessageSquare,
-    color: 'text-slate-400 dark:text-slate-500',
+    color: 'text-slate-600 dark:text-slate-500',
     bgColor: 'from-slate-700 to-slate-800',
   },
   {
@@ -148,11 +150,7 @@ export const PolicyGovernanceTab: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="h-64 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -184,7 +182,7 @@ export const PolicyGovernanceTab: React.FC = () => {
             className={`flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all ${
               hasChanges
                 ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20'
-                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

@@ -144,7 +144,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-slate-900 dark:text-white truncate">{displayName}</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{roleDisplay}</p>
-          <div className="flex items-center gap-1 mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-1 mt-1 text-xs text-slate-600 dark:text-slate-500">
             <Clock className="w-3 h-3" />
             <span>{localTime} local time</span>
           </div>
@@ -166,7 +166,7 @@ export const QuickProfileCard: React.FC<QuickProfileCardProps> = ({
                   {t(`settings.status.${presenceStatus}`, statusConfig[presenceStatus].label)}
                 </span>
               </div>
-              <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <ChevronDown className="w-4 h-4 text-slate-600 dark:text-slate-500" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">

@@ -84,7 +84,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
 
       {/* AI Narrative */}
       {report.aiNarrative && (
-        <div className="bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-4">
+        <div className="bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl border border-primary-200 dark:border-primary-500/20 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles size={16} className="text-primary-500" />
             <span className="text-sm font-semibold text-primary-700 dark:text-primary-300">
@@ -228,7 +228,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
       {/* Project Breakdown (for portfolio reports) */}
       {content.projectBreakdown && content.projectBreakdown.length > 0 && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100 dark:border-navy-700">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700">
             <h3 className="font-semibold text-navy-900 dark:text-white">Project Breakdown</h3>
           </div>
           <div className="overflow-x-auto">
@@ -252,7 +252,7 @@ export const TeamMeetingReport: React.FC<TeamMeetingReportProps> = ({ report, cl
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                 {content.projectBreakdown.map((project) => (
                   <tr key={project.projectId} className="hover:bg-slate-50 dark:hover:bg-white/5">
                     <td className="px-4 py-3 font-medium text-navy-900 dark:text-white">

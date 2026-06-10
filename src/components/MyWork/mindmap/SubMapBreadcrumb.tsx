@@ -32,7 +32,7 @@ export const SubMapBreadcrumb: React.FC<SubMapBreadcrumbProps> = ({ path, onNavi
 
       {path.map((item, idx) => (
         <React.Fragment key={item.nodeId}>
-          <ChevronRight size={12} className="text-slate-400 shrink-0" />
+          <ChevronRight size={12} className="text-slate-600 shrink-0" />
           {idx < path.length - 1 ? (
             <button
               onClick={() => onNavigate(item.nodeId)}

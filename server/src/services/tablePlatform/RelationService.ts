@@ -567,11 +567,11 @@ const relationService = {
     try {
       const linksFrom = await db.query(
         `SELECT DISTINCT from_record_id FROM tp_record_links WHERE from_record_id = $1 OR to_record_id = $1`,
-        [recordId, recordId]
+        [recordId]
       );
       const linksTo = await db.query(
         `SELECT DISTINCT to_record_id, from_record_id FROM tp_record_links WHERE from_record_id = $1 OR to_record_id = $1`,
-        [recordId, recordId]
+        [recordId]
       );
 
       const affected = new Set<string>();

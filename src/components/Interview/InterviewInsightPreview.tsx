@@ -5,14 +5,12 @@
  * Uses shared building blocks from @/components/shared/PreviewPane.
  */
 
-import { ChevronDown, ChevronRight, Copy, Send, Sparkles } from 'lucide-react';
+import { ChevronDown, Copy, Download, Send, Sparkles } from 'lucide-react';
 import React from 'react';
 
 import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import {
-  type ActionRow,
   type MetaPill,
-  PreviewActionBar,
   PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
@@ -35,6 +33,7 @@ export interface InterviewInsightPreviewBodyProps {
     createdAt?: string;
     sessionId?: string;
     sourceSessionCount?: number;
+    exportedToTools?: boolean;
   };
   isPolish: boolean;
   typeLabel: string;
@@ -46,7 +45,6 @@ export interface InterviewInsightPreviewBodyProps {
   detailsExpanded: boolean;
   onToggleDetailsExpanded: () => void;
   onDetailsAction: (action: string) => void;
-  showActionPanel?: boolean;
 }
 
 export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyProps> = ({
@@ -61,7 +59,6 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
   detailsExpanded,
   onToggleDetailsExpanded,
   onDetailsAction,
-  showActionPanel = false,
 }) => {
   const pills: MetaPill[] = [
     {
@@ -127,24 +124,27 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
             icon: Sparkles,
             onClick: () => onDetailsAction('copy-summarize-prompt'),
           },
+          {
+            id: 'export-tools',
+            label: insight.exportedToTools
+              ? isPolish
+                ? 'W Tools'
+                : 'In Tools'
+              : isPolish
+                ? 'Eksport do Tools'
+                : 'Export to Tools',
+            icon: Send,
+            onClick: () => onDetailsAction('export-tools'),
+            disabled: !!insight.exportedToTools,
+          },
+          {
+            id: 'download',
+            label: isPolish ? 'Pobierz (.md)' : 'Download (.md)',
+            icon: Download,
+            onClick: () => onDetailsAction('download'),
+          },
         ]}
       />
-      {showActionPanel && (
-        <ArtifactActionPanel
-          variant="compact"
-          isPolish={isPolish}
-          source={{
-            type: 'interview_insight',
-            id: insight.id,
-            title: insight.title || (isPolish ? 'Insight' : 'Insight'),
-            status: insight.status,
-            content: detailsText,
-            confidence: insight.confidence || null,
-            evidenceCount: 0,
-            sourceSessionCount: insight.sourceSessionCount || (insight.sessionId ? 1 : 0),
-          }}
-        />
-      )}
     </div>
   );
 };
@@ -153,75 +153,54 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
 
 export interface InterviewInsightPreviewFooterProps {
   insight: {
-    exportedToTools?: boolean;
-    exportedToAssessment?: boolean;
+    id?: string;
     title?: string;
+    status?: string;
+    content?: string;
+    description?: string;
+    sourceQuote?: string;
+    confidence?: string;
+    sourceSessionCount?: number;
+    sessionId?: string;
   };
   isPolish: boolean;
-  onOpenFull: () => void;
-  onExportToTools?: () => void;
-  onCopyLink?: () => void;
+  /** Show the compact "What next" create-strip below the AI hints (default true). */
+  showActionPanel?: boolean;
 }
 
 export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFooterProps> = ({
   insight,
   isPolish,
-  onOpenFull,
-  onExportToTools,
-  onCopyLink,
+  showActionPanel = true,
 }) => {
-  const buttons: ActionRow['buttons'] = [
-    {
-      label: isPolish ? 'Otwórz' : 'Open',
-      icon: ChevronRight,
-      onClick: onOpenFull,
-      colorScheme: 'primary',
-      shortcut: 'O',
-    },
-  ];
-
-  if (onExportToTools) {
-    buttons.push({
-      label: insight?.exportedToTools
-        ? isPolish
-          ? 'W Tools'
-          : 'In Tools'
-        : isPolish
-          ? 'Eksport: Tools'
-          : 'Export: Tools',
-      icon: Send,
-      onClick: onExportToTools,
-      colorScheme: 'neutral',
-      disabled: !!insight?.exportedToTools,
-    });
-  }
-
-  if (onCopyLink) {
-    buttons.push({
-      label: isPolish ? 'Kopiuj link' : 'Copy link',
-      icon: Copy,
-      onClick: onCopyLink,
-      colorScheme: 'neutral',
-    });
-  }
-
   const aiHints = isPolish
     ? ['Podsumuj wniosek', 'Zasugeruj działania']
     : ['Summarize insight', 'Suggest actions'];
 
+  // Canon §7.3: footer = AI → (Relations) → "What next" (create). The primary "Open" lives in the
+  // header and Export/Download in the Details ⋮ — no redundant bottom action bar. Consistent
+  // minimal gap between sections (space-y-2.5), no heavy dividers between bordered cards.
   return (
-    <div className="space-y-0">
+    <div className="space-y-2.5 pb-1">
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
         <PreviewAIHintStrip hints={aiHints} />
       </div>
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
-      <PreviewActionBar
-        rows={[
-          {
-            buttons,
-          },
-        ]}
-      />
+      {showActionPanel && (
+        <ArtifactActionPanel
+          variant="compact"
+          isPolish={isPolish}
+          source={{
+            type: 'interview_insight',
+            id: insight.id || '',
+            title: insight.title || (isPolish ? 'Insight' : 'Insight'),
+            status: insight.status,
+            content: insight.content || insight.description || insight.sourceQuote || '',
+            confidence: insight.confidence || null,
+            evidenceCount: 0,
+            sourceSessionCount: insight.sourceSessionCount || (insight.sessionId ? 1 : 0),
+          }}
+        />
+      )}
     </div>
   );
 };

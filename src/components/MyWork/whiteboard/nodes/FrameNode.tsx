@@ -91,7 +91,7 @@ export const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
         )}
       </div>
       {collapsed && (
-        <div className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+        <div className="text-[10px] text-slate-600 dark:text-slate-500 italic">
           {childCount > 0 ? `${childCount} item${childCount !== 1 ? 's' : ''} hidden` : 'Empty'}
         </div>
       )}

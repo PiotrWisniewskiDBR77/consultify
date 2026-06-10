@@ -98,7 +98,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
         <h2 className="text-sm font-bold text-slate-800 dark:text-white">
           {isPl ? 'Mapa ciepła aktywności' : 'Activity Heatmap'}
         </h2>
-        <span className="text-[10px] text-slate-400 ml-auto">
+        <span className="text-[10px] text-slate-600 ml-auto">
           {totalActivity} {isPl ? 'akcji w 30 dni' : 'actions in 30 days'}
         </span>
       </div>
@@ -109,7 +109,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
           <div className="mb-6">
             <div className="flex gap-1 mb-2">
               {weekDays.map((d) => (
-                <div key={d} className="w-8 text-center text-[8px] text-slate-400 font-bold">
+                <div key={d} className="w-8 text-center text-[8px] text-slate-600 font-bold">
                   {d}
                 </div>
               ))}
@@ -118,7 +118,7 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
               {days.map((day) => (
                 <div
                   key={day.date}
-                  className={`w-8 h-8 rounded-md ${INTENSITY_COLORS[day.intensity]} flex items-center justify-center text-[8px] font-medium transition-colors cursor-default ${day.count > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600'}`}
+                  className={`w-8 h-8 rounded-md ${INTENSITY_COLORS[day.intensity]} flex items-center justify-center text-[8px] font-medium transition-colors cursor-default ${day.count > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}
                   title={`${day.date}: ${day.count} ${isPl ? 'akcji' : 'actions'}`}
                 >
                   {day.dayLabel}
@@ -129,11 +129,11 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
 
           {/* Legend */}
           <div className="flex items-center gap-2 mb-6">
-            <span className="text-[9px] text-slate-400">{isPl ? 'Mniej' : 'Less'}</span>
+            <span className="text-[9px] text-slate-600">{isPl ? 'Mniej' : 'Less'}</span>
             {INTENSITY_COLORS.map((c, i) => (
               <div key={i} className={`w-4 h-4 rounded-sm ${c}`} />
             ))}
-            <span className="text-[9px] text-slate-400">{isPl ? 'Więcej' : 'More'}</span>
+            <span className="text-[9px] text-slate-600">{isPl ? 'Więcej' : 'More'}</span>
           </div>
 
           {/* Activity type breakdown */}

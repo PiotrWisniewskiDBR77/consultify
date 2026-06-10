@@ -45,8 +45,8 @@ interface TaskListSectionProps {
 const variantStyles = {
   default: {
     container: 'bg-white dark:bg-navy-900',
-    itemBorder: 'border-slate-100 dark:border-navy-700',
-    icon: <Circle size={16} className="text-slate-400 dark:text-slate-500" />,
+    itemBorder: 'border-slate-200 dark:border-navy-700',
+    icon: <Circle size={16} className="text-slate-600 dark:text-slate-500" />,
   },
   completed: {
     container: 'bg-emerald-50/50 dark:bg-emerald-900/10',
@@ -107,9 +107,9 @@ export const TaskListSection: React.FC<TaskListSectionProps> = ({
       </div>
 
       {/* Items */}
-      <div className="divide-y divide-slate-100 dark:divide-white/5">
+      <div className="divide-y divide-slate-200 dark:divide-white/5">
         {displayItems.length === 0 ? (
-          <div className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">
+          <div className="px-4 py-8 text-center text-slate-600 dark:text-slate-500">
             {emptyMessage}
           </div>
         ) : (

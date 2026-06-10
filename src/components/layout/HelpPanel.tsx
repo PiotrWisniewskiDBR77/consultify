@@ -289,7 +289,7 @@ const HelpPanel: React.FC<HelpPanelProps> = ({ isOpen, onClose }) => {
               {/* Empty State */}
               {playbooks.length === 0 && (
                 <div className="text-center py-8">
-                  <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <BookOpen className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-500 dark:text-gray-400">No help topics available</p>
                 </div>
               )}
@@ -333,7 +333,7 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onClick, onDismis
             <p className="text-xs text-blue-500 mt-1">{t(playbook.recommendationReason)}</p>
           )}
         </div>
-        <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-colors" />
+        <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-colors" />
       </div>
 
       {/* Dismiss button */}
@@ -346,7 +346,7 @@ const PlaybookCard: React.FC<PlaybookCardProps> = ({ playbook, onClick, onDismis
           className="absolute top-2 right-8 opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 dark:bg-navy-800 dark:hover:bg-gray-700 rounded transition-all"
           title={t('help.panel.dismiss')}
         >
-          <XCircle className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500" />
+          <XCircle className="w-4 h-4 text-gray-600 dark:text-gray-500 dark:text-gray-400 hover:text-rose-500" />
         </button>
       )}
     </div>

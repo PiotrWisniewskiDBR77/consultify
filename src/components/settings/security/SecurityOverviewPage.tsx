@@ -43,7 +43,6 @@ interface SecurityOverviewPageProps {
 }
 
 interface SecurityStatus {
-  passwordStrength: 'strong' | 'medium' | 'weak' | 'unknown';
   passwordLastChanged?: string;
   mfaEnabled: boolean;
   mfaMethod?: string;
@@ -73,7 +72,6 @@ interface MfaStatusResponse {
 }
 
 const DEFAULT_STATUS: SecurityStatus = {
-  passwordStrength: 'unknown',
   mfaEnabled: false,
   activeSessions: 1,
   recoveryEmail: false,
@@ -111,7 +109,6 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       const mfa = mfaRes as MfaStatusResponse;
 
       setStatus({
-        passwordStrength: 'medium',
         mfaEnabled: currentUser?.mfaEnabled || mfa.isEnabled || false,
         mfaMethod: mfa.method || 'totp',
         activeSessions: sessions.length,
@@ -134,14 +131,15 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   }, [currentUser.id, loadSecurityData]);
 
   const securityScore = useMemo(() => {
+    // Score is computed only from real, verifiable signals. Password strength
+    // for an already-set password is not available client-side, so it is not
+    // factored in (no fabricated value).
     let score = 0;
     const maxScore = 5;
 
-    if (status.passwordStrength === 'strong') score += 1;
-    else if (status.passwordStrength === 'medium') score += 0.5;
-    if (status.mfaEnabled) score += 1.5;
-    if (status.recoveryEmail) score += 0.5;
-    if (status.recoveryPhone) score += 0.5;
+    if (status.mfaEnabled) score += 2.5;
+    if (status.recoveryEmail) score += 0.75;
+    if (status.recoveryPhone) score += 0.75;
     if (status.backupCodes) score += 1;
 
     return { score: Math.min(score, maxScore), maxScore };
@@ -186,20 +184,15 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       id: 'password',
       icon: Key,
       title: t('settings.securityOverview.password', 'Password'),
-      status: status.passwordStrength !== 'weak',
-      statusLabel:
-        status.passwordStrength === 'strong'
-          ? t('settings.securityOverview.strong', 'Strong')
-          : status.passwordStrength === 'medium'
-            ? t('settings.securityOverview.medium', 'Medium')
-            : t('settings.securityOverview.weak', 'Weak'),
+      status: true,
+      statusLabel: t('settings.securityOverview.passwordSet', 'Set'),
       description: status.passwordLastChanged
         ? t('settings.securityOverview.lastChanged', 'Last changed {{date}}', {
             date: new Date(status.passwordLastChanged).toLocaleDateString(),
           })
         : t('settings.securityOverview.updateRegularly', 'Update regularly for best security'),
       action: () => navigateTo('auth-access'),
-      actionLabel: t('settings.securityOverview.manage', 'Manage'),
+      actionLabel: t('settings.securityOverview.change', 'Change'),
       color: 'violet' as const,
     },
     {
@@ -320,7 +313,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       case 'suspicious':
         return <AlertTriangle size={16} className="text-amber-500" />;
       default:
-        return <CheckCircle size={16} className="text-slate-400" />;
+        return <CheckCircle size={16} className="text-slate-600" />;
     }
   };
 
@@ -343,7 +336,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     emerald: {
       icon: 'bg-emerald-500/10 text-emerald-400',
       statusOk: 'text-emerald-400',
-      statusBad: 'text-slate-400',
+      statusBad: 'text-slate-600',
     },
     amber: {
       icon: 'bg-amber-500/10 text-amber-400',
@@ -428,7 +421,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                 {scoreLabel}
               </h4>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               {scorePercentage >= 80
                 ? t(
                     'settings.securityOverview.scoreExcellentDesc',
@@ -449,7 +442,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
         {/* Status Cards Grid */}
         <div>
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+          <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4">
             <Shield size={14} className="text-primary-400" />
             {t('settings.securityOverview.protectionStatus', 'Protection Status')}
           </h4>
@@ -497,7 +490,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
           <>
             <SettingsDivider />
             <div>
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2 mb-4">
                 <AlertTriangle size={14} className="text-amber-400" />
                 {t('settings.securityOverview.recommendations', 'Recommendations')}
               </h4>
@@ -527,7 +520,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                               : 'text-slate-500'
                         )}
                       />
-                      <p className="text-xs text-slate-300 leading-relaxed">{rec.text}</p>
+                      <p className="text-xs text-slate-600 leading-relaxed">{rec.text}</p>
                     </div>
                   );
                 })}
@@ -540,7 +533,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         <SettingsDivider />
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2">
               <History size={14} className="text-primary-400" />
               {t('settings.securityOverview.recentActivity', 'Recent Activity')}
             </h4>

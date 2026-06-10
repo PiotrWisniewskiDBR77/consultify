@@ -8,6 +8,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card } from '../../../components/Admin/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
+import { LoadingState } from '../../../components/ui/primitives';
 import Api from '../../../services/api';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
@@ -156,11 +157,7 @@ const CustomerAnalyticsView: React.FC = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -261,7 +258,7 @@ const CustomerAnalyticsView: React.FC = () => {
                   {sortedMetrics.map((org) => (
                     <tr
                       key={org.org_id}
-                      className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
+                      className="border-b border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
                     >
                       <td className="py-3 text-slate-900 dark:text-white font-medium">
                         {org.org_name}
@@ -299,7 +296,7 @@ const CustomerAnalyticsView: React.FC = () => {
                         ) : typeof org.health_score === 'number' ? (
                           <TrendingDown className="w-4 h-4 text-rose-400" />
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-slate-600">—</span>
                         )}
                       </td>
                     </tr>

@@ -1,6 +1,7 @@
 import {
   BarChart3,
   CheckCircle2,
+  ChevronRight,
   Copy,
   DollarSign,
   ExternalLink,
@@ -127,7 +128,7 @@ const SnapshotStatCard: React.FC<SnapshotStatCardProps> = ({ label, value, helpe
         </div>
         <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{value}</div>
       </div>
-      <div className="text-slate-400 dark:text-slate-300">{icon}</div>
+      <div className="text-slate-600 dark:text-slate-300">{icon}</div>
     </div>
     <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{helper}</div>
   </div>
@@ -144,7 +145,7 @@ const MonitoringPills: React.FC<{
       <span
         className={[
           'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium',
-          hasKpi ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400',
+          hasKpi ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-600',
         ].join(' ')}
       >
         {hasKpi ? <Link2 size={12} /> : <Link2Off size={12} />}
@@ -153,7 +154,7 @@ const MonitoringPills: React.FC<{
       <span
         className={[
           'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium',
-          hasRoiPlan ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400',
+          hasRoiPlan ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-600',
         ].join(' ')}
       >
         <DollarSign size={12} />
@@ -162,7 +163,7 @@ const MonitoringPills: React.FC<{
       <span
         className={[
           'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium',
-          hasRoiRealized ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400',
+          hasRoiRealized ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-600',
         ].join(' ')}
       >
         <CheckCircle2 size={12} />
@@ -338,7 +339,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
         label: t('common.type', 'Type'),
         width: '8%',
         render: () => (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/10 text-slate-600">
             INIT
           </span>
         ),
@@ -438,7 +439,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="flex items-center gap-3 text-slate-400">
+        <div className="flex items-center gap-3 text-slate-600">
           <BarChart3 size={20} className="animate-pulse" />
           <span className="text-sm">{t('common.loading', 'Loading...')}</span>
         </div>
@@ -711,6 +712,12 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
             getRowActions={(row) => {
               const i = row._raw as SummaryInitiativeItem;
               return [
+                {
+                  id: 'preview',
+                  label: t('common.preview', 'Open preview'),
+                  icon: ChevronRight,
+                  onClick: () => setSelectedId(row.id),
+                },
                 {
                   id: 'open',
                   label: t('common.open', 'Open'),

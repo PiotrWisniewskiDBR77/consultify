@@ -188,7 +188,7 @@ const ADD_BTN =
 const AI_BTN =
   'px-2.5 py-1 rounded-lg text-xs font-medium border border-primary-300/40 dark:border-primary-500/30 text-primary-500 hover:text-primary-600 hover:border-primary-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1';
 const TH =
-  'text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50';
+  'text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-500 border-b border-slate-200/50 dark:border-navy-700/50';
 const BADGE =
   'px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-800/50 text-[10px] text-slate-500 dark:text-slate-400';
 
@@ -472,7 +472,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                 {stakeholders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-xs text-slate-400">
+                    <td colSpan={5} className="py-6 text-center text-xs text-slate-600">
                       {isPolish ? 'Brak interesariuszy.' : 'No stakeholders yet.'}
                     </td>
                   </tr>
@@ -505,7 +505,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingStakeholderId(s.id);
                               setStakeholderDraft({ ...s });
                             }}
-                            className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
                             title={isPolish ? 'Edytuj' : 'Edit'}
                           >
                             <Edit3 size={13} />
@@ -515,7 +515,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                             onClick={() =>
                               setStakeholders((prev) => prev.filter((item) => item.id !== s.id))
                             }
-                            className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-rose-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />
@@ -572,7 +572,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                 {reminders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-xs text-slate-400">
+                    <td colSpan={5} className="py-6 text-center text-xs text-slate-600">
                       {isPolish ? 'Brak reminderów.' : 'No reminders yet.'}
                     </td>
                   </tr>
@@ -614,7 +614,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingReminderId(r.id);
                               setReminderDraft(normalizeReminderRule({ ...r }));
                             }}
-                            className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
                             title={isPolish ? 'Edytuj' : 'Edit'}
                           >
                             <Edit3 size={13} />
@@ -624,7 +624,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                             onClick={() =>
                               setReminders((prev) => prev.filter((item) => item.id !== r.id))
                             }
-                            className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-rose-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />
@@ -686,7 +686,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
               <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
                 {escalationRules.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-xs text-slate-400">
+                    <td colSpan={8} className="py-6 text-center text-xs text-slate-600">
                       {isPolish ? 'Brak reguł eskalacji.' : 'No escalation rules yet.'}
                     </td>
                   </tr>
@@ -734,7 +734,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                               setEditingEscalationId(rule.id);
                               setEscalationDraft({ ...rule });
                             }}
-                            className="p-1 text-slate-400 hover:text-primary-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-primary-500 disabled:opacity-40"
                             title={isPolish ? 'Edytuj' : 'Edit'}
                           >
                             <Edit3 size={13} />
@@ -746,7 +746,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                                 prev.filter((item) => item.id !== rule.id)
                               )
                             }
-                            className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-40"
+                            className="p-1 text-slate-600 hover:text-rose-500 disabled:opacity-40"
                             title={isPolish ? 'Usuń' : 'Delete'}
                           >
                             <Trash2 size={13} />
@@ -803,7 +803,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </button>
                 )}
                 <button
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  className="p-1 text-slate-600 hover:text-slate-600"
                   onClick={() => {
                     setEditingStakeholderId(null);
                     setStakeholderDraft(null);
@@ -989,7 +989,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </button>
                 )}
                 <button
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  className="p-1 text-slate-600 hover:text-slate-600"
                   onClick={() => {
                     setEditingReminderId(null);
                     setReminderDraft(null);
@@ -1198,7 +1198,7 @@ export const GovernanceCanvas: React.FC<GovernanceCanvasProps> = ({
                   </button>
                 )}
                 <button
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  className="p-1 text-slate-600 hover:text-slate-600"
                   onClick={() => {
                     setEditingEscalationId(null);
                     setEscalationDraft(null);

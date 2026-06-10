@@ -275,7 +275,7 @@ export const DigitalToolsView: React.FC = () => {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-slate-400">#{tool.number}</span>
+                      <span className="text-xs font-mono text-slate-600">#{tool.number}</span>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
                         {tool.classicFramework}
                       </span>
@@ -301,7 +301,7 @@ export const DigitalToolsView: React.FC = () => {
                     </div>
                   </div>
 
-                  <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  <ChevronRight className="w-5 h-5 text-slate-600 flex-shrink-0" />
                 </div>
               </div>
             );

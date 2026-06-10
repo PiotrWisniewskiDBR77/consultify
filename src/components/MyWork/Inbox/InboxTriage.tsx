@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * InboxTriage - Inbox Zero methodology for task management
  * Part of My Work Module PMO Upgrade
@@ -24,7 +23,6 @@ import {
   FileCheck,
   Filter,
   Inbox,
-  Loader2,
   Sparkles,
   Square,
   UserPlus,
@@ -33,6 +31,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import type {
@@ -76,7 +76,7 @@ const urgencyConfig = {
     label: 'Niskie',
     className: 'inbox-low',
     icon: <Archive size={14} />,
-    color: 'text-slate-400 dark:text-slate-500',
+    color: 'text-slate-600 dark:text-slate-500',
   },
 };
 
@@ -182,7 +182,7 @@ const InboxItemCard: React.FC<{
           {isSelected ? (
             <CheckSquare size={18} className="text-brand" />
           ) : (
-            <Square size={18} className="text-slate-300 hover:text-brand transition-colors" />
+            <Square size={18} className="text-slate-600 hover:text-brand transition-colors" />
           )}
         </button>
 
@@ -196,7 +196,7 @@ const InboxItemCard: React.FC<{
                 {t(`myWork.inbox.type.${item.type}`, item.type.replace('_', ' '))}
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <span className="text-[10px] text-slate-600 dark:text-slate-500">
               {new Date(item.receivedAt).toLocaleTimeString('pl-PL', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -217,7 +217,7 @@ const InboxItemCard: React.FC<{
           )}
 
           {/* Source & Meta */}
-          <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-3 text-[10px] text-slate-600 dark:text-slate-500">
             {item.source.userName && (
               <span className="flex items-center gap-1">
                 {item.source.avatarUrl ? (
@@ -325,6 +325,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
 }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [items, setItems] = useState<InboxItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -336,6 +337,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
   const loadInbox = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const res = await Api.get('/my-work/inbox');
       if (res?.items && res.items.length > 0) {
         setItems(res.items.filter((i: InboxItem) => !i.triaged));
@@ -345,6 +347,7 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
     } catch (error) {
       console.error('Failed to load inbox:', error);
       setItems([]);
+      setLoadError(t('myWork.inbox.error', 'Failed to load inbox'));
       toast.error(t('myWork.inbox.error', 'Failed to load inbox'));
     } finally {
       setLoading(false);
@@ -459,11 +462,12 @@ export const InboxTriage: React.FC<ExtendedInboxTriageProps> = ({
   const criticalCount = groupedItems.critical.length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 size={32} className="animate-spin text-brand" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="p-12" />;
+  }
+
+  // Distinguish a failed load from a genuinely empty inbox.
+  if (loadError) {
+    return <ErrorState message={loadError} retry={loadInbox} />;
   }
 
   return (

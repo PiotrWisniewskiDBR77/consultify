@@ -46,12 +46,12 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
           >
             <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
               {/* Gradient accent */}
-              <div className="h-1 bg-gradient-to-r from-primary-500 to-indigo-500" />
+              <div className="h-1 bg-gradient-to-r from-primary-500 to-crimson-500" />
 
               <div className="p-4">
                 <button
                   onClick={onClose}
-                  className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white transition-colors"
+                  className="absolute top-3 right-3 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -98,7 +98,7 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
             exit={{ opacity: 0, height: 0 }}
             className="mb-4"
           >
-            <div className="bg-gradient-to-r from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-lg p-3 border border-primary-200 dark:border-primary-500/20">
+            <div className="bg-gradient-to-r from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-lg p-3 border border-primary-200 dark:border-primary-500/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles size={14} className="text-primary-500" />
@@ -141,12 +141,12 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
           >
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
+              className="absolute top-4 right-4 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-white"
             >
               <X size={20} />
             </button>
 
-            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary-500 to-indigo-600 rounded-xl flex items-center justify-center mb-6">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary-500 to-crimson-600 rounded-xl flex items-center justify-center mb-6">
               <Sparkles size={32} className="text-white" />
             </div>
 
@@ -165,7 +165,7 @@ export const DemoUpgradePrompt: React.FC<DemoUpgradePromptProps> = ({
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleContactSales}
-                className="flex-1 py-3 px-6 bg-gradient-to-r from-primary-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-primary-500 hover:to-indigo-500 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-6 bg-gradient-to-r from-primary-600 to-crimson-600 text-white font-semibold rounded-xl hover:from-primary-500 hover:to-crimson-500 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2"
               >
                 {t('demo.upgrade.contactSales', 'Talk to Sales')}
                 <ArrowRight size={18} />

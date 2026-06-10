@@ -1,10 +1,10 @@
-import { ArrowRight, Bot, Factory, Globe2, Scale } from 'lucide-react';
+import { ArrowRight, Factory, Globe2, Scale } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import TeresaMark from '../../shared/TeresaMark';
 import { HomeBlockShell } from './HomeBlockShell';
 import type { HomeBlock, HomeScreenAction, HomeSignalCard } from './homeV2Types';
-
 interface IndustryLensBlockProps {
   block: Extract<HomeBlock, { id: 'industryLens' }>;
   onAction: (action: HomeScreenAction) => void;
@@ -17,7 +17,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
   return (
     <HomeBlockShell block={block}>
       <div className="grid gap-2.5">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300/75">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600/75">
           <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">
             <Factory size={12} className="mr-1 inline" />
             {payload.industryLabel}
@@ -35,7 +35,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
             onAction={onAction}
           />
           <SignalCard
-            icon={<Bot size={15} />}
+            icon={<TeresaMark size={15} />}
             signal={payload.technologySignal}
             toneClass="bg-indigo-500/15 text-indigo-200"
             onAction={onAction}
@@ -51,9 +51,9 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
             <div className="mt-1 text-lg font-semibold tabular-nums text-white">
               {payload.benchmark.value}
             </div>
-            <div className="text-xs text-slate-300/85">{payload.benchmark.label}</div>
+            <div className="text-xs text-slate-600/85">{payload.benchmark.label}</div>
             <div className="mt-0.5 text-[11px] text-emerald-100/80">{payload.benchmark.delta}</div>
-            <p className="mt-2 text-xs leading-relaxed text-slate-300/80 md:text-sm">
+            <p className="mt-2 text-xs leading-relaxed text-slate-600/80 md:text-sm">
               {payload.benchmark.implication}
             </p>
           </div>
@@ -87,7 +87,7 @@ export const IndustryLensBlock: React.FC<IndustryLensBlockProps> = ({ block, onA
             <div className="mt-1.5 text-base font-semibold leading-snug text-white">
               {payload.peerCase.title}
             </div>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-300/80 md:text-sm">
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-600/80 md:text-sm">
               {payload.peerCase.summary}
             </p>
             <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-primary-200">
@@ -135,7 +135,7 @@ const SignalCard: React.FC<{
     >
       <div className={`inline-flex rounded-lg p-1.5 ${toneClass}`}>{icon}</div>
       <div className="mt-2 text-sm font-semibold leading-snug text-white">{signal.title}</div>
-      <div className="mt-1 text-xs leading-relaxed text-slate-300/80">{signal.summary}</div>
+      <div className="mt-1 text-xs leading-relaxed text-slate-600/80">{signal.summary}</div>
       <div className="mt-2 font-mono text-[9px] uppercase tracking-wider text-white/45">
         {signal.tag}
       </div>

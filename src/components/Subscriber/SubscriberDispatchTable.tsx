@@ -104,11 +104,11 @@ const SubscriberDispatchTable: React.FC<SubscriberDispatchTableProps> = ({
       </div>
 
       {rows.length === 0 ? (
-        <div className="border-t border-slate-100 px-4 py-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <div className="border-t border-slate-200 px-4 py-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
           {COPY.empty}
         </div>
       ) : (
-        <div className="overflow-x-auto border-t border-slate-100 dark:border-slate-800">
+        <div className="overflow-x-auto border-t border-slate-200 dark:border-slate-800">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
               <tr>
@@ -132,7 +132,7 @@ const SubscriberDispatchTable: React.FC<SubscriberDispatchTableProps> = ({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {rows.map((row) => {
                 const Icon = STATUS_ICON[row.status];
                 const tone = STATUS_TONE[row.status];

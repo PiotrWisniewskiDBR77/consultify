@@ -36,7 +36,7 @@ export const BusinessCasesPage: React.FC = () => {
     <MarketingLayout>
       {/* ── HERO ── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 px-6 pb-20 pt-24">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_-10%,rgba(124,58,237,0.28),transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_-10%,rgba(165,28,48,0.28),transparent_70%)]" />
         <div className="relative mx-auto max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -65,7 +65,7 @@ export const BusinessCasesPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.14 }}
-            className="mt-6 max-w-3xl text-lg leading-8 text-slate-300"
+            className="mt-6 max-w-3xl text-lg leading-8 text-slate-600"
           >
             AluForm Group had ambitious targets for operational improvement, but each plant ran its
             own spreadsheets, its own priorities, and its own business cases. The board saw dozens
@@ -77,7 +77,7 @@ export const BusinessCasesPage: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mt-4 max-w-3xl text-lg leading-8 text-slate-300"
+            className="mt-4 max-w-3xl text-lg leading-8 text-slate-600"
           >
             This is the story of how they fixed that with Consultify.
           </motion.p>
@@ -108,7 +108,7 @@ export const BusinessCasesPage: React.FC = () => {
             ].map((m) => (
               <div key={m.sub} className={`rounded-2xl border px-5 py-5 ${m.color}`}>
                 <p className="text-3xl font-black text-white">{m.value}</p>
-                <p className="mt-1 text-sm text-slate-400">{m.sub}</p>
+                <p className="mt-1 text-sm text-slate-600">{m.sub}</p>
               </div>
             ))}
           </div>
@@ -610,7 +610,7 @@ export const BusinessCasesPage: React.FC = () => {
 
       {/* ── CTA ── */}
       <section className="px-6 pb-24 pt-4">
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-[32px] bg-gradient-to-br from-primary-600 to-indigo-700 p-10 text-center shadow-[0_0_90px_-36px_rgba(124,58,237,0.5)]">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-[32px] bg-gradient-to-br from-primary-600 to-crimson-700 p-10 text-center shadow-[0_0_90px_-36px_rgba(165,28,48,0.5)]">
           <p className="text-xs font-bold uppercase tracking-widest text-white/70">
             Ready to see this for your organization?
           </p>

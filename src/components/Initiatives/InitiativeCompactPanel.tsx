@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   CheckSquare,
   ChevronRight,
+  ClipboardList,
   Clock,
   DollarSign,
   ExternalLink,
@@ -486,6 +487,41 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           >
             {priority}
           </span>
+          {/* Spine source chip — Insights/Tools → Initiatives provenance */}
+          {(() => {
+            const src = String(initiative?.sourceType || '').toLowerCase();
+            if (!src) return null;
+            const isInterview =
+              src === 'interview' || src === 'interview_insight' || src === 'insight';
+            const isTool =
+              src === 'tool' || src === 'tool_session' || src === 'idea' || src === 'assessment';
+            if (!isInterview && !isTool) return null;
+            const label = isInterview
+              ? t('initiatives.source.interview', 'From Interview')
+              : t('initiatives.source.tool', 'From Assessment');
+            const sid = initiative?.sourceId;
+            const clickable = !!sid;
+            return (
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => {
+                  if (!sid) return;
+                  if (isInterview) navigate(`/interview?insightId=${sid}`);
+                  else navigate(`/my-work?tab=ideas&sessionId=${sid}`);
+                }}
+                title={label}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium border ${
+                  isInterview
+                    ? 'border-emerald-300/60 text-emerald-600 dark:border-emerald-500/30 dark:text-emerald-400'
+                    : 'border-crimson-200/70 text-crimson-600 dark:border-crimson-500/30 dark:text-crimson-400'
+                } ${clickable ? 'hover:bg-slate-50 dark:hover:bg-white/5' : 'cursor-default'}`}
+              >
+                {isInterview ? <ClipboardList size={10} /> : <Sparkles size={10} />}
+                {label}
+              </button>
+            );
+          })()}
           {/* Quick status actions */}
           {statusActions
             .filter((a) => a.variant === 'primary')
@@ -505,7 +541,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
 
       {/* Next Step CTA — "jaki jest kolejny krok z daną inicjatywą" */}
       {nextStepInfo && initiative && (
-        <div className="flex-shrink-0 px-4 py-2.5 border-b border-slate-100 dark:border-navy-800 bg-primary-50/50 dark:bg-primary-900/10">
+        <div className="flex-shrink-0 px-4 py-2.5 border-b border-slate-200 dark:border-navy-800 bg-primary-50/50 dark:bg-primary-900/10">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {t('initiatives.compact.nextStep', 'Next step')}
@@ -513,7 +549,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
             {healthInfo && (
               <div className="flex items-center gap-1">
                 <span className={`w-2 h-2 rounded-full ${healthInfo.dotClass}`} />
-                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                <span className="text-[10px] text-slate-600 dark:text-slate-500">
                   {healthInfo.label}
                 </span>
               </div>
@@ -583,7 +619,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
         })()}
 
       {/* B7.2: Key Info — Goal always visible (placeholder when empty) */}
-      <div className="flex-shrink-0 px-4 py-2 border-b border-slate-100 dark:border-navy-800">
+      <div className="flex-shrink-0 px-4 py-2 border-b border-slate-200 dark:border-navy-800">
         <div className="flex items-start gap-2">
           <Target size={12} className="text-blue-500 mt-0.5 flex-shrink-0" />
           {(initiative as any)?.summary || (initiative as any)?.description ? (
@@ -591,7 +627,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
               {(initiative as any).summary || (initiative as any).description}
             </p>
           ) : (
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">
+            <p className="text-[11px] text-slate-600 dark:text-slate-500 italic">
               {t('initiatives.compact.noGoal')}
             </p>
           )}
@@ -599,7 +635,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       </div>
 
       {/* B7.2: Metrics Dashboard — Tasks, Team, Resources, Finance/Risk */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-slate-100 dark:border-navy-800">
+      <div className="flex-shrink-0 px-4 py-3 border-b border-slate-200 dark:border-navy-800">
         <div className="grid grid-cols-5 gap-2">
           <MetricBox
             icon={CheckSquare}
@@ -1026,7 +1062,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
           {byStatus.active.length > MAX_VISIBLE_TASKS && (
             <button
               onClick={() => setShowAllActive((v) => !v)}
-              className="w-full text-center py-1 text-[10px] font-medium text-slate-400 hover:text-slate-700 dark:text-slate-300 transition-colors"
+              className="w-full text-center py-1 text-[10px] font-medium text-slate-600 hover:text-slate-700 dark:text-slate-300 transition-colors"
             >
               {showAllActive
                 ? t('initiatives.compact.showLess')
@@ -1307,7 +1343,7 @@ const FinanceTab: React.FC<{
         ].map((item) => (
           <div
             key={item.labelKey}
-            className="p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50 border border-slate-100 dark:border-navy-700/50 text-center"
+            className="p-3 rounded-xl bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700/50 text-center"
           >
             <item.icon size={16} className={`mx-auto mb-1 ${item.color}`} />
             <p className={`text-sm font-bold ${item.color}`}>{item.value}</p>
@@ -1411,7 +1447,7 @@ const OutputsTab: React.FC<{
                 {row.kind} · {row.statusKey} · {row.governance?.visibilityScope || 'private'}
               </div>
             </div>
-            <ExternalLink size={12} className="flex-shrink-0 text-slate-400" />
+            <ExternalLink size={12} className="flex-shrink-0 text-slate-600" />
           </div>
         </button>
       ))}

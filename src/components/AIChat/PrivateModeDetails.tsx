@@ -190,7 +190,7 @@ export const PrivateModeDetails: React.FC<PrivateModeDetailsProps> = ({
           </div>
 
           {/* Row 3 — actionable exit. */}
-          <div className="pt-2 border-t border-slate-100 dark:border-navy-800 text-slate-500 dark:text-slate-400">
+          <div className="pt-2 border-t border-slate-200 dark:border-navy-800 text-slate-500 dark:text-slate-400">
             {t(
               'trust.privateMode.details.exitHint',
               'To turn off: open the mode menu above and toggle "Private mode" again.'

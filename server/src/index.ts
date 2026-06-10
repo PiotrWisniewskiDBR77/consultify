@@ -464,6 +464,17 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     }
   });
 
+  // M16 P2-1: Organization Context background rebuild sweep (every 4h) - non-blocking
+  scheduleStartupTask(async () => {
+    try {
+      const { startOrgContextRebuildJob } = await import('./jobs/orgContextRebuildJob.js');
+      startOrgContextRebuildJob();
+      logger.info('[Server] ✅ Org Context rebuild job scheduled');
+    } catch (err: any) {
+      logger.error('[Server] Org Context rebuild job failed to start:', err?.message);
+    }
+  });
+
   // V4-TASK-05: Init Automation Rules Engine - non-blocking
   scheduleStartupTask(async () => {
     try {
@@ -928,6 +939,20 @@ const kbStaticCandidates = [
 ];
 const kbStaticDir = kbStaticCandidates.find((d) => fs.existsSync(d)) || kbStaticCandidates[0];
 app.use('/kb', express.static(kbStaticDir, { maxAge: '7d', immutable: true }));
+
+// Brand logos (#21): the Vite build's dist/assets/logos/* are not reliably
+// packaged into the prod container, so /assets/logos/*.svg 404s on the login
+// screen. Serve them authoritatively from the backend's bundled public dir
+// (shipped via Dockerfile COPY server/public). fallthrough lets Vite's own
+// hashed /assets/*.js|css continue to be served by the frontend static layer.
+const brandLogoCandidates = [
+  path.join(__dirname, '../../public/assets/logos'),
+  path.join(__dirname, '../public/assets/logos'),
+  path.join(process.cwd(), 'public/assets/logos'),
+  path.join(process.cwd(), 'server/public/assets/logos'),
+];
+const brandLogoDir = brandLogoCandidates.find((d) => fs.existsSync(d)) || brandLogoCandidates[0];
+app.use('/assets/logos', express.static(brandLogoDir, { maxAge: '7d' }));
 
 // ============================================================
 // INPUT SANITIZATION & CSRF PROTECTION (Security Hardening)
@@ -1587,6 +1612,12 @@ const staticFrontendSmartCache = express.static(frontendDistPath, {
   fallthrough: true,
 });
 
+// Short, branded redirect for the VTS wave-2 shared invitation link.
+// Keeps the e-mail clean: https://consultify.ai/vts -> full /invite/<token>.
+app.get('/vts', (_req: Request, res: Response) =>
+  res.redirect(302, '/invite/0728c1a701b9f5995810714921de5f6a3b201fd78d4665178e8c07bb6e69c7ea')
+);
+
 app.use(staticFrontendSmartCache);
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
@@ -1770,6 +1801,24 @@ if (startServer && shouldStartHttpServer) {
       const { tablePlatformRealtime } = await import('./services/tablePlatform/RealtimeService.js');
       tablePlatformRealtime.init(io);
       logger.info('[Server] Table Platform Realtime (Socket.IO /table-platform) initialized');
+
+      // M16 P1-3: Organization Context realtime (Socket.IO /org-context namespace)
+      try {
+        const { orgContextRealtime } = await import('./realtime/orgContextRealtime.js');
+        orgContextRealtime.init(io);
+        logger.info('[Server] Org Context Realtime (Socket.IO /org-context) initialized');
+      } catch (err: any) {
+        logger.warn('[Server] Org Context Realtime not available:', err?.message);
+      }
+
+      // History F4b: Chat projects realtime (Socket.IO /chat-projects namespace)
+      try {
+        const { chatProjectsRealtime } = await import('./realtime/chatProjectsRealtime.js');
+        chatProjectsRealtime.init(io);
+        logger.info('[Server] Chat Projects Realtime (Socket.IO /chat-projects) initialized');
+      } catch (err: any) {
+        logger.warn('[Server] Chat Projects Realtime not available:', err?.message);
+      }
     } catch (err: any) {
       logger.warn('[Server] Table Platform Realtime not available:', err?.message);
     }

@@ -47,7 +47,7 @@ const KanbanCard = React.memo<{
       {!locked && (
         <GripVertical
           size={12}
-          className="text-slate-300 dark:text-navy-600 mt-0.5 flex-shrink-0 cursor-grab"
+          className="text-slate-600 dark:text-navy-600 mt-0.5 flex-shrink-0 cursor-grab"
         />
       )}
       <div className="flex-1 min-w-0">
@@ -59,7 +59,7 @@ const KanbanCard = React.memo<{
           if (val == null || val === '') return null;
           return (
             <div key={col.key} className="flex items-center gap-1 mt-1">
-              <span className="text-[9px] text-slate-400 dark:text-slate-500">{col.header}:</span>
+              <span className="text-[9px] text-slate-600 dark:text-slate-500">{col.header}:</span>
               {col.type === 'rating' ? (
                 <span className="text-[10px] text-amber-500">{'★'.repeat(Number(val) || 0)}</span>
               ) : col.type === 'progress' ? (
@@ -70,7 +70,7 @@ const KanbanCard = React.memo<{
                       style={{ width: `${Math.min(Number(val) || 0, 100)}%` }}
                     />
                   </div>
-                  <span className="text-[9px] text-slate-400">{val}%</span>
+                  <span className="text-[9px] text-slate-600">{val}%</span>
                 </div>
               ) : (
                 <span className="text-[10px] text-slate-600 dark:text-slate-300 truncate">
@@ -183,7 +183,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
               <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex-1 truncate">
                 {laneKey}
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold text-slate-400 bg-slate-200/60 dark:bg-navy-700/60">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold text-slate-600 bg-slate-200/60 dark:bg-navy-700/60">
                 {laneRecords.length}
               </span>
             </div>
@@ -191,7 +191,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
             {/* Cards */}
             <div className="flex-1 overflow-auto p-2 space-y-1.5">
               {laneRecords.length === 0 && (
-                <div className="text-center py-6 text-[10px] text-slate-400 dark:text-slate-500">
+                <div className="text-center py-6 text-[10px] text-slate-600 dark:text-slate-500">
                   {isPl ? 'Brak elementów' : 'No items'}
                 </div>
               )}
@@ -216,7 +216,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                     laneKey === uncategorizedKey ? undefined : { [groupByFieldId]: laneKey };
                   onAddRecord(defaultVal);
                 }}
-                className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-400 dark:hover:border-navy-500 transition-colors"
+                className="w-full flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-slate-300 dark:border-navy-600 text-[10px] text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-400 dark:hover:border-navy-500 transition-colors"
               >
                 <Plus size={12} />
                 {isPl ? 'Dodaj' : 'Add'}

@@ -174,9 +174,9 @@ const AuditEventsViewer: React.FC = () => {
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap p-3 rounded-xl bg-slate-50 dark:bg-navy-900/50 border border-slate-200/60 dark:border-navy-700/60">
-        <Filter size={14} className="text-slate-400" />
+        <Filter size={14} className="text-slate-600" />
         <div className="flex items-center gap-1.5">
-          <Search size={12} className="text-slate-400" />
+          <Search size={12} className="text-slate-600" />
           <input
             value={resourceType}
             onChange={(e) => {
@@ -189,7 +189,7 @@ const AuditEventsViewer: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <User size={12} className="text-slate-400" />
+          <User size={12} className="text-slate-600" />
           <input
             value={actorId}
             onChange={(e) => {
@@ -202,7 +202,7 @@ const AuditEventsViewer: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <Calendar size={12} className="text-slate-400" />
+          <Calendar size={12} className="text-slate-600" />
           <input
             type="date"
             value={fromDate}
@@ -213,7 +213,7 @@ const AuditEventsViewer: React.FC = () => {
             disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none"
           />
-          <span className="text-xs text-slate-400">to</span>
+          <span className="text-xs text-slate-600">to</span>
           <input
             type="date"
             value={toDate}
@@ -225,7 +225,7 @@ const AuditEventsViewer: React.FC = () => {
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none"
           />
         </div>
-        <span className="text-[10px] text-slate-400 ml-auto">
+        <span className="text-[10px] text-slate-600 ml-auto">
           {loadError ? 'Events unavailable' : `${total} event${total !== 1 ? 's' : ''}`}
         </span>
       </div>
@@ -251,14 +251,14 @@ const AuditEventsViewer: React.FC = () => {
               </tr>
             ) : loading && events.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-12 text-slate-400">
+                <td colSpan={5} className="text-center py-12 text-slate-600">
                   <Loader2 size={20} className="animate-spin mx-auto mb-2" />
                   Loading audit events...
                 </td>
               </tr>
             ) : events.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-12 text-slate-400">
+                <td colSpan={5} className="text-center py-12 text-slate-600">
                   <AlertTriangle size={20} className="mx-auto mb-2 opacity-40" />
                   No audit events found
                 </td>
@@ -267,7 +267,7 @@ const AuditEventsViewer: React.FC = () => {
               events.map((ev) => (
                 <tr
                   key={ev.id}
-                  className="border-b border-slate-100 dark:border-navy-800 hover:bg-slate-50/50 dark:hover:bg-navy-900/30 transition-colors"
+                  className="border-b border-slate-200 dark:border-navy-800 hover:bg-slate-50/50 dark:hover:bg-navy-900/30 transition-colors"
                 >
                   <td className="px-3 py-2 text-slate-500 whitespace-nowrap">
                     {formatDateTime(ev.created_at)}
@@ -280,14 +280,14 @@ const AuditEventsViewer: React.FC = () => {
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
                     <span className="font-medium">{asText(ev.resource_type)}</span>
                     {ev.resource_id && (
-                      <span className="text-slate-400 ml-1 font-mono text-[10px]">
+                      <span className="text-slate-600 ml-1 font-mono text-[10px]">
                         {asText(ev.resource_id).slice(0, 12)}
                       </span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-slate-600 dark:text-slate-400">
                     {ev.actor_type && (
-                      <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">
+                      <span className="text-[10px] uppercase font-bold text-slate-600 mr-1">
                         {asText(ev.actor_type)}
                       </span>
                     )}
@@ -296,7 +296,7 @@ const AuditEventsViewer: React.FC = () => {
                     </span>
                   </td>
                   <td
-                    className="px-3 py-2 text-slate-400 max-w-[200px] truncate"
+                    className="px-3 py-2 text-slate-600 max-w-[200px] truncate"
                     title={ev.metadata ? JSON.stringify(ev.metadata) : ''}
                   >
                     {summarizeMetadata(ev.metadata)}
@@ -311,7 +311,7 @@ const AuditEventsViewer: React.FC = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-600">
             Page {currentPage} of {totalPages}
           </span>
           <div className="flex items-center gap-1">

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Subscription Analytics Dashboard
  * MRR/ARR tracking, churn analysis, LTV calculations, cohort analysis
@@ -20,8 +19,10 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { isBillingSelfServeEnabled } from '../../utils/billingSelfServeFlag';
 
 interface MRRData {
   totalMRR: number;
@@ -104,19 +105,46 @@ interface ExpansionData {
 }
 
 export const SubscriptionAnalytics: React.FC = () => {
+  const { t } = useTranslation();
+  // Decision D8: revenue analytics (MRR/churn/cohort/expansion) are not built
+  // out yet — the underlying endpoints return 503/404. Gate the whole surface
+  // behind the billing self-serve flag (default OFF) so we never fire dead
+  // requests or render fabricated metrics. Show an honest "not available yet"
+  // empty state instead.
+  const analyticsEnabled = isBillingSelfServeEnabled();
   const [mrr, setMRR] = useState<MRRData | null>(null);
   const [mrrTrend, setMRRTrend] = useState<MRRTrend | null>(null);
   const [churn, setChurn] = useState<ChurnData | null>(null);
   const [ltv, setLTV] = useState<LTVData | null>(null);
   const [cohorts, setCohorts] = useState<CohortData | null>(null);
   const [expansion, setExpansion] = useState<ExpansionData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(analyticsEnabled);
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState(30);
 
   useEffect(() => {
+    if (!analyticsEnabled) return;
     fetchAllData();
-  }, [selectedPeriod]);
+  }, [selectedPeriod, analyticsEnabled]);
+
+  if (!analyticsEnabled) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center dark:border-navy-700 dark:bg-white/5">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-crimson-50 text-crimson-600 dark:bg-crimson-500/10 dark:text-crimson-400">
+          <BarChart3 className="h-6 w-6" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('billing.analytics.unavailableTitle', 'Revenue analytics coming soon')}
+        </h3>
+        <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
+          {t(
+            'billing.analytics.unavailableBody',
+            'MRR, churn, cohort and expansion analytics are not available yet. They will appear here once self-serve billing is enabled.'
+          )}
+        </p>
+      </div>
+    );
+  }
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -190,7 +218,7 @@ export const SubscriptionAnalytics: React.FC = () => {
           Subscription Analytics
         </h2>
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+          <Calendar className="w-4 h-4 text-slate-600 dark:text-slate-500" />
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(parseInt(e.target.value))}
@@ -383,7 +411,7 @@ export const SubscriptionAnalytics: React.FC = () => {
               </thead>
               <tbody className="text-sm">
                 {churn?.data?.slice(0, 6).map((row, i) => (
-                  <tr key={i} className="border-t border-slate-100 dark:border-navy-700">
+                  <tr key={i} className="border-t border-slate-200 dark:border-navy-700">
                     <td className="py-2 text-slate-900 dark:text-white">
                       {formatMonth(row.month)}
                     </td>
@@ -425,7 +453,7 @@ export const SubscriptionAnalytics: React.FC = () => {
               </thead>
               <tbody className="text-sm">
                 {expansion?.data?.slice(0, 6).map((row, i) => (
-                  <tr key={i} className="border-t border-slate-100 dark:border-navy-700">
+                  <tr key={i} className="border-t border-slate-200 dark:border-navy-700">
                     <td className="py-2 text-slate-900 dark:text-white">
                       {formatMonth(row.month)}
                     </td>

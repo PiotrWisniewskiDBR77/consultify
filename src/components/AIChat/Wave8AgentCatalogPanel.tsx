@@ -1,8 +1,8 @@
-import { AlertTriangle, Bot, CalendarClock, CheckCircle2, Play, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, Play, ShieldCheck } from 'lucide-react';
 import React from 'react';
 
 import { Api } from '../../services/api';
-
+import TeresaMark from '../shared/TeresaMark';
 type Wave8Agent = {
   agentId: string;
   name: string;
@@ -251,7 +251,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
         <section className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
           <h2 className="flex items-center gap-2 font-semibold">
-            <Bot size={18} /> Launch Agent
+            <TeresaMark size={18} /> Launch Agent
           </h2>
           <div className="mt-4 space-y-3">
             <select

@@ -14,6 +14,7 @@ import { AlertTriangle, BarChart3, Clock, Loader2, RefreshCw, TrendingUp } from 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { LoadingState } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 
 interface AnalyticsOverview {
@@ -165,11 +166,7 @@ export const SuperAdminFeedbackAnalyticsView: React.FC = () => {
   );
 
   if (loading && !data) {
-    return (
-      <div className="flex items-center justify-center h-64 text-slate-500">
-        <Loader2 className="animate-spin mr-2" size={16} /> Loading analytics…
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" label="Loading analytics…" />;
   }
 
   if (error && !data) {

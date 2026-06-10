@@ -1,0 +1,92 @@
+/**
+ * AdminSettingsModule — section routing tests (Module 17).
+ *
+ * Verifies the admin shell renders the correct panel per route segment and
+ * resolves aliases, instead of aliasing every section back to the people panel
+ * (the historical bug documented in the module-17 audit).
+ */
+
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
+
+import type { User } from '../../../types';
+import AdminSettingsModule from '../AdminSettingsModule';
+
+vi.mock('../../../components/Admin/AdminMembersRolesPanel', () => ({
+  AdminMembersRolesPanel: () => <div data-testid="panel-people">people</div>,
+}));
+vi.mock('../../../components/Admin/AdminBillingFinOpsPanel', () => ({
+  AdminBillingFinOpsPanel: () => <div data-testid="panel-billing">billing</div>,
+}));
+vi.mock('../../../components/Admin/AdminAIControlCenterPanel', () => ({
+  AdminAIControlCenterPanel: () => <div data-testid="panel-ai">ai</div>,
+}));
+vi.mock('../../../components/Admin/AdminSecurityIdentityPanel', () => ({
+  AdminSecurityIdentityPanel: () => <div data-testid="panel-security">security</div>,
+}));
+vi.mock('../../../components/Admin/AdminAuditLogPanel', () => ({
+  AdminAuditLogPanel: () => <div data-testid="panel-audit">audit</div>,
+}));
+
+vi.mock('../../../store/useAppStore', () => ({
+  useAppStore: () => ({ setCurrentView: vi.fn() }),
+}));
+
+vi.mock('../../../components/ui/scroll-area', () => ({
+  ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+const currentUser = { id: 'u1', role: 'ADMIN' } as unknown as User;
+
+const renderAt = (path: string) =>
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <AdminSettingsModule currentUser={currentUser} />
+    </MemoryRouter>
+  );
+
+describe('AdminSettingsModule section routing', () => {
+  it('renders the people panel at /admin/people', () => {
+    renderAt('/admin/people');
+    expect(screen.getByTestId('panel-people')).toBeInTheDocument();
+    expect(screen.queryByTestId('panel-billing')).not.toBeInTheDocument();
+  });
+
+  it('renders the billing panel at /admin/billing', () => {
+    renderAt('/admin/billing');
+    expect(screen.getByTestId('panel-billing')).toBeInTheDocument();
+    expect(screen.queryByTestId('panel-people')).not.toBeInTheDocument();
+  });
+
+  it('renders the AI panel at /admin/ai', () => {
+    renderAt('/admin/ai');
+    expect(screen.getByTestId('panel-ai')).toBeInTheDocument();
+  });
+
+  it('renders the security panel at /admin/security', () => {
+    renderAt('/admin/security');
+    expect(screen.getByTestId('panel-security')).toBeInTheDocument();
+  });
+
+  it('renders the audit panel at /admin/audit', () => {
+    renderAt('/admin/audit');
+    expect(screen.getByTestId('panel-audit')).toBeInTheDocument();
+  });
+
+  it('resolves the iam alias to the security panel', () => {
+    renderAt('/admin/iam');
+    expect(screen.getByTestId('panel-security')).toBeInTheDocument();
+  });
+
+  it('resolves the compliance alias to the audit panel', () => {
+    renderAt('/admin/compliance');
+    expect(screen.getByTestId('panel-audit')).toBeInTheDocument();
+  });
+
+  it('falls back to the people panel for unknown segments', () => {
+    renderAt('/admin/unknown-section');
+    expect(screen.getByTestId('panel-people')).toBeInTheDocument();
+  });
+});

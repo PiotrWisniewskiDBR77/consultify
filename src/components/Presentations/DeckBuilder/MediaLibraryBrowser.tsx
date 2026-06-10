@@ -110,14 +110,14 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
   return (
     <div className="absolute right-0 top-0 bottom-0 w-80 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl z-40 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-navy-800">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-800">
         <div className="flex items-center gap-2">
           <ImageIcon size={14} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-700 dark:text-white">
             {t('presentations.builder.mediaLibrary.title', 'Media Library')}
           </h3>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+        <button onClick={onClose} className="text-slate-600 hover:text-slate-600">
           <X size={14} />
         </button>
       </div>
@@ -125,7 +125,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       {/* Search */}
       <div className="px-3 py-2">
         <div className="relative">
-          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -159,7 +159,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
             <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-400">
+          <div className="flex flex-col items-center justify-center h-32 text-slate-600">
             <ImageIcon size={20} className="mb-2 opacity-40" />
             <p className="text-xs">
               {t('presentations.builder.mediaLibrary.empty', 'No images found')}
@@ -202,7 +202,7 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       </div>
 
       {/* Upload button */}
-      <div className="px-3 py-2 border-t border-slate-100 dark:border-navy-800">
+      <div className="px-3 py-2 border-t border-slate-200 dark:border-navy-800">
         <button
           onClick={handleUpload}
           className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-slate-300 dark:border-navy-600 text-xs text-slate-500 hover:text-primary-500 hover:border-primary-400 transition-colors"

@@ -26,6 +26,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
+
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
 import { SettingsCard, SettingsSlider, SettingsToggle } from '../../AISettings';
@@ -176,11 +178,7 @@ export const AccessLimitsTab: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="h-64 flex items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-primary-400 animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -212,7 +210,7 @@ export const AccessLimitsTab: React.FC = () => {
             className={`flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all ${
               hasChanges
                 ? 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg shadow-primary-500/20'
-                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
             }`}
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -431,7 +429,7 @@ export const AccessLimitsTab: React.FC = () => {
               return (
                 <div key={tier.id} className="admin-card p-4">
                   <div className="flex items-center gap-3 mb-3">
-                    <Icon size={16} className="text-slate-400 dark:text-slate-500" />
+                    <Icon size={16} className="text-slate-600 dark:text-slate-500" />
                     <div>
                       <h4 className="text-sm font-medium text-white">{tier.name}</h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -447,7 +445,7 @@ export const AccessLimitsTab: React.FC = () => {
                       {tier.models.slice(0, 3).map((m) => (
                         <span
                           key={m}
-                          className="px-2 py-0.5 bg-white/5 text-slate-400 dark:text-slate-500 text-xs rounded"
+                          className="px-2 py-0.5 bg-white/5 text-slate-600 dark:text-slate-500 text-xs rounded"
                         >
                           {m}
                         </span>
@@ -470,7 +468,7 @@ export const AccessLimitsTab: React.FC = () => {
               <TrendingUp size={18} className="text-emerald-400" />
               Automatic Tier Assignment
             </h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mb-4">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mb-4">
               Automatically promote or demote users based on their monthly token usage
             </p>
 
@@ -486,7 +484,7 @@ export const AccessLimitsTab: React.FC = () => {
                 />
 
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                     Assignment Direction
                   </label>
                   <select
@@ -501,7 +499,7 @@ export const AccessLimitsTab: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-slate-400 dark:text-slate-500 mb-2">
+                  <label className="block text-sm text-slate-600 dark:text-slate-500 mb-2">
                     Maximum Auto-Assign Tier
                   </label>
                   <select
@@ -525,31 +523,31 @@ export const AccessLimitsTab: React.FC = () => {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-emerald-400">Budget</span>
-                    <span className="text-slate-400 dark:text-slate-500">
+                    <span className="text-slate-600 dark:text-slate-500">
                       0 - 1,000 tokens/month
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-blue-400">Standard</span>
-                    <span className="text-slate-400 dark:text-slate-500">
+                    <span className="text-slate-600 dark:text-slate-500">
                       1,001 - 50,000 tokens/month
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-amber-400">Premium</span>
-                    <span className="text-slate-400 dark:text-slate-500">
+                    <span className="text-slate-600 dark:text-slate-500">
                       50,001 - 200,000 tokens/month
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-primary-400">Reasoning</span>
-                    <span className="text-slate-400 dark:text-slate-500">
+                    <span className="text-slate-600 dark:text-slate-500">
                       200,001+ tokens/month
                     </span>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-white/5">
-                  <button className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg transition-colors">
+                  <button className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-600 text-sm rounded-lg transition-colors">
                     Preview Changes
                   </button>
                 </div>
@@ -610,10 +608,10 @@ export const AccessLimitsTab: React.FC = () => {
                           ))}
                         </select>
                       </td>
-                      <td className="px-6 py-4 text-slate-300">
+                      <td className="px-6 py-4 text-slate-600">
                         {user.usage.toLocaleString()} requests
                       </td>
-                      <td className="px-6 py-4 text-slate-300">${user.cost.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-slate-600">${user.cost.toFixed(2)}</td>
                       <td className="px-6 py-4">
                         <button className="text-primary-400 hover:text-primary-300 text-sm">
                           View Details
@@ -689,11 +687,11 @@ export const AccessLimitsTab: React.FC = () => {
                           {item.entityType}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-300">{item.requests.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-slate-300">
+                      <td className="px-6 py-4 text-slate-600">{item.requests.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-slate-600">
                         {(item.tokens / 1000).toFixed(1)}k
                       </td>
-                      <td className="px-6 py-4 text-slate-300">${item.cost.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-slate-600">${item.cost.toFixed(2)}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
@@ -702,7 +700,7 @@ export const AccessLimitsTab: React.FC = () => {
                               style={{ width: `${item.percentage}%` }}
                             />
                           </div>
-                          <span className="text-slate-400 dark:text-slate-500 text-xs">
+                          <span className="text-slate-600 dark:text-slate-500 text-xs">
                             {item.percentage}%
                           </span>
                         </div>

@@ -1,15 +1,34 @@
 /**
  * ProblemTable — standard table of problems for Manager module lanes.
  *
- * Follows app-table-standard.md: full-width, single-row height, severity border,
- * kebab actions, click-to-preview, double-click-to-open.
+ * Follows TABLE_AND_PREVIEW_CANON.md: full-width monochrome rows (severity lives
+ * in a leading signal dot + severity chip, NOT the row background/border),
+ * portal kebab actions, click-to-preview, double-click-to-open.
  */
 
-import { AlertTriangle, MoreVertical, Search, X } from 'lucide-react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, ChevronRight, Search, X } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { EmptyState } from '@/components/ui/composed/EmptyState';
+import { EntityStatusChip, LoadingState } from '@/components/ui/primitives';
+
 import type { ManagerProblemRow, ProblemAction, ProblemSeverity } from './types';
+
+/** Severity → canonical chip tone (§4.1). critical = danger alarm. */
+const SEVERITY_STATUS: Record<ProblemSeverity, string> = {
+  critical: 'blocked',
+  warning: 'escalated',
+  info: 'open',
+};
+
+/** Severity dot color, driven by canonical tone (§3.5 — signal dot, c.* family). */
+const SEVERITY_DOT: Record<ProblemSeverity, string> = {
+  critical: 'bg-c-danger',
+  warning: 'bg-c-warning',
+  info: 'bg-c-info',
+};
 
 interface ProblemTableProps {
   rows: ManagerProblemRow[];
@@ -20,24 +39,6 @@ interface ProblemTableProps {
   loading?: boolean;
   emptyMessage?: string;
 }
-
-const SEVERITY_BORDER: Record<ProblemSeverity, string> = {
-  critical: 'border-l-4 border-l-rose-500',
-  warning: 'border-l-4 border-l-amber-500',
-  info: 'border-l-4 border-l-blue-500',
-};
-
-const SEVERITY_DOT: Record<ProblemSeverity, string> = {
-  critical: 'bg-rose-500',
-  warning: 'bg-amber-500',
-  info: 'bg-blue-500',
-};
-
-const SEVERITY_HOVER: Record<ProblemSeverity, string> = {
-  critical: 'hover:bg-rose-500/5 dark:hover:bg-rose-500/5',
-  warning: 'hover:bg-amber-500/5 dark:hover:bg-amber-500/5',
-  info: 'hover:bg-blue-500/5 dark:hover:bg-blue-500/5',
-};
 
 function TypeBadge({ type }: { type: string }) {
   const label = type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -79,65 +80,65 @@ function SourceChip({ type, name }: { type: string; name: string }) {
   );
 }
 
-function ActionsMenu({
-  actions,
-  onAction,
-}: {
-  actions: ProblemAction[];
-  onAction: (action: ProblemAction) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+/** English fallback label for a severity (i18n key drives the live label). */
+function severityLabel(severity: ProblemSeverity): string {
+  switch (severity) {
+    case 'critical':
+      return 'Critical';
+    case 'warning':
+      return 'Warning';
+    default:
+      return 'Info';
+  }
+}
 
-  React.useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+type TFn = (key: string, fallback: string) => string;
 
-  if (actions.length === 0) return null;
+/**
+ * Build the kebab sections (§17): triage actions on top (context), then the
+ * canonical fixed manifest with "Otwórz podgląd". `danger`-variant triage
+ * actions land in their own danger section.
+ */
+function buildSections(
+  row: ManagerProblemRow,
+  t: TFn,
+  onSelect: (row: ManagerProblemRow) => void,
+  onAction: (row: ManagerProblemRow, action: ProblemAction) => void
+): RowActionSection[] {
+  const contextActions = row.actions
+    .filter((a) => a.variant !== 'danger')
+    .map((a) => ({
+      id: a.id,
+      label: a.label,
+      variant: a.variant,
+      onClick: () => onAction(row, a),
+    }));
 
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen(!open);
-        }}
-        className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-      >
-        <MoreVertical size={14} className="text-slate-400" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-8 z-50 min-w-[180px] py-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-lg">
-          {actions.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAction(a);
-                setOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
-                a.variant === 'danger'
-                  ? 'text-rose-600 dark:text-rose-400'
-                  : a.variant === 'primary'
-                    ? 'text-primary-600 dark:text-primary-400 font-medium'
-                    : 'text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              {a.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const dangerActions = row.actions
+    .filter((a) => a.variant === 'danger')
+    .map((a) => ({
+      id: a.id,
+      label: a.label,
+      variant: 'danger' as const,
+      onClick: () => onAction(row, a),
+    }));
+
+  return [
+    { id: 'context', kind: 'context' as const, actions: contextActions },
+    {
+      id: 'fixed',
+      kind: 'manage' as const,
+      actions: [
+        {
+          id: 'open-preview',
+          label: t('common.openPreview', 'Otwórz podgląd'),
+          icon: ChevronRight,
+          onClick: () => onSelect(row),
+        },
+      ],
+    },
+    { id: 'danger', kind: 'danger' as const, actions: dangerActions },
+  ];
 }
 
 export function ProblemTable({
@@ -224,7 +225,11 @@ export function ProblemTable({
               }`}
             >
               {sev !== 'all' && <span className={`w-2 h-2 rounded-full ${SEVERITY_DOT[sev]}`} />}
-              <span className="capitalize">{sev === 'all' ? t('common.all', 'All') : sev}</span>
+              <span>
+                {sev === 'all'
+                  ? t('common.all', 'All')
+                  : t(`manager.severity.${sev}`, severityLabel(sev))}
+              </span>
               <span className="text-[10px] tabular-nums opacity-60">{count}</span>
             </button>
           );
@@ -235,7 +240,7 @@ export function ProblemTable({
         {/* Search toggle */}
         {searchOpen ? (
           <div className="flex items-center gap-1 h-9 px-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800">
-            <Search size={14} className="text-slate-400 shrink-0" />
+            <Search size={14} className="text-slate-600 shrink-0" />
             <input
               autoFocus
               value={searchQuery}
@@ -250,7 +255,7 @@ export function ProblemTable({
                 setSearchOpen(false);
               }}
             >
-              <X size={14} className="text-slate-400 hover:text-slate-600" />
+              <X size={14} className="text-slate-600 hover:text-slate-600" />
             </button>
           </div>
         ) : (
@@ -259,14 +264,14 @@ export function ProblemTable({
             onClick={() => setSearchOpen(true)}
             className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
-            <Search size={14} className="text-slate-400" />
+            <Search size={14} className="text-slate-600" />
           </button>
         )}
       </div>
 
       {/* Table header */}
-      <div className="grid grid-cols-[auto_2fr_1fr_1fr_80px_80px_1fr_40px] gap-0 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
-        <div className="w-8" />
+      <div className="grid grid-cols-[auto_2fr_1fr_1fr_80px_80px_1fr_40px] gap-0 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+        <div className="px-2">{t('manager.col.severity', 'Severity')}</div>
         <div className="px-2">{t('manager.col.problem', 'Problem')}</div>
         <div className="px-2">{t('manager.col.type', 'Type')}</div>
         <div className="px-2">{t('manager.col.source', 'Source')}</div>
@@ -278,19 +283,15 @@ export function ProblemTable({
 
       {/* Rows */}
       <div className="flex-1 overflow-y-auto">
-        {loading && (
-          <div className="flex items-center justify-center h-32">
-            <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
+        {loading && <LoadingState variant="spinner" />}
 
         {!loading && filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-32 text-slate-400 dark:text-slate-500">
-            <AlertTriangle size={20} className="mb-2 opacity-40" />
-            <p className="text-xs">
-              {emptyMessage || t('manager.noProblems', 'No problems detected — on track.')}
-            </p>
-          </div>
+          <EmptyState
+            compact
+            icon={<AlertTriangle />}
+            title={emptyMessage || t('manager.noProblems', 'No problems detected — on track.')}
+            description=""
+          />
         )}
 
         {!loading &&
@@ -303,18 +304,20 @@ export function ProblemTable({
                 tabIndex={-1}
                 onClick={() => onSelect(row)}
                 onDoubleClick={() => onDoubleClick?.(row)}
-                className={`grid grid-cols-[auto_2fr_1fr_1fr_80px_80px_1fr_40px] gap-0 px-3 items-center cursor-pointer border-b border-slate-100 dark:border-navy-800 transition-colors ${
-                  SEVERITY_BORDER[row.severity]
-                } ${SEVERITY_HOVER[row.severity]} ${
+                className={`group grid grid-cols-[auto_2fr_1fr_1fr_80px_80px_1fr_40px] gap-0 px-4 items-center cursor-pointer border-b border-slate-200 dark:border-navy-800 transition-colors ${
                   isSelected
-                    ? 'bg-primary-500/10 dark:bg-primary-500/12 ring-1 ring-inset ring-primary-500/30'
-                    : 'bg-white dark:bg-navy-900'
+                    ? 'bg-primary-500/8 dark:bg-primary-500/10 shadow-[inset_4px_0_0_0_var(--c-accent,theme(colors.primary.500))]'
+                    : 'bg-white dark:bg-navy-900 hover:bg-slate-50/70 dark:hover:bg-white/[0.03]'
                 }`}
                 style={{ minHeight: '44px' }}
               >
-                {/* Severity dot */}
-                <div className="w-8 flex items-center justify-center">
-                  <span className={`w-2 h-2 rounded-full ${SEVERITY_DOT[row.severity]}`} />
+                {/* Severity — signal dot + canonical tone chip (§3.5/§4.1) */}
+                <div className="px-2 flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${SEVERITY_DOT[row.severity]}`} />
+                  <EntityStatusChip
+                    status={SEVERITY_STATUS[row.severity]}
+                    label={t(`manager.severity.${row.severity}`, severityLabel(row.severity))}
+                  />
                 </div>
 
                 {/* Problem title */}
@@ -322,7 +325,7 @@ export function ProblemTable({
                   <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
                     {row.title}
                   </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                  <p className="text-[10px] text-slate-600 dark:text-slate-500 truncate mt-0.5">
                     {row.rootCause}
                   </p>
                 </div>
@@ -344,11 +347,11 @@ export function ProblemTable({
                       {row.daysOverdue}d
                     </span>
                   ) : row.daysOverdue !== null && row.daysOverdue < 0 ? (
-                    <span className="text-xs tabular-nums text-slate-400">
-                      in {Math.abs(row.daysOverdue)}d
+                    <span className="text-xs tabular-nums text-slate-600">
+                      {t('manager.dueIn', 'in')} {Math.abs(row.daysOverdue)}d
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
                   )}
                 </div>
 
@@ -359,7 +362,7 @@ export function ProblemTable({
                       {row.impactCount} ↓
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
                   )}
                 </div>
 
@@ -370,9 +373,16 @@ export function ProblemTable({
                   </span>
                 </div>
 
-                {/* Actions kebab */}
-                <div className="flex items-center justify-center">
-                  <ActionsMenu actions={row.actions} onAction={(action) => onAction(row, action)} />
+                {/* Actions kebab — portal-based RowActionsMenu (§17) */}
+                <div
+                  className="flex items-center justify-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <RowActionsMenu
+                    iconVariant="vertical"
+                    className="opacity-40 transition-opacity group-hover:opacity-100"
+                    sections={buildSections(row, t, onSelect, onAction)}
+                  />
                 </div>
               </div>
             );
@@ -380,12 +390,14 @@ export function ProblemTable({
       </div>
 
       {/* Footer counter */}
-      <div className="flex items-center justify-between px-3 py-1.5 text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
+      <div className="flex items-center justify-between px-3 py-1.5 text-[10px] text-slate-600 dark:text-slate-500 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
         <span>
           {filtered.length} / {rows.length} {t('manager.problems', 'problems')}
         </span>
         <span className="tabular-nums">
-          {counts.critical} critical · {counts.warning} warning · {counts.info} info
+          {counts.critical} {t('manager.severity.critical', 'Critical')} · {counts.warning}{' '}
+          {t('manager.severity.warning', 'Warning')} · {counts.info}{' '}
+          {t('manager.severity.info', 'Info')}
         </span>
       </div>
     </div>

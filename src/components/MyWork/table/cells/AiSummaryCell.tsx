@@ -44,7 +44,7 @@ export const AiSummaryCell: React.FC<AiSummaryCellProps> = ({
   if (value == null || value === '') {
     return (
       <span
-        className="inline-flex items-center gap-1 px-1 text-xs text-slate-400 dark:text-slate-500 italic"
+        className="inline-flex items-center gap-1 px-1 text-xs text-slate-600 dark:text-slate-500 italic"
         data-testid="ai-summary-pending"
         title={promptTemplate ? `AI prompt: ${promptTemplate}` : undefined}
       >

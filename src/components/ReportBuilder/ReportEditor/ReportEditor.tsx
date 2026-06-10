@@ -6,10 +6,8 @@
  * - Center: Block canvas for building report structure
  * - Blocks can be added, reordered, configured inline
  */
-
 import {
   BookTemplate,
-  Bot,
   Check,
   ChevronDown,
   ChevronRight,
@@ -46,6 +44,7 @@ import { EmbeddedView } from '@/components/shared/NModeBlocks';
 
 import { Api } from '../../../services/api';
 import { getSourceDisplayLabel } from '../../Initiatives/InitiativeSourceLink';
+import TeresaMark from '../../shared/TeresaMark';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
 import { QualityGatesPanel } from '../QualityGatesPanel';
@@ -341,7 +340,7 @@ const SmartContentRenderer: React.FC<{
                   return (
                     <tr
                       key={axis.axisId || i}
-                      className="border-b border-slate-100 dark:border-slate-800"
+                      className="border-b border-slate-200 dark:border-slate-800"
                     >
                       <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
                         {axis.axisName}
@@ -430,7 +429,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
             {isPl ? 'Podgląd raportu' : 'Report Preview'}
           </span>
-          <span className="text-xs text-slate-400 ml-2">
+          <span className="text-xs text-slate-600 ml-2">
             {enabledBlocks.length} {isPl ? 'sekcji' : 'sections'}
           </span>
         </div>
@@ -465,7 +464,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
             return (
               <section
                 key={block.id}
-                className={`${idx > 0 ? 'border-t border-slate-100 dark:border-slate-800' : ''} ${isCover ? '' : 'px-12 py-10 md:px-16 md:py-12'}`}
+                className={`${idx > 0 ? 'border-t border-slate-200 dark:border-slate-800' : ''} ${isCover ? '' : 'px-12 py-10 md:px-16 md:py-12'}`}
                 style={{ pageBreakBefore: idx > 0 ? 'always' : undefined }}
               >
                 {isCover && hasContent ? (
@@ -495,7 +494,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
                         />
                       </div>
                     ) : (
-                      <div className="text-center py-12 text-slate-400">
+                      <div className="text-center py-12 text-slate-600">
                         <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p className="text-sm italic">
                           {isPl
@@ -512,7 +511,7 @@ const ReportPreviewModal: React.FC<ReportPreviewModalProps> = ({
 
           {/* Footer */}
           {styling.showBranding && (
-            <div className="border-t border-slate-100 dark:border-slate-800 px-12 py-6 text-center text-xs text-slate-400 print:text-slate-500">
+            <div className="border-t border-slate-200 dark:border-slate-800 px-12 py-6 text-center text-xs text-slate-600 print:text-slate-500">
               {isPl ? 'Utworzono w' : 'Created with'} Consultify
             </div>
           )}
@@ -2267,7 +2266,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         <div className="flex items-center gap-4">
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+            className="p-2 text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -2316,7 +2315,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             className={`inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border transition-all ${
               hasUnsavedChanges
                 ? 'border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
-                : 'border-slate-600/40 bg-slate-800/40 text-slate-400 hover:bg-slate-700/60 hover:text-slate-300'
+                : 'border-slate-600/40 bg-slate-800/40 text-slate-600 hover:bg-slate-700/60 hover:text-slate-300'
             }`}
             title={
               hasUnsavedChanges
@@ -2356,7 +2355,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 <button
                   onClick={() => handleGenerate('new_only')}
                   disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors"
                 >
                   <Zap className="w-3.5 h-3.5 text-primary-400 flex-shrink-0" />
                   <div className="text-left">
@@ -2371,7 +2370,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 <button
                   onClick={() => handleGenerate('modified')}
                   disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                   <div className="text-left">
@@ -2387,7 +2386,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 <button
                   onClick={() => handleGenerate('all')}
                   disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                   <div className="text-left">
@@ -2410,11 +2409,11 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               className={`inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border transition-all ${
                 showAgentChat
                   ? 'border-primary-500/60 bg-primary-500/20 text-primary-300'
-                  : 'border-slate-600/40 bg-slate-800/40 text-slate-400 hover:bg-slate-700/60 hover:text-slate-300'
+                  : 'border-slate-600/40 bg-slate-800/40 text-slate-600 hover:bg-slate-700/60 hover:text-slate-300'
               }`}
               title={isPl ? 'Asystent raportu' : 'Report Agent'}
             >
-              <Bot className="w-3.5 h-3.5" />
+              <TeresaMark className="w-3.5 h-3.5" />
               {isPl ? 'Agent' : 'Agent'}
             </button>
           )}
@@ -2444,7 +2443,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               <div className="absolute right-0 top-full mt-1.5 w-52 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
                 <button
                   onClick={() => handleViewExport('web')}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors"
                 >
                   <Monitor className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                   <div className="text-left">
@@ -2465,7 +2464,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 <button
                   onClick={() => handleViewExport('pdf')}
                   disabled={!!isExporting}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
                 >
                   <FileText className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
                   <div className="text-left">
@@ -2479,7 +2478,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 <button
                   onClick={() => handleViewExport('pptx')}
                   disabled={!!isExporting}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
                 >
                   <Presentation className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                   <div className="text-left">
@@ -2493,7 +2492,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 <button
                   onClick={() => handleViewExport('docx')}
                   disabled={!!isExporting}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-300 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-slate-600 hover:bg-slate-700/60 transition-colors disabled:opacity-50"
                 >
                   <Globe className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                   <div className="text-left">
@@ -2560,13 +2559,13 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                     {/* Chapter Header */}
                     {chapter.key !== '__ungrouped__' && (
                       <div className="flex items-center gap-3 pt-6 pb-2 border-b-2 border-slate-300 dark:border-slate-600">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
                           {chapters.filter((c) => c.key !== '__ungrouped__').indexOf(chapter) + 1}
                         </div>
                         <h2 className="text-lg font-bold text-slate-800 dark:text-white flex-1">
                           {chapter.title}
                         </h2>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-600">
                           {chapter.blocks.filter((b) => b.enabled).length}{' '}
                           {isPl ? 'bloków' : 'blocks'}
                         </span>

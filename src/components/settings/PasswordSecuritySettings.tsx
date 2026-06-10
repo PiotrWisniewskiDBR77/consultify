@@ -37,6 +37,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { StatusChip } from '@/components/ui/primitives';
+
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
@@ -372,7 +374,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.password && (
-          <div className="p-6 border-t border-slate-100 dark:border-navy-700 space-y-4">
+          <div className="p-6 border-t border-slate-200 dark:border-navy-700 space-y-4">
             {/* Current Password */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -553,13 +555,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                   {t('settings.security.twoFactor', 'Two-Factor Authentication')}
                 </h3>
                 {currentUser.mfaEnabled ? (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full">
-                    Enabled
-                  </span>
+                  <StatusChip tone="success" label="Enabled" />
                 ) : (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full">
-                    Not enabled
-                  </span>
+                  <StatusChip tone="warning" label="Not enabled" />
                 )}
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -575,7 +573,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.mfa && (
-          <div className="p-6 border-t border-slate-100 dark:border-navy-700">
+          <div className="p-6 border-t border-slate-200 dark:border-navy-700">
             <MFASetup
               isEnabled={!!currentUser.mfaEnabled}
               onUpdate={() => window.location.reload()}
@@ -608,9 +606,9 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.sessions && (
-          <div className="border-t border-slate-100 dark:border-navy-700">
+          <div className="border-t border-slate-200 dark:border-navy-700">
             {sessions.length > 1 && (
-              <div className="p-4 border-b border-slate-100 dark:border-navy-700 flex justify-end">
+              <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex justify-end">
                 <button
                   onClick={handleRevokeAllSessions}
                   className="px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors flex items-center gap-2"
@@ -620,7 +618,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 </button>
               </div>
             )}
-            <div className="divide-y divide-slate-100 dark:divide-white/5">
+            <div className="divide-y divide-slate-200 dark:divide-white/5">
               {isLoadingSessions ? (
                 <div className="p-8 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
@@ -645,9 +643,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                               {session.browser && ` - ${session.browser}`}
                             </p>
                             {(session.current || session.isCurrent) && (
-                              <span className="px-2 py-0.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full">
-                                Current
-                              </span>
+                              <StatusChip tone="success" label="Current" />
                             )}
                           </div>
                           <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -710,7 +706,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.recovery && (
-          <div className="p-6 border-t border-slate-100 dark:border-navy-700 space-y-4">
+          <div className="p-6 border-t border-slate-200 dark:border-navy-700 space-y-4">
             {recoveryLoadError ? (
               <div
                 role="alert"
@@ -873,7 +869,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
         </button>
 
         {expandedSections.events && (
-          <div className="border-t border-slate-100 dark:border-navy-700">
+          <div className="border-t border-slate-200 dark:border-navy-700">
             {loadingEvents ? (
               <div className="p-8 flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
@@ -883,7 +879,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
                 No recent security events
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-white/5">
+              <div className="divide-y divide-slate-200 dark:divide-white/5">
                 {securityEvents.map((event) => (
                   <div key={event.id} className="p-4 flex items-start gap-4">
                     <div

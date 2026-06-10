@@ -98,7 +98,7 @@ export const ShortcutHelpModal: React.FC<ShortcutHelpModalProps> = ({
             No shortcuts registered.
           </p>
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-navy-800">
+          <ul className="divide-y divide-slate-200 dark:divide-navy-800">
             {shortcuts.map((s) => (
               <li
                 key={s.id}

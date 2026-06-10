@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ProjectIntelligenceView
  *
@@ -42,6 +41,7 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { LoadingState } from '@/components/ui/primitives';
 import { useDemoSession } from '@/hooks/useDemoSession';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { INSIGHT_DETECTION_PROMPT, INTERVIEW_SYSTEM_PROMPT } from '@/services/ai/intelligence';
@@ -396,7 +396,7 @@ export const ProjectIntelligenceView: React.FC = () => {
             Choose a project from the sidebar to start capturing project intelligence. The AI will
             help you organize knowledge about objectives, stakeholders, risks, and more.
           </p>
-          <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-500">
             <Info size={14} />
             <span>Use the project selector in the header</span>
           </div>
@@ -447,7 +447,7 @@ export const ProjectIntelligenceView: React.FC = () => {
               )}
               <button
                 onClick={fetchData}
-                className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <RefreshCw size={18} />
               </button>
@@ -505,9 +505,7 @@ export const ProjectIntelligenceView: React.FC = () => {
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-            </div>
+            <LoadingState variant="spinner" className="h-64" />
           ) : activeTab === 'interview' ? (
             <InterviewTabContent projectId={currentProjectId} onInsightCreated={fetchData} />
           ) : activeTab === 'knowledge' ? (
@@ -546,7 +544,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
   return (
     <div className="space-y-6">
       {/* Instructions Card */}
-      <div className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-primary-200/50 dark:border-primary-800/30">
+      <div className="bg-gradient-to-br from-primary-50 to-crimson-50 dark:from-primary-900/20 dark:to-crimson-900/20 rounded-xl p-6 border border-primary-200/50 dark:border-primary-800/30">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-primary-100 dark:bg-primary-900/50 rounded-xl shrink-0">
             <MessageSquare className="w-6 h-6 text-primary-600 dark:text-primary-400" />
@@ -574,7 +572,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
                   </span>
                 );
               })}
-              <span className="text-xs text-slate-400 dark:text-slate-500 py-1">
+              <span className="text-xs text-slate-600 dark:text-slate-500 py-1">
                 +4 more categories
               </span>
             </div>
@@ -608,7 +606,7 @@ const InterviewTabContent: React.FC<InterviewTabContentProps> = ({
 
       {/* PMO Alignment Note */}
       <div className="bg-slate-50 dark:bg-navy-800/50 rounded-xl p-4 flex items-start gap-3">
-        <Info size={18} className="text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
+        <Info size={18} className="text-slate-600 dark:text-slate-500 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm text-slate-600 dark:text-slate-300">
             All captured insights are aligned with <strong>ISO 21500</strong>,{' '}
@@ -647,7 +645,7 @@ const KnowledgeTabContent: React.FC<KnowledgeTabContentProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 flex items-center justify-center mb-4">
-          <Database className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+          <Database className="w-8 h-8 text-slate-600 dark:text-slate-500" />
         </div>
         <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
           No insights captured yet
@@ -794,7 +792,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
           )}
 
           {insight.pmo_domain && (
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-500">
               <Target size={12} />
               <span>PMO: {insight.pmo_domain.replace(/_/g, ' ')}</span>
             </div>
@@ -819,7 +817,7 @@ const InsightCard: React.FC<InsightCardProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+            className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
             title="Delete insight"
           >
             <Trash2 size={18} />
@@ -841,7 +839,7 @@ const SessionsTabContent: React.FC<SessionsTabContentProps> = ({ sessions, onSes
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-navy-800/40 dark:bg-navy-800 flex items-center justify-center mb-4">
-          <History className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+          <History className="w-8 h-8 text-slate-600 dark:text-slate-500" />
         </div>
         <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-1">
           No interview sessions yet

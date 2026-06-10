@@ -77,7 +77,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
   if (!content) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-xl p-8 text-center">
-        <AlertCircle size={48} className="mx-auto text-slate-400 dark:text-slate-500 mb-4" />
+        <AlertCircle size={48} className="mx-auto text-slate-600 dark:text-slate-500 mb-4" />
         <p className="text-slate-500 dark:text-slate-400">
           {lang === 'pl' ? 'Treść nie znaleziona' : 'Content not found'}
         </p>
@@ -106,7 +106,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
     return (
       <article className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-indigo-600 px-8 py-6 text-white">
+        <div className="bg-gradient-to-r from-primary-600 to-crimson-600 px-8 py-6 text-white">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <DynamicIcon name={module.icon} size={24} />
@@ -441,8 +441,8 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
           <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 text-sm mb-2">
             <Video size={16} />
             <span>{lang === 'pl' ? 'Wideo' : 'Video'}</span>
-            <span className="text-slate-400 dark:text-slate-500">•</span>
-            <Clock size={14} className="text-slate-400 dark:text-slate-500" />
+            <span className="text-slate-600 dark:text-slate-500">•</span>
+            <Clock size={14} className="text-slate-600 dark:text-slate-500" />
             <span className="text-slate-500 dark:text-slate-400">{video.duration}</span>
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">{videoTitle}</h1>

@@ -88,7 +88,7 @@ export const CommunicationSurfaceModelPanel: React.FC<CommunicationSurfaceModelP
                         <Icon size={18} />
                       </div>
                       {index < FLOWS.length - 1 ? (
-                        <ArrowRight size={14} className="text-slate-300 dark:text-slate-600" />
+                        <ArrowRight size={14} className="text-slate-600 dark:text-slate-400" />
                       ) : null}
                     </div>
                     <div className="mt-3 text-sm font-semibold text-slate-900 dark:text-white">

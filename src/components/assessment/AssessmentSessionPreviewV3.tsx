@@ -235,7 +235,7 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {isPolish ? 'AI hints' : 'AI hints'}
             </div>
-            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> : null}
+            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-600" /> : null}
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">

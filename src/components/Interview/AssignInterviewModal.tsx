@@ -9,22 +9,21 @@
  * - Walidację scope przydziałów (organizacja vs projekt)
  */
 
-import {
-  AlertTriangle,
-  Calendar,
-  Check,
-  ChevronDown,
-  FileText,
-  Loader2,
-  Search,
-  UserPlus,
-  Users,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, FileText, UserPlus, Users, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  DatePicker,
+  Field,
+  FieldLabel,
+  MultiSelect,
+  type MultiSelectOption,
+  Select,
+  type SelectOption,
+} from '@/components/shared/forms';
+import { Button, LoadingState, Switch } from '@/components/ui/primitives';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -89,42 +88,27 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // UI state
-  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [templateSearchQuery, setTemplateSearchQuery] = useState('');
-
   // Load templates and users
   useEffect(() => {
     if (!isOpen) return;
 
     const loadData = async () => {
       setIsLoading(true);
-      console.log('[AssignInterviewModal] Starting to load data...');
 
       try {
-        console.log('[AssignInterviewModal] Loading templates and users...');
-
         // Load templates separately to see which one fails
         let templatesRes: any[] = [];
         let usersRes: any[] = [];
 
         try {
-          console.log('[AssignInterviewModal] Fetching templates from /interview/templates...');
           const templatesData = await Api.get('/interview/templates');
-          console.log('[AssignInterviewModal] Templates raw response:', templatesData);
           templatesRes = Array.isArray(templatesData) ? templatesData : [];
-          console.log('[AssignInterviewModal] Templates parsed:', templatesRes);
         } catch (err: any) {
-          console.error('[AssignInterviewModal] Failed to load templates:', err);
-          console.error('[AssignInterviewModal] Error details:', {
-            status: err?.response?.status,
-            statusText: err?.response?.statusText,
-            data: err?.response?.data,
-            message: err?.message,
-            stack: err?.stack,
-          });
+          console.error(
+            '[AssignInterviewModal] Failed to load templates:',
+            err?.response?.status,
+            err?.message
+          );
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load templates';
           if (err?.response?.status === 403) {
             toast.error(
@@ -144,25 +128,19 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         }
 
         try {
-          console.log('[AssignInterviewModal] Fetching users from /users...');
           const usersData = await Api.get('/users');
-          console.log('[AssignInterviewModal] Users raw response:', usersData);
           // API returns { users, total }, extract users array
           usersRes = Array.isArray(usersData?.users)
             ? usersData.users
             : Array.isArray(usersData)
               ? usersData
               : [];
-          console.log('[AssignInterviewModal] Users parsed:', usersRes);
         } catch (err: any) {
-          console.error('[AssignInterviewModal] Failed to load users:', err);
-          console.error('[AssignInterviewModal] Error details:', {
-            status: err?.response?.status,
-            statusText: err?.response?.statusText,
-            data: err?.response?.data,
-            message: err?.message,
-            stack: err?.stack,
-          });
+          console.error(
+            '[AssignInterviewModal] Failed to load users:',
+            err?.response?.status,
+            err?.message
+          );
           const errorMsg = err?.response?.data?.error || err?.message || 'Failed to load users';
           if (err?.response?.status === 403) {
             toast.error(
@@ -181,11 +159,6 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           usersRes = [];
         }
 
-        console.log('[AssignInterviewModal] Final data:', {
-          templatesCount: templatesRes.length,
-          usersCount: usersRes.length,
-        });
-
         setTemplates(
           templatesRes.map((template) => ({
             ...template,
@@ -203,7 +176,6 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           projectRole: u.projectRole || u.project_role,
         }));
 
-        console.log('[AssignInterviewModal] Mapped users:', allUsers);
         setUsers(allUsers);
 
         if (templatesRes.length === 0) {
@@ -236,7 +208,6 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         toast.error(msg);
       } finally {
         setIsLoading(false);
-        console.log('[AssignInterviewModal] Loading completed');
       }
     };
 
@@ -253,64 +224,60 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       setPriority('medium');
       setNotes('');
       setIsTeamAssignment(false);
-      setUserSearchQuery('');
-      setTemplateSearchQuery('');
     }
   }, [isOpen, preselectedTemplateId]);
 
-  // Filter templates
-  const filteredTemplates = useMemo(() => {
-    if (!templateSearchQuery) return templates;
-    const query = templateSearchQuery.toLowerCase();
-    return templates.filter(
-      (t) =>
-        t.name.toLowerCase().includes(query) ||
-        t.description?.toLowerCase().includes(query) ||
-        t.category?.toLowerCase().includes(query) ||
-        getTemplateSourceLabel(t.scope, isPolish).toLowerCase().includes(query) ||
-        (t.areaTags || []).join(' ').toLowerCase().includes(query)
-    );
-  }, [templates, templateSearchQuery, isPolish]);
+  // Template options for the portal-based Select (with scope/area-tag hints).
+  const templateOptions = useMemo<SelectOption[]>(
+    () =>
+      templates.map((template) => {
+        const tags = [
+          getTemplateSourceLabel(template.scope, isPolish),
+          ...(template.areaTags || []).map((tag) => getTemplateAreaTagLabel(tag, isPolish)),
+        ].filter(Boolean);
+        const label = tags.length ? `${template.name} · ${tags.join(' · ')}` : template.name;
+        return {
+          value: template.id,
+          label,
+          icon: <FileText size={16} className="shrink-0 text-blue-400" />,
+        };
+      }),
+    [templates, isPolish]
+  );
 
-  // Filter users
-  const filteredUsers = useMemo(() => {
-    if (!userSearchQuery) return users;
-    const query = userSearchQuery.toLowerCase();
-    return users.filter(
-      (u) => u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)
-    );
-  }, [users, userSearchQuery]);
+  // User options for the portal-based MultiSelect.
+  const userOptions = useMemo<MultiSelectOption[]>(
+    () =>
+      users.map((user) => ({
+        value: user.id,
+        label: user.name,
+        description: user.email,
+      })),
+    [users]
+  );
 
-  // Get selected template
-  const selectedTemplate = useMemo(() => {
-    return templates.find((t) => t.id === selectedTemplateId);
-  }, [templates, selectedTemplateId]);
-
-  // Get selected users
+  // Get selected users (for team-lead picker + count).
   const selectedUsers = useMemo(() => {
     return users.filter((u) => selectedUserIds.includes(u.id));
   }, [users, selectedUserIds]);
 
-  // Toggle user selection
-  const toggleUserSelection = useCallback(
-    (userId: string) => {
-      setSelectedUserIds((prev) => {
-        if (prev.includes(userId)) {
-          // Remove user
-          const newIds = prev.filter((id) => id !== userId);
-          // If team lead was removed, clear team lead
-          if (userId === teamLeadId) {
-            setTeamLeadId('');
-          }
-          // If less than 2 users, disable team assignment
-          if (newIds.length < 2) {
-            setIsTeamAssignment(false);
-          }
-          return newIds;
-        } else {
-          return [...prev, userId];
-        }
-      });
+  // Team-lead options (restricted to currently selected users).
+  const teamLeadOptions = useMemo<SelectOption[]>(
+    () => selectedUsers.map((user) => ({ value: user.id, label: user.name })),
+    [selectedUsers]
+  );
+
+  // Apply a new user selection from the MultiSelect, preserving the
+  // team-assignment invariants (clear lead if removed, disable team mode <2).
+  const handleUsersChange = useCallback(
+    (next: string[]) => {
+      if (teamLeadId && !next.includes(teamLeadId)) {
+        setTeamLeadId('');
+      }
+      if (next.length < 2) {
+        setIsTeamAssignment(false);
+      }
+      setSelectedUserIds(next);
     },
     [teamLeadId]
   );
@@ -383,32 +350,20 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
     }
   };
 
-  // Debug: log when modal should be visible
-  useEffect(() => {
-    console.log('[AssignInterviewModal] Modal state:', {
-      isOpen,
-      templatesCount: templates.length,
-      usersCount: users.length,
-      isLoading,
-    });
-  }, [isOpen, templates.length, users.length, isLoading]);
-
   if (!isOpen) return null;
-
-  console.log('[AssignInterviewModal] Rendering modal...');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-2xl shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <UserPlus size={20} className="text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-c-accent-soft flex items-center justify-center">
+              <UserPlus size={20} className="text-c-accent" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -432,345 +387,102 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            </div>
+            <LoadingState variant="spinner" className="py-12" />
           ) : (
             <>
               {/* Template Selection */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Szablon wywiadu' : 'Interview Template'} *
-                </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-left hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
-                  >
-                    {selectedTemplate ? (
-                      <div className="flex items-center gap-3">
-                        <FileText size={18} className="text-blue-400" />
-                        <div>
-                          <span className="text-slate-900 dark:text-white block">
-                            {selectedTemplate.name}
-                          </span>
-                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                            {selectedTemplate.category ? (
-                              <span className="text-xs text-slate-500">
-                                ({selectedTemplate.category})
-                              </span>
-                            ) : null}
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-300">
-                              {getTemplateSourceLabel(selectedTemplate.scope, isPolish)}
-                            </span>
-                            {(selectedTemplate.areaTags || []).slice(0, 2).map((tag) => (
-                              <span
-                                key={tag}
-                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-300"
-                              >
-                                {getTemplateAreaTagLabel(tag, isPolish)}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-slate-500">
-                        {isPolish ? 'Wybierz szablon...' : 'Select template...'}
-                      </span>
-                    )}
-                    <ChevronDown
-                      size={18}
-                      className={`text-slate-500 dark:text-slate-400 transition-transform ${
-                        showTemplateDropdown ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-
-                  {showTemplateDropdown && (
-                    <div className="absolute z-10 w-full mt-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                      <div className="p-2 border-b border-slate-200 dark:border-navy-700">
-                        <div className="relative">
-                          <Search
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-                          />
-                          <input
-                            type="text"
-                            value={templateSearchQuery}
-                            onChange={(e) => setTemplateSearchQuery(e.target.value)}
-                            placeholder={isPolish ? 'Szukaj szablonu...' : 'Search templates...'}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                      <div className="max-h-48 overflow-y-auto">
-                        {filteredTemplates.length > 0 ? (
-                          filteredTemplates.map((template) => (
-                            <button
-                              key={template.id}
-                              onClick={() => {
-                                setSelectedTemplateId(template.id);
-                                setShowTemplateDropdown(false);
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
-                                template.id === selectedTemplateId ? 'bg-blue-500/10' : ''
-                              }`}
-                            >
-                              <FileText size={16} className="text-blue-400 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm text-slate-900 dark:text-white block truncate">
-                                  {template.name}
-                                </span>
-                                {template.description && (
-                                  <span className="text-xs text-slate-500 block truncate">
-                                    {template.description}
-                                  </span>
-                                )}
-                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-300">
-                                    {getTemplateSourceLabel(template.scope, isPolish)}
-                                  </span>
-                                  {(template.areaTags || []).slice(0, 3).map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-300"
-                                    >
-                                      {getTemplateAreaTagLabel(tag, isPolish)}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                              {template.id === selectedTemplateId && (
-                                <Check size={16} className="text-blue-400 flex-shrink-0" />
-                              )}
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-6 text-center">
-                            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                              {isPolish ? 'Brak szablonów' : 'No templates found'}
-                            </div>
-                            {templates.length === 0 && !isLoading && (
-                              <div className="text-xs text-slate-500 mt-2">
-                                {isPolish
-                                  ? 'Sprawdź konsolę przeglądarki (F12) dla szczegółów'
-                                  : 'Check browser console (F12) for details'}
-                              </div>
-                            )}
-                            {templateSearchQuery && templates.length > 0 && (
-                              <div className="text-xs text-slate-500 mt-2">
-                                {isPolish
-                                  ? 'Spróbuj innej frazy wyszukiwania'
-                                  : 'Try a different search term'}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Field>
+                <FieldLabel required>
+                  {isPolish ? 'Szablon wywiadu' : 'Interview Template'}
+                </FieldLabel>
+                <Select
+                  value={selectedTemplateId}
+                  onChange={setSelectedTemplateId}
+                  options={templateOptions}
+                  placeholder={isPolish ? 'Wybierz szablon...' : 'Select template...'}
+                  aria-label={isPolish ? 'Szablon wywiadu' : 'Interview Template'}
+                />
+              </Field>
 
               {/* User Selection */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  {isPolish ? 'Przydziel do' : 'Assign to'} *
-                </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowUserDropdown(!showUserDropdown)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-left hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
-                  >
-                    {selectedUsers.length > 0 ? (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {selectedUsers.slice(0, 3).map((user) => (
-                          <span
-                            key={user.id}
-                            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs"
-                          >
-                            {user.name}
-                          </span>
-                        ))}
-                        {selectedUsers.length > 3 && (
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            +{selectedUsers.length - 3} {isPolish ? 'więcej' : 'more'}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-slate-500">
-                        {isPolish ? 'Wybierz użytkowników...' : 'Select users...'}
-                      </span>
-                    )}
-                    <ChevronDown
-                      size={18}
-                      className={`text-slate-500 dark:text-slate-400 transition-transform ${
-                        showUserDropdown ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-
-                  {showUserDropdown && (
-                    <div className="absolute z-10 w-full mt-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                      <div className="p-2 border-b border-slate-200 dark:border-navy-700">
-                        <div className="relative">
-                          <Search
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-                          />
-                          <input
-                            type="text"
-                            value={userSearchQuery}
-                            onChange={(e) => setUserSearchQuery(e.target.value)}
-                            placeholder={isPolish ? 'Szukaj użytkownika...' : 'Search users...'}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                      <div className="max-h-48 overflow-y-auto">
-                        {filteredUsers.length > 0 ? (
-                          filteredUsers.map((user) => {
-                            const isSelected = selectedUserIds.includes(user.id);
-                            return (
-                              <button
-                                key={user.id}
-                                onClick={() => toggleUserSelection(user.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors ${
-                                  isSelected ? 'bg-blue-500/10' : ''
-                                }`}
-                              >
-                                <div
-                                  className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                                    isSelected
-                                      ? 'bg-blue-500 border-blue-500'
-                                      : 'border-slate-300 dark:border-navy-500 bg-white dark:bg-navy-900'
-                                  }`}
-                                >
-                                  {isSelected && <Check size={12} className="text-white" />}
-                                </div>
-                                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-xs text-slate-700 dark:text-slate-300">
-                                  {user.name.charAt(0)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <span className="text-sm text-slate-900 dark:text-white block truncate">
-                                    {user.name}
-                                  </span>
-                                  <span className="text-xs text-slate-500 block truncate">
-                                    {user.email}
-                                  </span>
-                                </div>
-                              </button>
-                            );
-                          })
-                        ) : (
-                          <div className="px-4 py-6 text-center">
-                            <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                              {isPolish ? 'Brak użytkowników' : 'No users found'}
-                            </div>
-                            {users.length === 0 && !isLoading && (
-                              <div className="text-xs text-slate-500 mt-2">
-                                {isPolish
-                                  ? 'Sprawdź konsolę przeglądarki (F12) dla szczegółów'
-                                  : 'Check browser console (F12) for details'}
-                              </div>
-                            )}
-                            {userSearchQuery && users.length > 0 && (
-                              <div className="text-xs text-slate-500 mt-2">
-                                {isPolish
-                                  ? 'Spróbuj innej frazy wyszukiwania'
-                                  : 'Try a different search term'}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+              <Field>
+                <FieldLabel required>{isPolish ? 'Przydziel do' : 'Assign to'}</FieldLabel>
+                <MultiSelect
+                  values={selectedUserIds}
+                  onChange={handleUsersChange}
+                  options={userOptions}
+                  placeholder={isPolish ? 'Wybierz użytkowników...' : 'Select users...'}
+                  searchPlaceholder={isPolish ? 'Szukaj użytkownika...' : 'Search users...'}
+                  emptyLabel={isPolish ? 'Brak użytkowników' : 'No users found'}
+                  aria-label={isPolish ? 'Przydziel do' : 'Assign to'}
+                  renderOptionLeading={(option) => (
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs text-slate-700 dark:bg-navy-700 dark:text-slate-300">
+                      {option.label.charAt(0)}
+                    </span>
                   )}
-                </div>
+                />
 
                 {/* Team Assignment Toggle */}
                 {selectedUserIds.length >= 2 && (
-                  <div className="mt-3 p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700 rounded-lg">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isTeamAssignment}
-                        onChange={(e) => setIsTeamAssignment(e.target.checked)}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-navy-500 bg-white dark:bg-navy-900 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
-                      />
-                      <div className="flex items-center gap-2">
-                        <Users size={16} className="text-slate-500 dark:text-slate-400" />
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                  <div className="mt-1 p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700 rounded-xl">
+                    <Switch
+                      checked={isTeamAssignment}
+                      onCheckedChange={setIsTeamAssignment}
+                      aria-label={isPolish ? 'Przydzielenie zespołowe' : 'Team assignment'}
+                      label={
+                        <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                          <Users size={16} className="text-slate-500 dark:text-slate-400" />
                           {isPolish ? 'Przydzielenie zespołowe' : 'Team assignment'}
                         </span>
-                      </div>
-                    </label>
+                      }
+                    />
 
                     {isTeamAssignment && (
                       <div className="mt-3 pl-7">
-                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                        <FieldLabel className="mb-1.5 text-xs text-slate-500 dark:text-slate-400">
                           {isPolish ? 'Lider zespołu' : 'Team Lead'}
-                        </label>
-                        <select
+                        </FieldLabel>
+                        <Select
                           value={teamLeadId}
-                          onChange={(e) => setTeamLeadId(e.target.value)}
-                          className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none"
-                        >
-                          <option value="">
-                            {isPolish ? 'Wybierz lidera...' : 'Select lead...'}
-                          </option>
-                          {selectedUsers.map((user) => (
-                            <option key={user.id} value={user.id}>
-                              {user.name}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={setTeamLeadId}
+                          options={teamLeadOptions}
+                          placeholder={isPolish ? 'Wybierz lidera...' : 'Select lead...'}
+                          aria-label={isPolish ? 'Lider zespołu' : 'Team Lead'}
+                        />
                       </div>
                     )}
                   </div>
                 )}
-              </div>
+              </Field>
 
               {/* Due Date & Priority */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    {isPolish ? 'Termin' : 'Due Date'} *
-                  </label>
-                  <div className="relative">
-                    <Calendar
-                      size={16}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-                    />
-                    <input
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full pl-10 pr-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
+                <Field>
+                  <FieldLabel required>{isPolish ? 'Termin' : 'Due Date'}</FieldLabel>
+                  <DatePicker
+                    value={dueDate}
+                    onChange={setDueDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    placeholder={isPolish ? 'Wybierz datę...' : 'Pick a date...'}
+                    isPolish={isPolish}
+                    aria-label={isPolish ? 'Termin' : 'Due Date'}
+                  />
+                </Field>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    {isPolish ? 'Priorytet' : 'Priority'}
-                  </label>
-                  <select
+                <Field>
+                  <FieldLabel>{isPolish ? 'Priorytet' : 'Priority'}</FieldLabel>
+                  <Select
                     value={priority}
-                    onChange={(e) => setPriority(e.target.value as Priority)}
-                    className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
-                    <option value="medium">{isPolish ? 'Średni' : 'Medium'}</option>
-                    <option value="high">{isPolish ? 'Wysoki' : 'High'}</option>
-                    <option value="urgent">{isPolish ? 'Pilny' : 'Urgent'}</option>
-                  </select>
-                </div>
+                    onChange={(v) => setPriority(v as Priority)}
+                    options={[
+                      { value: 'low', label: isPolish ? 'Niski' : 'Low' },
+                      { value: 'medium', label: isPolish ? 'Średni' : 'Medium' },
+                      { value: 'high', label: isPolish ? 'Wysoki' : 'High' },
+                      { value: 'urgent', label: isPolish ? 'Pilny' : 'Urgent' },
+                    ]}
+                    aria-label={isPolish ? 'Priorytet' : 'Priority'}
+                  />
+                </Field>
               </div>
 
               {/* Notes */}
@@ -787,13 +499,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                       : 'Additional instructions for assignees...'
                   }
                   rows={3}
-                  className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none resize-none"
+                  className="w-full px-3 py-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/40 focus:outline-none resize-none transition-colors"
                 />
               </div>
 
               {/* Scope Warning */}
               {assignmentScope.type === 'projects' && (
-                <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
                   <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-amber-300">
                     {isPolish
@@ -808,30 +520,24 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/50">
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-          >
+          <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
             {isPolish ? 'Anuluj' : 'Cancel'}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={isSubmitting || isLoading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            loading={isSubmitting}
+            icon={isSubmitting ? undefined : <UserPlus size={16} />}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                {isPolish ? 'Przydzielanie...' : 'Assigning...'}
-              </>
-            ) : (
-              <>
-                <UserPlus size={16} />
-                {isPolish ? 'Przydziel' : 'Assign'}
-              </>
-            )}
-          </button>
+            {isSubmitting
+              ? isPolish
+                ? 'Przydzielanie...'
+                : 'Assigning...'
+              : isPolish
+                ? 'Przydziel'
+                : 'Assign'}
+          </Button>
         </div>
       </div>
     </div>

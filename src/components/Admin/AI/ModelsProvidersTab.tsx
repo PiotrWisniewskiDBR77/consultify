@@ -320,7 +320,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
       case 'unhealthy':
         return <XCircle size={14} className="text-rose-400" />;
       default:
-        return <Server size={14} className="text-slate-400 dark:text-slate-500" />;
+        return <Server size={14} className="text-slate-600 dark:text-slate-500" />;
     }
   };
 
@@ -404,7 +404,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
           {llmStatus?.defaultProvider && (
             <div className="flex items-center gap-2 text-sm">
               <Star size={14} className="text-amber-400" />
-              <span className="text-slate-400 dark:text-slate-500">Default:</span>
+              <span className="text-slate-600 dark:text-slate-500">Default:</span>
               <span className="text-white font-medium">{llmStatus.defaultProvider.name}</span>
               <span className="text-slate-500 dark:text-slate-400">
                 ({llmStatus.defaultProvider.model})
@@ -412,7 +412,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             </div>
           )}
           {llmStatus?.startupValidation && (
-            <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
               <Clock size={12} />
               Last check: {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}
             </div>
@@ -424,7 +424,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors text-sm font-medium ${
               showInactive
                 ? 'bg-white/10 border-white/20 text-white'
-                : 'border-white/10 text-slate-400 dark:text-slate-500 hover:text-white'
+                : 'border-white/10 text-slate-600 dark:text-slate-500 hover:text-white'
             }`}
           >
             {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -474,19 +474,19 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                             ? 'bg-primary-500/10 text-primary-400'
                             : TIER_CONFIG[p.tier]?.color === 'amber'
                               ? 'bg-amber-500/10 text-amber-400'
-                              : 'bg-white/5 text-slate-400 dark:text-slate-500'
+                              : 'bg-white/5 text-slate-600 dark:text-slate-500'
                     }`}
                   >
                     {p.tier}
                   </span>
                 )}
                 {p.supportsVision && (
-                  <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-400 dark:text-slate-500">
+                  <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-600 dark:text-slate-500">
                     Vision
                   </span>
                 )}
                 {p.supportsTools && (
-                  <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-400 dark:text-slate-500">
+                  <span className="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-600 dark:text-slate-500">
                     Tools
                   </span>
                 )}
@@ -504,7 +504,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                 <button
                   onClick={() => testSingleProvider(p.provider)}
                   disabled={testingProvider === p.provider || !p.isConfigured}
-                  className="text-xs px-2 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 disabled:opacity-50 rounded flex items-center gap-1 transition-colors text-slate-400 dark:text-slate-500"
+                  className="text-xs px-2 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 disabled:opacity-50 rounded flex items-center gap-1 transition-colors text-slate-600 dark:text-slate-500"
                 >
                   {testingProvider === p.provider ? (
                     <RefreshCw size={12} className="animate-spin" />
@@ -591,7 +591,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
+                        <span className="font-mono text-xs text-slate-600 dark:text-slate-500">
                           {p.model_id}
                         </span>
                       </td>
@@ -613,7 +613,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                           ? 'bg-primary-500/10 text-primary-400'
                                           : config?.color === 'amber'
                                             ? 'bg-amber-500/10 text-amber-400'
-                                            : 'bg-white/5 text-slate-400 dark:text-slate-500'
+                                            : 'bg-white/5 text-slate-600 dark:text-slate-500'
                                   }`}
                                 >
                                   <Icon size={10} />
@@ -681,7 +681,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         <button
                           onClick={() => testSingleProvider(p.provider)}
                           disabled={testingProvider === p.provider || !statusInfo?.isConfigured}
-                          className="text-xs px-2 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 disabled:opacity-50 rounded flex items-center gap-1 transition-colors text-slate-400 dark:text-slate-500"
+                          className="text-xs px-2 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 disabled:opacity-50 rounded flex items-center gap-1 transition-colors text-slate-600 dark:text-slate-500"
                         >
                           {testingProvider === p.provider ? (
                             <RefreshCw size={12} className="animate-spin" />
@@ -710,7 +710,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
             <Info size={16} className="text-blue-400" />
             <span className="text-sm font-medium text-white">Models Available per Tier</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-500">
             <span>
               {Object.values(availableModels).reduce((sum, models) => sum + models.length, 0)}{' '}
               models in {Object.keys(availableModels).length} tiers
@@ -753,7 +753,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                 ? 'text-primary-400'
                                 : config.color === 'amber'
                                   ? 'text-amber-400'
-                                  : 'text-slate-400 dark:text-slate-500'
+                                  : 'text-slate-600 dark:text-slate-500'
                         }
                       />
                       <span
@@ -766,7 +766,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                                 ? 'text-primary-400'
                                 : config.color === 'amber'
                                   ? 'text-amber-400'
-                                  : 'text-slate-400 dark:text-slate-500'
+                                  : 'text-slate-600 dark:text-slate-500'
                         }`}
                       >
                         {tier}
@@ -781,7 +781,7 @@ export const ModelsProvidersTab: React.FC<ModelsProvidersTabProps> = ({ organiza
                         {models.map((model, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-xs">
                             {getHealthIcon(model.health_status)}
-                            <span className="text-slate-300 truncate">{model.name}</span>
+                            <span className="text-slate-600 truncate">{model.name}</span>
                           </div>
                         ))}
                       </div>

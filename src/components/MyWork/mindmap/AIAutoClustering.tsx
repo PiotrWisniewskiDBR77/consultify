@@ -122,7 +122,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             <X size={16} />
           </button>
@@ -131,7 +131,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
         <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
           {clusters.length === 0 && !loading && (
             <div className="text-center py-8">
-              <Palette size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <Palette size={36} className="text-slate-600 dark:text-slate-400 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
                   ? 'AI pogrupuje pomysły w klastry tematyczne.'
@@ -173,7 +173,7 @@ export const AIAutoClustering: React.FC<AIAutoClusteringProps> = ({
                     <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
                       {cluster.name}
                     </span>
-                    <span className="text-[9px] text-slate-400">
+                    <span className="text-[9px] text-slate-600">
                       ({cluster.nodeIds.length} nodes)
                     </span>
                   </div>

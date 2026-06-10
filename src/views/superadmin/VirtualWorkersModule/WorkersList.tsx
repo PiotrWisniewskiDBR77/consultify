@@ -1,8 +1,9 @@
-import { Bot, Globe, Mic, Monitor, MoreVertical, Plus, RefreshCw } from 'lucide-react';
+import { Globe, Mic, Monitor, MoreVertical, Plus, RefreshCw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import TeresaMark from '../../../components/shared/TeresaMark';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
-
 interface VirtualWorker {
   id: string;
   slug: string;
@@ -63,11 +64,7 @@ export const WorkersList: React.FC<WorkersListProps> = ({ onSelectWorker }) => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -107,11 +104,11 @@ export const WorkersList: React.FC<WorkersListProps> = ({ onSelectWorker }) => {
 
         {workers.length === 0 && (
           <div className="col-span-full text-center py-16">
-            <Bot className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <TeresaMark className="w-12 h-12 mx-auto text-slate-600 dark:text-slate-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400">
               No virtual workers yet
             </h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-500 mt-1">
               Create your first virtual worker to get started.
             </p>
           </div>
@@ -131,7 +128,7 @@ const WorkerCard: React.FC<{ worker: VirtualWorker; onClick: () => void }> = ({
   >
     <div className="flex items-start justify-between mb-3">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-crimson-500 to-primary-600 flex items-center justify-center text-white font-bold text-sm">
           {worker.name.charAt(0)}
         </div>
         <div>
@@ -145,7 +142,7 @@ const WorkerCard: React.FC<{ worker: VirtualWorker; onClick: () => void }> = ({
       </div>
       <MoreVertical
         size={16}
-        className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
       />
     </div>
 

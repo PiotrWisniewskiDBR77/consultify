@@ -191,7 +191,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
             onClick={onClose}
             className="relative p-1.5 rounded-lg hover:bg-slate-100/80 dark:hover:bg-white/[0.06] transition-colors duration-150"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-slate-600" />
           </button>
         </div>
 
@@ -246,7 +246,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               </div>
               <ArrowRight
                 size={12}
-                className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
+                className="text-slate-600/60 transition-transform group-hover:translate-x-0.5"
               />
             </PrimaryStartButton>
 
@@ -270,7 +270,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               </div>
               <ArrowRight
                 size={12}
-                className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
+                className="text-slate-600/60 transition-transform group-hover:translate-x-0.5"
               />
             </PrimaryStartButton>
 
@@ -294,7 +294,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
               </div>
               <ArrowRight
                 size={12}
-                className="text-slate-400/60 transition-transform group-hover:translate-x-0.5"
+                className="text-slate-600/60 transition-transform group-hover:translate-x-0.5"
               />
             </PrimaryStartButton>
           </div>
@@ -389,7 +389,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
                   >
                     <Icon
                       size={18}
-                      className={active ? c.text : 'text-slate-400 dark:text-slate-500'}
+                      className={active ? c.text : 'text-slate-600 dark:text-slate-500'}
                     />
                     <span
                       className={`text-[11px] font-medium ${active ? c.text : 'text-slate-500 dark:text-slate-400'}`}

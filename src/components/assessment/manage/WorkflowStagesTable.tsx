@@ -462,7 +462,7 @@ const WorkflowStageRow: FC<{
               <span>{stage.gate.replace(/_/g, ' ')}</span>
             </div>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
           )}
         </td>
 
@@ -494,7 +494,7 @@ const WorkflowStageRow: FC<{
               )}
             </div>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
           )}
         </td>
 
@@ -506,7 +506,7 @@ const WorkflowStageRow: FC<{
               {stage.approverRole}
             </span>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
           )}
         </td>
 
@@ -601,7 +601,7 @@ const WorkflowStageRow: FC<{
               )}
             </div>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
           )}
         </td>
 
@@ -625,7 +625,7 @@ const WorkflowStageRow: FC<{
               )}
             </div>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
           )}
         </td>
 
@@ -701,7 +701,7 @@ const WorkflowStageRow: FC<{
               Done
             </span>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+            <span className="text-xs text-slate-600 dark:text-slate-500">—</span>
           )}
         </td>
       </motion.tr>

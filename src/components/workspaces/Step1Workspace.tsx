@@ -149,7 +149,7 @@ export const Step1Workspace: React.FC<Step1WorkspaceProps> = ({
                     ? 'text-green-400'
                     : profile.itLandscape?.integrationLevel === 'Medium'
                       ? 'text-yellow-400'
-                      : 'text-slate-400 dark:text-slate-500'
+                      : 'text-slate-600 dark:text-slate-500'
                 } `}
               >
                 {profile.itLandscape?.integrationLevel || 'Unknown'}

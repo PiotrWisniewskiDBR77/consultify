@@ -20,7 +20,7 @@ export function SwotMatrixVisual({ data, isPolish }: { data: SWOTData; isPolish:
   ] as const;
   return (
     <div className={cardClass}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
         SWOT 2x2
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -58,7 +58,7 @@ export function PorterPentagonVisual({ data, isPolish }: { data: PorterData; isP
   const polygon = points.map((point) => `${point.x},${point.y}`).join(' ');
   return (
     <div className={cardClass}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
         {isPolish ? 'Radar sił Portera' : 'Porter force radar'}
       </div>
       <div className="grid gap-4 md:grid-cols-[180px_1fr]">
@@ -110,7 +110,7 @@ export function AnsoffMatrixVisual({
   ] as const;
   return (
     <div className={cardClass}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
         Ansoff 2x2
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -143,7 +143,7 @@ export function PortfolioBcgVisual({
   const items = data.initiatives || [];
   return (
     <div className={cardClass}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
         BCG 2x2
       </div>
       <div className="relative h-56 rounded-2xl bg-slate-50 dark:bg-navy-900">
@@ -181,7 +181,7 @@ export function RiskMatrixVisual({
 }) {
   return (
     <div className={cardClass}>
-      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
         {isPolish ? 'Macierz prawdopodobieństwo x wpływ' : 'Probability x impact matrix'}
       </div>
       <div className="relative h-56 rounded-2xl bg-gradient-to-tr from-emerald-50 via-amber-50 to-rose-50 dark:from-emerald-950/20 dark:via-amber-950/20 dark:to-rose-950/20">

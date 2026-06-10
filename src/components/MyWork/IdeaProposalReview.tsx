@@ -91,7 +91,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-primary-200/30 dark:border-primary-800/30">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary-500/20 to-indigo-500/15 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary-500/20 to-crimson-500/15 flex items-center justify-center">
             <Sparkles size={12} className="text-primary-600 dark:text-primary-400" />
           </div>
           <div>
@@ -135,7 +135,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
           </button>
           <button
             onClick={onDismiss}
-            className="ml-1 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+            className="ml-1 p-1 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
             title={isPl ? 'Zamknij' : 'Dismiss'}
           >
             <X size={12} />
@@ -230,15 +230,15 @@ const ProposalItem: React.FC<{
                   style={{ width: `${confidencePercent}%` }}
                 />
               </div>
-              <span className="text-[9px] text-slate-400">{confidencePercent}%</span>
+              <span className="text-[9px] text-slate-600">{confidencePercent}%</span>
             </div>
-            <span className="text-[9px] text-slate-400">{patchSummary}</span>
+            <span className="text-[9px] text-slate-600">{patchSummary}</span>
           </div>
         </div>
         {expanded ? (
-          <ChevronUp size={12} className="text-slate-400" />
+          <ChevronUp size={12} className="text-slate-600" />
         ) : (
-          <ChevronDown size={12} className="text-slate-400" />
+          <ChevronDown size={12} className="text-slate-600" />
         )}
       </button>
 

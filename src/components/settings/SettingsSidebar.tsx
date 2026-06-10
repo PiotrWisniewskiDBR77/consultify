@@ -16,7 +16,6 @@ import {
   Bell,
   BookOpen,
   Brain,
-  Building2,
   Calendar,
   ChevronDown,
   Clock,
@@ -29,7 +28,6 @@ import {
   History,
   Image,
   Key,
-  Keyboard,
   LayoutDashboard,
   LifeBuoy,
   Link2,
@@ -40,7 +38,6 @@ import {
   Monitor,
   Moon,
   Palette,
-  PanelsTopLeft,
   Settings,
   Shield,
   Sliders,
@@ -148,9 +145,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   allowedSections,
 }) => {
   const { t } = useTranslation();
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(['settings-root', 'my-settings'])
-  );
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['my-settings']));
   const allowedSectionSet = useMemo(
     () => (allowedSections?.length ? new Set(allowedSections) : null),
     [allowedSections]
@@ -161,43 +156,6 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     () =>
       (
         [
-          {
-            id: 'settings-root',
-            label: t('settings.sidebar.groups.settingsRoot', 'SETTINGS ROOT'),
-            defaultOpen: true,
-            items: [
-              {
-                id: 'overview',
-                label: t('settings.sidebar.overview', 'Overview'),
-                icon: Sparkles,
-                keywords: ['taxonomy', 'ownership', 'overview', 'scope'],
-              },
-              {
-                id: 'tenant-defaults',
-                label: t('settings.sidebar.tenantDefaults', 'Tenant Defaults'),
-                icon: Building2,
-                keywords: ['organization', 'defaults', 'locale', 'currency'],
-              },
-              {
-                id: 'tenant-branding',
-                label: t('settings.sidebar.tenantBranding', 'Branding Handoff'),
-                icon: Sparkles,
-                keywords: ['branding', 'logo', 'colors', 'domain'],
-              },
-              {
-                id: 'tenant-security',
-                label: t('settings.sidebar.tenantSecurity', 'Security Handoff'),
-                icon: Shield,
-                keywords: ['admin', 'security', 'mfa', 'sso', 'policy'],
-              },
-              {
-                id: 'module-preferences',
-                label: t('settings.sidebar.modulePreferences', 'Module Preferences'),
-                icon: PanelsTopLeft,
-                keywords: ['module', 'interview', 'tools', 'assessment', 'copilot'],
-              },
-            ],
-          },
           {
             id: 'my-settings',
             label: t('settings.sidebar.groups.mySettings', 'PERSONAL'),
@@ -454,12 +412,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 icon: Accessibility,
                 keywords: ['contrast', 'motion', 'font'],
               },
-              {
-                id: 'shortcuts',
-                label: t('settings.sidebar.shortcuts', 'Keyboard Shortcuts'),
-                icon: Keyboard,
-                keywords: ['hotkeys', 'keys'],
-              },
+              // 'shortcuts' (Keyboard Shortcuts) intentionally hidden until a global
+              // shortcut-dispatch system exists. The customizer would otherwise let
+              // users rebind shortcuts that are not wired app-wide. Component and
+              // route are kept for when the dispatcher lands.
             ],
           },
           {
@@ -629,7 +585,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                               'w-4 h-4 flex-shrink-0',
                               isActive
                                 ? 'text-primary-600 dark:text-primary-400'
-                                : 'text-slate-400 dark:text-slate-400'
+                                : 'text-slate-600 dark:text-slate-400'
                             )}
                           />
                           <span className="flex-1 text-left">{item.label}</span>

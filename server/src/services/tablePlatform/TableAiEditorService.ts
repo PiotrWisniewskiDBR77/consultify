@@ -38,6 +38,11 @@ import logger from '../../utils/Logger.js';
 import aiUsageService, { AiBudgetExhaustedError, type AiEditorLevel } from './AiUsageService.js';
 import auditService from './AuditService.js';
 import { dispatchLevelStub } from './TableAiEditorLevels/index.js';
+import {
+  type ExecuteOperationsResult,
+  executeProposalOperations,
+  MutationExecutorError,
+} from './TableAiEditorLevels/MutationExecutor.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,6 +99,12 @@ export interface ApplyProposalInput {
   proposalId: string;
   workspaceId: string;
   actorUserId: string;
+  /**
+   * Tenant of the actor. Required so the MutationExecutor can refuse
+   * cross-tenant writes. When omitted, the service resolves it from the
+   * proposal's workspace via `tp_bases` (Block B parity: org === workspace).
+   */
+  organizationId?: string;
   /** When true, the apply is idempotent — re-applying a 'applied' row is a no-op. */
   idempotent?: boolean;
 }
@@ -102,6 +113,9 @@ export interface ApplyProposalResult {
   proposalId: string;
   applied: boolean;
   reason?: string;
+  /** Per-operation execution summary from the MutationExecutor. */
+  operationsApplied?: number;
+  operationsSkipped?: number;
 }
 
 export interface RejectProposalInput {
@@ -126,8 +140,49 @@ export class TableAiEditorError extends Error {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Shape of a `tp_schema_proposals` row as read by apply/reject. */
+interface ProposalApplyRow {
+  id: string;
+  workspace_id: string;
+  status: string;
+  level: string | null;
+  operations?: unknown;
+}
+
 function isAiEditorLevel(value: unknown): value is AiEditorLevel {
   return typeof value === 'string' && (AI_EDITOR_LEVELS as readonly string[]).includes(value);
+}
+
+/**
+ * The `operations` column is JSONB. The pg driver may hand it back as an
+ * already-parsed array or as a JSON string depending on column typing; this
+ * normalises both into a plain array for the executor.
+ */
+function parseOperations(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+/**
+ * Resolve the organizationId that owns a workspace via `tp_bases`. Used as a
+ * fallback when the apply route does not pass organizationId explicitly.
+ */
+async function resolveOrganizationId(workspaceId: string): Promise<string | null> {
+  const db = getDatabase();
+  const { rows } = await db.query<{ organization_id: string }>(
+    'SELECT organization_id FROM tp_bases WHERE workspace_id = $1 LIMIT 1',
+    [workspaceId]
+  );
+  const orgId = rows?.[0]?.organization_id;
+  return orgId ? String(orgId) : null;
 }
 
 // ── Service ──────────────────────────────────────────────────────────────────
@@ -268,9 +323,15 @@ const tableAiEditorService = {
   },
 
   /**
-   * Apply an AI Editor proposal. C-S1 skeleton flips status to 'applied' and
-   * writes the audit event but DOES NOT execute the operations — real
-   * MutationExecutor wiring lands in C-S2 (levels 1–4) and C-S3 (levels 5–8).
+   * Apply an AI Editor proposal. The proposal's persisted `operations` array
+   * is replayed against `tp_records` / `tp_fields` / `tp_views` by the
+   * MutationExecutor, then the row is flipped to `status = 'applied'` and an
+   * audit event records the real per-operation outcome.
+   *
+   * Failure semantics: if the executor throws (invalid op or a mutation
+   * fails), the proposal row is NOT flipped — it stays `pending` so the user
+   * can retry — and the error surfaces to the caller. A read-only level
+   * (methodological / source) applies cleanly with zero mutations.
    */
   async applyProposal(input: ApplyProposalInput): Promise<ApplyProposalResult> {
     if (!input.proposalId) {
@@ -284,8 +345,8 @@ const tableAiEditorService = {
     }
 
     const db = getDatabase();
-    const { rows } = await db.query(
-      `SELECT id, workspace_id, status, level
+    const { rows } = await db.query<ProposalApplyRow>(
+      `SELECT id, workspace_id, status, level, operations
          FROM tp_schema_proposals
         WHERE id = $1
           AND workspace_id = $2
@@ -320,6 +381,48 @@ const tableAiEditorService = {
       );
     }
 
+    const level = row.level == null ? null : String(row.level);
+    const operations = parseOperations(row.operations);
+
+    // Resolve the actor tenant. Block B parity: org === workspace, but we
+    // resolve from tp_bases so the executor can refuse cross-tenant writes
+    // even if a caller omits organizationId.
+    const organizationId =
+      input.organizationId && input.organizationId.length > 0
+        ? input.organizationId
+        : await resolveOrganizationId(input.workspaceId);
+    if (!organizationId) {
+      throw new TableAiEditorError(
+        'ORG_RESOLUTION_FAILED',
+        'Could not resolve organization for this workspace',
+        404
+      );
+    }
+
+    // Execute the real mutations BEFORE flipping status, so a failure leaves
+    // the proposal `pending` and retryable.
+    let execResult: ExecuteOperationsResult;
+    try {
+      execResult = await executeProposalOperations({
+        operations,
+        workspaceId: input.workspaceId,
+        organizationId,
+        actorUserId: input.actorUserId,
+        level,
+      });
+    } catch (e) {
+      if (e instanceof MutationExecutorError) {
+        logger.error('[TableAiEditorService] applyProposal mutation failed', {
+          proposalId: input.proposalId,
+          level,
+          code: e.code,
+          error: e.message,
+        });
+        throw new TableAiEditorError('APPLY_MUTATION_FAILED', `Apply failed: ${e.message}`, 422);
+      }
+      throw e;
+    }
+
     const beforeStatus = String(row.status);
     await db.query(
       `UPDATE tp_schema_proposals
@@ -338,16 +441,21 @@ const tableAiEditorService = {
       { status: beforeStatus },
       { status: 'applied' },
       {
-        level: row.level ?? null,
+        level,
         workspaceId: input.workspaceId,
-        handlerStatus: 'stub', // C-S1 — replaced in C-S2/C-S3
+        handlerStatus: 'live',
+        operationsApplied: execResult.applied,
+        operationsSkipped: execResult.skipped,
+        outcomes: execResult.outcomes,
       }
     );
 
     return {
       proposalId: input.proposalId,
       applied: true,
-      reason: 'stub_handler_no_op',
+      reason: execResult.applied > 0 ? 'applied' : 'no_op_read_only',
+      operationsApplied: execResult.applied,
+      operationsSkipped: execResult.skipped,
     };
   },
 
@@ -368,7 +476,7 @@ const tableAiEditorService = {
     }
 
     const db = getDatabase();
-    const { rows } = await db.query(
+    const { rows } = await db.query<ProposalApplyRow>(
       `SELECT id, workspace_id, status, level
          FROM tp_schema_proposals
         WHERE id = $1

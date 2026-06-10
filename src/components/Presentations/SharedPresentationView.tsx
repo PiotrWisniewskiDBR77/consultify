@@ -123,7 +123,7 @@ export const SharedPresentationView: React.FC = () => {
   if (loading) {
     return (
       <div className={`${shellClassName} flex items-center justify-center`}>
-        <div className="text-sm text-slate-400">
+        <div className="text-sm text-slate-600">
           {t('presentations.shared.loading', 'Loading shared presentation...')}
         </div>
       </div>
@@ -137,7 +137,7 @@ export const SharedPresentationView: React.FC = () => {
           <h1 className="text-lg font-semibold text-white">
             {t('presentations.shared.unavailableTitle', 'Presentation unavailable')}
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-slate-600">
             {error ||
               t('presentations.shared.unavailableBody', 'The shared link is invalid or expired.')}
           </p>
@@ -157,7 +157,7 @@ export const SharedPresentationView: React.FC = () => {
               </div>
               <h1 className="mt-1 text-lg font-semibold text-white">{deck.title}</h1>
             </div>
-            <div className="text-sm text-slate-400">
+            <div className="text-sm text-slate-600">
               {activeIndex + 1} / {cards.length}
             </div>
           </div>

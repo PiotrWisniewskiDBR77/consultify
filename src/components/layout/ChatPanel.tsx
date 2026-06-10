@@ -1,5 +1,4 @@
 import {
-  Bot,
   Check,
   CheckCircle,
   ChevronDown,
@@ -47,7 +46,7 @@ import { EnhancedChatInput } from '../AIChat/EnhancedChatInput';
 import { InlineResponseFeedback } from '../AIChat/InlineResponseFeedback';
 import { ThinkingBlock } from '../AIChat/Messages/ThinkingBlock';
 import { AIFeedbackButton } from '../AIFeedbackButton';
-
+import TeresaMark from '../shared/TeresaMark';
 // Tool Call Card Component for displaying MCP tool executions
 const ToolCallCard: React.FC<{ tool: ToolCallInfo }> = ({ tool }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -413,9 +412,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   }`}
                 >
                   {msg.role === 'ai' ? (
-                    <Bot size={14} strokeWidth={1.75} className="text-primary-500" />
+                    <TeresaMark size={14} strokeWidth={1.75} className="text-primary-500" />
                   ) : (
-                    <User size={14} strokeWidth={1.75} className="text-slate-400" />
+                    <User size={14} strokeWidth={1.75} className="text-slate-600" />
                   )}
                 </div>
 
@@ -751,7 +750,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         {isTyping && (
           <div className="flex gap-3 justify-start">
             <div className="w-6 h-6 rounded-full bg-primary-50 dark:bg-primary-900/50 border border-primary-200 dark:border-primary-700 flex items-center justify-center shrink-0 mt-0.5">
-              <Bot size={14} className="text-primary-600 dark:text-primary-400" />
+              <TeresaMark size={14} className="text-primary-600 dark:text-primary-400" />
             </div>
             <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl rounded-tl-none px-4 py-3 flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
@@ -800,7 +799,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 ? 'bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-500/30'
                 : speechSupported
                   ? 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-200'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 cursor-not-allowed'
             } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
             title={
               !speechSupported
@@ -820,7 +819,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             className={`p-2.5 rounded-lg transition-all flex items-center justify-center ${
               inputValue.trim()
                 ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-md shadow-primary-500/30'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-500'
             } ${aiFreezeStatus.isFrozen ? 'opacity-50 cursor-not-allowed' : ''}`}
             title="Send message"
           >

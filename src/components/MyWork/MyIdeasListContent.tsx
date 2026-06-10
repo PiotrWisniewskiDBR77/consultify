@@ -1,15 +1,25 @@
 import {
+  Archive,
+  Bot,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  Edit2,
+  ExternalLink,
   Flower2,
+  Folder,
+  FolderMinus,
+  FolderPlus,
   GitBranch,
   Lightbulb,
   Link2,
   Loader2,
+  type LucideIcon,
+  MessageSquare,
   MessageSquarePlus,
   Network,
   PenTool,
+  Presentation,
   Rocket,
   Sparkles,
   Sprout,
@@ -26,6 +36,21 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  type ActionRow,
+  type MetaPill,
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
+import { type RowActionSection, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
+import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
@@ -33,7 +58,9 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { tokenService } from '@/services/tokenService';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
+import { useFavoriteIdeas } from './hooks/useFavoriteIdeas';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useRecentIdeas } from './hooks/useRecentIdeas';
 import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './ideaEntryTypes';
 import { IdeasTableContent } from './IdeasTableContent';
 import type {
@@ -196,6 +223,23 @@ function getToolConfig(tool?: string | null) {
   return TOOL_CONFIG[t] || TOOL_CONFIG.mindmap;
 }
 
+/** Stage → signal-tone dot color (canon §4.0a: neutral chip shell, color only in dot). */
+const STAGE_DOT_VAR: Record<IdeaStage, string | undefined> = {
+  spark: CHIP_TONE_VAR.warning,
+  incubating: CHIP_TONE_VAR.success,
+  shaping: CHIP_TONE_VAR.info,
+  ready: CHIP_TONE_VAR.info,
+  promoted: CHIP_TONE_VAR.accent,
+};
+
+/** Tool → canonical ToolChip icon color (semantic c.* var, §4.2). */
+const TOOL_ICON_COLOR_VAR: Record<string, string> = {
+  mindmap: 'var(--c-accent)',
+  table: 'var(--c-info)',
+  process_flow: 'var(--c-success)',
+  whiteboard: 'var(--c-warning)',
+};
+
 const IDEAS_TABLE_VIEW_STORAGE_KEY = 'consultify.mywork.ideas.tableView';
 const IDEAS_TABLE_COLUMN_WIDTH_VERSION = 3;
 const DEFAULT_IDEAS_TABLE_FILTERS: TableFilters = {};
@@ -305,6 +349,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const persistedTableView = useMemo(() => loadIdeasTableViewState(), []);
   const [ideas, setIdeas] = useState<MyIdea[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   // activeTag is only used in the Tags (garden) view
   const [activeTag, setActiveTag] = useState<string>('all');
   const [convertIdea, setConvertIdea] = useState<MyIdea | null>(null);
@@ -327,6 +372,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const fetchIdeas = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getMyIdeas({ q: searchQuery || undefined, limit: 200 });
       const mapped = ((data || []) as any[]).map((raw) => ({
         ...raw,
@@ -352,22 +398,220 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       }
     } catch (err) {
       console.error('Failed to fetch ideas:', err);
+      setLoadError(t('myWork.errors.fetchFailed', 'Failed to load ideas'));
       toast.error(t('myWork.errors.fetchFailed', 'Failed to load ideas'));
     } finally {
       setLoading(false);
     }
   }, [searchQuery, t]);
 
+  const { recentIds, record: recordRecent } = useRecentIdeas();
+  const { isFavorite, toggleFavorite, hydrateFromServer } = useFavoriteIdeas();
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
+  const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
+  const [foldersAvailable, setFoldersAvailable] = useState(false);
+  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  // Grid/garden side-preview selection (canon §7/§8.1 — single-click opens preview, not navigation).
+  const [previewIdeaId, setPreviewIdeaId] = useState<string | null>(null);
+
+  // Record opens (for the "Recently opened" rail), then delegate to the host.
+  const openIdea = useCallback(
+    (...args: Parameters<typeof onIdeaClick>) => {
+      recordRecent(args[0]);
+      onIdeaClick(...args);
+    },
+    [onIdeaClick, recordRecent]
+  );
+
   const openIdeaInProcessFlow = useCallback(
     (idea: MyIdea) => {
-      onIdeaClick(idea.id, idea, { openMap: true, initialTool: 'process_flow' });
+      openIdea(idea.id, idea, { openMap: true, initialTool: 'process_flow' });
     },
-    [onIdeaClick]
+    [openIdea]
+  );
+
+  // "Recently opened" rail data: map stored recent IDs back to live ideas,
+  // dropping any that no longer exist, capped for a compact rail.
+  const recentIdeas = useMemo(
+    () =>
+      recentIds
+        .map((id) => ideas.find((i) => i.id === id))
+        .filter((i): i is MyIdea => Boolean(i))
+        .slice(0, 6),
+    [recentIds, ideas]
   );
 
   useEffect(() => {
     fetchIdeas();
   }, [fetchIdeas, refreshTrigger]);
+
+  // Seed local favorites from server-side `isFavorite` (cross-device). Union-merge
+  // (see useFavoriteIdeas) so this is safe before the M2 migration is applied.
+  useEffect(() => {
+    hydrateFromServer(ideas.filter((i: any) => i?.isFavorite).map((i: any) => String(i.id)));
+  }, [ideas, hydrateFromServer]);
+
+  // Load folders. The endpoint 503s until the M2 migration lands; we only show
+  // the folders UI once it resolves (foldersAvailable), so nothing breaks early.
+  useEffect(() => {
+    let cancelled = false;
+    Api.getMyIdeaFolders()
+      .then((list) => {
+        if (cancelled) return;
+        setFolders(Array.isArray(list) ? list.map((f: any) => ({ id: f.id, name: f.name })) : []);
+        setFoldersAvailable(true);
+      })
+      .catch(() => {
+        if (!cancelled) setFoldersAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTrigger]);
+
+  const handleMoveToFolder = useCallback(
+    async (idea: MyIdea, folderId: string | null) => {
+      // Optimistic local update, then persist.
+      setIdeas((prev) => prev.map((i) => (i.id === idea.id ? ({ ...i, folderId } as MyIdea) : i)));
+      try {
+        await Api.setIdeaFolder(idea.id, folderId);
+        toast.success(isPolish ? 'Przeniesiono' : 'Moved', { duration: 800 });
+      } catch {
+        toast.error(isPolish ? 'Nie udało się przenieść' : 'Failed to move idea');
+        fetchIdeas();
+      }
+    },
+    [isPolish, fetchIdeas]
+  );
+
+  const handleCreateFolder = useCallback(async () => {
+    const name = window.prompt(isPolish ? 'Nazwa folderu' : 'Folder name')?.trim();
+    if (!name) return;
+    try {
+      const created = await Api.createMyIdeaFolder({ name });
+      setFolders((prev) => [...prev, { id: created.id, name: created.name }]);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się utworzyć folderu' : 'Failed to create folder');
+    }
+  }, [isPolish]);
+
+  const handleDeleteFolder = useCallback(
+    async (folderId: string) => {
+      try {
+        await Api.deleteMyIdeaFolder(folderId);
+        setFolders((prev) => prev.filter((f) => f.id !== folderId));
+        if (activeFolderId === folderId) setActiveFolderId(null);
+        fetchIdeas(); // ideas were unfiled server-side
+      } catch {
+        toast.error(isPolish ? 'Nie udało się usunąć folderu' : 'Failed to delete folder');
+      }
+    },
+    [activeFolderId, fetchIdeas, isPolish]
+  );
+
+  // M2/C: home-shell bar (folders + starred + recents) shared across the
+  // table / grid / garden views so the home is consistent everywhere.
+  const homeShellBar = (
+    <>
+      {/* folders bar (only once the folders endpoint is live) */}
+      {foldersAvailable && (
+        <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => setActiveFolderId(null)}
+            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+              !activeFolderId
+                ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+            }`}
+          >
+            {isPolish ? 'Wszystkie' : 'All'}
+          </button>
+          {folders.map((f) => (
+            <span key={f.id} className="inline-flex items-center">
+              <button
+                type="button"
+                onClick={() => setActiveFolderId(f.id)}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  activeFolderId === f.id
+                    ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+                }`}
+              >
+                <Folder size={12} />
+                <span className="max-w-[140px] truncate">{f.name}</span>
+              </button>
+              {activeFolderId === f.id && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFolder(f.id)}
+                  title={isPolish ? 'Usuń folder' : 'Delete folder'}
+                  aria-label={isPolish ? 'Usuń folder' : 'Delete folder'}
+                  className="ml-0.5 rounded-full p-0.5 text-slate-600 hover:text-rose-500"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={handleCreateFolder}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-50 dark:border-navy-600 dark:text-slate-400 dark:hover:bg-navy-800"
+          >
+            <FolderPlus size={12} />
+            {isPolish ? 'Nowy folder' : 'New folder'}
+          </button>
+        </div>
+      )}
+      {/* "Starred only" filter toggle (shown once anything is starred) */}
+      {(showStarredOnly || ideas.some((i) => isFavorite(i.id))) && (
+        <div className="px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => setShowStarredOnly((v) => !v)}
+            aria-pressed={showStarredOnly}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              showStarredOnly
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-navy-800'
+            }`}
+          >
+            <Star size={13} className={showStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
+            {isPolish ? 'Tylko oznaczone' : 'Starred only'}
+          </button>
+        </div>
+      )}
+      {/* "Recently opened" rail (localStorage-backed, per device) */}
+      {recentIdeas.length > 0 && (
+        <div className="px-4 pt-3" data-testid="ideas-recents-rail">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+            {isPolish ? 'Ostatnio otwierane' : 'Recently opened'}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {recentIdeas.map((idea) => {
+              const tc = getToolConfig(idea.preferredTool);
+              const ToolIcon = tc.icon;
+              return (
+                <button
+                  key={idea.id}
+                  type="button"
+                  onClick={() => openIdea(idea.id, idea)}
+                  title={idea.title || ''}
+                  className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200 dark:hover:bg-navy-800"
+                >
+                  <ToolIcon size={13} className="text-slate-600" />
+                  <span className="max-w-[160px] truncate">
+                    {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   useEffect(() => {
     const counts = {
@@ -410,6 +654,12 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const baseFilteredIdeas = useMemo(() => {
     let list = ideas;
+    if (showStarredOnly) {
+      list = list.filter((i) => isFavorite(i.id));
+    }
+    if (activeFolderId) {
+      list = list.filter((i) => (i as any).folderId === activeFolderId);
+    }
     if (viewMode !== 'garden' && stageFilter !== 'all') {
       list = list.filter((i) => (i.stage || 'spark') === stageFilter);
     }
@@ -419,7 +669,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       );
     }
     return list;
-  }, [ideas, stageFilter, activeTag, viewMode]);
+  }, [ideas, stageFilter, activeTag, viewMode, showStarredOnly, isFavorite, activeFolderId]);
 
   const availableStageOptions = useMemo<FilterOption[]>(() => {
     const seen = new Set<string>();
@@ -603,7 +853,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   const openFocusedIdea = useCallback(() => {
     if (!focusedIdea) return;
-    onIdeaClick(focusedIdea.id, focusedIdea);
+    openIdea(focusedIdea.id, focusedIdea);
   }, [focusedIdea, onIdeaClick]);
 
   const openConvertForSelection = useCallback(() => {
@@ -896,9 +1146,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // ── Shared renderers ──
 
+  // Canon §4.0a: neutral chip shell, color only in the leading signal dot.
   const renderStageBadge = (stage: IdeaStage) => {
-    const cfg = STAGE_CONFIG[stage];
-    const Icon = cfg.icon;
     const labels: Record<IdeaStage, { en: string; pl: string }> = {
       spark: { en: 'Spark', pl: 'Iskra' },
       incubating: { en: 'Growing', pl: 'Rośnie' },
@@ -907,46 +1156,315 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       promoted: { en: 'Promoted', pl: 'Promowany' },
     };
     return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}
-      >
-        <Icon size={10} />
+      <ChipBase size="sm" leading={<ChipDot colorVar={STAGE_DOT_VAR[stage]} size="sm" />}>
         {isPolish ? labels[stage].pl : labels[stage].en}
-      </span>
+      </ChipBase>
     );
   };
 
+  // Canonical ToolChip: colored tool icon on a neutral (c-token) surface.
   const renderToolBadge = (tool?: string | null) => {
     const tc = getToolConfig(tool);
-    const Icon = tc.icon;
+    const key = String(tool || 'mindmap').toLowerCase();
     return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tc.badgeClass}`}
-      >
-        <Icon size={10} className={tc.badgeIconClass} />
-        {isPolish ? tc.labelPl : tc.label}
-      </span>
+      <ToolChip
+        icon={tc.icon as LucideIcon}
+        iconColor={TOOL_ICON_COLOR_VAR[key] || TOOL_ICON_COLOR_VAR.mindmap}
+        label={isPolish ? tc.labelPl : tc.label}
+      />
     );
   };
 
+  // Canonical neutral metadata chips (MetaChip) — tags are never colored (§4.0a).
   const renderTagBadges = (ideaTags?: string[], max = 3) => {
     if (!ideaTags || ideaTags.length === 0) return null;
     return (
       <div className="flex items-center gap-1 flex-wrap">
         {ideaTags.slice(0, max).map((tag) => (
-          <span
-            key={tag}
-            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.06]"
-          >
-            {tag}
-          </span>
+          <MetaChip key={tag} label={tag} />
         ))}
-        {ideaTags.length > max && (
-          <span className="text-[9px] text-slate-400">+{ideaTags.length - max}</span>
-        )}
+        {ideaTags.length > max && <MetaChip label={`+${ideaTags.length - max}`} />}
       </div>
     );
   };
+
+  // ── Grid/garden side preview (canon §7/§8.1) ──
+  const previewIdea = useMemo(
+    () => (previewIdeaId ? sortedIdeas.find((i) => i.id === previewIdeaId) || null : null),
+    [previewIdeaId, sortedIdeas]
+  );
+  const previewIdeaIds = useMemo(() => sortedIdeas.map((i) => i.id), [sortedIdeas]);
+
+  // Drop a stale preview selection when the underlying idea disappears.
+  useEffect(() => {
+    if (previewIdeaId && !sortedIdeas.some((i) => i.id === previewIdeaId)) {
+      setPreviewIdeaId(null);
+    }
+  }, [sortedIdeas, previewIdeaId]);
+
+  const renderIdeaPreview = (idea: MyIdea) => {
+    const stage = (idea.stage || 'spark') as IdeaStage;
+    const stageLabels: Record<IdeaStage, { en: string; pl: string }> = {
+      spark: { en: 'Spark', pl: 'Iskra' },
+      incubating: { en: 'Growing', pl: 'Rośnie' },
+      shaping: { en: 'Shaping', pl: 'Kształtuje się' },
+      ready: { en: 'Ready', pl: 'Gotowy' },
+      promoted: { en: 'Promoted', pl: 'Promowany' },
+    };
+    const tc = getToolConfig(idea.preferredTool);
+    const metaPills: MetaPill[] = [
+      { label: isPolish ? stageLabels[stage].pl : stageLabels[stage].en, icon: tc.icon },
+      { label: isPolish ? tc.labelPl : tc.label, icon: tc.icon },
+    ];
+    const metaTrailing = (
+      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        {idea.updatedAt
+          ? new Date(idea.updatedAt).toLocaleDateString()
+          : idea.createdAt
+            ? new Date(idea.createdAt).toLocaleDateString()
+            : '—'}
+      </span>
+    );
+    return (
+      <div className="space-y-4">
+        <PreviewMetaCard pills={metaPills} trailing={metaTrailing}>
+          {idea.tags?.length ? (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {idea.tags.map((tag) => (
+                <MetaChip key={tag} label={String(tag)} />
+              ))}
+            </div>
+          ) : null}
+        </PreviewMetaCard>
+        <PreviewDetailsSection text={idea.body || ''} label={isPolish ? 'Szczegóły' : 'Details'} />
+      </div>
+    );
+  };
+
+  const renderIdeaPreviewFooter = (idea: MyIdea) => {
+    const aiHints = isPolish
+      ? ['Dlaczego pilne?', 'Plan działania', 'Kto może pomóc?']
+      : ['Why urgent?', 'Action plan', 'Who can help?'];
+    const relationItems: RelationItem[] = [];
+    if ((idea as any).sourceType) {
+      relationItems.push({
+        label: `${isPolish ? 'Źródło' : 'Source'}: ${(idea as any).sourceType}`,
+        tone: 'text-slate-600 dark:text-slate-400',
+      });
+    }
+    const actionRows: ActionRow[] = [
+      {
+        columns: 3,
+        buttons: [
+          {
+            label: isPolish ? 'Konwertuj' : 'Convert',
+            icon: Sparkles,
+            onClick: () => setConvertIdea(idea),
+            colorScheme: 'purple',
+          },
+          {
+            label: isPolish ? 'Otwórz Flow' : 'Open Flow',
+            icon: Workflow,
+            onClick: () => openIdeaInProcessFlow(idea),
+            colorScheme: 'emerald',
+          },
+          {
+            label: isPolish ? 'Usuń' : 'Delete',
+            icon: Trash2,
+            onClick: () => handleDeleteSingleIdea(idea),
+            colorScheme: 'red',
+          },
+        ],
+      },
+    ];
+    return (
+      <div className="space-y-0">
+        <PreviewAIHintStrip hints={aiHints} />
+        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        <PreviewRelations
+          items={relationItems}
+          emptyLabel={isPolish ? 'Brak powiązań' : 'No linked documents'}
+        />
+        <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+        <PreviewActionBar rows={actionRows} />
+        <div className="mt-2">
+          <ConvertToOutputMenu
+            sourceType="idea"
+            sourceId={idea.id}
+            sourceTitle={idea.title || ''}
+            onConvertComplete={() => fetchIdeas()}
+            variant="dropdown"
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Card ⋮ — canon §8.0: IDENTICAL sections/positions to the Ideas table row.
+  const buildIdeaCardSections = (idea: MyIdea): RowActionSection[] => [
+    {
+      id: 'open',
+      kind: 'open',
+      actions: [
+        {
+          id: 'open',
+          label: isPolish ? 'Otwórz' : 'Open',
+          icon: ExternalLink,
+          onClick: () => openIdea(idea.id, idea),
+        },
+        {
+          id: 'flow',
+          label: 'Process Flow',
+          icon: Workflow,
+          onClick: () => openIdeaInProcessFlow(idea),
+        },
+      ],
+    },
+    {
+      id: 'ai',
+      kind: 'ai',
+      actions: [
+        {
+          id: 'ai_chat',
+          label: 'AI Chat',
+          icon: MessageSquare,
+          onClick: () => handleOpenIdeaAiChat(idea),
+        },
+        {
+          id: 'ai_insights',
+          label: 'AI Insights',
+          icon: Bot,
+          onClick: () => handleOpenIdeaAiInsights(idea),
+        },
+      ],
+    },
+    {
+      id: 'convert',
+      kind: 'convert',
+      label: isPolish ? 'Konwertuj do' : 'Convert to',
+      actions: [
+        {
+          id: 'convert_initiative',
+          label: isPolish ? 'Inicjatywa' : 'Initiative',
+          icon: Rocket,
+          onClick: () => handleConvert('initiative', idea),
+        },
+        {
+          id: 'convert_tasks',
+          label: isPolish ? 'Zadania' : 'Tasks',
+          icon: CheckCircle2,
+          onClick: () => handleConvert('task_set', idea),
+        },
+        {
+          id: 'convert_decision',
+          label: isPolish ? 'Decyzja' : 'Decision',
+          icon: Star,
+          onClick: () => handleConvert('decision', idea),
+        },
+        {
+          id: 'convert_team_chat',
+          label: 'Team Chat',
+          icon: MessageSquarePlus,
+          onClick: () => handleConvert('team_chat', idea),
+        },
+      ],
+    },
+    ...(foldersAvailable && folders.length > 0
+      ? [
+          {
+            id: 'folder',
+            kind: 'manage' as const,
+            label: isPolish ? 'Folder' : 'Folder',
+            actions: [
+              {
+                id: 'folder-none',
+                label: isPolish ? 'Bez folderu' : 'No folder',
+                icon: FolderMinus,
+                onClick: () => handleMoveToFolder(idea, null),
+                disabled: !(idea as any).folderId,
+              },
+              ...folders.map((f) => ({
+                id: `folder-${f.id}`,
+                label: f.name,
+                icon: Folder,
+                onClick: () => handleMoveToFolder(idea, f.id),
+                rightLabel: (idea as any).folderId === f.id ? '✓' : undefined,
+              })),
+            ],
+          },
+        ]
+      : []),
+    // DÓŁ — FIXED BOTTOM MANIFEST (canon §9.2). Ideas have no `due_date` → no Delay slot.
+    {
+      id: 'fixed',
+      kind: 'manage',
+      actions: [
+        {
+          id: 'open-preview',
+          label: isPolish ? 'Otwórz podgląd' : 'Open preview',
+          icon: ChevronRight,
+          onClick: () => setPreviewIdeaId(idea.id),
+        },
+        {
+          id: 'edit',
+          label: isPolish ? 'Edytuj' : 'Edit',
+          icon: Edit2,
+          onClick: () => openIdea(idea.id, idea),
+        },
+        {
+          id: 'archive',
+          label: isPolish ? 'Archiwizuj' : 'Archive',
+          icon: Archive,
+          disabled: true,
+          description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
+          onClick: () => {},
+        },
+      ],
+    },
+    {
+      id: 'output',
+      kind: 'output',
+      actions: [
+        {
+          id: 'output_presentation',
+          label: isPolish ? 'Prezentacja' : 'Presentation',
+          icon: Presentation,
+          disabled: true,
+          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          onClick: () => undefined,
+        },
+        {
+          id: 'output_report',
+          label: isPolish ? 'Raport' : 'Report',
+          icon: GitBranch,
+          disabled: true,
+          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          onClick: () => undefined,
+        },
+        {
+          id: 'output_table',
+          label: isPolish ? 'Tabela' : 'Table',
+          icon: Table2,
+          disabled: true,
+          rightLabel: isPolish ? 'wkrótce' : 'soon',
+          onClick: () => undefined,
+        },
+      ],
+    },
+    {
+      id: 'danger',
+      kind: 'danger',
+      actions: [
+        {
+          id: 'delete',
+          label: isPolish ? 'Usuń' : 'Delete',
+          icon: Trash2,
+          variant: 'danger',
+          onClick: () => handleDeleteSingleIdea(idea),
+        },
+      ],
+    },
+  ];
 
   const tagGroups = useMemo(() => {
     const groups: Record<string, MyIdea[]> = {};
@@ -976,7 +1494,17 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   if (loading) {
     return (
       <div className="w-full flex items-center justify-center" style={{ minHeight: 300 }}>
-        <Loader2 className="animate-spin text-amber-500" size={32} />
+        <LoadingState variant="spinner" />
+      </div>
+    );
+  }
+
+  // Distinguish error from empty: on a failed load, show ErrorState with retry —
+  // NOT the empty "Idea Garden" CTA (which falsely implies the user has 0 ideas).
+  if (loadError) {
+    return (
+      <div className="w-full flex items-center justify-center" style={{ minHeight: 300 }}>
+        <ErrorState message={loadError} retry={fetchIdeas} />
       </div>
     );
   }
@@ -1002,7 +1530,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <button
             onClick={() => setConvertIdea(null)}
             disabled={converting}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
           >
             <X size={16} />
           </button>
@@ -1095,7 +1623,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           <button
             onClick={() => setTagModalOpen(false)}
             disabled={bulkBusy}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
+            className="p-1 rounded-md text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors disabled:opacity-50"
           >
             <X size={16} />
           </button>
@@ -1183,6 +1711,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
+        {homeShellBar}
         {/* Match Tasks/Inbox: bounded height so table scrolls inside row and preview stays viewport-high */}
         <div className="flex flex-col flex-1 min-h-0">
           <IdeasTableContent
@@ -1216,7 +1745,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 [columnId]: value.length > 0 ? value : undefined,
               }))
             }
-            onOpenIdea={(idea) => onIdeaClick(idea.id, idea)}
+            onOpenIdea={(idea) => openIdea(idea.id, idea)}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+            folders={foldersAvailable ? folders : undefined}
+            onMoveToFolder={foldersAvailable ? handleMoveToFolder : undefined}
             onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
             onOpenIdeaAiChat={handleOpenIdeaAiChat}
             onOpenIdeaAiInsights={handleOpenIdeaAiInsights}
@@ -1248,128 +1781,131 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
 
     return (
-      <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-white dark:bg-navy-950">
         {convertModal}
         {tagModal}
-        <div className="p-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {sortedIdeas.map((idea) => {
-              const stage = (idea.stage || 'spark') as IdeaStage;
-              const tc = getToolConfig(idea.preferredTool);
-              const ToolIcon = tc.icon;
-              const isSelected = selectedIds.has(idea.id);
+        {confirmDialog}
+        {homeShellBar}
+        <div className="flex flex-col flex-1 min-h-0">
+          <TableWithPreviewLayout<MyIdea>
+            selectedId={previewIdeaId}
+            selectedItem={previewIdea}
+            onSelect={setPreviewIdeaId}
+            previewOpen={Boolean(previewIdeaId)}
+            autoOpenPreview={false}
+            onOpenFull={(id) => {
+              const idea = sortedIdeas.find((item) => item.id === id);
+              if (idea) openIdea(idea.id, idea);
+            }}
+            itemIds={previewIdeaIds}
+            getItemById={(id) => sortedIdeas.find((idea) => idea.id === id) || null}
+            renderPreview={renderIdeaPreview}
+            renderPreviewFooter={renderIdeaPreviewFooter}
+          >
+            <div className="h-full overflow-y-auto p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sortedIdeas.map((idea) => {
+                  const stage = (idea.stage || 'spark') as IdeaStage;
+                  const isSelected = selectedIds.has(idea.id);
+                  const isPreviewSelected = previewIdeaId === idea.id;
 
-              return (
-                <div
-                  key={idea.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onIdeaClick(idea.id, idea)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onIdeaClick(idea.id, idea);
-                    }
-                  }}
-                  className={[
-                    'group relative text-left overflow-hidden',
-                    'p-4 rounded-xl',
-                    `border-l-[3px] border ${tc.borderColor} border-slate-200/60 dark:border-white/[0.06]`,
-                    'bg-slate-50/80 dark:bg-navy-800/60',
-                    'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-md transition-all duration-150',
-                    isSelected ? 'ring-2 ring-primary-500/40' : '',
-                  ].join(' ')}
-                >
-                  <div className="absolute top-3 right-3">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        toggleSelect(idea.id);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary-500 focus:ring-primary-500/30"
-                    />
-                  </div>
-
-                  <div className="flex items-start gap-3 mb-3">
+                  return (
+                    // Card — canon §8.1 4-zone GridCard. Single-click → side preview;
+                    // double-click → full view. Neutral surface, NO border-l accent.
                     <div
-                      className={`flex-shrink-0 p-2 rounded-xl ${tc.bgColor} group-hover:scale-110 transition-transform`}
+                      key={idea.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setPreviewIdeaId(idea.id)}
+                      onDoubleClick={() => openIdea(idea.id, idea)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          openIdea(idea.id, idea);
+                        }
+                      }}
+                      className={[
+                        'group relative cursor-pointer rounded-xl p-4 text-left',
+                        'border border-slate-200/60 dark:border-white/[0.06]',
+                        'bg-white dark:bg-navy-900',
+                        'hover:shadow-md hover:-translate-y-px transition-all duration-150',
+                        isPreviewSelected || isSelected ? 'ring-2 ring-primary-500/40' : '',
+                      ].join(' ')}
                     >
-                      <ToolIcon size={20} className={tc.color} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                        {idea.title}
+                      {/* Zone 1 — Badge row (stage · tool) + kebab */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {renderStageBadge(stage)}
+                          {renderToolBadge(idea.preferredTool)}
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(idea.id);
+                            }}
+                            aria-label={isFavorite(idea.id) ? 'Unstar' : 'Star'}
+                            aria-pressed={isFavorite(idea.id)}
+                            className={`rounded p-0.5 transition-opacity ${
+                              isFavorite(idea.id)
+                                ? 'text-amber-400 opacity-100'
+                                : 'text-slate-600 opacity-0 hover:text-amber-400 group-hover:opacity-100 focus:opacity-100 dark:text-slate-400'
+                            }`}
+                          >
+                            <Star
+                              size={15}
+                              className={isFavorite(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
+                            />
+                          </button>
+                          {/* Kebab — same RowActionsMenu/sections as the table row (§8.0) */}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <RowActionsMenu sections={buildIdeaCardSections(idea)} />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                        {renderStageBadge(stage)}
-                        {renderToolBadge(idea.preferredTool)}
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+
+                      {/* Zone 2 — Title */}
+                      <h4
+                        className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug"
+                        title={idea.title || ''}
+                      >
+                        {idea.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                      </h4>
+
+                      {/* Zone 3 — Description (when available) */}
+                      {idea.body && (
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                          {idea.body}
+                        </p>
+                      )}
+
+                      {/* Zone 4 — Stats footer: tags · updated date */}
+                      <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-white/[0.05] mt-3 pt-3">
+                        <div className="min-w-0 flex-1">
+                          {(idea.tags || []).length > 0 ? (
+                            renderTagBadges(idea.tags, 2)
+                          ) : (
+                            <span className="text-slate-400 dark:text-slate-500">—</span>
+                          )}
+                        </div>
+                        <span className="shrink-0">
                           {idea.updatedAt
                             ? new Date(idea.updatedAt).toLocaleDateString()
                             : idea.createdAt
                               ? new Date(idea.createdAt).toLocaleDateString()
-                              : ''}
+                              : '—'}
                         </span>
                       </div>
                     </div>
-                  </div>
-
-                  {idea.body && (
-                    <div className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 mb-2">
-                      {idea.body}
-                    </div>
-                  )}
-
-                  {(idea.tags || []).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {(idea.tags || []).slice(0, 4).map((tag) => (
-                        <span
-                          key={`${idea.id}-${tag}`}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/20 dark:border-amber-500/30"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {(idea.tags || []).length > 4 && (
-                        <span className="text-[10px] text-slate-500">
-                          +{(idea.tags || []).length - 4}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => setConvertIdea(idea)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[11px] font-semibold hover:bg-primary-500/15 transition-colors"
-                    >
-                      <Sparkles size={12} />
-                      {isPolish ? 'Konwertuj' : 'Convert'}
-                    </button>
-                    <button
-                      onClick={() => openIdeaInProcessFlow(idea)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-semibold hover:bg-blue-500/15 transition-colors"
-                    >
-                      <Workflow size={12} />
-                      {isPolish ? 'Open Flow' : 'Open Flow'}
-                    </button>
-                    <ConvertToOutputMenu
-                      sourceType="idea"
-                      sourceId={idea.id}
-                      sourceTitle={idea.title || ''}
-                      onConvertComplete={() => fetchIdeas()}
-                      variant="dropdown"
-                      className="shrink-0"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
+          </TableWithPreviewLayout>
         </div>
+
+        <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       </div>
     );
   }
@@ -1393,6 +1929,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       {convertModal}
       {tagModal}
       {confirmDialog}
+      {homeShellBar}
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-primary-400/20 dark:from-amber-500/15 dark:to-primary-500/15">
@@ -1422,9 +1959,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                 className="w-full flex items-center gap-2.5 px-4 py-3 bg-slate-50/80 dark:bg-navy-900/50 hover:bg-slate-100/80 dark:hover:bg-navy-800/50 transition-colors text-left"
               >
                 {isCollapsed ? (
-                  <ChevronRight size={14} className="text-slate-400" />
+                  <ChevronRight size={14} className="text-slate-600" />
                 ) : (
-                  <ChevronDown size={14} className="text-slate-400" />
+                  <ChevronDown size={14} className="text-slate-600" />
                 )}
                 <Tag size={14} className="text-amber-500" />
                 <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -1436,7 +1973,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               </button>
 
               {!isCollapsed && (
-                <div className="divide-y divide-slate-100 dark:divide-navy-800/50">
+                <div className="divide-y divide-slate-200 dark:divide-navy-800/50">
                   {groupIdeas.map((idea) => {
                     const stage = (idea.stage || 'spark') as IdeaStage;
                     const tc = getToolConfig(idea.preferredTool);
@@ -1447,11 +1984,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         key={`${tag}-${idea.id}`}
                         role="button"
                         tabIndex={0}
-                        onClick={() => onIdeaClick(idea.id, idea)}
+                        onClick={() => openIdea(idea.id, idea)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            onIdeaClick(idea.id, idea);
+                            openIdea(idea.id, idea);
                           }
                         }}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 dark:hover:bg-navy-800/30 cursor-pointer transition-colors"
@@ -1465,6 +2002,25 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(idea.id);
+                            }}
+                            aria-label={isFavorite(idea.id) ? 'Unstar' : 'Star'}
+                            aria-pressed={isFavorite(idea.id)}
+                            className={`rounded p-0.5 transition-colors ${
+                              isFavorite(idea.id)
+                                ? 'text-amber-400'
+                                : 'text-slate-600 hover:text-amber-400 dark:text-slate-400'
+                            }`}
+                          >
+                            <Star
+                              size={13}
+                              className={isFavorite(idea.id) ? 'fill-amber-400 text-amber-400' : ''}
+                            />
+                          </button>
                           {renderStageBadge(stage)}
                           {renderToolBadge(idea.preferredTool)}
                           <button
@@ -1479,7 +2035,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                             <Workflow size={10} />
                             Flow
                           </button>
-                          <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                          <span className="text-[10px] text-slate-600 whitespace-nowrap">
                             {idea.updatedAt
                               ? new Date(idea.updatedAt).toLocaleDateString()
                               : idea.createdAt

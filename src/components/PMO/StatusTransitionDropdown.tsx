@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * StatusTransitionDropdown
  *
@@ -28,15 +27,17 @@ import { Api } from '../../services/api';
 import { InitiativeStatus, StatusTransition } from '../../types';
 
 // Status colors and icons mapping
-const STATUS_CONFIG: Record<
-  InitiativeStatus,
-  {
-    color: string;
-    bgColor: string;
-    darkBgColor: string;
-    icon: React.ReactNode;
-    label: string;
-  }
+const STATUS_CONFIG: Partial<
+  Record<
+    InitiativeStatus,
+    {
+      color: string;
+      bgColor: string;
+      darkBgColor: string;
+      icon: React.ReactNode;
+      label: string;
+    }
+  >
 > = {
   [InitiativeStatus.DRAFT]: {
     color: 'text-slate-600 dark:text-slate-400',
@@ -136,7 +137,14 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
   const [reason, setReason] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const config = STATUS_CONFIG[currentStatus] || STATUS_CONFIG[InitiativeStatus.DRAFT];
+  const config = STATUS_CONFIG[currentStatus] ||
+    STATUS_CONFIG[InitiativeStatus.DRAFT] || {
+      color: 'text-slate-600 dark:text-slate-400',
+      bgColor: 'bg-slate-100',
+      darkBgColor: 'dark:bg-slate-800',
+      icon: <Clock size={14} />,
+      label: 'Draft',
+    };
 
   // Fetch allowed transitions
   useEffect(() => {
@@ -242,7 +250,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
         {isOpen && allowedTransitions.length > 0 && (
           <div className="absolute z-50 mt-1 w-48 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 shadow-lg overflow-hidden">
             <div className="py-1">
-              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
+              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500 font-semibold">
                 Change Status To
               </div>
               {allowedTransitions.map((transition) => {

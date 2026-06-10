@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { MarketingLayout } from '../components/Landing/MarketingLayout';
 
 const TIMELINE_VISUALS = [
-  { year: '2018', icon: Rocket, color: '#7c3aed' },
-  { year: '2020', icon: Brain, color: '#a855f7' },
+  { year: '2018', icon: Rocket, color: '#A51C30' },
+  { year: '2020', icon: Brain, color: '#D42B3D' },
   { year: '2022', icon: Globe, color: '#3b82f6' },
   { year: '2023', icon: Star, color: '#f59e0b' },
   { year: '2024', icon: Users, color: '#10b981' },
@@ -28,7 +28,7 @@ export const OurStoryPage: React.FC = () => {
       {/* Hero */}
       <section className="relative px-6 pt-20 pb-24 overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0D0828,#0A0A1F,#12082E)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(160deg,#0B1220,#0F172A,#0B1220)]" />
           <div
             className="absolute top-0 left-1/2 -translate-x-1/2 w-[70%] h-[50%] rounded-full"
             style={{
@@ -61,7 +61,7 @@ export const OurStoryPage: React.FC = () => {
             <span
               className="block"
               style={{
-                background: 'linear-gradient(90deg, #fbbf24, #a78bfa)',
+                background: 'linear-gradient(90deg, #fbbf24, #D42B3D)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -92,8 +92,7 @@ export const OurStoryPage: React.FC = () => {
           <div
             className="absolute left-[28px] top-0 bottom-0 w-px"
             style={{
-              background:
-                'linear-gradient(to bottom, rgba(124,58,237,0.40), rgba(124,58,237,0.05))',
+              background: 'linear-gradient(to bottom, rgba(165,28,48,0.40), rgba(165,28,48,0.05))',
             }}
           />
 
@@ -142,8 +141,8 @@ export const OurStoryPage: React.FC = () => {
             viewport={{ once: true }}
             className="mt-16 p-8 rounded-2xl text-center"
             style={{
-              background: 'rgba(124,58,237,0.08)',
-              border: '1px solid rgba(124,58,237,0.25)',
+              background: 'rgba(165,28,48,0.08)',
+              border: '1px solid rgba(165,28,48,0.25)',
             }}
           >
             <p className="text-xl font-black text-white mb-3">
@@ -161,8 +160,8 @@ export const OurStoryPage: React.FC = () => {
             <button
               className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm font-semibold text-white"
               style={{
-                background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-                boxShadow: '0 0 30px -10px rgba(124,58,237,0.55)',
+                background: 'linear-gradient(135deg, #A51C30, #651120)',
+                boxShadow: '0 0 30px -10px rgba(165,28,48,0.55)',
               }}
             >
               {t('pages.ourStory.closing.cta', 'Join us')} <ArrowRight size={14} />

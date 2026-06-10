@@ -103,7 +103,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
             {t.columns.blocked}
           </span>
           <span
-            className={`text-lg font-bold ${blockedCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}
+            className={`text-lg font-bold ${blockedCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600'}`}
           >
             {blockedCount}
           </span>
@@ -159,7 +159,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                   >
                     {/* Axis Label */}
                     <div className="flex justify-between items-start mb-1.5">
-                      <span className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold bg-slate-50 dark:bg-navy-950 px-1.5 py-0.5 rounded border border-slate-100 dark:border-navy-700">
+                      <span className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold bg-slate-50 dark:bg-navy-950 px-1.5 py-0.5 rounded border border-slate-200 dark:border-navy-700">
                         {init.axis}
                       </span>
                       {init.priority === 'High' && (
@@ -185,7 +185,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 dark:text-slate-600">-</span>
+                          <span className="text-slate-600 dark:text-slate-400">-</span>
                         )}
                       </div>
 
@@ -201,7 +201,7 @@ export const FullStep5Workspace: React.FC<FullStep5WorkspaceProps> = ({
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 dark:text-slate-600">-</span>
+                          <span className="text-slate-600 dark:text-slate-400">-</span>
                         )}
                       </div>
                     </div>

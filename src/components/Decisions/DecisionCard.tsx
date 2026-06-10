@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DecisionCard - Reusable decision card component
  * Unified decision display for all modules
@@ -244,7 +243,9 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
   const { t } = useTranslation();
   const typeInfo = getTypeInfo(decision.decisionType);
 
-  const isOverdue = decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 7);
+  const isOverdue = Boolean(
+    decision.isOverdue || (decision.daysWaiting && decision.daysWaiting > 7)
+  );
   const daysOverdue = decision.daysOverdue || Math.max(0, (decision.daysWaiting || 0) - 7);
   const daysUntilDue =
     decision.daysUntilDue ??
@@ -289,7 +290,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           </span>
           <ChevronRight
             size={14}
-            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors shrink-0"
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-400 group-hover:text-primary-500 transition-colors shrink-0"
           />
         </div>
       </motion.div>
@@ -328,7 +329,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           </div>
           <ChevronRight
             size={14}
-            className="text-slate-700 dark:text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors"
+            className="text-slate-700 dark:text-slate-300 dark:text-slate-400 group-hover:text-primary-500 transition-colors"
           />
         </div>
 
@@ -336,8 +337,8 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           {decision.title}
         </h4>
 
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-navy-700">
-          <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-navy-700">
+          <div className="flex items-center gap-3 text-[11px] text-slate-600 dark:text-slate-500">
             <div className="flex items-center gap-1">
               <User size={11} />
               <span className="truncate max-w-[80px]">
@@ -444,8 +445,8 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
 
         {/* Waiting Time Bar */}
         {decision.daysWaiting !== undefined && (
-          <div className="mt-2 pt-2 border-t border-slate-100 dark:border-navy-700">
-            <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 mb-1">
+          <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-500 mb-1">
               <span>{t('decisions.waitingFor', 'Waiting for')}</span>
               <span className="font-medium">
                 {decision.daysWaiting} {t('decisions.days', 'days')}
@@ -474,7 +475,7 @@ export const DecisionCard: React.FC<DecisionCardProps> = ({
           className={`px-4 py-3 border-t flex items-center gap-2 ${
             isOverdue
               ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-500/10'
-              : 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-navy-700'
+              : 'bg-slate-50/50 dark:bg-white/5 border-slate-200 dark:border-navy-700'
           }`}
         >
           {isMyDecision ? (

@@ -218,7 +218,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="rounded-md p-1 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
             aria-label="Close intake panel"
             data-testid="intake-jwt-close"
           >
@@ -337,7 +337,7 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
                               data-testid={`intake-allow-list-toggle-${f.fieldId}`}
                             />
                             <span className="truncate">{f.label}</span>
-                            <span className="ml-auto truncate text-[10px] text-slate-400">
+                            <span className="ml-auto truncate text-[10px] text-slate-600">
                               {f.fieldId.slice(0, 8)}
                             </span>
                           </label>

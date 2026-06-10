@@ -249,7 +249,7 @@ export const VoiceModeLegend: React.FC<VoiceModeLegendProps> = ({
         aria-label={t('voice.legend.trigger', 'Voice modes explained')}
         title={t('voice.legend.trigger', 'Voice modes explained')}
         data-testid="voice-mode-legend-trigger"
-        className={`p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors ${
+        className={`p-1.5 rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors ${
           className ?? ''
         }`}
       >

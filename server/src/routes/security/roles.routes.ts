@@ -104,10 +104,31 @@ router.post(
     const orgId = req.user!.organizationId;
     await ensureRolesSchema();
 
+    const rawName = req.body?.name;
+    if (typeof rawName !== 'string' || rawName.trim().length === 0) {
+      return res.status(400).json({ error: 'Role name is required' });
+    }
+    if (
+      req.body?.roleKey !== undefined &&
+      (typeof req.body.roleKey !== 'string' || req.body.roleKey.trim().length === 0)
+    ) {
+      return res.status(400).json({ error: 'roleKey must be a non-empty string when provided' });
+    }
+    if (req.body?.permissions !== undefined && !Array.isArray(req.body.permissions)) {
+      return res.status(400).json({ error: 'permissions must be an array when provided' });
+    }
+    if (req.body?.capabilities !== undefined && !Array.isArray(req.body.capabilities)) {
+      return res.status(400).json({ error: 'capabilities must be an array when provided' });
+    }
+
     const id = uuidv4();
     const now = new Date().toISOString();
-    const name = String(req.body?.name || 'Custom Role');
-    const permissions = Array.isArray(req.body?.permissions) ? req.body.permissions : [];
+    const name = rawName.trim();
+    const permissions = Array.isArray(req.body?.permissions)
+      ? req.body.permissions
+      : Array.isArray(req.body?.capabilities)
+        ? req.body.capabilities
+        : [];
 
     await dbRun(
       `INSERT INTO security_roles (id, organization_id, name, permissions_json, created_at, updated_at, created_by, updated_by)
@@ -134,12 +155,36 @@ router.put(
     );
     if (!existing) return res.status(404).json({ error: 'Role not found' });
 
-    const name = req.body?.name !== undefined ? String(req.body.name) : undefined;
-    const permissions =
-      req.body?.permissions !== undefined
-        ? Array.isArray(req.body.permissions)
-          ? req.body.permissions
-          : []
+    const hasName = Object.prototype.hasOwnProperty.call(req.body || {}, 'name');
+    const hasPermissions = Object.prototype.hasOwnProperty.call(req.body || {}, 'permissions');
+    const hasCapabilities = Object.prototype.hasOwnProperty.call(req.body || {}, 'capabilities');
+
+    if (!hasName && !hasPermissions && !hasCapabilities) {
+      return res.status(400).json({ error: 'No updatable fields provided' });
+    }
+
+    let name: string | undefined;
+    if (hasName) {
+      if (typeof req.body?.name !== 'string') {
+        return res.status(400).json({ error: 'name must be a string' });
+      }
+      name = req.body.name.trim();
+      if (!name) {
+        return res.status(400).json({ error: 'name must be a non-empty string' });
+      }
+    }
+
+    if (hasPermissions && !Array.isArray(req.body?.permissions)) {
+      return res.status(400).json({ error: 'permissions must be an array when provided' });
+    }
+    if (hasCapabilities && !Array.isArray(req.body?.capabilities)) {
+      return res.status(400).json({ error: 'capabilities must be an array when provided' });
+    }
+
+    const permissions = hasPermissions
+      ? req.body.permissions
+      : hasCapabilities
+        ? req.body.capabilities
         : undefined;
 
     await dbRun(

@@ -89,6 +89,12 @@ verify_all_apis.cjs
 *.bak.broken
 *_converted.*
 * 2.*
+# Google Drive sync pollution (see docs/GDRIVE_SYNC.md)
+* 3.*
+* 4.*
+*.driveupload
+*.driveupload/
+
 *_trash*
 
 # Test output files
@@ -269,3 +275,7 @@ knowledge/**/*.docx
 
 # Local IDE/sync backup folder (auto-managed, never tracked)
 .drive-sync-backup/
+docs/audit/2026-06-03/screenshots/
+
+# VTS wave-2 credentials (sensitive)
+vts-wave2-credentials*.csv

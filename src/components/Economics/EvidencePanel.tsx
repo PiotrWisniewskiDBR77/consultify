@@ -25,6 +25,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { EmptyState } from '../ui/composed/EmptyState';
+import { LoadingState } from '../ui/primitives';
 
 interface Evidence {
   id: string;
@@ -201,31 +203,24 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
           onClick={onClose}
           className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-white/5 rounded-lg transition-colors"
         >
-          <X size={20} className="text-slate-400 dark:text-slate-500" />
+          <X size={20} className="text-slate-600 dark:text-slate-500" />
         </button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="animate-spin text-slate-400 dark:text-slate-500" size={24} />
-          </div>
+          <LoadingState variant="spinner" className="py-12" />
         ) : (
           <div className="space-y-4">
             {/* Evidence list */}
             {evidence.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto bg-slate-100 dark:bg-navy-800 rounded-xl flex items-center justify-center mb-4">
-                  <Paperclip className="text-slate-400 dark:text-slate-500" size={28} />
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
-                  No evidence attached
-                </p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  Add evidence to support the assessment
-                </p>
-              </div>
+              <EmptyState
+                icon={<Paperclip />}
+                title="No evidence attached"
+                description="Add evidence to support the assessment"
+                compact
+              />
             ) : (
               evidence.map((item) => {
                 const Icon = getEvidenceIcon(item.evidence_type);
@@ -272,7 +267,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                             <ExternalLink size={12} />
                           </a>
                         )}
-                        <div className="flex items-center gap-2 mt-2 text-xs text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center gap-2 mt-2 text-xs text-slate-600 dark:text-slate-500">
                           {item.category && (
                             <span className="px-2 py-0.5 bg-slate-200 dark:bg-navy-700 rounded">
                               {CATEGORIES.find((c) => c.id === item.category)?.label ||
@@ -288,7 +283,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                         {!item.is_verified && (
                           <button
                             onClick={() => handleVerifyEvidence(item.id)}
-                            className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-emerald-500"
+                            className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-emerald-500"
                             title="Verify"
                           >
                             <Check size={16} />
@@ -296,7 +291,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                         )}
                         <button
                           onClick={() => handleDeleteEvidence(item.id)}
-                          className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg text-slate-400 dark:text-slate-500 hover:text-rose-500"
+                          className="p-1.5 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg text-slate-600 dark:text-slate-500 hover:text-rose-500"
                           title="Delete"
                         >
                           <Trash2 size={16} />
@@ -374,7 +369,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                             onClick={() => setFile(null)}
                             className="p-1 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
                           >
-                            <X size={14} className="text-slate-400 dark:text-slate-500" />
+                            <X size={14} className="text-slate-600 dark:text-slate-500" />
                           </button>
                         </div>
                       ) : (
@@ -387,12 +382,12 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                           />
                           <Upload
                             size={24}
-                            className="mx-auto text-slate-400 dark:text-slate-500 mb-2"
+                            className="mx-auto text-slate-600 dark:text-slate-500 mb-2"
                           />
                           <p className="text-sm text-slate-500 dark:text-slate-400">
                             Click to select file
                           </p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                          <p className="text-xs text-slate-600 dark:text-slate-500 mt-1">
                             PDF, DOC, XLS, PNG, JPG (max 25MB)
                           </p>
                         </label>

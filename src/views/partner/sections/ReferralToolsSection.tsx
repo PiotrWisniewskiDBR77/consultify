@@ -16,7 +16,6 @@ import {
   ExternalLink,
   Link2,
   MousePointerClick,
-  Plus,
   QrCode,
   Share2,
   Trash2,
@@ -109,6 +108,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const campaignNameInputRef = useRef<HTMLInputElement | null>(null);
 
   const normalizeTools = useCallback(
@@ -222,6 +222,20 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
       const loadUsableTools = async (): Promise<ReferralTools | null> => {
         try {
+          const response = await V8PartnerApi.getReferralTools();
+          if (response?.tools) {
+            const normalized = normalizeTools(response.tools as V8PartnerReferralTools);
+            if (hasUsableReferralIdentity(normalized)) {
+              return normalized;
+            }
+          }
+        } catch (error) {
+          if (!shouldFallbackToLegacyPartner(error)) {
+            throw error;
+          }
+        }
+
+        try {
           const response = await Api.get('/api/partners/referral-tools');
           const legacyTools = unwrapApiData(response);
           if (response?.success && legacyTools) {
@@ -233,20 +247,6 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         } catch (legacyError) {
           if (!shouldFallbackToLegacyPartner(legacyError)) {
             throw legacyError;
-          }
-        }
-
-        try {
-          const response = await V8PartnerApi.getReferralTools();
-          if (response?.tools) {
-            const normalized = normalizeTools(response.tools as V8PartnerReferralTools);
-            if (hasUsableReferralIdentity(normalized)) {
-              return normalized;
-            }
-          }
-        } catch (error) {
-          if (!shouldFallbackToLegacyPartner(error)) {
-            throw error;
           }
         }
 
@@ -344,6 +344,42 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     [t]
   );
 
+  // Generate a QR code for the referral link (lazy-import qrcode lib).
+  const handleGetQrCode = useCallback(
+    async (link?: string) => {
+      const url = link || tools?.referralLink || '';
+      if (!url) {
+        toast.error(t('partner.referrals.noLink', 'No referral link available yet'));
+        return;
+      }
+      try {
+        const QRCode = (await import('qrcode')).default;
+        const dataUrl = await QRCode.toDataURL(url, {
+          width: 320,
+          margin: 2,
+          color: { dark: '#0F172A', light: '#FFFFFF' },
+        });
+        setQrDataUrl(dataUrl);
+      } catch {
+        toast.error(t('partner.referrals.qrFailed', 'Could not generate QR code'));
+      }
+    },
+    [t, tools?.referralLink]
+  );
+
+  // Open the referral link in a new tab (preview the landing experience).
+  const handlePreview = useCallback(
+    (link?: string) => {
+      const url = link || tools?.referralLink || '';
+      if (!url) {
+        toast.error(t('partner.referrals.noLink', 'No referral link available yet'));
+        return;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+    },
+    [t, tools?.referralLink]
+  );
+
   // Create new campaign link via API
   const handleCreateCampaign = async () => {
     const candidateName = String(
@@ -358,7 +394,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       setCreating(true);
       let response: any;
       try {
-        response = await Api.post('/api/partners/campaign-links', {
+        response = await V8PartnerApi.createCampaignLink({
           name: candidateName,
           utmSource: newCampaign.utmSource || undefined,
           utmMedium: newCampaign.utmMedium || undefined,
@@ -368,7 +404,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         if (!shouldFallbackToLegacyPartner(error)) {
           throw error;
         }
-        response = await V8PartnerApi.createCampaignLink({
+        response = await Api.post('/api/partners/campaign-links', {
           name: candidateName,
           utmSource: newCampaign.utmSource || undefined,
           utmMedium: newCampaign.utmMedium || undefined,
@@ -412,12 +448,12 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       setDeleting(campaignId);
       let response: any;
       try {
-        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
+        response = await V8PartnerApi.deleteCampaignLink(campaignId);
       } catch (error) {
         if (!shouldFallbackToLegacyPartner(error)) {
           throw error;
         }
-        response = await V8PartnerApi.deleteCampaignLink(campaignId);
+        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
       }
 
       if (response?.success || response?.deleted) {
@@ -458,7 +494,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         <div className="p-4 rounded-full bg-rose-500/10 mb-4">
           <Link2 className="w-8 h-8 text-rose-400" />
         </div>
-        <p className="text-slate-400 dark:text-slate-500 mb-4">{error}</p>
+        <p className="text-slate-600 dark:text-slate-500 mb-4">{error}</p>
         <button
           onClick={fetchTools}
           className="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
@@ -474,7 +510,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{pageCopy.title}</h2>
-        <p className="text-slate-400 dark:text-slate-500">{pageCopy.subtitle}</p>
+        <p className="text-slate-600 dark:text-slate-500">{pageCopy.subtitle}</p>
       </div>
 
       {v8Analytics && (
@@ -538,7 +574,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('partner.referrals.referredCustomersList', 'Referred customers')}
               </h3>
-              <p className="text-sm text-slate-400 dark:text-slate-500">
+              <p className="text-sm text-slate-600 dark:text-slate-500">
                 {t(
                   'partner.referrals.referredCustomersListDesc',
                   'A governed customer list from partner attribution records.'
@@ -559,7 +595,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                       <p className="font-medium text-slate-900 dark:text-white">
                         {customer.organizationName || customer.organizationId}
                       </p>
-                      <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-500">
                         {customer.attributionType.toLowerCase().replaceAll('_', ' ')}
                         {customer.referralCodeUsed ? ` · ${customer.referralCodeUsed}` : ''}
                       </p>
@@ -568,7 +604,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                       {customer.status.toLowerCase()}
                     </span>
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-sm text-slate-400 dark:text-slate-500">
+                  <div className="mt-3 flex items-center justify-between text-sm text-slate-600 dark:text-slate-500">
                     <span>
                       {t('partner.referrals.customerAttributedAt', 'Attributed')}{' '}
                       {customer.attributedAt}
@@ -637,7 +673,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-white/10 p-6 text-center">
-              <p className="text-slate-400 dark:text-slate-500">
+              <p className="text-slate-600 dark:text-slate-500">
                 {t('partner.referrals.noReferredCustomers', 'No referred customers yet')}
               </p>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -659,7 +695,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             <div className="p-2 rounded-lg bg-primary-500/20">
               <Link2 className="w-5 h-5 text-primary-400" />
             </div>
-            <span className="text-sm text-slate-400 dark:text-slate-500">
+            <span className="text-sm text-slate-600 dark:text-slate-500">
               {t('partner.referrals.yourCode', 'Your Referral Code')}
             </span>
           </div>
@@ -689,7 +725,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             <div className="p-2 rounded-lg bg-emerald-500/20">
               <Share2 className="w-5 h-5 text-emerald-400" />
             </div>
-            <span className="text-sm text-slate-400 dark:text-slate-500">
+            <span className="text-sm text-slate-600 dark:text-slate-500">
               {t('partner.referrals.yourLink', 'Your Referral Link')}
             </span>
           </div>
@@ -712,11 +748,19 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </button>
           </div>
           <div className="flex items-center gap-4 mt-2">
-            <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handleGetQrCode()}
+              className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
+            >
               <QrCode className="w-3 h-3" />
               {t('partner.referrals.getQR', 'Get QR Code')}
             </button>
-            <button className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handlePreview()}
+              className="text-xs text-primary-400 hover:text-primary-300 flex items-center gap-1"
+            >
               <ExternalLink className="w-3 h-3" />
               {t('partner.referrals.preview', 'Preview')}
             </button>
@@ -731,7 +775,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
               {t('partner.referrals.campaignLinks', 'Campaign Links')}
             </h3>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               {t(
                 'partner.referrals.campaignLinksDesc',
                 'Track performance by campaign with UTM parameters'
@@ -740,9 +784,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
           </div>
           <button
             onClick={() => setShowNewCampaign(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500"
           >
-            <Plus className="w-4 h-4" />
             {t('partner.referrals.newCampaign', 'New Campaign')}
           </button>
         </div>
@@ -755,7 +798,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
-                <label className="text-xs text-slate-400 dark:text-slate-500 mb-1 block">
+                <label className="text-xs text-slate-600 dark:text-slate-500 mb-1 block">
                   Campaign Name*
                 </label>
                 <input
@@ -768,7 +811,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 dark:text-slate-500 mb-1 block">
+                <label className="text-xs text-slate-600 dark:text-slate-500 mb-1 block">
                   UTM Source
                 </label>
                 <input
@@ -782,7 +825,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 dark:text-slate-500 mb-1 block">
+                <label className="text-xs text-slate-600 dark:text-slate-500 mb-1 block">
                   UTM Medium
                 </label>
                 <input
@@ -796,7 +839,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 dark:text-slate-500 mb-1 block">
+                <label className="text-xs text-slate-600 dark:text-slate-500 mb-1 block">
                   UTM Campaign
                 </label>
                 <input
@@ -813,7 +856,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             <div className="flex justify-end gap-2 mt-3">
               <button
                 onClick={() => setShowNewCampaign(false)}
-                className="px-4 py-2 text-sm text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -837,19 +880,19 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/5">
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     {t('partner.referrals.campaign', 'Campaign')}
                   </th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     {t('partner.referrals.clicks', 'Clicks')}
                   </th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     {t('partner.referrals.signups', 'Signups')}
                   </th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     {t('partner.referrals.conversions', 'Paid')}
                   </th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase">
+                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
                     {t('partner.referrals.convRate', 'Conv %')}
                   </th>
                   <th className="px-3 py-2"></th>
@@ -883,7 +926,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="text-slate-400 dark:text-slate-500">
+                      <span className="text-slate-600 dark:text-slate-500">
                         {campaign.clickCount > 0
                           ? `${((campaign.conversionCount / campaign.clickCount) * 100).toFixed(1)}%`
                           : '0%'}
@@ -893,7 +936,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => copyToClipboard(campaign.fullUrl, campaign.id)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors"
+                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors"
                           title="Copy link"
                         >
                           {copiedField === campaign.id ? (
@@ -905,7 +948,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                         <button
                           onClick={() => handleDeleteCampaign(campaign.id)}
                           disabled={deleting === campaign.id}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors disabled:opacity-50"
+                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors disabled:opacity-50"
                           title="Delete"
                         >
                           {deleting === campaign.id ? (
@@ -924,7 +967,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         ) : (
           <div className="text-center py-8">
             <MousePointerClick className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-            <p className="text-slate-400 dark:text-slate-500">
+            <p className="text-slate-600 dark:text-slate-500">
               {t(
                 'partner.referrals.noCampaigns',
                 'No campaign links yet. Create one to start tracking!'
@@ -959,6 +1002,49 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
           </li>
         </ul>
       </div>
+
+      {/* QR Code modal */}
+      {qrDataUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setQrDataUrl(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white dark:bg-navy-800 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+              {t('partner.referrals.qrTitle', 'Referral QR Code')}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+              {t('partner.referrals.qrHint', 'Scan to open your referral link')}
+            </p>
+            <img
+              src={qrDataUrl}
+              alt={t('partner.referrals.qrAlt', 'Referral QR code')}
+              className="w-full max-w-[240px] mx-auto rounded-lg border border-slate-200 dark:border-white/10"
+            />
+            <div className="flex items-center gap-2 mt-4">
+              <a
+                href={qrDataUrl}
+                download="consultify-referral-qr.png"
+                className="flex-1 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors"
+              >
+                {t('common.download', 'Download')}
+              </a>
+              <button
+                type="button"
+                onClick={() => setQrDataUrl(null)}
+                className="flex-1 px-4 py-2 rounded-lg bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 text-sm font-medium hover:bg-slate-200 dark:hover:bg-navy-600 transition-colors"
+              >
+                {t('common.close', 'Close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

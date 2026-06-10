@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
+import { BillingFeaturePending } from '../../../components/billing/BillingFeaturePending';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/BaseCard';
+import { LoadingState } from '../../../components/ui/primitives';
 import { Api } from '../../../services/api';
+import { isBillingSelfServeEnabled } from '../../../utils/billingSelfServeFlag';
 
 interface RevenueRecognition {
   id: string;
@@ -37,9 +40,11 @@ interface RecognitionScheduleItem {
 }
 
 export const RevenueRecognitionView: React.FC = () => {
+  // Decision D8: revenue-recognition endpoints return 503 until built out.
+  const billingAnalyticsEnabled = isBillingSelfServeEnabled();
   const [recognitions, setRecognitions] = useState<RevenueRecognition[]>([]);
   const [stats, setStats] = useState<RevenueRecognitionStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(billingAnalyticsEnabled);
   const [error, setError] = useState<string | null>(null);
   const [selectedRecognition, setSelectedRecognition] = useState<RevenueRecognition | null>(null);
   const [schedule, setSchedule] = useState<RecognitionScheduleItem[]>([]);
@@ -55,8 +60,13 @@ export const RevenueRecognitionView: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!billingAnalyticsEnabled) return;
     fetchData();
-  }, []);
+  }, [billingAnalyticsEnabled]);
+
+  if (!billingAnalyticsEnabled) {
+    return <BillingFeaturePending />;
+  }
 
   const fetchData = async () => {
     try {
@@ -171,11 +181,11 @@ export const RevenueRecognitionView: React.FC = () => {
       pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400' },
       in_progress: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
       completed: { bg: 'bg-green-500/20', text: 'text-green-400' },
-      on_hold: { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-400' },
+      on_hold: { bg: 'bg-gray-50 dark:bg-navy-8000/20', text: 'text-gray-600' },
     };
     const badge = badges[status] || {
       bg: 'bg-gray-50 dark:bg-navy-8000/20',
-      text: 'text-gray-400',
+      text: 'text-gray-600',
     };
     return (
       <span className={`px-2 py-0.5 text-xs rounded-full ${badge.bg} ${badge.text}`}>
@@ -207,11 +217,7 @@ export const RevenueRecognitionView: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-      </div>
-    );
+    return <LoadingState variant="spinner" className="h-64" />;
   }
 
   return (
@@ -367,7 +373,7 @@ export const RevenueRecognitionView: React.FC = () => {
               ))}
 
               {recognitions.length === 0 && (
-                <div className="text-center py-8 text-gray-400 dark:text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-gray-600 dark:text-gray-500 dark:text-gray-400">
                   No revenue recognition items found
                 </div>
               )}

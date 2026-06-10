@@ -102,14 +102,14 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
       label: t('myWork.timeGroup.later', 'Later'),
       count: taskCounts.later,
       icon: Clock,
-      color: 'text-slate-400 dark:text-slate-500',
+      color: 'text-slate-600 dark:text-slate-500',
     },
     {
       key: 'no-date' as TaskTimeGroup,
       label: t('myWork.timeGroup.noDate', 'No Date'),
       count: taskCounts.noDate,
       icon: CircleDashed,
-      color: 'text-slate-300',
+      color: 'text-slate-600',
     },
   ];
 
@@ -129,8 +129,8 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
   return (
     <div className="w-60 bg-white dark:bg-navy-900 shadow-sm h-full flex flex-col">
       {/* Header */}
-      <div className="px-4 py-4 border-b border-slate-100 dark:border-navy-800">
-        <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+      <div className="px-4 py-4 border-b border-slate-200 dark:border-navy-800">
+        <h2 className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
           {t('myWork.title', 'My Work')}
         </h2>
       </div>
@@ -159,9 +159,9 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                 className="p-0.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded"
               >
                 {expandedSections.has('tasks') ? (
-                  <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+                  <ChevronDown size={14} className="text-slate-600 dark:text-slate-500" />
                 ) : (
-                  <ChevronRight size={14} className="text-slate-400 dark:text-slate-500" />
+                  <ChevronRight size={14} className="text-slate-600 dark:text-slate-500" />
                 )}
               </button>
               <CheckSquare size={16} />
@@ -237,9 +237,9 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                 className="p-0.5 hover:bg-slate-200 dark:hover:bg-white/10 rounded"
               >
                 {expandedSections.has('decisions') ? (
-                  <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+                  <ChevronDown size={14} className="text-slate-600 dark:text-slate-500" />
                 ) : (
-                  <ChevronRight size={14} className="text-slate-400 dark:text-slate-500" />
+                  <ChevronRight size={14} className="text-slate-600 dark:text-slate-500" />
                 )}
               </button>
               <FileQuestion size={16} />

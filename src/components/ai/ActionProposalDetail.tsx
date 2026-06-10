@@ -48,7 +48,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
 
   if (!proposal) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-950/30 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-600 dark:text-slate-500 bg-slate-50/50 dark:bg-navy-950/30 rounded-xl border border-dashed border-slate-200 dark:border-navy-700">
         <Brain size={48} className="mb-4 opacity-20" />
         <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
           Select a Proposal
@@ -70,7 +70,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
   return (
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm overflow-hidden flex flex-col h-full">
       {/* Header */}
-      <div className="p-6 border-b border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50">
+      <div className="p-6 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50">
         <div className="flex items-center gap-2 mb-4">
           <div className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest">
             Draft Action
@@ -224,8 +224,8 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
               Simulation Strategy
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-700 rounded-xl">
-                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <div className="p-4 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl">
+                <h4 className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Activity size={14} /> Expected Direction
                 </h4>
                 <div className="flex items-center gap-3">
@@ -254,8 +254,8 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                   </div>
                 </div>
               </div>
-              <div className="p-4 bg-slate-50 dark:bg-navy-950 border border-slate-100 dark:border-navy-700 rounded-xl">
-                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <div className="p-4 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl">
+                <h4 className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Terminal size={14} /> Execution Assumptions
                 </h4>
                 <ul className="space-y-2">
@@ -270,7 +270,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
                       </li>
                     ))
                   ) : (
-                    <li className="text-xs text-slate-400 dark:text-slate-500 italic">
+                    <li className="text-xs text-slate-600 dark:text-slate-500 italic">
                       No explicit assumptions provided.
                     </li>
                   )}
@@ -304,7 +304,7 @@ export const ActionProposalDetail: React.FC<ActionProposalDetailProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="p-6 border-t border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 flex items-center justify-between">
+      <div className="p-6 border-t border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-950/50 flex items-center justify-between">
         <button
           onClick={onReject}
           className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-500/30 transition-all"

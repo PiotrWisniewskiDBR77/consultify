@@ -1,44 +1,6 @@
-<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="154.964154">
-<testsuite name="radar-go-gate.spec.ts" timestamp="2026-05-17T17:38:15.156Z" hostname="chromium" tests="1" failures="1" skipped="0" time="0.61" errors="0">
-<testcase name="Radar GO gate (no manual bootstrap) › covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states" classname="radar-go-gate.spec.ts" time="0.61">
-<failure message="radar-go-gate.spec.ts:86:3 covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states" type="FAILURE">
-<![CDATA[  [chromium] › radar-go-gate.spec.ts:86:3 › Radar GO gate (no manual bootstrap) › covers create, edit-equivalent state checks, filters, drill-down, refresh persist, and UI states 
-
-    Error: expect(received).toBe(expected) // Object.is equality
-
-    Expected: true
-    Received: false
-
-       at work-canvas-helpers.ts:226
-
-      224 |     throw new Error(
-      225 |       [
-    > 226 |         `Strict Canvas gate: unable to acquire ${label} auth token without credentials.`,
-          |                              ^
-      227 |         'Provide E2E owner/member credentials or enable test support/demo login in the target backend.',
-      228 |         ...issues.map((item) => `- ${item}`),
-      229 |       ].join('\n')
-        at loginAsUser (/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/smoke/work-canvas-helpers.ts:226:30)
-        at /Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/tests/e2e/smoke/radar-go-gate.spec.ts:102:19
-
-    Error: ENOENT: no such file or directory, open '/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify/test-results/.playwright-artifacts-0/119ff2ae935041810f526c50944c93ac.zip'
-
-    Test timeout of 120000ms exceeded.
-
-    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
-    ../../../test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/test-failed-1.png
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-
-    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
-    ../../../test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/video.webm
-    ────────────────────────────────────────────────────────────────────────────────────────────────
-]]>
-</failure>
-<system-err>
-<![CDATA[
-Warning: attachment test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/test-failed-1.png is missing
-Warning: attachment test-results/radar-go-gate-Radar-GO-gat-2d265-fresh-persist-and-UI-states-chromium/video.webm is missing]]>
-</system-err>
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="41.064142">
+<testsuite name="radar-go-gate.spec.ts" timestamp="2026-05-18T08:57:27.636Z" hostname="chromium" tests="1" failures="0" skipped="0" time="8.743" errors="0">
+<testcase name="Radar GO gate (no manual bootstrap) › covers radar shell render and core CTA presence" classname="radar-go-gate.spec.ts" time="8.743">
 </testcase>
 </testsuite>
 </testsuites>

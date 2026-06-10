@@ -104,7 +104,7 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
     <div className="w-64 max-h-[440px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
       <div className="p-2">
         <div className="relative">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -141,7 +141,7 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
 
       {/* Templates */}
       <div className="px-1 pb-1">
-        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-600">
           {isPl ? 'Szablony' : 'Templates'}
         </div>
         {templates.map((t) => (
@@ -153,12 +153,12 @@ export const TemplatesPopover: React.FC<TemplatesPopoverProps> = ({
             }}
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
           >
-            <Layers size={12} className="text-slate-400 shrink-0" />
+            <Layers size={12} className="text-slate-600 shrink-0" />
             {isPl ? t.labelPl : t.labelEn}
           </button>
         ))}
         {templates.length === 0 && filteredStarts.length === 0 && (
-          <div className="px-2 py-3 text-[10px] text-slate-400 text-center">
+          <div className="px-2 py-3 text-[10px] text-slate-600 text-center">
             {isPl ? 'Brak wyników' : 'No results'}
           </div>
         )}

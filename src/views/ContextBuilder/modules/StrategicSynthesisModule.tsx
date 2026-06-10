@@ -202,7 +202,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                     </div>
                     <button
                       onClick={() => setSelectedRisk(null)}
-                      className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                      className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
                     >
                       <svg
                         className="w-6 h-6"
@@ -223,7 +223,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                   <div className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
                           Severity Level
                         </label>
                         <div
@@ -248,7 +248,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
                           Source / Context
                         </label>
                         <div className="text-sm text-navy-900 dark:text-white font-medium">
@@ -258,9 +258,9 @@ export const StrategicSynthesisModule: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-100 dark:border-navy-700 space-y-4">
+                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
                       <div>
-                        <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-1">
                           Root Cause Analysis
                         </label>
                         <p className="text-navy-900 dark:text-slate-200">
@@ -269,7 +269,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                       </div>
                       <div className="h-px bg-slate-200 dark:bg-white/5" />
                       <div>
-                        <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-1">
                           Recommended Mitigation
                         </label>
                         <p className="text-navy-900 dark:text-slate-200">
@@ -398,7 +398,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                     </div>
                     <button
                       onClick={() => setSelectedStrength(null)}
-                      className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
+                      className="text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-200"
                     >
                       <svg
                         className="w-6 h-6"
@@ -419,7 +419,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                   <div className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
                           Impact Potential
                         </label>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
@@ -427,7 +427,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                        <label className="text-xs font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider block mb-2">
                           Confidence
                         </label>
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm bg-slate-100 dark:bg-navy-800/40 text-slate-700 dark:bg-slate-800 dark:text-slate-300">

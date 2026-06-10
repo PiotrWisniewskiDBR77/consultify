@@ -61,6 +61,43 @@ const withTimeout = async <T>(
   });
 };
 
+/**
+ * D2 — render the interview-insight handoff payload (governed P10 findings)
+ * into the tool prompt. When an interview insight is exported to a tool
+ * session, its findings ride in `context.boundedInsightPayload`. Previously
+ * the whole context was either JSON.stringify-dumped raw or stripped to
+ * `{org}`, so the evidence discipline was lost. This produces a structured,
+ * readable findings block. Returns '' for non-interview contexts.
+ */
+const buildInterviewFindingsSection = (context: Record<string, unknown>): string => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payload = (context as any)?.boundedInsightPayload;
+  if (!payload || !Array.isArray(payload.findings) || payload.findings.length === 0) return '';
+  const findingsText = payload.findings
+    .slice(0, 25)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((f: any, i: number) => {
+      const evidence = Array.isArray(f.evidencePointers)
+        ? f.evidencePointers
+            .slice(0, 5)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .map((p: any) => `    - ${String(p.excerpt || p.source_id || '').slice(0, 240)}`)
+            .join('\n')
+        : '';
+      return [
+        `${i + 1}. ${f.findingStatement}`,
+        f.confidenceLevel != null ? `   Confidence: ${f.confidenceLevel}%` : '',
+        f.limits ? `   Limits: ${f.limits}` : '',
+        f.nextAction ? `   Recommended next action: ${f.nextAction}` : '',
+        evidence ? `   Evidence:\n${evidence}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+    })
+    .join('\n\n');
+  return `\nInterview findings (evidence-bounded, from a governed stakeholder interview — base the initiatives on these):\n${findingsText}\n`;
+};
+
 const buildPrompt = ({
   toolType,
   methodologyId,
@@ -85,7 +122,7 @@ ${JSON.stringify(answers)}
 
 Context (JSON):
 ${JSON.stringify(context)}
-
+${buildInterviewFindingsSection(context)}
 Return ONLY valid JSON in this format:
 {"initiatives":[{"title":"...","description":"...","category":"Strategy|Operations|Digital|Process Auto","priority":"P1|P2|P3","risk":"Low|Medium|High"}]}`;
 };
@@ -157,7 +194,16 @@ export class ToolInitiativeService {
       methodologyId,
       count,
       answers,
-      context: includeChatContext ? context : { org: context?.org || {} },
+      // D2 — preserve the interview handoff payload (+ source) even when chat
+      // context is excluded, so governed findings always reach the prompt via
+      // buildInterviewFindingsSection. Previously `{org}` stripped them out.
+      context: includeChatContext
+        ? context
+        : {
+            org: context?.org || {},
+            boundedInsightPayload: (context as any)?.boundedInsightPayload,
+            source: (context as any)?.source,
+          },
     });
 
     for (let attempt = 1; attempt <= 2; attempt += 1) {

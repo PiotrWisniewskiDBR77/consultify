@@ -393,7 +393,7 @@ const SourceItem: React.FC<{ source: SourceUsed; index: number }> = ({ source, i
   if (source.type === 'dt_section') {
     return (
       <div className="text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
-        <FileText size={12} className="flex-shrink-0 mt-0.5 text-slate-400" />
+        <FileText size={12} className="flex-shrink-0 mt-0.5 text-slate-600" />
         <div>
           <span className="font-medium">DT Report</span>
           {source.quote && (
@@ -432,7 +432,7 @@ const SourceItem: React.FC<{ source: SourceUsed; index: number }> = ({ source, i
   if (source.type === 'web_source' && source.url) {
     return (
       <div className="text-[11px] flex items-center gap-1.5">
-        <ExternalLink size={12} className="flex-shrink-0 text-indigo-500" />
+        <ExternalLink size={12} className="flex-shrink-0 text-primary-500" />
         <a
           href={source.url}
           target="_blank"
@@ -514,7 +514,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
         className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/50 dark:hover:bg-navy-800/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400">
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 dark:text-primary-400">
             <Shield size={18} />
           </div>
           <div className="text-left">
@@ -536,7 +536,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
               <span className={`text-[10px] font-semibold ${confidenceLevel.color}`}>
                 {isPl ? confidenceLevel.labelPl : confidenceLevel.label}
               </span>
-              <p className="text-[9px] text-slate-400 dark:text-slate-500">
+              <p className="text-[9px] text-slate-600 dark:text-slate-500">
                 {isPl ? 'pewność' : 'confidence'}
               </p>
             </div>
@@ -758,7 +758,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
                             key={idx}
                             className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5"
                           >
-                            <span className="text-slate-400">•</span>
+                            <span className="text-slate-600">•</span>
                             {q}
                           </li>
                         ))}
@@ -839,7 +839,7 @@ export const AgentAuditVerdictPanel: React.FC<AgentAuditVerdictPanelProps> = ({
               <span className={`font-semibold ${confidenceLevel.color}`}>
                 {isPl ? 'Pewność' : 'Confidence'}: {confidenceScore}%
               </span>
-              <span className="text-slate-300 dark:text-navy-600">|</span>
+              <span className="text-slate-600 dark:text-navy-600">|</span>
               <span>
                 {isPl ? 'Źródła' : 'Sources'}: {verdict.sourcesSummary.counts.dt_section} DT ·{' '}
                 {verdict.sourcesSummary.counts.kb_snippet} KB ·{' '}

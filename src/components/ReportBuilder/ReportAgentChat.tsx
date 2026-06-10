@@ -9,7 +9,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
   ArrowRight,
-  Bot,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -27,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import TeresaMark from '../shared/TeresaMark';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -201,7 +201,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
       <div className="flex items-center justify-between px-4 py-3 border-b border-navy-700">
         <div className="flex items-center gap-2.5">
           <div className="p-1.5 bg-primary-500/10 rounded-lg">
-            <Bot size={18} className="text-primary-400" />
+            <TeresaMark size={18} className="text-primary-400" />
           </div>
           <div>
             <div className="text-sm font-medium text-white">
@@ -214,7 +214,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 text-slate-400 hover:text-white hover:bg-navy-800 rounded-lg transition-colors"
+          className="p-1.5 text-slate-600 hover:text-white hover:bg-navy-800 rounded-lg transition-colors"
         >
           <X size={16} />
         </button>
@@ -224,8 +224,8 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-center py-8">
-            <Bot className="mx-auto text-slate-600 mb-3" size={32} />
-            <p className="text-sm text-slate-400 mb-1">
+            <TeresaMark className="mx-auto text-slate-600 mb-3" size={32} />
+            <p className="text-sm text-slate-600 mb-1">
               {t('reports.agent.welcome', "I'm your report assistant")}
             </p>
             <p className="text-xs text-slate-500">
@@ -241,7 +241,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                   key={qa.label}
                   onClick={() => handleSend(qa.message)}
                   disabled={sending}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-primary-400 hover:bg-primary-500/5 rounded-lg border border-navy-700 hover:border-primary-500/30 transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:text-primary-400 hover:bg-primary-500/5 rounded-lg border border-navy-700 hover:border-primary-500/30 transition-colors text-left"
                 >
                   {qa.icon}
                   {qa.label}
@@ -255,7 +255,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
           <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'assistant' && (
               <div className="w-6 h-6 rounded-full bg-primary-500/10 flex items-center justify-center shrink-0 mt-1">
-                <Bot size={12} className="text-primary-400" />
+                <TeresaMark size={12} className="text-primary-400" />
               </div>
             )}
             <div className={`max-w-[85%] ${msg.role === 'user' ? 'order-first' : ''}`}>
@@ -263,7 +263,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                 className={`px-3 py-2 rounded-xl text-sm ${
                   msg.role === 'user'
                     ? 'bg-primary-600 text-white rounded-br-sm'
-                    : 'bg-navy-800 text-slate-300 rounded-bl-sm border border-navy-700'
+                    : 'bg-navy-800 text-slate-600 rounded-bl-sm border border-navy-700'
                 }`}
               >
                 <div className="whitespace-pre-wrap text-xs leading-relaxed">{msg.content}</div>
@@ -293,7 +293,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
                           >
                             {c.type}
                           </span>
-                          <span className="text-slate-400 truncate">
+                          <span className="text-slate-600 truncate">
                             {c.after || c.before || c.sectionKey}
                           </span>
                         </div>
@@ -327,7 +327,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
             </div>
             {msg.role === 'user' && (
               <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center shrink-0 mt-1">
-                <User size={12} className="text-slate-400" />
+                <User size={12} className="text-slate-600" />
               </div>
             )}
           </div>
@@ -336,7 +336,7 @@ export const ReportAgentChat: React.FC<ReportAgentChatProps> = ({
         {sending && (
           <div className="flex gap-2">
             <div className="w-6 h-6 rounded-full bg-primary-500/10 flex items-center justify-center shrink-0">
-              <Bot size={12} className="text-primary-400" />
+              <TeresaMark size={12} className="text-primary-400" />
             </div>
             <div className="px-3 py-2 rounded-xl bg-navy-800 border border-navy-700">
               <Loader2 size={14} className="animate-spin text-primary-400" />

@@ -36,6 +36,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { DegradedState } from '@/components/Admin/AdminState';
+import { LoadingState } from '@/components/ui/primitives';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import api from '../../services/api';
@@ -459,7 +460,7 @@ export function PromptManagementUI() {
           <div className="relative">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500"
             />
             <input
               type="text"
@@ -490,9 +491,7 @@ export function PromptManagementUI() {
         {/* Prompt List */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 size={24} className="animate-spin text-primary-500" />
-            </div>
+            <LoadingState variant="spinner" className="py-10" />
           ) : error ? (
             <div className="p-4">
               <DegradedState title="Prompts unavailable" description={error} />
@@ -513,14 +512,14 @@ export function PromptManagementUI() {
                     <span className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
                       <span>{category.icon}</span>
                       {category.name}
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                      <span className="text-xs text-slate-600 dark:text-slate-500">
                         ({category.prompts.length})
                       </span>
                     </span>
                     {expandedCategories.has(category.id) ? (
-                      <ChevronDown size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronDown size={16} className="text-slate-600 dark:text-slate-500" />
                     ) : (
-                      <ChevronRight size={16} className="text-slate-400 dark:text-slate-500" />
+                      <ChevronRight size={16} className="text-slate-600 dark:text-slate-500" />
                     )}
                   </button>
                   {expandedCategories.has(category.id) && (
@@ -867,7 +866,7 @@ export function PromptManagementUI() {
                             className={`font-medium flex items-center gap-2 ${
                               selectedPrompt.is_active
                                 ? 'text-green-600'
-                                : 'text-slate-400 dark:text-slate-500'
+                                : 'text-slate-600 dark:text-slate-500'
                             }`}
                           >
                             {selectedPrompt.is_active ? (
@@ -994,9 +993,7 @@ export function PromptManagementUI() {
                     </h3>
                     <div className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg">
                       {previewLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 size={24} className="animate-spin text-primary-500" />
-                        </div>
+                        <LoadingState variant="spinner" className="py-8" />
                       ) : (
                         <pre className="text-sm text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap">
                           {previewResult || 'No result'}

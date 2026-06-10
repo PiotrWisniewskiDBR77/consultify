@@ -102,9 +102,9 @@ const getColorClasses = (color: string) => {
       border: 'border-blue-200 dark:border-blue-800',
     },
     indigo: {
-      bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-      text: 'text-indigo-600 dark:text-indigo-400',
-      border: 'border-indigo-200 dark:border-indigo-800',
+      bg: 'bg-primary-50 dark:bg-primary-900/20',
+      text: 'text-primary-600 dark:text-primary-400',
+      border: 'border-primary-200 dark:border-primary-800',
     },
     orange: {
       bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -274,7 +274,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
         {/* Expand button */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"
+          className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600"
         >
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
