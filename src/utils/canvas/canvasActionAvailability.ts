@@ -73,7 +73,13 @@ export function getCanvasActionAvailability(
   }
 
   if (actionId === 'share' && !capabilities.canShare) {
-    return availability(actionId, 'coming_soon', 'Share links need a backend runtime.');
+    // P0-2 — the share runtime exists; a disabled button means the user lacks
+    // the canvas.share capability, so say that instead of "coming soon".
+    return availability(
+      actionId,
+      'disabled_missing_permission',
+      'Brak uprawnień do udostępniania / No permission to share.'
+    );
   }
 
   if (actionId === 'create-presentation' && !capabilities.canCreatePresentation) {

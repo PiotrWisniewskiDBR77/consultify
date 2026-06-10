@@ -223,9 +223,11 @@ describe('canvas workspace front-end contract helpers', () => {
     expect(getCanvasActionAvailability('copy', baseDocument).status).toBe('enabled');
     expect(getCanvasActionAvailability('save', baseDocument).status).toBe('enabled');
 
+    // P0-2 — share runtime exists; a missing canShare capability is a
+    // permissions problem, not "coming soon".
     expect(getCanvasActionAvailability('share', baseDocument)).toMatchObject({
-      status: 'coming_soon',
-      reason: 'Share links need a backend runtime.',
+      status: 'disabled_missing_permission',
+      reason: 'Brak uprawnień do udostępniania / No permission to share.',
     });
 
     expect(getCanvasActionAvailability('create-presentation', baseDocument)).toMatchObject({

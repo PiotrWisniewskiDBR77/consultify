@@ -360,6 +360,40 @@ const FACTORY_ROLE_TEMPLATES: RoleTemplate[] = [
   },
 ];
 
+/**
+ * P0-2 (Canvas audit 2026-06-10) — Canvas capabilities for regular members.
+ *
+ * The Work Canvas panel resolves its 9 `canvas.*` capabilities via
+ * GET /api/access/effective WITHOUT a projectId, so the project-scoped
+ * FACTORY_ROLE_TEMPLATES above never apply there. Before this baseline only
+ * OWNER/ADMIN/SUPERADMIN ('*') passed any canvas check — Canvas was de facto
+ * admin-only. Canvas drafts are personal chat artifacts (ownedDraft-scoped),
+ * so every standard member gets the full set, including convert.initiative /
+ * convert.decision: converting only creates a draft entity in the member's
+ * own workspace — project-level promotion/approval stays gated by the
+ * `initiative.` / `decision.` capabilities in the role templates above.
+ */
+export const CANVAS_MEMBER_CAPABILITIES: string[] = [
+  'canvas.output.presentation',
+  'canvas.output.table',
+  'canvas.output.report',
+  'canvas.convert.idea',
+  'canvas.convert.note',
+  'canvas.convert.initiative',
+  'canvas.convert.decision',
+  'canvas.convert.task',
+  'canvas.share',
+];
+
+/**
+ * Organization-level baseline capabilities granted by application role,
+ * independent of project membership. OWNER/ADMIN are omitted because they
+ * already receive '*' in resolveEffectiveAccess; GUEST stays read-only.
+ */
+const APPLICATION_ROLE_BASELINE_CAPABILITIES: Partial<Record<ApplicationRoleValue, string[]>> = {
+  USER: [...CANVAS_MEMBER_CAPABILITIES],
+};
+
 let roleSchemaReady = false;
 
 function parseJsonArray(value: unknown): string[] {
@@ -595,6 +629,14 @@ export async function resolveEffectiveAccess(params: {
     if (capabilities.some((capability) => capability.endsWith('.delegated')))
       scope.add('delegated');
   }
+
+  // P0-2: org-level baseline (e.g. canvas.*) — applies with or without a
+  // project context, so chat-scoped surfaces like Work Canvas resolve real
+  // capabilities for regular members instead of an empty set.
+  capabilities = dedupe([
+    ...capabilities,
+    ...(APPLICATION_ROLE_BASELINE_CAPABILITIES[applicationRole] || []),
+  ]);
 
   if (platformRole === 'SUPERADMIN') {
     capabilities = dedupe([...capabilities, '*', 'superadmin.access', 'audit.project.view']);

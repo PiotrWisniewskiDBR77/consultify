@@ -2416,10 +2416,12 @@ describe('WorkCanvasDocumentPanel', () => {
       'enabled'
     );
     // Share is a real toolbar action now (canvas.share capability); in the
-    // vitest runtime the capability defaults to false, so it renders gated.
+    // vitest runtime the capability defaults to false, so it renders gated
+    // with the honest missing-permission reason (P0-2 replaced the false
+    // "coming soon" copy).
     expect(screen.getByRole('button', { name: /Share Canvas document/i })).toHaveAttribute(
       'data-action-status',
-      'coming_soon'
+      'disabled_missing_permission'
     );
     // The standalone "Open document folder" and "Upload files" toolbar buttons
     // were removed in the rich-editor rollout; dataset upload now lives behind

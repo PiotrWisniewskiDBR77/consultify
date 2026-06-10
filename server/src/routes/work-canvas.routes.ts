@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { Router } from 'express';
+import { type Response, Router } from 'express';
 import * as XLSX from 'xlsx';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
@@ -14,6 +14,10 @@ import {
   normalizeCanvasArtifactBlocks,
   projectCanvasArtifactBlockToMarkdown,
 } from '../services/artifacts/contentProjectionService.js';
+import {
+  hasEffectiveCapability,
+  resolveEffectiveAccess,
+} from '../services/effectiveAccessService.js';
 import { unifiedExportService } from '../services/export/UnifiedExportService.js';
 import { insertDynamic } from '../utils/dbDynamic.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -477,6 +481,36 @@ function canUseWorkCanvasCapability(req: AuthRequest, capability: string): boole
 
   const role = String(req.userRole || req.user?.role || '').toUpperCase();
   return ['SUPERADMIN', 'OWNER', 'ADMIN', 'ADMINISTRATOR'].includes(role);
+}
+
+/**
+ * P0-2 — server-side enforcement of the same `canvas.*` capability the panel
+ * resolves via GET /api/access/effective (effectiveAccessService is the SSOT
+ * the UI consults, so we enforce against it rather than the legacy req.can /
+ * PermissionService path). Returns true when allowed; otherwise writes a 403
+ * in the same shape access/roles routes use and returns false.
+ */
+async function requireCanvasCapability(
+  req: AuthRequest,
+  res: Response,
+  capability: string
+): Promise<boolean> {
+  const { userId, organizationId } = authContext(req);
+  const access = await resolveEffectiveAccess({
+    userId,
+    organizationId,
+    applicationRole: req.userRole || req.user?.role,
+    isImpersonating: Boolean(req.user?.impersonatorId),
+  });
+  if (!hasEffectiveCapability(access, capability)) {
+    res.status(403).json({
+      error: 'Canvas permission required',
+      code: 'CANVAS_CAPABILITY_REQUIRED',
+      required: capability,
+    });
+    return false;
+  }
+  return true;
 }
 
 function envelope<T>(data: T, extra: Record<string, unknown> = {}) {
@@ -3844,6 +3878,9 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
 });
 
 router.post('/drafts/:draftId/share', async (req: AuthRequest, res) => {
+  // P0-2 — mirror the UI gate: minting a public link requires canvas.share,
+  // not just draft ownership (direct API calls used to bypass the UI check).
+  if (!(await requireCanvasCapability(req, res, 'canvas.share'))) return;
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const token = randomUUID().replace(/-/g, '');
@@ -3870,6 +3907,8 @@ router.post('/drafts/:draftId/share', async (req: AuthRequest, res) => {
 // authenticated GET /shared/:token resolve to 404 — `sharedDraftPayload` /
 // `parseShare` treat a missing or null share as "no share".
 router.delete('/drafts/:draftId/share', async (req: AuthRequest, res) => {
+  // P0-2 — same capability as POST: revoke manages the share lifecycle too.
+  if (!(await requireCanvasCapability(req, res, 'canvas.share'))) return;
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   if (!draft.provenance?.share) {
@@ -4340,10 +4379,15 @@ router.post('/drafts/:draftId/send-to-table-studio', async (req: AuthRequest, re
  * DocumentStudio and PresentationStudio use. The Outputs aggregate tab can
  * now list real Canvas-origin entries.
  *
- * Treats the Canvas as an outputType='report' / artifactFamily='work_canvas'
- * artifact. Registration is idempotent on (organization, origin_runtime,
- * origin_record_id) — calling twice produces a single artifact and updates
- * its metadata.
+ * Registers the Canvas under the same convention DocumentStudio (G5) and the
+ * deliverables doc runtime (C7) use for registry-native documents:
+ * outputType='report' + artifactFamily='document' + originRuntime='native_artifact'.
+ * ('work_canvas' is NOT a valid runtime/family — RegisterArtifactOriginParamsSchema
+ * and the DB CHECK constraints on v8_artifact_origin_links.origin_runtime /
+ * v8_output_artifacts.artifact_family both reject it.) Canvas provenance lives
+ * in originSummary.sourceType='work_canvas'. Registration is idempotent on
+ * (organization, origin_runtime, origin_record_id) — calling twice produces a
+ * single artifact and updates its metadata.
  */
 router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
@@ -4356,10 +4400,8 @@ router.post('/drafts/:draftId/register-in-outputs', async (req: AuthRequest, res
     const artifact = await registerArtifactOrigin({
       organizationId,
       outputType: 'report',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      artifactFamily: 'work_canvas' as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      originRuntime: 'work_canvas' as any,
+      artifactFamily: 'document',
+      originRuntime: 'native_artifact',
       originRecordId: draft.id,
       titleSnapshot: title,
       ownerUserId: userId,
