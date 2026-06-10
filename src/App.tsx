@@ -30,6 +30,8 @@ const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationVi
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicReportBuilderView'));
 const SharedConversationView = React.lazy(() => import('./views/SharedConversationView'));
+// Public, read-only viewer for shared work-canvas artifacts (token link).
+const PublicArtifactView = React.lazy(() => import('./views/PublicArtifactView'));
 // Sprint 13 — read-only Subscriber Dashboard (Bearer-token auth, no JWT).
 // Lives next to the other public, lazy-loaded routes so the main app's
 // auth-bootstrapping path does not gate the page on a logged-in
@@ -441,6 +443,21 @@ function AppContent() {
               }
             >
               <PublicReportBuilderView />
+            </React.Suspense>
+          }
+        />
+        {/* Public, read-only shared canvas artifact viewer */}
+        <Route
+          path="/public/artifacts/:token"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex h-screen items-center justify-center">
+                  <Loader2 className="animate-spin text-primary" />
+                </div>
+              }
+            >
+              <PublicArtifactView />
             </React.Suspense>
           }
         />
