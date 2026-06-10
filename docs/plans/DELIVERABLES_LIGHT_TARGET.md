@@ -153,3 +153,60 @@ standardy shell/visual, baseline eksportu. **Mamy też** benchmark (Kimi/Gamma/A
 ### 10.3 Kolejność (każdy krok izolowany, type-check po każdym)
 `(1) typy ✅ → (2) serwis → (3) router + mount za flagą → (4) split-view branch → (5) tool Teresy → (6) checklista`.
 Mount = 1 linia additive w rejestracji routerów (flag-gated, behavior-neutral gdy off — wzorzec MELS).
+
+> **Status L1: DONE + zweryfikowane live 2026-06-10** (commity a657208a…332cf6a0; smoke E2E w preview na staging DB:
+> intencja PL → checklista w czacie → żywy deck w split-view). Przy weryfikacji naprawione dwa bugi systemowe:
+> czat renderuje `ConversationStore.activeMessages` (nie appStore) oraz `\b` w JS nie matchuje po polskich
+> diakrytykach (martwe wzorce PL w `documentIntentDetector`).
+
+---
+
+## 11. L2 — plaster Doc E2E (ratyfikowane 2026-06-10, po audycie + dyskusji z ownerem)
+
+> Grounding decyzji: `docs/audit/2026-06-10/DOC_ENTRY_UX_AUDIT.md` (4 ścieżki wejścia przeklikane live —
+> formularz 8 pól, kontekst ginie, silnik produkuje placeholdery „MVP-1", canvas-streaming = cichy no-op).
+
+### 11.1 Decyzje ownera (ratyfikowane w rozmowie 2026-06-10)
+- **D-L2-1 · Wejście = rozmowa, nie moduł.** Dwa pierwszorzędne wejścia: (a) zdanie w czacie
+  („napisz raport o…"), (b) „zrób z tego dokument/tabelę" z kontekstu encji (notatka, idea/insight,
+  inicjatywa, wynik wywiadu). **Ekrany początkowe Document Studio przestają być wejściem** —
+  z większości rezygnujemy; governance/szablony zostają warstwą pod spodem, nie bramką.
+- **D-L2-2 · Grounding dwutorowy, oba tryby pełnoprawne.** (a) sourceRefs z encji org → źródła
+  per sekcja (chipy); (b) sama rozmowa z Teresą wystarcza do budowy założeń (wzorzec Gamma).
+  **Brak źródeł ≠ rusztowanie**: zawsze pełna proza; braki = jawne założenia inline do potwierdzenia.
+- **D-L2-3 · Koniec placeholderów.** Żaden tekst wewnętrzny (`MVP-1…`) nie może trafić do outputu
+  użytkownika — niezależnie od reszty prac, to jest osobny, natychmiastowy fix.
+- **D-L2-4 · Żywe sekcje** (bloki spięte z KPI/inicjatywami, auto-refresh) = faza późniejsza;
+  bloki projektujemy tak, żeby tego nie blokować (`is_refreshable` już w modelu).
+
+### 11.2 Co REUSE
+| Element | Lokalizacja | Uwaga |
+|---|---|---|
+| Kontrakt generacji | `deliverablesGeneration.ts` + serwis + router (L1) | format-param; gałąź `doc` zdejmuje `not_implemented` |
+| Canvas doc (edytor) | starter `'document'` w `WorkCanvasDocumentPanel` (TipTap, autosave, wersje, selekcja→Teresa) | **najmniejszy plaster:** generacja karmi canvas-draft realnym markdownem zamiast boilerplate |
+| Checklista | `deckGenerationChecklist` w `UnifiedChatPanel` (L1) | generalizacja na format-param |
+| Intencje PL/EN | `documentIntentDetector` (naprawiony 332cf6a0) | dziś nawiguje do /wordy — przepinamy za flagą |
+| Eksport DOCX/PDF | UnifiedExport / istniejące renderery serwerowe | lazy, bez zmian |
+| Rejestr artefaktów | `artifactRegistryService` | rejestracja doc jak deck w L1 |
+
+### 11.3 Co BUDUJEMY (izolowane, za tą samą flagą)
+1. **Generator treści doc** — `server/.../deliverables/docContentGenerator.ts`: plan (sekcje z intencji
+   + kontekstu rozmowy) → generate (realna proza per sekcja; LLM-path istniejący). Wejście:
+   `{intent, conversationContext?, sourceRefs[]}`. Wyjście: markdown + mapa `sekcja → źródła/założenia`.
+   Założenia jako jawne zdania w treści (nie placeholder); v1: źródła **per sekcja**, nie per zdanie.
+2. **Gałąź `doc` w deliverablesGenerationService** — plan/start/status; artefakt = canvas-draft
+   (markdown canonical) zarejestrowany w registry.
+3. **Intercept dokumentowy w czacie** — reuse wzorca deck-flow (checklista + split-view starter
+   `'document'` z wygenerowaną treścią). Koniec redirectu do `/wordy` (za flagą).
+4. **„Zrób z tego dokument" z encji** — sourceRefs z zaznaczenia/karty encji → to samo wejście kontraktu.
+5. **Per-sekcja akcje v1** — minimum: Regeneruj sekcję (reuse selekcja→AI-edit canvasa); Rozwiń/Skróć/
+   Podeprzyj danymi = iteracja po E2E.
+6. **Retire wejść** — chip „Documents" i intercept → nowy flow; Document Studio znika z głównych
+   wejść (zostaje jako „tryb pro" do czasu L4 retire-list §6).
+
+### 11.4 Naprawy towarzyszące (z audytu, niezależne od plastra)
+- Wszystkie komunikaty interceptów w `UnifiedChatPanel` przez `addChatMessage` → ConversationStore
+  (wzorzec 332cf6a0) — dziś są niewidoczne.
+- Canvas-streaming (`canvas-stream-request`): zdebugować cichy no-op.
+- Kosmetyka Document Studio (dopóki żyje): `&gt;` w starterze, overlap breadcrumba,
+  CTA „Open in Sheets Builder" przy podglądzie dokumentu.
