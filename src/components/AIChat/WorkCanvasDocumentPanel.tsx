@@ -8,6 +8,7 @@ import {
   FileText,
   FolderInput,
   Gavel,
+  History,
   Lightbulb,
   MoreHorizontal,
   Plus,
@@ -52,6 +53,7 @@ import { workCanvasActionErrorMessage } from '@/utils/canvas/workCanvasActionErr
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
+import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
@@ -659,6 +661,8 @@ function WorkCanvasMarkdownDocumentPanel({
   const [versionCursor, setVersionCursor] = React.useState(0);
   const [isVersionsOpen, setIsVersionsOpen] = React.useState(false);
   const [isVersionsLoading, setIsVersionsLoading] = React.useState(false);
+  // B1 — toolbar version-history popover (separate from the diagnostics list).
+  const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
   const [latestDiff, setLatestDiff] = React.useState<CanvasDiffSummary | null>(null);
   const [pendingDataset, setPendingDataset] = React.useState<{
     filename: string;
@@ -2108,6 +2112,23 @@ function WorkCanvasMarkdownDocumentPanel({
     }
   };
 
+  // B1 — same fetch as loadVersions but for the toolbar popover, without
+  // toggling the diagnostics-menu version list open.
+  const openVersionHistory = async () => {
+    setIsHistoryOpen(true);
+    const draft = await ensurePersistedDraft();
+    if (!draft?.draftId) return;
+    setIsVersionsLoading(true);
+    try {
+      const result = await Api.workCanvasGetVersions(draft.draftId);
+      setVersions(result);
+    } catch (error) {
+      setCanvasErrorFeedback(error, 'Failed to load Canvas versions.');
+    } finally {
+      setIsVersionsLoading(false);
+    }
+  };
+
   const restoreVersion = async (version: CanvasVersionSummary) => {
     if (!documentState.draftId) return;
     try {
@@ -2429,6 +2450,36 @@ function WorkCanvasMarkdownDocumentPanel({
             {renderCommandButton('copy')}
             {renderCommandButton('save')}
             {renderCommandButton('close')}
+          </div>
+
+          {/* B1 — version history popover trigger. */}
+          <div className="relative" data-testid="canvas-history-root">
+            <button
+              type="button"
+              onClick={() => {
+                if (isHistoryOpen) {
+                  setIsHistoryOpen(false);
+                  return;
+                }
+                void openVersionHistory();
+              }}
+              aria-label="Historia wersji"
+              aria-expanded={isHistoryOpen}
+              title="Historia wersji"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              <History size={15} />
+            </button>
+            {isHistoryOpen ? (
+              <CanvasVersionHistory
+                versions={versions}
+                isLoading={isVersionsLoading}
+                onClose={() => setIsHistoryOpen(false)}
+                onRestore={async (version) => {
+                  await restoreVersion(version);
+                }}
+              />
+            ) : null}
           </div>
 
           <input
