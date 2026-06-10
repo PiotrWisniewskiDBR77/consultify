@@ -103,6 +103,63 @@ export async function planDeckGeneration(params: {
   };
 }
 
+// ── Gałąź doc (L2) ──────────────────────────────────────────────────────────
+
+/**
+ * Krok PLAN dla dokumentu: wejściem jest sama intencja + opcjonalny wycinek
+ * rozmowy (D-L2-2b) i/lub sourceRefs z encji (D-L2-2a). Zwraca generationId
+ * == draftId canvasa — po stanie 'draft' montujemy go w starterze 'document'.
+ */
+export async function planDocGeneration(params: {
+  intent: string;
+  title?: string;
+  language: 'pl' | 'en';
+  conversationId?: string | null;
+  conversationContext?: string;
+  sourceRefs?: Array<Record<string, unknown>>;
+}): Promise<{
+  generationId: string;
+  plan: DeliverableGenerationPlanItem[];
+  warnings: string[];
+  setup: Record<string, unknown>;
+}> {
+  const setup: Record<string, unknown> = {
+    intent: params.intent,
+    title: params.title,
+    language: params.language,
+    conversationId: params.conversationId || undefined,
+    conversationContext: params.conversationContext,
+    sourceRefs: params.sourceRefs,
+  };
+  const res = (await Api.post('/deliverables/generations', {
+    format: 'doc',
+    setup,
+    intent: params.intent,
+  })) as any;
+  const data = res?.data?.data && typeof res.data.data === 'object' ? res.data.data : res?.data;
+  if (!data?.generationId) {
+    throw new Error(data?.error || 'Generation plan failed');
+  }
+  return {
+    generationId: String(data.generationId),
+    plan: Array.isArray(data.plan) ? data.plan : [],
+    warnings: Array.isArray(data.warnings) ? data.warnings : [],
+    setup,
+  };
+}
+
+export async function startDocGeneration(params: {
+  generationId: string;
+  setup: Record<string, unknown>;
+  plan?: DeliverableGenerationPlanItem[];
+}): Promise<void> {
+  await Api.post(`/deliverables/generations/${params.generationId}/generate`, {
+    format: 'doc',
+    setup: params.setup,
+    plan: params.plan,
+  });
+}
+
 export async function startDeckGeneration(params: {
   generationId: string;
   setup: Record<string, unknown>;

@@ -51,8 +51,10 @@ import {
   type DeliverableGenerationStatus,
   isDeliverablesLightEnabled,
   planDeckGeneration,
+  planDocGeneration,
   pollDeckGenerationUntilDone,
   startDeckGeneration,
+  startDocGeneration,
 } from '@/services/deliverablesGeneration';
 
 import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
@@ -351,8 +353,11 @@ const deckGenerationChecklist = (params: {
   planCount?: number;
   unitCount?: number;
   error?: string;
+  /** L2: ta sama checklista obsługuje deck i doc — różnią się tylko etykiety. */
+  format?: 'deck' | 'doc';
 }): string => {
   const pl = params.lang === 'pl';
+  const doc = params.format === 'doc';
   const order = ['plan_ready', 'generating', 'validating', 'draft'] as const;
   const reached = (step: (typeof order)[number]): boolean => {
     if (params.phase === 'error') return false;
@@ -360,23 +365,44 @@ const deckGenerationChecklist = (params: {
     return order.indexOf(step) <= order.indexOf(params.phase as (typeof order)[number]);
   };
   const mark = (step: (typeof order)[number]) => (reached(step) ? 'x' : ' ');
+  const unitsPl = doc ? 'sekcji' : 'slajdów';
+  const unitsEn = doc ? 'sections' : 'slides';
   const planLabel = pl
-    ? `Plan prezentacji${params.planCount ? ` — ${params.planCount} slajdów` : ''}`
-    : `Presentation plan${params.planCount ? ` — ${params.planCount} slides` : ''}`;
+    ? `Plan ${doc ? 'dokumentu' : 'prezentacji'}${params.planCount ? ` — ${params.planCount} ${unitsPl}` : ''}`
+    : `${doc ? 'Document' : 'Presentation'} plan${params.planCount ? ` — ${params.planCount} ${unitsEn}` : ''}`;
+  const heading = pl
+    ? `**${doc ? 'Dokument' : 'Prezentacja'}: „${params.title}”**`
+    : `**${doc ? 'Document' : 'Presentation'}: "${params.title}"**`;
   const lines = [
-    pl ? `**Prezentacja: „${params.title}”**` : `**Presentation: "${params.title}"**`,
+    heading,
     '',
     `- [${mark('plan_ready')}] ${planLabel}`,
-    `- [${mark('generating')}] ${pl ? 'Generowanie slajdów' : 'Generating slides'}`,
+    `- [${mark('generating')}] ${
+      pl
+        ? doc
+          ? 'Pisanie treści'
+          : 'Generowanie slajdów'
+        : doc
+          ? 'Writing content'
+          : 'Generating slides'
+    }`,
     `- [${mark('validating')}] ${pl ? 'Walidacja treści' : 'Validating content'}`,
     `- [${mark('draft')}] ${pl ? 'Artefakt gotowy' : 'Artifact ready'}`,
   ];
   if (params.phase === 'draft') {
+    const unitsSuffixPl = params.unitCount ? ` (${params.unitCount} ${unitsPl})` : '';
+    const unitsSuffixEn = params.unitCount ? ` (${params.unitCount} ${unitsEn})` : '';
     lines.push(
       '',
       pl
-        ? `✅ Gotowe — prezentacja${params.unitCount ? ` (${params.unitCount} slajdów)` : ''} jest po prawej stronie. Możesz ją tam przejrzeć albo otworzyć w Deck Builderze.`
-        : `✅ Done — the presentation${params.unitCount ? ` (${params.unitCount} slides)` : ''} is on the right. Review it there or open it in Deck Builder.`
+        ? `✅ Gotowe — ${doc ? 'dokument' : 'prezentacja'}${doc ? unitsSuffixPl : unitsSuffixPl} jest po prawej stronie. ${
+            doc
+              ? 'Możesz go tam edytować albo wyeksportować.'
+              : 'Możesz ją tam przejrzeć albo otworzyć w Deck Builderze.'
+          }`
+        : `✅ Done — the ${doc ? 'document' : 'presentation'}${unitsSuffixEn} is on the right. ${
+            doc ? 'Edit it there or export it.' : 'Review it there or open it in Deck Builder.'
+          }`
     );
   }
   if (params.phase === 'error') {
@@ -2049,6 +2075,128 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
 
         const uiLangDoc = (i18n.language || 'en').split('-')[0];
+
+        // Deliverables light (L2): dokument powstaje w miejscu — realna treść
+        // w canvasie (starter 'document') + checklista postępu, zamiast
+        // redirectu do /wordy i formularza. Za flagą; off ⇒ legacy.
+        if (isDeliverablesLightEnabled()) {
+          const docTitle = deckTitleFromIntent(
+            text,
+            uiLangDoc === 'pl' ? 'Dokument z czatu' : 'Document from chat'
+          );
+          const progressMessageId = useConversationStore.getState().appendLocalMessage({
+            role: 'ai',
+            content: deckGenerationChecklist({
+              lang: uiLangDoc,
+              title: docTitle,
+              phase: 'planning',
+              format: 'doc',
+            }),
+          });
+          onMessageSent?.(content);
+
+          const updateDocChecklist = (
+            phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
+            extra?: { planCount?: number; unitCount?: number; error?: string }
+          ) => {
+            useConversationStore.getState().updateMessageContent(
+              progressMessageId,
+              deckGenerationChecklist({
+                lang: uiLangDoc,
+                title: docTitle,
+                phase,
+                format: 'doc',
+                ...extra,
+              })
+            );
+          };
+
+          const persistDocFinalNote = (note: string) => {
+            const conversationId = useConversationStore.getState().activeConversationId;
+            if (!conversationId) return;
+            void addMessageToConversation({
+              conversationId,
+              role: 'ai',
+              content: note,
+              messageType: 'text',
+            }).catch(() => {
+              /* best-effort persist */
+            });
+          };
+
+          // Grounding trybu rozmowy (D-L2-2b): krótki wycinek ostatnich wiadomości.
+          const conversationContext = useConversationStore
+            .getState()
+            .activeMessages.slice(-6)
+            .map(
+              (m) => `${m.role === 'ai' ? 'Teresa' : 'User'}: ${String(m.content).slice(0, 400)}`
+            )
+            .join('\n');
+
+          void (async () => {
+            try {
+              const planned = await planDocGeneration({
+                intent: text,
+                title: docTitle,
+                language: uiLangDoc === 'pl' ? 'pl' : 'en',
+                conversationId: useConversationStore.getState().activeConversationId,
+                conversationContext,
+              });
+              const enabledCount = planned.plan.filter((item) => item.enabled).length;
+              updateDocChecklist('plan_ready', { planCount: enabledCount });
+
+              await startDocGeneration({
+                generationId: planned.generationId,
+                setup: planned.setup,
+              });
+              updateDocChecklist('generating', { planCount: enabledCount });
+
+              const final = await pollDeckGenerationUntilDone({
+                generationId: planned.generationId,
+                onUpdate: (status: DeliverableGenerationStatus) => {
+                  if (status.state === 'validating') {
+                    updateDocChecklist('validating', { planCount: enabledCount });
+                  }
+                },
+              });
+              if (final.state === 'draft') {
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                persistDocFinalNote(
+                  deckGenerationChecklist({
+                    lang: uiLangDoc,
+                    title: docTitle,
+                    phase: 'draft',
+                    format: 'doc',
+                    planCount: enabledCount,
+                    unitCount: final.artifact?.unitCount,
+                  })
+                );
+                // Montaż gotowego dokumentu w prawym panelu (hydration po draftId).
+                setRequestedCanvasDeckId(null);
+                setRequestedCanvasDraftId(planned.generationId);
+                setRequestedCanvasStarterId('document');
+                setIsWorkPanelOpen(true);
+              } else {
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                persistDocFinalNote(
+                  deckGenerationChecklist({
+                    lang: uiLangDoc,
+                    title: docTitle,
+                    phase: 'error',
+                    format: 'doc',
+                    error: final.error,
+                  })
+                );
+              }
+            } catch (err: unknown) {
+              updateDocChecklist('error', {
+                error: err instanceof Error ? err.message : undefined,
+              });
+            }
+          })();
+          return;
+        }
+
         addChatMessage({
           id: `doc-redirect-${Date.now()}`,
           role: 'ai',
