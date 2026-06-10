@@ -2057,7 +2057,9 @@ function sharedDraftPayload(draft: WorkCanvasDraft): {
   if (!token.trim()) return null;
   return {
     token,
-    url: typeof record.url === 'string' ? record.url : `/work-canvas/shared/${token}`,
+    // Fallback for legacy share records without a stored url — point them at
+    // the public viewer (the token resolves there regardless of mint date).
+    url: typeof record.url === 'string' ? record.url : `/public/artifacts/${token}`,
     title: typeof record.title === 'string' ? record.title : draft.title,
     createdAt: typeof record.createdAt === 'string' ? record.createdAt : draft.updatedAt,
     expiresAt: typeof record.expiresAt === 'string' ? record.expiresAt : draft.updatedAt,
@@ -3849,13 +3851,33 @@ router.post('/drafts/:draftId/share', async (req: AuthRequest, res) => {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const share = {
     token,
-    url: `/work-canvas/shared/${token}`,
+    // New shares land on the public, unauthenticated viewer (frontend route
+    // /public/artifacts/:token backed by GET /api/public/artifacts/:token).
+    // The legacy authenticated GET /shared/:token below keeps working for
+    // links minted before this change.
+    url: `/public/artifacts/${token}`,
     title: draft.title,
     createdAt,
     expiresAt,
   };
   const updated = await updateDraftAfterOperation(draft, { share });
   return res.json(envelope({ draft: updated, share }));
+});
+
+// Revoke a share: removes provenance.share from the draft (same read-modify-
+// write path as the share POST above). Once the share object is gone, both
+// the public viewer (GET /api/public/artifacts/:token) and the legacy
+// authenticated GET /shared/:token resolve to 404 — `sharedDraftPayload` /
+// `parseShare` treat a missing or null share as "no share".
+router.delete('/drafts/:draftId/share', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  if (!draft.provenance?.share) {
+    // Idempotent: revoking an unshared draft is a no-op, not an error.
+    return res.json(envelope({ draft, share: null }));
+  }
+  const updated = await updateDraftAfterOperation(draft, { share: null });
+  return res.json(envelope({ draft: updated, share: null }));
 });
 
 router.get('/shared/:token', async (req: AuthRequest, res) => {
@@ -3927,6 +3949,13 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
       typeof draft.provenance.linkedWorkspaceResources === 'object'
         ? (draft.provenance.linkedWorkspaceResources as Record<string, unknown>)
         : {};
+    // C4 — provenance loop closure: `linkedWorkspaceResources` keeps only the
+    // LAST entity per target (map keyed by target), so repeated promotes lose
+    // history. `materializedTo[]` is the append-only ledger of everything this
+    // draft materialized — the panel renders it as "Utworzone z tego dokumentu".
+    const previousMaterialized = Array.isArray(draft.provenance?.materializedTo)
+      ? (draft.provenance.materializedTo as unknown[])
+      : [];
     const updatedDraft = await updateDraftAfterOperation(draft, {
       linkedWorkspaceResources: {
         ...previousLinks,
@@ -3937,6 +3966,16 @@ router.post('/drafts/:draftId/save-to-workspace', async (req: AuthRequest, res) 
           linkedAt: new Date().toISOString(),
         },
       },
+      materializedTo: [
+        ...previousMaterialized,
+        {
+          target,
+          entityId: linkedResource.id,
+          url: linkedResource.url,
+          title: linkedResource.title,
+          at: new Date().toISOString(),
+        },
+      ],
     });
     return res.json(
       envelope({

@@ -5567,6 +5567,19 @@ export const Api = {
     return handleResponse(res, 'Failed to share Canvas draft');
   },
 
+  workCanvasRevokeShare: async (
+    draftId: string
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; share: null };
+  }> => {
+    const res = await fetch(`${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/share`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to revoke Canvas share link');
+  },
+
   workCanvasRestoreVersion: async (
     draftId: string,
     versionId: string,
