@@ -75,10 +75,9 @@ test.describe('V10 Work Canvas core flow smoke', () => {
         effectiveRole = normalizedRole.toUpperCase();
       }
     }
-    test.skip(
-      effectiveRole !== 'USER',
-      `Member capability gate requires USER role, got ${effectiveRole}.`
-    );
+    // Smoke must be deterministic: loginAsMember bootstraps a USER-role account,
+    // so assert the role instead of conditionally skipping (no .skip() in smoke).
+    expect(effectiveRole, 'Member capability gate requires a USER-role account').toBe('USER');
     const draft = await createWorkCanvasDraft(page.request, token, {
       title: 'Member capability check',
       conversationId: `member-canvas-${Date.now()}`,
