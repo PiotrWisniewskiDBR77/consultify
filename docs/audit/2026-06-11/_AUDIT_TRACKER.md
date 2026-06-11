@@ -33,7 +33,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M23 | Organizacja | 4 (internal) | ⬜ | — | — | — | — |
 | M24 | Panel Administratora | 4 (internal) | ⬜ | — | — | — | — |
 | M27 | SuperAdmin | 4 (internal) | ⬜ | — | — | — | — |
-| M26 | Portal Partnerski | 4 (internal) | ⬜ | — | — | — | — |
+| M26 | Portal Partnerski | 4 (internal) | 🟦 | 52 | Alpha | 2026-06-11 | `Harvard/modules/M26-portal-partnerski/KARTA_AUDYTU.md` |
 | A1 | Ecosystem/Affiliate | 4 (decyzja) | ⬜ | — | — | — | STUB — budować albo wyciąć |
 
 \* Oceny Ideas sprzed Protokołu V1 (bez Faz 3/4/5/6 i rubryki) — do przeliczenia po dociągnięciu; karty i plany rozwoju pozostają ważne jako Fazy 0–2.
