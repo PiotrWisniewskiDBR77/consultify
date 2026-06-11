@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Edge, Node } from 'reactflow';
 
+import { getHeaders } from '@/services/api';
+
 export interface ValidationIssue {
   layer: 'semantic_first' | 'structural_bounded';
   severity: 'error' | 'warning';
@@ -20,8 +22,6 @@ interface UseProcessFlowValidationOpts {
   nodes: Node[];
   edges: Edge[];
   autoValidate?: boolean;
-  /** Called when validation fails (HTTP error or network), so the host can surface a toast. */
-  onError?: (message: string) => void;
 }
 
 export function useProcessFlowValidation({
@@ -29,7 +29,6 @@ export function useProcessFlowValidation({
   nodes,
   edges,
   autoValidate = true,
-  onError,
 }: UseProcessFlowValidationOpts) {
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -41,21 +40,18 @@ export function useProcessFlowValidation({
     try {
       const res = await fetch(`/api/v8/process-flow/${processId}/validate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
       });
       if (res.ok) {
         const data = await res.json();
         setResult(data);
-      } else {
-        onError?.(`Validation failed (HTTP ${res.status}).`);
       }
     } catch {
-      // Network error — keep last result, but surface it instead of failing silently.
-      onError?.('Validation request failed — check your connection and retry.');
+      // Network error — keep last result
     } finally {
       setIsValidating(false);
     }
-  }, [processId, onError]);
+  }, [processId]);
 
   // Auto-validate after graph changes (debounced 500ms)
   useEffect(() => {

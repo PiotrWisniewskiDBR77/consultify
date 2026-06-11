@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { getHeaders } from '@/services/api';
+
 export interface DegradedScenario {
   scenario: string;
   active: boolean;
@@ -29,7 +31,7 @@ export function useProcessFlowDegraded({
     if (!processId) return;
     setIsChecking(true);
     try {
-      const res = await fetch(`/api/v8/process-flow/${processId}/health`);
+      const res = await fetch(`/api/v8/process-flow/${processId}/health`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
         setState({

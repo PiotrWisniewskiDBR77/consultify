@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import { getHeaders } from '@/services/api';
+
 export interface ReadbackStep {
   type: 'step' | 'decision' | 'parallel_split' | 'parallel_join' | 'start' | 'end';
   label: string;
@@ -24,7 +26,7 @@ export function useProcessFlowReadback({ processId }: UseProcessFlowReadbackOpts
     if (!processId) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/v8/process-flow/${processId}/readback`);
+      const res = await fetch(`/api/v8/process-flow/${processId}/readback`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
         setResult(data);

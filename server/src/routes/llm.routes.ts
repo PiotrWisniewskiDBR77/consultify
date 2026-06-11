@@ -790,19 +790,19 @@ router.get('/tiers/assignments', verifyToken, asyncHandler(LLMController.getTier
  * POST /api/llm/tiers/assign
  * Assign a provider to a tier
  */
-router.post('/tiers/assign', verifyToken, asyncHandler(LLMController.assignToTier));
+router.post('/tiers/assign', verifySuperAdmin, asyncHandler(LLMController.assignToTier));
 
 /**
  * DELETE /api/llm/tiers/assign
  * Remove a provider from a tier
  */
-router.delete('/tiers/assign', verifyToken, asyncHandler(LLMController.removeFromTier));
+router.delete('/tiers/assign', verifySuperAdmin, asyncHandler(LLMController.removeFromTier));
 
 /**
  * PUT /api/llm/tiers/priority
  * Update priority within a tier
  */
-router.put('/tiers/priority', verifyToken, asyncHandler(LLMController.updateTierPriority));
+router.put('/tiers/priority', verifySuperAdmin, asyncHandler(LLMController.updateTierPriority));
 
 // ==================== ROUTING RULES (PERSISTED) ====================
 

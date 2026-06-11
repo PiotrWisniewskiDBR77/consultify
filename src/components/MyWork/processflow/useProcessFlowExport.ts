@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import { getHeaders } from '@/services/api';
+
 export type ExportFormat = 'json' | 'readback' | 'png';
 
 interface UseProcessFlowExportOpts {
@@ -25,7 +27,7 @@ export function useProcessFlowExport({ processId, canvasRef }: UseProcessFlowExp
             link.click();
           }
         } else {
-          const res = await fetch(`/api/v8/process-flow/${processId}/export/${format}`);
+          const res = await fetch(`/api/v8/process-flow/${processId}/export/${format}`, { headers: getHeaders() });
           if (res.ok) {
             const data = await res.json();
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

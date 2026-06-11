@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import { getHeaders } from '@/services/api';
+
 export interface AIProposalOp {
   action: 'create' | 'delete' | 'connect' | 'move' | 'update_label';
   target_id?: string;
@@ -37,7 +39,7 @@ export function useProcessFlowAIProposal({ processId }: UseProcessFlowAIProposal
       try {
         const res = await fetch(`/api/v8/process-flow/${processId}/ai-proposals`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt }),
         });
         if (res.ok) {
@@ -61,7 +63,7 @@ export function useProcessFlowAIProposal({ processId }: UseProcessFlowAIProposal
       try {
         const res = await fetch(`/api/v8/process-flow/ai-proposals/${activeProposal.id}/resolve`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ action }),
         });
         if (res.ok) {
