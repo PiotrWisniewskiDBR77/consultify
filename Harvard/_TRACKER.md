@@ -22,19 +22,19 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M21 | Meeting | 2 (beta) | 🟦 | 52 | Alpha | 2026-06-11 | `modules/M21-meeting/KARTA_AUDYTU.md` |
 | M12 | Audyty | 2 (beta) | 🟦 | 47 | Alpha | 2026-06-11 | `modules/M12-audyty/KARTA_AUDYTU.md` |
 | M04 | Notatnik | 2 (beta) | 🟦 | 49 | Alpha | 2026-06-11 | `modules/M04-notatnik/KARTA_AUDYTU.md` |
-| M05 | Ideas — Zarządzanie | 3 (Ideas) | 🔁 | 68* | Beta | 2026-06-11 | `ideas/MODULE_02A` |
-| M06 | Ideas — Mind Map | 3 (Ideas) | 🔁 | 72* | Beta+ | 2026-06-11 | `ideas/MODULE_02B` |
-| M07 | Ideas — Process Flow | 3 (Ideas) | 🔁 | 48* | Alpha | 2026-06-11 | `ideas/MODULE_02C` |
-| M08 | Ideas — Table | 3 (Ideas) | 🔁 | 60* | Beta+ | 2026-06-11 | `ideas/MODULE_02D` |
-| M09 | Ideas — Whiteboard | 3 (Ideas) | 🔁 | 58* | Beta | 2026-06-11 | `ideas/MODULE_02E` |
-| M22 | AI OS / Internal Tools | 4 (internal) | ⬜ | — | — | — | — |
+| M05 | Ideas — Zarządzanie | 3 (Ideas) | 🟦 | 55 | Alpha | 2026-06-11 | `modules/M05-ideas-zarzadzanie/KARTA_AUDYTU.md` |
+| M06 | Ideas — Mind Map | 3 (Ideas) | 🟦 | 57 | Alpha | 2026-06-11 | `modules/M06-ideas-mind-map/KARTA_AUDYTU.md` |
+| M07 | Ideas — Process Flow | 3 (Ideas) | 🟦 | 44 | Alpha | 2026-06-11 | `modules/M07-ideas-process-flow/KARTA_AUDYTU.md` |
+| M08 | Ideas — Table | 3 (Ideas) | 🟦 | 52 | Alpha | 2026-06-11 | `modules/M08-ideas-table/KARTA_AUDYTU.md` |
+| M09 | Ideas — Whiteboard | 3 (Ideas) | 🟦 | 43 | Alpha | 2026-06-11 | `modules/M09-ideas-whiteboard/KARTA_AUDYTU.md` |
+| M22 | AI OS / Internal Tools | 4 (internal) | 🟦 | 51 | Alpha | 2026-06-11 | `modules/M22-ai-os/KARTA_AUDYTU.md` |
 | M23 | Organizacja | 4 (internal) | 🟦 | 44 | Alpha | 2026-06-11 | `modules/M23-organizacja/KARTA_AUDYTU.md` |
 | M24 | Panel Administratora | 4 (internal) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M24-admin/KARTA_AUDYTU.md` |
 | M27 | SuperAdmin | 4 (internal) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M27-superadmin/KARTA_AUDYTU.md` |
-| M26 | Portal Partnerski | 4 (internal) | ⬜ | — | — | — | — |
+| M26 | Portal Partnerski | 4 (internal) | 🟦 | 52 | Alpha | 2026-06-11 | `modules/M26-portal-partnerski/KARTA_AUDYTU.md` |
 | A1 | Ecosystem/Affiliate | 4 (decyzja) | 🟦 | 13 | Broken | 2026-06-11 | `modules/A1-affiliate/KARTA_AUDYTU.md` (świadomy STUB) |
 
-\* Oceny Ideas sprzed Protokołu V1 (bez Faz 3/4/5/6 i rubryki) — do przeliczenia po dociągnięciu; karty i plany rozwoju pozostają ważne jako Fazy 0–2.
+\* Oceny Ideas (M05–M09) przeliczone 2026-06-11 do pełnego Protokołu V1 (Fazy 0–2,5–6,7+plan); status zmieniony z 🔁 na 🟦 NIEPEŁNY. Wszystkie 27+A1 = 28 modułów zaudytowane statycznie. Fazy 3+4 zbiorczo po dostępie do Railway.
 
 ## Reguły aktualizacji
 - Po każdym audycie: wpis statusu+oceny+linku TUTAJ, w karcie pełna rubryka.
