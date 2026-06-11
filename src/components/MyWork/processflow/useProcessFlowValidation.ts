@@ -22,6 +22,7 @@ interface UseProcessFlowValidationOpts {
   nodes: Node[];
   edges: Edge[];
   autoValidate?: boolean;
+  onError?: (message: string) => void;
 }
 
 export function useProcessFlowValidation({
@@ -29,6 +30,7 @@ export function useProcessFlowValidation({
   nodes,
   edges,
   autoValidate = true,
+  onError,
 }: UseProcessFlowValidationOpts) {
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -46,12 +48,12 @@ export function useProcessFlowValidation({
         const data = await res.json();
         setResult(data);
       }
-    } catch {
-      // Network error — keep last result
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : 'Validation failed');
     } finally {
       setIsValidating(false);
     }
-  }, [processId]);
+  }, [processId, onError]);
 
   // Auto-validate after graph changes (debounced 500ms)
   useEffect(() => {

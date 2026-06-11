@@ -21,6 +21,10 @@
  * section counts on top. Slice E6.3 wires routes.
  */
 
+import {
+  loadCommentsForOrg as daoLoadCommentsForOrg,
+  persistComment as daoPersistComment,
+} from './documentCommentsRegistryDao.js';
 import type {
   DocumentAuditEntry,
   DocumentComment,
@@ -57,12 +61,10 @@ export class DocumentCommentError extends Error {
 // In-process registry + write-through
 // =============================================================================
 
-/** Per-artifact list of comments in insertion order. */
+/** Per-artifact list of comments in insertion order (live cache). */
 const commentStore = new Map<string, DocumentComment[]>();
-/** versionId-style fast lookup: commentId → comment. */
+/** commentId → comment fast-lookup. */
 const commentIndex = new Map<string, DocumentComment>();
-/** Mirror persistent store; the wave5 / Postgres swap will replace it. */
-const persistedCommentStore = new Map<string, DocumentComment[]>();
 
 const hydratedOrgs = new Set<string>();
 const hydrationInflight = new Map<string, Promise<void>>();
@@ -88,25 +90,11 @@ function cloneComment(comment: DocumentComment): DocumentComment {
 }
 
 async function persistComment(comment: DocumentComment): Promise<{ ok: boolean }> {
-  if (!comment || !comment.commentId || !comment.artifactId || !comment.organizationId) {
-    return { ok: false };
-  }
-  const k = key(comment.organizationId, comment.artifactId);
-  const current = persistedCommentStore.get(k) ?? [];
-  const next = [...current.filter((c) => c.commentId !== comment.commentId), cloneComment(comment)];
-  persistedCommentStore.set(k, next);
-  return { ok: true };
+  return daoPersistComment(comment);
 }
 
 async function loadCommentsForOrg(organizationId: string): Promise<DocumentComment[]> {
-  if (!organizationId) return [];
-  const prefix = `${organizationId}::`;
-  const out: DocumentComment[] = [];
-  for (const [k, list] of persistedCommentStore.entries()) {
-    if (!k.startsWith(prefix)) continue;
-    for (const comment of list) out.push(cloneComment(comment));
-  }
-  return out;
+  return daoLoadCommentsForOrg(organizationId);
 }
 
 async function ensureHydrated(organizationId: string): Promise<void> {

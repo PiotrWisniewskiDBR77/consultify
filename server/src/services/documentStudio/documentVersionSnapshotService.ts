@@ -34,6 +34,10 @@ import {
   computeDocumentSchemaDiff,
   summarizeDocumentSchemaDiff,
 } from './documentSchemaDiffService.js';
+import {
+  loadSnapshotsForOrg as daoLoadSnapshotsForOrg,
+  persistSnapshot as daoPersistSnapshot,
+} from './documentVersionSnapshotRegistryDao.js';
 import type {
   DocumentAuditEntry,
   DocumentSchema,
@@ -43,11 +47,10 @@ import type {
 } from './documentStudioTypes.js';
 
 // =============================================================================
-// In-process registry + write-through DAO
+// In-process registry (live cache) + write-through to Postgres DAO
 // =============================================================================
 
 const snapshotStore = new Map<string, DocumentVersionSnapshot[]>();
-const persistedSnapshotStore = new Map<string, DocumentVersionSnapshot[]>();
 // versionId → snapshot fast-lookup so getDocumentVersionSnapshot is O(1).
 const versionIndex = new Map<string, DocumentVersionSnapshot>();
 
@@ -82,28 +85,11 @@ function cloneSnapshot(snapshot: DocumentVersionSnapshot): DocumentVersionSnapsh
 }
 
 async function persistSnapshot(snapshot: DocumentVersionSnapshot): Promise<{ ok: boolean }> {
-  if (!snapshot || !snapshot.versionId || !snapshot.organizationId || !snapshot.artifactId) {
-    return { ok: false };
-  }
-  const k = key(snapshot.organizationId, snapshot.artifactId);
-  const current = persistedSnapshotStore.get(k) ?? [];
-  const next = [
-    ...current.filter((s) => s.versionId !== snapshot.versionId),
-    cloneSnapshot(snapshot),
-  ];
-  persistedSnapshotStore.set(k, next);
-  return { ok: true };
+  return daoPersistSnapshot(snapshot);
 }
 
 async function loadSnapshotsForOrg(organizationId: string): Promise<DocumentVersionSnapshot[]> {
-  if (!organizationId) return [];
-  const prefix = `${organizationId}::`;
-  const out: DocumentVersionSnapshot[] = [];
-  for (const [k, snaps] of persistedSnapshotStore.entries()) {
-    if (!k.startsWith(prefix)) continue;
-    for (const snap of snaps) out.push(cloneSnapshot(snap));
-  }
-  return out;
+  return daoLoadSnapshotsForOrg(organizationId);
 }
 
 async function ensureHydrated(organizationId: string): Promise<void> {
