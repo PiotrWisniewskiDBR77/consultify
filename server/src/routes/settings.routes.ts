@@ -865,7 +865,7 @@ router.get(
   '/notifications',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = (req.query.userId as string) || req.user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });

@@ -32,6 +32,8 @@ export interface MeetingNote {
   }>;
   followUps: string[];
   rawTranscript?: string;
+  /** Whether notes were produced by real AI or regex heuristic fallback. */
+  source: 'ai' | 'heuristic';
 }
 
 export interface MeetingContext {
@@ -164,6 +166,7 @@ Respond ONLY with valid JSON:
         })),
         followUps: parsed.followUps || [],
         rawTranscript: transcript,
+        source: 'ai',
       };
 
       await this.persistNote(note, context.organizationId, context.userId);
@@ -212,6 +215,7 @@ Respond ONLY with valid JSON:
       actionItems,
       followUps: [],
       rawTranscript: transcript,
+      source: 'heuristic',
     };
   }
 
