@@ -95,6 +95,7 @@ export async function planDeckGeneration(params: {
   plan: DeliverableGenerationPlanItem[];
   warnings: string[];
   setup: Record<string, unknown>;
+  sources: Array<{ sourceType: string; sourceId: string; sourceTitle?: string }>;
 }> {
   const setup = buildDeckSetup({ title: params.title, language: params.language });
   const res = (await Api.post('/deliverables/generations', {
@@ -111,6 +112,7 @@ export async function planDeckGeneration(params: {
     plan: Array.isArray(data.plan) ? data.plan : [],
     warnings: Array.isArray(data.warnings) ? data.warnings : [],
     setup,
+    sources: Array.isArray(data.sources) ? data.sources : [],
   };
 }
 
@@ -133,6 +135,7 @@ export async function planDocGeneration(params: {
   plan: DeliverableGenerationPlanItem[];
   warnings: string[];
   setup: Record<string, unknown>;
+  sources: Array<{ sourceType: string; sourceId: string; sourceTitle?: string }>;
 }> {
   const setup: Record<string, unknown> = {
     intent: params.intent,
@@ -156,6 +159,7 @@ export async function planDocGeneration(params: {
     plan: Array.isArray(data.plan) ? data.plan : [],
     warnings: Array.isArray(data.warnings) ? data.warnings : [],
     setup,
+    sources: Array.isArray(data.sources) ? data.sources : [],
   };
 }
 
@@ -185,6 +189,7 @@ export async function planSheetGeneration(params: {
   plan: DeliverableGenerationPlanItem[];
   warnings: string[];
   setup: Record<string, unknown>;
+  sources: Array<{ sourceType: string; sourceId: string; sourceTitle?: string }>;
 }> {
   const setup: Record<string, unknown> = {
     intent: params.intent,
@@ -207,6 +212,7 @@ export async function planSheetGeneration(params: {
     plan: Array.isArray(data.plan) ? data.plan : [],
     warnings: Array.isArray(data.warnings) ? data.warnings : [],
     setup,
+    sources: Array.isArray(data.sources) ? data.sources : [],
   };
 }
 

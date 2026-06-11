@@ -243,6 +243,63 @@ async function registerDocArtifactBestEffort(params: {
   }
 }
 
+/**
+ * B4 (plan wykonawczy): auto-skan organizacji, gdy użytkownik nie wskazał źródeł.
+ * Reuse narzędzi retrieval Teresy (insighty + notatki; flaga ENABLE_TERESA_RETRIEVAL
+ * — wyłączona ⇒ puste wyniki, generacja biegnie trybem rozmowy). Snippety hitów
+ * stają się faktami groundingu (ContextPack nie ma jeszcze ekstraktorów tych encji).
+ */
+async function autoScanOrgSources(
+  organizationId: string,
+  intent: string,
+  language: 'pl' | 'en'
+): Promise<{ refs: DocumentSourceRef[]; facts: string | null }> {
+  try {
+    const [{ searchInsights }, { searchOrgNotes }] = await Promise.all([
+      import('../ai/tools/searchInsights.js'),
+      import('../ai/tools/searchOrgNotes.js'),
+    ]);
+    const [insights, notes] = await Promise.all([
+      searchInsights({ query: intent, limit: 3 }, { organizationId }),
+      searchOrgNotes({ query: intent, limit: 3 }, { organizationId }),
+    ]);
+    const hits = [
+      ...insights.results.map((h) => ({
+        type: 'insight',
+        id: h.id,
+        title: h.title,
+        snippet: h.snippet,
+      })),
+      ...notes.results.map((h) => ({
+        type: 'note',
+        id: h.pageId,
+        title: h.title,
+        snippet: h.snippet,
+      })),
+    ].slice(0, 6);
+    if (hits.length === 0) return { refs: [], facts: null };
+    const refs: DocumentSourceRef[] = hits.map((h) => ({
+      sourceType: h.type,
+      sourceId: h.id,
+      sourceTitle: h.title,
+    }));
+    const header =
+      language === 'en'
+        ? 'Facts from organization sources found for this request (factual basis):'
+        : 'Fakty ze źródeł organizacji znalezionych dla tej prośby (podstawa faktograficzna):';
+    const lines = hits
+      .map((h) => `${h.title}: ${String(h.snippet || '').trim()}`)
+      .filter((l) => l.length > 5);
+    const facts = lines.length ? `${header}\n- ${lines.join('\n- ')}`.slice(0, 4000) : null;
+    return { refs, facts };
+  } catch (err) {
+    logger.warn(
+      `${LOG_PREFIX} auto-scan unavailable (continuing conversation-grounded): ${err instanceof Error ? err.message : err}`
+    );
+    return { refs: [], facts: null };
+  }
+}
+
 function outlineToPlanItems(outline: DocumentOutline): GenerationPlanItem[] {
   return outline.sections.map((section, index) => ({
     key: `${index}:${section.title}`,
@@ -309,6 +366,15 @@ export async function planSheet(params: {
   const parsed = parseSetup(params.setup);
   const title = parsed.title || (parsed.language === 'en' ? 'Sheet from chat' : 'Arkusz z czatu');
 
+  // B4: brak wskazanych źródeł ⇒ auto-skan org (jak w planDoc).
+  const auto = parsed.sourceRefs?.length
+    ? { refs: [] as DocumentSourceRef[], facts: null as string | null }
+    : await autoScanOrgSources(
+        params.organizationId,
+        parsed.intent,
+        parsed.language === 'en' ? 'en' : 'pl'
+      );
+
   const draft = await createDraft({
     organizationId: params.organizationId,
     actorUserId: params.userId,
@@ -317,9 +383,12 @@ export async function planSheet(params: {
       kind: 'table',
       title,
       content: sheetSkeletonMarkdown(title),
-      sources: parsed.sourceRefs || [],
+      sources: parsed.sourceRefs?.length ? parsed.sourceRefs : auto.refs,
       provenance: {
-        deliverablesGeneration: { sheetSetup: { ...parsed, title } },
+        deliverablesGeneration: {
+          sheetSetup: { ...parsed, title },
+          autoGrounding: auto.refs.length ? { refs: auto.refs, facts: auto.facts } : undefined,
+        },
       },
     },
   });
@@ -332,13 +401,25 @@ export async function planSheet(params: {
     format: 'sheet',
     event: 'plan_ready',
     language: parsed.language,
-    groundingMode: parsed.sourceRefs?.length ? 'source_refs' : 'conversation',
+    groundingMode: parsed.sourceRefs?.length
+      ? 'source_refs'
+      : auto.refs.length
+        ? 'auto_scan'
+        : 'conversation',
   });
-  logger.info(`${LOG_PREFIX} sheet plan ready: generation=${draft.id}`);
+  logger.info(
+    `${LOG_PREFIX} sheet plan ready: generation=${draft.id} autoSources=${auto.refs.length}`
+  );
+  const usedSheetRefs = parsed.sourceRefs?.length ? parsed.sourceRefs : auto.refs;
   return {
     generationId: draft.id,
     format: 'sheet',
     state: 'plan_ready',
+    sources: usedSheetRefs.map((r) => ({
+      sourceType: r.sourceType,
+      sourceId: r.sourceId,
+      sourceTitle: r.sourceTitle,
+    })),
     plan: [
       {
         key: '0:sheet',
@@ -385,11 +466,13 @@ export async function startSheet(params: {
       const systemPrompt = pl
         ? 'Jesteś analitykiem danych w Consultify. Tworzysz arkusz roboczy jako tabelę Markdown (GFM). Zwracasz WYŁĄCZNIE: linię tytułu "# <tytuł>" i jedną tabelę GFM (wiersz nagłówków, separator, wiersze danych). Maksymalnie 10 kolumn i 15 wierszy. Kolumny dobierz pod intencję użytkownika. Jeśli kontekst zawiera konkretne dane — użyj ich; w przeciwnym razie wypełnij realistycznymi wierszami startowymi (bez lorem ipsum). Bez komentarzy, bez bloków kodu.'
         : 'You are a data analyst at Consultify. You create a working sheet as a Markdown (GFM) table. Return ONLY: a title line "# <title>" and one GFM table (header row, separator, data rows). At most 10 columns and 15 rows. Choose columns to fit the user intent. If the context contains concrete data, use it; otherwise fill with realistic seed rows (no lorem ipsum). No commentary, no code fences.';
-      const sheetFacts = await buildGroundingFacts(
+      const explicitSheetFacts = await buildGroundingFacts(
         params.organizationId,
         stored.sourceRefs,
         pl ? 'pl' : 'en'
       );
+      const sheetFacts =
+        explicitSheetFacts || provenance.deliverablesGeneration?.autoGrounding?.facts || null;
       const userPromptBase = stored.conversationContext
         ? `${stored.intent}\n\n${pl ? 'Kontekst rozmowy' : 'Conversation context'}:\n${stored.conversationContext.slice(0, 3000)}`
         : stored.intent;
@@ -491,6 +574,8 @@ interface DraftProvenance {
   deliverablesGeneration?: {
     intake: DocumentIntake;
     outline: DocumentOutline;
+    /** B4: źródła znalezione auto-skanem + fakty (snippety) do promptu. */
+    autoGrounding?: { refs: DocumentSourceRef[]; facts: string | null };
   };
   [key: string]: unknown;
 }
@@ -546,6 +631,15 @@ export async function planDoc(params: {
   const { outline } = planDocument({ intake });
   const title = parsed.title || outline.title;
 
+  // B4: brak wskazanych źródeł ⇒ Teresa sama szuka w organizacji.
+  const auto = parsed.sourceRefs?.length
+    ? { refs: [] as DocumentSourceRef[], facts: null as string | null }
+    : await autoScanOrgSources(
+        params.organizationId,
+        parsed.intent,
+        parsed.language === 'en' ? 'en' : 'pl'
+      );
+
   const draft = await createDraft({
     organizationId: params.organizationId,
     actorUserId: params.userId,
@@ -554,9 +648,13 @@ export async function planDoc(params: {
       kind: 'document',
       title,
       content: outlineSkeletonMarkdown(title, outline),
-      sources: parsed.sourceRefs || [],
+      sources: parsed.sourceRefs?.length ? parsed.sourceRefs : auto.refs,
       provenance: {
-        deliverablesGeneration: { intake: { ...intake, title }, outline },
+        deliverablesGeneration: {
+          intake: { ...intake, title },
+          outline,
+          autoGrounding: auto.refs.length ? { refs: auto.refs, facts: auto.facts } : undefined,
+        },
       } satisfies DraftProvenance,
     },
   });
@@ -569,17 +667,27 @@ export async function planDoc(params: {
     format: 'doc',
     event: 'plan_ready',
     language: parsed.language,
-    groundingMode: parsed.sourceRefs?.length ? 'source_refs' : 'conversation',
+    groundingMode: parsed.sourceRefs?.length
+      ? 'source_refs'
+      : auto.refs.length
+        ? 'auto_scan'
+        : 'conversation',
   });
   logger.info(
-    `${LOG_PREFIX} plan ready: generation=${draft.id} sections=${outline.sections.length}`
+    `${LOG_PREFIX} plan ready: generation=${draft.id} sections=${outline.sections.length} autoSources=${auto.refs.length}`
   );
+  const usedRefs = parsed.sourceRefs?.length ? parsed.sourceRefs : auto.refs;
   return {
     generationId: draft.id,
     format: 'doc',
     state: 'plan_ready',
     plan: outlineToPlanItems(outline),
     warnings: [],
+    sources: usedRefs.map((r) => ({
+      sourceType: r.sourceType,
+      sourceId: r.sourceId,
+      sourceTitle: r.sourceTitle,
+    })),
   };
 }
 
@@ -617,11 +725,12 @@ export async function startDoc(params: {
   void (async () => {
     try {
       // B2: fakty z encji org (jeśli wskazane) wzbogacają opis dla silnika prozy.
-      const groundingFacts = await buildGroundingFacts(
+      const explicitFacts = await buildGroundingFacts(
         params.organizationId,
         stored.intake.sourceHints,
         stored.intake.language === 'en' ? 'en' : 'pl'
       );
+      const groundingFacts = explicitFacts || stored.autoGrounding?.facts || null;
       const intake = groundingFacts
         ? { ...stored.intake, description: `${stored.intake.description}\n\n${groundingFacts}` }
         : stored.intake;

@@ -341,7 +341,7 @@ export interface ConversationMessage {
      * in the transcript survives reloads. `generationId` = deckId/draftId.
      */
     deliverable?: {
-      kind: 'deck' | 'doc';
+      kind: 'deck' | 'doc' | 'sheet';
       generationId: string;
       title?: string;
     };
@@ -1212,11 +1212,12 @@ export const useConversationStore = create<ConversationState>()(
             titleLower === 'new conversation' ||
             titleLower === 'nowa rozmowa';
           const canAutoTitle = activeConv?.titleSource !== 'user';
-          const shouldTryTitle =
-            message.role === 'ai' &&
-            get().activeConversationId === conversationId &&
-            defaultTitle &&
-            canAutoTitle;
+          // No activeConversationId gate here: an AI reply may legitimately land in a
+          // conversation the user has already navigated away from (stream finishing
+          // after a new-chat switch — feedback f9fba1e0, conversations stuck at
+          // "New conversation"). Auto-title follows the conversation that received
+          // the reply; the dedupe window below still prevents bursts.
+          const shouldTryTitle = message.role === 'ai' && defaultTitle && canAutoTitle;
 
           if (shouldTryTitle) {
             const now = Date.now();

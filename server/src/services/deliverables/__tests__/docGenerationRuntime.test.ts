@@ -50,6 +50,15 @@ vi.mock('../../contextPackBuilder.js', () => ({
   buildContextPack: (...args: unknown[]) => buildContextPackMock(...args),
 }));
 
+const searchInsightsMock = vi.fn();
+vi.mock('../../ai/tools/searchInsights.js', () => ({
+  searchInsights: (...args: unknown[]) => searchInsightsMock(...args),
+}));
+const searchOrgNotesMock = vi.fn();
+vi.mock('../../ai/tools/searchOrgNotes.js', () => ({
+  searchOrgNotes: (...args: unknown[]) => searchOrgNotesMock(...args),
+}));
+
 const {
   planDoc,
   planSheet,
@@ -114,6 +123,8 @@ beforeEach(() => {
   updateDraftMock.mockResolvedValue(draftRow());
   materializeMock.mockResolvedValue({ artifactId: 'doc-artifact-1', schema: {} });
   buildContextPackMock.mockResolvedValue({ key_points: [], data_points: [] });
+  searchInsightsMock.mockResolvedValue({ results: [], truncated: false });
+  searchOrgNotesMock.mockResolvedValue({ results: [], truncated: false });
   renderMarkdownMock.mockReturnValue(
     '# Raport o transformacji\n\n## Synteza\n\nRealna treść konsultingowa oparta o kontekst.'
   );
@@ -422,5 +433,79 @@ describe('B2 — grounding sourceRefs przez ContextPack', () => {
 
     const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
     expect(status.state).toBe('draft');
+  });
+});
+
+describe('B4 — auto-skan organizacji (brak wskazanych źródeł)', () => {
+  it('planDoc zwraca znalezione źródła i zapisuje fakty (snippety) do provenance', async () => {
+    searchInsightsMock.mockResolvedValue({
+      results: [
+        {
+          id: 'ins-1',
+          title: 'Wąskie gardło w intralogistyce',
+          snippet: 'Magazyn traci 4h dziennie na ręczne skanowanie.',
+          type: 'process',
+        },
+      ],
+      truncated: false,
+    });
+    searchOrgNotesMock.mockResolvedValue({
+      results: [
+        {
+          pageId: 'note-9',
+          title: 'Notatka z warsztatu',
+          snippet: 'Zarząd zatwierdził budżet pilota automatyzacji.',
+          updatedAt: null,
+        },
+      ],
+      truncated: false,
+    });
+
+    const result = await planDoc({
+      setup: { intent: 'Napisz raport o automatyzacji', language: 'pl', conversationId: 'conv-1' },
+      organizationId: ORG,
+      userId: USER,
+    });
+
+    expect(result.sources).toEqual([
+      { sourceType: 'insight', sourceId: 'ins-1', sourceTitle: 'Wąskie gardło w intralogistyce' },
+      { sourceType: 'note', sourceId: 'note-9', sourceTitle: 'Notatka z warsztatu' },
+    ]);
+    const provenance = createDraftMock.mock.calls[0][0].input.provenance;
+    expect(provenance.deliverablesGeneration.autoGrounding.facts).toContain('4h dziennie');
+    expect(provenance.deliverablesGeneration.autoGrounding.facts).toContain('budżet pilota');
+  });
+
+  it('startDoc używa faktów z auto-skanu, gdy brak explicit sourceRefs', async () => {
+    getDraftMock.mockResolvedValue(
+      draftRow({
+        provenance: {
+          deliverablesGeneration: {
+            intake: { description: 'Napisz raport', language: 'pl', title: 'Raport' },
+            outline,
+            autoGrounding: {
+              refs: [{ sourceType: 'insight', sourceId: 'ins-1', sourceTitle: 'X' }],
+              facts: 'Fakty ze źródeł organizacji:\n- Magazyn traci 4h dziennie.',
+            },
+          },
+        },
+      })
+    );
+
+    await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+
+    const intakeArg = materializeMock.mock.calls[0][0].intake;
+    expect(intakeArg.description).toContain('Magazyn traci 4h dziennie');
+  });
+
+  it('auto-skan z zerem trafień ⇒ generacja biegnie trybem rozmowy (sources puste)', async () => {
+    const result = await planDoc({
+      setup: { intent: 'Napisz raport o czymkolwiek', language: 'pl', conversationId: 'conv-1' },
+      organizationId: ORG,
+      userId: USER,
+    });
+    expect(result.sources).toEqual([]);
+    expect(result.state).toBe('plan_ready');
   });
 });

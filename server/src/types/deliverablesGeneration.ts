@@ -94,6 +94,13 @@ export interface StartGenerationRequest {
 
 // ── Response DTOs ───────────────────────────────────────────────────────────
 
+/** Źródło organizacji użyte do groundingu (wskazane albo z auto-skanu). */
+export interface GenerationSourceRef {
+  sourceType: string;
+  sourceId: string;
+  sourceTitle?: string;
+}
+
 /** Odpowiedź kroku PLAN. */
 export interface CreateGenerationResponse {
   generationId: string;
@@ -102,6 +109,8 @@ export interface CreateGenerationResponse {
   plan: GenerationPlanItem[];
   /** Ostrzeżenia walidacji planu (np. brakujące źródła). */
   warnings: string[];
+  /** B4: źródła groundingu (auto-skan org, gdy użytkownik nie wskazał własnych). */
+  sources?: GenerationSourceRef[];
 }
 
 /** Odpowiedź GET /:id (poll). */
