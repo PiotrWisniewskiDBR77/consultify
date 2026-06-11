@@ -21,7 +21,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M15 | Rezultaty | 2 (beta) | 🟦 | 49 | Alpha | 2026-06-11 | `modules/M15-rezultaty/KARTA_AUDYTU.md` |
 | M21 | Meeting | 2 (beta) | 🟦 | 52 | Alpha | 2026-06-11 | `modules/M21-meeting/KARTA_AUDYTU.md` |
 | M12 | Audyty | 2 (beta) | 🟦 | 47 | Alpha | 2026-06-11 | `modules/M12-audyty/KARTA_AUDYTU.md` |
-| M04 | Notatnik | 2 (beta) | ⬜ | — | — | — | — |
+| M04 | Notatnik | 2 (beta) | 🟦 | 49 | Alpha | 2026-06-11 | `modules/M04-notatnik/KARTA_AUDYTU.md` |
 | M05 | Ideas — Zarządzanie | 3 (Ideas) | 🔁 | 68* | Beta | 2026-06-11 | `ideas/MODULE_02A` |
 | M06 | Ideas — Mind Map | 3 (Ideas) | 🔁 | 72* | Beta+ | 2026-06-11 | `ideas/MODULE_02B` |
 | M07 | Ideas — Process Flow | 3 (Ideas) | 🔁 | 48* | Alpha | 2026-06-11 | `ideas/MODULE_02C` |
