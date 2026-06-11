@@ -61,3 +61,23 @@ Rollback = flagi OFF (bez migracji, bez utraty danych — drafty zostają w `wor
 
 **Następne na ścieżce krytycznej:** D3 (decyzja `[P]` o włączeniu flag) — zależne od promocji
 Londyn→prod. Równolegle wolne: A3 (streaming sekcji), C1–C2 (edit-light), C3 (re-scoped po stubie).
+
+
+---
+
+## 5. Metryki §8 (live, endpoint `GET /api/deliverables/generations/metrics`)
+
+Dodane po D1 (operacjonalizacja telemetrii D2 dla decyzji D3). Snapshot 2026-06-11 (demo-org, 30 dni):
+
+| Metryka §8 | Cel | Live |
+|---|---|---|
+| Completion rate (completed / terminal) | > 95% | **100%** (7/7, 0 failed) |
+| Honest-failure coverage | 100% | **1.0** (zero cichych degradacji) |
+| Time-to-completion doc | proxy <10s (TTFC) | p50 **19s** / p95 19.4s (one-shot; A3 streaming obniży TTFC) |
+| Time-to-completion sheet | — | p50 **4.8s** |
+| Time-to-completion deck | — | **13.7s** / 5 kart |
+| Udział groundingu w danych org (source_refs+auto_scan) | > 50% po fazie B | **43%** (29% source_refs + 14% auto_scan; reszta conversation) |
+
+Endpoint admin-scoped (ADMIN/OWNER/SUPERADMIN), org-scoped, za flagą. Daje Piotrowi twarde
+liczby pod D3 zamiast przeczucia. **Jedyny cel poniżej progu:** udział groundingu 43% vs cel >50% —
+naturalnie wzrośnie z B1 (wejście z encji) gdy użytkownicy zaczną tworzyć z kart, nie z pustego promptu.

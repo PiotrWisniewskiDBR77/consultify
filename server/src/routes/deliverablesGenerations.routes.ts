@@ -23,6 +23,7 @@ import {
   start,
   status,
 } from '../services/deliverables/deliverablesGenerationService.js';
+import { getDeliverableMetrics } from '../services/deliverables/deliverablesMetricsService.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
 import type {
   CreateGenerationRequest,
@@ -207,6 +208,25 @@ router.post('/:id/generate', aiRateLimiter, async (req: any, res: Response) => {
       userId: getUserId(req),
     });
     res.status(202).json({ success: true, ...result });
+  } catch (err) {
+    handleServiceError(res, err);
+  }
+});
+
+// GET /metrics — agregaty §8 dla decyzji D3 (admin org-scoped).
+// MUSI być przed `/:id`, inaczej router potraktuje "metrics" jako generationId.
+router.get('/metrics', async (req: any, res: Response) => {
+  const role = String(req.user?.role || req.userRole || '')
+    .trim()
+    .toUpperCase();
+  if (!['ADMIN', 'OWNER', 'SUPERADMIN', 'ADMINISTRATOR'].includes(role)) {
+    res.status(403).json({ success: false, error: 'Permission denied', code: 'PERMISSION_DENIED' });
+    return;
+  }
+  const windowDays = Math.min(365, Math.max(1, Number(req.query.windowDays) || 30));
+  try {
+    const metrics = await getDeliverableMetrics(getOrgId(req), windowDays);
+    res.status(200).json({ success: true, metrics });
   } catch (err) {
     handleServiceError(res, err);
   }
