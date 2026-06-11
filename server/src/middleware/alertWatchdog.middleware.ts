@@ -12,6 +12,19 @@ import type { NextFunction, Request, Response } from 'express';
 
 import logger from '../utils/Logger.js';
 
+type SystemAlertNotifier = { sendSystemAlert: (opts: { title: string; message: string; severity: string; source: string; throttleKey: string; throttleMs: number }) => Promise<void> };
+let _systemAlertNotifier: SystemAlertNotifier | null = null;
+async function getSystemAlertNotifier(): Promise<SystemAlertNotifier | null> {
+  if (_systemAlertNotifier) return _systemAlertNotifier;
+  try {
+    const mod = await import('../services/systemAlertNotifier.js');
+    _systemAlertNotifier = mod as unknown as SystemAlertNotifier;
+    return _systemAlertNotifier;
+  } catch {
+    return null;
+  }
+}
+
 interface WatchdogConfig {
   windowMs: number;
   fiveXxThreshold: number;
@@ -164,12 +177,28 @@ async function notifyAlert(type: string, message: string): Promise<void> {
       const safeMessage = escapeHtml(message).slice(0, MAX_STRINGIFIED_ALERT_PAYLOAD);
       await emailService.sendEmail(
         alertEmail,
-        `[Consultivity Alert] ${safeType}`,
+        `[Consultify Alert] ${safeType}`,
         `<p>${safeMessage}</p><p>Time: ${new Date().toISOString()}</p>`
       );
     }
   } catch {
     // fail-open: never block requests for alerting failures
+  }
+
+  try {
+    const notifier = await getSystemAlertNotifier();
+    if (notifier?.sendSystemAlert) {
+      await notifier.sendSystemAlert({
+        title: type,
+        message,
+        severity: 'WARNING',
+        source: 'AlertWatchdog',
+        throttleKey: `watchdog_${type}`,
+        throttleMs: 30 * 60 * 1000,
+      });
+    }
+  } catch {
+    // fail-open
   }
 }
 

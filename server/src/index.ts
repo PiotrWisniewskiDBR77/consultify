@@ -1709,10 +1709,29 @@ app.use((req: Request, res: Response) => {
 // GLOBAL ERROR HANDLERS
 // ============================================================
 
+async function fireCrashAlert(label: string, detail: string): Promise<void> {
+  try {
+    await Promise.race([
+      sendSystemAlert({
+        title: `[${label}] Unhandled server error`,
+        message: detail.slice(0, 1000),
+        severity: 'CRITICAL',
+        source: 'Process',
+        throttleKey: `crash_${label}`,
+        throttleMs: 60_000,
+      }),
+      new Promise<void>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500)),
+    ]);
+  } catch {
+    // best-effort — never block or delay process exit
+  }
+}
+
 if (!isTest) {
   // Handle uncaught exceptions
   process.on('uncaughtException', (err: Error) => {
     logger.error('[Server] Uncaught Exception:', err);
+    void fireCrashAlert('uncaughtException', err?.message || String(err));
     if (isProduction) {
       logger.error('[Server] Uncaught Exception (not exiting):', err.message);
     } else {
@@ -1723,6 +1742,8 @@ if (!isTest) {
   // Handle unhandled promise rejections
   process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
     logger.error('[Server] Unhandled Rejection:', { reason, promise });
+    const detail = reason instanceof Error ? reason.message : String(reason);
+    void fireCrashAlert('unhandledRejection', detail);
     if (isProduction) {
       logger.error('[Server] Unhandled Rejection (not exiting):', reason);
     } else {

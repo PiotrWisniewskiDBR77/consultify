@@ -153,6 +153,54 @@ async function ensureFeedbackSchema(): Promise<void> {
       }
     }
 
+    // A1: ensure feedback_pulse and feature_requests exist (migration 200 often not applied)
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS feedback_pulse (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        organization_id TEXT,
+        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        context TEXT DEFAULT '/',
+        comment TEXT,
+        metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_feedback_pulse_user ON feedback_pulse(user_id)`
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_feedback_pulse_rating ON feedback_pulse(rating)`
+    );
+
+    await dbRun(
+      `CREATE TABLE IF NOT EXISTS feature_requests (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        user_email TEXT,
+        organization_id TEXT,
+        category TEXT DEFAULT 'other',
+        feature_name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        impact TEXT DEFAULT 'medium',
+        context TEXT,
+        status TEXT DEFAULT 'NEW',
+        priority INTEGER DEFAULT 0,
+        votes_count INTEGER DEFAULT 0,
+        admin_notes TEXT,
+        target_release TEXT,
+        related_ticket_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_feature_requests_status ON feature_requests(status)`
+    );
+    await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_feature_requests_created ON feature_requests(created_at)`
+    );
+
     _feedbackSchemaEnsured = true;
   } catch (err) {
     logger.warn('[Feedback] Failed to ensure feedback schema (will rely on migrations):', err);
@@ -414,7 +462,9 @@ async function getSuperAdminRecipients(): Promise<
     : userCols.has('organizationId')
       ? 'organizationId as organization_id'
       : 'NULL as organization_id';
-  const activeClause = userCols.has('is_active') ? ' AND (is_active = 1 OR is_active IS NULL)' : '';
+  const activeClause = userCols.has('is_active')
+    ? ` AND (CAST(is_active AS TEXT) NOT IN ('0', 'false', 'f') OR is_active IS NULL)`
+    : '';
 
   const rows = await dbAll<{ id: string; email: string | null; organization_id: string | null }>(
     `

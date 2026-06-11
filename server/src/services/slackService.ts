@@ -75,11 +75,15 @@ interface SlackServiceDependencies {
 class SlackServiceClass {
   private webhookUrl: string | undefined;
   private registrationWebhookUrl: string | undefined;
+  private feedbackWebhookUrl: string | undefined;
+  private ideasWebhookUrl: string | undefined;
   private axiosInstance: AxiosInstance;
 
   constructor(deps?: SlackServiceDependencies) {
     this.webhookUrl = deps?.webhookUrl || this.resolveWebhookUrl();
     this.registrationWebhookUrl = this.resolveRegistrationWebhookUrl() || this.webhookUrl;
+    this.feedbackWebhookUrl = this.resolveFeedbackWebhookUrl() || this.webhookUrl;
+    this.ideasWebhookUrl = this.resolveIdeasWebhookUrl() || this.webhookUrl;
     this.axiosInstance = deps?.axiosInstance || axios;
   }
 
@@ -99,6 +103,28 @@ class SlackServiceClass {
     return (
       process.env[`SLACK_REGISTRATION_WEBHOOK_URL_${envName}`] ||
       process.env.SLACK_REGISTRATION_WEBHOOK_URL
+    );
+  }
+
+  private resolveFeedbackWebhookUrl(): string | undefined {
+    const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_');
+    return (
+      process.env[`SLACK_FEEDBACK_WEBHOOK_URL_${envName}`] ||
+      process.env.SLACK_FEEDBACK_WEBHOOK_URL
+    );
+  }
+
+  private resolveIdeasWebhookUrl(): string | undefined {
+    const envName = String(process.env.APP_ENV || process.env.NODE_ENV || 'development')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_');
+    return (
+      process.env[`SLACK_IDEAS_WEBHOOK_URL_${envName}`] ||
+      process.env.SLACK_IDEAS_WEBHOOK_URL
     );
   }
 
@@ -225,7 +251,12 @@ class SlackServiceClass {
    * Send feedback alert to Slack with full context
    */
   async sendNewFeedbackAlert(feedback: FeedbackData): Promise<void> {
-    if (!this.webhookUrl) {
+    const isIdea = feedback.type === 'IDEA' || feedback.type === 'FEATURE' || feedback.type === 'IMPROVEMENT';
+    const targetUrl = isIdea
+      ? (this.ideasWebhookUrl || this.webhookUrl)
+      : (this.feedbackWebhookUrl || this.webhookUrl);
+
+    if (!targetUrl) {
       logger.debug('[SlackService] No webhook URL configured, skipping feedback alert');
       return;
     }
@@ -323,7 +354,7 @@ class SlackServiceClass {
       if (feedback.feedbackId) {
         contextElements.push({
           type: 'mrkdwn',
-          text: `🔗 <${appUrl}/superadmin/customers/feedback|View in SuperAdmin>`,
+          text: `🔗 <${appUrl}/superadmin/customers/feedback?feedbackId=${encodeURIComponent(feedback.feedbackId)}|View in SuperAdmin>`,
         });
       }
 
@@ -347,12 +378,25 @@ class SlackServiceClass {
         attachments: [{ color, blocks }],
       };
 
-      await this.axiosInstance.post(this.webhookUrl, payload);
-      logger.info('[SlackService] Feedback alert sent', {
-        type: feedback.type,
-        severity: feedback.severity,
-        route: feedback.routePath,
-      });
+      let lastError: unknown;
+      for (let attempt = 0; attempt <= 1; attempt++) {
+        try {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
+          await this.axiosInstance.post(targetUrl, payload);
+          logger.info('[SlackService] Feedback alert sent', {
+            type: feedback.type,
+            severity: feedback.severity,
+            route: feedback.routePath,
+            channel: isIdea ? 'ideas' : 'feedback',
+            attempt,
+          });
+          return;
+        } catch (err) {
+          lastError = err;
+          logger.warn(`[SlackService] Feedback alert attempt ${attempt + 1} failed:`, err instanceof Error ? err.message : String(err));
+        }
+      }
+      logger.error('[SlackService] Failed to send feedback alert after retries:', lastError instanceof Error ? lastError.message : String(lastError));
     } catch (error: unknown) {
       logger.error(
         '[SlackService] Failed to send alert:',
