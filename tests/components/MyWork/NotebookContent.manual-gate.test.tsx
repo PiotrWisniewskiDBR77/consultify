@@ -1,8 +1,13 @@
 import React from 'react';
 import { act, render, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NotebookContent } from '../../../src/components/MyWork/NotebookContent';
+
+// C3 (KROK 6): NotebookContent now calls useNavigate (expand-into-document),
+// so it must render inside a Router.
+const renderWithRouter = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 const { toastErrorMock, apiMock, editorMock } = vi.hoisted(() => ({
   toastErrorMock: vi.fn(),
@@ -129,7 +134,7 @@ describe('NotebookContent manual gate regressions', () => {
   it('shows an honest error when openPageId cannot be loaded', async () => {
     apiMock.getNotebookPage.mockRejectedValue(new Error('missing'));
 
-    render(<NotebookContent searchQuery="" openPageId="missing-note" />);
+    renderWithRouter(<NotebookContent searchQuery="" openPageId="missing-note" />);
 
     await waitFor(() => {
       expect(apiMock.getNotebookPage).toHaveBeenCalledWith('missing-note');
@@ -164,7 +169,7 @@ describe('NotebookContent manual gate regressions', () => {
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Persist me on exit' }] }],
     });
 
-    const { unmount } = render(<NotebookContent searchQuery="" />);
+    const { unmount } = renderWithRouter(<NotebookContent searchQuery="" />);
 
     await waitFor(() => {
       expect(apiMock.getNotebookPages).toHaveBeenCalled();
@@ -191,5 +196,72 @@ describe('NotebookContent manual gate regressions', () => {
         })
       );
     });
+  });
+
+  // C3 (KROK 6): "Expand into document" creates a work-canvas draft copy of the
+  // note (D-C-2 provenance) via POST /api/work-canvas/drafts.
+  it('renders the expand-into-document button and POSTs a draft with provenance', async () => {
+    apiMock.getNotebookPages.mockResolvedValue([
+      {
+        id: 'note-1',
+        title: 'Expand me',
+        projectId: null,
+        visibility: 'private',
+        tags: [],
+        contentJson: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Body text' }] }],
+        },
+        contentText: 'Body text',
+        maturity: 'seed',
+        icon: null,
+        summary: null,
+        status: 'active',
+        pinned: false,
+        convertedTo: null,
+        attachments: [],
+        createdAt: '2026-03-28T10:00:00.000Z',
+        updatedAt: '2026-03-28T10:00:00.000Z',
+      },
+    ]);
+    editorMock.getJSON.mockReturnValue({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Body text' }] }],
+    });
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 'draft-77' } }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      const { findByTestId } = renderWithRouter(<NotebookContent searchQuery="" />);
+
+      const button = await findByTestId('notebook-expand-to-document');
+      await act(async () => {
+        button.click();
+      });
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          '/api/work-canvas/drafts',
+          expect.objectContaining({ method: 'POST' })
+        );
+      });
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body.kind).toBe('document');
+      expect(body.contentMd).toContain('Body text');
+      expect(body.provenance).toEqual(
+        expect.objectContaining({
+          source: 'notebook-expand',
+          sourceType: 'notebook',
+          sourceId: 'note-1',
+          sourceTitle: 'Expand me',
+        })
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

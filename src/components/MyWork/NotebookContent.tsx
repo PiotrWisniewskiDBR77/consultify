@@ -40,6 +40,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -76,6 +77,7 @@ import { NotebookCanonicalPathStrip } from './notebook/NotebookCanonicalPathStri
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
 import { NotebookContextPanel } from './notebook/NotebookContextPanel';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
+import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
 import {
   detectSlashTrigger,
@@ -607,6 +609,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   onBackToLibrary,
 }) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const isPolish = i18n.language === 'pl';
   const { emitMyWorkEvent, setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } =
     useAppStore();
@@ -1609,6 +1612,39 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     [activePage, canConvertDeliverable, deliverableGuardMessage, isPolish, emitMyWorkEvent]
   );
 
+  // C3 (KROK 6): "Rozwiń w dokument" — copy the note into a Work Canvas draft
+  // (provenance: notebook-expand, D-C-2 copy-no-sync) and open /chat split-view.
+  const [isExpandingToDocument, setIsExpandingToDocument] = useState(false);
+  const handleExpandToDocument = useCallback(async () => {
+    if (!activePage || isExpandingToDocument) return;
+    setIsExpandingToDocument(true);
+    trackFunnelEvent('notebook_convert_triggered', {
+      target: 'canvas-document',
+      noteId: activePage.id,
+    });
+    try {
+      // Prefer the live editor JSON — autosave debounces, so activePage may lag.
+      const contentJson = editor?.getJSON() ?? activePage.contentJson;
+      const { chatUrl } = await expandNotebookPageToCanvasDraft({
+        id: activePage.id,
+        title: title || activePage.title || '',
+        contentJson,
+        contentText: activePage.contentText,
+      });
+      toast.success(
+        isPolish ? 'Utworzono szkic dokumentu w Canvas' : 'Document draft created in Canvas'
+      );
+      navigate(chatUrl);
+    } catch (error: any) {
+      console.error('Failed to expand note into Canvas document', error);
+      toast.error(
+        isPolish ? 'Nie udało się utworzyć dokumentu' : 'Failed to create the document'
+      );
+    } finally {
+      setIsExpandingToDocument(false);
+    }
+  }, [activePage, editor, isExpandingToDocument, isPolish, navigate, title]);
+
   const handleHandoffRadar = useCallback(async () => {
     if (!activePage) return;
     try {
@@ -2217,6 +2253,27 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Toolbar */}
                   {editor && <NotebookToolbar editor={editor} />}
+                  {/* C3 (KROK 6): expand the note into a Canvas document draft */}
+                  <button
+                    onClick={() => void handleExpandToDocument()}
+                    disabled={isExpandingToDocument}
+                    data-testid="notebook-expand-to-document"
+                    title={
+                      isPolish
+                        ? 'Utwórz dokument w Canvas z kopią tej notatki i rozwijaj go z Teresą'
+                        : 'Create a Canvas document from a copy of this note and extend it with Teresa'
+                    }
+                    className="ml-auto mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/60 dark:bg-indigo-950/30 px-2.5 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/40 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    <FileText size={12} />
+                    {isExpandingToDocument
+                      ? isPolish
+                        ? 'Tworzenie…'
+                        : 'Creating…'
+                      : isPolish
+                        ? 'Rozwiń w dokument'
+                        : 'Expand into document'}
+                  </button>
                 </div>
               </div>
 
