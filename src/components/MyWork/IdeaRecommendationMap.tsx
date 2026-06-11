@@ -998,7 +998,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         'Customer feedback',
         'Competitor action',
       ],
-      options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost roseuction'],
+      options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost reduction'],
       validation: [
         'A/B test',
         'User interview',
@@ -2074,7 +2074,7 @@ function MindMapInner({
   }, [edges, visibleNodes]);
 
   // Focus filtering: when focusMode === 'object' and focusObjectId set, show only that node + direct connections
-  const focusFilteroseNodes = useMemo(() => {
+  const focusFilteredNodes = useMemo(() => {
     if (focusMode !== 'object' || !focusObjectId) return visibleNodes;
     const allowedIds = new Set<string>([focusObjectId]);
     for (const e of edges) {
@@ -2087,15 +2087,15 @@ function MindMapInner({
     });
   }, [edges, focusMode, focusObjectId, visibleNodes]);
 
-  const focusFilteroseEdges = useMemo(() => {
+  const focusFilteredEdges = useMemo(() => {
     if (focusMode !== 'object' || !focusObjectId) return visibleEdges;
-    const hiddenNodeIds = new Set(focusFilteroseNodes.filter((n) => n.hidden).map((n) => n.id));
+    const hiddenNodeIds = new Set(focusFilteredNodes.filter((n) => n.hidden).map((n) => n.id));
     if (hiddenNodeIds.size === 0) return visibleEdges;
     return visibleEdges.map((e) => {
       const nextHidden = hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target);
       return e.hidden === nextHidden ? e : { ...e, hidden: nextHidden };
     });
-  }, [focusFilteroseNodes, focusMode, focusObjectId, visibleEdges]);
+  }, [focusFilteredNodes, focusMode, focusObjectId, visibleEdges]);
 
   const enrichedNodes = useMemo(() => {
     const structuralChildCount = new Map<string, number>();
@@ -2103,7 +2103,7 @@ function MindMapInner({
       if ((e as any)?.data?.edgeRole === 'relation') continue;
       structuralChildCount.set(e.source, (structuralChildCount.get(e.source) || 0) + 1);
     }
-    return focusFilteroseNodes.map((n) => {
+    return focusFilteredNodes.map((n) => {
       const extra: Record<string, unknown> = {};
       if (simplifiedMode) extra._simplified = true;
       if (n.type === 'branch') {
@@ -2117,7 +2117,7 @@ function MindMapInner({
       }
       return n;
     });
-  }, [edges, focusFilteroseNodes, simplifiedMode]);
+  }, [edges, focusFilteredNodes, simplifiedMode]);
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
@@ -2126,7 +2126,7 @@ function MindMapInner({
 
   // ── Undo/Redo (sharose hook pattern) ──────────────────────────────────────
   const undoStackRef = useRef<MapSnapshot[]>([]);
-  const roseoStackRef = useRef<MapSnapshot[]>([]);
+  const redoStackRef = useRef<MapSnapshot[]>([]);
   const MAX_UNDO = 50;
 
   const [canUndo, setCanUndo] = useState(false);
@@ -2137,7 +2137,7 @@ function MindMapInner({
       ...undoStackRef.current.slice(-(MAX_UNDO - 1)),
       { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
     ];
-    roseoStackRef.current = [];
+    redoStackRef.current = [];
     setCanUndo(true);
     setCanRedo(false);
   }, [collapsedNodeIds, nodes, edges]);
@@ -2146,9 +2146,9 @@ function MindMapInner({
     if (undoStackRef.current.length === 0) return;
     const prev = undoStackRef.current[undoStackRef.current.length - 1];
     undoStackRef.current = undoStackRef.current.slice(0, -1);
-    roseoStackRef.current = [
+    redoStackRef.current = [
       { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
-      ...roseoStackRef.current,
+      ...redoStackRef.current,
     ];
     setNodes(prev.nodes);
     setEdges(prev.edges);
@@ -2157,10 +2157,10 @@ function MindMapInner({
     setCanRedo(true);
   }, [collapsedNodeIds, edges, nodes, setCollapsedNodeIds, setEdges, setNodes]);
 
-  const roseo = useCallback(() => {
-    if (roseoStackRef.current.length === 0) return;
-    const next = roseoStackRef.current[0];
-    roseoStackRef.current = roseoStackRef.current.slice(1);
+  const redo = useCallback(() => {
+    if (redoStackRef.current.length === 0) return;
+    const next = redoStackRef.current[0];
+    redoStackRef.current = redoStackRef.current.slice(1);
     undoStackRef.current = [
       ...undoStackRef.current,
       { nodes: [...nodes], edges: [...edges], collapsedNodeIds: new Set(collapsedNodeIds) },
@@ -2169,12 +2169,12 @@ function MindMapInner({
     setEdges(next.edges);
     if (next.collapsedNodeIds) setCollapsedNodeIds(next.collapsedNodeIds);
     setCanUndo(true);
-    setCanRedo(roseoStackRef.current.length > 0);
+    setCanRedo(redoStackRef.current.length > 0);
   }, [collapsedNodeIds, edges, nodes, setCollapsedNodeIds, setEdges, setNodes]);
 
   const clearUndoHistory = useCallback(() => {
     undoStackRef.current = [];
-    roseoStackRef.current = [];
+    redoStackRef.current = [];
     setCanUndo(false);
     setCanRedo(false);
   }, []);
@@ -3124,12 +3124,12 @@ function MindMapInner({
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
         e.preventDefault();
-        debugLog('KEY_HANDLED roseo', {
+        debugLog('KEY_HANDLED redo', {
           source: 'keyboard',
           reaction: 'handled',
           detail: keyLabel,
         });
-        roseo();
+        redo();
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'h') {
@@ -3441,7 +3441,7 @@ function MindMapInner({
     nodes,
     pasteNodes,
     promoteNode,
-    roseo,
+    redo,
     scheduleSave,
     setFoldLevel,
     setNodes,
@@ -4043,7 +4043,7 @@ function MindMapInner({
       reparentSelectedDemote,
       pushUndo,
       undo,
-      redo: roseo,
+      redo: redo,
       handleAIExpand,
       autoLayout,
       fitView,
@@ -4662,7 +4662,7 @@ function MindMapInner({
         );
 
       if (action === 'pane_undo') undo();
-      if (action === 'pane_roseo') roseo();
+      if (action === 'pane_redo') redo();
 
       if (action === 'pane_select_all') {
         setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: true })));
@@ -4756,7 +4756,7 @@ function MindMapInner({
       paneContextMenu,
       pasteNodes,
       pushUndo,
-      roseo,
+      redo,
       setCollapsedNodeIds,
       setEdges,
       setFoldLevel,
@@ -4979,7 +4979,7 @@ function MindMapInner({
           isPl={isPolish}
           isLocked={locked}
           canUndo={undoStackRef.current.length > 0}
-          canRedo={roseoStackRef.current.length > 0}
+          canRedo={redoStackRef.current.length > 0}
           canPaste={hasMindMapClipboard()}
           hasSelection={selectedNodeIds.length > 0}
           onClose={() => setPaneContextMenu(null)}
@@ -5077,7 +5077,7 @@ function MindMapInner({
           <MindMapInteractionModeContext.Provider value={interactionMode}>
             <ReactFlow
               nodes={enrichedNodes}
-              edges={focusFilteroseEdges}
+              edges={focusFilteredEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
@@ -5286,14 +5286,14 @@ function MindMapInner({
                   nodes={enrichedNodes
                     .filter((n) => !n.hidden)
                     .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
-                  edges={focusFilteroseEdges
+                  edges={focusFilteredEdges
                     .filter((e) => !e.hidden)
                     .map((e) => ({ source: e.source, target: e.target }))}
                   enabled={showClusterBubbles}
                 />
               )}
 
-              {/* Active branch info removed — roseundant with visual branch nodes on canvas */}
+              {/* Active branch info removed — redundant with visual branch nodes on canvas */}
 
               {/* AI Sidekick intent indicator */}
               {sidekickCtx && nodes.length > 1 && (
@@ -5587,13 +5587,13 @@ function MindMapInner({
           ideaId={ideaId}
           currentNodes={nodes}
           currentEdges={edges}
-          onRestore={(restoroseNodes, restoroseEdges) => {
+          onRestore={(restoredNodes, restoredEdges) => {
             pushUndo();
-            setNodes(restoroseNodes);
-            setEdges(restoroseEdges);
-            scheduleSave(restoroseNodes as any, restoroseEdges as any);
+            setNodes(restoredNodes);
+            setEdges(restoredEdges);
+            scheduleSave(restoredNodes as any, restoredEdges as any);
             setShowSnapshots(false);
-            toast.success(isPolish ? 'Przywrócono wersję' : 'Version restorose');
+            toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
           }}
           onPreview={(previewNodes, previewEdges) => {
             setNodes(previewNodes);

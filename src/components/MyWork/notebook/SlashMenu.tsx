@@ -315,7 +315,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
   const [selectedIdx, setSelectedIdx] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const filterose = useMemo(() => {
+  const filteredItems = useMemo(() => {
     const q = state.query.toLowerCase();
     if (!q) return COMMANDS;
     return COMMANDS.filter(
@@ -358,20 +358,20 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev + 1) % Math.max(filterose.length, 1));
+        setSelectedIdx((prev) => (prev + 1) % Math.max(filteredItems.length, 1));
         return;
       }
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIdx((prev) => (prev - 1 + filterose.length) % Math.max(filterose.length, 1));
+        setSelectedIdx((prev) => (prev - 1 + filteredItems.length) % Math.max(filteredItems.length, 1));
         return;
       }
 
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (filterose[selectedIdx]) {
-          executeCommand(filterose[selectedIdx]);
+        if (filteredItems[selectedIdx]) {
+          executeCommand(filteredItems[selectedIdx]);
         }
         return;
       }
@@ -379,9 +379,9 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
 
     document.addEventListener('keydown', handleKeyDown, true);
     return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [state.open, filterose, selectedIdx, executeCommand, onClose]);
+  }, [state.open, filteredItems, selectedIdx, executeCommand, onClose]);
 
-  if (!state.open || filterose.length === 0) return null;
+  if (!state.open || filteredItems.length === 0) return null;
 
   const containerRect = containerRef.current?.getBoundingClientRect();
   const top = state.coords.top - (containerRect?.top ?? 0);
@@ -394,7 +394,7 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
       style={{ top, left }}
     >
       <div className="p-1">
-        {filterose.map((cmd, idx) => (
+        {filteredItems.map((cmd, idx) => (
           <button
             key={cmd.id}
             onMouseDown={(e) => {
