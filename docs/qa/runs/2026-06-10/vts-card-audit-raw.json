@@ -1,0 +1,2076 @@
+{
+  "insights": [
+    {
+      "id": "vts_w2_I1",
+      "title": "Ręczna integracja danych między 11 systemami to największy ukryty koszt operacyjny HQ",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "12 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "164 słów, ~5 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "evidence_map_cover": {
+          "pass": true,
+          "note": "12 wpisów; nieodwzorowane refy: brak; snippety >120zn: 0"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "1003 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I10",
+      "title": "VTS wchodzi w AI z dojrzałą gotowością kulturową — przewagą jest skodyfikowanie standardu human-in-the-loop",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "14 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "128 słów, ~6 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "2 szt."
+        },
+        "evidence_map_cover": {
+          "pass": true,
+          "note": "8 wpisów; nieodwzorowane refy: brak; snippety >120zn: 0"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "1096 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": false,
+          "note": "podejrzenie EN-prozy"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I2",
+      "title": "Excel pełni rolę nieformalnego systemu operacyjnego dla krytycznych procesów VTS — czas to ujawnić i okiełznać",
+      "checks": {
+        "title_len": {
+          "pass": false,
+          "note": "16 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "156 słów, ~10 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "4 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "2 szt."
+        },
+        "evidence_map_cover": {
+          "pass": true,
+          "note": "9 wpisów; nieodwzorowane refy: brak; snippety >120zn: 0"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "944 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I3",
+      "title": "Inżynierowie R&D tracą znaczącą część czasu na administrację danych BOM zamiast projektować",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "12 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "161 słów, ~7 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "4 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "2 szt."
+        },
+        "evidence_map_cover": {
+          "pass": false,
+          "note": "8 wpisów; nieodwzorowane refy: brak; snippety >120zn: 1"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "790 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I4",
+      "title": "Wiedza projektowa VTS jest więźniem głów ekspertów i historii maili",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "10 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "156 słów, ~7 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "4 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "evidence_map_cover": {
+          "pass": false,
+          "note": "8 wpisów; nieodwzorowane refy: brak; snippety >120zn: 1"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "978 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I5",
+      "title": "Ekspansja USA i Data Centers bez wspólnej bazy wiedzy decyzyjnej grozi kosztownym reworkiem produktowym",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "14 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "161 słów, ~7 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "2 szt."
+        },
+        "evidence_map_cover": {
+          "pass": false,
+          "note": "10 wpisów; nieodwzorowane refy: brak; snippety >120zn: 1"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "1146 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I6",
+      "title": "Jakość i RCA tracą tempo na ręcznym przygotowaniu danych — AI przyspiesza eksperta, nie zastępuje go",
+      "checks": {
+        "title_len": {
+          "pass": false,
+          "note": "16 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "147 słów, ~6 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "4 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "2 szt."
+        },
+        "evidence_map_cover": {
+          "pass": true,
+          "note": "8 wpisów; nieodwzorowane refy: brak; snippety >120zn: 0"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "908 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": false,
+          "note": "podejrzenie EN-prozy"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I7",
+      "title": "PMO raportuje, ale nie egzekwuje — brak operacyjnego widoku blockerów, decyzji i zależności",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "13 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "129 słów, ~7 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "4 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "4 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "2 szt."
+        },
+        "evidence_map_cover": {
+          "pass": true,
+          "note": "8 wpisów; nieodwzorowane refy: brak; snippety >120zn: 0"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "1060 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I8",
+      "title": "Ręczna lokalizacja contentu per rynek czyni Marketing wąskim gardłem ekspansji sprzedażowej",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "11 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "150 słów, ~5 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "2 szt."
+        },
+        "evidence_map_cover": {
+          "pass": true,
+          "note": "8 wpisów; nieodwzorowane refy: brak; snippety >120zn: 0"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "952 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_I9",
+      "title": "Wiedza rynkowa Sprzedaży nie zasila roadmapy — ryzyko błędnych kierunków produktowych w ekspansji USA i Data Centers",
+      "checks": {
+        "title_len": {
+          "pass": false,
+          "note": "17 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "148 słów, ~6 zdań"
+        },
+        "themes_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "theme_desc_len": {
+          "pass": true,
+          "note": "ok"
+        },
+        "theme_evidence": {
+          "pass": true,
+          "note": "ok"
+        },
+        "issues_count": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "opportunities": {
+          "pass": true,
+          "note": "3 szt."
+        },
+        "signals": {
+          "pass": true,
+          "note": "2 szt."
+        },
+        "evidence_map_cover": {
+          "pass": true,
+          "note": "7 wpisów; nieodwzorowane refy: brak; snippety >120zn: 0"
+        },
+        "missing_data_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "material_quality_complete": {
+          "pass": true,
+          "note": "komplet (z aliasami)"
+        },
+        "content_len": {
+          "pass": false,
+          "note": "1054 słów"
+        },
+        "content_sections": {
+          "pass": false,
+          "note": "brak sekcji: Obserwacja, Mechanizm, Wpływ, Rekomendacja"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML w treści"
+        }
+      }
+    }
+  ],
+  "initiatives": [
+    {
+      "id": "vts_w2_IN1",
+      "title": "Zmapuj ręczne przepływy danych HQ i zakwalifikuj je do automatyzacji",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "10 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "218 słów (JSON: symptom,rootCause,costOfInaction)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "91 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "75 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "101 słów"
+        },
+        "description_len": {
+          "pass": false,
+          "note": "895 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "147 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "8"
+        },
+        "success_count": {
+          "pass": false,
+          "note": "0"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "odwołania do IN#"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "kpi_baseline_target": {
+          "pass": false,
+          "note": "5 KPI, primary:2, bez targetu:1, bez baseline/„do ustalenia\":2"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:1 D:3 I:1; niekompletne:3"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:2 C:2 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I1"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": false,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN10",
+      "title": "Samoobsługowy obieg FDR: FAQ, workflow i podpowiedzi zamiast powtarzalnych zapytań do finansów",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "12 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "213 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "54 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "90 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "85 słów"
+        },
+        "description_len": {
+          "pass": false,
+          "note": "775 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "130 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "brak jawnych odwołań"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": false,
+          "note": "4 KPI, primary:1, bez targetu:2, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": true,
+          "note": "R:3 A:1 D:1 I:1; niekompletne:0"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:2 C:2 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I1"
+        },
+        "depends_on": {
+          "pass": true,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN11",
+      "title": "Marketing Content Localization Factory — od ręcznych wersji rynkowych do sterowanego pipeline'u AI",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "13 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "235 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "65 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "82 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "110 słów"
+        },
+        "description_len": {
+          "pass": true,
+          "note": "640 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "151 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_mece": {
+          "pass": false,
+          "note": "brak jawnych odwołań"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "4 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:1 D:1 I:1; niekompletne:2"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:2 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I8"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN12",
+      "title": "Voice of Market: ustrukturyzowany przepływ sygnałów rynkowych od Sprzedaży do R&D",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "11 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "223 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "61 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "81 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "65 słów"
+        },
+        "description_len": {
+          "pass": false,
+          "note": "1144 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "166 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "7"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "odwołania do IN#"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "4 KPI, primary:2, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "5 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": true,
+          "note": "R:2 A:1 D:4 I:0; niekompletne:0"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:3 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I9"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN13",
+      "title": "Inwentaryzacja danych i luk jako fundament automatyzacji i AI w HQ VTS",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "12 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "204 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "87 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "85 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "114 słów"
+        },
+        "description_len": {
+          "pass": true,
+          "note": "693 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": false,
+          "note": "157 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "brak jawnych odwołań"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "4 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:1 D:1 I:1; niekompletne:1"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:3 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I1"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN14",
+      "title": "Wspólny katalog KPI z baseline jako warunek rozliczalności transformacji VTS",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "10 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "199 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "59 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "82 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "108 słów"
+        },
+        "description_len": {
+          "pass": true,
+          "note": "667 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "132 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "brak jawnych odwołań"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": false,
+          "note": "4 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":1"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:2 D:1 I:1; niekompletne:6"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:3 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I7"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN15",
+      "title": "Ramy Human-in-the-Loop dla nadzoru nad decyzjami AI w VTS",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "9 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "239 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "71 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "90 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "99 słów"
+        },
+        "description_len": {
+          "pass": false,
+          "note": "925 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "127 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "7"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "odwołania do IN#"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "3 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:3 A:1 D:3 I:1; niekompletne:3"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:2 I:2"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I10"
+        },
+        "depends_on": {
+          "pass": true,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": false,
+          "note": "podejrzenie EN-prozy"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN2",
+      "title": "Excel-to-Workflow: ujarzmienie krytycznych arkuszy bez ownera i audytu",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "8 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "221 słów (JSON: symptom,rootCause,costOfInaction)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "97 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "76 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "121 słów"
+        },
+        "description_len": {
+          "pass": true,
+          "note": "601 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": false,
+          "note": "131 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": false,
+          "note": "0"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "brak jawnych odwołań"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": false,
+          "note": "4 KPI, primary:2, bez targetu:1, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:1 D:2 I:1; niekompletne:5"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:2 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I2"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": false,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN3",
+      "title": "Design-to-Production Data Backbone: czysty przepływ CAD→PLM→BOM→Zakupy→Jakość",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "6 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "215 słów (JSON: symptom,rootCause,costOfInaction)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "52 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "74 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "91 słów"
+        },
+        "description_len": {
+          "pass": true,
+          "note": "706 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": false,
+          "note": "131 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": false,
+          "note": "0"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "odwołania do IN#"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "4 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:1 D:1 I:1; niekompletne:2"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:3 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I3"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": false,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN4",
+      "title": "R&D Knowledge Hub: utrwalenie decyzji, lekcji i reuse w bazie wiedzy inżynierskiej",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "12 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "225 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "78 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "78 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "96 słów"
+        },
+        "description_len": {
+          "pass": false,
+          "note": "782 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "133 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "brak jawnych odwołań"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "4 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": true,
+          "note": "R:2 A:2 D:1 I:1; niekompletne:0"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:2 C:2 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I4"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN5",
+      "title": "Zbuduj proces wywiadu rynkowo-regulacyjnego dla ekspansji USA i Data Centers",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "10 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "205 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "70 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "80 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "92 słów"
+        },
+        "description_len": {
+          "pass": true,
+          "note": "746 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "146 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "brak jawnych odwołań"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "3 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:1 D:1 I:1; niekompletne:1"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:3 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I5"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN6",
+      "title": "AI-wspomagana analiza przyczyn źródłowych reklamacji i inteligencja jakości serwisowej",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "9 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "211 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "68 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "73 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "94 słów"
+        },
+        "description_len": {
+          "pass": true,
+          "note": "564 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "114 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "odwołania do IN#"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "kpi_baseline_target": {
+          "pass": false,
+          "note": "5 KPI, primary:1, bez targetu:1, bez baseline/„do ustalenia\":1"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:3 A:1 D:1 I:1; niekompletne:1"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:3 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I6"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN7",
+      "title": "Transformation Control Tower — sterowanie programem od dnia 1 Etapu 2",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "11 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "231 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "75 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "92 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "102 słów"
+        },
+        "description_len": {
+          "pass": false,
+          "note": "808 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "127 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "7"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "odwołania do IN#"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "4"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "4 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": true,
+          "note": "R:3 A:1 D:1 I:1; niekompletne:0"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:2 C:2 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I7"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN8",
+      "title": "PMO Decision & Escalation Register: koniec powtarzanych decyzji bez właściciela",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "10 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "213 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "61 słów"
+        },
+        "summary_len": {
+          "pass": true,
+          "note": "85 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "76 słów"
+        },
+        "description_len": {
+          "pass": true,
+          "note": "694 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "101 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "brak jawnych odwołań"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "4 KPI, primary:1, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:2 D:1 I:1; niekompletne:1"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:2 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I7"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    },
+    {
+      "id": "vts_w2_IN9",
+      "title": "Automatyzacja onboardingu i offboardingu HR jako pierwszy domknięty proces end-to-end",
+      "checks": {
+        "title_len": {
+          "pass": true,
+          "note": "10 słów"
+        },
+        "problem_len": {
+          "pass": true,
+          "note": "222 słów (proza)"
+        },
+        "hypothesis_format": {
+          "pass": true,
+          "note": "75 słów"
+        },
+        "summary_len": {
+          "pass": false,
+          "note": "98 słów"
+        },
+        "business_value": {
+          "pass": true,
+          "note": "100 słów"
+        },
+        "description_len": {
+          "pass": false,
+          "note": "840 słów"
+        },
+        "description_sections": {
+          "pass": true,
+          "note": "ok (6/6)"
+        },
+        "sizing_present": {
+          "pass": true,
+          "note": "153 słów"
+        },
+        "deliverables_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "success_count": {
+          "pass": true,
+          "note": "6"
+        },
+        "scope_in_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_count": {
+          "pass": true,
+          "note": "5"
+        },
+        "scope_out_mece": {
+          "pass": true,
+          "note": "odwołania do IN#"
+        },
+        "kill_count": {
+          "pass": true,
+          "note": "3"
+        },
+        "kpi_baseline_target": {
+          "pass": true,
+          "note": "4 KPI, primary:2, bez targetu:0, bez baseline/„do ustalenia\":0"
+        },
+        "milestones_count": {
+          "pass": true,
+          "note": "4 szt., bez daty/fazy relatywnej:0"
+        },
+        "raid_mix": {
+          "pass": false,
+          "note": "R:2 A:1 D:2 I:1; niekompletne:1"
+        },
+        "raci_min": {
+          "pass": true,
+          "note": "A:1 R:1 C:2 I:1"
+        },
+        "lineage": {
+          "pass": true,
+          "note": "interview_insight / vts_w2_I1"
+        },
+        "depends_on": {
+          "pass": false,
+          "note": "0 zależności w tabeli"
+        },
+        "lang_pl": {
+          "pass": true,
+          "note": "ok"
+        },
+        "html_entities": {
+          "pass": true,
+          "note": "encje HTML (&quot; itp.) w polach"
+        }
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 > Jeden, klient-agnostyczny standard + procedura, wg której powstaje i jest akceptowana **każda** karta
 > Wniosku (insightu) i Inicjatywy w Consultify — dla Apatora i każdego kolejnego klienta.
 > Towarzyszy `docs/initiatives/INITIATIVE_FORMULA.md` (doktryna: MECE · charter+WBS · Kaplan–Norton ·
-> baseline→target · falsyfikowalna teza). **Status: wersja 1.0, do zatwierdzenia przez CTO.**
+> baseline→target · falsyfikowalna teza). **Status: wersja 1.1, do zatwierdzenia przez CTO.**
 >
 > Dokument ma trzy części:
 > **A. STANDARD** (co musi być — pełne wymogi 100%) ·
@@ -60,7 +60,7 @@
 | Poza zakresem (scope_out) | W | min 3 | MECE, z odwołaniami do innych inicjatyw | nigdy |
 | Kryteria zatrzymania (kill_criteria) | W | min 2 | konkretny warunek stop | nigdy |
 | KPI | W | min 2, ≥1 primary | baseline→target + kierunek + jednostka; brak baseline → „do ustalenia" + powód | nigdy |
-| Kamienie milowe (milestones) | W | min 3 | fazowane 0–3/3–6/6–12 + data + opis | nigdy |
+| Kamienie milowe (milestones) | W | min 3 | fazowane 0–3/3–6/6–12 + data + opis; **przed startem programu dozwolone daty relatywne** (np. „Tyg. 1–2 od startu") w nazwie/opisie zamiast `target_date` | nigdy |
 | RAID | W | ≥2 RISK +≥1 ASSUMPTION +≥1 DEPENDENCY | probability+impact+mitigation_plan+response_strategy | nigdy |
 | RACI | W | 1 A +1 R +≥1 C/I | realne role; jeden Accountable | nigdy |
 | Lineage (source_type+source_id) | W | komplet | powiązanie ze źródłem lub `manual`+powód | nigdy |
@@ -147,7 +147,7 @@ Każda pozycja = warunek PASS/FAIL, możliwy do zakodowania (lint treści).
 | `scope_out_mece` | ≥ 1 scope_out odwołuje się do innej inicjatywy |
 | `kill_count` | ≥ 2 |
 | `kpi_baseline_target` | KPI ≥ 2; ≥1 primary; każdy target≠null; baseline≠null LUB opis zawiera „do ustalenia" |
-| `milestones_count` | ≥ 3, każdy z datą |
+| `milestones_count` | ≥ 3, każdy z datą `target_date` LUB relatywnym oznaczeniem fazy w nazwie/opisie (Dni/Tyg./Mies. + liczba) — relatywne dozwolone tylko przed startem programu; po starcie kamienie dostają daty kalendarzowe |
 | `raid_mix` | RISK ≥ 2 ∧ ASSUMPTION ≥ 1 ∧ DEPENDENCY ≥ 1; każdy ma probability+impact+mitigation_plan |
 | `raci_min` | 1×A ∧ 1×R ∧ ≥1×(C∨I) |
 | `lineage` | source_type+source_id (lub manual+powód) |
@@ -211,4 +211,5 @@ pierwsza karta, która przejdzie B3+B4 z wynikiem ≥90, staje się przykładem 
 ---
 
 ## Changelog
+- **v1.1 (2026-06-10):** decyzja CTO — milestones mogą mieć daty relatywne (Dni/Tyg./Mies. od startu) zamiast `target_date`, dopóki program nie wystartował; po starcie wymagana konwersja na daty kalendarzowe (§A3 + walidator `milestones_count`).
 - **v1.0 (2026-06-09):** pierwszy kanon — standard A + formuła B + wzorce C. Do zatwierdzenia przez CTO.
