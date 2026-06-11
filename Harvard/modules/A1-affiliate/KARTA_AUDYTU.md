@@ -1,108 +1,78 @@
-# A1 — Ecosystem-Affiliate (aneks) — Karta audytu (Protokół V1)
+# A1 — Ecosystem / Affiliate Dashboard (aneks) — Karta audytu (Protokół V1)
 
-**Data:** YYYY-MM-DD · **Branch:** `<branch>` (commit `<sha>`) · **Audytor:** Claude + agenci (KOD/TESTY/KANON+SEC)
-**Wejścia:** _MODULE_MAP_V2 wpis A1 · inwentarz `Harvard/podzial/inventory/INV_G_admin_ustawienia_partner_superadmin.md` · poprzednia karta `<link>` · plany `<linki>`
-**Evidence:** `docs/audit/<data>/<modul>/evidence/`
+**Data:** 2026-06-11 · **Branch:** `feat/deliverables-light` (commit `5607fb3c77`) · **Audytor:** Claude (osobiście — moduł trywialny, bez subagentów)
+**Wejścia:** _MODULE_MAP_V2 wpis A1 · inwentarz `Harvard/podzial/inventory/INV_G_*.md` (sekcja ECOSYSTEM/AFFILIATE, poz.1)
+**Evidence:** weryfikacja inline (poniżej, plik:linia).
 
-## OCENA: __/100 — Tier: <GA-ready | Beta | Alpha | Broken> <· „NIEPEŁNY (bez Fazy 4)" jeśli dotyczy>
+## OCENA: 13/100 — Tier: Broken (świadomy STUB) · status 🟦 NIEPEŁNY (de facto: decyzja produktowa „budować albo wyciąć")
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | __ | |
-| B. Wiring i dane | 15 | __ | |
-| C. Testy automatyczne | 15 | __ | |
-| D. Żywa użyteczność | 15 | __ | |
-| E. Kanony/UI | 10 | __ | |
-| F. Bezpieczeństwo/dostęp | 10 | __ | |
-| G. Środowiska (Railway) | 10 | __ | |
-| **Hard cap zastosowany?** | — | — | <nie / jaki i dlaczego> |
+| A. Realność funkcji | 25 | 2 | 0% realne — pełny stub end-to-end (klient zwraca puste, serwer 503 na wszystko). |
+| B. Wiring i dane | 15 | 1 | Brak realnego wiringu — `referrals.routes.ts` to catch-all 503; brak tabel/danych. |
+| C. Testy automatyczne | 15 | 1 | Brak testów istotnych (nie ma czego testować). |
+| D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana; widok zawsze pusty (nic do zweryfikowania poza pustką). |
+| E. Kanony/UI | 10 | 2 | Widok renderuje pusty dashboard; minimalne. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | 503 na wszystkich endpointach = zero powierzchni ataku; widok `requireAuth`. |
+| G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana (n/d — stub). |
+| **Hard cap zastosowany?** | — | — | Faza 4 niewykonana → max 70; faktyczny sufit to 0% realności funkcji (świadomy stub), nie hard-cap bezpieczeństwa. |
 
-**Werdykt jednym akapitem:** <co jest mocne, co łamie zaufanie, co blokuje tier wyżej>
+**Werdykt jednym akapitem:** A1 to **świadomy stub end-to-end**, nie regresja — i jako taki wymaga **decyzji produktowej (budować albo wyciąć)**, nie naprawy. Zweryfikowane osobiście: serwer `referrals.routes.ts` to jeden catch-all `router.use((req,res) => res.status(503) {type:'not_configured'})` — **503 na KAŻDY endpoint** (czytelny komunikat „missing configuration", nie cichy fail); klient `api.ts` ma hardkodowane atrapy (`getUserReferrals: async () => ({ success:true, referrals: [] })`, `:12915`); `AffiliateDashboardView` jest zamontowany (`AppRoutes.tsx:2336`, `requireAuth`), ale pozycja sidebar „Ecosystem Impact" pojawia się tylko gdy `journeyState === 'ECOSYSTEM_NODE'`, więc dla większości userów moduł jest niewidoczny, a gdy widoczny — zawsze pusty. **Pozytyw:** to UCZCIWY stub — degraded-mode 503 z jasnym komunikatem zamiast fabrykowania fałszywych KPI poleceń (kontrast z localStorage-fasadą M23 czy „real call fake feature" M18/M20). Brak powierzchni ataku (wszystko 503, brak danych). **Jedyny dług:** moduł zajmuje miejsce w nawigacji i kodzie bez wartości — do rozstrzygnięcia.
 
 ---
 
 ## 0. Zakres i scenariusze krytyczne (FAZA 0)
-**Checklist pozycji inwentarza:** N pozycji (z INV) + M nowych (git log od <data inwentarza>).
-**Scenariusze krytyczne (3–7):**
-1. S1: <happy path E2E — kroki>
-2. S2: …
-**Obowiązujące kanony:** <§27 dla tabel: które | CARD_CONTENT_FORMULA: tak/nie | ModuleHub/MELS | beta-gating>
+**Checklist:** INV_G sekcja ECOSYSTEM/AFFILIATE, poz.1 (cały moduł = 1 pozycja STUB).
+**Scenariusze krytyczne:** brak realnych (moduł nie ma działającej funkcjonalności). Hipotetyczne dla wersji zbudowanej: S1 lista poleceń, S2 kod referencyjny, S3 KPI ekosystemu.
+**Obowiązujące kanony:** §27 — n/d · CARD_CONTENT_FORMULA — n/d · gating: `requireAuth` + warunek `journeyState`.
 
 ## 1. Prawda kodu (FAZA 1)
-### 1a. REALNE (zweryfikowane)
-- … `plik:linia`
-### 1b. MOCK / STUB / fabrykowane klientem
-- … `plik:linia`
-### 1c. ZEPSUTE / WIDOCZNE-ALE-ZEPSUTE
-- … `plik:linia`
-### 1d. UKRYTE / MARTWY KOD
-- … `plik:linia` → rekomendacja: <wytnij | wepnij | zostaw świadomie>
-### 1e. Wiring FE↔BE↔DB
-| Funkcja | Endpoint | Tabela DB | Migracja | Status |
-|---|---|---|---|---|
+### 1a. REALNE
+- Brak.
+### 1b. MOCK / STUB
+- **[STUB] Cały moduł** — klient `api.ts:12910-12915` hardkodowane atrapy (pusta lista, pusty kod); serwer `referrals.routes.ts:12-20` catch-all 503 `not_configured`.
+### 1c. ZEPSUTE
+- Brak (stub jest świadomy i uczciwy — 503 z komunikatem, nie cichy).
+### 1d. MARTWY KOD
+- `AffiliateDashboardView` — żywy montaż, ale zasilany wyłącznie atrapami → de facto martwa wartość.
+### 1e. Wiring
+| Funkcja | Endpoint | Tabela | Status |
+|---|---|---|---|
+| Referrals/KPI | `/api/referrals/*` | — | **503 na wszystko (stub)** |
 ### 1f. Flagi
-| Flaga | Default BE (komentarz vs runtime) | Default FE | Kto włącza | Wpływ |
-|---|---|---|---|---|
-
-### 1g. Połączenia międzymodułowe (zasila Krok 6 sekwencji — INTEGRACJE.md)
-| Kierunek | Moduł po drugiej stronie | Mechanizm (event / API / registry / konwersja / deep-link / handoff czatu) | Plik:linia | Status (DZIAŁA/ZEPSUTE/STUB) |
-|---|---|---|---|---|
-| WEJŚCIE ← | | | | |
-| WYJŚCIE → | | | | |
+| Flaga | Default | Wpływ |
+|---|---|---|
+| `journeyState === 'ECOSYSTEM_NODE'` | rzadki | warunek widoczności wpisu sidebar |
+### 1g. Połączenia
+- Brak realnych (moduł izolowany, nie zasila/nie czyta z innych).
 
 ## 2. Testy automatyczne (FAZA 2)
-**Uruchomienie:** `<komenda>` @ `<sha>` → **PASS __ / FAIL __ / SKIP __** (log: evidence/f2_tests.log)
-| Plik testu | Zakres | Liczba | Wynik | W CI? |
-|---|---|---|---|---|
-**Pokrycie scenariuszy krytycznych:**
-| Scenariusz | FE | BE | E2E | CI | Luka |
-|---|---|---|---|---|---|
-**Backlog testowy (→ plan dokończenia):**
-1. [P_] <typ> — <plik docelowy> — <scenariusz>
+Brak istotnych testów (nic do pokrycia). Backlog: jeśli moduł budowany — testy dopiero przy implementacji.
 
 ## 3. Środowiska / Railway (FAZA 3)
-| Aspekt | Staging | Prod | Werdykt |
-|---|---|---|---|
-| Wdrożony commit | | | |
-| Migracje modułu zastosowane | | | |
-| Flagi/env wymagane | | | |
-| Smoke endpointów (lista+kody) | | | |
-| Błędy w logach (24–48 h) | | | |
-**Dowody:** evidence/f3_*.txt
+**n/d (stub).** Na każdym środowisku zwróci 503. PENDING tylko formalnie.
 
-## 4. Żywa weryfikacja frontu (FAZA 4 — Claude osobiście)
-**Środowisko:** <preview localhost / staging> · **Konto/rola:** <…>
-| # | Scenariusz | Wynik | Dowód |
-|---|---|---|---|
-| S1 | | PASS/FAIL/BLOCKED | evidence/f4_s1_*.png |
-**Przyciski-zawsze-błąd znalezione:** <lista albo „brak">
-**Stany (pusty/loading/błąd/overflow):** <wyniki>
-**i18n PL↔EN:** <wyniki> · **Konsola/sieć:** <czysto / lista błędów> · **Role (member/pilot):** <wyniki> · **Skróty:** <wyniki>
+## 4. Żywa weryfikacja frontu (FAZA 4)
+**PENDING / n/d.** Widok zawsze pusty; jedyna „weryfikacja" = potwierdzenie pustki + 503 w sieci.
 
 ## 5. Kanony i standardy (FAZA 5)
-**§27 TABLE_AND_PREVIEW_CANON:**
-| Tabela/powierzchnia | A | B | C | … | S | Odstępstwa |
-|---|---|---|---|---|---|---|
-**CARD_CONTENT_FORMULA (próbka ≥5):** <wynik walidatorów / n.d.>
-**Wzorzec hubowy (ModuleHub/MELS):** <zgodny / odstępstwa>
-**UI-standards / i18n / beta-plate / stany standardowe:** <wyniki>
+n/d — brak funkcjonalności do oceny kanonowej.
 
 ## 6. Bezpieczeństwo i dostęp (FAZA 6)
-| Warstwa | Nawigacja | Route | API | Dziura? |
-|---|---|---|---|---|
-**Org-scope:** <wynik przeglądu endpointów> · **Zasoby publiczne:** <wynik> · **WS/realtime:** <wynik / n.d.> · **Capabilities serwerowo:** <wynik>
-**Findingi:** [P0] … · [P1] … · [P2] …
+- **Brak powierzchni ataku** — wszystkie endpointy 503; brak danych, brak zapisu, brak org-scope do złamania. Widok `requireAuth`. Zero findingów.
 
-## 7. PLAN DOKOŃCZENIA (FAZA 8)
-### Fala 1 — Integralność (P0)
-1. **<co>** — <dlaczego, 1 zdanie z dowodem> — Weryfikacja: <test/screenshot>
-### Fala 2 — Domknięcie wartości (P1)
-### Fala 3 — Jakość i kanony (P2)
+## 7. PLAN DOKOŃCZENIA (FAZA 8) — DECYZJA PRODUKTOWA
+### Ścieżka A — WYCIĄĆ (rekomendowana jeśli brak roadmapy ekosystemu)
+1. Usunąć `AffiliateDashboardView`, route `/affiliate`, `referrals.routes.ts`, atrapy `api.ts:12910-12915`, warunek sidebar `ECOSYSTEM_NODE` — Weryfikacja: 0 referencji, brak martwego route.
+### Ścieżka B — ZBUDOWAĆ (jeśli ekosystem/affiliate w planie)
+1. Realny `referrals.routes.ts` (CRUD poleceń + kody + KPI) na realnych tabelach — Weryfikacja: endpointy 200 z danymi.
+2. Klient `api.ts` realny zamiast atrap — Weryfikacja: lista/kod z backendu.
+3. Org-scope + auth na nowych endpointach (uniknąć wzorca side-router-weak-gate z M20/M24/M27) — Weryfikacja: testy cross-org/role.
+4. Faza 4 żywa + testy.
 
-### Definition of Done (odhaczane przy realizacji)
-- [ ] 1. Testy auto FE+BE scenariuszy krytycznych zielone w CI
-- [ ] 2. Żywa weryfikacja Claude'a: pełny skrypt Fazy 4 PASS z dowodami
-- [ ] 3. Railway: migracje + flagi + smoke 200 + czyste logi
-- [ ] 4. Kanony: checklisty Fazy 5 bez odstępstw P0/P1
-- [ ] 5. Zero WIDOCZNE-ALE-ZEPSUTE
-- [ ] 6. Zero cichych degradacji bez komunikatu
+### Definition of Done
+- [ ] Decyzja właściciela: wyciąć czy budować (warunek wejścia do dalszych prac)
+- [ ] (jeśli budować) pełny protokół V1 od nowa po implementacji
+
+---
+**Pozostałe do domknięcia audytu A1:** to nie audyt techniczny, lecz **decyzja produktowa**. Moduł jest uczciwym stubem (503 + jasny komunikat, bez fabrykacji). Rekomendacja: wyciąć, chyba że ekosystem/affiliate jest w roadmapie — wtedy budować od zera z org-scope od początku.

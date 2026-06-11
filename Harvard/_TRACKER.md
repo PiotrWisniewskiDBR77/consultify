@@ -32,7 +32,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M24 | Panel Administratora | 4 (internal) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M24-admin/KARTA_AUDYTU.md` |
 | M27 | SuperAdmin | 4 (internal) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M27-superadmin/KARTA_AUDYTU.md` |
 | M26 | Portal Partnerski | 4 (internal) | ⬜ | — | — | — | — |
-| A1 | Ecosystem/Affiliate | 4 (decyzja) | ⬜ | — | — | — | STUB — budować albo wyciąć |
+| A1 | Ecosystem/Affiliate | 4 (decyzja) | 🟦 | 13 | Broken | 2026-06-11 | `modules/A1-affiliate/KARTA_AUDYTU.md` (świadomy STUB) |
 
 \* Oceny Ideas sprzed Protokołu V1 (bez Faz 3/4/5/6 i rubryki) — do przeliczenia po dociągnięciu; karty i plany rozwoju pozostają ważne jako Fazy 0–2.
 
