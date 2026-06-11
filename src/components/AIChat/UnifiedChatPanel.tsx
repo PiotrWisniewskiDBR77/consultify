@@ -2440,6 +2440,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           void (async () => {
             try {
+              // B1: rozmowa otwarta z kontekstem encji (openChatWithContext) ⇒
+              // encja staje się źródłem groundingu dokumentu (ContextPack ma
+              // ekstraktory dla tych typów).
+              const ENTITY_SOURCE_TYPES = ['initiative', 'task', 'decision', 'report'];
+              const wsCtx = workspaceContext as
+                | { type?: string; entityId?: string; entityName?: string }
+                | null
+                | undefined;
+              const entitySourceRefs =
+                wsCtx?.entityId && ENTITY_SOURCE_TYPES.includes(String(wsCtx.type || ''))
+                  ? [
+                      {
+                        sourceType: String(wsCtx.type),
+                        sourceId: wsCtx.entityId,
+                        sourceTitle: wsCtx.entityName,
+                      },
+                    ]
+                  : undefined;
+
               const planned = await planDocGeneration({
                 intent: text,
                 title: docTitle,
@@ -2448,6 +2467,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 language: effectiveChatLanguage === 'pl' ? 'pl' : 'en',
                 conversationId: useConversationStore.getState().activeConversationId,
                 conversationContext,
+                sourceRefs: entitySourceRefs,
               });
               const enabledCount = planned.plan.filter((item) => item.enabled).length;
               const sourcesCount = planned.sources?.length || 0;

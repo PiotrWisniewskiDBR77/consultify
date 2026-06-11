@@ -1430,6 +1430,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
           )
         }
+        // B1 (deliverables): intencja dokumentowa łapana przez intercept czatu;
+        // sourceRefs inicjatywy płyną z workspaceContext (openChatWithContext).
+        onMakeDocument={() =>
+          openAiChat(
+            item,
+            i18n.language === 'pl'
+              ? `Napisz dokument na podstawie tej inicjatywy: cele, status, ryzyka i rekomendacje.`
+              : `Write a document based on this initiative: goals, status, risks and recommendations.`
+          )
+        }
       />
     );
 

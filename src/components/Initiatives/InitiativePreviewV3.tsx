@@ -53,7 +53,9 @@ export const InitiativePreviewV3Body: React.FC<{
   detailsExpanded?: boolean;
   onToggleDetailsExpanded?: () => void;
   onSummarize?: () => Promise<void> | void;
-}> = ({ initiative, detailsExpanded, onToggleDetailsExpanded, onSummarize }) => {
+  /** B1 (deliverables): generuje dokument ugruntowany w tej inicjatywie (czat). */
+  onMakeDocument?: () => Promise<void> | void;
+}> = ({ initiative, detailsExpanded, onToggleDetailsExpanded, onSummarize, onMakeDocument }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [internalExpanded, setInternalExpanded] = useState(false);
@@ -145,6 +147,17 @@ export const InitiativePreviewV3Body: React.FC<{
           await onSummarize?.();
         },
       },
+      ...(onMakeDocument
+        ? [
+            {
+              id: 'make-document',
+              label: isPolish ? 'Zrób z tego dokument' : 'Make a document from this',
+              onClick: async () => {
+                await onMakeDocument();
+              },
+            } satisfies DetailsAction,
+          ]
+        : []),
       {
         id: 'copy',
         label: isPolish ? 'Kopiuj' : t('common.copy', 'Copy'),
@@ -174,6 +187,7 @@ export const InitiativePreviewV3Body: React.FC<{
     initiative.name,
     initiative.title,
     isPolish,
+    onMakeDocument,
     onSummarize,
     status,
     t,
