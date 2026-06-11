@@ -363,13 +363,42 @@ function sanitizePrimitiveText(text: string): string {
   return cleaned;
 }
 
-function sanitizeSlideContentValue(value: unknown): unknown {
-  if (typeof value === 'string') return sanitizePrimitiveText(value);
-  if (Array.isArray(value)) return value.map((entry) => sanitizeSlideContentValue(entry));
+/**
+ * Deck-quality polish (mirrors docGenerationRuntime.polishMarkdownForCanvas):
+ * slide blocks render as PLAIN text, so internal/markdown tokens emitted by the
+ * LLM layers must never reach storage. Cleans:
+ *  - `## `/`### ` markdown heading markers leaking into body text (marker
+ *    stripped, text kept — block structure already carries the heading),
+ *  - `[Fact: <label>]` provenance markers from the Narrative Engine
+ *    (internal id labels are removed; if the bracket wraps real prose, the
+ *    prose survives),
+ *  - `**bold**` / `` `code` `` markers (noise in plain-text slide blocks),
+ *  - `Data gap:` internal placeholder prefix → human phrasing in deck language.
+ */
+function polishDeckText(text: string, language: 'pl' | 'en' = 'en'): string {
+  let out = sanitizePrimitiveText(text);
+  out = out.replace(/^\s{0,3}#{1,6}\s+/gm, '');
+  out = out.replace(/\s*\[Fact:\s*([^\]]*)\]/gi, (_match, inner: string) => {
+    const trimmed = String(inner || '').trim();
+    // Internal id labels (fact_kp_3, kp-12, …) carry no reader value — drop.
+    if (!trimmed || /^[\w.-]+$/.test(trimmed)) return '';
+    return ` ${trimmed}`;
+  });
+  out = out.replace(/\*\*([^*\n]+)\*\*/g, '$1');
+  out = out.replace(/`([^`\n]+)`/g, '$1');
+  const gapLabel = language === 'pl' ? 'Do uzupełnienia' : 'To be completed';
+  out = out.replace(/^(\s*)Data gap:\s*/gim, `$1${gapLabel}: `);
+  if (/^data gap$/i.test(out.trim())) out = gapLabel;
+  return out.replace(/[ \t]{2,}/g, ' ').trim();
+}
+
+function sanitizeSlideContentValue(value: unknown, language: 'pl' | 'en' = 'en'): unknown {
+  if (typeof value === 'string') return polishDeckText(value, language);
+  if (Array.isArray(value)) return value.map((entry) => sanitizeSlideContentValue(entry, language));
   if (value && typeof value === 'object') {
     const output: Record<string, unknown> = {};
     for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
-      output[key] = sanitizeSlideContentValue(nested);
+      output[key] = sanitizeSlideContentValue(nested, language);
     }
     return output;
   }
@@ -606,7 +635,11 @@ function buildSlideContentBase(
             (artifactData._initiatives || []).slice(0, 6).map((initiative: any) => ({
               title: initiative.name,
               description: initiative.summary || initiative.status || '',
-              impact: String(initiative.impact || initiative.roi || 'Data gap'),
+              impact: String(
+                initiative.impact ||
+                  initiative.roi ||
+                  (isPl ? 'Do uzupełnienia' : 'To be confirmed')
+              ),
               priority: String(initiative.priority || 'medium').toLowerCase(),
               category: initiative.axis || initiative.category,
             })) ||
@@ -747,16 +780,17 @@ function buildSlideContent(
       } as UnifiedSlide)
     : buildSlideContentBase(item, setup, artifactData);
   const governed = attachSlideGovernance(baseSlide, item, setup);
-  const keyMessage = sanitizePrimitiveText(
-    String(governed.key_message || item.title || item.intent)
+  const keyMessage = polishDeckText(
+    String(governed.key_message || item.title || item.intent),
+    setup.language
   );
   return {
     ...governed,
     key_message:
       keyMessage.length >= 8
         ? keyMessage
-        : sanitizePrimitiveText(String(item.title || item.intent)),
-    content: sanitizeSlideContentValue(governed.content) as any,
+        : polishDeckText(String(item.title || item.intent), setup.language),
+    content: sanitizeSlideContentValue(governed.content, setup.language) as any,
   } as UnifiedSlide;
 }
 
@@ -1285,8 +1319,12 @@ export async function generateDeck(
         };
         const narrativeOutput = await generateNarrative(engineInput);
         if (narrativeOutput.post_check.passed && narrativeOutput.content) {
+          // Narrative Engine emits inline `[Fact: <label>]` citation markers and
+          // markdown headings by contract (linguisticRealization) — internal
+          // provenance, not slide copy. Polish before the text reaches the
+          // deck document / unified JSON.
           (slide as any)._narrative_enrichment = {
-            content: narrativeOutput.content,
+            content: polishDeckText(narrativeOutput.content, setup.language),
             facts_used: narrativeOutput.facts_used.length,
             observations_used: narrativeOutput.observations_used.length,
           };

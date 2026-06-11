@@ -14,7 +14,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { AIAcceptRejectBar, CanvasAIFloatingMenu } from './CanvasAIFloatingMenu';
-import { acceptAiDiff, applyAiDiff, rejectAiDiff } from './canvasDiffOps';
+import {
+  acceptAiDiff,
+  applyAiDiff,
+  rejectAiDiff,
+  snapRangeToBlockBoundaries,
+} from './canvasDiffOps';
 import { getCanvasEditorExtensions } from './canvasEditorExtensions';
 import { CanvasEditorToolbar } from './CanvasEditorToolbar';
 import { htmlToMarkdown, markdownToHtml } from './canvasMarkdownConversion';
@@ -213,6 +218,21 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
       if (hasPendingDiff) return null;
       setAiProcessing(true);
 
+      // E1 — block-boundary guard. A selection crossing block nodes (e.g.
+      // paragraph → heading) would splice the replacement mid-word into the
+      // second block. Snap the range outward to whole blocks BEFORE sending,
+      // so the AI sees (and the diff replaces) complete blocks. Single-block
+      // selections return the original range untouched — behavior identical.
+      const effectiveRange = snapRangeToBlockBoundaries(editor, {
+        from: selection.from,
+        to: selection.to,
+      });
+      const wasSnapped =
+        effectiveRange.from !== selection.from || effectiveRange.to !== selection.to;
+      const effectiveText = wasSnapped
+        ? editor.state.doc.textBetween(effectiveRange.from, effectiveRange.to, '\n\n')
+        : selectedText;
+
       try {
         const token = localStorage.getItem('token');
         const response = await fetch('/api/ai/chat/quick', {
@@ -222,8 +242,8 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            message: `${prompt}\n\nText to modify:\n${selectedText}`,
-            context: { source: 'canvas_selection', selectedText },
+            message: `${prompt}\n\nText to modify:\n${effectiveText}`,
+            context: { source: 'canvas_selection', selectedText: effectiveText },
           }),
         });
 
@@ -243,7 +263,9 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         // Apply inline diff (mark original removed + insert replacement marked
         // added). Span is measured inside applyAiDiff via the doc-size delta —
         // never `to + string.length`, which breaks on multi-node replacements.
-        applyAiDiff(editor, { from: selection.from, to: selection.to }, replacement);
+        // E1 — uses the block-snapped range so a cross-block diff replaces
+        // whole blocks instead of splicing into the middle of one.
+        applyAiDiff(editor, effectiveRange, replacement);
 
         // C6 — record the apply event so the per-span provenance audit (the
         // differentiator vs Claude/ChatGPT/Gemini/Antigravity) has the prompt
@@ -255,10 +277,10 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
           kind: 'apply',
           at: Date.now(),
           prompt,
-          originalExcerpt: selectedText,
+          originalExcerpt: effectiveText,
           replacementExcerpt: replacement,
-          selectionFrom: selection.from,
-          selectionTo: selection.to,
+          selectionFrom: effectiveRange.from,
+          selectionTo: effectiveRange.to,
         });
 
         setHasPendingDiff(true);

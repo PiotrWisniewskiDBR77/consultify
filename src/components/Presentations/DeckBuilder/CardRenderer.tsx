@@ -20,6 +20,7 @@ import { SmartDiagramBlock } from './blocks/SmartDiagramBlock';
 import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
+import { sanitizeDeckBlock, sanitizeDeckDisplayText } from './deckTextSanitizer';
 import { assignBlocksToRegions, selectLayout } from './layouts/LayoutEngine';
 import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 
@@ -126,9 +127,12 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
     }
   };
 
-  const renderBlockItem = (block: CardBlock, blockIndex: number) => {
-    const Component = BLOCK_COMPONENTS[block.type];
+  const renderBlockItem = (rawBlock: CardBlock, blockIndex: number) => {
+    const Component = BLOCK_COMPONENTS[rawBlock.type];
     if (!Component) return null;
+    // Display-time safeguard: decks stored before the server-side polish
+    // (polishDeckText) may carry raw `##`/`[Fact: …]`/`Data gap:` tokens.
+    const block = sanitizeDeckBlock(rawBlock);
     return (
       <AnimatedBlock
         key={block.block_id}
@@ -173,7 +177,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
               className="text-lg font-semibold opacity-60"
               style={{ color: theme.colors.textPrimary }}
             >
-              {card.title}
+              {sanitizeDeckDisplayText(card.title)}
             </p>
           </div>
         ) : useGridLayout ? (

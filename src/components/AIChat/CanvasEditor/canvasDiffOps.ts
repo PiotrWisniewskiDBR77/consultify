@@ -50,6 +50,35 @@ export function hasPendingAiDiff(editor: Editor): boolean {
   return found;
 }
 
+/**
+ * E1 block-boundary guard — when a selection crosses block nodes (e.g. starts
+ * mid-paragraph and ends mid-heading), splicing a flat replacement string at
+ * `to` injects it mid-word INSIDE the second block (live-observed: Condense
+ * across an H1 boundary spliced prose into the heading). Snap such selections
+ * outward to whole blocks: `from` → start of its textblock, `to` → end of its
+ * textblock. Selections contained in a single textblock are returned AS-IS
+ * (object identity preserved) so the single-block path stays byte-identical.
+ *
+ * Endpoints that resolve between blocks (not inside a textblock — e.g. a
+ * NodeSelection edge) are left untouched; only textblock endpoints are
+ * expanded.
+ */
+export function snapRangeToBlockBoundaries(editor: Editor, range: DocRange): DocRange {
+  const { doc } = editor.state;
+  const clamp = (pos: number) => Math.max(0, Math.min(pos, doc.content.size));
+  const $from = doc.resolve(clamp(range.from));
+  const $to = doc.resolve(clamp(range.to));
+
+  if ($from.sameParent($to) && $from.parent.isTextblock) {
+    return range;
+  }
+
+  return {
+    from: $from.parent.isTextblock ? $from.start() : range.from,
+    to: $to.parent.isTextblock ? $to.end() : range.to,
+  };
+}
+
 export function collectMarkedRanges(editor: Editor, markName: string): DocRange[] {
   const ranges: DocRange[] = [];
   editor.state.doc.descendants((node, pos) => {
