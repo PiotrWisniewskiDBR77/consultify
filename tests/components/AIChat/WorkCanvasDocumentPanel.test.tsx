@@ -2432,6 +2432,69 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.queryByRole('button', { name: /Upload files/i })).not.toBeInTheDocument();
   });
 
+  // Regression (live audit check 7): save-as-note success must keep the panel
+  // OPEN and show the feedback strip with a clickable note deep-link — the
+  // observed failure was a silently closing panel with no success feedback.
+  it('keeps the panel open and shows a clickable note link after save-as-note', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url === '/api/work-canvas/drafts') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              id: 'draft-1',
+              title: 'Company Work Note',
+              contentMd: '# Company Work Note',
+              saveState: 'saved',
+              lifecycleState: 'draft',
+              markdownProjectionStatus: 'synced',
+            },
+          }),
+        };
+      }
+      if (url === '/api/work-canvas/drafts/draft-1/save-to-workspace') {
+        expect(JSON.parse(String(init?.body))).toEqual({ target: 'note' });
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              draft: {
+                id: 'draft-1',
+                title: 'Company Work Note',
+                contentMd: '# Company Work Note',
+              },
+              linkedResource: {
+                type: 'note',
+                id: 'page-1',
+                title: 'Company Work Note',
+                url: '/my-work/notebook/page-1',
+              },
+              readBack: { status: 'created' },
+            },
+          }),
+        };
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel onClose={onClose} />);
+
+    await screen.findByTestId('canvas-document-view');
+    await user.click(screen.getByRole('button', { name: /Save as note/i }));
+
+    const noteFeedback = await screen.findByTestId('canvas-action-feedback');
+    expect(noteFeedback).toHaveTextContent('Company Work Note saved to note.');
+    const noteLink = within(noteFeedback).getByRole('link', { name: 'Open →' });
+    expect(noteLink).toHaveAttribute('href', '/my-work/notebook/page-1');
+    // The panel must NOT close on success — the user reviews the link first.
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByTestId('canvas-document-view')).toBeInTheDocument();
+  });
+
   it('renders Canvas action failures as safe alerts without backend details', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async (url: string) => {

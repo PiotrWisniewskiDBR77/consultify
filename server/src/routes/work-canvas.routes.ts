@@ -3624,6 +3624,38 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
         url: resource.url,
         auditEventId,
       };
+      // C4 — provenance loop closure on the LIVE approval writer: append this
+      // materialization to the draft's `provenance.materializedTo[]` ledger
+      // (same entry shape as the /save-to-workspace writer above). Best-effort:
+      // the entity already exists, so a failed provenance write must never
+      // fail the approval.
+      try {
+        const previousMaterialized = Array.isArray(draft.provenance?.materializedTo)
+          ? (draft.provenance.materializedTo as unknown[])
+          : [];
+        await updateDraftAfterOperation(draft, {
+          materializedTo: [
+            ...previousMaterialized,
+            {
+              target: proposal.target,
+              entityId: resource.id,
+              url: resource.url,
+              title: resource.title,
+              at: new Date().toISOString(),
+            },
+          ],
+        });
+      } catch (provenanceError) {
+        logger.warn('[work-canvas] canvas.proposal.materialized_to_append_failed', {
+          proposalId: proposal.id,
+          draftId: draft.id,
+          target: proposal.target,
+          error:
+            provenanceError instanceof Error
+              ? provenanceError.message
+              : String(provenanceError),
+        });
+      }
     } catch (error) {
       logger.error('[work-canvas] canvas.proposal.materialize_failed', {
         proposalId: proposal.id,

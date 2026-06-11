@@ -428,7 +428,7 @@ function getInitialMyWorkTab(
 function parseMyWorkPathIntent(
   pathname: string,
   isPolish: boolean
-): { tab: ModuleTab; doc?: OpenDocument } | null {
+): { tab: ModuleTab; doc?: OpenDocument; notebookPageId?: string } | null {
   const parseIdeaTool = (segment?: string): CanvasToolType | undefined => {
     switch (segment) {
       case 'mind-map':
@@ -495,6 +495,15 @@ function parseMyWorkPathIntent(
   if (segments[1] === 'ideas') return { tab: 'ideas' };
   if (segments[1] === 'tasks') return { tab: 'tasks' };
   if (segments[1] === 'decisions') return { tab: 'decisions' };
+  // Page-level deep link (/my-work/notebook/<pageId>) — used by canvas
+  // save-as-note success links and provenance "Otwórz" entries. Previously the
+  // pageId segment was DISCARDED, so a valid link landed on the notebooks
+  // library (often "No notebooks yet" — ingested pages have no notebook
+  // container). NotebookContent's `openPageId` fetches the page by id
+  // directly, so passing it through is the entire fix.
+  if (segments[1] === 'notebook' && segments[2]) {
+    return { tab: 'notebook', notebookPageId: decodeURIComponent(segments[2]) };
+  }
   if (segments[1] === 'notebook') return { tab: 'notebook' };
   if (segments[1] === 'inbox') return { tab: 'inbox' };
   if (segments[1] === 'calendar') return { tab: 'calendar' };
@@ -1378,6 +1387,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const intent = parseMyWorkPathIntent(location.pathname, isPolish);
     if (!intent) return;
     setActiveTab(intent.tab);
+    // /my-work/notebook/<pageId> opens the page editor directly (bypasses the
+    // notebooks library, which knows nothing about container-less ingested
+    // pages such as canvas save-as-note materializations).
+    if (intent.notebookPageId) {
+      setNotebookOpenPageId(intent.notebookPageId);
+    }
     const nextDoc = intent.doc;
     if (!nextDoc) return;
     if (nextDoc.type === 'idea' && nextDoc.data?.initialTool) {
