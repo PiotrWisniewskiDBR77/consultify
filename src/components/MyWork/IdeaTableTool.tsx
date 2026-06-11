@@ -142,7 +142,6 @@ import { RecordExpandModal } from './table/RecordExpandModal';
 import { RowDetailPanel } from './table/RowDetailPanel';
 import { type RowTemplate, RowTemplatePicker } from './table/RowTemplatePicker';
 import { SharingManager } from './table/sharing/SharingManager';
-import { SnapshotManager } from './table/SnapshotManager';
 import { StatusBar } from './table/StatusBar';
 import { StickyNoteView } from './table/StickyNoteView';
 import { SyncManager } from './table/sync/SyncManager';
@@ -639,7 +638,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [renamingViewName, setRenamingViewName] = useState('');
   const [showAuditTrail, setShowAuditTrail] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
-  const [showSnapshotManager, setShowSnapshotManager] = useState(false);
   const [showConnectorWizard, setShowConnectorWizard] = useState(false);
   const [showConnectorList, setShowConnectorList] = useState(false);
   const [showWebhookRelays, setShowWebhookRelays] = useState(false);
@@ -1832,15 +1830,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <Activity size={12} />
                 </button>
 
-                {/* Snapshots */}
-                <button
-                  onClick={() => setShowSnapshotManager(true)}
-                  className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                  title={isPl ? 'Migawki' : 'Snapshots'}
-                >
-                  <Camera size={12} />
-                </button>
-
                 {/* Keyboard shortcuts */}
                 <button
                   onClick={() => setShowKeyboardShortcuts(true)}
@@ -2187,12 +2176,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
                 >
                   <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
-                </button>
-                <button
-                  onClick={() => setShowSnapshotManager(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-                >
-                  <Camera size={14} /> {isPl ? 'Migawki' : 'Snapshots'}
                 </button>
                 <button
                   onClick={() => setShowConditionalFmt(true)}
@@ -3337,13 +3320,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           setDetailNodeId(entityId);
           setDetailMode('preview');
         }}
-      />
-
-      {/* Snapshot Manager */}
-      <SnapshotManager
-        open={showSnapshotManager}
-        onClose={() => setShowSnapshotManager(false)}
-        baseId={ideaId}
       />
 
       {/* Data Connector Wizard */}

@@ -317,12 +317,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   >('requires');
   const [availableDecisions, setAvailableDecisions] = useState<
     { id: string; title: string; status: string }[]
-  >([
-    { id: 'dec-1', title: 'Zatwierdzenie budżetu Q2', status: 'pending' },
-    { id: 'dec-2', title: 'Wybór dostawcy chmury', status: 'pending' },
-    { id: 'dec-3', title: 'Go-Live Date Approval', status: 'approved' },
-    { id: 'dec-4', title: 'Zatrudnienie Senior Dev', status: 'pending' },
-  ]);
+  >([]);
 
   // Related Notes (notebook pages mentioning task title)
   const [relatedNotes, setRelatedNotes] = useState<
@@ -1145,6 +1140,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
             : initiativesRes.value?.initiatives || []
           : [];
       const decisions = decisionsRes.status === 'fulfilled' ? decisionsRes.value || [] : [];
+      setAvailableDecisions(
+        (decisions as any[]).map((d: any) => ({
+          id: String(d.id),
+          title: String(d.title || 'Decision'),
+          status: String(d.status || 'pending'),
+        }))
+      );
       const projects =
         projectsRes.status === 'fulfilled'
           ? Array.isArray(projectsRes.value)

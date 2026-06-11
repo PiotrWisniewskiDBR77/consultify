@@ -1952,13 +1952,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         </button>
         <button
           type="button"
-          disabled
-          className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-          title={comingSoonPrep}
+          onClick={() => setShowCharter(true)}
+          className={MENU_3_ACTION_NEUTRAL}
         >
           <Sparkles className="h-3.5 w-3.5" />
           {t('initiatives.charter.short', 'Charter')}
-          <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
         </button>
       </div>
     </div>
@@ -1986,12 +1984,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           isPilotParticipant ? undefined : (
             <button
               type="button"
-              disabled
-              title={comingSoonPrep}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setShowInitiativeWizard(true)}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-hig-primary text-white hover:bg-hig-primary/90 transition-colors duration-150"
             >
               <span>{t('initiatives.form.newInitiative')}</span>
-              <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
             </button>
           )
         }

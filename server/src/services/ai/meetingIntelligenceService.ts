@@ -217,22 +217,10 @@ Respond ONLY with valid JSON:
 
   private async persistNote(note: MeetingNote, orgId: string, userId: string): Promise<void> {
     await dbRun(
-      `INSERT INTO notebook_entries
-        (id, organization_id, user_id, title, content, entry_type, metadata_json, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'meeting_note', ?, datetime('now'), datetime('now'))`,
-      [
-        note.id,
-        orgId,
-        userId,
-        note.title,
-        this.formatNoteAsMarkdown(note),
-        JSON.stringify({
-          participants: note.participants,
-          actionItemCount: note.actionItems.length,
-          decisionCount: note.decisions.length,
-          calendarDate: note.date,
-        }),
-      ]
+      `INSERT INTO notebook_pages
+        (id, owner_user_id, organization_id, title, content_text, visibility, content_json)
+       VALUES (?, ?, ?, ?, ?, 'private', '{}')`,
+      [note.id, userId, orgId, note.title, this.formatNoteAsMarkdown(note)]
     ).catch((err) => logger.debug(`[MeetingIntel] Persist skipped: ${err?.message}`));
   }
 

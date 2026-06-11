@@ -53,6 +53,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
   const [generationPrompt, setGenerationPrompt] = React.useState('');
   const [message, setMessage] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const selectedRef = React.useRef<Wave5Artifact | null>(null);
 
   React.useEffect(() => {
@@ -61,6 +62,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
   const load = React.useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [schemaRes, listRes] = await Promise.all([
         Api.getWave5ArtifactSchema(),
@@ -84,7 +86,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
         }
       }
     } catch (err: any) {
-      setMessage(err?.message || 'Failed to load artifacts');
+      setLoadError(err?.message || 'Failed to load artifacts');
     } finally {
       setLoading(false);
     }
@@ -242,6 +244,31 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
       setMessage(JSON.stringify(res.manifest, null, 2));
     }
   };
+
+  if (loadError) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center min-h-[320px] text-center space-y-3">
+        <FileText size={32} className="text-slate-400 dark:text-slate-600" />
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Artifacts unavailable
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
+          The Artifacts runtime requires <code className="font-mono">ENABLE_V8_GLOBAL=true</code>{' '}
+          on the server. Contact your administrator to enable this feature.
+        </p>
+        <pre className="mt-2 text-[10px] text-slate-400 dark:text-slate-600 whitespace-pre-wrap max-w-xs">
+          {loadError}
+        </pre>
+        <button
+          type="button"
+          onClick={() => { setLoadError(null); load(); }}
+          className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">

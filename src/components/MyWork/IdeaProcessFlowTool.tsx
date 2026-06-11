@@ -2285,7 +2285,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   y: event.clientY,
                 });
               }}
-              {...getIdeasToolInteractionProps('processflow', { locked })}
+              {...getIdeasToolInteractionProps('processflow', { locked, connectMode: !locked })}
               onInit={(instance: ReactFlowInstance) => {
                 reactFlowInstanceRef.current = instance;
               }}

@@ -1664,16 +1664,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const handleHandoffInitiatives = useCallback(async () => {
     if (!activePage) return;
     try {
-      await Api.post('/v8/notebook/handoff/inicjatywy', {
-        noteId: activePage.id,
-        title: activePage.title,
+      const description = activePage.contentText?.trim() || undefined;
+      await Api.post('/initiatives', {
+        title: activePage.title || (isPolish ? 'Inicjatywa z notatki' : 'Initiative from note'),
+        description,
+        status: 'DRAFT',
       });
-      toast.success(isPolish ? 'Wysłano do Inicjatyw' : 'Sent to Initiatives');
+      toast.success(isPolish ? 'Inicjatywa utworzona' : 'Initiative created');
       trackFunnelEvent('notebook_handoff', { target: 'initiatives', noteId: activePage.id });
     } catch (err: any) {
       toast.error(
         err?.message ||
-          (isPolish ? 'Nie udało się wysłać do Inicjatyw' : 'Failed to send to Initiatives')
+          (isPolish ? 'Nie udało się utworzyć inicjatywy' : 'Failed to create initiative')
       );
     }
   }, [activePage, isPolish]);
