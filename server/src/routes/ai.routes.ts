@@ -3998,9 +3998,14 @@ router.post(
             ...pipelineRequest,
             options: {
               ...(pipelineRequest.options || {}),
+              // Re-assert the language AFTER the Deep Thinking addon: the addon
+              // carries an English section template and used to land last in the
+              // prompt, which pulled deep_research_synthesis output into English
+              // despite request language 'pl' (feedback f2c9f146, Elkomtech).
               systemInstruction:
                 String((pipelineRequest.options as any)?.systemInstruction || '') +
-                String(prelude.systemInstructionAddon || ''),
+                String(prelude.systemInstructionAddon || '') +
+                languageInstruction,
             },
           } as any;
         }

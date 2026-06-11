@@ -94,11 +94,23 @@ async function findAccessibleConversation(
   userId: string,
   organizationId?: string
 ): Promise<any | null> {
-  // Try personal ownership first (fast path)
-  const personal = await dbGet('SELECT * FROM conversations WHERE id = ? AND user_id = ?', [
-    conversationId,
-    userId,
-  ]);
+  // Try personal ownership first (fast path). Ownership alone is not enough:
+  // a conversation belongs to the organization context it was created in.
+  // Without the org filter, a user who switches organizations can keep reading
+  // and writing a conversation from the previous org (feedback 79802ad8 —
+  // Elkomtech user resumed an April dbr77 conversation after the switch).
+  // NULL organization_id = legacy rows from before the column existed; those
+  // stay accessible in any org context.
+  const personal = organizationId
+    ? await dbGet(
+        `SELECT * FROM conversations
+         WHERE id = ? AND user_id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+        [conversationId, userId, organizationId]
+      )
+    : await dbGet('SELECT * FROM conversations WHERE id = ? AND user_id = ?', [
+        conversationId,
+        userId,
+      ]);
   if (personal) return personal;
 
   // Try team access: conversation is in a team-scope project the user's org owns
@@ -250,9 +262,21 @@ router.get(
       let whereClause: string;
       const params: (string | boolean)[] = [];
 
+      // Personal conversations are scoped to the org context they were created in
+      // (feedback 79802ad8: after an org switch the list kept showing — and let the
+      // user resume — conversations from the previous organization). NULL = legacy
+      // rows, visible everywhere.
+      const personalOrgFilter = req.organizationId
+        ? ` AND (c.organization_id = ? OR c.organization_id IS NULL)`
+        : '';
+
       if (scope === 'personal') {
         whereClause = `WHERE c.user_id = ?`;
         params.push(req.userId!);
+        if (personalOrgFilter) {
+          whereClause += personalOrgFilter;
+          params.push(req.organizationId!);
+        }
         whereClause += ` AND (c.chat_project_id IS NULL OR cp.scope IS NULL OR cp.scope = 'personal')`;
       } else if (scope === 'team') {
         if (!req.organizationId || !teamReadAllowed) {
@@ -262,8 +286,11 @@ router.get(
         params.push(req.organizationId);
       } else {
         // scope === 'all': personal + team (team only if P34 allows read)
-        whereClause = `WHERE (c.user_id = ?`;
+        whereClause = `WHERE ((c.user_id = ?${personalOrgFilter})`;
         params.push(req.userId!);
+        if (personalOrgFilter) {
+          params.push(req.organizationId!);
+        }
         if (teamReadAllowed && req.organizationId) {
           whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
           params.push(req.organizationId);

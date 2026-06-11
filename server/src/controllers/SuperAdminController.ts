@@ -147,15 +147,30 @@ const getOrganizations = catchAsync(async (req, res, next) => {
   const hasDiscountPercent = await hasColumn('organizations', 'discount_percent').catch(
     () => false
   );
+  // Feedback #d11ec6b0 (restored after merge d675885189 dropped it): membership
+  // lives in TWO places — users.organization_id (primary tenant) and the
+  // organization_members join table. Counting only the former hides users whose
+  // primary tenant is elsewhere but who are ACTIVE members here (e.g. an OWNER
+  // of aplix-na with primary tenant vts). Count the DISTINCT union of both.
   const sql = `
-        SELECT 
-            o.id, o.name, o.plan, o.status, 
-            COALESCE(o.trial_started_at, o.created_at) as created_at, 
+        SELECT
+            o.id, o.name, o.plan, o.status,
+            COALESCE(o.trial_started_at, o.created_at) as created_at,
             ${hasDiscountPercent ? 'COALESCE(o.discount_percent, 0)' : '0'} as discount_percent,
-            COUNT(CASE WHEN COALESCE(LOWER(u.status), 'active') != 'deleted' THEN 1 END) as user_count
+            (
+                SELECT COUNT(*) FROM (
+                    SELECT u.id AS user_id
+                      FROM users u
+                     WHERE u.organization_id = o.id
+                       AND COALESCE(LOWER(u.status), 'active') <> 'deleted'
+                    UNION
+                    SELECT om.user_id AS user_id
+                      FROM organization_members om
+                     WHERE om.organization_id = o.id
+                       AND (om.status IS NULL OR UPPER(om.status) = 'ACTIVE')
+                ) combined
+            ) as user_count
         FROM organizations o
-        LEFT JOIN users u ON o.id = u.organization_id
-        GROUP BY o.id, o.name, o.plan, o.status, o.trial_started_at, o.created_at${hasDiscountPercent ? ', o.discount_percent' : ''}
         ORDER BY o.name ASC
     `;
 
@@ -384,6 +399,7 @@ const getUsers = catchAsync(async (req, res, next) => {
   const hasUserJobTitle = await hasColumn('users', 'job_title').catch(() => false);
   const hasUserDepartment = await hasColumn('users', 'department').catch(() => false);
   const hasUserProfiles = await tableExists('user_profiles').catch(() => false);
+  const hasOrgMembers = await tableExists('organization_members').catch(() => false);
   const organizationId =
     typeof req.query.organizationId === 'string' ? req.query.organizationId.trim() : '';
   const role = typeof req.query.role === 'string' ? req.query.role.trim() : '';
@@ -392,8 +408,22 @@ const getUsers = catchAsync(async (req, res, next) => {
   const whereClauses: string[] = [];
 
   if (organizationId) {
-    whereClauses.push('u.organization_id = ?');
-    queryParams.push(organizationId);
+    // Feedback #d11ec6b0 (restored after merge d675885189 dropped it): a user
+    // whose primary tenant is elsewhere but who is an ACTIVE organization_members
+    // row here must appear in this org's user list (e.g. OWNER of aplix-na with
+    // primary tenant vts).
+    if (hasOrgMembers) {
+      whereClauses.push(
+        `(u.organization_id = ? OR u.id IN (
+            SELECT om.user_id FROM organization_members om
+             WHERE om.organization_id = ?
+               AND (om.status IS NULL OR UPPER(om.status) = 'ACTIVE')))`
+      );
+      queryParams.push(organizationId, organizationId);
+    } else {
+      whereClauses.push('u.organization_id = ?');
+      queryParams.push(organizationId);
+    }
   }
 
   if (role) {

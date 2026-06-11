@@ -589,7 +589,18 @@ export const FeedbackSidePanel: React.FC = () => {
         );
       }
     } catch (e) {
-      toast.error(t('feedback.ai.failed', 'AI assist failed. Please try again.'));
+      // feedback 4424011a: surface server reason (e.g. "LLM provider not configured")
+      // instead of a generic retry message that gives users no actionable information.
+      const serverMsg = e instanceof Error ? e.message : '';
+      const isUnavailable =
+        serverMsg.toLowerCase().includes('unavailable') ||
+        serverMsg.toLowerCase().includes('no_llm_provider') ||
+        serverMsg.toLowerCase().includes('not configured');
+      toast.error(
+        isUnavailable
+          ? t('feedback.ai.unavailable', 'AI assist is not available right now.')
+          : serverMsg || t('feedback.ai.failed', 'AI assist failed. Please try again.')
+      );
     } finally {
       setIsComposing(false);
     }

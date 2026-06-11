@@ -42,6 +42,16 @@ export interface OpenChatOptions {
   };
 }
 
+// Burst guard (feedback f9fba1e0 — four "Notification: Skrzynka" conversations created
+// within 3 seconds): for entity types without pmoContext fields (e.g. 'notification'),
+// `alreadyHasContext` below can never match, so every click used to create a fresh
+// conversation. Collapse rapid repeat opens of the SAME entity onto one creation.
+const recentEntityConversations = new Map<
+  string,
+  { promise: Promise<{ id: string }>; ts: number }
+>();
+const ENTITY_CONVERSATION_REUSE_WINDOW_MS = 30_000;
+
 export function useOpenChatWithContext() {
   const { activeConversationId, conversations, createConversation, setWorkspaceContext } =
     useConversationStore();
@@ -106,17 +116,37 @@ export function useOpenChatWithContext() {
         ? `${entityType.charAt(0).toUpperCase() + entityType.slice(1)}: ${entityName}`
         : `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Chat`;
 
-      const conv = await createConversation({
-        title,
-        pmoContext: pmoContext || {
-          assessmentId: entityType === 'assessment' ? entityId : undefined,
-          initiativeIds: entityType === 'initiative' ? [entityId] : undefined,
-          taskId: entityType === 'task' ? entityId : undefined,
-          decisionId: entityType === 'decision' ? entityId : undefined,
-          reportId: entityType === 'report' ? entityId : undefined,
-          kpiId: entityType === 'kpi' ? entityId : undefined,
-        },
-      });
+      const entityKey = `${entityType}:${entityId}`;
+      const recent = recentEntityConversations.get(entityKey);
+      let conv: { id: string };
+      if (recent && Date.now() - recent.ts < ENTITY_CONVERSATION_REUSE_WINDOW_MS) {
+        conv = await recent.promise;
+        // createConversation activates the new conversation itself; mirror that
+        // for the reused one so the kickoff message lands in it.
+        if (useConversationStore.getState().activeConversationId !== conv.id) {
+          useConversationStore.getState().setActiveConversation(conv.id);
+        }
+      } else {
+        const promise = createConversation({
+          title,
+          pmoContext: pmoContext || {
+            assessmentId: entityType === 'assessment' ? entityId : undefined,
+            initiativeIds: entityType === 'initiative' ? [entityId] : undefined,
+            taskId: entityType === 'task' ? entityId : undefined,
+            decisionId: entityType === 'decision' ? entityId : undefined,
+            reportId: entityType === 'report' ? entityId : undefined,
+            kpiId: entityType === 'kpi' ? entityId : undefined,
+          },
+        });
+        recentEntityConversations.set(entityKey, { promise, ts: Date.now() });
+        try {
+          conv = await promise;
+        } catch (err) {
+          // Failed creations must not poison the reuse window.
+          recentEntityConversations.delete(entityKey);
+          throw err;
+        }
+      }
 
       // Set workspace context with full entity data
       setWorkspaceContext({

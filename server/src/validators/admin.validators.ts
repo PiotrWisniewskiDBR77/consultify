@@ -27,6 +27,19 @@ const userStatusSchema = z
   .transform((value) => value.toLowerCase())
   .pipe(z.enum(userStatusValues));
 
+// Restored from abf1c6de58 (feedback #1e3d749a): production users carry roles
+// beyond USER/ADMIN/SUPERADMIN/MANAGER (OWNER, MEMBER, PROJECT_MANAGER,
+// CONSULTANT, VIEWER…). The Edit User dialog echoes the current role back, so a
+// narrow enum 400s every edit of such a user. The merge d675885189 silently
+// re-narrowed this; keep the schema permissive — the controller normalizes and
+// validates roles against business logic.
+const roleTokenSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .regex(/^[A-Za-z0-9_-]+$/, 'role must be a simple token');
+
 export const UpdateOrganizationAdminSchema = z.object({
   plan: z.enum(['free', 'trial', 'starter', 'pro', 'professional', 'enterprise']).optional(),
   status: z.enum(['active', 'pending', 'blocked', 'suspended', 'cancelled', 'trial']).optional(),
@@ -38,7 +51,7 @@ export const CreateUserAdminSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1).max(255),
   lastName: z.string().min(1).max(255),
-  role: z.enum(['USER', 'ADMIN', 'SUPERADMIN', 'MANAGER']).optional(),
+  role: roleTokenSchema.optional(),
   organizationId: z.string().trim().min(1).max(255).optional(),
   password: z.string().min(8).max(255).optional(),
   licensePlanId: z.string().trim().max(255).nullable().optional(),
@@ -51,7 +64,7 @@ export const UpdateUserAdminSchema = z.object({
   email: z.string().email().optional(),
   firstName: z.string().max(255).optional(),
   lastName: z.string().max(255).optional(),
-  role: z.enum(['USER', 'ADMIN', 'SUPERADMIN', 'MANAGER']).optional(),
+  role: roleTokenSchema.optional(),
   organizationId: z.string().trim().min(1).max(255).optional(),
   status: userStatusSchema.optional(),
   licensePlanId: z.string().trim().max(255).nullable().optional(),

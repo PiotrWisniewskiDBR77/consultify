@@ -170,9 +170,14 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
           // BroadcastChannel not supported
         }
 
-        // Hard reload to reset all cached data
+        // Hard reload to reset all cached data. Drop conversation/entity deep links:
+        // staying on /chat/<id> after the switch would resume a conversation from
+        // the PREVIOUS organization (feedback 79802ad8 — Elkomtech user landed back
+        // in an old dbr77 thread). The server now 404s those, but landing on a
+        // "conversation not found" screen right after switching is still bad UX.
         setTimeout(() => {
-          window.location.href = window.location.pathname;
+          const path = window.location.pathname;
+          window.location.href = path.startsWith('/chat/') ? '/chat' : path;
         }, 300);
       } catch (err) {
         console.error('[OrgContext] Switch org error:', err);

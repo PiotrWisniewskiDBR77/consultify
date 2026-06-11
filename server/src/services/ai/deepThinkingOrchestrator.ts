@@ -62,12 +62,31 @@ function normalizeDepth(raw: unknown): DeepThinkingDepth {
 
 function buildDeepThinkingFormatAddon(
   showHighlights?: boolean,
-  researchType?: ResearchType
+  researchType?: ResearchType,
+  langCode?: string
 ): string {
+  // The section template below is written in English. Without an explicit
+  // counter-rule the model follows the template's language instead of the
+  // user's (feedback f2c9f146 — deep_research_synthesis answered in English
+  // despite request language 'pl'). The rule names the target language so the
+  // addon stays language-safe even when appended after the main prompt.
+  const langNames: Record<string, string> = {
+    pl: 'Polish (polski)',
+    en: 'English',
+    de: 'German (Deutsch)',
+    es: 'Spanish (Español)',
+    ar: 'Arabic (العربية)',
+    ja: 'Japanese (日本語)',
+    jp: 'Japanese (日本語)',
+  };
+  const langName = langNames[(langCode || 'en').split('-')[0]] || 'English';
+  const languageRule = `- LANGUAGE: write the ENTIRE output — including all section headers — in ${langName}. The section names below are structural labels only; translate them.`;
+
   // If research has task-specific synthesis, use lighter format rules
   if (researchType && researchType !== 'general_research') {
     return [
       '\n\n## OUTPUT QUALITY RULES (must follow)',
+      languageRule,
       '- No fluff. No blog style. This is boardroom-grade.',
       '- Separate facts vs assumptions explicitly.',
       '- Use citation markers [n] to reference sources.',
@@ -91,6 +110,7 @@ function buildDeepThinkingFormatAddon(
     '6) Next actions (checklist + early signals)',
     '',
     'Rules:',
+    languageRule,
     '- No fluff. No blog style. This is boardroom-grade.',
     '- Separate facts vs assumptions explicitly.',
     '- Do NOT reveal chain-of-thought. If reasoning highlights are requested, keep them high-level.',
@@ -492,7 +512,7 @@ export class DeepThinkingOrchestrator {
           ].join('\n')
         : '';
     const addon = [
-      buildDeepThinkingFormatAddon(showHighlights, researchType),
+      buildDeepThinkingFormatAddon(showHighlights, researchType, (language || 'en').split('-')[0]),
       historicalContextAddon,
       researchOutput ? buildResearchAddon(researchOutput) : '',
       researchOutput ? '\n\nRules (research):\n- If sources are provided, cite them as [n].' : '',

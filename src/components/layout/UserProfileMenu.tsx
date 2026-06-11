@@ -155,6 +155,14 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     void fetchOrgs();
   }, [fetchOrgs, isOpen, orgs.length, orgsLoading, shouldShowOrgSwitcher]);
 
+  // Feedback #160c40be — also load orgs when the name/role chip is visible (not
+  // only when the menu opens), so the header role resolves to the active-org
+  // membership role immediately instead of flickering from the global role.
+  useEffect(() => {
+    if (!showName || !shouldShowOrgSwitcher || orgsLoading || orgs.length > 0) return;
+    void fetchOrgs();
+  }, [fetchOrgs, showName, orgs.length, orgsLoading, shouldShowOrgSwitcher]);
+
   if (!currentUser) return null;
 
   const initials =
@@ -163,11 +171,19 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     (isDemoMode ? demoOrganization?.name : currentOrganization?.name) ||
     currentUser.companyName ||
     'Workspace';
-  const roleLabel = currentUser.role?.toLowerCase();
   const activeOrganizationId =
     (isDemoMode ? demoOrganization?.id : currentOrganization?.id) ||
     currentUser.organizationId ||
     null;
+  // Feedback #160c40be — the header chip used the GLOBAL `users.role` while the
+  // org switcher below shows the PER-ORG membership role, so the same person read
+  // as "member" up here and "admin" in the switcher. Prefer the active org's
+  // membership role (same source as the switcher) when the org list is loaded;
+  // fall back to the global role before it's fetched.
+  const activeOrgRole = activeOrganizationId
+    ? orgs.find((o) => o.id === activeOrganizationId)?.role
+    : undefined;
+  const roleLabel = (activeOrgRole || currentUser.role || '').toLowerCase();
 
   return (
     <div className={`relative ${className}`} ref={menuRef}>

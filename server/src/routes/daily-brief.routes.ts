@@ -39,13 +39,25 @@ router.get(
         )
       : [];
 
-    const notifications = await dbAll(
-      `
+    // Same org-scoping rule as tasks above (residual gap from #5d9b15f7):
+    // notifications carry organization_id, so a brief rendered in org A must not
+    // count/show unread notifications from org B. NULL = legacy/system rows.
+    const notifications = orgId
+      ? await dbAll(
+          `
+    SELECT id, title, type, created_at FROM notifications
+    WHERE user_id = ? AND (organization_id = ? OR organization_id IS NULL) AND read = 0
+    ORDER BY created_at DESC LIMIT 5
+  `,
+          [userId, orgId]
+        )
+      : await dbAll(
+          `
     SELECT id, title, type, created_at FROM notifications
     WHERE user_id = ? AND read = 0 ORDER BY created_at DESC LIMIT 5
   `,
-      [userId]
-    );
+          [userId]
+        );
 
     const meetings = await dbAll(
       `
