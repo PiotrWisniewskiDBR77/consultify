@@ -59,6 +59,13 @@ vi.mock('../../ai/tools/searchOrgNotes.js', () => ({
   searchOrgNotes: (...args: unknown[]) => searchOrgNotesMock(...args),
 }));
 
+const featureFlagsMock = { ENABLE_DELIVERABLES_DOC_STREAMING: false };
+vi.mock('../../../config/FeatureFlags.js', () => ({
+  get featureFlags() {
+    return featureFlagsMock;
+  },
+}));
+
 const {
   planDoc,
   planSheet,
@@ -125,6 +132,7 @@ beforeEach(() => {
   buildContextPackMock.mockResolvedValue({ key_points: [], data_points: [] });
   searchInsightsMock.mockResolvedValue({ results: [], truncated: false });
   searchOrgNotesMock.mockResolvedValue({ results: [], truncated: false });
+  featureFlagsMock.ENABLE_DELIVERABLES_DOC_STREAMING = false;
   renderMarkdownMock.mockReturnValue(
     '# Raport o transformacji\n\n## Synteza\n\nRealna treść konsultingowa oparta o kontekst.'
   );
@@ -510,7 +518,6 @@ describe('B4 — auto-skan organizacji (brak wskazanych źródeł)', () => {
   });
 });
 
-
 describe('B3 — sekcja Źródła w artefakcie', () => {
   it('dokument kończy się sekcją Źródła z tytułami encji', async () => {
     getDraftMock.mockResolvedValue(
@@ -522,7 +529,11 @@ describe('B3 — sekcja Źródła w artefakcie', () => {
               language: 'pl',
               title: 'Raport',
               sourceHints: [
-                { sourceType: 'initiative', sourceId: 'init-7', sourceTitle: 'Automatyzacja magazynu' },
+                {
+                  sourceType: 'initiative',
+                  sourceId: 'init-7',
+                  sourceTitle: 'Automatyzacja magazynu',
+                },
               ],
             },
             outline,
@@ -544,5 +555,48 @@ describe('B3 — sekcja Źródła w artefakcie', () => {
     await flushBackgroundWork();
     const contentPatch = updateDraftMock.mock.calls.find((c) => 'content' in c[0].patch);
     expect(contentPatch[0].patch.content).not.toContain('## Źródła');
+  });
+});
+
+describe('A3 — streaming per-sekcja (flaga ENABLE_DELIVERABLES_DOC_STREAMING)', () => {
+  it('generuje sekcja-po-sekcji z progresywnym zapisem i koherencją (priors w prompcie)', async () => {
+    featureFlagsMock.ENABLE_DELIVERABLES_DOC_STREAMING = true;
+    generateChatResponseMock
+      .mockResolvedValueOnce({ content: 'Proza sekcji Synteza.' })
+      .mockResolvedValueOnce({ content: 'Proza sekcji Kontekst.' });
+
+    await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+    await flushBackgroundWork();
+
+    // one-shot NIE został użyty
+    expect(materializeMock).not.toHaveBeenCalled();
+    // dwa wywołania = dwie sekcje
+    expect(generateChatResponseMock).toHaveBeenCalledTimes(2);
+    // drugie wywołanie zna pierwszą sekcję (koherencja)
+    const secondPrompt = generateChatResponseMock.mock.calls[1][0].messages[0].content;
+    expect(secondPrompt).toContain('Synteza');
+    // progresywny zapis: ≥2 zapisy treści (po każdej sekcji)
+    const contentWrites = updateDraftMock.mock.calls.filter((c) => 'content' in c[0].patch);
+    expect(contentWrites.length).toBeGreaterThanOrEqual(2);
+    // finalna treść ma obie sekcje
+    const finalContent = contentWrites[contentWrites.length - 1][0].patch.content;
+    expect(finalContent).toContain('## Synteza');
+    expect(finalContent).toContain('Proza sekcji Kontekst.');
+
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
+    expect(status.state).toBe('draft');
+  });
+
+  it('wszystkie sekcje padły ⇒ stan error (uczciwy, brak wydmuszki)', async () => {
+    featureFlagsMock.ENABLE_DELIVERABLES_DOC_STREAMING = true;
+    generateChatResponseMock.mockRejectedValue(new Error('LLM down'));
+
+    await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+    await flushBackgroundWork();
+
+    const status = await statusDoc({ generationId: 'draft-1', organizationId: ORG });
+    expect(status.state).toBe('error');
   });
 });

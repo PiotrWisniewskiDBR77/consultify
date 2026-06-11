@@ -724,6 +724,99 @@ export async function planDoc(params: {
   };
 }
 
+/**
+ * A3 (plan wykonawczy): generacja dokumentu sekcja-po-sekcji. Każde wywołanie
+ * widzi tytuły poprzednich sekcji (koherencja narracji bez kwadratowego rozrostu
+ * kontekstu) + fakty groundingu. Po KAŻDEJ sekcji zapisuje narastający markdown
+ * do draftu i emituje progres — panel re-hydratuje, więc sekcje „rosną na oczach".
+ * Zwraca finalny markdown albo null gdy WSZYSTKIE sekcje padły (uczciwy error).
+ */
+async function runStreamingDocGeneration(params: {
+  draftId: string;
+  organizationId: string;
+  title: string;
+  outline: DocumentOutline;
+  language: 'pl' | 'en';
+  groundingFacts: string | null;
+  onSectionDone: (index: number, total: number) => void;
+}): Promise<string | null> {
+  const { generateChatResponse } = await import('../aiService.js');
+  const pl = params.language !== 'en';
+  const sections = params.outline.sections;
+  const total = sections.length;
+
+  const systemPrompt = pl
+    ? 'Jesteś starszym konsultantem w Consultify. Piszesz JEDNĄ sekcję dokumentu biznesowego — zwracasz wyłącznie prozę tej sekcji (bez nagłówka, bez markdownu nagłówków). 2–4 akapity, konkretnie, językiem konsultingowym. Jeśli twierdzenie wykracza poza dostarczone fakty, oznacz je w nawiasie „(założenie)". Bez bloków kodu, bez meta-komentarzy.'
+    : 'You are a senior consultant at Consultify. You write ONE section of a business document — return only that section prose (no heading, no markdown headings). 2–4 paragraphs, concrete, consulting register. If a claim goes beyond the provided facts, flag it inline as "(assumption)". No code fences, no meta-commentary.';
+
+  const lines = [`# ${params.title}`, ''];
+  let anySucceeded = false;
+
+  for (let i = 0; i < total; i++) {
+    const section = sections[i];
+    const priorTitles = sections.slice(0, i).map((s) => s.title);
+    const ctxParts = [
+      pl ? `Dokument: „${params.title}"` : `Document: "${params.title}"`,
+      pl ? `Sekcja do napisania: „${section.title}"` : `Section to write: "${section.title}"`,
+      section.purpose
+        ? pl
+          ? `Cel sekcji: ${section.purpose}`
+          : `Section purpose: ${section.purpose}`
+        : '',
+      priorTitles.length
+        ? pl
+          ? `Wcześniejsze sekcje (nie powtarzaj ich treści): ${priorTitles.join(', ')}`
+          : `Earlier sections (do not repeat them): ${priorTitles.join(', ')}`
+        : '',
+      params.groundingFacts || '',
+    ].filter(Boolean);
+
+    let prose = '';
+    try {
+      const res = await generateChatResponse({
+        systemPrompt,
+        messages: [{ role: 'user', content: ctxParts.join('\n\n') }],
+        model: 'standard',
+        maxTokens: 900,
+      });
+      prose = String(res.content || '')
+        .replace(/^```(?:markdown)?\s*/i, '')
+        .replace(/\s*```\s*$/, '')
+        .replace(/^#{1,3}\s.*$/gm, '') // wytnij ewentualne nagłówki od modelu
+        .trim();
+    } catch (err) {
+      logger.warn(
+        `${LOG_PREFIX} streaming section failed: generation=${params.draftId} section="${section.title}" — ${err instanceof Error ? err.message : err}`
+      );
+    }
+
+    if (prose && !isPlaceholderDocumentProse(prose)) {
+      anySucceeded = true;
+      lines.push(`## ${section.title}`, '', prose, '');
+    } else {
+      // Sekcja padła — jawny znacznik, nie cisza (D-L2-3 w duchu).
+      lines.push(
+        `## ${section.title}`,
+        '',
+        pl
+          ? '_(Nie udało się wygenerować tej sekcji — spróbuj ponownie lub uzupełnij ręcznie.)_'
+          : '_(This section could not be generated — retry or fill it in manually.)_',
+        ''
+      );
+    }
+
+    // Progresywny zapis: panel re-hydratuje i pokazuje narastającą treść.
+    await updateDraft({
+      organizationId: params.organizationId,
+      draftId: params.draftId,
+      patch: { content: lines.join('\n') },
+    });
+    params.onSectionDone(i + 1, total);
+  }
+
+  return anySucceeded ? lines.join('\n') : null;
+}
+
 export async function startDoc(params: {
   generationId: string;
   setup: Record<string, unknown>;
@@ -767,6 +860,66 @@ export async function startDoc(params: {
       const intake = groundingFacts
         ? { ...stored.intake, description: `${stored.intake.description}\n\n${groundingFacts}` }
         : stored.intake;
+      const docLangEarly = stored.intake.language === 'en' ? ('en' as const) : ('pl' as const);
+      const usedRefsEarly = stored.intake.sourceHints?.length
+        ? stored.intake.sourceHints
+        : stored.autoGrounding?.refs;
+      const groundingModeDoc = stored.intake.sourceHints?.length
+        ? 'source_refs'
+        : stored.autoGrounding?.refs?.length
+          ? 'auto_scan'
+          : 'conversation';
+
+      // A3: streaming per-sekcja (flaga OFF ⇒ sprawdzona ścieżka one-shot niżej).
+      const { featureFlags } = await import('../../config/FeatureFlags.js');
+      if (featureFlags.ENABLE_DELIVERABLES_DOC_STREAMING) {
+        const streamed = await runStreamingDocGeneration({
+          draftId: draft.id,
+          organizationId: params.organizationId,
+          title: String(stored.intake.title || draft.title),
+          outline,
+          language: docLangEarly,
+          groundingFacts,
+          onSectionDone: (done, totalSections) =>
+            setDocRuntime(draft.id, {
+              state: done >= totalSections ? 'validating' : 'generating',
+              warnings: [],
+              sectionCount: totalSections,
+            }),
+        });
+        if (!streamed) {
+          throw new Error(
+            'Generacja treści nie powiodła się (LLM niedostępny) — dokument nie został wypełniony'
+          );
+        }
+        const withSources = appendSourcesSection(streamed, usedRefsEarly, docLangEarly);
+        await updateDraft({
+          organizationId: params.organizationId,
+          draftId: draft.id,
+          patch: { content: withSources },
+        });
+        setDocRuntime(draft.id, {
+          state: 'draft',
+          warnings: [],
+          sectionCount: outline.sections.length,
+        });
+        void trackDeliverableEvent({
+          organizationId: params.organizationId,
+          userId: params.userId,
+          generationId: draft.id,
+          format: 'doc',
+          event: 'completed',
+          durationMs: Date.now() - generationStartedAt,
+          unitCount: outline.sections.length,
+          language: stored.intake.language,
+          groundingMode: `${groundingModeDoc}+stream`,
+        });
+        logger.info(
+          `${LOG_PREFIX} draft ready (streamed): generation=${draft.id} sections=${outline.sections.length}`
+        );
+        return;
+      }
+
       const result = await materializeDocumentArtifact({
         organizationId: params.organizationId,
         userId: params.userId,

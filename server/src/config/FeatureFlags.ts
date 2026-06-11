@@ -32,6 +32,7 @@ const FeatureFlagsSchema = z.object({
   ENABLE_V8_SHADOW_MODE: z.boolean().default(false),
   ENABLE_DELIVERABLES_LIGHT: z.boolean().default(false),
   ENABLE_TERESA_RETRIEVAL: z.boolean().default(false),
+  ENABLE_DELIVERABLES_DOC_STREAMING: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -124,6 +125,12 @@ export function loadFeatureFlags(): FeatureFlags {
     // locate notes, insights and initiatives the user references by topic.
     // Opt-in; when off the chat stream and persona prompt are untouched.
     ENABLE_TERESA_RETRIEVAL: process.env.ENABLE_TERESA_RETRIEVAL === 'true',
+
+    // Deliverables A3: per-section streaming for documents. Generates section
+    // by section (each call sees prior sections for coherence) and writes the
+    // draft progressively, so the first section paints in ~3-4s instead of
+    // waiting ~19s for the one-shot. Opt-in; OFF ⇒ proven one-shot path.
+    ENABLE_DELIVERABLES_DOC_STREAMING: process.env.ENABLE_DELIVERABLES_DOC_STREAMING === 'true',
   };
 
   // Validate configuration
