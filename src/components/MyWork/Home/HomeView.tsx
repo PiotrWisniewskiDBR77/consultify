@@ -59,7 +59,6 @@ type QuadrantSpec = {
   y: number;
 };
 
-const STATUS_FILTER_IDS: StatusFilter[] = ['all', 'new', 'updated', 'saved', 'watching'];
 
 const QUADRANTS: QuadrantSpec[] = [
   {
