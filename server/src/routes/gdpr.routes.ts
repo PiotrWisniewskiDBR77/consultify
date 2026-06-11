@@ -19,6 +19,7 @@ import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { verifyUserPassword } from '../utils/verifyUserPassword.js';
 
 // Apply rate limiting
 const router = Router();
@@ -535,6 +536,14 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
+      const { password } = (req.body || {}) as { password?: unknown };
+
+      // Verify the user's password before scheduling an irreversible account
+      // deletion. Keeps this route in lockstep with the settings deletion routes.
+      const passwordCheck = await verifyUserPassword(userId, password);
+      if (!passwordCheck.ok) {
+        return res.status(passwordCheck.status).json({ error: passwordCheck.error });
+      }
 
       // Check for existing pending deletion
       const existing = await dbGet<{ id: string }>(

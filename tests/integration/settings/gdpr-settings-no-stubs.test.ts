@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import bcrypt from 'bcryptjs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,6 +21,8 @@ describe('Settings/GDPR routes (no stub responses)', () => {
 
   const userId = 'u-gdpr-1';
   const orgId = null;
+  const userPassword = 'Sup3rSecret!';
+  const passwordHash = bcrypt.hashSync(userPassword, 4);
   const jwtSecret = 'test-secret-min-32-chars-1234567890-abcdef';
 
   const makeToken = () =>
@@ -64,6 +67,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
         first_name TEXT,
         last_name TEXT,
         phone TEXT,
+        password TEXT,
         role TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         last_login_at DATETIME
@@ -110,8 +114,8 @@ describe('Settings/GDPR routes (no stub responses)', () => {
       DELETE FROM users WHERE id = '${userId}';
     `);
     await db.run(
-      `INSERT INTO users (id, organization_id, email, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?)`,
-      [userId, orgId, 'u1@test.local', 'U', 'One', 'ADMIN']
+      `INSERT INTO users (id, organization_id, email, first_name, last_name, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [userId, orgId, 'u1@test.local', 'U', 'One', passwordHash, 'ADMIN']
     );
   });
 
@@ -147,7 +151,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     const res = await request(makeApp())
       .post('/api/settings/request-deletion')
       .set('Authorization', `Bearer ${makeToken()}`)
-      .send({ reason: 'test' });
+      .send({ reason: 'test', password: userPassword });
     expect(res.status).toBe(202);
     expect(res.body).toEqual(
       expect.objectContaining({

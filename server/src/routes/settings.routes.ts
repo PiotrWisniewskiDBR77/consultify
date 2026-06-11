@@ -3,7 +3,6 @@
  * API endpoints for settings including user preferences
  */
 
-import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { Response, Router } from 'express';
 
@@ -26,6 +25,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { verifyUserPassword } from '../utils/verifyUserPassword.js';
 
 const router = Router();
 
@@ -2638,7 +2638,16 @@ router.post(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
-    const { reason } = req.body || {};
+    const { reason, password } = req.body || {};
+
+    // Verify the user's password before scheduling an irreversible account deletion.
+    // This mirrors POST /gdpr/deletion-request so no deletion route can be hit
+    // without proof of the password.
+    const passwordCheck = await verifyUserPassword(userId, password);
+    if (!passwordCheck.ok) {
+      return res.status(passwordCheck.status).json({ error: passwordCheck.error });
+    }
+
     logger.warn(
       `[settings] Account deletion requested by user ${userId}, reason=${reason || 'n/a'}`
     );
@@ -3012,21 +3021,9 @@ router.post(
     }
 
     // Verify the user's password before scheduling an irreversible account deletion.
-    if (!password || typeof password !== 'string') {
-      return res.status(400).json({ error: 'Password is required to confirm account deletion' });
-    }
-
-    const user = await dbGet<{ id: string; password: string }>(
-      'SELECT id, password FROM users WHERE id = ?',
-      [userId]
-    );
-
-    if (!user || !user.password) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    if (!bcrypt.compareSync(password, user.password)) {
-      return res.status(403).json({ error: 'Password is incorrect' });
+    const passwordCheck = await verifyUserPassword(userId, password);
+    if (!passwordCheck.ok) {
+      return res.status(passwordCheck.status).json({ error: passwordCheck.error });
     }
 
     const { v4: uuidv4 } = await import('uuid');
