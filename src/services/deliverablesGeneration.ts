@@ -58,7 +58,9 @@ export function deckTitleFromIntent(intent: string, fallback: string): string {
   // P3 (audyt): zdejmij frazę-komendę z początku — tytuł ma brzmieć jak tytuł.
   line = line
     .replace(
-      /^(napisz|przygotuj|stwórz|utwórz|zrób|wygeneruj|opracuj|create|write|make|prepare|generate|build)\s+(mi\s+|me\s+|a\s+|an\s+)?(raport|dokument|notatk\w*|prezentacj\w*|arkusz\w*|deck|tabel\w*|budżet|plik\s*excel|skoroszyt|report|document|memo|presentation|sheet|spreadsheet|table|budget)?\s*[:,-]?\s*/i,
+      // [\p{L}]* zamiast \w* — \w nie obejmuje polskich diakrytyków, więc
+      // "prezentacj\w*" zostawiało "ę" z "prezentację" (tytuł "Ę o …").
+      /^(napisz|przygotuj|stwórz|utwórz|zrób|wygeneruj|opracuj|create|write|make|prepare|generate|build)\s+(mi\s+|me\s+|a\s+|an\s+)?(raport|dokument|notatk[\p{L}]*|prezentacj[\p{L}]*|arkusz[\p{L}]*|deck|tabel[\p{L}]*|budżet|plik\s*excel|skoroszyt|report|document|memo|presentation|sheet|spreadsheet|table|budget)?\s*[:,-]?\s*/iu,
       ''
     )
     .trim();
