@@ -10,7 +10,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M03 | Moja Praca — organizer | 1 (core) | 🟦 | 44 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
 | M10 | Wywiad | 1 (core) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
 | M13 | Inicjatywy | 1 (core) | 🟦 | 45 | Alpha | 2026-06-11 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
-| M14 | Wdrożenie | 1 (core) | ⬜ | — | — | — | — |
+| M14 | Wdrożenie | 1 (core) | 🟦 | 42 | Alpha | 2026-06-11 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
 | M25 | Ustawienia | 1 (core) | ⬜ | — | — | — | — |
 | M02 | Canvas | 2 (beta) | ⬜ | — | — | — | audyty cząstkowe 2026-06-10 |
 | M17 | Outputs | 2 (beta) | ⬜ | — | — | — | — |
