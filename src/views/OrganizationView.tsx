@@ -18,6 +18,7 @@ import OrganizationSidebar, {
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
 import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
+import { useOrgContextSync } from '../hooks/useOrgContextSync';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 import { ChallengeMapModule } from './ContextBuilder/modules/ChallengeMapModule';
@@ -125,8 +126,10 @@ export const OrganizationView: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { setCurrentView, currentOrganization } = useAppStore();
+  const { setCurrentView, currentOrganization, currentUser } = useAppStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useOrgContextSync(!!currentUser?.isAuthenticated);
 
   useEffect(() => {
     const path = location.pathname.replace(/\/+$/, '');

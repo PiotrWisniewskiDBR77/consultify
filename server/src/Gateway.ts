@@ -181,6 +181,7 @@ import ownershipRoutes from './routes/organization/ownership.routes.js';
 import rbacRoutes from './routes/organization/rbac.routes.js';
 import teamsRoutes from './routes/organization/teams.routes.js';
 import organizationContextRoutes from './routes/organization-context.routes.js';
+import organizationContextStoreRoutes from './routes/organization-context-store.routes.js';
 import partnerOutreachRoutes from './routes/partnerOutreach.routes.js';
 import partnerRoutes, {
   partnerConfigRouter,
@@ -697,6 +698,7 @@ export class ApiGateway {
       // Previously wrapped in mountStub, which 404'd the member-invite funnel in prod.
       app.use('/api/invitations', invitationRoutes);
       app.use('/api/organization-context', organizationContextRoutes);
+      app.use('/api/organization-context-store', organizationContextStoreRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);
       app.use('/api/organization-data', organizationDataRoutes);
       app.use('/api/organization', orgLimitsRoutes);
