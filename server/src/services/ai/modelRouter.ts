@@ -1380,21 +1380,35 @@ export class ModelRouter {
     const requestedModelId =
       providerName === 'openrouter' ? normalizeOpenRouterModelId(modelId) : modelId;
 
-    let provider = await DbPromise.get<ProviderRow>(
-      `SELECT * FROM llm_providers 
-             WHERE provider = ? AND ${sqlTruthy('is_active')}
-             AND (model_id = ? OR model_id IS NULL OR model_id = '')
-             LIMIT 1`,
-      [providerName, requestedModelId],
-      { fallback: true }
-    );
+    // Cache provider rows — they change only on admin config updates (router:config_update flushes).
+    const CACHE_KEY = `router:provider_cfg:${providerName}:${requestedModelId}`;
+    let provider: ProviderRow | null | undefined;
+    try {
+      const cached = await appCache.get<ProviderRow | null>(CACHE_KEY);
+      if (cached !== undefined) provider = cached;
+    } catch { /* ignore */ }
 
-    if (!provider) {
+    if (provider === undefined) {
       provider = await DbPromise.get<ProviderRow>(
-        `SELECT * FROM llm_providers WHERE provider = ? AND ${sqlTruthy('is_active')} LIMIT 1`,
-        [providerName],
+        `SELECT * FROM llm_providers
+               WHERE provider = ? AND ${sqlTruthy('is_active')}
+               AND (model_id = ? OR model_id IS NULL OR model_id = '')
+               LIMIT 1`,
+        [providerName, requestedModelId],
         { fallback: true }
       );
+
+      if (!provider) {
+        provider = await DbPromise.get<ProviderRow>(
+          `SELECT * FROM llm_providers WHERE provider = ? AND ${sqlTruthy('is_active')} LIMIT 1`,
+          [providerName],
+          { fallback: true }
+        );
+      }
+
+      try {
+        await appCache.set(CACHE_KEY, provider ?? null, 300); // 5 mins, flushed on config_update
+      } catch { /* ignore */ }
     }
 
     if (!provider || !provider.api_key) {
