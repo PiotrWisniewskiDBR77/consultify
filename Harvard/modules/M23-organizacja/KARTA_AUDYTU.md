@@ -136,7 +136,7 @@
 3. **Role-gate na route `/organization/*` sekcji admin** lub redirect także przy montowaniu z URL (koniec podwójnej implementacji) — Weryfikacja: member deep-link → redirect/403.
 
 ### Fala 2 — Domknięcie wartości (P1/P2)
-1. **Backendowa persystencja Goals/Challenges/Strategy** (per-org) + zasilanie kontekstu Teresy (jak Profil) — Weryfikacja: dane przeżywają zmianę przeglądarki/org, AI je widzi.
+1. **`[INTEGRACJA — INTEGRACJE.md §C poz.8 / Sprint 7+ / W11]`** Backendowa persystencja Goals/Challenges/Strategy (per-org) + zasilanie kontekstu Teresy (jak Profil organizacji). `useContextBuilderStore.ts:414` = zustand persist (localStorage), nie per-org, nie zasila Teresy — dane giną przy zmianie przeglądarki/org. Wzorzec: Profil firmy → backendowy kontekst — replikować — Weryfikacja: dane przeżywają zmianę przeglądarki/org, AI je widzi.
 2. **Goals AI realne** (nie hardcoded `onRefine` no-op) — Weryfikacja: sugestie z LLM.
 3. **Billing/Limits CTA** — realny checkout/upgrade lub jawne „zarządzane przez…" — Weryfikacja: CTA coś robi.
 4. **Włączyć `orgContext.middleware.test.ts` w CI z PG** — Weryfikacja: multi-tenant isolation testowana.

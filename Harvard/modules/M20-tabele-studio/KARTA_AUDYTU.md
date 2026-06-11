@@ -147,7 +147,7 @@
 4. **Usunąć kolizję migracji** 725×2/726×2 + test ModuleSync — Weryfikacja: unikalne numery, test deterministyczny.
 
 ### Fala 2 — Domknięcie wartości (P1/P2)
-1. **Governed sync realny** — `syncToModule` faktycznie pisze do Results/Finance/Execution (nie tylko log) lub jawnie oznaczyć „preview" — Weryfikacja: rekord pojawia się w module docelowym.
+1. **`[INTEGRACJA — INTEGRACJE.md §C poz.1 / Sprint 5 / DECYZJA #6]`** Governed sync realny — `ModuleSyncService.ts:89` pisze wyłącznie do `tp_module_sync_results` (log-only); grep potwierdza ZERO czytelników w M15/M16. `syncToModule` musi faktycznie pisać do Results/Finance/Execution ALBO jawnie oznaczyć jako „preview" i ukryć przyciski sync — Weryfikacja: rekord pojawia się w module docelowym.
 2. **Uspójnić 4 flagi** (komentarz vs runtime ON) + obsłużyć 503/404 na FE (baner zamiast `catch→null`) — Weryfikacja: komentarz=runtime; flaga OFF → komunikat.
 3. **Test fundamentu na realnej `tp_records`** (S1) + anty-false-green E2E — Weryfikacja: testy dotykają DB, potrafią oblać.
 

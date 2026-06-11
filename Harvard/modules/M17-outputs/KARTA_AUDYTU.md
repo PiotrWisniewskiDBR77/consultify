@@ -148,7 +148,7 @@
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P1)
-1. **Sanityzacja public viewera** — `/presentations/shared/:token` zwraca whitelistę pól (bez `organization_id`/`confidentiality`/wewnętrznych ID/tokenu), wzór `/api/public/artifacts` — Weryfikacja: odpowiedź sieciowa nie zawiera org/confidentiality.
+1. **`[INTEGRACJA — INTEGRACJE.md §C poz.9 / Sprint 7+ / W9]`** Sanityzacja public viewera — `/presentations/shared/:token` zwraca whitelistę pól (bez `organization_id`/`confidentiality`/wewnętrznych ID/tokenu). **NAPRAWIĆ RAZ RAZEM Z M19** (wspólny leak `presentations.routes.ts:412`), wzór `/api/public/artifacts` — Weryfikacja: odpowiedź sieciowa nie zawiera org/confidentiality.
 2. **Serwerowa bramka aprobaty eksportu** — handlery eksportu odrzucają artefakt nie-`approved`/`published` (nie tylko quality) — Weryfikacja: export `draft` przez API → 403; test serwerowy (T4).
 3. **Fix testów** — mock i18n (T1) + decyzja o 25 stale testach middleware (T2: skasuj lub przywróć hardening) — Weryfikacja: zielono, intencja jasna.
 

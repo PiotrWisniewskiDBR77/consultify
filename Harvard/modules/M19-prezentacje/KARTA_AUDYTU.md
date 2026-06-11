@@ -142,7 +142,7 @@
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P1)
-1. **Sanityzacja public viewera** (wspólne z M17) — whitelist pól w `/presentations/shared/:token` — Weryfikacja: odpowiedź bez org/confidentiality/token.
+1. **`[INTEGRACJA — INTEGRACJE.md §C poz.9 / Sprint 7+ / W9]`** Sanityzacja public viewera (wspólne z M17) — **NAPRAWIĆ RAZ RAZEM Z M17** — whitelist pól w `/presentations/shared/:token` (`presentations.routes.ts:412,606`) — Weryfikacja: odpowiedź bez org/confidentiality/token.
 2. **Role-gate `overrideQualityGate`** — override tylko ADMIN/OWNER (przekaż rolę do `enforceQualityGateForExport`) — Weryfikacja: nie-admin z `?overrideQualityGate=true` → 422/403.
 3. **Naprawa fałszywej zieleni** — 15 vacuous testów p20 (realny webServer/supertest lub skreślić); test round-trip snapshotów na DB (S4) + route 422 (S5) — Weryfikacja: testy realnie asertują, dotykają DB.
 

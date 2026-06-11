@@ -281,6 +281,8 @@
 
 6. **Rozstrzygnąć `my_idea_map_versions`** — tabela istnieje (mig. 622), zero kodu jej używa; `my_idea_map_snapshots` ma kod bez tabeli — jedno z dwóch jest właściwym przeznaczeniem. Decyzja: wdrożyć wersjonowanie na jednej tabeli i usunąć martwą.
 
+7. **`[INTEGRACJA — INTEGRACJE.md §C poz.3 / Sprint 7+ / DECYZJA #9]`** Eksport serwerowy Ideas → Outputs — `final-batch.routes.ts:32` → `finalBatchService.ts:19` tworzy wpis `idea_exports` ze statusem `pending`, ale plik nigdy nie powstaje (STUB). Albo zaimplementować worker generacji pliku (docelowo `v8_output_artifacts`), albo usunąć przycisk eksportu z UI — Weryfikacja: eksport tworzy plik do pobrania LUB przycisk niewidoczny.
+
 ### Fala 3 — Jakość i kanony (P2)
 
 7. **Confirm przed aplikacją szablonu na niepusty graf** — `IdeaTemplateGallery.tsx:1886–1908` nadpisuje bez dialogu. Dodać modal potwierdzenia jeśli `nodes.length > 0`. Weryfikacja: próba aplikacji szablonu na istniejącą mapę → pojawia się dialog.

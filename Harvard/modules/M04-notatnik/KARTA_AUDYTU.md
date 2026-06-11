@@ -136,7 +136,7 @@
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P1)
 1. **Owner/visibility check na v8 handoff** — `loadNote` w `notebookHandoffService` musi respektować owner/visibility/`canAccessNotebookRow` jak live route — Weryfikacja: handoff cudzej prywatnej notatki → 403/404; test cross-user.
-2. **Naprawa handoff PÓŁ-MARTWEGO** — albo realny INSERT (Radar/Inicjatywy faktycznie powstają), albo usunąć kłamliwy toast „Wysłano" — Weryfikacja: toast zgodny z efektem.
+2. **`[INTEGRACJA — INTEGRACJE.md §C poz.2 / Sprint 4 / W6]`** Naprawa handoff PÓŁ-MARTWEGO — albo realny INSERT (Radar/Inicjatywy faktycznie powstają), albo usunąć kłamliwy toast „Wysłano" (`notebookHandoffService.ts:429` — 0 INSERT). Koordynacja z M21 (wspólna ścieżka) — naprawić RAZ — Weryfikacja: toast zgodny z efektem.
 3. **project_members check w v8 search** — Weryfikacja: notatka projektowa bez membership → niewidoczna w search.
 
 ### Fala 2 — Domknięcie wartości (P2)

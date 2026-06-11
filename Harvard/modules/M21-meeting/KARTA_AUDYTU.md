@@ -131,7 +131,7 @@
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P2 — brak P0/P1)
-1. **Naprawa `persistNote` dead-path** — utworzyć tabelę `notebook_entries`/przekierować do realnego Notebooka (M04), albo usunąć martwy INSERT — Weryfikacja: markdown notatki trafia do trwałego miejsca lub kod znika.
+1. **`[INTEGRACJA — INTEGRACJE.md §C poz.2 / Sprint 4 / W6]`** Naprawa `persistNote` dead-path — `meeting.routes.ts:218-237` wykonuje INSERT do nieistniejącej tabeli `notebook_entries`. Albo utworzyć realny handoff do M04 (Notatnik), albo usunąć martwy INSERT i poinformować użytkownika — Weryfikacja: markdown notatki trafia do trwałego miejsca lub kod znika.
 2. **Guard transkryptu** — limit rozmiaru + sanityzacja/oddzielenie injection (transkrypt jako dane, nie instrukcje); rozważyć review przed persystencją wyodrębnionych decyzji — Weryfikacja: duży/wrogi transkrypt nie steruje persystowanymi rekordami.
 3. **Fix mock i18next** (3 FAIL) + testy S6/S7 (AI notes, brief) — Weryfikacja: zielone, pokrywają ekstrakcję.
 

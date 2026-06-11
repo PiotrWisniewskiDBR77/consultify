@@ -178,6 +178,8 @@
 4. **Gating pilota serwerowo** — Rollout CRUD odrzuca rolę pilota (`requireOrgRole` + capability) — Weryfikacja: pilot API → 403.
 5. **Pokrycie testowe S2/S5/S6** — test BE `rollout.routes`, kanban-DnD, raporty z live-data; wprowadzić do PR-gate — Weryfikacja: zielone w CI.
 
+6. **`[INTEGRACJA — INTEGRACJE.md §C poz.5 / Sprint 4–5 / W6]`** Eksport sygnałów ROI do `v8_roi_realization_entries` + deep-link Execution→Results. `ExecutionHub.tsx:945` — fallback puste; M15 czyta własne tabele niezależnie; brak feed-forward z Wdrożenia do Rezultatów. Realny export sygnałów (budget_health, roi_delta) przy każdej zmianie snapshotu `ExecutionHub` + link `?initiativeId=` do M15 — **To jest dziura w kręgosłupie produktu** — Weryfikacja: zmiana budżetu w M14 pojawia się jako sygnał w M15 Rezultaty.
+
 ### Fala 3 — Jakość i kanony (P2)
 1. **§27 Rollout 5 tabel** — `FilterableTable`+preview+filtry+sort+resize+kebab+bulk zamiast surowego `<table>` (`RolloutTab:1130`) — Weryfikacja: §27 A-S czyste per tabela.
 2. **§27.D bulk-bar Portfel** — akcje po zaznaczeniu (nie tylko „Clear") (`ExecutionHub.tsx:4855-4870`) — Weryfikacja: bulk action wykonuje operację.

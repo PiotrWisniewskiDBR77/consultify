@@ -278,7 +278,7 @@ Do wykonania przez Claude (main session) wg skryptu Protokołu V1:
 
 3. **WS collab — dodać org-scope verify przy joinowaniu** — `ideaCollabWs.gateway.ts:258-283` brak sprawdzenia, czy ideaId należy do org użytkownika z JWT. Naprawa: przed `room.set(ws, user)` dodać `db.get('SELECT id FROM my_ideas WHERE id=? AND organization_id=?', [ideaId, organizationId])` i zamknąć socket przy braku wyniku. Weryfikacja: test jednostkowy WS gateway — user z Org B nie dołącza do rooma idei z Org A.
 
-4. **ExportPowerPoint — uczciwa etykieta lub prawdziwy .pptx** — `ExportPowerPoint.tsx:91-95` pobiera HTML, nie .pptx. Naprawa: zmienić etykietę na „Export as HTML Presentation" lub zaimplementować `pptxgenjs`. Weryfikacja: Faza 4 screenshot — pobrany plik ma rozszerzenie zgodne z etykietą.
+4. **`[INTEGRACJA — INTEGRACJE.md §C poz.4 / Sprint 7+ (Fala 3)]`** ExportPowerPoint — uczciwa etykieta lub prawdziwy .pptx — `ExportPowerPoint.tsx:87-95` generuje `.html`, nie `.pptx` (UI label sam przyznaje). Naprawa: zmienić etykietę na „Export as HTML Presentation" LUB zaimplementować `pptxgenjs`. Weryfikacja: pobrany plik ma rozszerzenie zgodne z etykietą.
 
 5. **WebhookSettings — usunąć lub przenieść na serwer** — `WebhookSettings.tsx:44-67` wysyła webhooki bezpośrednio z klienta przez localStorage. Naprawa: wyciąć feature flag lub dodać endpoint serwer-side. Weryfikacja: brak fetch do zewnętrznych URL z klienta.
 
@@ -288,7 +288,7 @@ Do wykonania przez Claude (main session) wg skryptu Protokołu V1:
 
 7. **Dodanie `qa-idea-mindmap-checklist.spec.ts` do CI tier0** — E2E spec istnieje (361 ln) ale nie jest w `test:e2e:tier0` (`package.json:108`). Naprawa: dodać do komendy tier0 lub stworzyć podzbiór deterministic tier0. Weryfikacja: CI pipeline uruchamia spec.
 
-8. **Teresa — integracja sidekick event** — event `idea-mindmap-sidekick-context` wysyłany z `IdeaRecommendationMap.tsx:2534` ale `useOpenChatWithContext.ts` go nie konsumuje. Naprawa: dodać handler w `useOpenChatWithContext`. Weryfikacja: klik „Zapytaj Teresę o tę mapę" → otwiera się czat z kontekstem węzłów.
+8. **`[INTEGRACJA — INTEGRACJE.md §C poz.6 / Sprint 7+ (Fala 2)]`** Teresa — integracja sidekick event — event `idea-mindmap-sidekick-context` wysyłany z `IdeaRecommendationMap.tsx:2534`; konsumowany lokalnie w toolbarze (`AIActionsPopover.tsx:91`, `FloatingAIPopover.tsx:54`), ale **NIE przez `useOpenChatWithContext`** — bogaty kontekst węzłów nie dociera do czatu Teresy. Naprawa: dodać handler `idea-mindmap-sidekick-context` w `useOpenChatWithContext` (przekazać `sidekickCtx` zamiast prostego promptu). Weryfikacja: klik „Zapytaj Teresę o tę mapę" → czat Teresy otwiera się z kontekstem węzłów (nie generyczny prompt).
 
 9. **Flush przy zamknięciu karty — sendBeacon/keepalive** — `useIdeaMapSync.ts:350-354` używa zwykłego fetch bez `keepalive`, co może gubić ostatni zapis przy zamknięciu karty. Naprawa: dodać `keepalive: true` do fetch lub `navigator.sendBeacon`. Weryfikacja: zamknij kartę podczas edycji → dane zapisane w DB.
 

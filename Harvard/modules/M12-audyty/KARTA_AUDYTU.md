@@ -112,7 +112,7 @@
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P1)
-1. **Walidacja org-membership assignee** w `interviewAssignmentService.create` (+ filtr `config.assigneeIds` w `generateSurveys`) — Weryfikacja: `assigneeIds=[obcy user]` → odrzucone; test cross-org assignment.
+1. **`[INTEGRACJA — INTEGRACJE.md §C poz.7 / Sprint 1 / W1 security]`** Walidacja org-membership assignee w `interviewAssignmentService.create` (+ filtr `config.assigneeIds` w `generateSurveys`, `auditProgramService.ts:409`). Fix jest współdzielony z M10 — naprawić RAZ w serwisie bazowym — Weryfikacja: `assigneeIds=[obcy user]` → odrzucone; test cross-org assignment.
 2. **Testy fundamentu** — fan-out integracyjny (realny serwis), rollup integracyjny (realny SQL), 7 endpointów + org-scoping (moduł ma 0 testów) — Weryfikacja: zielone, pokrywają pętlę E2E.
 
 ### Fala 2 — Domknięcie wartości (P2/P3)

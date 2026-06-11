@@ -10,8 +10,8 @@
 
 ## 0. GDZIE JESTEŚMY (jednym ekranem)
 
-- **Zaudytowano:** 27 modułów + A1 = **28/28**, skan statyczny kompletny. Wszystkie status **🟦 NIEPEŁNY** (Fazy 3 Railway + 4 żywa przeglądarka odłożone do dostępu do Railway/staging).
-- **Średnia ocena:** ~**49/100**. Najwyżej: M02 Canvas 57, M06 Mind Map 57, M19 Prezentacje 55, M05 55. Najniżej (poza A1-stub 13): M14 42, M09 43, M07 44, M03 44, M23 44.
+- **Zaudytowano:** 27 modułów (M01–M10, M12–M27) + A1 = **28/28 kart**. ⚠️ **M11 Narzędzia descoped** — karta to pusty szablon; brak zidentyfikowanego realnego modułu/kodu. Wszystkie 27 modułów + A1: status **🟦 NIEPEŁNY** (Fazy 3 Railway + 4 żywa przeglądarka odłożone do dostępu do Railway/staging).
+- **Średnia ocena:** ~**49/100** (liczona z 27 modułów M01–M27, z wyłączeniem A1-stub 13/100). Najwyżej: M02 Canvas 57, M06 Mind Map 57, M19 Prezentacje 55, M05 55. Najniżej: M14 42, M09 43, M07 44, M03 44, M23 44.
 - **Tier:** cała platforma na poziomie **Alpha**. Zero modułów GA-ready, zero Beta-ready bez poprawek.
 - **Co trzyma platformę w Alpha (3 zdania):** (1) systemowy dług bezpieczeństwa — cross-org IDOR + side-router-weak-gate w ~12 modułach; (2) „fake features" — funkcje, które kłamią użytkownikowi (toast „wysłano" bez zapisu, przyciski zawsze 404, persystencja in-memory znikająca po restarcie); (3) brak żywej weryfikacji (Faza 4) i niepewny stan migracji na prodzie (PROD = kod z 2026-05-18).
 
@@ -33,6 +33,7 @@
 | M08 | Ideas — Table | 52 | Alpha | — | 4 przyciski zawsze błąd + generate_table stub |
 | M09 | Ideas — Whiteboard | 43 | Alpha | cross-org write (cap 50, niewiążący) | per-user board blokuje multiplayer + WS bez org + facilitation cross-org |
 | M10 | Wywiad | 50 | Alpha | cross-org IDOR wniosków PII | `InterviewInsightService.ts:1618,1723` read+delete bez org |
+| M11 | Narzędzia/Assessment | **N/D** | — | — | **Descoped** — pusty szablon karty; brak zidentyfikowanego realnego kodu |
 | M12 | Audyty | 47 | Alpha | — | ZERO testów + P1 assignment injection cross-org |
 | M13 | Inicjatywy | 45 | Alpha | cross-org write governance | `initiativeGovernanceService.ts:119,130` + 3 CTA martwe |
 | M14 | Wdrożenie | 42 | Alpha | cross-org write budżetu | `executionBudgetService.ts:401-420` recalc bez org |
@@ -50,6 +51,8 @@
 | M26 | Portal Partnerski | 52 | Alpha | — | silent earnings fallback 15% + brak E2E happy-path |
 | M27 | SuperAdmin | 50 | Alpha | brak auth llm tiers | `llm.routes.ts:793,799,805` + virtual-workers przepuszcza org-admina |
 | A1 | Affiliate/Ecosystem | 13 | Broken | — (świadomy stub) | DECYZJA: budować albo wyciąć |
+
+> ¹ **Kolumna Hard-cap:** „cross-org IDOR/WRITE" = trigger bezpieczeństwa (ocena ≤50, wymiar F=0); „Faza 4 deferred" = wymiary D+G nieodblokowane (M22/M23 podane bo brak innych dominant blokerów — stan dotyczy faktycznie wszystkich 28); „—" = brak aktywnego hard-capu poza ograniczeniem Faz 3+4. Kolumna pokazuje DOMINUJĄCY czynnik blokujący, nie pełny profil ryzyka modułu.
 
 ---
 
@@ -86,7 +89,7 @@ To rdzeń planu. Większość P0/P1 z kart to instancje ~15 wzorców. Naprawiamy
 - Process Flow: `20260603_v8_process_flow.sql` — w repo, runner manualny, prawdopodobnie nie na prodzie.
 - M20: kolizja numeracji migracji **725×2/726×2** (realny bug) — L.
 - M26: 4 migracje partner z 2026-03/04 prawdopodobnie niezastosowane na prod.
-**Robota:** napisać brakujące, rozwiązać kolizję, zweryfikować schemat przez `information_schema` (NIE tabelę migracji — runner oznacza wykonaną mimo błędu).
+**Robota (dwa etapy):** (a) **Sprint 5 (bez Railway):** napisać brakujące pliki `.sql`, rozwiązać kolizję numerów 725/726; (b) **FAZA C (wymaga Railway):** zastosować migracje na staging/prod + zweryfikować przez `information_schema` — NIE tabelę migracji (runner oznacza wykonaną mimo błędu).
 
 ### W5 — Persistencja-fasada (Map in-memory udające DAO) 🔴 P0
 **Miejsce:** M18 `documentVersionSnapshotService.ts:50,84-96` + `documentCommentsService.ts:61,65` — wersje/komentarze/approvals/audit znikają po deployu. Zielone testy MOCKUJĄ DAO → maskują.
@@ -130,12 +133,15 @@ M06 „Cost roseuction" + `roseoStackRef`; M10/M13/M04 „rose" (21×/...) → `
 
 ### W15 — Tokeny kolorów + §27 (TABLE_AND_PREVIEW_CANON) + CI 🟡 P2 (GA)
 - Tokeny: M25 (2237 hardkodów), M18 (~150), M02 (~61), M27 (45 hex), M16, M21, M04.
-- §27: Portfolio (M13), Rollout 5 tabel (M14), Results grid (M15), Audyty listy (M12), Admin 4 tabele (M24), Settings listy (M25), Partner tabele (M26), AI-OS ActionCenter (M22), Organizacja tabele (M23).
+- §27 (SSOT: `docs/ui-standards/03-modules/TABLE_AND_PREVIEW_CANON.md`): Portfolio (M13), Rollout 5 tabel (M14), Results grid (M15), Audyty listy (M12), Admin 4 tabele (M24), Settings listy (M25), Partner tabele (M26), AI-OS ActionCenter (M22), Organizacja tabele (M23).
 - CI: **systemowy** — branch `Londyn` NIE jest w PR-gate (M02 zgłasza jako blocker L); promować E2E smoke modułów do PR-gate (M01,M03,M05,M06,M08,M12 testy poza CI).
 
 ---
 
 ## 3. FAZY REALIZACJI (z bramkami)
+
+> **Definicja PRÓG BETA:** Fazy A+B+C ukończone; każdy moduł core (M01/M03/M10/M13/M14/M15/M25) re-oceniony ≥55/100 po naprawach lub jawnie descoped; zero aktywnych hard-capów bezpieczeństwa; backup DB przed promocją wykonany.
+> **Definicja PRÓG GA:** Fazy D+E ukończone; CI gate'uje `Londyn`; moduły core ≥70/100.
 
 ### 🔴 FAZA A — Security blitz (PRÓG BETA, część 1)
 Workstreamy **W1+W2+W3**. Zamyka WSZYSTKIE hard-capy bezpieczeństwa. Bez tego żaden moduł nie wyjdzie poza 50.
@@ -150,8 +156,8 @@ Workstreamy **W5+W6**. Usuwa wszystko, co kłamie użytkownikowi.
 
 ### 🔴 FAZA C — Migracje + żywa weryfikacja (PRÓG BETA, część 3 = domknięcie Faz 3+4 audytu)
 Workstream **W4** + **Faza 3 (Railway)** + **Faza 4 (żywa przeglądarka)** dla wszystkich 28 modułów.
-**Wymaga:** dostęp do Railway + konto staging (obecny blocker odłożenia). PROD = 2026-05-18 → najpierw promocja `Londyn`→prod (osobny workflow, bez backupu — uwaga).
-**Bramka C:** wszystkie migracje zastosowane i zweryfikowane przez `information_schema`; każdy moduł przeszedł żywo wg scenariuszy S z karty; status kart 🟦→✅; re-ocena rubryką (D=15, G=10 odblokowane).
+**Wymaga:** dostęp do Railway + konto staging (obecny blocker odłożenia). PROD = 2026-05-18 → **PRZED promocją `Londyn`→prod: backup/snapshot DB (twardy warunek, nieodwracalne)**; osobny workflow promocji.
+**Bramka C:** ✅ backup/snapshot DB przed promocją · ✅ wszystkie migracje zastosowane+zweryfikowane przez `information_schema` · ✅ każdy moduł przeszedł żywo wg scenariuszy S z karty · ✅ karty 🟦→✅ + re-ocena rubryką V1 (D+G odblokowane) · ✅ system testów przekrojowych gotowy (Krok 8 — lista B `INTEGRACJE.md` §B jako scenariusze bazowe).
 **To jest moment, w którym audyt staje się PEŁNY.**
 
 ### 🟠 FAZA D — Beta hardening (umocnienie BETA)
@@ -167,6 +173,7 @@ Workstreamy **W12+W13+W14+W15** + Fale 3 z kart (dead-code, i18n, tokeny, §27, 
 ## 4. PLAN SPRINTÓW (kolejność wykonania)
 
 > Zasada: najpierw wątki systemowe (RAZ, szeroki efekt), potem domknięcia per-moduł. Każdy fix = osobny commit na `feat/deliverables-light`; `npx tsc --noEmit` zielony; po module wpis w `_TRACKER.md`.
+> **Legenda nakładu:** XS = <30 min · S = 30 min–2 h · M = 2–6 h · L = 6–16 h (1–2 dni) · XL = 3–5 dni roboczych.
 
 **Sprint 1 — Security XS/S (najwyższy stosunek efekt/nakład)** — FAZA A
 W3 (`x-kpi-role`), W2 quick gates: M27 `llm.routes.ts` (verifySuperAdmin), M27 virtual-workers, M24 admin-data×3 + ai-settings×2, M23 competency-auth + org-export role-gate, M15 `benefits.routes.ts:468`, M08 2 helpery org. → ~12 poprawek, wszystkie S/XS.
@@ -177,11 +184,11 @@ W1: M01 memory, M03 DecisionController+inbox, M10 getInsight/deleteInsight, M13 
 **Sprint 3 — Side-router pełny skan** — FAZA A (domknięcie)
 Przeskanować WSZYSTKIE mounty `Gateway.ts`; wyrównać gate; zamknąć Bramkę A.
 
-**Sprint 4 — Fake features** — FAZA B
-W6: M03 mocki decyzji + realny fetch, M07 connectMode + 5 hooków + V8 mirror decyzja, M08 4 przyciski + generate_table, M13 3 CTA, M04+M21 handoff (realny INSERT lub usunąć toast), M22 Artifacts UX.
+**Sprint 4 — Fake features** — FAZA B ⚠️ Wymaga odpowiedzi na **[DECYZJA #5]** i **[DECYZJA #7]** przed startem.
+W6: M03 mocki decyzji + realny fetch; M07 connectMode + 5 hooków + V8 mirror **[DECYZJA #7]**; M08 4 przyciski + generate_table **[DECYZJA #5]**; M13 3 CTA; M04+M21 handoff (realny INSERT lub usunąć toast); M22 Artifacts UX.
 
-**Sprint 5 — Persistencja + migracje** — FAZA B + W4
-W5: M18 wave5 DAO+migracja. W4: Ideas snapshots/activity, process-flow, M20 kolizja 725/726, M26 partner schema verify.
+**Sprint 5 — Persistencja + migracje (pisanie plików SQL)** — FAZA B + W4-a (bez Railway)
+W5: M18 wave5 DAO+migracja. W4-a (pisanie plików, bez Railway): Ideas snapshots/activity, process-flow, M20 kolizja 725/726, M26 partner schema verify. **[DECYZJA #6]** M20 governed sync — dokończyć w tej fali czy oznaczyć preview?
 
 **Sprint 6 — Railway + żywa weryfikacja** — FAZA C (wymaga dostępu)
 Promocja `Londyn`→prod → migracje → Faza 3 (schema verify) → Faza 4 (28× żywo wg scenariuszy S) → re-ocena. **= PRÓG BETA osiągnięty.**
@@ -193,20 +200,24 @@ W7-W11 + Fale 2; potem W12-W15 + Fale 3. Kolejność modułów: core (M01,M03,M1
 
 ## 5. INTEGRACJE MIĘDZYMODUŁOWE (Krok 6 — do domknięcia)
 
-Z sekcji 1g kart. Status przepływów kanonicznych (pełna lista w `INTEGRACJE.md` §B):
+> ⚠️ **STATUSY = ANALIZA STATYCZNA KODU (offline, bez Railway).** Runtime niezweryfikowany do FAZY C (Faza 3+4). Każde „DZIAŁA" może być fałszywe na żywym środowisku ze względu na schema drift, brakujące migracje lub flagę OFF.
 
-| # | Przepływ | Status z kart |
-|---|----------|---------------|
-| 4 | Wywiad→Inicjatywy→Wdrożenie→Rezultaty | DZIAŁA (KPI/ROI realne, economics linkages) |
-| 9 | Tabele→publish-to-Results / sync-to-Finance | **URWANY/STUB** — M20 pisze log, M15/M16 nie odbierają |
-| 6 | Audyty→fan-out wywiadów→Inbox | DZIAŁA real (ale assignee bez walidacji org — P1) |
-| 7 | Notatnik→konwersje | DZIAŁA (report/presentation/task/decision/canvas/idea) |
-| 11 | Meeting→decyzje/akcje→My Work | CZĘŚCIOWY — lokalne `meeting_follow_ups`, nie globalne handoff |
-| 13 | Organizacja→kontekst Teresy | CZĘŚCIOWY — profil DZIAŁA, Goals/Challenges/Strategy NIE (localStorage) |
-| 1 | Czat→Canvas→registry→Outputs | DZIAŁA (triada deck/doc/sheet live) |
-| 8 | Ideas→convert (6 targetów) | DZIAŁA (M05→M13/M17/M01) |
-| 2 | Ideas sidekick→Teresa | **ZEPSUTY** — M06 wysyła event, `useOpenChatWithContext` nie konsumuje |
-| 15 | Beta/uprawnienia (3 warstwy) | **NIESPÓJNY** — W7 (tylko nawigacja) |
+**Pełna mapa z werdyktami weryfikowanymi w kodzie (file:line, oba końce) → `INTEGRACJE.md` §A (~70 połączeń), §B (20 przepływów), §C (9 poprawek `[INTEGRACJA]`).**
+
+Skrócony snapshot 10 kluczowych przepływów:
+
+| # | Przepływ | Status (statyczny, zweryf. w kodzie) |
+|---|----------|--------------------------------------|
+| 4 | Wywiad→Inicjatywy→Wdrożenie→Rezultaty | **CZĘŚCIOWY** — rdzeń M10→M13→M15 PEŁNY; ogniwo M14→M15 URWANE |
+| 9 | Tabele→publish-to-Results / sync-to-Finance | **STUB** |
+| 6 | Audyty→fan-out wywiadów→Inbox | PEŁNY (P1 assignee bez walidacji org) |
+| 7 | Notatnik→konwersje | MIESZANY (convert DZIAŁA; handoff→Radar STUB) |
+| 11 | Meeting→decyzje/akcje→My Work | LOKALNY **[DECYZJA #8]** |
+| 13 | Organizacja→kontekst Teresy | CZĘŚCIOWY (Goals/Challenges/Strategy localStorage) |
+| 1 | Czat→Canvas→registry→Outputs | PEŁNY |
+| 8 | Ideas→convert (6 targetów) | CZĘŚCIOWY (eksport serwerowy STUB **[DECYZJA #9]**) |
+| 17 | Mind Map sidekick→Teresa | CZĘŚCIOWY (toolbar only, nie cross-moduł do czatu) |
+| 15 | Beta/uprawnienia (3 warstwy) | NIESPÓJNY (W7) |
 
 **✅ Krok 6 UKOŃCZONY 2026-06-11 (`INTEGRACJE.md` wypełnione + kontrakty zweryfikowane w kodzie, oba końce).** Wynik: 20 przepływów kanonicznych — **11 PEŁNY/DZIAŁA, 5 CZĘŚCIOWY/URWANY/LOKALNY, 4 STUB/ZEPSUTE, 1 niespójny (beta)**. 9 poprawek `[INTEGRACJA]` dopisanych do planów modułów.
 
@@ -225,6 +236,8 @@ Z sekcji 1g kart. Status przepływów kanonicznych (pełna lista w `INTEGRACJE.m
 5. **M08 dual-stack** — ścieżka B metadata-first (`useTablePlatformBridge`) czy wyciąć?
 6. **M20 governed sync** — dokończyć sync-to-results/finance (obecnie STUB) jako Beta-feature czy odłożyć?
 7. **V8 mirror Process Flow** (M07) — naprawić kontrakt ID czy wyciąć mirror i zostać przy blob-sync?
+8. **Meeting→My Work globalizacja** (M21) — czy `meeting_follow_ups`/`decisions_json` powinny trafiać do globalnych `tasks`/`decisions` (M03), czy lokalny widok spotkania to świadoma architektura? Blokuje: Sprint 4 (W6 fake-features dla M21).
+9. **M05 eksport serwerowy Ideas** — dokończyć worker generacji pliku (`finalBatchService.ts:19` — wpis `pending`, plik nigdy nie powstaje) czy wyciąć przycisk eksportu? Blokuje: Sprint 7+ (M05 Fala 2).
 
 ---
 
@@ -232,9 +245,30 @@ Z sekcji 1g kart. Status przepływów kanonicznych (pełna lista w `INTEGRACJE.m
 
 - **FAZA A:** ✅ test cross-org 403/404 dla każdego naprawionego endpointu · ✅ side-router skan Gateway.ts udokumentowany · ✅ zero hard-capów bezpieczeństwa w kartach.
 - **FAZA B:** ✅ zero kłamliwych elementów UI · ✅ M18 persystencja przeżywa cold-start PG (test nie-mockowany).
-- **FAZA C:** ✅ migracje zweryfikowane `information_schema` · ✅ 28× Faza 4 żywo · ✅ karty 🟦→✅ + re-ocena.
+- **FAZA C:** ✅ **backup/snapshot DB przed promocją** · ✅ migracje zweryfikowane `information_schema` (staging+prod) · ✅ 27 modułów × scenariusze S żywo w przeglądarce · ✅ karty 🟦→✅ + re-ocena rubryką V1 (D+G odblokowane) · ✅ Krok 8 — testy przekrojowe zainicjowane (lista B `INTEGRACJE.md` §B).
 - **FAZA D:** ✅ beta-lock 3-warstwowy · ✅ sekrety szyfrowane · ✅ M12 ma testy · ✅ degradacje transparentne.
 - **FAZA E (GA):** ✅ CI gate'uje `Londyn` · ✅ i18n PL/EN pełne · ✅ §27 wszędzie · ✅ martwy kod usunięty · ✅ moduły core ≥ próg GA.
+
+### Protokół re-audytu (po zamknięciu Sprintów 1–5)
+
+Po naprawach Fazy A+B, przed Sprint 6:
+1. Dla każdego modułu z naprawionymi P0/P1: uruchom ponownie Fazy 1–2 (statyka+testy).
+2. Zaktualizuj wymiary A/B/C/F w karcie modułu; D/G czekają na Fazę 4.
+3. Nowy wynik → wiersz w `Harvard/_AUDIT_TRACKER.md` (nowa ocena + data).
+4. Zaktualizuj §1 MASTER_PLAN (ocena, hard-cap).
+5. Re-ocena pełna (D+G odblokowane) dopiero po Fazie 4 (Sprint 6).
+
+---
+
+## BLOKERY PO STRONIE WŁAŚCICIELA
+
+| # | Blok | Potrzebne do | Pilność |
+|---|------|-------------|---------|
+| B1 | Decyzje §6 (#1–#9) | Sprint 4–5: każda pozycja `[DECYZJA #n]` blokuje jej sprint | Przed Sprint 4 |
+| B2 | Dostęp Railway CLI + konto staging | Sprint 6 (FAZA C) | Przed Sprint 6 |
+| B3 | Backup/snapshot prod DB | Promocja `Londyn`→prod (FAZA C) — nieodwracalne | Razem z B2 |
+| B4 | Żywa weryfikacja (Faza 4) 27 modułów × scenariusze S | Zamknięcie FAZY C (próg BETA) | Po Sprint 6 |
+| B5 | Decyzja A1 Affiliate (#1) | Nie blokuje Sprint 1–5; czyści backlog | Przed Sprint 7 |
 
 ---
 

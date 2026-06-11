@@ -2,11 +2,16 @@
 
 **Status: WYPEŁNIONE 2026-06-11.** Źródło: sekcje **1g** wszystkich 28 kart + **weryfikacja kontraktów w kodzie** (oba końce: nadawca wysyła to, co odbiorca czyta). Przepływy sporne (URWANY/STUB/ZEPSUTE) potwierdzone bezpośrednim odczytem kodu — file:line obu końców. Branch `feat/deliverables-light` (`878dbe545a`).
 
+> ⚠️ **Statusy = wynik analizy statycznej kodu (offline, bez Railway).** Runtime niezweryfikowany do FAZY C audytu (Fazy 3+4). Każde „DZIAŁA" może być fałszywe na żywym środowisku ze względu na schema drift, brakujące migracje lub flagę OFF.
+
 > **Legenda statusów:** **PEŁNY** = oba końce spięte, dane przepływają · **CZĘŚCIOWY** = działa częściowo / przez słabsze ogniwo · **LOKALNY** = zapis lokalny, nie do globalnej tabeli docelowej · **URWANY** = nadawca produkuje, odbiorca nie czyta · **STUB** = nadawca tylko loguje/no-op, brak realnego efektu · **ZEPSUTE** = produkuje zły artefakt · **DZIAŁA-za-flagą** = poprawne, gated.
+> **Weryfikacja źródłowa:** `(zweryf.)` = oba końce sprawdzone bezpośrednio w kodzie (file:line) w tej sesji audytowej · `(z karty)` = werdykt z karty modułu audytu, bez dodatkowej weryfikacji kodu.
 
 ---
 
 ## A. Tabela zbiorcza połączeń (z sekcji 1g 28 kart)
+
+**Indeks modułów w tabeli (szybka nawigacja):** M01·M02·M04·M05·M06·M07·M08·M09·M10·M11(N/D)·M12·M13·M14·M15·M16·M17·M18·M19·M20·M21·M22·M23·M24·M25·M26·M27·A1.
 
 | Z modułu | Do modułu | Mechanizm | Plik:linia (kluczowy koniec) | Status |
 |---|---|---|---|---|
@@ -35,11 +40,12 @@
 | M07 Process Flow | wspólny blob-sync | mindmap/whiteboard/table przez `useIdeaMapSync` | — | DZIAŁA |
 | M07 Process Flow | M19 Prezentacje | eksport `/api/presentations/decks` | — | DZIAŁA |
 | M08 Ideas Table | M19 Prezentacje | `createPresentationDeck` → INSERT deck+cards | `ExportToPresentation.tsx:237` → `presentations.routes.ts:1285` | **PEŁNY (zweryf.)** |
-| M08 Ideas Table | M20 Tabele (platforma) | `useTablePlatformBridge` socket `/table-platform` | `IdeaTableTool.tsx:275,301` | UKRYTE (flaga OFF) |
+| M08 Ideas Table | M20 Tabele (platforma) | `useTablePlatformBridge` socket `/table-platform` | `IdeaTableTool.tsx:275,301` | UKRYTE (flaga OFF) **[DECYZJA #5 — dual-stack dokończyć czy wyciąć?]** |
 | M09 Whiteboard | wspólny blob-sync + WS | `/ws/collab/:ideaId` + presence polling | `ideaCollabWs.gateway.ts` | DZIAŁA (P0 WS bez org-auth) |
 | M10 Wywiad | M13 Inicjatywy | `generate_from_evidence` → INSERT `initiatives` | `InterviewHub.tsx:12955` → `initiative-generator.routes.ts` | **PEŁNY (zweryf.)** |
 | M10 Wywiad | M03 My Work | mirror-task przy przydziale | `interviewAssignmentService.create` | DZIAŁA |
 | M10 Wywiad | M17 Outputs | eksport raportu (assessment/deck) | — | DZIAŁA |
+| M11 Narzędzia | — | — | — | **N/D — descoped (szablon karty, brak realnego modułu); patrz przepływ B.5** |
 | M12 Audyty | M10 Wywiad | fan-out przydziałów `interviewAssignmentService.create` | `auditProgramService.ts:376` → `InterviewAssignmentService.ts:393` | **PEŁNY (zweryf.) — P1 brak walidacji org assignee** |
 | M12 Audyty | M03 My Work | mirror-task z przydziału | — | DZIAŁA (org atakującego — P1) |
 | M13 Inicjatywy | M14 Wdrożenie | reuse dokumentu (`InitiativeDocumentView`) | `ExecutionHub.tsx:135-139,4749` | **PEŁNY (zweryf.)** |
@@ -56,10 +62,10 @@
 | M20 Tabele | public | PublicViewPage + slug formularzy | — | DZIAŁA (share_password fikcyjne) |
 | M16 Finanse | M17 Outputs | export analiz | — | DZIAŁA (za beta) |
 | M17 Outputs | M18/M19/M20 | rejestr artefaktów + `resolveArtifactOpenPath` (reopen) | — | DZIAŁA |
-| M17 Outputs | public | `/presentations/shared/:token` | `presentations.routes.ts:412,621` | DZIAŁA (**P1 over-disclosure — wspólny z M19**) |
+| M17 Outputs | public | `/presentations/shared/:token` | `presentations.routes.ts:412,621` | DZIAŁA (**P1 over-disclosure — wspólny z M19, naprawić RAZ wątek W9, patrz §C poz.9**) |
 | M18 Dokumenty | M17 Outputs | „New AI document" + rejestracja artefaktu | — | DZIAŁA |
 | M19 Prezentacje | M17 Outputs | rejestracja decka + reopen `?artifactId=` | — | DZIAŁA |
-| M19 Prezentacje | public | `/presentations/shared/:token` | `presentations.routes.ts:412,606` | DZIAŁA (**P1 over-disclosure — wspólny z M17**) |
+| M19 Prezentacje | public | `/presentations/shared/:token` | `presentations.routes.ts:412,606` | DZIAŁA (**P1 over-disclosure — wspólny z M17, naprawić RAZ wątek W9, patrz §C poz.9**) |
 | M21 Meeting | M03 My Work | brief czyta tasks/decisions (read-only) | — | DZIAŁA (jednokierunkowo) |
 | M21 Meeting | M03 (action items/decisions) | persist → `meeting_follow_ups` / `meetings.decisions_json` | `meetingService.ts:338,369` | **LOKALNY (zweryf. — nie globalne `tasks`/`decisions`)** |
 | M22 AI OS | M01 Czat | `ai_runs`/`ai_run_ledger` mirror (ActionCenter) | `ai.routes.ts:6013-6024` | DZIAŁA |
@@ -94,7 +100,7 @@
 8. **Ideas → convert (6 targetów) + ekspansje** (M05→M13/M17/M01) — **CZĘŚCIOWY.** convert→initiative/task_set/team_chat/link_graph **DZIAŁA**; **eksport serwerowy→Outputs STUB** (`idea_exports` status pending, plik nigdy nie powstaje).
 9. **Tabele Studio ↔ governed → Results/Finance/execution** (M20→M15/M16/M14) — **STUB.** `syncToModule` pisze wyłącznie metadane do `tp_module_sync_results`; grep potwierdza **ZERO czytelników** w M15/M16. Dane nigdy nie opuszczają M20.
 10. **Outputs ↔ studia** (M17↔M18/M19/M20) — **PEŁNY** (rejestr + open-path + reopen).
-11. **Meeting → decyzje/akcje → My Work** (M21→M03) — **LOKALNY.** `addMeetingFollowUp`→`meeting_follow_ups`, `addMeetingDecision`→`meetings.decisions_json`; **nie** trafia do globalnych `tasks`/`decisions` → nie pojawi się w My Work jako zasób globalny.
+11. **Meeting → decyzje/akcje → My Work** (M21→M03) — **LOKALNY.** `addMeetingFollowUp`→`meeting_follow_ups`, `addMeetingDecision`→`meetings.decisions_json`; **nie** trafia do globalnych `tasks`/`decisions` → nie pojawi się w My Work jako zasób globalny. **[DECYZJA #8 — globalizować (realny handoff do M03) czy świadoma lokalna architektura?]**
 12. **Kalendarz ← źródła** (M03←M13/M14/decyzje/google/outlook) — **DZIAŁA** (`/my-work/calendar/unified`).
 13. **Organizacja → kontekst Teresy** (M23→M01/generatory) — **CZĘŚCIOWY.** Profil firmy zasila backendowy kontekst (DZIAŁA); **Goals/Challenges/Strategy localStorage-only** (zustand persist, nie per-org, NIE zasila Teresy).
 14. **Finanse ↔ Inicjatywy (ROI)** (M16↔M13) — **DZIAŁA** (`v8_initiative_economics_linkages`).
@@ -114,19 +120,24 @@
 
 **Podsumowanie statusów przepływów kanonicznych (1-20, bez N/D M11):**
 - **PEŁNY / DZIAŁA:** 11 (Czat→Canvas→Outputs, Czat→intercepty, Canvas→promote, Outputs↔studia, Kalendarz, Finanse↔Inicjatywy, konwersacje split, M08→M19, AI-OS waves, M13→M15 rdzeń łańcucha, M10→M13+M13→M14).
-- **CZĘŚCIOWY / LOKALNY / URWANY:** 5 (kręgosłup M14→M15, Notatnik konwersje mieszane, Ideas convert+export, Meeting→MyWork lokalny, Organizacja→Teresa, Mind Map sidekick).
-- **STUB / ZEPSUTE:** 4 (Tabele governed sync, Notatnik→Radar handoff, Ideas eksport serwerowy, Mind Map PPT).
+- **CZĘŚCIOWY / LOKALNY / URWANY:** 6 (kręgosłup M14→M15, Notatnik konwersje mieszane, Ideas convert+eksport serwerowy STUB, Meeting→MyWork lokalny, Organizacja→Teresa, Mind Map sidekick).
+- **STUB / ZEPSUTE:** 2 (Tabele governed sync, Mind Map PPT). *(Notatnik→Radar i Ideas eksport serwerowy przeniesione do CZĘŚCIOWY — mają realną część działającą)*
 - **NIESPÓJNY przekrojowo:** 1 (beta 3-warstwowa — W7).
 
+> Uwaga: flow #4 Kręgosłup rozliczony per-ogniwo (M10→M13 PEŁNY + M13→M14 PEŁNY + M13→M15 PEŁNY + M14→M15 URWANY = 4 ogniwa liczone razem jako 1 przepływ kanoniczny). Suma werdyktów 11+6+2+1 = 20 (bez M11 N/D).
+
 **Poprawki dopisane do planów modułów (tag `[INTEGRACJA]` — wchodzą do MASTER_PLAN_DOKONCZENIA):**
-1. **M20** — governed sync-to-results/finance to STUB (`ModuleSyncService.ts:89` log-only). Plan: Fala 2 — realny write do modułu docelowego ALBO ukryć przyciski sync. **Decyzja produktowa #6.**
-2. **M04 + M21 + M06** — handoff Notatnik→Radar/Inicjatywy = STUB (toast bez INSERT, `notebookHandoffService.ts:429`). Plan: Fala 1 — realny INSERT albo usunąć kłamliwy toast (wątek **W6 fake-features**).
-3. **M05** — eksport serwerowy→Outputs STUB (`finalBatchService.ts:19` pending bez pliku). Plan: Fala 2 — realny worker generacji pliku ALBO usunąć przycisk. **Decyzja: dokończyć czy wyciąć.**
-4. **M06** — eksport PPT ZEPSUTE (HTML nie .pptx). Plan: Fala 3 — realny generator .pptx (pptxgenjs) albo przemianować przycisk na „Eksport HTML".
-5. **M14→M15** — brak feed-forward ROI z egzekucji do wyników. Plan M14: Fala 2 — eksport sygnałów ROI do `v8_roi_realization_entries` + deep-link Execution→Results. **To dziura w kręgosłupie produktu — priorytet.**
-6. **M06 sidekick→Teresa** — bogaty kontekst nie dociera do czatu. Plan M06: Fala 2 — `useOpenChatWithContext` konsumuje `idea-mindmap-sidekick-context` (przekazać `sidekickCtx` do czatu zamiast prostego promptu).
-7. **M12→M10** — assignee bez walidacji org (P1 injection). Plan M12: Fala 1 — walidacja org-membership w `interviewAssignmentService.create` (pokrywa się z **W1/security**).
-8. **M23→Teresa** — Goals/Challenges/Strategy localStorage. Plan M23: Fala 2 — backend per-org + zasilanie kontekstu (wątek **W11**).
-9. **M17/M19** — wspólny public-viewer over-disclosure (`presentations.routes.ts:412`). Naprawić RAZ (wątek **W9**).
+
+> Mapowanie na MASTER_PLAN: „Fala N" = fala z karty modułu; „Sprint N" = sprint z MASTER_PLAN §4.
+
+1. **M20** — governed sync-to-results/finance to STUB (`ModuleSyncService.ts:89` log-only). Plan: Fala 2 → **Sprint 5 / DECYZJA #6** — realny write do modułu docelowego ALBO ukryć przyciski sync.
+2. **M04 + M21** — handoff Notatnik→Radar/Inicjatywy = STUB (toast bez INSERT, `notebookHandoffService.ts:429`). Plan: Fala 1 → **Sprint 4 / W6 fake-features** — realny INSERT albo usunąć kłamliwy toast.
+3. **M05** — eksport serwerowy→Outputs STUB (`finalBatchService.ts:19` pending bez pliku). Plan: Fala 2 → **Sprint 7+ / DECYZJA #9** — realny worker generacji pliku ALBO usunąć przycisk.
+4. **M06** — eksport PPT ZEPSUTE (HTML nie .pptx). Plan: Fala 3 → **Sprint 7+ (Fala 3)** — realny generator .pptx (pptxgenjs) albo przemianować przycisk na „Eksport HTML".
+5. **M14→M15** — brak feed-forward ROI z egzekucji do wyników. Plan M14: Fala 2 → **Sprint 4–5 / W6** — eksport sygnałów ROI do `v8_roi_realization_entries` + deep-link Execution→Results. **To dziura w kręgosłupie produktu — priorytet.**
+6. **M06 sidekick→Teresa** — bogaty kontekst nie dociera do czatu. Plan M06: Fala 2 → **Sprint 7+ (Fala 2)** — `useOpenChatWithContext` konsumuje `idea-mindmap-sidekick-context`.
+7. **M12→M10** — assignee bez walidacji org (P1 injection). Plan M12: Fala 1 → **Sprint 1 / W1/W2 security** — walidacja org-membership w `interviewAssignmentService.create`.
+8. **M23→Teresa** — Goals/Challenges/Strategy localStorage. Plan M23: Fala 2 → **Sprint 7+ / W11** — backend per-org + zasilanie kontekstu Teresy.
+9. **M17/M19** — wspólny public-viewer over-disclosure (`presentations.routes.ts:412`). Plan: **Sprint 7+ (Fala 1) / W9** — naprawić RAZ dla obu modułów (whitelist pól).
 
 **Potwierdzenie:** mapa kompletna — wszystkie 28 modułów zmapowane, wszystkie przepływy sporne zweryfikowane w kodzie (oba końce, file:line). Lista B = scenariusze dla systemu testów przekrojowych (Krok 8). Korekta jednej oceny karty (M06 sidekick: „brak konsumenta" → „konsument lokalny, cross-moduł do czatu urwany").
