@@ -3,7 +3,7 @@
  * Bundle 30.5 (T112) — Real OAuth connect/disconnect
  */
 
-import { Check, ExternalLink, Link2, Loader2, Shield, Unlink } from 'lucide-react';
+import { AlertTriangle, Check, ExternalLink, Link2, Loader2, Shield, Unlink } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -78,6 +78,7 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     loadAccounts();
@@ -109,9 +110,11 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
   const loadAccounts = async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const data = await (Api as any).get('/settings/connected-accounts');
       setAccounts(data?.accounts || []);
     } catch {
+      setLoadError(true);
       setAccounts([]);
     } finally {
       setLoading(false);
@@ -161,6 +164,20 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
           )}
         </p>
       </div>
+
+      {loadError && (
+        <div className="flex items-center gap-2 rounded-md border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+          <AlertTriangle size={16} />
+          <span>{t('settings.connectedAccounts.loadError', 'Unable to load connection status. Shown status may be inaccurate.')}</span>
+          <button
+            type="button"
+            onClick={loadAccounts}
+            className="ml-auto text-xs underline hover:no-underline"
+          >
+            {t('common.retry', 'Retry')}
+          </button>
+        </div>
+      )}
 
       <div className="space-y-4">
         {PROVIDERS.map((provider) => {

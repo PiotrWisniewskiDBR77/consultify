@@ -25,6 +25,7 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
   const { t } = useTranslation();
   const [history, setHistory] = useState<LoginEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     fetchHistory();
@@ -32,11 +33,13 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
 
   const fetchHistory = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const historyData = await Api.getLoginHistory();
       setHistory(historyData);
     } catch (error) {
       console.error('Failed to fetch login history:', error);
+      setLoadError(true);
       setHistory([]);
     } finally {
       setLoading(false);
@@ -75,6 +78,18 @@ export const LoginHistorySettings: React.FC<LoginHistorySettingsProps> = ({ clas
       {loading ? (
         <div className="text-center py-8 text-slate-600 dark:text-slate-500">
           {t('common.loading', 'Loading...')}
+        </div>
+      ) : loadError ? (
+        <div className="flex items-center gap-2 rounded-md border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+          <AlertTriangle size={16} />
+          <span>{t('settings.security.loginHistoryError', 'Unable to load login history. Please try again.')}</span>
+          <button
+            type="button"
+            onClick={fetchHistory}
+            className="ml-auto text-xs underline hover:no-underline"
+          >
+            {t('common.retry', 'Retry')}
+          </button>
         </div>
       ) : (
         <div className="space-y-2">

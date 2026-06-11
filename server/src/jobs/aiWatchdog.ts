@@ -145,7 +145,7 @@ const AIWatchdog = {
                 FROM projects p
                 LEFT JOIN organizations o ON p.organization_id = o.id
                 WHERE p.status IN ('active', 'in_progress', 'planning')
-                AND p.created_at > datetime('now', '-1 year')
+                AND p.created_at > NOW() - INTERVAL '1 year'
                 ORDER BY p.updated_at DESC
             `,
         [],
