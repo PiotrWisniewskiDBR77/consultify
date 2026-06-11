@@ -74,11 +74,6 @@ export { TaskDetailView } from './TaskDetailView';
 // LEGACY COMPONENTS (kept for backward compatibility)
 // ============================================================================
 
-// Main orchestrators (OLD - kept for reference)
-export type { NotificationMode } from './NotificationsHub';
-export { NotificationsHub } from './NotificationsHub';
-export { WorkCenter } from './WorkCenter';
-
 // Navigation components (OLD - kept for reference)
 export type { WorkTab } from './PillNavigation';
 export { PillNavigation } from './PillNavigation';
@@ -237,4 +232,3 @@ export { TaskInbox } from './TaskInbox';
 export type { FilterPreset, TaskFilters, ViewMode } from './Tasks/TaskFiltersBar';
 export { TaskFiltersBar } from './Tasks/TaskFiltersBar';
 export { TodayDashboard } from './TodayDashboard';
-export { WorkloadView } from './WorkloadView';
