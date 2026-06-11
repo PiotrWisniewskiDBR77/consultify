@@ -6019,8 +6019,8 @@ router.post(
       if (nodeIds.length > 0) {
         try {
           const mapRow = await queryHelpers.queryOne<any>(
-            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? LIMIT 1`,
-            [ideaId, userId]
+            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+            [ideaId, userId, orgId]
           );
           const allNodes: any[] = mapRow?.nodes_json ? JSON.parse(mapRow.nodes_json) : [];
           const nodeIdSet = new Set(nodeIds);
@@ -6094,8 +6094,8 @@ router.post(
       if (nodeIds.length > 0) {
         try {
           const mapRow = await queryHelpers.queryOne<any>(
-            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? LIMIT 1`,
-            [ideaId, userId]
+            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+            [ideaId, userId, orgId]
           );
           const allNodes: any[] = mapRow?.nodes_json ? JSON.parse(mapRow.nodes_json) : [];
           const nodeIdSet = new Set(nodeIds);

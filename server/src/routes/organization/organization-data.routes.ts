@@ -5,7 +5,7 @@
  */
 import { Response, Router } from 'express';
 
-import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
+import { type AuthRequest, requireRole, verifyToken } from '../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -209,6 +209,7 @@ router.get(
  */
 router.post(
   '/export/:category',
+  requireRole('admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { category } = req.params;
     try {
@@ -347,6 +348,7 @@ router.post(
  */
 router.post(
   '/export/all',
+  requireRole('admin', 'owner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const orgId = req.user?.organizationId;

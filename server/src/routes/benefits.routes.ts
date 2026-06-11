@@ -478,8 +478,8 @@ router.post(
     const hasCurrentValue = (kpiCols || []).some((c) => c?.name === 'current_value');
     if (hasCurrentValue) {
       await dbRun(
-        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [Number(value), kpiId]
+        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [Number(value), kpiId, orgId]
       ).catch(() => null);
     }
 

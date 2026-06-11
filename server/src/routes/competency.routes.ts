@@ -1,10 +1,18 @@
 import { type Response, Router } from 'express';
 
 import type { AuthRequest } from '../middleware/auth.middleware.js';
+import { requireRole, verifyToken } from '../middleware/auth.middleware.js';
 import * as taxonomy from '../services/competencyTaxonomyService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+
+router.use(verifyToken);
+// Write mutations (POST/PUT/DELETE) restricted to admin/owner; GETs are org-read-only
+router.use((req, res, next) => {
+  if (req.method === 'GET') return next();
+  return requireRole('admin', 'owner')(req as AuthRequest, res, next);
+});
 
 /* ================================================================== */
 /*  Categories                                                         */

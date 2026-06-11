@@ -7,7 +7,7 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import { requireRole } from '../middleware/rbac.middleware.js';
 import * as ConversationLogger from '../services/ai/virtualWorkerConversationLogger.js';
 import * as InsightsEngine from '../services/ai/virtualWorkerInsightsEngine.js';
 import * as PreviewService from '../services/ai/virtualWorkerPreviewService.js';
@@ -17,9 +17,9 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
-// All routes require authentication and superAdmin role (global personas — org-admin not sufficient)
+// All routes require superadmin — virtual workers are global system configuration
 router.use(verifyToken);
-router.use(verifySuperAdmin);
+router.use(requireRole('super_admin'));
 
 // ==========================================
 // WORKERS CRUD

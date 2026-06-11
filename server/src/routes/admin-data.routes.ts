@@ -11,8 +11,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
-import { isRequestSuperAdmin } from '../middleware/requestAccess.js';
+import { type AuthRequest, requireRole, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
   validateBody,
@@ -59,8 +58,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
 
-    if (orgId !== req.user?.organizationId && !isRequestSuperAdmin(req)) {
-      return res.status(403).json({ error: 'Cross-organization access is blocked', code: 'ADMIN_BOUNDARY_VIOLATION' });
+    const callerRole = req.user?.role;
+    const callerOrgId = req.user?.organizationId;
+    if (callerRole !== 'super_admin' && callerOrgId !== orgId) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
     }
 
     const users = await dbAll<{
@@ -98,14 +99,17 @@ router.get(
  */
 router.put(
   '/user-tiers/:orgId/:userId',
+  requireRole('super_admin', 'admin', 'owner'),
   validateParams(UserTierParamsSchema),
   validateBody(UpdateUserTierBodySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId, userId } = req.params;
     const { tier } = req.body;
 
-    if (orgId !== req.user?.organizationId && !isRequestSuperAdmin(req)) {
-      return res.status(403).json({ error: 'Cross-organization access is blocked', code: 'ADMIN_BOUNDARY_VIOLATION' });
+    const callerRole = req.user?.role;
+    const callerOrgId = req.user?.organizationId;
+    if (callerRole !== 'super_admin' && callerOrgId !== orgId) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
     }
 
     const runResult = await dbRun(
@@ -134,6 +138,12 @@ router.get(
   validateParams(OrgIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
+
+    const callerRole = req.user?.role;
+    const callerOrgId = req.user?.organizationId;
+    if (callerRole !== 'super_admin' && callerOrgId !== orgId) {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
 
     const userCosts = await dbAll<{
       entityType: string;
@@ -272,6 +282,7 @@ router.get(
  */
 router.put(
   '/security-events/:eventId/resolve',
+  requireRole('super_admin', 'admin', 'owner'),
   validateParams(EventIdParamSchema),
   validateBody(ResolveSecurityEventBodySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -492,6 +503,7 @@ router.get(
  */
 router.delete(
   '/sessions/:sessionId',
+  requireRole('super_admin', 'admin', 'owner'),
   validateParams(SessionIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { sessionId } = req.params;
@@ -784,6 +796,7 @@ router.post(
  */
 router.put(
   '/scheduled-events/:eventId',
+  requireRole('super_admin', 'admin', 'owner'),
   validateParams(ScheduledEventIdParamSchema),
   validateBody(UpdateScheduledEventBodySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -871,6 +884,7 @@ router.put(
  */
 router.delete(
   '/scheduled-events/:eventId',
+  requireRole('super_admin', 'admin', 'owner'),
   validateParams(ScheduledEventIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { eventId } = req.params;
