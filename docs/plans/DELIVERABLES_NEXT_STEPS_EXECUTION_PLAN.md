@@ -85,8 +85,10 @@
 - **DONE gdy:** użytkownik może wyłączyć sekcję planu i dostaje dokument bez niej.
 
 ### C3. Per-karta akcje decka `[D]`
-- `regenerateSlide` już istnieje w `presentationGeneratorService` — podpiąć w
-  `CanvasPresentationView`: na karcie „Regeneruj / Inny układ”.
+- **KOREKTA (2026-06-11, code-verified):** `regenerateSlide` w `presentationGeneratorService`
+  to STUB — zwraca istniejący slajd bez regeneracji. Realne C3 = wywołanie LLM per slajd
+  + spójna aktualizacja `unified_json` ORAZ `deck_json` (builder-cache czytany pierwszy).
+  Pół dnia chirurgii na silniku decka; koordynować z workstreamem canvas (deck hygiene d61f532f).
 - **DONE gdy:** regeneracja jednej karty nie dotyka pozostałych; widoczny stan ładowania karty.
 
 ## FAZA D — Droga na produkcję
@@ -131,3 +133,16 @@ A1 ──► A2 ──► A4 ──► D1 ──► D2 ──► D3 ──► D4
 1. `[C]` A1 — test + fix `setContent` w `CanvasRichEditor` (odblokowuje wszystko).
 2. `[P]` B1 — decyzja: gdzie na kartach encji siedzi „Zrób z tego…” (5 min decyzji).
 3. `[D]` B2 — ContextPack w `startDoc`/`startSheet` (niezależne od A1, czysto serwerowe).
+
+
+---
+
+## Statusy wykonania (2026-06-11, code-verified)
+
+A1–A4 ✅ (A1 root-cause: stale autosave szkieletu, nie edytor) · **B1 ✅** (6ddca907 — akcja na
+podglądzie inicjatywy, API-proof groundingMode=source_refs) · **B2 ✅** (eef8ca1d) · **B3 ✅**
+(c8c57a7e — sekcja Źródła w doc+sheet; klikalne chipy = iteracja UI) · **B4 ✅** (e4c92767 —
+auto-skan insighty+notatki, linia „Źródła organizacji" w checkliście) · **D2 ✅** (telemetria,
+DB-proof). P2-6 i18n checklisty — zamknięte decyzją: dwujęzyczna mapa PL/EN to wzorzec docelowy
+(język artefaktu = język wiadomości, niezależny od async bundli i18n UI). Otwarte: A3 streaming
+sekcji, C1–C2, C3 (re-scoped po odkryciu stuba), D1/D3/D4, klik-through B1 w stabilnym środowisku.
