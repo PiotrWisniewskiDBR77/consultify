@@ -9028,7 +9028,7 @@ router.post(
     try {
       await dbRun(
         `INSERT INTO ai_tier_overrides (id, organization_id, request_id, tier, reason, created_by, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [uuidv4(), orgId, requestId, tier, reason || null, userId]
       );
     } catch (err: any) {

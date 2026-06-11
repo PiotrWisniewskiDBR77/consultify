@@ -138,7 +138,7 @@ class RealtimePlatformService {
   async cleanStalePresence(staleMinutes: number = 5) {
     await queryHelpers.queryRun(
       `UPDATE realtime_presence SET is_connected=0, disconnected_at=CURRENT_TIMESTAMP
-       WHERE is_connected=1 AND last_heartbeat_at < datetime('now', '-' || $1 || ' minutes')`,
+       WHERE is_connected=1 AND last_heartbeat_at < NOW() - ($1 * INTERVAL '1 minute')`,
       [staleMinutes]
     );
     return { ok: true };
@@ -517,7 +517,7 @@ class RealtimePlatformService {
     try {
       await queryHelpers.queryRun(
         `INSERT INTO tool_session_edit_locks (id, organization_id, tool_session_id, block_id, locked_by, expires_at)
-         VALUES ($1,$2,$3,$4,$5, datetime('now', '+' || $6 || ' minutes'))`,
+         VALUES ($1,$2,$3,$4,$5, NOW() + ($6 * INTERVAL '1 minute'))`,
         [id, orgId, data.toolSessionId, data.blockId, data.lockedBy, ttl]
       );
       return { id, acquired: true };

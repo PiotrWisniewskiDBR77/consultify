@@ -421,6 +421,23 @@ function normalizeDeckRow(row: any) {
   };
 }
 
+// W9: strip tenant-identifying and internal fields before returning to unauthenticated callers
+const PUBLIC_DECK_DENY_FIELDS = new Set([
+  'organization_id',
+  'confidentiality',
+  'share_token',
+  'share_created_by',
+  'created_by',
+  'updated_by',
+]);
+
+function toPublicDeckRow(row: any) {
+  const full = normalizeDeckRow(row);
+  return Object.fromEntries(
+    Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k))
+  );
+}
+
 function parseDeckPayload(row: any): any {
   return normalizeDeckDocument(row) || {};
 }
@@ -618,7 +635,7 @@ router.get(
       return res.status(404).json({ success: false, error: 'Shared presentation not found' });
     }
 
-    res.json({ success: true, data: normalizeDeckRow(row) });
+    res.json({ success: true, data: toPublicDeckRow(row) });
   })
 );
 
