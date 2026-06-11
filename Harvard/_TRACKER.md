@@ -19,7 +19,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M20 | Tabele Studio | 2 (beta) | 🟦 | 43 | Alpha | 2026-06-11 | `modules/M20-tabele-studio/KARTA_AUDYTU.md` |
 | M16 | Finanse | 2 (beta) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M16-finanse/KARTA_AUDYTU.md` |
 | M15 | Rezultaty | 2 (beta) | 🟦 | 49 | Alpha | 2026-06-11 | `modules/M15-rezultaty/KARTA_AUDYTU.md` |
-| M21 | Meeting | 2 (beta) | ⬜ | — | — | — | — |
+| M21 | Meeting | 2 (beta) | 🟦 | 52 | Alpha | 2026-06-11 | `modules/M21-meeting/KARTA_AUDYTU.md` |
 | M12 | Audyty | 2 (beta) | ⬜ | — | — | — | — |
 | M04 | Notatnik | 2 (beta) | ⬜ | — | — | — | — |
 | M05 | Ideas — Zarządzanie | 3 (Ideas) | 🔁 | 68* | Beta | 2026-06-11 | `ideas/MODULE_02A` |
