@@ -15,11 +15,7 @@ router.use(verifyToken);
 
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
-  const orgId =
-    req.user?.organizationId ||
-    req.organizationId ||
-    (req.headers['x-organization-id'] as string) ||
-    (req.query.organizationId as string);
+  const orgId = req.user?.organizationId || req.organizationId;
   if (!userId || !orgId) {
     res.status(401).json({ error: 'Authentication required' });
     return null;
@@ -112,6 +108,7 @@ router.post(
       .status(201)
       .json(
         await initiativeGovernanceService.linkGoalToInitiative(
+          id.orgId,
           req.params.goalId,
           p.data.initiativeId,
           p.data.contributionWeight
@@ -126,7 +123,7 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     res.json({
-      initiatives: await initiativeGovernanceService.getGoalInitiatives(req.params.goalId),
+      initiatives: await initiativeGovernanceService.getGoalInitiatives(id.orgId, req.params.goalId),
     });
   })
 );
@@ -138,6 +135,7 @@ router.delete(
     if (!id) return;
     res.json(
       await initiativeGovernanceService.unlinkGoalFromInitiative(
+        id.orgId,
         req.params.goalId,
         req.params.initiativeId
       )
@@ -299,6 +297,7 @@ router.post(
       .status(201)
       .json(
         await initiativeGovernanceService.linkDecisionToInitiative(
+          id.orgId,
           req.params.initiativeId,
           p.data.decisionId,
           p.data.linkType
@@ -313,7 +312,7 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     res.json({
-      decisions: await initiativeGovernanceService.getInitiativeDecisions(req.params.initiativeId),
+      decisions: await initiativeGovernanceService.getInitiativeDecisions(id.orgId, req.params.initiativeId),
     });
   })
 );

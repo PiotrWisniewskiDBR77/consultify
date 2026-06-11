@@ -171,7 +171,7 @@ router.get(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, req.user?.organizationId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
 
     const sourceStatement =
@@ -220,7 +220,7 @@ router.put(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, req.user?.organizationId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
 
     await updateModel(modelId, req.body);
@@ -234,7 +234,7 @@ router.delete(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, req.user?.organizationId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
     if (model.status === 'approved')
       return res.status(400).json({ error: 'Cannot delete approved model. Archive it instead.' });
@@ -258,7 +258,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, req.user?.organizationId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
     const traceId = getFinanceTraceId((req as any).correlationId);
 
@@ -319,7 +319,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, req.user?.organizationId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
     if (model.status !== 'draft')
       return res.status(400).json({ error: 'Only draft models can be submitted for review' });
@@ -355,7 +355,7 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
-    const model = await getModel(modelId);
+    const model = await getModel(modelId, req.user?.organizationId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
     const traceId = getFinanceTraceId((req as any).correlationId);
 

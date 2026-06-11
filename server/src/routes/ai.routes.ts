@@ -5745,6 +5745,15 @@ router.get(
   verifyToken,
   validateParams(ProjectIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || req.organizationId;
+    const projectRow = await dbGet<{ organization_id: string }>(
+      `SELECT organization_id FROM projects WHERE id = ?`,
+      [req.params.projectId]
+    );
+    if (!projectRow) return res.status(404).json({ error: 'Project not found' });
+    if (String(projectRow.organization_id) !== String(orgId)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     try {
       const AIMemoryManager = await getAIMemoryManager();
       const memory = await AIMemoryManager.buildProjectMemorySummary(req.params.projectId);
@@ -5814,9 +5823,17 @@ router.delete(
   verifyToken,
   validateParams(ProjectIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || req.organizationId;
+    const projectRow = await dbGet<{ organization_id: string }>(
+      `SELECT organization_id FROM projects WHERE id = ?`,
+      [req.params.projectId]
+    );
+    if (!projectRow) return res.status(404).json({ error: 'Project not found' });
+    if (String(projectRow.organization_id) !== String(orgId)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     if (!req.can || !req.can('edit_project_settings')) {
       return res.status(403).json({ error: 'Permission denied' });
-      return;
     }
 
     try {

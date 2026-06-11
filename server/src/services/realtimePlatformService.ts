@@ -389,6 +389,15 @@ class RealtimePlatformService {
     );
   }
 
+  async getOutcomeWithSession(orgId: string, outcomeId: string) {
+    return queryHelpers.queryFirst(
+      `SELECT o.id FROM tool_facilitation_outcomes o
+       JOIN tool_facilitation_sessions s ON s.id = o.facilitation_session_id
+       WHERE o.id=$1 AND s.organization_id=$2`,
+      [outcomeId, orgId]
+    );
+  }
+
   async exportOutcome(outcomeId: string, exportType: string, exportId: string) {
     await queryHelpers.queryRun(
       `UPDATE tool_facilitation_outcomes SET exported_to_type=$1, exported_to_id=$2 WHERE id=$3`,

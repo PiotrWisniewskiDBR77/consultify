@@ -951,7 +951,8 @@ export class DecisionController {
         outcome?: string;
       };
       const userId = req.user?.id;
-      if (!userId) {
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
@@ -978,11 +979,11 @@ export class DecisionController {
             ? 'Rejected'
             : '');
 
-      // Get decision first
+      // Get decision first — scoped to caller's org
       const currentDecision = await queryHelpers.queryOne<{
         decision_maker_id?: string;
         status?: string;
-      }>(`SELECT * FROM decisions WHERE id = ?`, [id]);
+      }>(`SELECT * FROM decisions WHERE id = ? AND organization_id = ?`, [id, orgId]);
 
       if (!currentDecision) {
         res.status(404).json({ error: 'Decision not found' });
@@ -1029,7 +1030,6 @@ export class DecisionController {
       );
 
       // V4-TASK-08: Unified audit log
-      const orgId = req.user?.organizationId;
       if (orgId) {
         auditEventsService
           .log({
@@ -1086,7 +1086,8 @@ export class DecisionController {
     async (req: AuthenticatedRequest<UpdateDecisionRequest>, res: Response): Promise<void> => {
       const { id } = req.params;
       const userId = req.user?.id;
-      if (!userId) {
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
@@ -1108,8 +1109,8 @@ export class DecisionController {
       }
 
       const currentDecision = await queryHelpers.queryOne<DecisionRow>(
-        `SELECT * FROM decisions WHERE id = ?`,
-        [id]
+        `SELECT * FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
       );
       if (!currentDecision) {
         res.status(404).json({ error: 'Decision not found' });
@@ -1189,7 +1190,6 @@ export class DecisionController {
       );
 
       // V4-TASK-08: Unified audit log
-      const orgId = req.user?.organizationId;
       if (orgId) {
         auditEventsService
           .log({
@@ -1231,14 +1231,15 @@ export class DecisionController {
       const { id } = req.params;
       const { reason, escalateToUserId } = req.body;
       const userId = req.user?.id;
-      if (!userId) {
+      const orgId = req.user?.organizationId;
+      if (!userId || !orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
       const currentDecision = await queryHelpers.queryOne<DecisionRow>(
-        `SELECT * FROM decisions WHERE id = ?`,
-        [id]
+        `SELECT * FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
       );
 
       if (!currentDecision) {

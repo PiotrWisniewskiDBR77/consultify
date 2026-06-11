@@ -116,7 +116,14 @@ class InitiativeGovernanceService {
     return { ok: true };
   }
 
-  async linkGoalToInitiative(goalId: string, initiativeId: string, weight?: number) {
+  async linkGoalToInitiative(orgId: string, goalId: string, initiativeId: string, weight?: number) {
+    const goal = await this.getGoal(orgId, goalId);
+    if (!goal) throw Object.assign(new Error('Goal not found'), { status: 404 });
+    const init = await queryHelpers.queryFirst(
+      `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
+      [initiativeId, orgId]
+    );
+    if (!init) throw Object.assign(new Error('Initiative not found'), { status: 404 });
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO goal_initiative_links (id, goal_id, initiative_id, contribution_weight)
@@ -127,13 +134,15 @@ class InitiativeGovernanceService {
     return { id };
   }
 
-  async getGoalInitiatives(goalId: string) {
+  async getGoalInitiatives(orgId: string, goalId: string) {
+    const goal = await this.getGoal(orgId, goalId);
+    if (!goal) return [];
     return queryHelpers.queryAll(
       `SELECT gil.*, i.name as initiative_name, i.status as initiative_status
        FROM goal_initiative_links gil
        LEFT JOIN initiatives i ON i.id = gil.initiative_id
-       WHERE gil.goal_id=$1 ORDER BY gil.created_at`,
-      [goalId]
+       WHERE gil.goal_id=$1 AND i.organization_id=$2 ORDER BY gil.created_at`,
+      [goalId, orgId]
     );
   }
 
@@ -181,7 +190,9 @@ class InitiativeGovernanceService {
     };
   }
 
-  async unlinkGoalFromInitiative(goalId: string, initiativeId: string) {
+  async unlinkGoalFromInitiative(orgId: string, goalId: string, initiativeId: string) {
+    const goal = await this.getGoal(orgId, goalId);
+    if (!goal) throw Object.assign(new Error('Goal not found'), { status: 404 });
     await queryHelpers.queryRun(
       `DELETE FROM goal_initiative_links WHERE goal_id=$1 AND initiative_id=$2`,
       [goalId, initiativeId]
@@ -537,7 +548,17 @@ class InitiativeGovernanceService {
     return { status, ...result };
   }
 
-  async linkDecisionToInitiative(initiativeId: string, decisionId: string, linkType?: string) {
+  async linkDecisionToInitiative(
+    orgId: string,
+    initiativeId: string,
+    decisionId: string,
+    linkType?: string
+  ) {
+    const init = await queryHelpers.queryFirst(
+      `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
+      [initiativeId, orgId]
+    );
+    if (!init) throw Object.assign(new Error('Initiative not found'), { status: 404 });
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO initiative_decision_links (id, initiative_id, decision_id, link_type)
@@ -548,7 +569,12 @@ class InitiativeGovernanceService {
     return { id };
   }
 
-  async getInitiativeDecisions(initiativeId: string) {
+  async getInitiativeDecisions(orgId: string, initiativeId: string) {
+    const init = await queryHelpers.queryFirst(
+      `SELECT id FROM initiatives WHERE id=$1 AND organization_id=$2`,
+      [initiativeId, orgId]
+    );
+    if (!init) return [];
     return queryHelpers.queryAll(
       `SELECT idl.*, d.title as decision_title, d.workflow_status
        FROM initiative_decision_links idl

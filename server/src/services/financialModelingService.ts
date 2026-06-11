@@ -1103,8 +1103,11 @@ export async function createModel(params: {
   return id;
 }
 
-export async function getModel(modelId: string): Promise<any> {
-  const model = (await dbGet(`SELECT * FROM financial_models WHERE id = ?`, [modelId])) as any;
+export async function getModel(modelId: string, orgId?: string): Promise<any> {
+  const sql = orgId
+    ? `SELECT * FROM financial_models WHERE id = ? AND organization_id = ?`
+    : `SELECT * FROM financial_models WHERE id = ?`;
+  const model = (await dbGet(sql, orgId ? [modelId, orgId] : [modelId])) as any;
   if (!model) return null;
   model.assumptions_json =
     typeof model.assumptions_json === 'string'

@@ -410,10 +410,10 @@ async function recalcInitiativeActualTotal(
     )) || []) as Array<{ total: number }>;
 
     const total = result[0]?.total || 0;
-    await dbRun(`UPDATE initiatives SET actual_budget_total = ?, updated_at = NOW() WHERE id = ?`, [
-      total,
-      initiativeId,
-    ]);
+    await dbRun(
+      `UPDATE initiatives SET actual_budget_total = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+      [total, initiativeId, organizationId]
+    );
   } catch (err) {
     logger.error(`Failed to recalc actual budget total for ${initiativeId}`, err);
   }

@@ -7587,12 +7587,18 @@ ${JSON.stringify(questions || [], null, 2)}
 
   getInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
+    const orgRow = await queryHelpers.queryOne(
+      `SELECT organization_id FROM interview_insights WHERE id = ?`,
+      [id]
+    );
+    if (!orgRow) { res.status(404).json({ error: 'Insight not found' }); return; }
+    const userOrgId = String(req.user?.organizationId || (req as any).organizationId || '');
+    if (String((orgRow as any).organization_id) !== userOrgId) {
+      res.status(403).json({ error: 'Forbidden' }); return;
+    }
     const interviewInsightService = await import('../services/InterviewInsightService.js');
     const insight = await interviewInsightService.getById(id);
-    if (!insight) {
-      res.status(404).json({ error: 'Insight not found' });
-      return;
-    }
+    if (!insight) { res.status(404).json({ error: 'Insight not found' }); return; }
     res.json(insight);
   }),
 
@@ -7776,14 +7782,20 @@ ${JSON.stringify(questions || [], null, 2)}
   deleteInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
 
+    const orgRow = await queryHelpers.queryOne(
+      `SELECT organization_id FROM interview_insights WHERE id = ?`,
+      [id]
+    );
+    if (!orgRow) { res.status(404).json({ error: 'Insight not found' }); return; }
+    const userOrgId = String(req.user?.organizationId || (req as any).organizationId || '');
+    if (String((orgRow as any).organization_id) !== userOrgId) {
+      res.status(403).json({ error: 'Forbidden' }); return;
+    }
+
     const interviewInsightService = await import('../services/InterviewInsightService.js');
     const deleted = await interviewInsightService.deleteInsight(id);
 
-    if (!deleted) {
-      res.status(404).json({ error: 'Insight not found' });
-      return;
-    }
-
+    if (!deleted) { res.status(404).json({ error: 'Insight not found' }); return; }
     res.json({ success: true });
   }),
 
