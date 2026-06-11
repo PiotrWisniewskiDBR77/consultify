@@ -305,11 +305,11 @@ export interface MessageRendererProps {
 
   /**
    * B2 (artifact lifecycle): opens the canvas split-view with a chat-generated
-   * deliverable (deck/doc) mounted. Fed by persisted `metadata.deliverable` on
-   * the message, so the chip survives reloads.
+   * deliverable (deck/doc/sheet) mounted. Fed by persisted `metadata.deliverable`
+   * on the message, so the chip survives reloads.
    */
   onOpenDeliverableArtifact?: (deliverable: {
-    kind: 'deck' | 'doc';
+    kind: 'deck' | 'doc' | 'sheet';
     generationId: string;
     title?: string;
   }) => void;
@@ -1640,10 +1640,20 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         (metadata as any)?.deliverable?.generationId && (
           <div className="mt-1.5">
             <ArtifactChip
-              kind={(metadata as any).deliverable.kind === 'doc' ? 'doc' : 'deck'}
+              kind={
+                (metadata as any).deliverable.kind === 'doc'
+                  ? 'doc'
+                  : (metadata as any).deliverable.kind === 'sheet'
+                    ? 'sheet'
+                    : 'deck'
+              }
               title={String(
                 (metadata as any).deliverable.title ||
-                  ((metadata as any).deliverable.kind === 'doc' ? 'Document' : 'Presentation')
+                  ((metadata as any).deliverable.kind === 'doc'
+                    ? 'Document'
+                    : (metadata as any).deliverable.kind === 'sheet'
+                      ? 'Sheet'
+                      : 'Presentation')
               )}
               onOpen={() => onOpenDeliverableArtifact((metadata as any).deliverable)}
             />

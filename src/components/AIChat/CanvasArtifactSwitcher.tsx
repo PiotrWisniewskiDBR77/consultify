@@ -9,12 +9,13 @@
  * Honest scope (what is switchable today):
  * - 'deck'  → CanvasPresentationView (deckId = deliverable generationId)
  * - 'doc'   → markdown document panel hydrated by draftId (= generationId)
+ * - 'sheet' → same markdown panel (sheets are GFM-table markdown drafts)
  * - 'base'  → the panel's original document mount (props-driven)
  * Renders nothing when fewer than two entries exist, so existing single-artifact
  * flows are visually unchanged.
  */
 
-import { FileText, Presentation } from 'lucide-react';
+import { FileText, Presentation, Table } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -28,11 +29,13 @@ import { useArtifactsStore } from '../../store/useArtifactsStore';
 export type CanvasMountSelection =
   | { kind: 'base' }
   | { kind: 'deck'; deckId: string | null; artifactId?: string }
-  | { kind: 'doc'; draftId: string; artifactId?: string };
+  | { kind: 'doc'; draftId: string; artifactId?: string }
+  // Sheet = GFM-table markdown draft; mounts the same markdown panel as 'doc'.
+  | { kind: 'sheet'; draftId: string; artifactId?: string };
 
 interface SwitcherEntry {
   key: string;
-  kind: 'base' | 'deck' | 'doc';
+  kind: 'base' | 'deck' | 'doc' | 'sheet';
   title: string;
   selection: CanvasMountSelection;
   artifactId?: string;
@@ -90,18 +93,26 @@ export const CanvasArtifactSwitcher: React.FC<CanvasArtifactSwitcherProps> = ({
           ? pl
             ? 'Dokument'
             : 'Document'
-          : pl
-            ? 'Prezentacja'
-            : 'Presentation');
-      if (deliverable.kind === 'doc') {
-        // The base mount may already BE this generated doc draft — skip the duplicate.
+          : deliverable.kind === 'sheet'
+            ? pl
+              ? 'Arkusz'
+              : 'Sheet'
+            : pl
+              ? 'Prezentacja'
+              : 'Presentation');
+      if (deliverable.kind === 'doc' || deliverable.kind === 'sheet') {
+        // The base mount may already BE this generated doc/sheet draft — skip the duplicate.
         if (hasBaseDocument && baseDraftId && baseDraftId === deliverable.generationId) continue;
         result.push({
-          key: `doc-${deliverable.generationId}`,
-          kind: 'doc',
+          key: `${deliverable.kind}-${deliverable.generationId}`,
+          kind: deliverable.kind,
           title,
           artifactId: artifact.id,
-          selection: { kind: 'doc', draftId: deliverable.generationId, artifactId: artifact.id },
+          selection: {
+            kind: deliverable.kind,
+            draftId: deliverable.generationId,
+            artifactId: artifact.id,
+          },
         });
       } else {
         result.push({
@@ -140,6 +151,9 @@ export const CanvasArtifactSwitcher: React.FC<CanvasArtifactSwitcherProps> = ({
     if (entry.selection.kind === 'doc' && mounted.kind === 'doc') {
       return entry.selection.draftId === mounted.draftId;
     }
+    if (entry.selection.kind === 'sheet' && mounted.kind === 'sheet') {
+      return entry.selection.draftId === mounted.draftId;
+    }
     return true; // base === base
   };
 
@@ -156,7 +170,13 @@ export const CanvasArtifactSwitcher: React.FC<CanvasArtifactSwitcherProps> = ({
   if (entries.length < 2) return null;
 
   const iconFor = (kind: SwitcherEntry['kind']) =>
-    kind === 'deck' ? <Presentation size={12} /> : <FileText size={12} />;
+    kind === 'deck' ? (
+      <Presentation size={12} />
+    ) : kind === 'sheet' ? (
+      <Table size={12} />
+    ) : (
+      <FileText size={12} />
+    );
 
   return (
     <div className="flex h-9 shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-200/70 bg-white/70 px-2 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60">
@@ -192,7 +212,8 @@ export const CanvasArtifactSwitcher: React.FC<CanvasArtifactSwitcherProps> = ({
         >
           {entries.map((entry) => (
             <option key={entry.key} value={entry.key}>
-              {(entry.kind === 'deck' ? '🖥 ' : '📄 ') + entry.title}
+              {(entry.kind === 'deck' ? '🖥 ' : entry.kind === 'sheet' ? '📊 ' : '📄 ') +
+                entry.title}
             </option>
           ))}
         </select>

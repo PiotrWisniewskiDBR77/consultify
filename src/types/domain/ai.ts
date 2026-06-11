@@ -360,11 +360,12 @@ export type AIArtifactType =
 
 /**
  * Deliverables light (B2): reference to a chat-generated deliverable
- * (deck or doc draft). `generationId` doubles as deckId/draftId in the
+ * (deck, doc or sheet draft). `generationId` doubles as deckId/draftId in the
  * deliverables runtime, so the canvas panel can re-mount the artifact.
+ * 'sheet' = GFM-table markdown draft (work_canvas kind='table').
  */
 export interface AIArtifactDeliverableRef {
-  kind: 'deck' | 'doc';
+  kind: 'deck' | 'doc' | 'sheet';
   generationId: string;
   title?: string;
 }

@@ -737,9 +737,10 @@ export function WorkCanvasDocumentPanel(props: WorkCanvasDocumentPanelProps) {
       <div className="min-h-0 flex-1">
         {mounted.kind === 'deck' ? (
           <CanvasPresentationView deckId={mounted.deckId} onClose={props.onClose} />
-        ) : mounted.kind === 'doc' ? (
+        ) : mounted.kind === 'doc' || mounted.kind === 'sheet' ? (
+          // Sheets are GFM-table markdown drafts — same markdown mount as docs.
           <WorkCanvasMarkdownDocumentPanel
-            key={`switched-doc-${mounted.draftId}`}
+            key={`switched-${mounted.kind}-${mounted.draftId}`}
             {...props}
             initialStarterId="document"
             initialDraftId={mounted.draftId}
@@ -946,7 +947,8 @@ function WorkCanvasMarkdownDocumentPanel({
               }
             );
             const jsonById = await responseById.json().catch(() => ({}));
-            const draftById = jsonById?.data;
+            // GET /drafts/:id returns envelope({ draft }) — align with the primary path.
+            const draftById = jsonById?.data?.draft || jsonById?.data;
             if (!responseById.ok || cancelled || !draftById) return;
             setDocumentState((current) =>
               mapDraftResponseToCanvasDocumentState(draftById, current)

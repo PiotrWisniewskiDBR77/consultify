@@ -12,7 +12,7 @@
  * a small card with an explicit "Otwórz / Open" affordance.
  */
 
-import { ExternalLink, FileText, Presentation } from 'lucide-react';
+import { ExternalLink, FileText, Presentation, Table } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 // ============================================================================
 
 export interface ArtifactChipProps {
-  kind: 'deck' | 'doc';
+  kind: 'deck' | 'doc' | 'sheet';
   title: string;
   onOpen: () => void;
 }
@@ -33,9 +33,19 @@ export interface ArtifactChipProps {
 export const ArtifactChip: React.FC<ArtifactChipProps> = ({ kind, title, onOpen }) => {
   const { i18n } = useTranslation();
   const pl = (i18n.language || 'en').split('-')[0] === 'pl';
-  const Icon = kind === 'deck' ? Presentation : FileText;
+  const Icon = kind === 'deck' ? Presentation : kind === 'sheet' ? Table : FileText;
   const kindLabel =
-    kind === 'deck' ? (pl ? 'Prezentacja' : 'Presentation') : pl ? 'Dokument' : 'Document';
+    kind === 'deck'
+      ? pl
+        ? 'Prezentacja'
+        : 'Presentation'
+      : kind === 'sheet'
+        ? pl
+          ? 'Arkusz'
+          : 'Sheet'
+        : pl
+          ? 'Dokument'
+          : 'Document';
 
   return (
     <button

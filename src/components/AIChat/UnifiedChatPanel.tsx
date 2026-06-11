@@ -405,6 +405,8 @@ const deckGenerationChecklist = (params: {
   phase: 'planning' | 'plan_ready' | 'generating' | 'validating' | 'draft' | 'error';
   planCount?: number;
   unitCount?: number;
+  /** B4: liczba źródeł org użytych do groundingu (auto-skan lub wskazane). */
+  sourcesCount?: number;
   error?: string;
   /** L2/L3: jedna checklista dla deck/doc/sheet — różnią się tylko etykiety. */
   format?: ChecklistFormat;
@@ -429,6 +431,15 @@ const deckGenerationChecklist = (params: {
     heading,
     '',
     `- [${mark('plan_ready')}] ${planLabel}`,
+    ...(params.sourcesCount
+      ? [
+          `- [${mark('plan_ready')}] ${
+            pl
+              ? `Źródła organizacji — ${params.sourcesCount} znalezione`
+              : `Organization sources — ${params.sourcesCount} found`
+          }`,
+        ]
+      : []),
     `- [${mark('generating')}] ${copy.generating}`,
     `- [${mark('validating')}] ${pl ? 'Walidacja treści' : 'Validating content'}`,
     `- [${mark('draft')}] ${pl ? 'Artefakt gotowy' : 'Artifact ready'}`,
@@ -460,12 +471,16 @@ const deckGenerationChecklist = (params: {
  * artefaktu po reloadzie. Chip w transkrypcie idzie osobno, z server-side
  * metadata wiadomości (metadata.deliverable).
  */
-const registerChatDeliverable = (kind: 'deck' | 'doc', generationId: string, title: string) => {
+const registerChatDeliverable = (
+  kind: 'deck' | 'doc' | 'sheet',
+  generationId: string,
+  title: string
+) => {
   const conversationId = useConversationStore.getState().activeConversationId;
   if (!conversationId) return;
   useArtifactsStore.getState().registerConversationDeliverable(conversationId, {
     id: `deliverable-${generationId}`,
-    type: kind === 'doc' ? 'document' : 'deck',
+    type: kind === 'doc' ? 'document' : kind === 'sheet' ? 'table' : 'deck',
     title,
     content: '',
     createdAt: new Date(),
@@ -2172,7 +2187,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           const updateSheetChecklist = (
             phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
-            extra?: { planCount?: number; unitCount?: number; error?: string }
+            extra?: {
+              planCount?: number;
+              unitCount?: number;
+              sourcesCount?: number;
+              error?: string;
+            }
           ) => {
             useConversationStore.getState().updateMessageContent(
               progressMessageId,
@@ -2186,7 +2206,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             );
           };
 
-          const persistSheetFinalNote = (note: string) => {
+          const persistSheetFinalNote = (
+            note: string,
+            // B2-parity: deliverable ref w metadata wiadomości — persystowane
+            // server-side, dzięki czemu ArtifactChip w transkrypcie przeżywa reload.
+            metadata?: {
+              deliverable: { kind: 'deck' | 'doc' | 'sheet'; generationId: string; title?: string };
+            }
+          ) => {
             const conversationId = useConversationStore.getState().activeConversationId;
             if (!conversationId) return;
             void addMessageToConversation({
@@ -2194,6 +2221,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               role: 'ai',
               content: note,
               messageType: 'text',
+              ...(metadata ? { metadata } : {}),
             }).catch(() => {
               /* best-effort persist */
             });
@@ -2216,13 +2244,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 conversationId: useConversationStore.getState().activeConversationId,
                 conversationContext,
               });
-              updateSheetChecklist('plan_ready', { planCount: undefined });
+              const sheetSourcesCount = planned.sources?.length || 0;
+              updateSheetChecklist('plan_ready', { sourcesCount: sheetSourcesCount });
 
               await startSheetGeneration({
                 generationId: planned.generationId,
                 setup: planned.setup,
               });
-              updateSheetChecklist('generating');
+              updateSheetChecklist('generating', { sourcesCount: sheetSourcesCount });
               // Kimi-parity: artefakt widoczny od razu (szkielet), treść
               // dociągnie event 'deliverables:draft-ready' po generacji.
               setRequestedCanvasDeckId(null);
@@ -2234,7 +2263,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 generationId: planned.generationId,
                 signal: deliverablesPollAbortRef.current?.signal,
                 onUpdate: (status: DeliverableGenerationStatus) => {
-                  if (status.state === 'validating') updateSheetChecklist('validating');
+                  if (status.state === 'validating')
+                    updateSheetChecklist('validating', { sourcesCount: sheetSourcesCount });
                 },
               });
               if (final.state === 'draft') {
@@ -2245,9 +2275,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     title: sheetTitle,
                     phase: 'draft',
                     format: 'sheet',
+                    sourcesCount: sheetSourcesCount,
                     unitCount: final.artifact?.unitCount,
-                  })
+                  }),
+                  // B2-parity: chip artefaktu w transkrypcie (reload-safe, server-side).
+                  {
+                    deliverable: {
+                      kind: 'sheet',
+                      generationId: planned.generationId,
+                      title: sheetTitle,
+                    },
+                  }
                 );
+                // B2-parity: artefakt rozmowy (persisted) — przełącznik + aktywny artefakt.
+                registerChatDeliverable('sheet', planned.generationId, sheetTitle);
                 announceDeliverableDraftReady(planned.generationId);
               } else {
                 useConversationStore.getState().removeLocalMessage(progressMessageId);
@@ -2348,7 +2389,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           const updateDocChecklist = (
             phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
-            extra?: { planCount?: number; unitCount?: number; error?: string }
+            extra?: {
+              planCount?: number;
+              unitCount?: number;
+              sourcesCount?: number;
+              error?: string;
+            }
           ) => {
             useConversationStore.getState().updateMessageContent(
               progressMessageId,
@@ -2404,13 +2450,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 conversationContext,
               });
               const enabledCount = planned.plan.filter((item) => item.enabled).length;
-              updateDocChecklist('plan_ready', { planCount: enabledCount });
+              const sourcesCount = planned.sources?.length || 0;
+              updateDocChecklist('plan_ready', { planCount: enabledCount, sourcesCount });
 
               await startDocGeneration({
                 generationId: planned.generationId,
                 setup: planned.setup,
               });
-              updateDocChecklist('generating', { planCount: enabledCount });
+              updateDocChecklist('generating', { planCount: enabledCount, sourcesCount });
               // Kimi-parity: dokument widoczny od razu jako szkielet sekcji;
               // gotową treść dociągnie event 'deliverables:draft-ready'.
               setRequestedCanvasDeckId(null);
@@ -2423,7 +2470,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 signal: deliverablesPollAbortRef.current?.signal,
                 onUpdate: (status: DeliverableGenerationStatus) => {
                   if (status.state === 'validating') {
-                    updateDocChecklist('validating', { planCount: enabledCount });
+                    updateDocChecklist('validating', { planCount: enabledCount, sourcesCount });
                   }
                 },
               });
@@ -2436,6 +2483,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     phase: 'draft',
                     format: 'doc',
                     planCount: enabledCount,
+                    sourcesCount,
                     unitCount: final.artifact?.unitCount,
                   }),
                   // B2: chip artefaktu w transkrypcie (reload-safe, server-side).
@@ -2554,7 +2602,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
           const updateChecklist = (
             phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
-            extra?: { planCount?: number; unitCount?: number; error?: string }
+            extra?: {
+              planCount?: number;
+              unitCount?: number;
+              sourcesCount?: number;
+              error?: string;
+            }
           ) => {
             useConversationStore
               .getState()
@@ -4128,8 +4181,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // canvas split-view with the chat-generated deliverable mounted + mark it
   // as the conversation's active artifact (persisted).
   const handleOpenDeliverableArtifact = useCallback(
-    (deliverable: { kind: 'deck' | 'doc'; generationId: string; title?: string }) => {
-      if (deliverable.kind === 'doc') {
+    (deliverable: { kind: 'deck' | 'doc' | 'sheet'; generationId: string; title?: string }) => {
+      // Sheet = GFM-table markdown draft → same draft mount as doc.
+      if (deliverable.kind === 'doc' || deliverable.kind === 'sheet') {
         setRequestedCanvasDeckId(null);
         setRequestedCanvasDraftId(deliverable.generationId);
         setRequestedCanvasStarterId('document');
