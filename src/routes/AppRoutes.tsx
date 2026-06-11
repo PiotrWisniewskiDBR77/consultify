@@ -16,6 +16,7 @@ import {
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
+import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
@@ -1429,7 +1430,9 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <InterviewHub />
+                <V8UnavailableBanner moduleName="Interview">
+                  <InterviewHub />
+                </V8UnavailableBanner>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1440,7 +1443,9 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <InterviewHub />
+                <V8UnavailableBanner moduleName="Interview">
+                  <InterviewHub />
+                </V8UnavailableBanner>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1849,9 +1854,11 @@ export const AppRoutes: React.FC = () => {
               >
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                      <FullExecutionView />
-                    </Suspense>
+                    <V8UnavailableBanner moduleName="Execution">
+                      <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                        <FullExecutionView />
+                      </Suspense>
+                    </V8UnavailableBanner>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
               </ProductionModuleGate>
@@ -1868,9 +1875,11 @@ export const AppRoutes: React.FC = () => {
               >
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
-                      <ExecutionHub />
-                    </Suspense>
+                    <V8UnavailableBanner moduleName="Implementation">
+                      <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                        <ExecutionHub />
+                      </Suspense>
+                    </V8UnavailableBanner>
                   </AnimationWrapper>
                 </RouteErrorBoundary>
               </ProductionModuleGate>
