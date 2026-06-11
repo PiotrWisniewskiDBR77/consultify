@@ -29,11 +29,12 @@
 - **DONE gdy:** generacja doc/sheet ⇒ jej tab aktywny; „Working document" nie powstaje
   jako efekt uboczny remountu (nie tworzyć boilerplate-draftu, gdy `initialDraftId` jest podany).
 
-### A3. Streaming treści do panelu (upgrade z „szkielet→podmiana” do „rośnie na oczach") `[D]+[C]`
-- Po A1: zamiast jednej podmiany — sekwencyjne `updateMessageContent`-owe doklejanie sekcji.
-  Backend: `docGenerationRuntime.startDoc` emituje sekcje przez SSE/odświeżany draft
-  (prosty wariant: update draftu po każdej sekcji + event per sekcja). Decyzja techniczna po A1.
-- **DONE gdy:** sekcje dokumentu pojawiają się kolejno w panelu w trakcie generacji.
+### A3. Streaming treści do panelu (upgrade z „szkielet→podmiana” do „rośnie na oczach") `[D]` ✅ DONE
+- **Zrobione (744283a5):** `runStreamingDocGeneration` generuje sekcja-po-sekcji (każde wywołanie
+  widzi tytuły poprzednich sekcji → koherencja), zapisuje draft progresywnie po każdej sekcji
+  → panel re-hydratuje. Za flagą `ENABLE_DELIVERABLES_DOC_STREAMING` (OFF ⇒ one-shot).
+- **DONE — live-proof:** pierwsza sekcja w ~3s (vs ~18s one-shot), 5 sekcji 3→18s, realna proza.
+  Time-to-first-content — metryka §8 — drastycznie w dół. Padnięte sekcje znaczone inline; all-fail ⇒ error.
 
 ### A4. Retest triady E2E + smoke wizualny `[D]`
 - Pełny przebieg deck/doc/sheet na świeżej konwersacji; screenshoty do `docs/qa/runs/<data>/`.
