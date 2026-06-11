@@ -44,6 +44,12 @@
 | Flaga | Default BE (komentarz vs runtime) | Default FE | Kto włącza | Wpływ |
 |---|---|---|---|---|
 
+### 1g. Połączenia międzymodułowe (zasila Krok 6 sekwencji — INTEGRACJE.md)
+| Kierunek | Moduł po drugiej stronie | Mechanizm (event / API / registry / konwersja / deep-link / handoff czatu) | Plik:linia | Status (DZIAŁA/ZEPSUTE/STUB) |
+|---|---|---|---|---|
+| WEJŚCIE ← | | | | |
+| WYJŚCIE → | | | | |
+
 ## 2. Testy automatyczne (FAZA 2)
 **Uruchomienie:** `<komenda>` @ `<sha>` → **PASS __ / FAIL __ / SKIP __** (log: evidence/f2_tests.log)
 | Plik testu | Zakres | Liczba | Wynik | W CI? |

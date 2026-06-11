@@ -9,9 +9,11 @@
 ```
 docs/audyt-harvard/
 ├── README.md            ← ta instrukcja
+├── SEKWENCJA.md         ← GŁÓWNY PLAN: 8 kroków z bramkami (decyzja właścicielska) — czytaj PRZED pracą
 ├── BOOTSTRAP_PROMPT.md  ← prompt startowy dla Claude'a na nowym komputerze
 ├── KONTEKST.md          ← snapshot pamięci projektowej (findingi, naprawione, pułapki infra)
-├── PLAN_3_DNI.md        ← harmonogram dokończenia
+├── PLAN_3_DNI.md        ← mapowanie sekwencji na dni
+├── INTEGRACJE.md        ← mapa połączeń międzymodułowych (szkielet — wypełniany w Kroku 6)
 ├── _TRACKER.md          ← SSOT statusu 27 modułów (aktualizować po KAŻDYM audycie i wdrożeniu)
 └── modules/
     ├── M01-czat/
@@ -34,17 +36,21 @@ docs/audyt-harvard/
 | Formuła kart treści | `docs/standards/CARD_CONTENT_FORMULA.md` |
 | Formuła inicjatyw | `docs/initiatives/INITIATIVE_FORMULA.md` |
 
-## Instrukcja działania — JEDEN MODUŁ (pętla powtarzana ×27)
+## Kolejność prac: SEKWENCJA 8 KROKÓW (SSOT: `SEKWENCJA.md`)
+
+Pracujemy KROKAMI z bramkami, nie przeplatamy audytów z naprawami: **(4) najpierw WSZYSTKIE audyty** (pełna widoczność) → **(5) wszystkie plany dokończenia** → **(6) przegląd połączeń międzymodułowych** (INTEGRACJE.md) → **(7) budowa moduł po module + zatwierdzenia** → **(8) system testów całości**. Jedyny wyjątek w kroku 4: quick-fix ≤5 linijek bez ryzyka (z wpisem do logu). Szczegóły i bramki: `SEKWENCJA.md`.
+
+## Instrukcja działania — JEDEN MODUŁ w Kroku 4 (pętla powtarzana ×28)
 
 1. **Otwórz** `modules/<Mxx>/KARTA_AUDYTU.md` + wpis modułu w `_MODULE_MAP_V2.md` + jego inwentarz INV_*.
 2. **FAZA 0 (Claude):** wypełnij sekcję 0 karty — checklist pozycji + 3–7 scenariuszy krytycznych + obowiązujące kanony.
 3. **FAZY 1, 2, 5+6 (3 subagenty RÓWNOLEGLE):** KOD → sekcje 1a–1f; TESTY → sekcja 2 (testy URUCHOMIONE, nie cytowane); KANON+SEC → sekcje 5–6. Prompty agentów: przekaż im fragment protokołu z opisem ich fazy + wpis modułu + inwentarz.
 4. **FAZA 3 (Claude):** Railway — commit/migracje/flagi/smoke/logi → sekcja 3. Dowody do `evidence/f3_*`.
 5. **FAZA 4 (Claude OSOBIŚCIE, przeglądarka):** skrypt z protokołu — happy path E2E z reloadem, wszystkie przyciski, stany, i18n, role, konsola/sieć. Screenshoty `evidence/f4_*`. **Bez Fazy 4 ocena max 70 + status NIEPEŁNY.**
-6. **FAZA 7 (Claude):** rubryka /100 + hard caps → nagłówek karty.
-7. **FAZA 8 (Claude):** plan dokończenia (3 fale, każda pozycja: co/dlaczego/jak zweryfikować) + DoD → sekcja 7 karty.
-8. **Aktualizuj `_TRACKER.md`** (status, ocena, tier, data).
-9. **WDROŻENIE:** realizuj plan falami; każdy commit wpisuj do `WDROZENIE_LOG.md`; po Fali odhaczaj DoD w karcie; po komplecie DoD → re-audyt Faz 2–6 → nowa ocena w karcie i trackerze.
+6. **FAZA 7 (Claude):** rubryka /100 + hard caps → nagłówek karty. Pamiętaj o sekcji **1g (połączenia międzymodułowe)** — to paliwo Kroku 6.
+7. **Aktualizuj `_TRACKER.md`** (status, ocena, tier, data) + commit/push → następny moduł.
+8. **FAZA 8 (plan dokończenia)** robiona jest ZBIORCZO w Kroku 5 sekwencji (po komplecie audytów), uzupełniana w Kroku 6 o `[INTEGRACJA]`.
+9. **WDROŻENIE = Krok 7 sekwencji:** realizuj plan falami; każdy commit do `WDROZENIE_LOG.md`; po komplecie DoD → re-audyt Faz 2–6 → nowa ocena w karcie i trackerze.
 
 ## Twarde zasady (z Protokołu — skrót)
 

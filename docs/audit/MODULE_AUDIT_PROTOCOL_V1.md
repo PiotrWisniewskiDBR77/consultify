@@ -31,7 +31,8 @@
 - **Wiring FE↔BE↔DB:** funkcja → endpoint → tabela DB → migracja (plik) → status.
 - **Flagi:** flaga → default BE (komentarz vs runtime!) → default FE → kto może włączyć → wpływ na moduł.
 - **Martwy kod:** plik → dlaczego martwy → rekomendacja (wytnij/wepnij).
-**Output:** sekcje karty 2–5 (Realne / Mock / Zepsute / Wiring+Flagi).
+- **Połączenia międzymodułowe (1g):** wszystkie WEJŚCIA i WYJŚCIA modułu (eventy, API, registry, konwersje, deep-linki, handoffy czatu) z plikiem i statusem — to paliwo Kroku 6 sekwencji (`docs/audyt-harvard/INTEGRACJE.md`).
+**Output:** sekcje karty 1a–1g (Realne / Mock / Zepsute / Martwe / Wiring / Flagi / Połączenia).
 
 ### FAZA 2 — Testy automatyczne: przód i tył
 **Cel:** wiedzieć, co jest chronione testem, co jest zielone NAPRAWDĘ, i co trzeba dopisać.
