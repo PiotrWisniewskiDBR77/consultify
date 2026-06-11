@@ -4,7 +4,16 @@
  * This control only changes the active work system inside one shared workspace.
  * Panel navigation lives separately in the right-side WorkspacePanelStrip.
  */
-import { GitBranch, HelpCircle, Layers, Search, StickyNote, Table2, Workflow } from 'lucide-react';
+import {
+  GitBranch,
+  HelpCircle,
+  Layers,
+  MessagesSquare,
+  Search,
+  StickyNote,
+  Table2,
+  Workflow,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,6 +27,10 @@ export interface IdeaWorkspaceToolbarProps {
   onSearch?: () => void;
   /** Opens the keyboard shortcuts help (also bound to `?`). */
   onShowHelp?: () => void;
+  /** C5: Serializes the map and seeds a Teresa chat to discuss it. */
+  onDiscuss?: () => void;
+  /** Disables the discuss action when the map is empty. */
+  discussDisabled?: boolean;
 }
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
@@ -46,13 +59,16 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   familyCounts,
   onSearch,
   onShowHelp,
+  onDiscuss,
+  discussDisabled,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const searchLabel = isPl ? 'Szukaj' : 'Search';
   const searchShortcut = isMac ? '⌘F' : 'Ctrl+F';
   const helpLabel = isPl ? 'Skróty klawiszowe' : 'Keyboard shortcuts';
-  const hasLeadingActions = Boolean(onSearch || onShowHelp);
+  const discussLabel = isPl ? 'Omów z Teresą' : 'Discuss with Teresa';
+  const hasLeadingActions = Boolean(onSearch || onShowHelp || onDiscuss);
 
   return (
     <div className="absolute top-3 right-3 z-[50]">
@@ -78,6 +94,19 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
             className="flex items-center justify-center h-9 w-9 rounded-hig-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-all"
           >
             <HelpCircle size={14} />
+          </button>
+        )}
+        {onDiscuss && (
+          <button
+            type="button"
+            onClick={onDiscuss}
+            disabled={discussDisabled}
+            aria-label={discussLabel}
+            title={discussLabel}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-hig-xl text-xs font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          >
+            <MessagesSquare size={14} />
+            <span className="hidden md:inline">{discussLabel}</span>
           </button>
         )}
         {hasLeadingActions && (

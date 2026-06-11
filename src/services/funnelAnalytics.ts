@@ -108,6 +108,7 @@ export type FunnelEventName =
   | 'ideas_attach_artifact'
   | 'ideas_open_linked'
   | 'ideas_convert_selection'
+  | 'ideas_discuss_with_teresa'
   | 'ideas_focus_mode'
   | 'ideas_artifact_attached'
   | 'ideas_table_view_changed'

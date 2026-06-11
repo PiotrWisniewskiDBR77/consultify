@@ -56,6 +56,7 @@ import {
   normalizePreferredSystem,
   normalizeStageToV5,
 } from './ideaEntryTypes';
+import { ideaMapToMarkdown } from './ideaMapToMarkdown';
 import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
@@ -1736,6 +1737,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [isChatCollapsed, isPolish, seedText, setChatKickoffMessage, title, toggleChatCollapse]
   );
 
+  // C5: Ideas → chat — serialize the current map into a markdown outline and
+  // seed a Teresa conversation, so the user can then say "zrób z tego dokument".
+  const mapHasNodes = (graphNodes?.length ?? 0) > 0;
+  const handleDiscussWithTeresa = useCallback(() => {
+    const liveNodes = graphNodesRef.current?.length ? graphNodesRef.current : graphNodes;
+    const liveEdges = graphEdgesRef.current?.length ? graphEdgesRef.current : graphEdges;
+    if (!liveNodes?.length) {
+      toast(isPolish ? 'Mapa jest pusta' : 'The map is empty', { icon: '🗺️' });
+      return;
+    }
+    const mapTitle = title || seedText?.slice(0, 80) || (isPolish ? 'Mapa myśli' : 'Mind map');
+    const outline = ideaMapToMarkdown(
+      { nodes: liveNodes, edges: liveEdges },
+      { title: mapTitle, isPolish: Boolean(isPolish) }
+    );
+    const kickoff = isPolish
+      ? `Oto mapa myśli „${mapTitle}". Omówmy ją i zaproponuj następne kroki:\n\n${outline}`
+      : `Here is the mind map "${mapTitle}". Let's discuss it and propose next steps:\n\n${outline}`;
+    trackFunnelEvent('ideas_discuss_with_teresa', {
+      ideaId: realId,
+      tool: activeTool,
+      nodeCount: liveNodes.length,
+    });
+    openChat(kickoff);
+  }, [activeTool, graphEdges, graphNodes, isPolish, openChat, realId, seedText, title]);
+
   // Subscribe to idea-workspace-chat-prompt so any tool can send text to the chat panel
   useEffect(() => {
     const handler = (e: Event) => {
@@ -2946,6 +2973,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           familyCounts={familyCounts}
           onSearch={() => setSearchOpen(true)}
           onShowHelp={() => setShortcutsHelpOpen(true)}
+          onDiscuss={handleDiscussWithTeresa}
+          discussDisabled={!mapHasNodes}
         />
 
         {proposalBatch && (
