@@ -9,7 +9,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M01 | Czat | 1 (core) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M01-czat/KARTA_AUDYTU.md` |
 | M03 | Moja Praca — organizer | 1 (core) | 🟦 | 44 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
 | M10 | Wywiad | 1 (core) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
-| M13 | Inicjatywy | 1 (core) | ⬜ | — | — | — | — |
+| M13 | Inicjatywy | 1 (core) | 🟦 | 45 | Alpha | 2026-06-11 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
 | M14 | Wdrożenie | 1 (core) | ⬜ | — | — | — | — |
 | M25 | Ustawienia | 1 (core) | ⬜ | — | — | — | — |
 | M02 | Canvas | 2 (beta) | ⬜ | — | — | — | audyty cząstkowe 2026-06-10 |
