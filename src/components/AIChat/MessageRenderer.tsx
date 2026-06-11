@@ -19,6 +19,7 @@ import {
   Database,
   Download,
   FileCode,
+  FilePlus2,
   FileText,
   GitBranch,
   Lightbulb,
@@ -40,6 +41,7 @@ import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../typ
 import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
 import { ArtifactChip } from './ArtifactChip';
+import { shouldOfferDocumentEmission } from './canvasEmissionHeuristic';
 import { ChatCodeBlock } from './ChatCodeBlock';
 import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
@@ -314,6 +316,14 @@ export interface MessageRendererProps {
     title?: string;
   }) => void;
 
+  /**
+   * B4 (auto-emission): when an AI answer is itself document-shaped (per
+   * shouldOfferDocumentEmission), the transcript offers "open as document" —
+   * lifts the message content into a fresh Canvas draft. Unlike
+   * onOpenDeliverableArtifact, no artifact exists yet; this creates one on click.
+   */
+  onEmitArtifactFromMessage?: (content: string, title: string) => void;
+
   // Agent audit accept handler (from Api)
   handleAgentAuditAccept: (audit: any, msgId: string) => Promise<void>;
 
@@ -398,6 +408,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   toggleArtifactsPanel,
   exportArtifact,
   onOpenDeliverableArtifact,
+  onEmitArtifactFromMessage,
   handleAgentAuditAccept,
   onOptionSelect,
   onProposalApprove,
@@ -406,7 +417,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   onProposalInspect,
   proposalBusyById,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Wave A7.4 — unlocks the `routingTrace` section of TrustPanel. Regular
   // members see the compact trust pills; admins/super-admins get the
   // operator view with lazy-loaded full trace.
@@ -1659,6 +1670,34 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             />
           </div>
         )}
+
+      {/* B4 — auto-emission offer. When an AI answer is itself document-shaped
+          (and didn't already produce a deliverable), offer to lift it into a
+          Canvas draft. Decision D-C-4: a chip, never an auto-opened panel. */}
+      {(() => {
+        if (msg.role !== 'ai' || msg.isStreaming) return null;
+        if (!onEmitArtifactFromMessage) return null;
+        if ((metadata as any)?.deliverable?.generationId) return null; // B2 chip already shown
+        const content = String(msg.content || '');
+        const decision = shouldOfferDocumentEmission(content);
+        if (!decision.offer) return null;
+        const pl = (i18n.language || 'en').split('-')[0] === 'pl';
+        return (
+          <div className="mt-1.5">
+            <button
+              type="button"
+              onClick={() => onEmitArtifactFromMessage(content, decision.title)}
+              className="group inline-flex max-w-full items-center gap-2 rounded-xl border border-navy-200 dark:border-navy-700/40 bg-navy-50/60 dark:bg-navy-800/30 px-3 py-1.5 text-left transition-colors hover:border-primary-200 hover:bg-primary-50/70 dark:hover:border-primary-700/50 dark:hover:bg-primary-900/20"
+              title={pl ? 'Utwórz dokument z tej odpowiedzi' : 'Create a document from this answer'}
+            >
+              <FilePlus2 size={14} className="shrink-0 text-navy-500 group-hover:text-primary-500" />
+              <span className="truncate text-xs font-medium text-navy-600 dark:text-navy-300 group-hover:text-primary-600">
+                {pl ? 'Otwórz jako dokument' : 'Open as document'}
+              </span>
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Enhanced Artifacts Badge */}
       {msg.role === 'ai' && hasArtifacts && (

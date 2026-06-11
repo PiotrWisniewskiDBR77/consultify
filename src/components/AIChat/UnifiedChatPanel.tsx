@@ -4262,6 +4262,46 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     []
   );
 
+  // B4 (auto-emission) — lift a document-shaped chat answer into a fresh Canvas
+  // draft and open it. No artifact existed yet (unlike handleOpenDeliverableArtifact),
+  // so we create one from the message content, then mount it like a doc deliverable.
+  const handleEmitArtifactFromMessage = useCallback(
+    async (content: string, title: string) => {
+      try {
+        const token = window.localStorage.getItem('token') || '';
+        const conversationId =
+          useConversationStore.getState().activeConversationId || `canvas-${Date.now()}`;
+        const response = await fetch('/api/work-canvas/drafts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            conversationId,
+            kind: 'document',
+            title: title || 'Dokument z czatu',
+            content,
+            contentMd: content,
+            canonicalFormat: 'markdown',
+            provenance: { source: 'chat-auto-emit' },
+          }),
+        });
+        if (!response.ok) throw new Error(`draft create failed: ${response.status}`);
+        const json = await response.json();
+        const draftId = json?.data?.draft?.id || json?.draft?.id || json?.data?.id;
+        if (!draftId) throw new Error('draft id missing in response');
+        setRequestedCanvasDeckId(null);
+        setRequestedCanvasDraftId(draftId);
+        setRequestedCanvasStarterId('document');
+        setIsWorkPanelOpen(true);
+      } catch (err) {
+        console.error('[UnifiedChatPanel] auto-emit to document failed:', err);
+      }
+    },
+    []
+  );
+
   // Deep Thinking: Save output as Decision
   const handleSaveAsDecision = useCallback(
     async (messageId: string, content: string) => {
@@ -4887,6 +4927,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleCommitEditMessage={handleCommitEditMessage}
       handleViewArtifacts={handleViewArtifacts}
       onOpenDeliverableArtifact={handleOpenDeliverableArtifact}
+      onEmitArtifactFromMessage={handleEmitArtifactFromMessage}
       handleFeedback={handleFeedback}
       handleSendMessage={handleSendMessage}
       handleEnableDeepThinking={handleEnableDeepThinking}
