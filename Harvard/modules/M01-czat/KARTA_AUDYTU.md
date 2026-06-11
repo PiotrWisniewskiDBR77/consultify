@@ -1,103 +1,182 @@
 # M01 — Czat — Karta audytu (Protokół V1)
 
-**Data:** YYYY-MM-DD · **Branch:** `<branch>` (commit `<sha>`) · **Audytor:** Claude + agenci (KOD/TESTY/KANON+SEC)
-**Wejścia:** _MODULE_MAP_V2 wpis M01 · inwentarz `Harvard/podzial/inventory/INV_A_czat_canvas.md` · poprzednia karta `<link>` · plany `<linki>`
-**Evidence:** `docs/audit/<data>/<modul>/evidence/`
+**Data:** 2026-06-11 · **Branch:** `feat/deliverables-light` (commit `2d5769ea20`) · **Audytor:** Claude + agenci (KOD/TESTY/KANON+SEC)
+**Wejścia:** _MODULE_MAP_V2 wpis M01 · inwentarz `Harvard/podzial/inventory/INV_A_czat_canvas.md` (sekcja CZAT) · poprzednia karta `docs/audit/2026-06-02/MODULE_01` (62/100) · programy: chat-world-class, deliverables-light
+**Evidence:** `Harvard/modules/M01-czat/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: __/100 — Tier: <GA-ready | Beta | Alpha | Broken> <· „NIEPEŁNY (bez Fazy 4)" jeśli dotyczy>
+## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | __ | |
-| B. Wiring i dane | 15 | __ | |
-| C. Testy automatyczne | 15 | __ | |
-| D. Żywa użyteczność | 15 | __ | |
-| E. Kanony/UI | 10 | __ | |
-| F. Bezpieczeństwo/dostęp | 10 | __ | |
-| G. Środowiska (Railway) | 10 | __ | |
-| **Hard cap zastosowany?** | — | — | <nie / jaki i dlaczego> |
+| A. Realność funkcji | 25 | 22 | 49/59 pozycji REALNE, 0 mock w czacie, 1 rozjazd (AI-memory) + 6 martwych komponentów. |
+| B. Wiring i dane | 15 | 11 | Wiring solidny z migracjami, ale cross-org gap w pamięci projektu + SQLite-izm `datetime('now')` na PG + crash hasła share (naprawiony quick-fixem). |
+| C. Testy automatyczne | 15 | 7 | S1 mocno chroniony (z E2E w PR-gate), ale suite komponentów CZERWONY (UnifiedChatPanel 14 FAIL — realny bug), integ wymaga DB, E2E głównie cron-only. |
+| D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana — brak dowodu wizualnego (re-ocena po przejściu w przeglądarce). |
+| E. Kanony/UI | 10 | 8 | §27 nie dotyczy (sidebar ≠ tabela), i18n solidne, shell spójny; drobne P2. |
+| F. Bezpieczeństwo/dostęp | 10 | 3 | Cross-org IDOR P0 (read + destrukcyjny write pamięci projektu) + leak `metadata` w public viewerze. |
+| G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana — brak weryfikacji staging/prod (re-ocena po smoke). |
+| **Hard cap zastosowany?** | — | — | **TAK — cross-org leak/brak auth na zapisie → max 50 + P0** (dominuje nad „Faza 4 niewykonana → max 70"). Suma surowa 51 → przycięta do 50. |
 
-**Werdykt jednym akapitem:** <co jest mocne, co łamie zaufanie, co blokuje tier wyżej>
+**Werdykt jednym akapitem:** Czat to najbardziej dojrzały moduł aplikacji — 49/59 funkcji realnych, wszystkie kluczowe przepływy (streaming SSE, CRUD rozmów, handoffy intencji do 7 celów, karty propozycji, deep-research, głos Teresy) wpięte w żywe endpointy z migracjami, org-scope w `conversations.routes.ts` wzorcowy (21/21). Zaufanie łamie **cross-org IDOR w pamięci projektu** (`/api/ai/memory/project/:projectId` — każdy zalogowany czyta i KASUJE pamięć cudzej organizacji po UUID), co uruchamia hard-cap na 50 niezależnie od reszty. Tier wyżej blokują dziś trzy rzeczy: ten P0, czerwony rdzeń testów komponentów (realny bug `CanvasArtifactSwitcher`), oraz niewykonane Fazy 3+4 (środowiska + żywa weryfikacja).
 
 ---
 
 ## 0. Zakres i scenariusze krytyczne (FAZA 0)
-**Checklist pozycji inwentarza:** N pozycji (z INV) + M nowych (git log od <data inwentarza>).
-**Scenariusze krytyczne (3–7):**
-1. S1: <happy path E2E — kroki>
-2. S2: …
-**Obowiązujące kanony:** <§27 dla tabel: które | CARD_CONTENT_FORMULA: tak/nie | ModuleHub/MELS | beta-gating>
+**Checklist pozycji inwentarza:** 59 pozycji CZAT (INV_A, grupy A–H), zweryfikowane 2026-06-11. Sekcja CANVAS z INV_A należy do M02.
+**Scenariusze krytyczne (7):**
+1. **S1** — nowa rozmowa → wpisz prompt → streaming SSE → reload strony → wiadomości trwałe.
+2. **S2** — slash-command / intercept intencji (`/research`, `/table`) → odpala właściwy cel (ResearchProgress / ChatToSchemaPanel).
+3. **S3** — załącznik pliku (PDF/CSV) → ingest serwerowy → odpowiedź uwzględnia treść.
+4. **S4** — split-view na module (np. `/initiatives`) → kontekst encji (workspaceContext) zasila czat → odpowiedź kontekstowa.
+5. **S5** — udostępnienie rozmowy `/share/:token` → otwarcie read-only → revoke → 410/404.
+6. **S6** — handoff intencji → Canvas (deck/doc) → chip artefaktu w transkrypcie, reload-safe.
+7. **S7** — głos Teresy (Gemini Live, opcjonalny) → transkrypt dopisany do rozmowy.
+**Obowiązujące kanony:** §27 TABLE_AND_PREVIEW_CANON: **NIE** (czat ma sidebar historii, nie tabelę encji) · CARD_CONTENT_FORMULA: NIE (czat produkuje propozycje, nie kanon kart treści) · wzorzec hubowy: własny shell `UnifiedChatPanel` (split/full z jednego SSOT), nie ModuleHub · beta-gating: NIE (core, otwarty).
 
 ## 1. Prawda kodu (FAZA 1)
+> Pełny raport: `evidence/f1_code_truth.md`. Werdykt zbiorczy 59 poz.: **REALNE 49 · MOCK/STUB 0 · ZEPSUTE/ROZJAZD 1 · MARTWE 6 · UKRYTE-celowo/za-flagą reszta.**
+
 ### 1a. REALNE (zweryfikowane)
-- … `plik:linia`
+- Wszystkie główne przepływy: CRUD rozmów (`conversations.routes.ts`), streaming SSE (`ai.routes.ts:1423,5341`), share, branch (`:2219`), export (`:2037`), title-generate (`:1186`), save-to-context (`:973`), deep-research orchestrator (`deepThinkingOrchestrator.ts`).
+- Handoffy intencji poz. 53–57 (deck/doc/sheet/mindmap/flow/whiteboard/canvas-write) — wpięte i realne.
+- Karty propozycji (TeresaProposalCard/ChatTableProposalCard/ExecutionProposalMessage → `POST /chat/confirm`) — realne.
+
 ### 1b. MOCK / STUB / fabrykowane klientem
-- … `plik:linia`
+- Brak w obrębie samego CZATU (sourceRefs-STUB należy do M02 Canvas).
+
 ### 1c. ZEPSUTE / WIDOCZNE-ALE-ZEPSUTE
-- … `plik:linia`
+- **[ROZJAZD P2]** poz. 48 AI memory — inwentarz mówi „[DZIAŁA]", ale osobny router `/api/ai-memory` jest za `internalToolsGuard` (404 dla nie-dbr77). Dla klienta panel pamięci niedostępny, nie „działa".
+- **[P0 — NAPRAWIONE quick-fixem]** `share.routes.ts:592` woła niezdefiniowane `hashPasscode` → `ReferenceError` przy ustawianiu hasła share. Naprawione na `await scryptHash(...)` (zgodne z :304/:417). Wpis w `WDROZENIE_LOG.md`.
+
 ### 1d. UKRYTE / MARTWY KOD
-- … `plik:linia` → rekomendacja: <wytnij | wepnij | zostaw świadomie>
+- Poz. 58 — `WorkModeMenu`, `ChatToggleButton`+`ChatOverlay` (para), `CodeInterpreter`, `ActiveModeStrip` — 0 zewn. referencji → **wytnij** (Fala 3).
+- `OrganizationMemoryPanel.tsx` (orphan z poz. 48) — 0 importów, 0 wywołań API → **wytnij albo wepnij** (zależnie od decyzji o klienckiej pamięci AI).
+- Poz. 59 — panele Wave5–9/AIOSHub/ActionCenter, ResearchSessionsDock (poz. 39) — **UKRYTE-celowo** (internal, `/ai/*`, `canUseInternalTools`), zostaw świadomie.
+
 ### 1e. Wiring FE↔BE↔DB
 | Funkcja | Endpoint | Tabela DB | Migracja | Status |
 |---|---|---|---|---|
-### 1f. Flagi
-| Flaga | Default BE (komentarz vs runtime) | Default FE | Kto włącza | Wpływ |
-|---|---|---|---|---|
+| Streaming odpowiedzi | `POST /api/ai/chat/stream` | conversations, messages | tak | DZIAŁA |
+| CRUD rozmów | `conversations.routes.ts` (GET/POST/PATCH/DELETE) | conversations | tak | DZIAŁA (org-scope 21/21) |
+| Załączniki/ingest | `ai.routes.ts:351,540` | attachments | tak | DZIAŁA |
+| Share rozmowy | `share.routes.ts` (`/conversations/:id/share`) | conversation_shares | tak | DZIAŁA (po quick-fixie hasła) |
+| Branch / export / title | `conversations.routes.ts:2219/2037/1186` | conversations, messages | tak | DZIAŁA |
+| Pamięć projektu | `GET/DELETE /api/ai/memory/project/:projectId` | project memory | tak | **ZEPSUTE — bez org-scope (P0)** |
 
-### 1g. Połączenia międzymodułowe (zasila Krok 6 sekwencji — INTEGRACJE.md)
-| Kierunek | Moduł po drugiej stronie | Mechanizm (event / API / registry / konwersja / deep-link / handoff czatu) | Plik:linia | Status (DZIAŁA/ZEPSUTE/STUB) |
+### 1f. Flagi
+| Flaga | Default BE (komentarz vs RUNTIME) | Default FE | Kto włącza | Wpływ |
 |---|---|---|---|---|
-| WEJŚCIE ← | | | | |
-| WYJŚCIE → | | | | |
+| `ENABLE_DELIVERABLES_LIGHT` | strict `=== 'true'` → OFF | `VITE_…` OFF | env/deploy | handoff deck/doc/sheet → legacy redirect przy OFF |
+| `ENABLE_V8_GLOBAL` (poz. 52) | strict `=== 'true'` → OFF (`FeatureFlags.ts:121`) | — | env | wskaźnik kontekstu/run-control off |
+| `ENABLE_TERESA_RETRIEVAL` | strict `=== 'true'` → OFF (`:127`) | — | env | retrieval Teresy off |
+| rodzina `chatV9*` (FE) | — | **ON** przy braku env (`inputCharCounterFlag.ts:34`, `trustBadgeFlag.ts`) | FE flaga = kill-switch | char counter/trust badge/voice legend/private popover renderują się domyślnie |
+
+> Uwaga: handoffy/V8/retrieval to **strict `=== 'true'`** (nie wzorzec `!== 'false'` z Tabel) — w czystym deployu bez env są OFF.
+
+### 1g. Połączenia międzymodułowe (zasila Krok 6 — INTEGRACJE.md)
+| Kierunek | Moduł po drugiej stronie | Mechanizm | Plik:linia | Status |
+|---|---|---|---|---|
+| WYJŚCIE → | M19 Prezentacje / M02 Canvas | handoff intencji „deck" (in-place light lub `/prezentacje`) | INV_A poz.53 | DZIAŁA / część za flagą |
+| WYJŚCIE → | M18 Dokumenty / M02 Canvas | handoff intencji „doc" (light lub `/wordy`) | poz.54 | DZIAŁA / za flagą |
+| WYJŚCIE → | M20 Tabele / M02 Canvas | handoff „sheet" + ChatToSchemaPanel (`/excele`) | poz.55 | DZIAŁA |
+| WYJŚCIE → | M06/M07/M09 Ideas | interceptory mindmap/process-flow/whiteboard | poz.56 | DZIAŁA |
+| WYJŚCIE → | M02 Canvas | pisanie streamem do otwartego canvasa | poz.57 | DZIAŁA |
+| WYJŚCIE → | M03/M13/M04 (encje) | karty propozycji → `POST /chat/confirm` (Teresa/Table/Execution) | poz.30 | DZIAŁA |
+| WYJŚCIE → | Context OS | zapis wiadomości (bookmark) | `conversations.routes.ts:973` | DZIAŁA |
+| WEJŚCIE ← | M13/M10/wszystkie | split-view kontekst encji (pmoContext + workspaceContext) | `MainLayout.tsx:356`, `useOpenChatWithContext.ts` | DZIAŁA |
+| WEJŚCIE ← | M23 Organizacja | OrgContext przełącza kontekst czatu i orkiestratora | poz.47 | DZIAŁA |
 
 ## 2. Testy automatyczne (FAZA 2)
-**Uruchomienie:** `<komenda>` @ `<sha>` → **PASS __ / FAIL __ / SKIP __** (log: evidence/f2_tests.log)
-| Plik testu | Zakres | Liczba | Wynik | W CI? |
-|---|---|---|---|---|
+> Pełny raport: `evidence/f2_tests_report.md` · log: `evidence/f2_tests.log`. Runner: vitest (FE/integ) + playwright (E2E).
+**Uruchomienie (CELOWANE, @ `2d5769ea20`):**
+- FE unit/store/utils (11 plików): **103 PASS / 1 FAIL** (+1 suite-sierota). FAIL: `voice-server-config-boundary` (brittle source-grep). Sierota: `deepThinkingRuntime.test.ts` (importuje nieistniejące źródło).
+- FE komponenty AIChat: **CZERWONE** — `UnifiedChatPanel` 14 FAIL / 15 PASS; `MessageRenderer.context-save`, `AddFilesMenu`, `ConversationItem.rename` FAIL.
+- FE voice/nav/composer (10 plików): **116 PASS / 0 FAIL** ✅
+- BE service/policy/voice (13 plików): **78 PASS / 0 FAIL** ✅
+- Integration chat/ai/conversations: NIE-uruchamialne lokalnie bez DB; odtworzone warunki CI (postgres:15 + `db:migrate --safe`) → **93 PASS / 1 FAIL** + **62 PASS / 2 FAIL**.
+
+**Realne czerwienie (zacommitowane, drzewo czyste):**
+1. `CanvasArtifactSwitcher.tsx:84` — `(conversationArtifacts || [])` nie chroni przed nie-iterowalną wartością → 14 FAIL UnifiedChatPanel. **P0.**
+2. `chat-projects.list.filters` ×2 — wyciek/duplikat wiersza w `scope=team` (`['org-2','u-2']` vs `['org-2']`). **P0** (zbieżne z org-scope).
+3. `MessageRenderer.context-save`, `AddFilesMenu`, `ConversationItem.rename` — FAIL.
+
 **Pokrycie scenariuszy krytycznych:**
-| Scenariusz | FE | BE | E2E | CI | Luka |
+| Scenariusz | FE | BE | E2E | CI (PR-gate) | Luka |
 |---|---|---|---|---|---|
+| S1 nowa rozmowa→SSE→reload | ✓ | ✓ | ✓ | ✓ | — (mocne) |
+| S2 slash/intencje | ✓ | częśc. | tylko cron | ✗ | E2E nie w PR-gate |
+| S3 załącznik/ingest | suite RED | — | brak | ✗ | brak realnej ochrony |
+| S4 split-view/workspaceContext | RED | — | — | ✗ | rdzeń czerwony |
+| S5 share rozmowy/revoke | częśc. | częśc. | dla deliverables | ✗ | brak dla samej rozmowy |
+| S6 handoff→Canvas chip | RED | — | smoke (nie PR) | ✗ | rdzeń FE czerwony |
+| S7 głos Teresy | ✓ | ✓ | — | częśc. | 1 test brittle |
+
+**Pułapka CI potwierdzona:** `e2e-nightly.yml` i `e2e-weekly.yml` = cron/manual-only, NIE na push/PR. Jedyny E2E czatu blokujący PR to `tests/e2e/runtime` (1 test); cały `tests/e2e/smoke/*` (canvas/refresh-persistence) nie liczy się jako ochrona PR.
+
 **Backlog testowy (→ plan dokończenia):**
-1. [P_] <typ> — <plik docelowy> — <scenariusz>
+1. [P0] unit/component — `CanvasArtifactSwitcher` — guard nie-iterowalnej wartości + naprawa mocka UnifiedChatPanel.
+2. [P0] integration — `chat-projects` — wyciek wiersza w team-scope filter.
+3. [P1] E2E/integ — S3 ingest załącznika (brak pokrycia).
+4. [P1] CI — przenieść kluczowe smoke (refresh-persistence, canvas) do triggera PR.
+5. [P1] cleanup — usunąć test-sierotę `deepThinkingRuntime`; przepisać voice boundary na asercję zachowania.
 
 ## 3. Środowiska / Railway (FAZA 3)
+**Status: NIEWYKONANE (PENDING).** Wymaga sesji Railway (smoke endpointów + `information_schema` na staging/prod). Do zrobienia: weryfikacja wdrożonego commitu staging vs prod (prod=2026-05-18), migracje tabel pamięci/share, flagi (`ENABLE_DELIVERABLES_LIGHT`, `GEMINI_LIVE_API_KEY`, `TERESA_VOICE_*`), smoke `POST /api/ai/chat/stream` + `GET /conversations` + `/share/:token`, logi 24–48 h.
 | Aspekt | Staging | Prod | Werdykt |
 |---|---|---|---|
-| Wdrożony commit | | | |
-| Migracje modułu zastosowane | | | |
-| Flagi/env wymagane | | | |
-| Smoke endpointów (lista+kody) | | | |
-| Błędy w logach (24–48 h) | | | |
-**Dowody:** evidence/f3_*.txt
+| Wdrożony commit | — | — | PENDING |
+| Migracje modułu | — | — | PENDING |
+| Flagi/env | — | — | PENDING |
+| Smoke endpointów | — | — | PENDING |
+| Błędy w logach | — | — | PENDING |
 
 ## 4. Żywa weryfikacja frontu (FAZA 4 — Claude osobiście)
-**Środowisko:** <preview localhost / staging> · **Konto/rola:** <…>
+**Status: NIEWYKONANE (PENDING).** Preview działa (hook wykrył serwer) — do przejścia 7 scenariuszy z reloadem, polowaniem na przyciski-zawsze-błąd, stany pusty/loading/błąd, i18n PL↔EN, rola MEMBER, konsola/sieć. Bez tego D=0 i status NIEPEŁNY. **Uwaga DB:** `.env` wskazuje na zdalną Railway — przy żywym przejściu używać wyłącznie danych jednorazowych i potwierdzić cel zapisu.
 | # | Scenariusz | Wynik | Dowód |
 |---|---|---|---|
-| S1 | | PASS/FAIL/BLOCKED | evidence/f4_s1_*.png |
-**Przyciski-zawsze-błąd znalezione:** <lista albo „brak">
-**Stany (pusty/loading/błąd/overflow):** <wyniki>
-**i18n PL↔EN:** <wyniki> · **Konsola/sieć:** <czysto / lista błędów> · **Role (member/pilot):** <wyniki> · **Skróty:** <wyniki>
+| S1–S7 | — | PENDING | evidence/f4_* |
 
 ## 5. Kanony i standardy (FAZA 5)
-**§27 TABLE_AND_PREVIEW_CANON:**
-| Tabela/powierzchnia | A | B | C | … | S | Odstępstwa |
-|---|---|---|---|---|---|---|
-**CARD_CONTENT_FORMULA (próbka ≥5):** <wynik walidatorów / n.d.>
-**Wzorzec hubowy (ModuleHub/MELS):** <zgodny / odstępstwa>
-**UI-standards / i18n / beta-plate / stany standardowe:** <wyniki>
+> Pełny raport: `evidence/f56_kanon_sec.md`. **Brak odstępstw P0/P1.**
+**§27 TABLE_AND_PREVIEW_CANON:** NIE dotyczy — `ChatHistorySidebar.tsx` to overlay nawigacyjny + drzewo folderów, nie tabela encji org-scoped (§1.2 reguła rozstrzygająca).
+**CARD_CONTENT_FORMULA:** n.d.
+**Wzorzec hubowy:** `UnifiedChatPanel` (split/full z jednego SSOT, `MainLayout.tsx:356`) — poprawnie, nie ModuleHub.
+**UI-standards / i18n / stany:** i18n PL/EN solidne (94/157 plików `useTranslation`, klucze `aiChat.*` w PL i EN); **korupcja „rose"/„roseuction" NIE występuje** (trafienia `rose` = legalny ton Tailwind). Odstępstwa tylko P2: UI błędu przerwanego strumienia niezweryfikowany wizualnie (→ Faza 4); pełny audyt hardcoded-stringów na 63 plikach (→ Faza 8).
 
 ## 6. Bezpieczeństwo i dostęp (FAZA 6)
+> Pełny raport: `evidence/f56_kanon_sec.md`.
 | Warstwa | Nawigacja | Route | API | Dziura? |
 |---|---|---|---|---|
-**Org-scope:** <wynik przeglądu endpointów> · **Zasoby publiczne:** <wynik> · **WS/realtime:** <wynik / n.d.> · **Capabilities serwerowo:** <wynik>
-**Findingi:** [P0] … · [P1] … · [P2] …
+| Czat (core) | sidebar otwarty | `/chat` zalogowany | verifyToken | brak (core) |
+| Pamięć projektu | — | — | tylko verifyToken, BEZ org | **TAK — P0** |
+| Public viewer | — | `/share/:token`, `/public/artifacts/:token` | token + rate-limit | częśc. (F-3) |
+
+**Org-scope:** `conversations.routes.ts` 21/21 endpointów scoped (SSOT `findAccessibleConversation:92-130`). `ai.routes.ts`: `/memory/project/:projectId` GET/POST/DELETE **BEZ scope**.
+**Zasoby publiczne:** `/public/artifacts/:token` wzorcowy (strict `^[0-9a-f]{32}$`, rate-limit, revoke→404, expiry→410, payload sanitarny). `/share/:token` revoke/expiry/hasło OK (po quick-fixie).
+**WS/realtime:** SSE streaming — autoryzacja tokenem; szczegóły upgrade do potwierdzenia w Fazie 3/4. **Capabilities serwerowo:** DELETE pamięci sprawdza `req.can` ale w kontekście callera, nie własności projektu.
+**Findingi:**
+- **[P0] F-1/F-2 cross-org IDOR pamięci projektu** — `GET /api/ai/memory/project/:projectId` (`ai.routes.ts:5744`→`buildProjectMemorySummary(projectId)` bez org) i `DELETE` (`:5812`→`clearProjectMemory(projectId)`); router zamontowany `app.use('/api/ai', aiRoutes)` (`Gateway.ts:397`) BEZ internalToolsGuard → osiągalne dla każdego zalogowanego. Read + destrukcyjny write cudzej org po UUID.
+- **[P2] F-3** — public viewer rozmowy zwraca `metadata` verbatim (`share.routes.ts:541`) → ryzyko wycieku pól wewnętrznych.
+- **[P3] F-5 + nota infra** — debug-log query web-search; SQLite-izm `datetime('now',…)` w cleanup pamięci pada na PG.
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P0)
-1. **<co>** — <dlaczego, 1 zdanie z dowodem> — Weryfikacja: <test/screenshot>
+1. **Org-scope na pamięci projektu** — `buildProjectMemorySummary`/`clearProjectMemory` muszą przyjmować i egzekwować `organization_id`; weryfikacja własności projektu przed read/delete — Weryfikacja: test integracyjny cross-org (user org-A nie czyta/nie kasuje projektu org-B → 403/404).
+2. **Naprawa `CanvasArtifactSwitcher` guard** — `conversationArtifacts` nie-iterowalne wali 14 testów UnifiedChatPanel — Weryfikacja: suite UnifiedChatPanel zielony.
+3. **Wyciek wiersza w team-scope filter** (`chat-projects.list`) — `scope=team` zwraca obce wiersze — Weryfikacja: test filtra zielony, brak `u-2` w wyniku org-2.
+4. **(ZROBIONE quick-fix)** crash hasła share `hashPasscode`→`scryptHash` — Weryfikacja: PATCH `/conversations/:id/share` z `password` nie rzuca; test BE.
+
 ### Fala 2 — Domknięcie wartości (P1)
+1. **Decyzja o klienckiej pamięci AI** — albo udostępnić panel klientom (zdjąć z internalToolsGuard rozjazd poz.48 + wepnąć `OrganizationMemoryPanel`), albo świadomie ukryć i wyciąć orphan — Weryfikacja: panel działa na koncie klienta LUB usunięty z drzewa.
+2. **Pokrycie testowe S3/S4/S6** — ingest załącznika, split-view kontekst, handoff→Canvas chip — Weryfikacja: nowe testy integ/E2E zielone.
+3. **Przeniesienie kluczowych E2E smoke do PR-gate** — refresh-persistence, canvas chip — Weryfikacja: trigger PR uruchamia je.
+4. **F-3 metadata w public viewerze** — whitelist pól zamiast verbatim — Weryfikacja: response nie zawiera pól wewnętrznych.
+
 ### Fala 3 — Jakość i kanony (P2)
+1. **Wycięcie martwego kodu** — WorkModeMenu, ChatOverlay+ChatToggleButton, CodeInterpreter, ActiveModeStrip (+ decyzja o OrganizationMemoryPanel) — Weryfikacja: build zielony, 0 referencji.
+2. **SQLite-izm `datetime('now')`** w cleanup pamięci → składnia PG — Weryfikacja: zapytanie cleanup nie pada na Postgresie.
+3. **Audyt hardcoded-stringów i18n** (63 pliki) + UI błędu przerwanego strumienia — Weryfikacja: Faza 4 screenshot + brak hardcodów.
+4. **Test-sierota `deepThinkingRuntime`** + brittle voice boundary — Weryfikacja: suite bez sieroty, voice test na asercji zachowania.
 
 ### Definition of Done (odhaczane przy realizacji)
 - [ ] 1. Testy auto FE+BE scenariuszy krytycznych zielone w CI
@@ -106,3 +185,6 @@
 - [ ] 4. Kanony: checklisty Fazy 5 bez odstępstw P0/P1
 - [ ] 5. Zero WIDOCZNE-ALE-ZEPSUTE
 - [ ] 6. Zero cichych degradacji bez komunikatu
+
+---
+**Pozostałe do domknięcia audytu M01:** Faza 3 (Railway smoke + migracje + flagi) i Faza 4 (żywe przejście 7 scenariuszy ze screenshotami). Po ich wykonaniu re-ocena wymiarów D i G; ocena końcowa pozostanie ≤50 dopóki P0 cross-org nie jest naprawiony.

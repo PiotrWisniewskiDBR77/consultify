@@ -589,7 +589,7 @@ router.patch('/conversations/:id/share', authenticate, async (req: Request, res:
       if (passcode === null) {
         delete newSettings.passwordHash;
       } else {
-        newSettings.passwordHash = hashPasscode(String(passcode));
+        newSettings.passwordHash = await scryptHash(String(passcode));
       }
     }
 

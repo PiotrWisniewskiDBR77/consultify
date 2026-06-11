@@ -6,7 +6,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 
 | # | Moduł | Pula | Status | Ocena | Tier | Data | Karta |
 |---|-------|------|--------|-------|------|------|-------|
-| M01 | Czat | 1 (core) | ⬜ | — | — | — | — |
+| M01 | Czat | 1 (core) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M01-czat/KARTA_AUDYTU.md` |
 | M03 | Moja Praca — organizer | 1 (core) | ⬜ | — | — | — | — |
 | M10 | Wywiad | 1 (core) | ⬜ | — | — | — | — |
 | M13 | Inicjatywy | 1 (core) | ⬜ | — | — | — | — |
