@@ -8,6 +8,7 @@ import {
   BookTemplate,
   CheckCircle2,
   ChevronRight,
+  Copy,
   Download,
   ExternalLink,
   FileSpreadsheet,
@@ -50,6 +51,7 @@ import {
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { resolveArtifactOpenPath } from './artifactNavigation';
+import { duplicateArtifactToCanvasDraft } from './duplicateArtifactToDraft';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 import type { ArtifactGovernanceSummary, UnifiedOutputRow } from './types';
 import type { useRapActions } from './useRapData';
@@ -493,6 +495,48 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         },
       },
     ];
+
+    // D2 "Duplikuj / Użyj jako szablonu" — Claude-Artifacts "Remix" analog.
+    // Copies a document/sheet artifact into a NEW Work Canvas draft + opens the
+    // chat canvas; the original is untouched. Decks are not markdown canvas
+    // drafts → gated to document/sheet (see duplicateArtifactToDraft.ts).
+    if (row.kind === 'document' || row.kind === 'sheet') {
+      base.push({
+        id: 'duplicate_as_template',
+        label: t('rap.actions.duplicateAsTemplate', 'Duplikuj / Użyj jako szablonu'),
+        icon: Copy,
+        onClick: async () => {
+          const toastId = toast.loading(
+            isPolish ? 'Tworzę kopię…' : 'Creating a copy…'
+          );
+          try {
+            const { chatUrl } = await duplicateArtifactToCanvasDraft(
+              {
+                kind: row.kind as 'document' | 'sheet',
+                originRecordId: row.originRecordId,
+                artifactId: row.artifactId,
+                title: row.title,
+              },
+              { isPolish }
+            );
+            toast.success(
+              isPolish ? 'Utworzono kopię do edycji' : 'Created an editable copy',
+              { id: toastId }
+            );
+            navigate(chatUrl);
+          } catch (e: any) {
+            toast.error(
+              e?.message
+                ? String(e.message)
+                : isPolish
+                  ? 'Nie udało się utworzyć kopii'
+                  : 'Could not create a copy',
+              { id: toastId }
+            );
+          }
+        },
+      });
+    }
 
     if (
       !isTemplateArtifact &&
