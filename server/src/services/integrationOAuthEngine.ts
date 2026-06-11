@@ -10,6 +10,7 @@ import crypto from 'crypto';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import _logger from '../utils/Logger.js';
+import { decryptSecret, encryptSecret } from '../utils/secretEncryption.js';
 
 const logger = _logger;
 
@@ -638,8 +639,8 @@ export async function storeTokens(
       id,
       userId,
       connectorId,
-      tokens.accessToken,
-      tokens.refreshToken || null,
+      encryptSecret(tokens.accessToken),
+      tokens.refreshToken ? encryptSecret(tokens.refreshToken) : null,
       expiresAt,
       tokens.scopes || null,
       extra,
@@ -677,8 +678,8 @@ export async function getStoredToken(
   );
   if (!row) return null;
   return {
-    accessToken: row.access_token,
-    refreshToken: row.refresh_token,
+    accessToken: decryptSecret(row.access_token),
+    refreshToken: row.refresh_token ? decryptSecret(row.refresh_token) : null,
     expiresAt: row.expires_at,
     status: row.status,
     extraData: row.extra_data,
