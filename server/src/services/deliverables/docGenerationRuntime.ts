@@ -501,7 +501,11 @@ export async function startSheet(params: {
         );
       }
 
-      const content = markdown.startsWith('#') ? markdown : `# ${draft.title}\n\n${markdown}`;
+      const baseContent = markdown.startsWith('#') ? markdown : `# ${draft.title}\n\n${markdown}`;
+      const sheetRefs = stored.sourceRefs?.length
+        ? stored.sourceRefs
+        : provenance.deliverablesGeneration?.autoGrounding?.refs;
+      const content = appendSourcesSection(baseContent, sheetRefs, pl ? 'pl' : 'en');
       await updateDraft({
         organizationId: params.organizationId,
         draftId: draft.id,
@@ -578,6 +582,35 @@ interface DraftProvenance {
     autoGrounding?: { refs: DocumentSourceRef[]; facts: string | null };
   };
   [key: string]: unknown;
+}
+
+/**
+ * B3 (plan wykonawczy): artefakt niesie swoje źródła — sekcja na końcu treści
+ * (typ + tytuł). Klikalne chipy per sekcja = przyszła iteracja UI; v1 czytelny tekst.
+ */
+function appendSourcesSection(
+  markdown: string,
+  refs: DocumentSourceRef[] | undefined,
+  language: 'pl' | 'en'
+): string {
+  if (!refs?.length) return markdown;
+  const typeLabels: Record<string, { pl: string; en: string }> = {
+    initiative: { pl: 'Inicjatywa', en: 'Initiative' },
+    insight: { pl: 'Insight', en: 'Insight' },
+    note: { pl: 'Notatka', en: 'Note' },
+    decision: { pl: 'Decyzja', en: 'Decision' },
+    task: { pl: 'Zadanie', en: 'Task' },
+    report: { pl: 'Raport', en: 'Report' },
+  };
+  const items = refs
+    .slice(0, 10)
+    .map((r) => {
+      const label = typeLabels[String(r.sourceType)]?.[language] || r.sourceType;
+      return `- ${label}: ${r.sourceTitle || r.sourceId}`;
+    })
+    .join('\n');
+  const heading = language === 'en' ? '## Sources' : '## Źródła';
+  return `${markdown}\n\n${heading}\n\n${items}`;
 }
 
 async function getDocDraft(
@@ -760,11 +793,16 @@ export async function startDoc(params: {
         rendered,
         stored.intake.language === 'en' ? 'en' : 'pl'
       );
+      const docLang = stored.intake.language === 'en' ? ('en' as const) : ('pl' as const);
+      const usedRefs = stored.intake.sourceHints?.length
+        ? stored.intake.sourceHints
+        : stored.autoGrounding?.refs;
+      const markdownWithSources = appendSourcesSection(markdown, usedRefs, docLang);
 
       await updateDraft({
         organizationId: params.organizationId,
         draftId: draft.id,
-        patch: { content: markdown, artifactId: result.artifactId },
+        patch: { content: markdownWithSources, artifactId: result.artifactId },
       });
       // C7 — zarejestruj gotowy dokument w rejestrze Outputs (best-effort).
       await registerDocArtifactBestEffort({

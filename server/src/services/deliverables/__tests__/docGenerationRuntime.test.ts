@@ -509,3 +509,40 @@ describe('B4 — auto-skan organizacji (brak wskazanych źródeł)', () => {
     expect(result.state).toBe('plan_ready');
   });
 });
+
+
+describe('B3 — sekcja Źródła w artefakcie', () => {
+  it('dokument kończy się sekcją Źródła z tytułami encji', async () => {
+    getDraftMock.mockResolvedValue(
+      draftRow({
+        provenance: {
+          deliverablesGeneration: {
+            intake: {
+              description: 'Napisz raport',
+              language: 'pl',
+              title: 'Raport',
+              sourceHints: [
+                { sourceType: 'initiative', sourceId: 'init-7', sourceTitle: 'Automatyzacja magazynu' },
+              ],
+            },
+            outline,
+          },
+        },
+      })
+    );
+
+    await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+
+    const contentPatch = updateDraftMock.mock.calls.find((c) => 'content' in c[0].patch);
+    expect(contentPatch[0].patch.content).toContain('## Źródła');
+    expect(contentPatch[0].patch.content).toContain('Inicjatywa: Automatyzacja magazynu');
+  });
+
+  it('brak źródeł ⇒ brak sekcji Źródła (czysty dokument)', async () => {
+    await startDoc({ generationId: 'draft-1', setup: {}, organizationId: ORG, userId: USER });
+    await flushBackgroundWork();
+    const contentPatch = updateDraftMock.mock.calls.find((c) => 'content' in c[0].patch);
+    expect(contentPatch[0].patch.content).not.toContain('## Źródła');
+  });
+});
