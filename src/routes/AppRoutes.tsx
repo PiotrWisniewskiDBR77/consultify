@@ -15,7 +15,7 @@ import {
 } from 'react-router-dom';
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
@@ -1198,15 +1198,17 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/audit-programs"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
-                    <AuditProgramsHub />
-                  </Suspense>
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
+            <BetaGate moduleId="MODULE_AUDITS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                      <AuditProgramsHub />
+                    </Suspense>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </BetaGate>
           }
         />
 
@@ -1354,11 +1356,13 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.PREZENTACJE_GEN}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
-                <RouteErrorBoundary>
-                  <PrezentacjeView />
-                </RouteErrorBoundary>
-              </MainLayout>
+              <BetaGate moduleId="MODULE_PREZENTACJE_GEN">
+                <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.prezentacje', 'Presentations')]}>
+                  <RouteErrorBoundary>
+                    <PrezentacjeView />
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
             </ProtectedRoute>
           }
         />
@@ -1368,11 +1372,13 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.TABELE}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.tabele', 'Tables')]}>
-                <RouteErrorBoundary>
-                  <TabeleView />
-                </RouteErrorBoundary>
-              </MainLayout>
+              <BetaGate moduleId="MODULE_TABELE">
+                <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.tabele', 'Tables')]}>
+                  <RouteErrorBoundary>
+                    <TabeleView />
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
             </ProtectedRoute>
           }
         />
@@ -1751,76 +1757,86 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ECONOMICS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Finance"
-              >
-                <RouteErrorBoundary>
-                  <EconomicsView />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <BetaGate moduleId="MODULE_ECONOMICS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Finance"
+                >
+                  <RouteErrorBoundary>
+                    <EconomicsView />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         <Route
           path={ROUTES.FINANCE}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Finance"
-              >
-                <RouteErrorBoundary>
-                  <EconomicsView />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <BetaGate moduleId="MODULE_ECONOMICS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Finance"
+                >
+                  <RouteErrorBoundary>
+                    <EconomicsView />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         <Route
           path="/finance/statements/:id"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Statement']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Finance"
-              >
-                <RouteErrorBoundary>
-                  <EconomicsView />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <BetaGate moduleId="MODULE_ECONOMICS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Statement']} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Finance"
+                >
+                  <RouteErrorBoundary>
+                    <EconomicsView />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         <Route
           path="/finance/models/:id"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Model']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Finance"
-              >
-                <RouteErrorBoundary>
-                  <EconomicsView />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <BetaGate moduleId="MODULE_ECONOMICS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Model']} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Finance"
+                >
+                  <RouteErrorBoundary>
+                    <EconomicsView />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         <Route
           path="/finance/analyses/:id"
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Analysis']} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Finance"
-              >
-                <RouteErrorBoundary>
-                  <EconomicsView />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <BetaGate moduleId="MODULE_ECONOMICS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Analysis']} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Finance"
+                >
+                  <RouteErrorBoundary>
+                    <EconomicsView />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         <Route
@@ -1972,24 +1988,26 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.PRESENTATIONS}
           element={
-            <MainLayout
-              breadcrumbs={
-                breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
-                  t('rap.outputs.breadcrumb.library', 'Library'),
-                ]
-              }
-              noPadding
-            >
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Outputs"
+            <BetaGate moduleId="MODULE_PRESENTATIONS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.outputsLibrary', 'Outputs'),
+                    t('rap.outputs.breadcrumb.library', 'Library'),
+                  ]
+                }
+                noPadding
               >
-                <RouteErrorBoundary>
-                  <ReportsAndPresentationsHub />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Outputs"
+                >
+                  <RouteErrorBoundary>
+                    <ReportsAndPresentationsHub />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         <Route
@@ -2010,64 +2028,70 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.MEETING}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Meeting"
-              >
-                <RouteErrorBoundary>
-                  <MeetingHub />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <BetaGate moduleId="MODULE_MEETING">
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Meeting"
+                >
+                  <RouteErrorBoundary>
+                    <MeetingHub />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         <Route
           path="/presentations/wizard"
           element={
-            <MainLayout
-              breadcrumbs={
-                breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
-                  t('rap.breadcrumb.presentationWizard', 'Presentation Wizard'),
-                ]
-              }
-            >
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Outputs"
+            <BetaGate moduleId="MODULE_PRESENTATIONS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.outputsLibrary', 'Outputs'),
+                    t('rap.breadcrumb.presentationWizard', 'Presentation Wizard'),
+                  ]
+                }
               >
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <PresentationWizard />
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Outputs"
+                >
+                  <RouteErrorBoundary>
+                    <AnimationWrapper variant="slideUp">
+                      <PresentationWizard />
+                    </AnimationWrapper>
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         <Route
           path="/presentations/builder/:deckId"
           element={
-            <MainLayout
-              breadcrumbs={
-                breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
-                  t('rap.breadcrumb.deckBuilder', 'Deck Builder'),
-                ]
-              }
-            >
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Outputs"
+            <BetaGate moduleId="MODULE_PRESENTATIONS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.outputsLibrary', 'Outputs'),
+                    t('rap.breadcrumb.deckBuilder', 'Deck Builder'),
+                  ]
+                }
               >
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <DeckBuilder />
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Outputs"
+                >
+                  <RouteErrorBoundary>
+                    <AnimationWrapper variant="slideUp">
+                      <DeckBuilder />
+                    </AnimationWrapper>
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         {/*
@@ -2080,19 +2104,21 @@ export const AppRoutes: React.FC = () => {
           path="/document-studio"
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout
-                breadcrumbs={
-                  breadcrumbs || [
-                    t('sidebar.documentStudio', 'Documents'),
-                    t('documentStudio.breadcrumb', 'Document Studio'),
-                  ]
-                }
-                noPadding
-              >
-                <RouteErrorBoundary>
-                  <DocumentStudioView />
-                </RouteErrorBoundary>
-              </MainLayout>
+              <BetaGate moduleId="MODULE_DOCUMENT_STUDIO">
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs || [
+                      t('sidebar.documentStudio', 'Documents'),
+                      t('documentStudio.breadcrumb', 'Document Studio'),
+                    ]
+                  }
+                  noPadding
+                >
+                  <RouteErrorBoundary>
+                    <DocumentStudioView />
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
             </ProtectedRoute>
           }
         />
@@ -2100,19 +2126,21 @@ export const AppRoutes: React.FC = () => {
           path="/document-studio/:artifactId"
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout
-                breadcrumbs={
-                  breadcrumbs || [
-                    t('sidebar.documentStudio', 'Documents'),
-                    t('documentStudio.breadcrumb', 'Document Studio'),
-                  ]
-                }
-                noPadding
-              >
-                <RouteErrorBoundary>
-                  <DocumentStudioView />
-                </RouteErrorBoundary>
-              </MainLayout>
+              <BetaGate moduleId="MODULE_DOCUMENT_STUDIO">
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs || [
+                      t('sidebar.documentStudio', 'Documents'),
+                      t('documentStudio.breadcrumb', 'Document Studio'),
+                    ]
+                  }
+                  noPadding
+                >
+                  <RouteErrorBoundary>
+                    <DocumentStudioView />
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
             </ProtectedRoute>
           }
         />
@@ -2135,16 +2163,18 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.BENEFITS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
-              <ProductionModuleGate
-                enabled={!hideNonCoreModulesOnPublicProduction}
-                moduleName="Results"
-              >
-                <RouteErrorBoundary>
-                  <ResultsHub />
-                </RouteErrorBoundary>
-              </ProductionModuleGate>
-            </MainLayout>
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <ResultsHub />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
           }
         />
         {/* MCP IRIS + Marketplace dropped from navigation (decision D7). Redirect

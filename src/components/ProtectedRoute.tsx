@@ -5,6 +5,7 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { normalizeAppRole } from '@/utils/roleGuards';
+import { dispatchBetaAccessBlocked, isBetaClosed } from '@/utils/betaAccess';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -83,5 +84,29 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // All checks passed, render children
+  return <>{children}</>;
+};
+
+interface BetaGateProps {
+  moduleId: string;
+  children: React.ReactNode;
+}
+
+/**
+ * Route-level guard for closed-beta modules. Mirrors the sidebar lock from
+ * betaAccess.ts so direct URL access is blocked the same way as sidebar nav.
+ * On block: fires the access:blocked event (shows the modal) and redirects to chat.
+ */
+export const BetaGate: React.FC<BetaGateProps> = ({ moduleId, children }) => {
+  const isLocked = isBetaClosed(moduleId);
+
+  React.useEffect(() => {
+    if (isLocked) dispatchBetaAccessBlocked();
+  }, [isLocked]);
+
+  if (isLocked) {
+    return <Navigate to={ROUTES.AI_CHAT} replace />;
+  }
+
   return <>{children}</>;
 };

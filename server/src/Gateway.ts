@@ -7,6 +7,7 @@ import { deprecationHeader } from './middleware/deprecationHeader.middleware.js'
 import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
 import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
 import { trialEntryGuard } from './middleware/trialEntryGuard.middleware.js';
+import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
@@ -521,7 +522,7 @@ export class ApiGateway {
         documentRoutes
       );
       app.use('/api/settings', settingsRoutes);
-      app.use('/api/meeting', meetingRoutes);
+      app.use('/api/meeting', betaGate, meetingRoutes);
       mountStub(
         '/api/integrations/calendar',
         calendarIntegrationsRoutes,
@@ -758,6 +759,7 @@ export class ApiGateway {
       app.use(
         '/api/document-studio',
         gatewayVerifyToken,
+        betaGate,
         highRiskSurfaceGuard({ categories: ['upload', 'export', 'public_share'] }),
         documentStudioRoutes
       );
@@ -873,8 +875,8 @@ export class ApiGateway {
         'stack:',
         economicsRoutes?.stack?.length
       );
-      app.use('/api/economics', economicsRoutes);
-      app.use('/api/presentations', presentationsRoutes);
+      app.use('/api/economics', betaGate, economicsRoutes);
+      app.use('/api/presentations', createBetaGate(['/shared/', '/embed/']), presentationsRoutes);
       app.use('/api/presentations-v4', presentationEnterpriseRoutes);
       // Deliverables light runtime — flag-gated inside the router (404 when ENABLE_DELIVERABLES_LIGHT is off)
       app.use('/api/deliverables/generations', deliverablesGenerationsRoutes);
@@ -897,7 +899,7 @@ export class ApiGateway {
           `[PresentationStudio] Layout-capacity persistence init failed: ${err?.message || err}`
         );
       }
-      app.use('/api/presentation-studio', presentationStudioRoutes);
+      app.use('/api/presentation-studio', betaGate, presentationStudioRoutes);
       app.use('/api/results', resultsKpiReportsRoutes);
       app.use('/api/results-v4', resultsEnterpriseRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
@@ -989,7 +991,7 @@ export class ApiGateway {
       );
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
       app.use('/api/budget', budgetRoutes);
-      app.use('/api/benefits', benefitsRoutes);
+      app.use('/api/benefits', betaGate, benefitsRoutes);
       app.use(
         '/api/finance-statements',
         gatewayVerifyToken,
@@ -997,7 +999,7 @@ export class ApiGateway {
         deprecationHeader('/api/v8/finance'),
         financeStatementsRoutes
       );
-      app.use('/api/financial-modeling', gatewayVerifyToken, financialModelingRoutes);
+      app.use('/api/financial-modeling', gatewayVerifyToken, betaGate, financialModelingRoutes);
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
 
