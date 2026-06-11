@@ -59,13 +59,7 @@ type QuadrantSpec = {
   y: number;
 };
 
-const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'new', label: 'New' },
-  { id: 'updated', label: 'Updated' },
-  { id: 'saved', label: 'Saved' },
-  { id: 'watching', label: 'Watching' },
-];
+const STATUS_FILTER_IDS: StatusFilter[] = ['all', 'new', 'updated', 'saved', 'watching'];
 
 const QUADRANTS: QuadrantSpec[] = [
   {
@@ -231,6 +225,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const { screen, blocks, layout, loading, error, refresh } = useHomeData(refreshTrigger);
   const radarData = useRadarData(refreshTrigger);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  const STATUS_FILTERS: Array<{ id: StatusFilter; label: string }> = [
+    { id: 'all', label: t('myWork.radar.filter.all', 'All') },
+    { id: 'new', label: t('myWork.radar.filter.new', 'New') },
+    { id: 'updated', label: t('myWork.radar.filter.updated', 'Updated') },
+    { id: 'saved', label: t('myWork.radar.filter.saved', 'Saved') },
+    { id: 'watching', label: t('myWork.radar.filter.watching', 'Watching') },
+  ];
   const lastErrorToastRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -337,13 +339,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
         </span>
       </div>
 
-      <div className="relative z-10 flex-1 overflow-hidden px-4 pb-4 md:px-5">
+      <div className="relative z-10 flex-1 overflow-y-auto px-4 pb-4 md:px-5">
         <div className="mb-2.5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Your Radar</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {t('myWork.radar.title', 'Your Radar')}
+            </h2>
             <p className="mt-0.5 max-w-3xl text-[12px] text-slate-600 dark:text-slate-400">
-              A personal map of signals worth your attention — across your development, projects,
-              industry and role.
+              {t(
+                'myWork.radar.description',
+                'A personal map of signals worth your attention — across your development, projects, industry and role.'
+              )}
             </p>
           </div>
 

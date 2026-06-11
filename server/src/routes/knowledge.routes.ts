@@ -853,4 +853,25 @@ router.put(
   })
 );
 
+/**
+ * DELETE /api/knowledge/documents/:id
+ * Soft-delete a knowledge document (sets deleted_at). Org-scoped.
+ */
+router.delete(
+  '/documents/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'Missing document id' });
+
+    const result = await KnowledgeService.deleteDocument(orgId, id);
+    if (!result.deleted) return res.status(404).json({ error: 'Document not found' });
+
+    return res.json({ success: true, deleted: id });
+  })
+);
+
 export default router;

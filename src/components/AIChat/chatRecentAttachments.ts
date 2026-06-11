@@ -53,6 +53,12 @@ function writeAll(items: RecentAttachment[]) {
  * upgrades a name-only entry in place once its docId is known (the upload that
  * created the docId happens after the file is first picked).
  */
+export function removeRecentAttachment(docId: string): RecentAttachment[] {
+  const updated = readRecentAttachments().filter((x) => x.docId !== docId);
+  writeAll(updated);
+  return updated;
+}
+
 export function pushRecentAttachment(entry: {
   name: string;
   docId?: string;

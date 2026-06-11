@@ -9,19 +9,21 @@
  * @version 4.0.0
  */
 
-import { ChevronRight, ExternalLink, Link2, Plus, Upload } from 'lucide-react';
+import { ChevronRight, ExternalLink, Link2, Plus, Trash2, Upload } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import type { CloudProviderId } from '../../hooks/useCloudIntegrations';
+import { Api } from '../../services/api';
 import { Button } from '../ui/primitives/Button';
 import { Modal } from '../ui/primitives/Modal';
 import { SUPPORTED_CHAT_ATTACHMENT_ACCEPT } from './chatAttachmentSupport';
 import {
   pushRecentAttachment,
   readRecentAttachments,
+  removeRecentAttachment,
   type RecentAttachment,
 } from './chatRecentAttachments';
 
@@ -179,6 +181,20 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       setRecentHover(false);
     }
   }, [isOpen]);
+
+  const handleDeleteRecentDoc = async (e: React.MouseEvent, docId: string, name: string) => {
+    e.stopPropagation();
+    try {
+      await Api.deleteKnowledgeDocument(docId);
+      const updated = removeRecentAttachment(docId);
+      setRecentItems(updated);
+      toast.success(t('aiChat.menu.toast.docDeleted', { name, defaultValue: `Deleted: ${name}` }), {
+        duration: 2000,
+      });
+    } catch {
+      toast.error(t('aiChat.menu.toast.docDeleteFailed', 'Could not delete the document.'));
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -408,6 +424,16 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                       <span className="flex-1 text-[12px] text-slate-600 dark:text-slate-300 truncate group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                         {r.name}
                       </span>
+                      {r.docId && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteRecentDoc(e, r.docId!, r.name)}
+                          className="ml-1 shrink-0 rounded p-0.5 text-slate-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
+                          title={t('aiChat.menu.deleteDoc', 'Remove from knowledge base')}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </button>
                   ))
                 )}

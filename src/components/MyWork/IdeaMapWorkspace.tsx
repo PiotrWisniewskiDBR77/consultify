@@ -2619,6 +2619,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     <div
       ref={workspaceRootRef}
       className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950"
+      style={{ touchAction: 'none' }}
       role="region"
       aria-label={isPolish ? 'Obszar roboczy mapy idei' : 'Idea map workspace'}
     >

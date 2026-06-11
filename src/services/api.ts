@@ -11481,6 +11481,15 @@ export const Api = {
     if (!res.ok) throw new Error(out.error || 'Failed to update document');
     return out;
   },
+  deleteKnowledgeDocument: async (id: string) => {
+    const res = await fetch(`${API_URL}/knowledge/documents/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to delete document');
+    return out;
+  },
   // Approval workflows
   getApprovalWorkflows: async (filters?: {
     resourceType?: string;

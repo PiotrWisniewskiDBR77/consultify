@@ -655,7 +655,7 @@ const KnowledgeService = {
   async getDocuments(orgId: string, _userId?: string, _role?: string): Promise<any[]> {
     await ensureKnowledgeSchema();
     const rows = await DbPromise.all<DocumentRow>(
-      `SELECT * FROM knowledge_docs WHERE (organization_id = ? OR organization_id IS NULL) ORDER BY created_at DESC LIMIT 200`,
+      `SELECT * FROM knowledge_docs WHERE (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 200`,
       [orgId],
       { fallback: true } as any
     );
@@ -666,7 +666,7 @@ const KnowledgeService = {
     await ensureKnowledgeSchema();
     const rows = await DbPromise.all<DocumentRow>(
       `SELECT * FROM knowledge_docs
-       WHERE (organization_id = ? OR organization_id IS NULL) AND category = ?
+       WHERE (organization_id = ? OR organization_id IS NULL) AND category = ? AND deleted_at IS NULL
        ORDER BY created_at DESC LIMIT 200`,
       [orgId, String(category)],
       { fallback: true } as any
@@ -686,6 +686,18 @@ const KnowledgeService = {
       { fallback: true } as any
     );
     return (rows || []).map(normalizeDocument);
+  },
+
+  async deleteDocument(orgId: string, docId: string): Promise<{ deleted: boolean }> {
+    await ensureKnowledgeSchema();
+    const result = await DbPromise.run(
+      `UPDATE knowledge_docs
+       SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+      [docId, orgId],
+      { fallback: true } as any
+    );
+    return { deleted: Boolean((result as any)?.changes) };
   },
 
   async updateDocumentMetadata(

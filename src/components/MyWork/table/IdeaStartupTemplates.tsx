@@ -168,7 +168,7 @@ export const IdeaStartupTemplates: React.FC<IdeaStartupTemplatesProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-[520px] rounded-2xl border border-white/[0.06] bg-white/95 dark:bg-navy-900/[0.97] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+      <div className="w-[520px] max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.06] bg-white/95 dark:bg-navy-900/[0.97] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* ── Header ─────────────────────────────────────────── */}
         <div className="relative flex items-center justify-between px-6 py-4 border-b border-slate-200/30 dark:border-white/[0.04]">
           <div className="absolute inset-0 bg-gradient-to-r from-primary-500/[0.03] via-transparent to-blue-500/[0.03] dark:from-primary-500/[0.06] dark:to-blue-500/[0.06]" />
