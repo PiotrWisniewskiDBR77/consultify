@@ -2202,9 +2202,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       (avgProgress + decisionHealth + capacityHealth + riskHealth) / 4
     );
 
-    const budgetValues = initiatives
-      .map((initiative) => (initiative as any).budget || (initiative as any).costCapex)
-      .filter((value) => typeof value === 'number' && value > 0);
+    const budgetPairs = initiatives
+      .map((initiative) => ({
+        budget: (initiative as any).budget || (initiative as any).costCapex,
+        actual: (initiative as any).actualCost ?? (initiative as any).actual_cost,
+      }))
+      .filter(
+        (pair) =>
+          typeof pair.budget === 'number' &&
+          pair.budget > 0 &&
+          typeof pair.actual === 'number'
+      );
+
+    let budgetHealth: number | null = null;
+    if (budgetPairs.length > 0) {
+      const totalBudget = budgetPairs.reduce((sum, pair) => sum + pair.budget, 0);
+      const totalActual = budgetPairs.reduce((sum, pair) => sum + pair.actual, 0);
+      budgetHealth = Math.max(0, Math.round(100 - (totalActual / totalBudget) * 100));
+    }
 
     return {
       healthScore,
@@ -2213,7 +2228,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       totalDecisions,
       blockedCount,
       onTrackCount: Math.max(totalInitiatives - blockedCount, 0),
-      budgetHealth: budgetValues.length ? 100 : null,
+      budgetHealth,
       breakdown: {
         execution: avgProgress,
         decisions: decisionHealth,
