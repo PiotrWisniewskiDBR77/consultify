@@ -1,0 +1,338 @@
+/**
+ * M12 — Audit Programs route tests (Bramka D: testy fundamentu M12).
+ *
+ * Covers:
+ *   - CRUD org-scoping: GET/PATCH/DELETE return 404 for wrong-org programs
+ *   - generate-surveys fan-out: creates one assignment per template × assignee
+ *   - SEC-3: generate-surveys filters foreign assignees via organization_members check
+ *   - generate-surveys idempotency: alreadyGenerated=true skips re-fan-out
+ *   - completion rollup endpoint
+ *
+ * Call graph notes:
+ *   getProgram()     → dbGet (single row lookup)
+ *   listPrograms()   → dbGet (count) + dbAll (rows)
+ *   createProgram()  → dbRun (INSERT) + dbGet (return)
+ *   updateProgram()  → dbGet (existing) + dbRun (UPDATE) + dbGet (return)
+ *   deleteProgram()  → dbGet (exist-check) + dbRun (DELETE)
+ *   generateSurveys()→ dbGet (get) + dbAll (org_members) + create() + updateProgram()
+ */
+
+import express, { type Express, type NextFunction, type Request } from 'express';
+import request from 'supertest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// ── Mock fns (hoisted) ────────────────────────────────────────────────────────
+
+const { mockDbAll, mockDbGet, mockDbRun } = vi.hoisted(() => ({
+  mockDbAll: vi.fn(),
+  mockDbGet: vi.fn(),
+  mockDbRun: vi.fn(),
+}));
+
+const mockCreate = vi.fn();
+
+// ── Module mocks ──────────────────────────────────────────────────────────────
+
+vi.mock('../../utils/DbPromise.js', () => ({
+  all: (...args: any[]) => mockDbAll(...args),
+  get: (...args: any[]) => mockDbGet(...args),
+  run: (...args: any[]) => mockDbRun(...args),
+}));
+
+vi.mock('../../middleware/auth.middleware.js', () => ({
+  verifyToken: (_req: any, _res: any, next: any) => next(),
+  isAuthenticated: (_req: any, _res: any, next: any) => next(),
+  validateOrgMembership: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../middleware/rbac.middleware.js', () => ({
+  requireOrgAccess: () => (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
+  apiAuthRateLimiter: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../middleware/demoGuard.middleware.js', () => ({
+  demoContextMiddleware: (_req: any, _res: any, next: any) => next(),
+}));
+
+vi.mock('../../utils/Logger.js', () => ({
+  default: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
+
+vi.mock('../../services/InterviewAssignmentService.js', () => ({
+  default: { create: (...args: any[]) => mockCreate(...args) },
+}));
+
+// ── Test constants ────────────────────────────────────────────────────────────
+
+const ORG_A = 'org-aaa-111';
+const ORG_B = 'org-bbb-222';
+const USER_A = 'user-a-1';
+const PROG_ID = 'prog-x-1';
+const TMPL_ID = 'tmpl-y-1';
+const OWN_ASSIGNEE = 'user-own-1';
+const FOREIGN_ASSIGNEE = 'user-foreign-2';
+
+/** Raw DB row as returned by dbGet (config as JSON string). */
+function baseRow(extra: Record<string, any> = {}) {
+  return {
+    id: PROG_ID,
+    organization_id: ORG_A,
+    name: 'ISO 27001 Audit',
+    description: null,
+    objective: null,
+    status: 'draft',
+    preset: null,
+    config: JSON.stringify({ templateIds: [TMPL_ID], assigneeIds: [OWN_ASSIGNEE] }),
+    created_by: USER_A,
+    created_at: '2026-06-11T00:00:00.000Z',
+    updated_at: '2026-06-11T00:00:00.000Z',
+    ...extra,
+  };
+}
+
+function updatedRow(extra: Record<string, any> = {}) {
+  return baseRow({
+    config: JSON.stringify({
+      templateIds: [TMPL_ID],
+      assigneeIds: [OWN_ASSIGNEE],
+      surveysGenerated: true,
+      generatedAssignmentIds: ['ia-1'],
+    }),
+    status: 'active',
+    ...extra,
+  });
+}
+
+// ── App factory ───────────────────────────────────────────────────────────────
+
+async function makeApp(orgId = ORG_A) {
+  const { default: router } = await import('../audit-programs.routes.js');
+  const app: Express = express();
+  app.use(express.json());
+  app.use((req: Request, _res: any, next: NextFunction) => {
+    (req as any).user = { id: USER_A, organizationId: orgId };
+    (req as any).organizationId = orgId;
+    (req as any).userId = USER_A;
+    next();
+  });
+  app.use('/api/audit', router);
+  return app;
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe('audit-programs CRUD org-scoping', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbGet.mockResolvedValue(undefined);
+    mockDbRun.mockResolvedValue({ success: true, changes: 1 });
+  });
+
+  it('GET /programs returns empty list when no programs', async () => {
+    mockDbGet.mockResolvedValueOnce({ total: 0 }); // count
+    mockDbAll.mockResolvedValueOnce([]); // rows
+    const app = await makeApp();
+    const res = await request(app).get('/api/audit/programs');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('programs');
+    expect(Array.isArray(res.body.programs)).toBe(true);
+  });
+
+  it('POST /programs creates with org scope', async () => {
+    mockDbGet.mockResolvedValueOnce(baseRow()); // createProgram → getProgram returns created row
+    const app = await makeApp();
+    const res = await request(app)
+      .post('/api/audit/programs')
+      .send({ name: 'ISO 27001', status: 'draft' });
+    expect(res.status).toBe(201);
+    expect(res.body.program.id).toBe(PROG_ID);
+  });
+
+  it('POST /programs returns 400 when name is missing', async () => {
+    const app = await makeApp();
+    const res = await request(app).post('/api/audit/programs').send({ status: 'draft' });
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /programs/:id returns 404 for unknown program', async () => {
+    mockDbGet.mockResolvedValueOnce(undefined); // getProgram → not found
+    const app = await makeApp();
+    const res = await request(app).get(`/api/audit/programs/${PROG_ID}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /programs/:id returns program when it belongs to the requesting org', async () => {
+    mockDbGet.mockResolvedValueOnce(baseRow());
+    const app = await makeApp(ORG_A);
+    const res = await request(app).get(`/api/audit/programs/${PROG_ID}`);
+    expect(res.status).toBe(200);
+    expect(res.body.program.id).toBe(PROG_ID);
+  });
+
+  it('GET /programs/:id returns 404 when program belongs to a different org (cross-org scope)', async () => {
+    // ORG_B requests — dbGet returns undefined because the real query uses WHERE organization_id = ORG_B
+    mockDbGet.mockResolvedValueOnce(undefined);
+    const app = await makeApp(ORG_B);
+    const res = await request(app).get(`/api/audit/programs/${PROG_ID}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('PATCH /programs/:id returns 404 for wrong-org program', async () => {
+    // updateProgram calls getProgram first — returns null for ORG_B
+    mockDbGet.mockResolvedValueOnce(undefined);
+    const app = await makeApp(ORG_B);
+    const res = await request(app)
+      .patch(`/api/audit/programs/${PROG_ID}`)
+      .send({ name: 'Changed' });
+    expect(res.status).toBe(404);
+  });
+
+  it('PATCH /programs/:id returns 400 when name is empty string', async () => {
+    const app = await makeApp(ORG_A);
+    const res = await request(app)
+      .patch(`/api/audit/programs/${PROG_ID}`)
+      .send({ name: '' });
+    expect(res.status).toBe(400);
+  });
+
+  it('DELETE /programs/:id returns 404 for wrong-org program', async () => {
+    mockDbGet.mockResolvedValueOnce(undefined);
+    const app = await makeApp(ORG_B);
+    const res = await request(app).delete(`/api/audit/programs/${PROG_ID}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('DELETE /programs/:id returns 200 for own-org program', async () => {
+    mockDbGet.mockResolvedValueOnce(baseRow()); // deleteProgram → getProgram exist-check
+    const app = await makeApp(ORG_A);
+    const res = await request(app).delete(`/api/audit/programs/${PROG_ID}`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+});
+
+describe('audit-programs generate-surveys fan-out', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbGet.mockResolvedValue(undefined);
+    mockDbRun.mockResolvedValue({ success: true, changes: 1 });
+    mockCreate.mockResolvedValue({ id: 'ia-1' });
+  });
+
+  it('returns 404 when program not found', async () => {
+    mockDbGet.mockResolvedValueOnce(undefined);
+    const app = await makeApp();
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(404);
+  });
+
+  it('fans out one assignment per template × assignee', async () => {
+    // generateSurveys: getProgram (1) → org_members (all) → create() → updateProgram: getProgram (2), dbRun, getProgram (3)
+    mockDbGet
+      .mockResolvedValueOnce(baseRow()) // 1: initial getProgram
+      .mockResolvedValueOnce(baseRow()) // 2: updateProgram existence check
+      .mockResolvedValueOnce(updatedRow()); // 3: post-update getProgram return
+    mockDbAll.mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]); // org_members check
+
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(200);
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ assigneeUserIds: [OWN_ASSIGNEE], templateId: TMPL_ID })
+    );
+    expect(res.body.created).toBe(1);
+  });
+
+  it('SEC-3: filters foreign assignees — does not create assignment for non-members', async () => {
+    const rowWithForeign = baseRow({
+      config: JSON.stringify({
+        templateIds: [TMPL_ID],
+        assigneeIds: [FOREIGN_ASSIGNEE, OWN_ASSIGNEE],
+      }),
+    });
+
+    mockDbGet
+      .mockResolvedValueOnce(rowWithForeign) // 1: getProgram
+      .mockResolvedValueOnce(rowWithForeign) // 2: updateProgram exist-check
+      .mockResolvedValueOnce(updatedRow()); // 3: post-update return
+    // org_members: only OWN_ASSIGNEE is a member (foreign filtered)
+    mockDbAll.mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }]);
+
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(200);
+    // Only own-user assignment created — foreign user silently dropped
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const callArg = mockCreate.mock.calls[0][0];
+    expect(callArg.assigneeUserIds).toEqual([OWN_ASSIGNEE]);
+    expect(callArg.assigneeUserIds).not.toContain(FOREIGN_ASSIGNEE);
+  });
+
+  it('SEC-3: no assignments created when all assignees are foreign', async () => {
+    const rowWithForeign = baseRow({
+      config: JSON.stringify({
+        templateIds: [TMPL_ID],
+        assigneeIds: [FOREIGN_ASSIGNEE],
+      }),
+    });
+
+    mockDbGet.mockResolvedValueOnce(rowWithForeign);
+    // org_members: empty — foreign user is not a member
+    mockDbAll.mockResolvedValueOnce([]);
+
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(200);
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(res.body.created).toBe(0);
+  });
+
+  it('idempotent: returns alreadyGenerated=true on second call', async () => {
+    const generated = baseRow({
+      config: JSON.stringify({
+        templateIds: [TMPL_ID],
+        assigneeIds: [OWN_ASSIGNEE],
+        surveysGenerated: true,
+        generatedAssignmentIds: ['ia-existing'],
+      }),
+    });
+
+    mockDbGet.mockResolvedValueOnce(generated);
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+    expect(res.status).toBe(200);
+    expect(res.body.alreadyGenerated).toBe(true);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe('audit-programs completion rollup', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbGet.mockResolvedValue(undefined);
+    mockDbRun.mockResolvedValue({ success: true, changes: 1 });
+  });
+
+  it('returns 404 when program not found', async () => {
+    mockDbGet.mockResolvedValueOnce(undefined);
+    const app = await makeApp();
+    const res = await request(app).get(`/api/audit/programs/${PROG_ID}/completion`);
+    expect(res.status).toBe(404);
+  });
+
+  it('returns generated=false when no surveys have been generated yet', async () => {
+    mockDbGet.mockResolvedValueOnce(baseRow());
+    const app = await makeApp(ORG_A);
+    const res = await request(app).get(`/api/audit/programs/${PROG_ID}/completion`);
+    expect(res.status).toBe(200);
+    expect(res.body.completion.generated).toBe(false);
+    expect(res.body.completion.total).toBe(0);
+  });
+});
