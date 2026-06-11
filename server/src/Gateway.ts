@@ -997,7 +997,7 @@ export class ApiGateway {
         deprecationHeader('/api/v8/finance'),
         financeStatementsRoutes
       );
-      app.use('/api/financial-modeling', financialModelingRoutes);
+      app.use('/api/financial-modeling', gatewayVerifyToken, financialModelingRoutes);
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
 
