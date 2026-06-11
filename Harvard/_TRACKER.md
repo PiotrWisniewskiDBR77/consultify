@@ -1,8 +1,6 @@
 # TRACKER AUDYTÓW PER-MODUŁ (Protokół V1)
 
-> **PRZENIESIONY:** SSOT trackera = `Harvard/_TRACKER.md` (projekt Audyt Harvard). Ten plik nie jest już aktualizowany.
-
-Protokół: `Harvard/protokol/MODULE_AUDIT_PROTOCOL_V1.md` · Szablon karty: `Harvard/protokol/MODULE_AUDIT_CARD_TEMPLATE.md` · Podział: `_MODULE_MAP_V2.md`
+**SSOT statusu projektu Audyt Harvard.** Protokół: `Harvard/protokol/MODULE_AUDIT_PROTOCOL_V1.md` · Podział: `Harvard/podzial/_MODULE_MAP_V2.md` · Karty: `modules/<Mxx>-*/KARTA_AUDYTU.md` · Instrukcja: `README.md`
 
 Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ zrobiony · 🔁 do dociągnięcia do protokołu
 
