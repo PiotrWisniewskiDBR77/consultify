@@ -14,7 +14,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M25 | Ustawienia | 1 (core) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M25-ustawienia/KARTA_AUDYTU.md` |
 | M02 | Canvas | 2 (beta) | 🟦 | 57 | Alpha | 2026-06-11 | `modules/M02-canvas/KARTA_AUDYTU.md` |
 | M17 | Outputs | 2 (beta) | 🟦 | 51 | Alpha | 2026-06-11 | `modules/M17-outputs/KARTA_AUDYTU.md` |
-| M18 | Dokumenty | 2 (beta) | ⬜ | — | — | — | — |
+| M18 | Dokumenty | 2 (beta) | 🟦 | 47 | Alpha | 2026-06-11 | `modules/M18-dokumenty/KARTA_AUDYTU.md` |
 | M19 | Prezentacje | 2 (beta) | ⬜ | — | — | — | — |
 | M20 | Tabele Studio | 2 (beta) | ⬜ | — | — | — | — |
 | M16 | Finanse | 2 (beta) | ⬜ | — | — | — | — |
