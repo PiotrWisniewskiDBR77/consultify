@@ -30,7 +30,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M22 | AI OS / Internal Tools | 4 (internal) | ⬜ | — | — | — | — |
 | M23 | Organizacja | 4 (internal) | 🟦 | 44 | Alpha | 2026-06-11 | `modules/M23-organizacja/KARTA_AUDYTU.md` |
 | M24 | Panel Administratora | 4 (internal) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M24-admin/KARTA_AUDYTU.md` |
-| M27 | SuperAdmin | 4 (internal) | ⬜ | — | — | — | — |
+| M27 | SuperAdmin | 4 (internal) | 🟦 | 50 | Alpha | 2026-06-11 | `modules/M27-superadmin/KARTA_AUDYTU.md` |
 | M26 | Portal Partnerski | 4 (internal) | ⬜ | — | — | — | — |
 | A1 | Ecosystem/Affiliate | 4 (decyzja) | ⬜ | — | — | — | STUB — budować albo wyciąć |
 
