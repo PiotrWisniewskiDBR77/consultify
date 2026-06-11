@@ -144,3 +144,17 @@ Retire-list z `DELIVERABLES_LIGHT_TARGET.md` §6: wygaszenie `/presentation-stud
 ## Szacunki łączne
 Kroki 1–3: ~1.5–2 d · 4–6: ~3 d · 7–9: ~3 d · 10–11: ~1.5 d · 13: ~1 d. **Razem ~9–10 dni
 agentów do pełnej funkcjonalności** (bez kroku 12, który wymaga osobnej decyzji).
+
+---
+
+## Statusy (2026-06-11, runda Opus)
+
+Cała ścieżka canvas DOMKNIĘTA poza live-smoke i fazą D3/L4:
+- **KROK 6 C3 ✅** (51750182) · **KROK 7 B3 patch-mode ✅** (835936ac) · **KROK 8 C5 ✅** (72e9a470 —
+  „Omów z Teresą" na mapie) · **KROK 9 B4 auto-emisja ✅** (5115dbe6 — chip „Otwórz jako dokument",
+  heurystyka 8/8, decyzja D-C-4 = chip nie auto-panel) · **KROK 10 D2 ✅** (4fd92adf — „Duplikuj/
+  Użyj jako szablonu" w Outputs).
+- Sibling (Kimi): entity-grounding (C1/C2), sekcja Źródła, telemetria, D1 charter — DONE.
+- **Pozostało:** live-smoke wizualny B3/B4/C5/D2/C3 (jedna sesja preview); KROK 11 E2/E3 polish;
+  KROK 12 D3+L4 (osobna decyzja ownera — retire-lista). Pre-existing: 14 faili UnifiedChatPanel.test
+  (mock drift po B2, chip task_b95c9650) + 2 błędy tsc w siostrzanych views (WIP innej sesji).
