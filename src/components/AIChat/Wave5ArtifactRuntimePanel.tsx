@@ -1,5 +1,6 @@
 import { Check, FileText, GitBranch, RefreshCw, X } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
@@ -38,6 +39,9 @@ const DEFAULT_TYPES = [
 ];
 
 export const Wave5ArtifactRuntimePanel: React.FC = () => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
+
   const [artifactTypes, setArtifactTypes] = React.useState<string[]>(DEFAULT_TYPES);
   const [artifacts, setArtifacts] = React.useState<Wave5Artifact[]>([]);
   const [selected, setSelected] = React.useState<Wave5Artifact | null>(null);
@@ -108,7 +112,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
   const createArtifact = async () => {
     if (!title.trim() || !content.trim()) {
-      setMessage('Title and content are required.');
+      setMessage(isPolish ? 'Tytuł i treść są wymagane.' : 'Title and content are required.');
       return;
     }
     setLoading(true);
@@ -215,7 +219,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
   const generateStructuredArtifact = async () => {
     if (!generationPrompt.trim()) {
-      setMessage('Generation prompt is required.');
+      setMessage(isPolish ? 'Polecenie generowania jest wymagane.' : 'Generation prompt is required.');
       return;
     }
     setLoading(true);
@@ -250,11 +254,12 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
       <div className="p-6 flex flex-col items-center justify-center min-h-[320px] text-center space-y-3">
         <FileText size={32} className="text-slate-400 dark:text-slate-600" />
         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Artifacts unavailable
+          {isPolish ? 'Artefakty niedostępne' : 'Artifacts unavailable'}
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
-          The Artifacts runtime requires <code className="font-mono">ENABLE_V8_GLOBAL=true</code>{' '}
-          on the server. Contact your administrator to enable this feature.
+          {isPolish
+            ? <>Środowisko uruchomieniowe artefaktów wymaga ustawienia <code className="font-mono">ENABLE_V8_GLOBAL=true</code> na serwerze. Skontaktuj się z administratorem, aby włączyć tę funkcję.</>
+            : <>The Artifacts runtime requires <code className="font-mono">ENABLE_V8_GLOBAL=true</code>{' '}on the server. Contact your administrator to enable this feature.</>}
         </p>
         <pre className="mt-2 text-[10px] text-slate-400 dark:text-slate-600 whitespace-pre-wrap max-w-xs">
           {loadError}
@@ -264,7 +269,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
           onClick={() => { setLoadError(null); load(); }}
           className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:underline"
         >
-          Retry
+          {isPolish ? 'Spróbuj ponownie' : 'Retry'}
         </button>
       </div>
     );
@@ -277,11 +282,12 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
           Consultify AI OS
         </p>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          Wave 5 Artifact Runtime
+          {isPolish ? 'Środowisko artefaktów — Wave 5' : 'Wave 5 Artifact Runtime'}
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          First-class artifacts with mutation proposals, diff preview, approval, version lineage,
-          document filling and provenance manifests.
+          {isPolish
+            ? 'Artefakty pierwszej klasy z propozycjami mutacji, podglądem różnic, zatwierdzaniem, historią wersji, wypełnianiem dokumentów i manifestami proweniencji.'
+            : 'First-class artifacts with mutation proposals, diff preview, approval, version lineage, document filling and provenance manifests.'}
         </p>
       </div>
 
@@ -294,9 +300,13 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
       <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
         <section className="rounded-xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
           <div className="border-b border-slate-200 p-4 dark:border-navy-700">
-            <h2 className="font-semibold text-slate-900 dark:text-white">Generate Output</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white">
+              {isPolish ? 'Generuj dokument wyjściowy' : 'Generate Output'}
+            </h2>
             <p className="text-xs text-slate-500">
-              Create report, deck or table as a first-class artifact.
+              {isPolish
+                ? 'Utwórz raport, prezentację lub tabelę jako artefakt pierwszej klasy.'
+                : 'Create report, deck or table as a first-class artifact.'}
             </p>
             <div className="mt-3 space-y-2">
               <select
@@ -304,14 +314,14 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 onChange={(event) => setGenerationKind(event.target.value as typeof generationKind)}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               >
-                <option value="executive_report">Executive report</option>
-                <option value="board_deck">Board deck</option>
-                <option value="kpi_table">KPI table</option>
+                <option value="executive_report">{isPolish ? 'Raport zarządczy' : 'Executive report'}</option>
+                <option value="board_deck">{isPolish ? 'Prezentacja dla zarządu' : 'Board deck'}</option>
+                <option value="kpi_table">{isPolish ? 'Tabela KPI' : 'KPI table'}</option>
               </select>
               <textarea
                 value={generationPrompt}
                 onChange={(event) => setGenerationPrompt(event.target.value)}
-                placeholder="Describe the artifact to generate"
+                placeholder={isPolish ? 'Opisz artefakt do wygenerowania' : 'Describe the artifact to generate'}
                 rows={4}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               />
@@ -321,13 +331,15 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 disabled={loading || !generationPrompt.trim()}
                 className="rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
               >
-                Generate artifact
+                {isPolish ? 'Generuj artefakt' : 'Generate artifact'}
               </button>
             </div>
           </div>
 
           <div className="border-b border-slate-200 p-4 dark:border-navy-700">
-            <h2 className="font-semibold text-slate-900 dark:text-white">Create Artifact</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white">
+              {isPolish ? 'Utwórz artefakt' : 'Create Artifact'}
+            </h2>
             <div className="mt-3 space-y-2">
               <select
                 value={artifactType}
@@ -343,13 +355,13 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Artifact title"
+                placeholder={isPolish ? 'Tytuł artefaktu' : 'Artifact title'}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               />
               <textarea
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                placeholder="Artifact content"
+                placeholder={isPolish ? 'Treść artefaktu' : 'Artifact content'}
                 rows={5}
                 className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
               />
@@ -359,14 +371,20 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 disabled={loading}
                 className="rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-navy-950"
               >
-                Create draft artifact
+                {isPolish ? 'Utwórz szkic artefaktu' : 'Create draft artifact'}
               </button>
             </div>
           </div>
 
           <div className="border-b border-slate-200 p-4 dark:border-navy-700">
-            <h2 className="font-semibold text-slate-900 dark:text-white">Document Filling</h2>
-            <p className="text-xs text-slate-500">Missing fields return questions, not guesses.</p>
+            <h2 className="font-semibold text-slate-900 dark:text-white">
+              {isPolish ? 'Wypełnianie dokumentu' : 'Document Filling'}
+            </h2>
+            <p className="text-xs text-slate-500">
+              {isPolish
+                ? 'Brakujące pola zwracają pytania, nie domysły.'
+                : 'Missing fields return questions, not guesses.'}
+            </p>
             <div className="mt-3 space-y-2">
               <textarea
                 value={template}
@@ -385,22 +403,26 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                 onClick={runTemplateFill}
                 className="rounded-md border px-3 py-2 text-xs"
               >
-                Fill template
+                {isPolish ? 'Wypełnij szablon' : 'Fill template'}
               </button>
             </div>
           </div>
 
           <div className="p-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-slate-900 dark:text-white">Artifacts</h2>
+              <h2 className="font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Artefakty' : 'Artifacts'}
+              </h2>
               <button type="button" onClick={load} className="rounded-md border px-2 py-1 text-xs">
                 <RefreshCw size={12} className="inline mr-1" />
-                Refresh
+                {isPolish ? 'Odśwież' : 'Refresh'}
               </button>
             </div>
             <div className="mt-3 divide-y divide-slate-200 dark:divide-navy-800">
               {artifacts.length === 0 ? (
-                <p className="py-3 text-sm text-slate-500">No Wave 5 artifacts yet.</p>
+                <p className="py-3 text-sm text-slate-500">
+                  {isPolish ? 'Brak artefaktów Wave 5.' : 'No Wave 5 artifacts yet.'}
+                </p>
               ) : (
                 artifacts.map((artifact) => (
                   <button
@@ -425,7 +447,9 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
         <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           {!selected ? (
-            <p className="text-sm text-slate-500">Select or create an artifact.</p>
+            <p className="text-sm text-slate-500">
+              {isPolish ? 'Wybierz lub utwórz artefakt.' : 'Select or create an artifact.'}
+            </p>
           ) : (
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">
@@ -434,7 +458,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                     {selected.title}
                   </h2>
                   <p className="text-xs text-slate-500">
-                    {selected.artifactType} · {selected.status} · version {selected.version}
+                    {selected.artifactType} · {selected.status} · {isPolish ? 'wersja' : 'version'} {selected.version}
                   </p>
                 </div>
                 <button
@@ -442,7 +466,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                   onClick={exportManifest}
                   className="rounded-md border px-3 py-1.5 text-xs"
                 >
-                  Export manifest
+                  {isPolish ? 'Eksportuj manifest' : 'Export manifest'}
                 </button>
               </div>
 
@@ -452,12 +476,12 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Propose Mutation
+                  {isPolish ? 'Zaproponuj mutację' : 'Propose Mutation'}
                 </h3>
                 <textarea
                   value={proposedContent}
                   onChange={(event) => setProposedContent(event.target.value)}
-                  placeholder="New artifact content. This creates a diff and waits for approval."
+                  placeholder={isPolish ? 'Nowa treść artefaktu. Tworzy porównanie zmian i oczekuje na zatwierdzenie.' : 'New artifact content. This creates a diff and waits for approval.'}
                   rows={5}
                   className="mt-2 w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
                 />
@@ -467,18 +491,20 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                   disabled={loading || !proposedContent.trim()}
                   className="mt-2 rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
                 >
-                  Create mutation proposal
+                  {isPolish ? 'Utwórz propozycję mutacji' : 'Create mutation proposal'}
                 </button>
               </div>
 
               <div>
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                   <GitBranch size={14} />
-                  Mutation Proposals
+                  {isPolish ? 'Propozycje mutacji' : 'Mutation Proposals'}
                 </h3>
                 <div className="mt-2 space-y-3">
                   {(selected.mutations || []).length === 0 ? (
-                    <p className="text-sm text-slate-500">No mutations yet.</p>
+                    <p className="text-sm text-slate-500">
+                      {isPolish ? 'Brak propozycji mutacji.' : 'No mutations yet.'}
+                    </p>
                   ) : (
                     (selected.mutations || []).map((mutation) => (
                       <div
@@ -516,7 +542,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
                               onClick={() => commitMutation(mutation.mutationId)}
                               className="rounded-md bg-sky-600 px-2 py-1 text-white"
                             >
-                              Commit
+                              {isPolish ? 'Zatwierdź' : 'Commit'}
                             </button>
                           )}
                         </div>
@@ -545,7 +571,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Version Lineage
+                  {isPolish ? 'Historia wersji' : 'Version Lineage'}
                 </h3>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {(selected.versions || []).map((version) => (
@@ -558,7 +584,7 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Provenance Footer
+                  {isPolish ? 'Stopka proweniencji' : 'Provenance Footer'}
                 </h3>
                 <pre className="mt-2 max-h-44 overflow-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-700 whitespace-pre-wrap dark:bg-navy-950 dark:text-slate-200">
                   {JSON.stringify(selected.provenance || {}, null, 2)}

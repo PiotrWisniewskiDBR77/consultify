@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, Plug, RefreshCw, ShieldAlert } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
@@ -24,6 +25,8 @@ type Wave7Connector = {
 };
 
 export const Wave7ConnectorAdminPanel: React.FC = () => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const [catalog, setCatalog] = React.useState<any[]>([]);
   const [connectors, setConnectors] = React.useState<Wave7Connector[]>([]);
   const [health, setHealth] = React.useState<any | null>(null);
@@ -224,10 +227,13 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
     <div className="mx-auto max-w-7xl p-6 text-slate-900 dark:text-white">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Wave 7 Connector Admin</h1>
+          <h1 className="text-2xl font-semibold">
+            {isPolish ? 'Wave 7 — Panel administracyjny konektorów' : 'Wave 7 Connector Admin'}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Permission-aware connector registry, OAuth/session lifecycle, source trace and safe tool
-            execution.
+            {isPolish
+              ? 'Rejestr konektorów z kontrolą uprawnień, cykl życia OAuth/sesji, ślad źródłowy i bezpieczne wykonywanie narzędzi.'
+              : 'Permission-aware connector registry, OAuth/session lifecycle, source trace and safe tool execution.'}
           </p>
         </div>
         <button
@@ -236,7 +242,7 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm disabled:opacity-50 dark:border-navy-700"
         >
-          <RefreshCw size={16} /> Refresh
+          <RefreshCw size={16} /> {isPolish ? 'Odśwież' : 'Refresh'}
         </button>
       </div>
 
@@ -249,7 +255,7 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
         <section className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
           <h2 className="flex items-center gap-2 font-semibold">
-            <Plug size={18} /> Register Connector
+            <Plug size={18} /> {isPolish ? 'Rejestruj konektor' : 'Register Connector'}
           </h2>
           <div className="mt-4 space-y-3">
             <select
@@ -271,15 +277,15 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               onChange={(event) => setStatus(event.target.value as typeof status)}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
-              <option value="connected">Connected</option>
-              <option value="stale">Stale</option>
-              <option value="disconnected">Disconnected</option>
-              <option value="failed">Failed</option>
+              <option value="connected">{isPolish ? 'Połączony' : 'Connected'}</option>
+              <option value="stale">{isPolish ? 'Przestarzały' : 'Stale'}</option>
+              <option value="disconnected">{isPolish ? 'Odłączony' : 'Disconnected'}</option>
+              <option value="failed">{isPolish ? 'Błąd' : 'Failed'}</option>
             </select>
             <input
               value={projectIds}
               onChange={(event) => setProjectIds(event.target.value)}
-              placeholder="Optional project ACL ids, comma separated"
+              placeholder={isPolish ? 'Opcjonalne ID projektów ACL, oddzielone przecinkami' : 'Optional project ACL ids, comma separated'}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <button
@@ -288,12 +294,12 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               disabled={loading}
               className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sky-600"
             >
-              Register connector
+              {isPolish ? 'Zarejestruj konektor' : 'Register connector'}
             </button>
           </div>
 
           <h2 className="mt-6 flex items-center gap-2 font-semibold">
-            <ShieldAlert size={18} /> Tool Execution Test
+            <ShieldAlert size={18} /> {isPolish ? 'Test wykonania narzędzia' : 'Tool Execution Test'}
           </h2>
           <div className="mt-4 space-y-3">
             <select
@@ -301,7 +307,7 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               onChange={(event) => setSelectedConnectorId(event.target.value)}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
-              <option value="">Select connector</option>
+              <option value="">{isPolish ? 'Wybierz konektor' : 'Select connector'}</option>
               {connectors.map((connector) => (
                 <option key={connector.connectorId} value={connector.connectorId}>
                   {connector.displayName} ({connector.status})
@@ -313,21 +319,21 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               onChange={(event) => setToolKind(event.target.value as typeof toolKind)}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
-              <option value="read">Read</option>
-              <option value="search">Search</option>
-              <option value="write">Write (requires AIRun)</option>
-              <option value="destructive">Destructive (requires AIRun)</option>
+              <option value="read">{isPolish ? 'Odczyt' : 'Read'}</option>
+              <option value="search">{isPolish ? 'Wyszukiwanie' : 'Search'}</option>
+              <option value="write">{isPolish ? 'Zapis (wymaga AIRun)' : 'Write (requires AIRun)'}</option>
+              <option value="destructive">{isPolish ? 'Destrukcyjne (wymaga AIRun)' : 'Destructive (requires AIRun)'}</option>
             </select>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Connector query"
+              placeholder={isPolish ? 'Zapytanie konektora' : 'Connector query'}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <input
               value={aiRunId}
               onChange={(event) => setAiRunId(event.target.value)}
-              placeholder="AIRun id for write/destructive tools"
+              placeholder={isPolish ? 'ID AIRun dla narzędzi zapisu/destrukcyjnych' : 'AIRun id for write/destructive tools'}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <button
@@ -336,18 +342,18 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               disabled={loading || !selectedConnectorId}
               className="w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              Execute governed tool
+              {isPolish ? 'Wykonaj kontrolowane narzędzie' : 'Execute governed tool'}
             </button>
           </div>
 
           <h2 className="mt-6 flex items-center gap-2 font-semibold">
-            <Plug size={18} /> Real Source Binding
+            <Plug size={18} /> {isPolish ? 'Powiązanie z realnym źródłem' : 'Real Source Binding'}
           </h2>
           <div className="mt-4 space-y-3">
             <input
               value={externalConnectorId}
               onChange={(event) => setExternalConnectorId(event.target.value)}
-              placeholder="Existing tp_connectors id"
+              placeholder={isPolish ? 'Istniejące ID tp_connectors' : 'Existing tp_connectors id'}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <div className="grid grid-cols-3 gap-2">
@@ -357,7 +363,7 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                 disabled={loading || !selectedConnectorId}
                 className="rounded-md border px-2 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
               >
-                Link
+                {isPolish ? 'Powiąż' : 'Link'}
               </button>
               <button
                 type="button"
@@ -365,7 +371,7 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                 disabled={loading || !selectedConnectorId}
                 className="rounded-md border px-2 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
               >
-                Reindex
+                {isPolish ? 'Reindeksuj' : 'Reindex'}
               </button>
               <button
                 type="button"
@@ -373,13 +379,13 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                 disabled={loading || !selectedConnectorId}
                 className="rounded-md border border-rose-200 px-2 py-2 text-xs font-medium text-rose-700 disabled:opacity-50 dark:border-rose-900 dark:text-rose-200"
               >
-                Disconnect
+                {isPolish ? 'Odłącz' : 'Disconnect'}
               </button>
             </div>
           </div>
 
           <h2 className="mt-6 flex items-center gap-2 font-semibold">
-            <ShieldAlert size={18} /> OAuth Session Lifecycle
+            <ShieldAlert size={18} /> {isPolish ? 'Cykl życia sesji OAuth' : 'OAuth Session Lifecycle'}
           </h2>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button
@@ -388,7 +394,7 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               disabled={loading || !selectedConnectorId}
               className="rounded-md border px-2 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
             >
-              Mark reconnected
+              {isPolish ? 'Oznacz jako ponownie połączony' : 'Mark reconnected'}
             </button>
             <button
               type="button"
@@ -396,20 +402,20 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               disabled={loading || !selectedConnectorId}
               className="rounded-md border border-rose-200 px-2 py-2 text-xs font-medium text-rose-700 disabled:opacity-50 dark:border-rose-900 dark:text-rose-200"
             >
-              Mark access revoked
+              {isPolish ? 'Oznacz dostęp jako cofnięty' : 'Mark access revoked'}
             </button>
           </div>
         </section>
 
         <section className="space-y-4">
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">Connector Health</h2>
+            <h2 className="font-semibold">{isPolish ? 'Stan konektorów' : 'Connector Health'}</h2>
             <div className="mt-3 grid gap-2 text-xs sm:grid-cols-4">
               {[
-                ['Total', health?.total ?? connectors.length],
-                ['Connected', health?.connected ?? 0],
-                ['Stale', health?.stale ?? 0],
-                ['Failed', health?.failed ?? 0],
+                [isPolish ? 'Łącznie' : 'Total', health?.total ?? connectors.length],
+                [isPolish ? 'Połączone' : 'Connected', health?.connected ?? 0],
+                [isPolish ? 'Przestarzałe' : 'Stale', health?.stale ?? 0],
+                [isPolish ? 'Błędy' : 'Failed', health?.failed ?? 0],
               ].map(([label, value]) => (
                 <div
                   key={label}
@@ -440,23 +446,24 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                     )}
                   </div>
                   <div className="mt-2 text-xs text-slate-500">
-                    Status: {connector.status}; freshness age:{' '}
-                    {connector.freshnessAgeMinutes ?? 'unknown'} min; TTL:{' '}
-                    {connector.freshnessTtlMinutes ?? 'unknown'} min
+                    {isPolish ? 'Status' : 'Status'}: {connector.status}; {isPolish ? 'wiek aktualności' : 'freshness age'}:{' '}
+                    {connector.freshnessAgeMinutes ?? (isPolish ? 'nieznany' : 'unknown')} min; TTL:{' '}
+                    {connector.freshnessTtlMinutes ?? (isPolish ? 'nieznany' : 'unknown')} min
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    OAuth access: {connector.accessState || connector.authState || 'unknown'}; token
-                    expiry: {connector.tokenExpiresAt || 'not recorded'}
+                    {isPolish ? 'Dostęp OAuth' : 'OAuth access'}: {connector.accessState || connector.authState || (isPolish ? 'nieznany' : 'unknown')}; {isPolish ? 'wygaśnięcie tokenu' : 'token expiry'}: {connector.tokenExpiresAt || (isPolish ? 'nie zarejestrowano' : 'not recorded')}
                   </div>
                   {(connector.reconnectRequired ||
                     connector.tokenExpired ||
                     connector.accessRevokedAt) && (
                     <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-                      Reconnect required
+                      {isPolish ? 'Wymagane ponowne połączenie' : 'Reconnect required'}
                       {connector.accessRevokedAt
-                        ? `; access revoked${connector.revokedReason ? ` (${connector.revokedReason})` : ''}`
+                        ? isPolish
+                          ? `; dostęp cofnięty${connector.revokedReason ? ` (${connector.revokedReason})` : ''}`
+                          : `; access revoked${connector.revokedReason ? ` (${connector.revokedReason})` : ''}`
                         : connector.tokenExpired
-                          ? '; token expired'
+                          ? isPolish ? '; token wygasł' : '; token expired'
                           : ''}
                     </div>
                   )}
@@ -467,23 +474,25 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                       : 'tenant'}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    Source binding: {connector.tenantPolicy?.externalConnectorId || 'registry only'}
+                    {isPolish ? 'Powiązanie źródła' : 'Source binding'}: {connector.tenantPolicy?.externalConnectorId || (isPolish ? 'tylko rejestr' : 'registry only')}
                   </div>
                   {connector.failureState && (
                     <div className="mt-2 rounded bg-rose-50 p-2 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
-                      Failure: {connector.failureState}
+                      {isPolish ? 'Błąd' : 'Failure'}: {connector.failureState}
                     </div>
                   )}
                 </div>
               ))}
               {connectors.length === 0 && (
-                <div className="text-sm text-slate-500">No Wave 7 connectors yet.</div>
+                <div className="text-sm text-slate-500">
+                  {isPolish ? 'Brak konektorów Wave 7.' : 'No Wave 7 connectors yet.'}
+                </div>
               )}
             </div>
           </div>
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">ConnectorRun Audit</h2>
+            <h2 className="font-semibold">{isPolish ? 'Audyt uruchomień konektora' : 'ConnectorRun Audit'}</h2>
             <div className="mt-3 space-y-2">
               {runs.map((run) => (
                 <div key={run.runId} className="rounded-lg border p-3 text-xs dark:border-navy-700">
@@ -491,17 +500,17 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                     {run.toolName} / {run.toolKind} / {run.status}
                   </div>
                   <div className="mt-1 text-slate-500">
-                    ACL: {run.aclDecision?.reason || 'unknown'}; freshness:{' '}
-                    {run.freshnessWarning || 'fresh'}
+                    ACL: {run.aclDecision?.reason || (isPolish ? 'nieznany' : 'unknown')}; {isPolish ? 'aktualność' : 'freshness'}:{' '}
+                    {run.freshnessWarning || (isPolish ? 'aktualne' : 'fresh')}
                   </div>
                   <div className="mt-1 text-slate-500">
-                    OAuth: {run.sourceTrace?.accessState || 'unknown'}; token expiry:{' '}
-                    {run.sourceTrace?.tokenExpiresAt || 'not tracked'}
+                    OAuth: {run.sourceTrace?.accessState || (isPolish ? 'nieznany' : 'unknown')}; {isPolish ? 'wygaśnięcie tokenu' : 'token expiry'}:{' '}
+                    {run.sourceTrace?.tokenExpiresAt || (isPolish ? 'nie śledzono' : 'not tracked')}
                   </div>
-                  {run.error && <div className="mt-1 text-rose-600">Error: {run.error}</div>}
+                  {run.error && <div className="mt-1 text-rose-600">{isPolish ? 'Błąd' : 'Error'}: {run.error}</div>}
                 </div>
               ))}
-              {runs.length === 0 && <div className="text-sm text-slate-500">No runs yet.</div>}
+              {runs.length === 0 && <div className="text-sm text-slate-500">{isPolish ? 'Brak uruchomień.' : 'No runs yet.'}</div>}
             </div>
           </div>
         </section>

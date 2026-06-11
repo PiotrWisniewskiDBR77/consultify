@@ -9,26 +9,31 @@ import {
   ListChecks,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 
 type SourceRef = { sourceType: string; sourceId: string; title?: string | null };
 
-const reasonLabels: Record<string, string> = {
-  regression_pack_failed: 'Regression pack did not pass.',
-  ciso_pack_failed: 'CISO/security pack did not pass.',
-  business_persona_pack_failed: 'Business persona pack did not pass.',
-  provider_health_failed: 'AI provider health is not acceptable.',
-  compliance_audit_failed: 'Compliance audit evidence did not pass.',
-  missing_regression_evidence: 'Missing regression evidence ID.',
-  missing_ciso_evidence: 'Missing CISO evidence ID.',
-  missing_persona_evidence: 'Missing business persona evidence ID.',
-  missing_compliance_evidence: 'Missing compliance audit evidence ID.',
-  ai_ops_eval_gate_failed: 'AI Ops eval pack did not pass.',
-  open_p0_findings: 'Open P0 findings must be closed before release.',
+const reasonLabels: Record<string, { en: string; pl: string }> = {
+  regression_pack_failed: { en: 'Regression pack did not pass.', pl: 'Pakiet regresji nie przeszedł.' },
+  ciso_pack_failed: { en: 'CISO/security pack did not pass.', pl: 'Pakiet CISO/bezpieczeństwa nie przeszedł.' },
+  business_persona_pack_failed: { en: 'Business persona pack did not pass.', pl: 'Pakiet person biznesowych nie przeszedł.' },
+  provider_health_failed: { en: 'AI provider health is not acceptable.', pl: 'Stan zdrowia dostawcy AI jest nieakceptowalny.' },
+  compliance_audit_failed: { en: 'Compliance audit evidence did not pass.', pl: 'Dowody audytu zgodności nie przeszły weryfikacji.' },
+  missing_regression_evidence: { en: 'Missing regression evidence ID.', pl: 'Brak identyfikatora dowodu regresji.' },
+  missing_ciso_evidence: { en: 'Missing CISO evidence ID.', pl: 'Brak identyfikatora dowodu CISO.' },
+  missing_persona_evidence: { en: 'Missing business persona evidence ID.', pl: 'Brak identyfikatora dowodu persony biznesowej.' },
+  missing_compliance_evidence: { en: 'Missing compliance audit evidence ID.', pl: 'Brak identyfikatora dowodu audytu zgodności.' },
+  ai_ops_eval_gate_failed: { en: 'AI Ops eval pack did not pass.', pl: 'Pakiet ewaluacji AI Ops nie przeszedł.' },
+  open_p0_findings: { en: 'Open P0 findings must be closed before release.', pl: 'Otwarte ustalenia P0 muszą zostać zamknięte przed wdrożeniem.' },
 };
 
-const formatReason = (reason: string) => reasonLabels[reason] || reason.replace(/_/g, ' ');
+const formatReason = (reason: string, isPolish: boolean) => {
+  const entry = reasonLabels[reason];
+  if (entry) return isPolish ? entry.pl : entry.en;
+  return reason.replace(/_/g, ' ');
+};
 
 const parseSourceRefs = (raw: string): SourceRef[] =>
   raw
@@ -46,6 +51,9 @@ const parseSourceRefs = (raw: string): SourceRef[] =>
     .filter((source) => source.sourceId.length > 0);
 
 export const Wave9OutcomeAIOpsPanel: React.FC = () => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
+
   const [outcomes, setOutcomes] = React.useState<any[]>([]);
   const [dashboard, setDashboard] = React.useState<any | null>(null);
   const [acceptanceRuns, setAcceptanceRuns] = React.useState<any[]>([]);
@@ -149,7 +157,9 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
         sourceRefs: parsedSourceRefs,
       });
       if (res?.outcome?.outcomeId) setSelectedOutcomeId(res.outcome.outcomeId);
-      setMessage('Outcome KPI/ROI contract created with verified evidence and source refs.');
+      setMessage(isPolish
+        ? 'Kontrakt KPI/ROI wyniku utworzony ze zweryfikowanymi dowodami i odwołaniami do źródeł.'
+        : 'Outcome KPI/ROI contract created with verified evidence and source refs.');
       await load();
     } catch (err: any) {
       setMessage(err?.message || 'Outcome creation failed');
@@ -192,7 +202,9 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
         title: 'Primary provider unavailable',
         rollbackFlag: 'ai.provider.primary.disabled',
       });
-      setMessage('Provider failure and rollback incident recorded.');
+      setMessage(isPolish
+        ? 'Awaria dostawcy i incydent wycofania zostały zarejestrowane.'
+        : 'Provider failure and rollback incident recorded.');
       await load();
     } catch (err: any) {
       setMessage(err?.message || 'Provider failure simulation failed');
@@ -224,7 +236,9 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
         verificationMethod: 'golden_prompt_eval',
         payload: { promptKey: 'wave9-golden-business-outcome', score: 0.92 },
       });
-      setMessage('Golden prompt eval recorded as PASS.');
+      setMessage(isPolish
+        ? 'Ewaluacja wzorcowego promptu zarejestrowana jako ZALICZONA.'
+        : 'Golden prompt eval recorded as PASS.');
       await load();
     } catch (err: any) {
       setMessage(err?.message || 'Eval recording failed');
@@ -298,10 +312,13 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
     <div className="mx-auto max-w-7xl p-6 text-slate-900 dark:text-white">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Wave 9 Outcome & AI Ops</h1>
+          <h1 className="text-2xl font-semibold">
+            {isPolish ? 'Wave 9 — Wyniki i AI Ops' : 'Wave 9 Outcome & AI Ops'}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            KPI/ROI contracts, CFO scenarios, executive reports, provider health, incidents and
-            final acceptance.
+            {isPolish
+              ? 'Kontrakty KPI/ROI, scenariusze CFO, raporty zarządcze, stan dostawców AI, incydenty i akceptacja końcowa.'
+              : 'KPI/ROI contracts, CFO scenarios, executive reports, provider health, incidents and final acceptance.'}
           </p>
         </div>
         <button
@@ -310,7 +327,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
           disabled={loading}
           className="rounded-md border px-3 py-2 text-sm disabled:opacity-50 dark:border-navy-700"
         >
-          Refresh
+          {isPolish ? 'Odśwież' : 'Refresh'}
         </button>
       </div>
 
@@ -323,15 +340,16 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[390px_minmax(0,1fr)]">
         <section className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
           <h2 className="flex items-center gap-2 font-semibold">
-            <BarChart3 size={18} /> KPI / ROI Contract
+            <BarChart3 size={18} /> {isPolish ? 'Kontrakt KPI / ROI' : 'KPI / ROI Contract'}
           </h2>
           <p className="mt-1 text-xs text-slate-500">
-            Create an outcome only when the KPI is grounded in verified source refs and mapped task
-            IDs.
+            {isPolish
+              ? 'Twórz wynik tylko wtedy, gdy KPI jest zakorzeniony w zweryfikowanych odwołaniach do źródeł i przypisanych identyfikatorach zadań.'
+              : 'Create an outcome only when the KPI is grounded in verified source refs and mapped task IDs.'}
           </p>
           <div className="mt-4 space-y-3">
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-              Initiative ID for the verified outcome
+              {isPolish ? 'Identyfikator inicjatywy dla zweryfikowanego wyniku' : 'Initiative ID for the verified outcome'}
               <input
                 value={initiativeId}
                 onChange={(e) => setInitiativeId(e.target.value)}
@@ -339,7 +357,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               />
             </label>
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-              Task IDs linked to this KPI, comma separated
+              {isPolish ? 'Identyfikatory zadań powiązanych z tym KPI, oddzielone przecinkami' : 'Task IDs linked to this KPI, comma separated'}
               <input
                 value={taskIds}
                 onChange={(e) => setTaskIds(e.target.value)}
@@ -347,7 +365,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               />
             </label>
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-              KPI name shown in reports
+              {isPolish ? 'Nazwa KPI widoczna w raportach' : 'KPI name shown in reports'}
               <input
                 value={kpiName}
                 onChange={(e) => setKpiName(e.target.value)}
@@ -396,7 +414,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-              Verified source refs, one per line as type:id:title
+              {isPolish ? 'Zweryfikowane odwołania do źródeł, jedno w wierszu jako typ:id:tytuł' : 'Verified source refs, one per line as type:id:title'}
               <textarea
                 value={sourceRefs}
                 onChange={(e) => setSourceRefs(e.target.value)}
@@ -410,14 +428,14 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               disabled={loading}
               className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-sky-600"
             >
-              Create KPI/ROI outcome
+              {isPolish ? 'Utwórz wynik KPI/ROI' : 'Create KPI/ROI outcome'}
             </button>
           </div>
         </section>
 
         <section className="space-y-4">
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-            <h2 className="font-semibold">Outcomes</h2>
+            <h2 className="font-semibold">{isPolish ? 'Wyniki' : 'Outcomes'}</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {outcomes.map((outcome) => (
                 <button
@@ -428,26 +446,28 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                 >
                   <div className="font-medium">{outcome.kpiName}</div>
                   <div className="mt-1 text-xs text-slate-500">
-                    baseline {outcome.baseline} → target {outcome.target}; confidence{' '}
+                    {isPolish ? 'bazowy' : 'baseline'} {outcome.baseline} → {isPolish ? 'cel' : 'target'} {outcome.target}; {isPolish ? 'pewność' : 'confidence'}{' '}
                     {outcome.confidence}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
                     ROI:{' '}
                     {outcome.roi?.available
-                      ? `${outcome.roi.riskAdjustedRoiPercent}% risk-adjusted`
-                      : 'missing'}
+                      ? `${outcome.roi.riskAdjustedRoiPercent}% ${isPolish ? 'skorygowany o ryzyko' : 'risk-adjusted'}`
+                      : (isPolish ? 'brak danych' : 'missing')}
                   </div>
                 </button>
               ))}
               {outcomes.length === 0 && (
-                <div className="text-sm text-slate-500">No outcomes yet.</div>
+                <div className="text-sm text-slate-500">
+                  {isPolish ? 'Brak wyników.' : 'No outcomes yet.'}
+                </div>
               )}
             </div>
           </div>
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="flex items-center gap-2 font-semibold">
-              <FileText size={18} /> Reports
+              <FileText size={18} /> {isPolish ? 'Raporty' : 'Reports'}
             </h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {(
@@ -460,7 +480,9 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                   disabled={loading || !selectedOutcomeId}
                   className="rounded-md border px-3 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
                 >
-                  {type.replace(/_/g, ' ')}
+                  {isPolish
+                    ? { client_ready: 'Dla klienta', investor_ready: 'Dla inwestora', steering_committee: 'Dla komitetu sterującego', ciso_security: 'CISO / Bezpieczeństwo' }[type] ?? type.replace(/_/g, ' ')
+                    : type.replace(/_/g, ' ')}
                 </button>
               ))}
             </div>
@@ -468,7 +490,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               <div className="mt-3 rounded-lg border p-3 text-xs dark:border-navy-700">
                 <div className="font-medium">{report.title}</div>
                 <div className="mt-1 text-slate-500">
-                  assumptions: {report.businessEffectSummary?.assumptions?.length || 0}; confidence:{' '}
+                  {isPolish ? 'założenia' : 'assumptions'}: {report.businessEffectSummary?.assumptions?.length || 0}; {isPolish ? 'pewność' : 'confidence'}:{' '}
                   {report.businessEffectSummary?.confidence}
                 </div>
               </div>
@@ -477,23 +499,23 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="flex items-center gap-2 font-semibold">
-              <Activity size={18} /> AI Ops Dashboard
+              <Activity size={18} /> {isPolish ? 'Panel AI Ops' : 'AI Ops Dashboard'}
             </h2>
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
                 <Database size={14} className="mb-1" />
-                Providers: {dashboard?.providerHealth?.length || 0}
+                {isPolish ? 'Dostawcy' : 'Providers'}: {dashboard?.providerHealth?.length || 0}
               </div>
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
-                Cost: ${dashboard?.costDashboard?.totalCostUsd || 0}
+                {isPolish ? 'Koszt' : 'Cost'}: ${dashboard?.costDashboard?.totalCostUsd || 0}
               </div>
               <div className="rounded-lg border p-3 text-sm dark:border-navy-700">
                 <ListChecks size={14} className="mb-1" />
-                Eval gate: {dashboard?.evalDashboard?.latestGate || 'BLOCKED'}
+                {isPolish ? 'Bramka ewaluacji' : 'Eval gate'}: {dashboard?.evalDashboard?.latestGate || 'BLOCKED'}
               </div>
             </div>
             <div className="mt-3 rounded-lg border p-3 text-xs text-slate-600 dark:border-navy-700 dark:text-slate-300">
-              Acceptance runs registered: {acceptanceRuns.length}
+              {isPolish ? 'Zarejestrowane przebiegi akceptacyjne' : 'Acceptance runs registered'}: {acceptanceRuns.length}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -502,7 +524,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                 disabled={loading}
                 className="inline-flex items-center gap-2 rounded-md border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-700 disabled:opacity-50 dark:border-emerald-900 dark:text-emerald-200"
               >
-                <CheckCircle2 size={14} /> Record golden eval PASS
+                <CheckCircle2 size={14} /> {isPolish ? 'Zapisz wynik ewaluacji: ZALICZONA' : 'Record golden eval PASS'}
               </button>
               <button
                 type="button"
@@ -510,14 +532,14 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                 disabled={loading}
                 className="inline-flex items-center gap-2 rounded-md border border-rose-200 px-3 py-2 text-xs font-medium text-rose-700 disabled:opacity-50 dark:border-rose-900 dark:text-rose-200"
               >
-                <AlertTriangle size={14} /> Simulate provider unavailable
+                <AlertTriangle size={14} /> {isPolish ? 'Symuluj niedostępność dostawcy' : 'Simulate provider unavailable'}
               </button>
             </div>
           </div>
 
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="flex items-center gap-2 font-semibold">
-              <Flag size={18} /> Final Acceptance
+              <Flag size={18} /> {isPolish ? 'Akceptacja końcowa' : 'Final Acceptance'}
             </h2>
             <button
               type="button"
@@ -525,7 +547,7 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
               disabled={loading}
               className="mt-3 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              Run final acceptance
+              {isPolish ? 'Uruchom akceptację końcową' : 'Run final acceptance'}
             </button>
             {acceptance && (
               <div className="mt-3 rounded-lg border p-3 text-sm dark:border-navy-700">
@@ -535,22 +557,22 @@ export const Wave9OutcomeAIOpsPanel: React.FC = () => {
                   ) : (
                     <AlertTriangle size={16} className="text-amber-500" />
                   )}
-                  Decision: {acceptance.decision}
+                  {isPolish ? 'Decyzja' : 'Decision'}: {acceptance.decision}
                 </div>
                 {acceptance.report?.blockers?.length > 0 && (
                   <div className="mt-2 text-xs text-amber-700 dark:text-amber-200">
                     {acceptance.report.blockers.map((reason: string) => (
-                      <div key={reason}>- {formatReason(reason)}</div>
+                      <div key={reason}>- {formatReason(reason, isPolish)}</div>
                     ))}
                   </div>
                 )}
                 {acceptance.report?.acceptanceRunEvidence && (
                   <div className="mt-2 text-xs text-slate-500">
-                    Linked runs:{' '}
+                    {isPolish ? 'Powiązane przebiegi' : 'Linked runs'}:{' '}
                     {Object.values(acceptance.report.acceptanceRunEvidence)
                       .filter(Boolean)
                       .map((run: any) => `${run.runType}:${run.runRef || run.runId}`)
-                      .join(', ') || 'none'}
+                      .join(', ') || (isPolish ? 'brak' : 'none')}
                   </div>
                 )}
               </div>

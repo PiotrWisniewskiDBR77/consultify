@@ -1,5 +1,6 @@
 import { AlertTriangle, CalendarClock, CheckCircle2, Play, ShieldCheck } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import TeresaMark from '../shared/TeresaMark';
@@ -21,6 +22,8 @@ type Wave8Agent = {
 };
 
 export const Wave8AgentCatalogPanel: React.FC = () => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const [agents, setAgents] = React.useState<Wave8Agent[]>([]);
   const [runs, setRuns] = React.useState<any[]>([]);
   const [schedules, setSchedules] = React.useState<any[]>([]);
@@ -226,10 +229,13 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
     <div className="mx-auto max-w-7xl p-6 text-slate-900 dark:text-white">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Wave 8 Agent Catalog</h1>
+          <h1 className="text-2xl font-semibold">
+            {isPolish ? 'Wave 8 — Katalog agentów' : 'Wave 8 Agent Catalog'}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Specialized agents with role prompts, tool scopes, output schemas and scheduled work
-            audit.
+            {isPolish
+              ? 'Wyspecjalizowani agenci z promptami ról, zakresami narzędzi, schematami wyjść i audytem zaplanowanych zadań.'
+              : 'Specialized agents with role prompts, tool scopes, output schemas and scheduled work audit.'}
           </p>
         </div>
         <button
@@ -238,7 +244,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
           disabled={loading}
           className="rounded-md border px-3 py-2 text-sm disabled:opacity-50 dark:border-navy-700"
         >
-          Refresh
+          {isPolish ? 'Odśwież' : 'Refresh'}
         </button>
       </div>
 
@@ -251,7 +257,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
         <section className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
           <h2 className="flex items-center gap-2 font-semibold">
-            <TeresaMark size={18} /> Launch Agent
+            <TeresaMark size={18} /> {isPolish ? 'Uruchom agenta' : 'Launch Agent'}
           </h2>
           <div className="mt-4 space-y-3">
             <select
@@ -274,7 +280,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
             <input
               value={requestedTools}
               onChange={(event) => setRequestedTools(event.target.value)}
-              placeholder="Requested tools, comma separated"
+              placeholder={isPolish ? 'Żądane narzędzia, oddzielone przecinkami' : 'Requested tools, comma separated'}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <select
@@ -282,14 +288,14 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               onChange={(event) => setCadence(event.target.value as typeof cadence)}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
-              <option value="none">Run now</option>
-              <option value="daily">Schedule daily</option>
-              <option value="weekly">Schedule weekly</option>
+              <option value="none">{isPolish ? 'Uruchom teraz' : 'Run now'}</option>
+              <option value="daily">{isPolish ? 'Zaplanuj codziennie' : 'Schedule daily'}</option>
+              <option value="weekly">{isPolish ? 'Zaplanuj co tydzień' : 'Schedule weekly'}</option>
             </select>
             <input
               value={approvalAiRunId}
               onChange={(event) => setApprovalAiRunId(event.target.value)}
-              placeholder="Approved AIRun id for execution agents"
+              placeholder={isPolish ? 'Zatwierdzone ID AIRun dla agentów wykonawczych' : 'Approved AIRun id for execution agents'}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
             <label className="flex items-center gap-2 text-sm">
