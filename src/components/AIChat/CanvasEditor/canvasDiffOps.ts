@@ -130,6 +130,12 @@ export function applyAiDiff(editor: Editor, range: DocRange, replacement: string
     editor
       .chain()
       .setTextSelection({ from: to, to: to + insertedSpan })
+      // B3 — a FLAT plain-text replacement inserted at the end boundary of the
+      // aiRemoved-marked original INHERITS the (inclusive) aiRemoved mark, so
+      // accept would delete the replacement together with the original.
+      // (Multi-node HTML replacements carry their own marks and dodge this.)
+      // Strip aiRemoved from the inserted span before marking it added.
+      .unsetMark(AI_REMOVED_MARK)
       .setMark(AI_ADDED_MARK)
       .run();
   }

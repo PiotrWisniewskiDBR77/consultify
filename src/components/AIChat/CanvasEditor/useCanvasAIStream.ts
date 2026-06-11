@@ -27,13 +27,17 @@ export interface CanvasStreamContext {
   history?: Array<{ role: string; parts: Array<{ text: string }> }>;
   language?: string;
   canvasContextPacket?: Record<string, unknown> | null;
+  /** B3 — provenance scope (draft id) so patch ops land in the audit log. */
+  provenanceScope?: string | null;
 }
+
+export type CanvasStreamRequestMode = 'append' | 'replace' | 'generate' | 'patch';
 
 export interface UseCanvasAIStreamReturn {
   isStreaming: boolean;
   streamToCanvas: (
     prompt: string,
-    mode: 'append' | 'replace' | 'generate',
+    mode: CanvasStreamRequestMode,
     context?: CanvasStreamContext
   ) => void;
   stopStream: () => void;
@@ -75,11 +79,7 @@ export function useCanvasAIStream({
   }, []);
 
   const streamToCanvas = useCallback(
-    async (
-      prompt: string,
-      mode: 'append' | 'replace' | 'generate',
-      streamContext?: CanvasStreamContext
-    ) => {
+    async (prompt: string, mode: CanvasStreamRequestMode, streamContext?: CanvasStreamContext) => {
       if (!editor || isStreaming) return;
 
       // W2-T1 — refuse to start a stream while a previous AI suggestion is
@@ -98,6 +98,89 @@ export function useCanvasAIStream({
       abortControllerRef.current = abortController;
       setIsStreaming(true);
 
+      // ── B3 patch-mode: surgical anchor-based edit via /chat/quick ──────
+      // No SSE, no editor lock: the document is sent as a plain-text
+      // projection, the model returns anchored operations, and anchors are
+      // re-validated against the LIVE doc at apply time — so a user edit
+      // during the request degrades safely to the fallback stream.
+      const streamMode: 'append' | 'replace' | 'generate' = mode === 'patch' ? 'replace' : mode;
+      if (mode === 'patch') {
+        try {
+          const {
+            buildDocTextIndex,
+            parsePatchOperations,
+            applyPatchOperations,
+            buildPatchPrompt,
+          } = await import('./canvasPatchOps');
+          const docText = buildDocTextIndex(editor).text;
+          const token = localStorage.getItem('token');
+          const response = await fetch('/api/ai/chat/quick', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              // ChatQuickRequestSchema caps message at 8000 chars server-side,
+              // so the document slice is capped at 6000 (not the 12KB the
+              // streaming path uses) to leave room for contract + instruction.
+              message: buildPatchPrompt(prompt.slice(0, 1000), docText.slice(0, 6000)),
+              context: { source: 'canvas_patch' },
+              language: streamContext?.language,
+            }),
+            signal: abortController.signal,
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const rawReply = data?.response ?? data?.content ?? data?.text ?? '';
+            const parsed = parsePatchOperations(String(rawReply), docText);
+            if (parsed.ok) {
+              const applied = applyPatchOperations(editor, parsed.operations);
+              if (applied > 0) {
+                // C6 — patch ops join the same provenance audit as selection edits.
+                const scope = streamContext?.provenanceScope;
+                if (scope) {
+                  const { recordProvenanceEvent } = await import('./canvasProvenanceLog');
+                  for (const op of parsed.operations) {
+                    recordProvenanceEvent(scope, {
+                      kind: 'apply',
+                      at: Date.now(),
+                      prompt,
+                      originalExcerpt: op.anchor,
+                      replacementExcerpt: op.replacement,
+                    });
+                  }
+                }
+                setIsStreaming(false);
+                abortControllerRef.current = null;
+                // Surface Accept/Reject + Esc in CanvasRichEditor and the brief
+                // chat reply in UnifiedChatPanel. Markdown is NOT reconciled
+                // here — accept/reject does that, exactly like selection edits.
+                window.dispatchEvent(new CustomEvent('canvas-patch-pending'));
+                window.dispatchEvent(
+                  new CustomEvent('canvas-patch-result', {
+                    detail: { status: 'applied', opsApplied: applied },
+                  })
+                );
+                return;
+              }
+            }
+          }
+        } catch (err: any) {
+          if (err?.name === 'AbortError') {
+            setIsStreaming(false);
+            abortControllerRef.current = null;
+            return;
+          }
+          // Network/parse crash — degrade to the fallback stream below.
+        }
+        // Patch could not be applied (parse/anchor validation failed) —
+        // visible note in chat, then the existing replace stream takes over.
+        window.dispatchEvent(
+          new CustomEvent('canvas-patch-result', { detail: { status: 'fallback' } })
+        );
+      }
+
       // Capture document + selection BEFORE mutating the editor, so Teresa
       // receives the real pre-edit state as context.
       const { from: selFrom, to: selTo } = editor.state.selection;
@@ -106,10 +189,10 @@ export function useCanvasAIStream({
       const documentMarkdown = htmlToMarkdown(editor.getHTML()).trim();
 
       // Determine insertion point
-      if (mode === 'append') {
+      if (streamMode === 'append') {
         editor.commands.focus('end');
         editor.commands.insertContent('\n\n');
-      } else if (mode === 'replace') {
+      } else if (streamMode === 'replace') {
         if (selFrom !== selTo) {
           editor
             .chain()
@@ -130,7 +213,7 @@ export function useCanvasAIStream({
       // handler appends it to the workspace prompt). The structured packet
       // (title/kind/blocks/selection) rides along in context.canvasContextPacket.
       const modeGuidance =
-        mode === 'replace'
+        streamMode === 'replace'
           ? 'Rewrite ONLY the user-selected portion below. Return just the replacement prose — no preamble, no explanations, no markdown code fences.'
           : 'Continue and extend the document. Return ONLY the new prose to insert — no preamble, no explanations, no code fences, and do not repeat content already present.';
       const systemInstruction = [
@@ -159,7 +242,7 @@ export function useCanvasAIStream({
             language: streamContext?.language,
             context: {
               source: 'canvas_stream',
-              mode,
+              mode: streamMode,
               canvasContextPacket: streamContext?.canvasContextPacket || null,
             },
             options: { selectedTier: 'STANDARD' },
@@ -241,7 +324,7 @@ export function useCanvasAIStream({
           // 'replace' marked the original selection as aiRemoved and streamed the
           // new content right after it — now drop the original so the document
           // reflects a true replacement.
-          if (mode === 'replace') {
+          if (streamMode === 'replace') {
             const { collectMarkedRanges, AI_REMOVED_MARK } = await import('./canvasDiffOps');
             const removed = collectMarkedRanges(editor, AI_REMOVED_MARK);
             let chain = editor.chain();

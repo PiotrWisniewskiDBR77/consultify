@@ -739,6 +739,36 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const pendingActionsCount = useAIActionsStore((s) => s.pendingCount);
   const { handleAction: handleChatAction } = useChatActions();
 
+  // B3 patch-mode — useCanvasAIStream reports the outcome of a surgical
+  // canvas patch via 'canvas-patch-result' (it has no chat access). Reply
+  // briefly here: success → point the user at the diff; fallback → visible
+  // note that we degraded to the full rewrite stream.
+  useEffect(() => {
+    const onPatchResult = (event: Event) => {
+      const detail = (event as CustomEvent).detail as
+        | { status?: 'applied' | 'fallback'; opsApplied?: number }
+        | undefined;
+      if (!detail?.status) return;
+      const uiLang = (i18n.language || 'en').split('-')[0];
+      const content =
+        detail.status === 'applied'
+          ? uiLang === 'pl'
+            ? 'Zmieniłem wskazany fragment — przejrzyj diff w dokumencie i zaakceptuj lub odrzuć poprawkę.'
+            : 'I changed the targeted fragment — review the diff in the document and accept or reject the edit.'
+          : uiLang === 'pl'
+            ? 'Nie udało się przygotować punktowej poprawki — przepisuję wskazany fragment w trybie pełnym.'
+            : 'Could not prepare a targeted patch — rewriting via the full streaming mode instead.';
+      addChatMessage({
+        id: `canvas-patch-${Date.now()}`,
+        role: 'ai',
+        content,
+        timestamp: new Date(),
+      });
+    };
+    window.addEventListener('canvas-patch-result', onPatchResult);
+    return () => window.removeEventListener('canvas-patch-result', onPatchResult);
+  }, [addChatMessage, i18n.language]);
+
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)
   // ========================================================================
@@ -2864,7 +2894,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         addChatMessage({
           id: `canvas-stream-${Date.now()}`,
           role: 'ai',
-          content: uiLang === 'pl' ? 'Piszę w dokumencie…' : 'Writing in the document…',
+          // B3 — patch-mode gets its own status; the outcome reply arrives via
+          // the 'canvas-patch-result' listener below once the diff is applied.
+          content:
+            canvasStreamMode === 'patch'
+              ? uiLang === 'pl'
+                ? 'Nanoszę punktową poprawkę w dokumencie…'
+                : 'Applying a targeted edit in the document…'
+              : uiLang === 'pl'
+                ? 'Piszę w dokumencie…'
+                : 'Writing in the document…',
           timestamp: new Date(),
         });
 

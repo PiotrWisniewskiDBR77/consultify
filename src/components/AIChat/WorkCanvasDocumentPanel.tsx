@@ -845,6 +845,11 @@ function WorkCanvasMarkdownDocumentPanel({
   const markdownEditorRef = React.useRef<HTMLTextAreaElement | null>(null);
   const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
   const initialStarterPersistedRef = React.useRef(false);
+  // C3 (KROK 6, D-C-2): origin provenance of the loaded draft (e.g. notebook-expand
+  // source fields). Persisted saves spread it back so the panel's own provenance
+  // payload does not clobber the copy-with-provenance contract on first autosave.
+  const draftOriginProvenanceRef = React.useRef<Record<string, unknown> | null>(null);
+  const expandSourceNoticeShownRef = React.useRef(false);
 
   const activeTemplate =
     starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
@@ -867,6 +872,28 @@ function WorkCanvasMarkdownDocumentPanel({
     setActionFeedbackTone('alert');
     setActionFeedback(workCanvasActionErrorMessage(error, fallback));
   }, []);
+
+  // C3 (KROK 6): remember the loaded draft's provenance (so saves preserve it)
+  // and surface a one-time "Źródło: notatka …" notice for notebook-expand drafts.
+  const captureDraftOriginProvenance = React.useCallback(
+    (draft: any) => {
+      const provenance =
+        draft?.provenance && typeof draft.provenance === 'object'
+          ? (draft.provenance as Record<string, unknown>)
+          : null;
+      draftOriginProvenanceRef.current = provenance;
+      if (
+        provenance &&
+        String(provenance.source || provenance.originSource || '') === 'notebook-expand' &&
+        !expandSourceNoticeShownRef.current
+      ) {
+        expandSourceNoticeShownRef.current = true;
+        const sourceTitle = String(provenance.sourceTitle || '').trim();
+        setStatusFeedback(sourceTitle ? `Źródło: notatka „${sourceTitle}”` : 'Źródło: notatka');
+      }
+    },
+    [setStatusFeedback]
+  );
 
   React.useEffect(() => {
     let cancelled = false;
@@ -902,6 +929,7 @@ function WorkCanvasMarkdownDocumentPanel({
                 mapDraftResponseToCanvasDocumentState(draftById, current)
               );
               setShareInfo(extractShareFromDraft(draftById));
+              captureDraftOriginProvenance(draftById);
               lastSavedContentRef.current =
                 typeof draftById.contentMd === 'string'
                   ? draftById.contentMd
@@ -954,6 +982,7 @@ function WorkCanvasMarkdownDocumentPanel({
               mapDraftResponseToCanvasDocumentState(draftById, current)
             );
             setShareInfo(extractShareFromDraft(draftById));
+            captureDraftOriginProvenance(draftById);
             lastSavedContentRef.current =
               typeof draftById.contentMd === 'string'
                 ? draftById.contentMd
@@ -971,6 +1000,7 @@ function WorkCanvasMarkdownDocumentPanel({
             mapDraftResponseToCanvasDocumentState(latestDraft, current)
           );
           setShareInfo(extractShareFromDraft(latestDraft));
+          captureDraftOriginProvenance(latestDraft);
           lastSavedContentRef.current =
             typeof latestDraft.contentMd === 'string'
               ? latestDraft.contentMd
@@ -1178,6 +1208,14 @@ function WorkCanvasMarkdownDocumentPanel({
                 lifecycleState: draftToPersist.lifecycleState,
                 researchSessionId: draftToPersist.researchSessionId || null,
                 provenance: {
+                  // C3 (D-C-2): keep origin provenance (e.g. notebook-expand
+                  // sourceType/sourceId/sourceTitle) — PUT replaces provenance
+                  // wholesale, so the panel must echo it back on every save.
+                  ...(draftOriginProvenanceRef.current || {}),
+                  ...(draftOriginProvenanceRef.current?.source &&
+                  draftOriginProvenanceRef.current.source !== 'chat-work-canvas-panel'
+                    ? { originSource: draftOriginProvenanceRef.current.source }
+                    : {}),
                   source: 'chat-work-canvas-panel',
                   starterId: draftToPersist.activeStarterId,
                   researchSessionId: draftToPersist.researchSessionId || null,
@@ -1213,6 +1251,10 @@ function WorkCanvasMarkdownDocumentPanel({
           throw saveError;
         }
         const savedDraft = json?.data;
+        // Keep echoing the server's merged provenance on subsequent saves (C3/D-C-2).
+        if (savedDraft?.provenance && typeof savedDraft.provenance === 'object') {
+          draftOriginProvenanceRef.current = savedDraft.provenance as Record<string, unknown>;
+        }
         const nextState = mapDraftResponseToCanvasDocumentState(savedDraft, {
           ...draftToPersist,
           draftId: draftToPersist.draftId,
@@ -1612,7 +1654,7 @@ function WorkCanvasMarkdownDocumentPanel({
       const detail = (event as CustomEvent).detail as
         | {
             prompt?: string;
-            mode?: 'append' | 'replace' | 'generate';
+            mode?: 'append' | 'replace' | 'generate' | 'patch';
             history?: Array<{ role: string; parts: Array<{ text: string }> }>;
             language?: string;
             canvasContextPacket?: Record<string, unknown> | null;
@@ -1624,11 +1666,13 @@ function WorkCanvasMarkdownDocumentPanel({
         history: detail?.history,
         language: detail?.language,
         canvasContextPacket: detail?.canvasContextPacket ?? null,
+        // B3 — patch ops record per-anchor provenance under the draft id.
+        provenanceScope: documentState.draftId ?? null,
       });
     };
     window.addEventListener('canvas-stream-request', handler);
     return () => window.removeEventListener('canvas-stream-request', handler);
-  }, [richEditor, streamToCanvas]);
+  }, [richEditor, streamToCanvas, documentState.draftId]);
 
   const buildQuickAddMarkdown = (element: CanvasQuickAddElement, prompt: string) => {
     const cleanedPrompt = prompt.trim();

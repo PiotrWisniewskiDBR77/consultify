@@ -175,6 +175,20 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
     };
   }, []);
 
+  // B3 — patch-mode ops (chat-driven, applied by useCanvasAIStream via the
+  // shared editor instance) land as aiRemoved/aiAdded marks WITHOUT passing
+  // through handleAIRequest, so sync the pending-diff state here. That
+  // surfaces the same Accept/Reject bar + Esc-to-reject + autosave skip the
+  // selection-edit flow gets.
+  useEffect(() => {
+    const onPatchPending = () => {
+      setHasPendingDiff(true);
+      setSelection(null);
+    };
+    window.addEventListener('canvas-patch-pending', onPatchPending);
+    return () => window.removeEventListener('canvas-patch-pending', onPatchPending);
+  }, []);
+
   // P1 — Esc handler. While Teresa is streaming, Esc stops the stream
   // (consultants reach for Esc reflexively when AI starts producing the wrong
   // thing). While a pending diff is unresolved, Esc rejects it. Only one of
