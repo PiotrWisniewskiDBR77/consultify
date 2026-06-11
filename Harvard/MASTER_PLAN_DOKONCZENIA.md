@@ -208,7 +208,11 @@ Z sekcji 1g kart. Status przepływów kanonicznych (pełna lista w `INTEGRACJE.m
 | 2 | Ideas sidekick→Teresa | **ZEPSUTY** — M06 wysyła event, `useOpenChatWithContext` nie konsumuje |
 | 15 | Beta/uprawnienia (3 warstwy) | **NIESPÓJNY** — W7 (tylko nawigacja) |
 
-**Robota Kroku 6:** wypełnić tabelę A w `INTEGRACJE.md` (wszystkie wiersze 1g), sparować wyjścia↔wejścia, dopisać urwane przepływy do planów właściwych modułów z tagiem `[INTEGRACJA]`. Lista B = scenariusze testów systemowych (Krok 8).
+**✅ Krok 6 UKOŃCZONY 2026-06-11 (`INTEGRACJE.md` wypełnione + kontrakty zweryfikowane w kodzie, oba końce).** Wynik: 20 przepływów kanonicznych — **11 PEŁNY/DZIAŁA, 5 CZĘŚCIOWY/URWANY/LOKALNY, 4 STUB/ZEPSUTE, 1 niespójny (beta)**. 9 poprawek `[INTEGRACJA]` dopisanych do planów modułów.
+
+**🔴 NOWE ODKRYCIE KRĘGOSŁUPA (nie było w kartach):** łańcuch Wywiad→Inicjatywy→Wdrożenie→Rezultaty spina się przez M13→M15 (rdzeń), ale **ogniwo M14→M15 jest URWANE** — Wdrożenie liczy budżet/health/ryzyka, ale NIE eksportuje ROI do `v8_roi_realization_entries`; Rezultaty czytają własne tabele; brak deep-linku Execution→Results (`ExecutionHub.tsx:945`). To dziura w głównym przepływie wartości produktu → **dodać do planu M14 jako Fala 2 [INTEGRACJA], priorytet**.
+
+**Pozostałe urwane przepływy → MASTER PLAN (już pokryte wątkami):** governed sync M20→Results/Finance STUB (W6/decyzja #6); handoff Notatnik→Radar STUB (W6); Ideas eksport serwerowy STUB (decyzja); Mind Map PPT→HTML (Fala 3); Mind Map sidekick→Teresa kontekst urwany (M06 Fala 2); Meeting→MyWork lokalny (decyzja produktowa: globalizować czy zostawić). Pełna lista: `INTEGRACJE.md` §C.
 
 ---
 
