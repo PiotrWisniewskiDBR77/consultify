@@ -34,3 +34,12 @@
 1. **Backend-boot bug naprawiony w trakcie** (`organization-context-store.routes` importował nieistniejące `dbAll`/`dbRun` z `DbPromise` → ESM crash). Pre-existing (W11), blokował boot i uderzyłby w prod. Fix: `670…` (alias `all as dbAll, run as dbRun`).
 2. **M14→M15 deep-link prowadzi do modułu beta-closed** — przycisk „Zobacz w Rezultatach" (M14) → `/benefits` → redirect `/chat`, bo `MODULE_BENEFITS:'closed'`. Deep-link strukturalnie poprawny; **decyzja produktowa:** otworzyć Rezultaty (beta) albo ukryć/oznaczyć przycisk dopóki zamknięte, by nie mylił (analogicznie do #6).
 3. **A3 billing dla OWNER** → `/admin/billing` (nie user-level `BillingSettings`) — spójne z IA admina; user-level ścieżka żyje dla nie-adminów.
+
+## Faza-4-deep — M01 S5 (share → read-only → revoke) — 2026-06-12 (sesja żywa)
+**Werdykt: ✅ PASS po naprawie 2 realnych bugów (oba uderzały też w PROD — ten sam kod, Postgres).**
+Przepływ E2E (Chrome, staging): `POST /conversations/:id/share` → **200** · `GET /share/:token` → **200** (wiadomości renderują) · `DELETE share` (revoke) → **200** · ponowny `GET /share/:token` → **410** „Share has been revoked" (×2, stabilnie).
+
+Bugi znalezione i naprawione (`share.routes.ts`, commit `9cd8fd0d2f`):
+1. **Publiczny widok 500** — `JSON.parse(m.metadata)` na kolumnie **JSONB** (node-pg zwraca obiekt, nie string). Fix: `parseMaybeJson()` (string→parse / obiekt→passthrough / else undef).
+2. **SECURITY: rewokowane share dalej dostępne** — `is_active` jest INTEGER/bigint na PG, node-pg serializuje bigint jako **string** `"0"`, więc `!share.is_active` (`"0"` truthy) nigdy nie odpalał guarda 410. Fix: `flagOn()` (number/string/bool→bool) w widoku, unlock i liście.
+**Znaczenie:** oba istnieją na prodzie — przy deployu `Londyn`→prod naprawiają realny wyciek dostępu (rewokowane linki) + crash publicznego widoku. M01 S5: 🟩→**✅**.
