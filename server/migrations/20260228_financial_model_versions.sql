@@ -62,7 +62,17 @@ CREATE TABLE IF NOT EXISTS financial_model_versions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fmver_model ON financial_model_versions(model_id);
-CREATE INDEX IF NOT EXISTS idx_fmver_version ON financial_model_versions(model_id, version);
+-- Guard the version index: on drifted DBs the table evolved to `version_number`
+-- (no `version` column), where a CREATE TABLE IF NOT EXISTS above is a no-op.
+-- Only build the legacy index where the `version` column actually exists.
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'financial_model_versions' AND column_name = 'version'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_fmver_version ON financial_model_versions(model_id, version);
+  END IF;
+END $$;
 
 -- Add source_statement_id to financial_models for traceability (B11)
 ALTER TABLE financial_models ADD COLUMN IF NOT EXISTS source_statement_id TEXT;
