@@ -64,6 +64,22 @@ ALTER TABLE interview_evidence
 ALTER TABLE interview_evidence
   ADD COLUMN IF NOT EXISTS ingest_to_knowledge INTEGER DEFAULT 1;
 
+-- Normalize to the canonical INTEGER type on drifted DBs where the column is
+-- BOOLEAN (the ADD COLUMN above is then a no-op and the `= 1` UPDATE below
+-- fails). Convert true→1 / false→0.
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'interview_evidence' AND column_name = 'ingest_to_knowledge'
+      AND data_type = 'boolean'
+  ) THEN
+    ALTER TABLE interview_evidence ALTER COLUMN ingest_to_knowledge DROP DEFAULT;
+    ALTER TABLE interview_evidence ALTER COLUMN ingest_to_knowledge TYPE INTEGER
+      USING (CASE WHEN ingest_to_knowledge THEN 1 ELSE 0 END);
+    ALTER TABLE interview_evidence ALTER COLUMN ingest_to_knowledge SET DEFAULT 1;
+  END IF;
+END $$;
+
 ALTER TABLE interview_evidence
   ADD COLUMN IF NOT EXISTS knowledge_document_id TEXT;
 
