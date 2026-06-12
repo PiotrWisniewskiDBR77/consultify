@@ -4,8 +4,8 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M02 · inwentarz `Harvard/podzial/inventory/INV_A_czat_canvas.md` (sekcja CANVAS, poz.1-33) · podkłady `CANVAS_MODULE_AUDITOR_BRIEF.md` + `DELIVERABLES_HARVARD_AUDIT_HANDOFF.md` (2026-06-11) · audyty `docs/audit/2026-06-10/CANVAS_*` i `DELIVERABLES_*` · `[[project_canvas_program]]`, `[[project_deliverables_light_l1]]`
 **Evidence:** `Harvard/modules/M02-canvas/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 58/100 — Tier: Alpha (górny — kandydat na Beta) · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 7→8 (W7 beta-lock 3-warstwowy, commit `bc5579918d`). Suma: 22+13+9+0+6+8+0=58.
+## OCENA: 59/100 — Tier: Alpha (górny — kandydat na Beta) · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 7→8 (W7 beta-lock 3-warstwowy, commit `bc5579918d`). Suma: 22+13+9+0+6+8+0=58. **Fala 5 (2026-06-12):** A: 22→23 — `regenerateSlide` STUB naprawiony: real LLM via narrative engine + contextPack snapshot + route + CardCanvas menu (`36a6f240ff`). Suma: 59.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|

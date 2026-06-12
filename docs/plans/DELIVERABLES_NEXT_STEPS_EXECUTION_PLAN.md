@@ -85,12 +85,11 @@
   ZA flagą wariantową, default auto-start zostaje; pomiar która ścieżka lepsza).
 - **DONE gdy:** użytkownik może wyłączyć sekcję planu i dostaje dokument bez niej.
 
-### C3. Per-karta akcje decka `[D]`
-- **KOREKTA (2026-06-11, code-verified):** `regenerateSlide` w `presentationGeneratorService`
-  to STUB — zwraca istniejący slajd bez regeneracji. Realne C3 = wywołanie LLM per slajd
-  + spójna aktualizacja `unified_json` ORAZ `deck_json` (builder-cache czytany pierwszy).
-  Pół dnia chirurgii na silniku decka; koordynować z workstreamem canvas (deck hygiene d61f532f).
-- **DONE gdy:** regeneracja jednej karty nie dotyka pozostałych; widoczny stan ładowania karty.
+### C3. Per-karta akcje decka `[D]` ✅ DONE (2026-06-12, commit `36a6f240`)
+- `regenerateSlide` real LLM (narrative engine dla exec_summary/key_messages/next_steps/
+  recommendation_portfolio + contextPack snapshot) + route + CardCanvas hover menu (spinner)
+  + DeckBuilder handler. Inne karty nieruszone. Live smoke pending.
+- **DONE:** regeneracja 1 karty nie dotyka pozostałych (`36a6f240`); stan ładowania w spinnerze.
 
 ## FAZA D — Droga na produkcję
 

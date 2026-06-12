@@ -12,7 +12,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M13 | Inicjatywy | 1 (core) | 🟦 | **54** ↑9 | Alpha | 2026-06-12 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
 | M14 | Wdrożenie | 1 (core) | 🟦 | **52** ↑10 | Alpha | 2026-06-11 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
 | M25 | Ustawienia | 1 (core) | 🟦 | **54** ↑4 | Alpha | 2026-06-11 | `modules/M25-ustawienia/KARTA_AUDYTU.md` |
-| M02 | Canvas | 2 (beta) | 🟦 | **58** ↑1 | Alpha górny | 2026-06-11 | `modules/M02-canvas/KARTA_AUDYTU.md` |
+| M02 | Canvas | 2 (beta) | 🟦 | **59** ↑2 | Alpha górny | 2026-06-12 | `modules/M02-canvas/KARTA_AUDYTU.md` |
 | M17 | Outputs | 2 (beta) | 🟦 | **54** ↑3 | Alpha | 2026-06-11 | `modules/M17-outputs/KARTA_AUDYTU.md` |
 | M18 | Dokumenty | 2 (beta) | 🟦 | **54** ↑7 | Alpha | 2026-06-11 | `modules/M18-dokumenty/KARTA_AUDYTU.md` |
 | M19 | Prezentacje | 2 (beta) | 🟦 | **56** ↑1 | Alpha górny | 2026-06-11 | `modules/M19-prezentacje/KARTA_AUDYTU.md` |
@@ -38,7 +38,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 \* Re-audit 2026-06-11 po Sprintach 1–5 (W1–W15 + Bramka D): 21 modułów zaktualizowanych; ↑ = delta vs pre-sprint; ✓ = korekta błędu arytmetycznego. Średnia 28 modułów: ~52 (poprz. ~49). Hard capy zdjęte gdzie security P0 naprawiony.
 \* Fala 2/3 (2026-06-11/12): korekty kart za pominięte naprawy Sprint 5 — M01(59), M03(54), M04(52), M05(60), M06(60), M07(55), M08(54), M09(49), M12(49), M13(53), M14(52), M16(58), M17(54), M19(56+role gate), M20(48), M21(55), M25(54), M26(53), M27(58); korekty atrybucji M23/M24; średnia 27 modułów (bez A1) ~53.
 \* Fala 4 (2026-06-12): naprawy kodu P0 — M10(59→60, dead import usunięty `ea77dc678c`), M13(53→54, CRUD 5/5 PASS `ea77dc678c`); react-i18next mock-drift naprawiony; `InitiativesHub` error UI uzupełniony; średnia ~54.
-\* Fala 5 (2026-06-12): M01(59→60) — UnifiedChatPanel test mock-drift: `useArtifactsStore` selector-aware + `setConversationChatLanguage` stub; 29/29 PASS (`e0b368b218`); C: 8→9; średnia ~54.
+\* Fala 5 (2026-06-12): M01(59→60) — UnifiedChatPanel test mock-drift: `useArtifactsStore` selector-aware + `setConversationChatLanguage` stub; 29/29 PASS (`e0b368b218`); C: 8→9; średnia ~54. M02(58→59) — `regenerateSlide` STUB naprawiony: real narrative engine + contextPack snapshot + route + CardCanvas hover menu (`36a6f240ff`); A: 22→23.
 
 ## Reguły aktualizacji
 - Po każdym audycie: wpis statusu+oceny+linku TUTAJ, w karcie pełna rubryka.

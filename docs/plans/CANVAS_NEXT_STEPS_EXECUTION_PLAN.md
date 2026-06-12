@@ -155,6 +155,8 @@ Cała ścieżka canvas DOMKNIĘTA poza live-smoke i fazą D3/L4:
   heurystyka 8/8, decyzja D-C-4 = chip nie auto-panel) · **KROK 10 D2 ✅** (4fd92adf — „Duplikuj/
   Użyj jako szablonu" w Outputs).
 - Sibling (Kimi): entity-grounding (C1/C2), sekcja Źródła, telemetria, D1 charter — DONE.
-- **Pozostało:** live-smoke wizualny B3/B4/C5/D2/C3 (jedna sesja preview); KROK 11 E2/E3 polish;
-  KROK 12 D3+L4 (osobna decyzja ownera — retire-lista). Pre-existing: 14 faili UnifiedChatPanel.test
+- **KROK 11 E3 ✅** (`36a6f240`) — `regenerateSlide` real LLM impl (narrative engine dla text-heavy
+  slides + contextPack snapshot) + route + CardCanvas hover menu + DeckBuilder handler.
+- **Pozostało:** live-smoke wizualny B3/B4/C5/D2 + KROK 3 M-5 (jedna sesja preview); KROK 11 E2;
+  KROK 12 D3+L4 (osobna decyzja ownera — retire-lista). UnifiedChatPanel.test: 29/29 PASS (naprawione `e0b368b218`).
   (mock drift po B2, chip task_b95c9650) + 2 błędy tsc w siostrzanych views (WIP innej sesji).
