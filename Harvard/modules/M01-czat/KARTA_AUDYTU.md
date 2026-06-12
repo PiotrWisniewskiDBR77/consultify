@@ -149,20 +149,20 @@
 | Warstwa | Nawigacja | Route | API | Dziura? |
 |---|---|---|---|---|
 | Czat (core) | sidebar otwarty | `/chat` zalogowany | verifyToken | brak (core) |
-| Pamięć projektu | — | — | tylko verifyToken, BEZ org | **TAK — P0** |
+| Pamięć projektu | — | — | org-scope NAPRAWIONY (`b9f2dee9d2`) | **NIE** |
 | Public viewer | — | `/share/:token`, `/public/artifacts/:token` | token + rate-limit | częśc. (F-3) |
 
-**Org-scope:** `conversations.routes.ts` 21/21 endpointów scoped (SSOT `findAccessibleConversation:92-130`). `ai.routes.ts`: `/memory/project/:projectId` GET/POST/DELETE **BEZ scope**.
+**Org-scope:** `conversations.routes.ts` 21/21 endpointów scoped (SSOT `findAccessibleConversation:92-130`). `ai.routes.ts`: `/memory/project/:projectId` GET/DELETE **org-scoped** (`b9f2dee9d2`).
 **Zasoby publiczne:** `/public/artifacts/:token` wzorcowy (strict `^[0-9a-f]{32}$`, rate-limit, revoke→404, expiry→410, payload sanitarny). `/share/:token` revoke/expiry/hasło OK (po quick-fixie).
 **WS/realtime:** SSE streaming — autoryzacja tokenem; szczegóły upgrade do potwierdzenia w Fazie 3/4. **Capabilities serwerowo:** DELETE pamięci sprawdza `req.can` ale w kontekście callera, nie własności projektu.
 **Findingi:**
-- **[P0] F-1/F-2 cross-org IDOR pamięci projektu** — `GET /api/ai/memory/project/:projectId` (`ai.routes.ts:5744`→`buildProjectMemorySummary(projectId)` bez org) i `DELETE` (`:5812`→`clearProjectMemory(projectId)`); router zamontowany `app.use('/api/ai', aiRoutes)` (`Gateway.ts:397`) BEZ internalToolsGuard → osiągalne dla każdego zalogowanego. Read + destrukcyjny write cudzej org po UUID.
+- ~~**[P0] F-1/F-2 cross-org IDOR pamięci projektu**~~ **NAPRAWIONY** (`b9f2dee9d2`) — GET i DELETE `/memory/project/:projectId` (`:5748-5755`, `:5826-5833`): SELECT organization_id, compare to JWT orgId → 403 przy niezgodności.
 - **[P2] F-3** — public viewer rozmowy zwraca `metadata` verbatim (`share.routes.ts:541`) → ryzyko wycieku pól wewnętrznych.
 - **[P3] F-5 + nota infra** — debug-log query web-search; SQLite-izm `datetime('now',…)` w cleanup pamięci pada na PG.
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P0)
-1. **Org-scope na pamięci projektu** — `buildProjectMemorySummary`/`clearProjectMemory` muszą przyjmować i egzekwować `organization_id`; weryfikacja własności projektu przed read/delete — Weryfikacja: test integracyjny cross-org (user org-A nie czyta/nie kasuje projektu org-B → 403/404).
+1. ~~**Org-scope na pamięci projektu**~~ **[DONE `b9f2dee9d2`]** — GET/DELETE org-gate via SELECT+compare (`:5749-5755`, `:5827-5833`).
 2. **Naprawa `CanvasArtifactSwitcher` guard** — `conversationArtifacts` nie-iterowalne wali 14 testów UnifiedChatPanel — Weryfikacja: suite UnifiedChatPanel zielony.
 3. **Wyciek wiersza w team-scope filter** (`chat-projects.list`) — `scope=team` zwraca obce wiersze — Weryfikacja: test filtra zielony, brak `u-2` w wyniku org-2.
 4. **(ZROBIONE quick-fix)** crash hasła share `hashPasscode`→`scryptHash` — Weryfikacja: PATCH `/conversations/:id/share` z `password` nie rzuca; test BE.

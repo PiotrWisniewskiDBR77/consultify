@@ -134,11 +134,11 @@
 |---|---|---|---|---|
 | Organizer (core) | sidebar otwarty | zalogowany | requireOrgAccess (waliduje usera) | — |
 | Manager | sidebar admin/manager | brak role-guard | **brak `requireRole` (UI-only)** | **TAK (P1)** |
-| Decyzje decide | — | — | bez org-scope | **TAK (P0)** |
+| Decyzje decide | — | — | org-scope NAPRAWIONY (`b9f2dee9d2`) | **NIE** |
 
 **Findingi:**
-- **[P0] F-SEC-2 cross-org IDOR write decyzji** — `DecisionController.decide` (`DecisionController.ts:985` SELECT, `:1012` UPDATE) `WHERE id=?` bez `organization_id`; check własności (`:994-1001`) przepuszcza ADMIN/SUPERADMIN → admin org A zatwierdza/odrzuca decyzję org B. Zweryfikowane osobiście (Claude).
-- **[P0/P1] F-SEC-3 cross-org IDOR inbox** — `inboxService.triageItem`/`delegateItem` (`inboxService.ts:332,351`) `WHERE id=?` bez org/user → dowolny user snooze/SLA/deleguje element inboxa dowolnej org (delegate klonuje do arbitralnego `toUserId`).
+- ~~**[P0] F-SEC-2 cross-org IDOR write decyzji**~~ **NAPRAWIONY** (`b9f2dee9d2`) — SELECT teraz `WHERE id = ? AND organization_id = ?` (`:986`); org A nie może zatwierdzić decyzji org B.
+- ~~**[P0/P1] F-SEC-3 cross-org IDOR inbox**~~ **NAPRAWIONY** (`45d74b0de1`) — delegate/snooze/sla routes: 2-step SELECT organization_id → porównanie z JWT orgId → 403 przy niezgodności.
 - **[P1] F-SEC-1 leak executive-analytics** — `GET /my-work/executive-analytics` (`my-work.routes.ts:7832`) zwraca portfel całej org (overload alerts z imionami+godzinami per-pracownik) KAŻDEMU członkowi; manager-gate tylko UI.
 - **[P3]** email logowany `my-work.routes.ts:619`.
 

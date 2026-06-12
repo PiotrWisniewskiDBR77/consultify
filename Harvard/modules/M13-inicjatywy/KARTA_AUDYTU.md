@@ -138,7 +138,7 @@
 | Pilot VTS | UI hub | — | brak gatingu serwerowego | **TAK (P1)** |
 
 **Findingi:**
-- **[P0] cross-org IDOR governance** — `initiativeGovernanceService.linkGoalToInitiative` (`:119` INSERT bez org/ownership), `getGoalInitiatives` (`:130` SELECT `WHERE gil.goal_id=$1` bez org), analogicznie `unlinkGoalFromInitiative`, `linkDecisionToInitiative`, `getInitiativeDecisions`. Sąsiedni `getGoalRollup` (`:140`) filtruje org → luka zlokalizowana. Zweryfikowane osobiście. **Czwarty moduł z tym wzorcem (M01/M03/M10/M13).**
+- ~~**[P0] cross-org IDOR governance**~~ **NAPRAWIONY** (`b9f2dee9d2`) — `initiativeGovernanceService` refaktoryzowany: wszystkie 5 funkcji z org-scope (link/get/unlink/linkDecision/getDecisions).
 - **[P1] router governance org-spoofable** — mount `/api/initiatives-v4` (`Gateway.ts:906`); agent zgłasza brak `requireOrgAccess` i org z `x-organization-id`/`?organizationId` — do potwierdzenia, ale serwis i tak ignoruje org.
 - **[P1] gating pilota VTS tylko klient** — `isPilotParticipantRole` w hubie; serwer `createInitiative`/bulk/generator bez gatingu → obejście bezpośrednim API.
 - **[P2]** `createGovernanceGate` nie weryfikuje przynależności `initiativeId` do org; brak osobnych capability serwerowych dla approve/transition.

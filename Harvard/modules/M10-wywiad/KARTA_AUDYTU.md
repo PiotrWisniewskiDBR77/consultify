@@ -129,11 +129,11 @@
 | Warstwa | Nawigacja | Route | API | Dziura? |
 |---|---|---|---|---|
 | Wywiad (core) | sidebar otwarty | zalogowany | per-permission (admin fallback OK) | — |
-| Wnioski get/delete | — | — | bez org-scope | **TAK (P0)** |
+| Wnioski get/delete | — | — | org-scope NAPRAWIONY (`b9f2dee9d2`) | **NIE** |
 
 **Findingi:**
-- **[P0] SEC-1 cross-org IDOR read wniosku** — `getInsight` (`InterviewController.ts:7588`→`InterviewInsightService.ts:1618` `SELECT * FROM interview_insights WHERE id=?` bez org). Dowolny zalogowany odczyta wniosek cudzej org wraz z `evidence_map` (cytaty z transkryptów = PII cross-tenant). Zweryfikowane osobiście.
-- **[P0] SEC-2 cross-org IDOR hard delete** — `deleteInsight` (`:7776`→`InterviewInsightService.ts:1723` `DELETE … WHERE id=?` bez org). Twardy delete wniosku cudzej org.
+- ~~**[P0] SEC-1 cross-org IDOR read wniosku**~~ **NAPRAWIONY** (`b9f2dee9d2`) — `getInsight` (`:7588`): SELECT org_id WHERE id=?, compare to JWT orgId → 403.
+- ~~**[P0] SEC-2 cross-org IDOR hard delete**~~ **NAPRAWIONY** (`b9f2dee9d2`) — `deleteInsight` (`:7782`): SELECT org_id WHERE id=?, compare → 403 before delete.
 - **Dowód przypadkowości:** sąsiednie handlery encji (regenerate/activity/comments/update/export) mają `SELECT organization_id WHERE id=?` + 403 — luka zlokalizowana, wzorzec fixu pod ręką.
 - Pozostałe 23 endpointy (szablony `canAccessTemplate`, przydziały approve/send-back/delete, sesje, enterprise) — scoped OK.
 

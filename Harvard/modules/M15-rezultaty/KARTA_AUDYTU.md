@@ -122,12 +122,12 @@
 |---|---|---|
 | Org-scope legacy benefits by-id | CZYSTE | PUT/DELETE `/kpis/:kpiId` `WHERE id=? AND organization_id=?` (`:247,:313`) |
 | time-series KPI write | **DZIURAWE (UPDATE bez org)** | `benefits.routes.ts:468` |
-| RBAC KPI (V8) | **PODRABIALNE** | `x-kpi-role` z nagłówka (`v8/results.routes.ts:108`) |
+| RBAC KPI (V8) | NAPRAWIONE (`91c8245559`) | `x-kpi-role` usunięty; rola z JWT org role |
 | Approval/finalization raportów | serwerowe | `findKpiReportFinalizationViolation` (409) |
 
 **Findingi:**
-- **[P0] SEC-1 cross-org KPI write** — `POST /benefits/kpis/:kpiId/time-series` (`:410`): INSERT scoped do org, ale `UPDATE initiative_kpis SET current_value=? WHERE id=?` (`:468`) **bez org** → nadpisanie `current_value` KPI innej org po kpiId. `SELECT measurement_frequency WHERE id=?` (`:439`) też bez org (cross-org read meta). **Zweryfikowane osobiście.**
-- **[P0] SEC-2 RBAC bypass `x-kpi-role`** — `p04KpiRoleFromRequest` (`v8/results.routes.ts:108-113`) rola z nagłówka bez porównania z realną; `x-kpi-role: kpi_owner` przechodzi `delete_kpi`/`edit_definition`/`create_report`/`manage_reconciliation`. **Zweryfikowane osobiście.** In-org privilege escalation + bypass bramek raportów.
+- ~~**[P0] SEC-1 cross-org KPI write**~~ **NAPRAWIONY** (`91c8245559`) — `POST /benefits/kpis/:kpiId/time-series` (`:481`): UPDATE teraz `AND organization_id = ?`; INSERT był już org-scoped.
+- ~~**[P0] SEC-2 RBAC bypass `x-kpi-role`**~~ **NAPRAWIONY** (`91c8245559`) — `x-kpi-role` header usunięty; `p04KpiRoleFromRequest` wyprowadza rolę z JWT (`req.user?.role`).
 - **[P2] SEC-6 connector IRIS plaintext** — `mes_api_token`/Authorization plaintext JSON w `mcp_providers.config` (`mcp.routes.ts:91`); `GET /api/mcp/providers` (tylko `verifyToken`, nie admin) zwraca `config` non-adminom.
 - **[P2] SEC-8 beta-lock tylko nawigacyjny** — `/benefits` (`AppRoutes.tsx:2136`) tylko `ProductionModuleGate`, brak beta-guarda; direct URL omija.
 - **[P3] SEC-3** INSERT/UPSERT deviation/roi bez weryfikacji własności rodzica (data-pollution własnej org).
