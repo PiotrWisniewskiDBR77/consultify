@@ -48,6 +48,7 @@ import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 import {
   deckTitleFromIntent,
+  type DeliverableGenerationPlanItem,
   type DeliverableGenerationStatus,
   isDeliverablesLightEnabled,
   planDeckGeneration,
@@ -404,9 +405,13 @@ const deckGenerationChecklist = (params: {
   title: string;
   phase: 'planning' | 'plan_ready' | 'generating' | 'validating' | 'draft' | 'error';
   planCount?: number;
+  /** E2: tytuły sekcji planu — pokazywane jako pod-punkty po plan_ready. */
+  planItems?: DeliverableGenerationPlanItem[];
   unitCount?: number;
   /** B4: liczba źródeł org użytych do groundingu (auto-skan lub wskazane). */
   sourcesCount?: number;
+  /** E2: tytuły źródeł — pokazywane jako pod-punkty obok licznika. */
+  sources?: Array<{ sourceType: string; sourceId: string; sourceTitle?: string }>;
   error?: string;
   /** L2/L3: jedna checklista dla deck/doc/sheet — różnią się tylko etykiety. */
   format?: ChecklistFormat;
@@ -420,24 +425,41 @@ const deckGenerationChecklist = (params: {
     return order.indexOf(step) <= order.indexOf(params.phase as (typeof order)[number]);
   };
   const mark = (step: (typeof order)[number]) => (reached(step) ? 'x' : ' ');
-  const planCountSuffix = params.planCount ? ` — ${params.planCount} ${copy.units}` : '';
+
+  const enabledItems = params.planItems?.filter((i) => i.enabled) ?? [];
+  const planCountDisplay = params.planCount ?? (enabledItems.length || undefined);
+  const planCountSuffix = planCountDisplay ? ` — ${planCountDisplay} ${copy.units}` : '';
   const planLabel = pl
     ? `Plan: ${copy.noun.toLowerCase()}${planCountSuffix}`
     : `${copy.noun} plan${planCountSuffix}`;
   const heading = pl
     ? `**${copy.noun}: „${params.title}”**`
-    : `**${copy.noun}: "${params.title}"**`;
+    : `**${copy.noun}: “${params.title}”**`;
+
+  const planSubItems =
+    reached('plan_ready') && enabledItems.length > 0
+      ? enabledItems.map((item) => `  - ${item.title}`)
+      : [];
+
+  const sourcesCount = params.sourcesCount ?? params.sources?.length ?? 0;
+  const sourceSubItems =
+    reached('plan_ready') && params.sources && params.sources.length > 0
+      ? params.sources.filter((s) => s.sourceTitle).map((s) => `  - ${s.sourceTitle}`)
+      : [];
+
   const lines = [
     heading,
     '',
     `- [${mark('plan_ready')}] ${planLabel}`,
-    ...(params.sourcesCount
+    ...planSubItems,
+    ...(sourcesCount > 0
       ? [
           `- [${mark('plan_ready')}] ${
             pl
-              ? `Źródła organizacji — ${params.sourcesCount} znalezione`
-              : `Organization sources — ${params.sourcesCount} found`
+              ? `Źródła organizacji — ${sourcesCount} znalezione`
+              : `Organization sources — ${sourcesCount} found`
           }`,
+          ...sourceSubItems,
         ]
       : []),
     `- [${mark('generating')}] ${copy.generating}`,
@@ -2219,6 +2241,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
             extra?: {
               planCount?: number;
+              planItems?: DeliverableGenerationPlanItem[];
+              sources?: Array<{ sourceType: string; sourceId: string; sourceTitle?: string }>;
               unitCount?: number;
               sourcesCount?: number;
               error?: string;
@@ -2275,13 +2299,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 conversationContext,
               });
               const sheetSourcesCount = planned.sources?.length || 0;
-              updateSheetChecklist('plan_ready', { sourcesCount: sheetSourcesCount });
+              updateSheetChecklist('plan_ready', {
+                planItems: planned.plan,
+                sources: planned.sources,
+                sourcesCount: sheetSourcesCount,
+              });
 
               await startSheetGeneration({
                 generationId: planned.generationId,
                 setup: planned.setup,
               });
-              updateSheetChecklist('generating', { sourcesCount: sheetSourcesCount });
+              updateSheetChecklist('generating', {
+                planItems: planned.plan,
+                sources: planned.sources,
+                sourcesCount: sheetSourcesCount,
+              });
               // Kimi-parity: artefakt widoczny od razu (szkielet), treść
               // dociągnie event 'deliverables:draft-ready' po generacji.
               setRequestedCanvasDeckId(null);
@@ -2294,7 +2326,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 signal: deliverablesPollAbortRef.current?.signal,
                 onUpdate: (status: DeliverableGenerationStatus) => {
                   if (status.state === 'validating')
-                    updateSheetChecklist('validating', { sourcesCount: sheetSourcesCount });
+                    updateSheetChecklist('validating', {
+                      planItems: planned.plan,
+                      sources: planned.sources,
+                      sourcesCount: sheetSourcesCount,
+                    });
                 },
               });
               if (final.state === 'draft') {
@@ -2305,6 +2341,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     title: sheetTitle,
                     phase: 'draft',
                     format: 'sheet',
+                    planItems: planned.plan,
+                    sources: planned.sources,
                     sourcesCount: sheetSourcesCount,
                     unitCount: final.artifact?.unitCount,
                   }),
@@ -2421,6 +2459,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
             extra?: {
               planCount?: number;
+              planItems?: DeliverableGenerationPlanItem[];
+              sources?: Array<{ sourceType: string; sourceId: string; sourceTitle?: string }>;
               unitCount?: number;
               sourcesCount?: number;
               error?: string;
@@ -2501,13 +2541,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               });
               const enabledCount = planned.plan.filter((item) => item.enabled).length;
               const sourcesCount = planned.sources?.length || 0;
-              updateDocChecklist('plan_ready', { planCount: enabledCount, sourcesCount });
+              updateDocChecklist('plan_ready', {
+                planCount: enabledCount,
+                planItems: planned.plan,
+                sources: planned.sources,
+                sourcesCount,
+              });
 
               await startDocGeneration({
                 generationId: planned.generationId,
                 setup: planned.setup,
               });
-              updateDocChecklist('generating', { planCount: enabledCount, sourcesCount });
+              updateDocChecklist('generating', {
+                planCount: enabledCount,
+                planItems: planned.plan,
+                sources: planned.sources,
+                sourcesCount,
+              });
               // Kimi-parity: dokument widoczny od razu jako szkielet sekcji;
               // gotową treść dociągnie event 'deliverables:draft-ready'.
               setRequestedCanvasDeckId(null);
@@ -2520,7 +2570,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 signal: deliverablesPollAbortRef.current?.signal,
                 onUpdate: (status: DeliverableGenerationStatus) => {
                   if (status.state === 'validating') {
-                    updateDocChecklist('validating', { planCount: enabledCount, sourcesCount });
+                    updateDocChecklist('validating', {
+                      planCount: enabledCount,
+                      planItems: planned.plan,
+                      sources: planned.sources,
+                      sourcesCount,
+                    });
                   }
                 },
               });
@@ -2533,6 +2588,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     phase: 'draft',
                     format: 'doc',
                     planCount: enabledCount,
+                    planItems: planned.plan,
+                    sources: planned.sources,
                     sourcesCount,
                     unitCount: final.artifact?.unitCount,
                   }),
@@ -2654,6 +2711,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             phase: Parameters<typeof deckGenerationChecklist>[0]['phase'],
             extra?: {
               planCount?: number;
+              planItems?: DeliverableGenerationPlanItem[];
+              sources?: Array<{ sourceType: string; sourceId: string; sourceTitle?: string }>;
               unitCount?: number;
               sourcesCount?: number;
               error?: string;
@@ -2697,21 +2756,33 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 language: effectiveChatLanguage === 'pl' ? 'pl' : 'en',
               });
               const enabledCount = planned.plan.filter((item) => item.enabled).length;
-              updateChecklist('plan_ready', { planCount: enabledCount });
+              updateChecklist('plan_ready', {
+                planCount: enabledCount,
+                planItems: planned.plan,
+                sources: planned.sources,
+              });
 
               await startDeckGeneration({
                 generationId: planned.generationId,
                 setup: planned.setup,
               });
               setRequestedCanvasDeckId(planned.generationId);
-              updateChecklist('generating', { planCount: enabledCount });
+              updateChecklist('generating', {
+                planCount: enabledCount,
+                planItems: planned.plan,
+                sources: planned.sources,
+              });
 
               const final = await pollDeckGenerationUntilDone({
                 generationId: planned.generationId,
                 signal: deliverablesPollAbortRef.current?.signal,
                 onUpdate: (status: DeliverableGenerationStatus) => {
                   if (status.state === 'validating') {
-                    updateChecklist('validating', { planCount: enabledCount });
+                    updateChecklist('validating', {
+                      planCount: enabledCount,
+                      planItems: planned.plan,
+                      sources: planned.sources,
+                    });
                   }
                 },
               });
@@ -2725,6 +2796,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     title: deckTitle,
                     phase: 'draft',
                     planCount: enabledCount,
+                    planItems: planned.plan,
+                    sources: planned.sources,
                     unitCount: final.artifact?.unitCount,
                   }),
                   // B2: chip artefaktu w transkrypcie (reload-safe, server-side).
