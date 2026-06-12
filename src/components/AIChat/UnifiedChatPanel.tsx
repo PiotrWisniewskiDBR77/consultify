@@ -5399,6 +5399,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               data-testid="chat-full-welcome"
               className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center"
             >
+              <img
+                src="/assets/logos/logo-light.svg"
+                alt="Consultify"
+                className="mb-6 h-8 w-auto object-contain opacity-80 dark:hidden"
+              />
+              <img
+                src="/assets/logos/logo-dark.svg"
+                alt="Consultify"
+                className="mb-6 h-8 w-auto object-contain opacity-80 hidden dark:block"
+              />
               <div className="mb-3 inline-flex items-center rounded-full border border-primary-200/70 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:border-primary-800/60 dark:bg-primary-900/20 dark:text-primary-300">
                 Teresa
               </div>
