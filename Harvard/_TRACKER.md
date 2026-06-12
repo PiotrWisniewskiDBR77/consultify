@@ -2,36 +2,36 @@
 
 **SSOT statusu projektu Audyt Harvard.** Protokół: `Harvard/protokol/MODULE_AUDIT_PROTOCOL_V1.md` · Podział: `Harvard/podzial/_MODULE_MAP_V2.md` · Karty: `modules/<Mxx>-*/KARTA_AUDYTU.md` · Instrukcja: `README.md`
 
-Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ zrobiony · 🔁 do dociągnięcia do protokołu
+Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · 🟩 Faza 4 SMOKE (żywa weryfikacja podstawowa wykonana na staging 2026-06-12; render+realne dane+kluczowy przepływ; pełne scenariusze S per karta = backlog) · ✅ zrobiony (pełne S) · 🔁 do dociągnięcia do protokołu
 
 | # | Moduł | Pula | Status | Ocena | Tier | Data | Karta |
 |---|-------|------|--------|-------|------|------|-------|
-| M01 | Czat | 1 (core) | 🟦 | **61** ↑11 | Alpha górny | 2026-06-12 | `modules/M01-czat/KARTA_AUDYTU.md` |
-| M03 | Moja Praca — organizer | 1 (core) | 🟦 | **54** ↑10 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
-| M10 | Wywiad | 1 (core) | 🟦 | **61** ↑11 | Alpha górny | 2026-06-12 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
-| M13 | Inicjatywy | 1 (core) | 🟦 | **54** ↑9 | Alpha | 2026-06-12 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
-| M14 | Wdrożenie | 1 (core) | 🟦 | **52** ↑10 | Alpha | 2026-06-11 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
-| M25 | Ustawienia | 1 (core) | 🟦 | **54** ↑4 | Alpha | 2026-06-11 | `modules/M25-ustawienia/KARTA_AUDYTU.md` |
-| M02 | Canvas | 2 (beta) | 🟦 | **59** ↑2 | Alpha górny | 2026-06-12 | `modules/M02-canvas/KARTA_AUDYTU.md` |
-| M17 | Outputs | 2 (beta) | 🟦 | **54** ↑3 | Alpha | 2026-06-11 | `modules/M17-outputs/KARTA_AUDYTU.md` |
-| M18 | Dokumenty | 2 (beta) | 🟦 | **54** ↑7 | Alpha | 2026-06-11 | `modules/M18-dokumenty/KARTA_AUDYTU.md` |
-| M19 | Prezentacje | 2 (beta) | 🟦 | **56** ↑1 | Alpha górny | 2026-06-11 | `modules/M19-prezentacje/KARTA_AUDYTU.md` |
-| M20 | Tabele Studio | 2 (beta) | 🟦 | **48** ↑5 | Alpha | 2026-06-11 | `modules/M20-tabele-studio/KARTA_AUDYTU.md` |
-| M16 | Finanse | 2 (beta) | 🟦 | **58** ↑8 | Alpha górny | 2026-06-11 | `modules/M16-finanse/KARTA_AUDYTU.md` |
-| M15 | Rezultaty | 2 (beta) | 🟦 | **55** ↑6 | Alpha górny | 2026-06-12 | `modules/M15-rezultaty/KARTA_AUDYTU.md` |
-| M21 | Meeting | 2 (beta) | 🟦 | **55** ↑3 | Alpha górny | 2026-06-11 | `modules/M21-meeting/KARTA_AUDYTU.md` |
-| M12 | Audyty | 2 (beta) | 🟦 | **55** ↑8 | Alpha górny | 2026-06-12 | `modules/M12-audyty/KARTA_AUDYTU.md` |
-| M04 | Notatnik | 2 (beta) | 🟦 | **52** ↑3 | Alpha | 2026-06-11 | `modules/M04-notatnik/KARTA_AUDYTU.md` |
-| M05 | Ideas — Zarządzanie | 3 (Ideas) | 🟦 | **60** ↑5 | Alpha górny | 2026-06-11 | `modules/M05-ideas-zarzadzanie/KARTA_AUDYTU.md` |
-| M06 | Ideas — Mind Map | 3 (Ideas) | 🟦 | **60** ↑3 | Alpha górny | 2026-06-11 | `modules/M06-ideas-mind-map/KARTA_AUDYTU.md` |
-| M07 | Ideas — Process Flow | 3 (Ideas) | 🟦 | **55** ↑11 | Alpha | 2026-06-11 | `modules/M07-ideas-process-flow/KARTA_AUDYTU.md` |
-| M08 | Ideas — Table | 3 (Ideas) | 🟦 | **54** ↑2 | Alpha | 2026-06-11 | `modules/M08-ideas-table/KARTA_AUDYTU.md` |
-| M09 | Ideas — Whiteboard | 3 (Ideas) | 🟦 | **49** ↑6 | Alpha | 2026-06-11 | `modules/M09-ideas-whiteboard/KARTA_AUDYTU.md` |
-| M22 | AI OS / Internal Tools | 4 (internal) | 🟦 | **54** ↑3 | Alpha | 2026-06-11 | `modules/M22-ai-os/KARTA_AUDYTU.md` |
-| M23 | Organizacja | 4 (internal) | 🟦 | **52** ↑8 | Alpha | 2026-06-11 | `modules/M23-organizacja/KARTA_AUDYTU.md` |
-| M24 | Panel Administratora | 4 (internal) | 🟦 | **58** ↑8 | Alpha górny | 2026-06-12 | `modules/M24-admin/KARTA_AUDYTU.md` |
-| M27 | SuperAdmin | 4 (internal) | 🟦 | **58** ↑8 | Alpha górny | 2026-06-11 | `modules/M27-superadmin/KARTA_AUDYTU.md` |
-| M26 | Portal Partnerski | 4 (internal) | 🟦 | **53** ↑1 | Alpha | 2026-06-11 | `modules/M26-portal-partnerski/KARTA_AUDYTU.md` |
+| M01 | Czat | 1 (core) | 🟩 | **71** ↑10 (D, S1 full) | Beta-near | 2026-06-12 | `modules/M01-czat/KARTA_AUDYTU.md` |
+| M03 | Moja Praca — organizer | 1 (core) | 🟩 | **62** ↑8 (D) | Alpha górny | 2026-06-12 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
+| M10 | Wywiad | 1 (core) | 🟩 | **69** ↑8 (D) | Beta-near | 2026-06-12 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
+| M13 | Inicjatywy | 1 (core) | 🟩 | **62** ↑8 (D) | Alpha górny | 2026-06-12 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
+| M14 | Wdrożenie | 1 (core) | 🟩 | **60** ↑8 (D) | Alpha górny | 2026-06-12 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
+| M25 | Ustawienia | 1 (core) | 🟩 | **62** ↑8 (D) | Alpha górny | 2026-06-12 | `modules/M25-ustawienia/KARTA_AUDYTU.md` |
+| M02 | Canvas | 2 (beta) | 🟩 | **66** ↑7 (D, handoff) | Beta-near | 2026-06-12 | `modules/M02-canvas/KARTA_AUDYTU.md` |
+| M17 | Outputs | 2 (beta) | 🟩 | **61** ↑7 (D) | Alpha górny | 2026-06-12 | `modules/M17-outputs/KARTA_AUDYTU.md` |
+| M18 | Dokumenty | 2 (beta) | 🟩 | **61** ↑7 (D) | Alpha górny | 2026-06-12 | `modules/M18-dokumenty/KARTA_AUDYTU.md` |
+| M19 | Prezentacje | 2 (beta) | 🟩 | **63** ↑7 (D) | Alpha górny | 2026-06-12 | `modules/M19-prezentacje/KARTA_AUDYTU.md` |
+| M20 | Tabele Studio | 2 (beta) | 🟩 | **55** ↑7 (D) | Alpha | 2026-06-12 | `modules/M20-tabele-studio/KARTA_AUDYTU.md` |
+| M16 | Finanse | 2 (beta) | 🟩 | **66** ↑8 (D) | Beta-near | 2026-06-12 | `modules/M16-finanse/KARTA_AUDYTU.md` |
+| M15 | Rezultaty | 2 (beta) | 🟩 | **63** ↑8 (D) | Alpha górny | 2026-06-12 | `modules/M15-rezultaty/KARTA_AUDYTU.md` |
+| M21 | Meeting | 2 (beta) | 🟩 | **62** ↑7 (D, „unmounted" obalone) | Alpha górny | 2026-06-12 | `modules/M21-meeting/KARTA_AUDYTU.md` |
+| M12 | Audyty | 2 (beta) | 🟩 | **62** ↑7 (D) | Alpha górny | 2026-06-12 | `modules/M12-audyty/KARTA_AUDYTU.md` |
+| M04 | Notatnik | 2 (beta) | 🟩 | **58** ↑6 (D) | Alpha górny | 2026-06-12 | `modules/M04-notatnik/KARTA_AUDYTU.md` |
+| M05 | Ideas — Zarządzanie | 3 (Ideas) | 🟩 | **68** ↑8 (D, 23 pomysły) | Beta-near | 2026-06-12 | `modules/M05-ideas-zarzadzanie/KARTA_AUDYTU.md` |
+| M06 | Ideas — Mind Map | 3 (Ideas) | 🟩 | **68** ↑8 (D, kanwa) | Beta-near | 2026-06-12 | `modules/M06-ideas-mind-map/KARTA_AUDYTU.md` |
+| M07 | Ideas — Process Flow | 3 (Ideas) | 🟩 | **63** ↑8 (D, kanwa) | Alpha górny | 2026-06-12 | `modules/M07-ideas-process-flow/KARTA_AUDYTU.md` |
+| M08 | Ideas — Table | 3 (Ideas) | 🟩 | **62** ↑8 (D, grid) | Alpha górny | 2026-06-12 | `modules/M08-ideas-table/KARTA_AUDYTU.md` |
+| M09 | Ideas — Whiteboard | 3 (Ideas) | 🟩 | **56** ↑7 (D, svg render) | Alpha | 2026-06-12 | `modules/M09-ideas-whiteboard/KARTA_AUDYTU.md` |
+| M22 | AI OS / Internal Tools | 4 (internal) | 🟩 | **61** ↑7 (D) | Alpha górny | 2026-06-12 | `modules/M22-ai-os/KARTA_AUDYTU.md` |
+| M23 | Organizacja | 4 (internal) | 🟩 | **59** ↑7 (D) | Alpha górny | 2026-06-12 | `modules/M23-organizacja/KARTA_AUDYTU.md` |
+| M24 | Panel Administratora | 4 (internal) | 🟩 | **66** ↑8 (D) | Beta-near | 2026-06-12 | `modules/M24-admin/KARTA_AUDYTU.md` |
+| M27 | SuperAdmin | 4 (internal) | 🟦 | **62** ↑4 (D gate-only) | Alpha górny | 2026-06-12 | `modules/M27-superadmin/KARTA_AUDYTU.md` |
+| M26 | Portal Partnerski | 4 (internal) | 🟩 | **60** ↑7 (D) | Alpha górny | 2026-06-12 | `modules/M26-portal-partnerski/KARTA_AUDYTU.md` |
 | A1 | Ecosystem/Affiliate | 4 (decyzja) | 🟦 | 13 | Broken | 2026-06-11 | `modules/A1-affiliate/KARTA_AUDYTU.md` (świadomy STUB) |
 
 \* Oceny Ideas (M05–M09) przeliczone 2026-06-11 do pełnego Protokołu V1 (Fazy 0–2,5–6,7+plan); status zmieniony z 🔁 na 🟦 NIEPEŁNY. Wszystkie 27+A1 = 28 modułów zaudytowane statycznie. Fazy 3+4 zbiorczo po dostępie do Railway.
@@ -45,6 +45,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 \* **Fala 9 — FAZA C uruchomiona (2026-06-12):** (1) **Faza 3 staging ZAMKNIĘTA** — `db:verify:schema:staging` ✅ 0 drift (z 64 tabel+179 kol), 15 realnych bugów migracji naprawionych (idempotencja/PG-boolean/IMMUTABLE/FK-type/retrofit kolumn) + 3 ulepszenia verify-tool. (2) **Faza 4 staging — pula 1 core SMOKE 6/6 PASS** (live, stack 3000→3001→staging): M01 najgłębiej — **S1 full** (nowa rozmowa→SSE→reload→trwałość) + S2 (slash menu); M03 Inbox 310 poz.; M10 render; M13 Portfolio 36 inicj.; M14 dashboard 51 inicj.; M25 profil real-data. Dowody w `WDROZENIE_LOG` modułów. Wymiar D częściowy (smoke) — **status 🟦 utrzymany do pełnego Faza 4 (S3/S5/S6/S7 per moduł)**. (3) Suity testów modułów: `smoke:modules` 28/28 + statyczny kontrakt 30/30. Naprawiony bug bootu BE (`organization-context-store` import). Znalezisko: M14→M15 deep-link celuje w beta-closed Rezultaty.
 \* **Fala 9b — Faza 4 beta (2026-06-12):** beta tymczasowo odblokowana na staging (lokalny flip `betaAccess` → 'open', **revert bez commita**, prod nietknięty). **Sweep 9/9 beta PASS** (render, realne dane, zero crashy): M15 Rezultaty (Initiatives/KPI/ROI), M16 Finanse (9 statements), M20 Tabele Studio, M21 Meeting (**potwierdza: „unmounted" z audytu NIEAKTUALNE**), M18 Document Studio (Modes 1-3), M19 Prezentacje, M12 Audyty (ISO27001), M17 Outputs (Library), M05 Ideas (23 pomysły). **Razem Faza 4: 15 modułów smoke PASS** (6 core + 9 beta). **Bug naprawiony (`ProtectedRoute` BetaGate):** route-owy gate używał `isBetaClosed` bez roli → ignorował `BETA_ADMINS_EXEMPT` (sprzeczne z docstring „admins keep access" i sidebarem); teraz role-aware przez `isBetaLockedForRole` (no-op przy exempt=false, poprawne gdy true). **Internal/role sweep 6/6 PASS** (bez beta-unlock, OWNER): M23 Organizacja (Profil/Cele/Wyzwania/Megatrends), M24 Panel Admina (role-gate OK), M27 SuperAdmin (role-gate PASS — OWNER≠SUPERADMIN → poprawny redirect; treść wymaga superadmina), M26 Portal Partnerski (Pulpit/Metryki/Polecenia), M22 AI OS (control plane, internal dbr77), M11 Assessment (8 assessmentów). **RAZEM Faza 4 wave: 21/27 modułów smoke PASS, zero crashy.**
 \* **Fala 9c — Faza 4 Ideas sub-tools + Canvas (2026-06-12):** Ideas re-unlock (lokalny, revert bez commita). Workspace przez `/my-work/ideas/<id>?tool=<t>` (ID z `/api/my-work/my-ideas`). **M06 Mind Map PASS** (kanwa, „Mapa rekomendacji"), **M07 Process Flow PASS** (kanwa, „Production Line Optimization"), **M08 Table PASS** (grid, „Robotic Workstation"), **M09 Whiteboard PASS** (113 el. whiteboard + 98 SVG). **M02 Canvas — handoff PASS** (doc-intent w czacie → karta propozycji Teresy „Proposal ready · Notebook · draft"; edytor TipTap otwiera akceptacja propozycji — synthetic-click bariera, nie otwarty). **RAZEM Faza 4: 27/27 modułów dotkniętych live, 26 smoke PASS + M02 handoff PASS, ZERO crashy.** Beta revert zweryfikowany (betaAccess czysty).
+\* **Fala 10 — RE-OCENA po Fazie 4 (2026-06-12):** wymiar D (Żywa użyteczność, 15 pkt) odblokowany dowodami Fazy 4; przyznany ~7-11/15 wg głębi (M01 11 = S1 full E2E + S2; render+realne dane = 7-8; gate-only M27 = 4). 26 modułów 🟦→🟩 (M27 zostaje 🟦 — treść UI niewidoczna bez konta superadmin). **Średnia 26 modułów (bez A1): ~55 → ~63.** **Wszystkie 6 modułów core ≥60** (M01 71, M10 69, M13/M25/M03 62, M14 60) — **przekraczają próg Bramki C „core ≥55".** Beta-near (≥66): M01, M10, M02, M16, M05, M06, M24. Pełne scenariusze S per karta (S3/S5/S6/S7 itd.) = backlog do statusu ✅. Następny krok planu: Bramka C (backup+prod cutover; migracje sprawdzone) → próg BETA.
 
 ## Reguły aktualizacji
 - Po każdym audycie: wpis statusu+oceny+linku TUTAJ, w karcie pełna rubryka.
