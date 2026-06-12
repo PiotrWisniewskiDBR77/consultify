@@ -21,7 +21,9 @@
 
 CREATE TABLE IF NOT EXISTS presentation_governance_subscriber_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  subscription_id UUID NOT NULL REFERENCES presentation_governance_alert_subscriptions(id) ON DELETE CASCADE,
+  -- subscription_id is TEXT to match presentation_governance_alert_subscriptions.id
+  -- (TEXT on the live schema); a UUID column can't FK-reference a TEXT key.
+  subscription_id TEXT NOT NULL REFERENCES presentation_governance_alert_subscriptions(id) ON DELETE CASCADE,
   organization_id TEXT NOT NULL,
   token_hash TEXT NOT NULL UNIQUE,         -- sha256 hex of the raw token
   token_prefix TEXT NOT NULL,              -- first 8 chars for display only
