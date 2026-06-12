@@ -43,3 +43,11 @@ Bugi znalezione i naprawione (`share.routes.ts`, commit `9cd8fd0d2f`):
 1. **Publiczny widok 500** — `JSON.parse(m.metadata)` na kolumnie **JSONB** (node-pg zwraca obiekt, nie string). Fix: `parseMaybeJson()` (string→parse / obiekt→passthrough / else undef).
 2. **SECURITY: rewokowane share dalej dostępne** — `is_active` jest INTEGER/bigint na PG, node-pg serializuje bigint jako **string** `"0"`, więc `!share.is_active` (`"0"` truthy) nigdy nie odpalał guarda 410. Fix: `flagOn()` (number/string/bool→bool) w widoku, unlock i liście.
 **Znaczenie:** oba istnieją na prodzie — przy deployu `Londyn`→prod naprawiają realny wyciek dostępu (rewokowane linki) + crash publicznego widoku. M01 S5: 🟩→**✅**.
+
+## Sweep systemowy klasy bugów PG (bigint/JSONB) — 2026-06-12
+Po znalezieniu w M01 dwóch bugów cross-env (node-pg: bigint→string, jsonb→obiekt) przebiegłem **cały kod routes/services** za tą samą klasą. Metoda: lista kolumn `bigint`/`jsonb` ze staging przez `information_schema`, potem `grep` JS-side `=== 1`/`!col`/`Boolean()`/`JSON.parse` + krzyżowanie **per (tabela, kolumna)**.
+- **JSON.parse-on-jsonb:** 7 kandydatów → wszystkie kolumny okazały się TEXT w swoich tabelach (`generated_workbooks.schema_json`, `settings_audit_log.old_value`, `audit_logs.details`, `integration_sync_log.error_details` ×2) → **bezpieczne**. Jedyny realny jsonb to `conversation_shares.metadata` (naprawiony).
+- **bigint-as-bool:** gating webhooków (`v8_webhook_registrations.is_active`=boolean, `webhook_subscriptions.is_active`=integer) → bezpieczne; `webhooks`/`tools`/`access_codes`.is_active = integer → bezpieczne. **2 realne offendery: `vat_validations.is_valid` (bigint)** w `taxService.ts:535` (`=== 1` → ważny VAT z cache czytany jako nieważny) i `billing.routes.ts:3514` (`!!` → nieważny VAT jako ważny) → **naprawione** (commit `71cc36693d`, `Number(x)===1`).
+- **Uboczne (zgłoszone jako tło):** `billing.routes.ts:3506` używa SQLite-only `datetime("now")` → cache VAT zawsze pudłuje na PG (osobny portability bug, task `task_e820c8a6`).
+
+**Bilans sweepu: 4 realne bugi prod naprawione, reszta to false-positivy (int4 / TEXT) — kod poza tym czysty w tej klasie.** Trwała lekcja: `finding_pg_bigint_jsonb_serialization` (pamięć).
