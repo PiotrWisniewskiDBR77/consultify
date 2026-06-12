@@ -1483,20 +1483,20 @@ router.get(
         if (snapshot) {
           const data = {
             users: {
-              used: snapshot.usageToday.users,
+              used: Number(snapshot.usageToday.users ?? 0),
               limit: snapshot.limits?.maxUsers ?? -1,
             },
             projects: {
-              used: snapshot.usageToday.projects,
+              used: Number(snapshot.usageToday.projects ?? 0),
               limit: snapshot.limits?.maxProjects ?? -1,
             },
             storage: {
-              used: snapshot.usageToday.storageMb,
+              used: Number(snapshot.usageToday.storageMb ?? 0),
               limit: snapshot.limits?.maxStorageMb ?? -1,
               unit: 'MB',
             },
             aiTokens: {
-              used: snapshot.usageToday.tokensUsed,
+              used: Number(snapshot.usageToday.tokensUsed ?? 0),
               limit: snapshot.limits?.maxTotalTokens ?? -1,
             },
           };
