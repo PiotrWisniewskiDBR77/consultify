@@ -8,7 +8,11 @@ CREATE INDEX IF NOT EXISTS idx_revoked_tokens_user_reason_expires ON revoked_tok
 -- user_sessions: used by trackSessionActivity on every authenticated request
 DO $$
 BEGIN
-  IF to_regclass('user_sessions') IS NOT NULL THEN
+  IF to_regclass('user_sessions') IS NOT NULL
+     AND EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'user_sessions' AND column_name = 'is_active'
+     ) THEN
     CREATE INDEX IF NOT EXISTS idx_user_sessions_user_active ON user_sessions (user_id, is_active);
   END IF;
 END $$;
