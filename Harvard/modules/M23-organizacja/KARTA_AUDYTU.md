@@ -5,7 +5,7 @@
 **Evidence:** `Harvard/modules/M23-organizacja/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
 ## OCENA: 52/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 17→20 i B: 9→11 (W11 org-context-store backend — Goals/Challenges/Strategy mają realną persystencję per-org + zasilają Teresę, commit `d013ab7c4c`); C: 7→8 (W15 CI gate, commit `99bda16792`); F: 5→7 (W2 `/api/competency` auth + org-data export role-gate, commit `e3945bc7fc`). Suma: 20+11+8+0+6+7+0=52.
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 17→20 i B: 9→11 (W11 org-context-store backend — Goals/Challenges/Strategy mają realną persystencję per-org + zasilają Teresę, commit `d013ab7c4c`); C: 7→8 (W15 CI gate, commit `99bda16792`); F: 5→7 (`/api/competency` auth + org-data export role-gate + KG orgId fallbacks removed + admin sub-sections direct URL redirect, commity `fd8707c5b2` + `c7f36d9f3f`). Suma: 20+11+8+0+6+7+0=52.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|

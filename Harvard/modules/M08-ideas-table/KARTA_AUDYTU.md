@@ -4,12 +4,12 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M08 · inwentarz `Harvard/podzial/ideas/MODULE_02D_table.md` · protokół `Harvard/protokol/MODULE_AUDIT_PROTOCOL_V1.md`
 **Evidence:** `Harvard/modules/M08-ideas-table/evidence/` (Faza 4 niewykonana — brak przeglądarki)
 
-## OCENA: 52/100 — Tier: Alpha · „NIEPEŁNY (bez Fazy 4)"
-> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 15→17 (W6 4 zepsute przyciski usunięte + generate_table dead case, commit `f35aa8d7c8`); C: 7→8 (W15 CI gate, commit `99bda16792`); F: 8→9 (W1 2 pomocnicze zapytania org-scope, commit `b9f2dee9d2`). Suma: 17+11+8+0+7+9+0=52 (naprawia błąd arytmetyczny — poprzedni nagłówek wskazywał 52, ale suma = 48).
+## OCENA: 53/100 — Tier: Alpha · „NIEPEŁNY (bez Fazy 4)"
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 15→17 (W6 4 zepsute przyciski usunięte + generate_table dead case, commit `f35aa8d7c8`); C: 7→8 (W15 CI gate, commit `99bda16792`); F: 8→9 (W1 2 pomocnicze zapytania org-scope, commit `b9f2dee9d2`). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 17→18 (ActivityFeed 401 fix — Api.get() zamiast raw fetch, commit `606c9f2c0e`). Suma: 18+11+8+0+7+9+0=53.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 17/25 | Rdzeń (persistence + AI + 25 typów kolumn + 7 widoków) REALNE; 4 zepsute przyciski (Import/ActivityFeed/AuditTrail/Snapshot) usunięte (W6, `f35aa8d7c8`); generate_table dead case usunięty (W6); fałszywy streaming pozostaje P2 |
+| A. Realność funkcji | 25 | 18/25 | Rdzeń (persistence + AI + 25 typów kolumn + 7 widoków) REALNE; SnapshotManager+Import usunięte (W6); ActivityFeed 401 naprawione (Sprint5, `606c9f2c0e`); AuditTrail path OK (W6) ale nadal brak auth headers; fałszywy streaming P2 |
 | B. Wiring i dane | 15 | 11/15 | Ścieżka produkcyjna map-sync solidna, migracje kompleksowe; connector/activity/audit/snapshot trafiają w nieistniejące mounty; 2 zapytania `my_idea_maps` bez `organization_id` w kontekście pomocniczym (nie w głównej ścieżce zapisu) |
 | C. Testy automatyczne | 15 | 8/15 | 137 testów PASS + W15 CI gate Londyn (`99bda16792`); testy pokrywają głównie ścieżkę platformy, zero dla useTablePersistence/FormulaEngineV2/useTableRows |
 | D. Żywa użyteczność | 15 | 0/15 | Faza 4 niewykonana — brak przeglądarki; hard cap zastosowany |
@@ -36,7 +36,7 @@
 | 3 | AI — ai-fill, ai-suggestions, AICopilot | REALNA + mock-streaming | REALNE (degradacja) | `:8710, :8790`; `AICopilotMode.tsx:117-131` |
 | 4 | 25 typów kolumn + 7 widoków legacy | REALNE | REALNE | `CellRenderer.tsx:489-515`; `IdeaTableTool.tsx:2683-2767` |
 | 5 | Konektory / Import | ZEPSUTE (404) | ZEPSUTE | `useConnectors.ts:112` → `/workspaces/{id}/connectors` ≠ istniejący mount |
-| 6 | ActivityFeed / AuditTrail / Snapshots | ZEPSUTE (401/404) | ZEPSUTE | `ActivityFeed.tsx:148-150` bez Authorization; `AuditTrailPanel.tsx:177`; `SnapshotManager.tsx:117` |
+| 6 | ActivityFeed / AuditTrail / Snapshots | CZĘŚCIOWO NAPRAWIONE | CZĘŚCIOWO | ActivityFeed: **NAPRAWIONE** (`606c9f2c0e`, Api.get() z JWT); AuditTrail: path fix W6 ale raw fetch — nadal 401; SnapshotManager: USUNIĘTE (W6) |
 | 7 | ExportToPresentation | REALNA | REALNE | `ExportToPresentation.tsx:237` → `Api.createPresentationDeck` → `/api/presentations/decks` (`Gateway.ts:877`) |
 | 8 | CrossTableRelations | REALNA | REALNE | `CrossTableRelations.tsx:141-143` → `Api.getMyIdeaMap` |
 | 9 | FormulaEngineV2 | REALNA | REALNE | `FormulaEngineV2.ts` — SUM/AVG/MIN/MAX/COUNT/IF/CONCAT/SCORE |

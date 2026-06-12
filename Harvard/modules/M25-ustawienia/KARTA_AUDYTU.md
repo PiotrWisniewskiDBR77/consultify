@@ -4,13 +4,13 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M25 · inwentarz `Harvard/podzial/inventory/INV_G_*.md` (sekcja USTAWIENIA, poz.1-12) · poprzednia karta `docs/audit/2026-06-02/MODULE_18_ustawienia.md` (56/100) · finding `[[finding_v10_voice_config_false_negative]]`
 **Evidence:** `Harvard/modules/M25-ustawienia/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 53/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 5→8 (W1 notifications read-IDOR naprawiony + Bramka D CalDAV/OAuth AES-256-GCM, commity `b9f2dee9d2` + `9ef570ca1b`, hard cap zdjęty).
+## OCENA: 54/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 5→8 (W1 notifications read-IDOR naprawiony + Bramka D CalDAV/OAuth AES-256-GCM, commity `b9f2dee9d2` + `9ef570ca1b`, hard cap zdjęty). **Fala 2 (pominięte w re-audycie 2026-06-11):** B: 12→13 (LoginHistorySettings + ConnectedAccounts: amber baner z Retry zamiast cichej pustki przy błędzie API, commit `7495c12ffb`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 21 | 10/12 REALNE z trwałym `user_preferences` (próbka 6 toggli persystuje+read-back); Shortcuts UKRYTE/no-op, Feature flags read-only viewer, Billing route-only „Section not found". |
-| B. Wiring i dane | 15 | 12 | Rdzeń `user_preferences`/`gdpr_requests` realny, integracje org-scoped, GDPR z bcrypt+grace; minus: cicha degradacja `catch→[]` na login-history/connected-accounts + zerwany billing. |
+| B. Wiring i dane | 15 | 13 | Rdzeń `user_preferences`/`gdpr_requests` realny, integracje org-scoped, GDPR z bcrypt+grace; login-history/connected-accounts: amber baner naprawiony (`7495c12ffb`); pozostałe: zerwany billing. |
 | C. Testy automatyczne | 15 | 6 | 286 PASS/43 FAIL/18 SKIP, ale większość FAIL to drift harnessu; **S5 GDPR-delete bcrypt i S3 zmiana hasła bez testu**; nic w PR-gate na `Londyn`. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | Własny spójny shell settings + i18n dobry, ale **2237 hardkodów palety Tailwind** zamiast tokenów + brak kanonu list (sesje/keys/webhooks = layouty kartowe, nie §27). |

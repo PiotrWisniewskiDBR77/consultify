@@ -4,17 +4,17 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M14 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja WDROŻENIE, poz.1-13) · poprzednia karta `docs/audit/2026-06-02/MODULE_06_realizacja.md` (51/100) · reuse dokumentu inicjatywy z M13
 **Evidence:** `Harvard/modules/M14-wdrozenie/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 48/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 recalcInitiativeActualTotal org-scope + W2 task_dependencies naprawione, commit `b9f2dee9d2` + `e3945bc7fc`, hard cap zdjęty); E: 5→6 (W13 M14 Wave8 i18n, commit `84757dc672`).
+## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 recalcInitiativeActualTotal org-scope, commit `b9f2dee9d2`; task_dependencies org-scope, commit `9974596da7`; hard cap zdjęty); E: 5→6 (W13 M14 Wave8 i18n, commit `84757dc672`). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 20→21 (budgetHealth real calculation, commit `84757dc672`); B: 9→10 (execution.routes.ts deleted, commit `2fe1c81be3`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 20 | 11/13 REALNE z żywymi tabelami+migracjami; Manager (poz.9) cicho martwy bez V8, `budgetHealth=100` hardcode na dashboardzie. |
-| B. Wiring i dane | 15 | 9 | Rollout trwały (naprawione vs 06-02), CRUD/aggregate org-scoped, ale cicha degradacja V8→legacy bez banera + osierocony `execution.routes.ts` (404 na stats/escalations/calendar). |
+| A. Realność funkcji | 25 | 21 | 11/13 REALNE z żywymi tabelami+migracjami; Manager (poz.9) cicho martwy bez V8; budgetHealth real calculation (Sprint 5, `84757dc672`). |
+| B. Wiring i dane | 15 | 10 | Rollout trwały (naprawione vs 06-02), CRUD/aggregate org-scoped, ale cicha degradacja V8→legacy bez banera; osierocony `execution.routes.ts` USUNIĘTY (`2fe1c81be3`). |
 | C. Testy automatyczne | 15 | 6 | 633 PASS/23 FAIL lokalnie; S2 (DnD) i S6 (raporty) zero działającego pokrycia, `rollout.routes` bez testów BE; nic nie biegnie w PR-gate na `feat/*`. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | Hub zgodny + Portfel głównie OK, ale 5 tabel Rollout poza §27 (surowy `<table>`); W13 i18n Wave8 naprawione (commit `84757dc672`). |
-| F. Bezpieczeństwo/dostęp | 10 | 7 | W1 recalcInitiativeActualTotal + W2 task_dependencies org-scope naprawione (commity `b9f2dee9d2`, `e3945bc7fc`); W7 beta-lock 3-warstwowy; pozostałe: pilot tylko klient (P2). |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | recalcInitiativeActualTotal org-scope (`b9f2dee9d2`); task_dependencies 2-step verify (`9974596da7`); W7 beta-lock 3-warstwowy; pozostałe: pilot tylko klient (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1+W2), hard cap zdjęty.** Suma surowa 48 < 70 (Faza 4 niewykonana). |
 
@@ -41,7 +41,7 @@
 - Portfel/dashboard (Health Score z realnych danych, fallback liczy z DB — `ExecutionHub.tsx`), tabela/kanban/timeline (`ExecutionInitiativesKanbanView.tsx:268`, PATCH `/initiatives/:id/status`), Timeline z sygnałami opóźnień/ryzyk (`:1066-1091`), Action Queue (`ExecutionController.ts:744-900`, org-scoped), RAID+Decisions (`:1248-1264`), panel+dokument inicjatywy (reuse M13, `:4749-4758`), **Rollout 5 zakładek trwałe** (`rollout.routes.ts` + `20260608_rollout_tables.sql`), Raporty (`reportContentGenerator.ts` — brak fabrykowanych liczb), czat Teresy handoff (`:1665-1730`), V8 z fallbackiem (legacy router na te same tabele — NIE fabrykacja), blokada pilota (UI, `:573/1787/2659`).
 
 ### 1b. MOCK / STUB / fabrykowane klientem
-- **[P2] `budgetHealth=100` hardcode** — `ExecutionHub.tsx:2216` — kafelek executive dashboard pokazuje sztywne 100% „zdrowia budżetu" niezależnie od danych.
+- ~~**[P2] `budgetHealth=100` hardcode**~~ — **NAPRAWIONE** (Sprint 5, commit `84757dc672`) — `ExecutionHub.tsx:2221` teraz liczy `Math.max(0, Math.round(100 - (totalActual / totalBudget) * 100))`; ukrywa kafelek gdy brak danych.
 - Poza tym: brak mocków danych; fallbacki czytają realne tabele.
 
 ### 1c. ZEPSUTE / WIDOCZNE-ALE-ZEPSUTE
@@ -49,7 +49,7 @@
 - **[P2] ciche degradacje `catch→[]`** bez komunikatu: execution-health (`:1301`), action-queue (`:1317`) — sygnały lecą do `[]`, user nie wie, że control-tower/risk/budget niedostępne.
 
 ### 1d. UKRYTE / MARTWY KOD
-- **[MARTWY] `routes/execution.routes.ts`** — niezamontowany (Gateway montuje `routes/pmo/execution.routes.ts` @ `Gateway.ts:821`); jego trasy `/stats|/escalations|/calendar` zwracają 404 → 3 czerwone E2E. Rekomendacja: **wytnij** (lub remount jeśli trasy potrzebne — ale `pmo/execution` je zastępuje).
+- ~~**[MARTWY] `routes/execution.routes.ts`**~~ — **USUNIĘTY** (commit `2fe1c81be3`) — plik skasowany; Gateway montuje `routes/pmo/execution.routes.ts` @ `Gateway.ts:821`.
 - **[MARTWY] `ImplementationView.tsx`** (importowany, nigdy renderowany), **`views/ExecutionView.tsx`** (hardcode `projectId="default"`), **`ExecutionDetailPanel.tsx`** → wytnij (potwierdzone z inwentarza poz.13).
 - **[KANDYDACI]** `PeopleChangeWorkspace`/`RiskSignalsPanel`/`DelayDetectionPanel`/`ReportCompactPanel` — do weryfikacji konsumentów.
 
@@ -64,7 +64,7 @@
 | Budget entries | legacy `/api/execution-control/budget/entries` + `executionBudgetService` | budget_entries, **initiatives** | tak | **recalc bez org-scope (P0 write)** |
 | Manager lanes | `v8Get /api/v8/...` (brak legacy) | — | — | ZEPSUTE bez `ENABLE_V8_GLOBAL` (cicho 0) |
 | Sygnały/timeline/budget | v8→legacy fallback (te same tabele) | risk_signal_alerts, delay_signals | tak | DZIAŁA z **cichą** degradacją |
-| Dependency interventions | `v8/execution-control.routes.ts:1117` | task_dependencies, initiative_dependencies | tak | **task_dep bez org-scope (P1, za flagą)** |
+| Dependency interventions | `v8/execution-control.routes.ts:1117` | task_dependencies, initiative_dependencies | tak | **NAPRAWIONE** — task_dep: 2-step org verify (`9974596da7`); initiative_dep: zawsze org-scoped |
 
 ### 1f. Flagi
 | Flaga | Default BE | Default FE | Kto włącza | Wpływ |
@@ -153,13 +153,13 @@
 | Warstwa | Nawigacja | Route | API | Dziura? |
 |---|---|---|---|---|
 | Execution core | sidebar otwarty | zalogowany | verifyToken + org-scope + role | — |
-| Budget entries (legacy) | — | always-mounted | `requireOrgRole('admin')`, ale recalc bez org | **TAK (P0 write)** |
-| Dependency interventions (v8) | — | za `ENABLE_V8_GLOBAL` | task_dep bez org-scope | **TAK (P1, za flagą)** |
+| Budget entries (legacy) | — | always-mounted | `requireOrgRole('admin')` + recalc `AND organization_id` (`b9f2dee9d2`) | **NAPRAWIONE (W1)** |
+| Dependency interventions (v8) | — | za `ENABLE_V8_GLOBAL` | task_dep org-scope naprawiony (`9974596da7`) | **NAPRAWIONE** |
 | Pilot VTS Rollout | UI `readOnly` | — | `requireOrgRole('user')` | **TAK (P2)** |
 
 **Findingi:**
-- **[P0] cross-org write budżetu** — `POST /api/execution-control/budget/entries` (`executionControl.routes.ts:485-499`, **zawsze zamontowany bez bramki V8**, `Gateway.ts:985-989`) → `createBudgetEntry` (org-scoped insert do `budget_entries`) → `recalcInitiativeActualTotal` (`executionBudgetService.ts:401-420`) wykonuje **`UPDATE initiatives SET actual_budget_total = ? WHERE id = ?` BEZ `organization_id`** (`:413`). Eksploit: admin org A podaje `initiativeId` org B → wstawia własny wpis ACTUAL → recalc nadpisuje cachowany `actual_budget_total` cudzej inicjatywy wartością atakującego. Wymaga roli admin, ale działa na prodzie bez flagi. **Zweryfikowane osobiście.** Piąty moduł z wzorcem cross-org (M01/M03/M10/M13/M14).
-- **[P1] cross-org write `task_dependencies`** — `POST /api/v8/execution-control/interventions/dependency` (`v8/execution-control.routes.ts:1135-1148`): INSERT/DELETE na `task_dependencies` z surowymi ID z body **bez org-scope** (tabela nie ma `organization_id`). Eksploit globalny, ale **za `ENABLE_V8_GLOBAL` (default OFF → 404)** → P1 warunkowy zależny od flagi na środowisku. (Sąsiedni `initiative_dependencies` `:1149-1162` poprawnie filtruje org → luka zlokalizowana w gałęzi TASK↔TASK.)
+- ~~**[P0] cross-org write budżetu**~~ — **NAPRAWIONE** (Sprint 2, commit `b9f2dee9d2`) — `recalcInitiativeActualTotal` (`executionBudgetService.ts:413`) teraz wykonuje `UPDATE initiatives SET actual_budget_total = ? WHERE id = ? AND organization_id = ?` — cross-org tamper niemożliwy.
+- ~~**[P1] cross-org write `task_dependencies`**~~ — **NAPRAWIONE** (Sprint 5, commit `9974596da7`) — dodano 2-step verify: `SELECT organization_id FROM tasks WHERE id=?` dla `fromEntityId` i `toEntityId`; 403 `EXECUTION_TASK_ORG_MISMATCH` gdy mismatch (`v8/execution-control.routes.ts:1138-1151`).
 - **[P2] pilot VTS Rollout tylko klient** — `readOnly` w UI; serwer `requireOrgRole('user')` przepuszcza CRUD przez API (wzorzec M13).
 - **[P3] `ON CONFLICT (id) DO UPDATE` bez org-guard** — `risk_signal_alerts` (`v8/execution-control.routes.ts:128-132`), `delay_signals` (`:410-418`) → cross-org tamper flagi dismiss.
 
@@ -167,9 +167,9 @@
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P0)
-1. **Org-scope na `recalcInitiativeActualTotal`** — dodać `AND organization_id = ?` do `UPDATE initiatives` (`executionBudgetService.ts:413`); rozważyć też weryfikację, że `initiativeId` z body należy do org PRZED `createBudgetEntry` — Weryfikacja: test cross-org (admin org A z `initiativeId` org B → 0 zmian na `initiatives` org B; smoke: budżet org B niezmieniony).
-2. **Org-scope na `task_dependencies` interwencjach** — INSERT/DELETE z weryfikacją, że `fromTaskId`/`toTaskId` należą do org wywołującego (join przez `tasks.organization_id`), bo tabela nie ma kolumny org (`v8/execution-control.routes.ts:1138-1147`) — Weryfikacja: link cross-org → 403/404.
-3. **Rozstrzygnij osierocony `routes/execution.routes.ts`** — wytnij (martwy) albo remount, by `/stats|/escalations|/calendar` nie dawały 404 — Weryfikacja: 3 E2E execution-center zielone albo trasy świadomie usunięte.
+1. ~~**Org-scope na `recalcInitiativeActualTotal`**~~ — **DONE** (`b9f2dee9d2`) — `AND organization_id = ?` dodany do `UPDATE initiatives` w `executionBudgetService.ts:413`.
+2. ~~**Org-scope na `task_dependencies` interwencjach**~~ — **DONE** (`9974596da7`) — 2-step verify na `fromTaskId`/`toTaskId`.
+3. ~~**Rozstrzygnij osierocony `routes/execution.routes.ts`**~~ — **DONE** (`2fe1c81be3`) — plik usunięty.
 4. **Napraw env-drift testów decision-management** (seed/role „iris") + hardcoded `localhost:3005` — Weryfikacja: integracyjne+E2E zielone lokalnie.
 
 ### Fala 2 — Domknięcie wartości (P1)

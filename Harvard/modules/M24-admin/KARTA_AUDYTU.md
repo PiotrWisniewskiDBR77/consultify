@@ -5,7 +5,7 @@
 **Evidence:** `Harvard/modules/M24-admin/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
 ## OCENA: 57/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (W2 admin-data×3 + ai-settings×2 org-scope wyrównane, commit `e3945bc7fc`, hard cap zdjęty).
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (admin-data router-level requireRole + param :orgId org-scope + ai-settings admin/owner-only, commity `1f9ed50f05` + `fd8707c5b2`; /debug-memberships dropped; members POST/PATCH/DELETE requireRole added; hard cap zdjęty).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|

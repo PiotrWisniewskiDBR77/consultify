@@ -4,16 +4,17 @@
 **Wejścia:** `Harvard/podzial/ideas/MODULE_02B_mind-map.md` (poprzednia analiza 72/100) · `Harvard/podzial/inventory/INV_B_my-work.md` (sekcja Ideas) · Protokół V1
 **Evidence:** `Harvard/modules/M06-ideas-mind-map/evidence/` (Faza 4 niewykonana — brak przeglądarki w subagent)
 
-## OCENA: 57/100 — Tier: Alpha · „NIEPEŁNY (bez Fazy 4)"
+## OCENA: 60/100 — Tier: Alpha górny · „NIEPEŁNY (bez Fazy 4)"
+> **Re-audit 2026-06-11 po Sprintach 1–5 (pierwotna karta bez re-audytu — subagent):** A: 16→17 (WebhookSettings localStorage STUB usunięty, commit `fd8707c5b2`); E: 7→8 (export label uczciwy „HTML Presentation" + „Cost roseuction"/Recoverose strings naprawione, commit `fd8707c5b2`); F: 7→8 (WS collab org-scope verify na `ideaId`, commit `fd8707c5b2`, P1 zamknięty). Suma: 17+11+9+0+8+8+7=60.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 16/25 | Rdzeń persystencji+collab+edycji REALNY; 7 pozycji inwentarza MOCK/ZEPSUTE (eksport PPT→HTML, webhooki localStorage, AI overlays fabrykowane klientem, sendBeacon brak, string "Cost roseuction") |
+| A. Realność funkcji | 25 | 17/25 | Rdzeń persystencji+collab+edycji REALNY; WebhookSettings STUB usunięty (Sprint5, `fd8707c5b2`); pozostałe MOCK/ZEPSUTE: eksport PPT→HTML, AI overlays fabrykowane klientem, sendBeacon brak |
 | B. Wiring i dane | 15 | 11/15 | Każdy główny endpoint ma tabelę+migrację+org-scope; brak migracji dla `my_idea_map_snapshots` i `my_idea_activity` → endpointy zwrócą 503 na nieprzygotowanej DB |
 | C. Testy automatyczne | 15 | 9/15 | 64 testy FE zielone; smoke sync 8 testów; ale zero testów BE route `/map/sync`; e2e checklist poza CI; p12-integration dotyczy odrębnego v8 modułu |
 | D. Żywa użyteczność | 15 | 0/15 | FAZA 4 NIEWYKONANA (subagent bez przeglądarki) — hard cap max 70 zastosowany |
-| E. Kanony/UI | 10 | 7/10 | Brak §27 dla tabel (moduł nie eksponuje tabeli listowej — canvas); ModuleHub prawidłowy; i18n: string "Cost roseuction" widoczny dla PL i EN; brak align/snap |
-| F. Bezpieczeństwo/dostęp | 10 | 7/10 | HTTP endpoints org-scoped poprawnie; WS `/ws/collab/:ideaId` — brak weryfikacji, czy łączący się użytkownik należy do org właściciela idei (P1); beta-gating przez SSOT betaAccess.ts |
+| E. Kanony/UI | 10 | 8/10 | §27 N/D (canvas, nie lista); ModuleHub prawidłowy; i18n naprawione (Sprint5: „Cost roseuction"/Recoverose gone, export label „HTML Presentation", commit `fd8707c5b2`); brak align/snap |
+| F. Bezpieczeństwo/dostęp | 10 | 8/10 | HTTP endpoints org-scoped; WS collab org-scope verify NAPRAWIONE (Sprint5 `fd8707c5b2`: `ideaId` sprawdzane vs org z JWT); beta-gating przez SSOT betaAccess.ts |
 | G. Środowiska (Railway) | 10 | 7/10 | Migracje główne realne (5 plików); brak migracji 2 tabel pomocniczych; flagi domyślne bezpieczne; Faza 3 bez curl-smoke (brak uprawnień Railway w subagent) |
 | **Hard cap zastosowany?** | — | — | Faza 4 niewykonana → max 70; suma surowa = 57, poniżej 70 → cap nieaktywny |
 

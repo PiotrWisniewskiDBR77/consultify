@@ -4,12 +4,12 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M27 · inwentarz `Harvard/podzial/inventory/INV_G_*.md` (sekcja SUPERADMIN, poz.1-7) · `[[finding_feedback_system_audit]]`
 **Evidence:** `Harvard/modules/M27-superadmin/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 57/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→7 (W2 llm-tiers verifySuperAdmin + virtual-workers org-admin block naprawione, commit `e3945bc7fc`, hard cap zdjęty).
+## OCENA: 58/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→7 (W2 llm-tiers verifySuperAdmin + virtual-workers org-admin block naprawione, commit `e3945bc7fc`, hard cap zdjęty). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 23→24 (P0 FeedbackBacklog secret-path leak + SSO crash guard naprawione, commit `69ffc1fd86`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 23 | ~95% z 60+ zakładek REALNE (cienkie wrappery → realne widoki, nie placeholdery); feature flags/AI providers/Stripe/module-access realne; martwy płaski AIPlatformModule. |
+| A. Realność funkcji | 25 | 24 | ~95% z 60+ zakładek REALNE; FeedbackBacklog secret-path leak + SSO crash naprawione (Sprint5, `69ffc1fd86`); pozostałe: martwy płaski AIPlatformModule. |
 | B. Wiring i dane | 15 | 13 | Feature flags persystują+wersjonują, AI config persyst., Stripe realny, bootstrap DBR77 realny. |
 | C. Testy automatyczne | 15 | 8 | ~502 PASS/9 FAIL; superadmin middleware-gate 42/42, ale brak E2E non-superadmin→403, słabe asercje `[401,403,404]`, 2 realne P0 bugi wykryte; nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
@@ -44,8 +44,8 @@
 - Brak placeholder-zakładek. `iam/IAMModuleView.tsx` (70 l., 0 API) — prawdopodobny orphan.
 
 ### 1c. ZEPSUTE / WIDOCZNE-ALE-ZEPSUTE
-- **[P0] `SuperAdminFeedbackBacklogView`** wycieka surowy `internal: SQLSTATE[HY000] .../secrets` (info-disclosure).
-- **[P0] `SSOConfigurationView.tsx:484`** crash `providerType.replace()` (brak guarda + mock-drift `provider`/`providerType`).
+- ~~**[P0] `SuperAdminFeedbackBacklogView`** wycieka surowy `internal: SQLSTATE[HY000] .../secrets`~~ — **NAPRAWIONE** (Sprint5, `69ffc1fd86`) — statyczny string w setError/toast.
+- ~~**[P0] `SSOConfigurationView.tsx:484`** crash `providerType.replace()`~~ — **NAPRAWIONE** (Sprint5, `69ffc1fd86`) — nullish coalesce na `providerType`.
 - Known feedback 500 — NAPRAWIONE w kodzie (`feedback.routes.ts:158/177/466`, commit `36ceb52c60`); live-weryfikacja deploy PENDING.
 
 ### 1d. UKRYTE / MARTWY KOD
