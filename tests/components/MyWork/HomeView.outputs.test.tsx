@@ -95,6 +95,13 @@ vi.mock('../../../src/components/MyWork/Home/useRadarData', () => ({
   useRadarData: (...args: unknown[]) => useRadarDataMock(...args),
 }));
 
+// The preview panel upgrades to an async Teresa AI briefing when a signal is
+// opened. Pin it to the settled deterministic baseline so the panel renders the
+// signal's preview copy (whyItMatters, etc.) synchronously instead of a shimmer.
+vi.mock('../../../src/components/MyWork/Home/useRadarBriefing', () => ({
+  useRadarBriefing: () => ({ briefing: null, loading: false }),
+}));
+
 const useV8MyWorkRoofSummaryMock = vi.fn();
 vi.mock('../../../src/hooks/useV8MyWorkRoof', () => ({
   useV8MyWorkRoofSummary: (...args: unknown[]) => useV8MyWorkRoofSummaryMock(...args),

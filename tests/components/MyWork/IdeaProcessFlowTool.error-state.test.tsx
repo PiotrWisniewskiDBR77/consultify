@@ -29,6 +29,8 @@ vi.mock('reactflow', () => ({
   MiniMap: () => null,
   Handle: () => null,
   Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
+  ConnectionMode: { Strict: 'strict', Loose: 'loose' },
+  MarkerType: { Arrow: 'arrow', ArrowClosed: 'arrowclosed' },
   addEdge: vi.fn((edge, edges) => [...edges, edge]),
   applyEdgeChanges: vi.fn((_changes, edges) => edges),
   applyNodeChanges: vi.fn((_changes, nodes) => nodes),

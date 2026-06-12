@@ -70,7 +70,7 @@ describe('CalendarCreateEventModal', () => {
     render(
       <CalendarCreateEventModal
         open
-        defaultDate={new Date('2026-03-27T00:00:00Z')}
+        defaultDate={new Date(2026, 2, 27)}
         onClose={vi.fn()}
         onCreated={vi.fn()}
       />,
@@ -95,7 +95,7 @@ describe('CalendarCreateEventModal', () => {
     render(
       <CalendarCreateEventModal
         open
-        defaultDate={new Date('2026-03-27T00:00:00Z')}
+        defaultDate={new Date(2026, 2, 27)}
         onClose={vi.fn()}
         onCreated={vi.fn()}
       />,
@@ -119,7 +119,7 @@ describe('CalendarCreateEventModal', () => {
     render(
       <CalendarCreateEventModal
         open
-        defaultDate={new Date('2026-03-27T00:00:00Z')}
+        defaultDate={new Date(2026, 2, 27)}
         onClose={onClose}
         onCreated={onCreated}
       />,
@@ -159,7 +159,7 @@ describe('CalendarCreateEventModal', () => {
     render(
       <CalendarCreateEventModal
         open
-        defaultDate={new Date('2026-03-27T00:00:00Z')}
+        defaultDate={new Date(2026, 2, 27)}
         onClose={onClose}
         onCreated={onCreated}
       />,
