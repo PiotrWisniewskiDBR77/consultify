@@ -1,41 +1,11 @@
 -- V8 Reports & Presentations Operating Model — core tables
 -- WP-W6-OUT-01: Delivery lifecycle, template families, recurring automation, AI governance
 -- Decisions: W6-1 (shared AI governance), W6-2 (separate presets), W6-3 (3 template families), W6-4 (recurring scope)
+--
+-- Note: v8_output_artifacts is defined in 20260323_v8_reports_output_runtime.sql
 
 -- ==========================================
--- 1. Output Artifacts — unified output records
--- ==========================================
-
-CREATE TABLE IF NOT EXISTS v8_output_artifacts (
-  artifact_id              TEXT PRIMARY KEY,
-  organization_id          TEXT NOT NULL,
-  output_type              TEXT NOT NULL
-                           CHECK (output_type IN ('report', 'presentation')),
-  delivery_state           TEXT NOT NULL DEFAULT 'draft'
-                           CHECK (delivery_state IN (
-                             'draft', 'generated', 'editing', 'in_review',
-                             'ready', 'shared', 'archived'
-                           )),
-  template_family_ref      TEXT,
-  source_initiative_id     TEXT,
-  ai_governance_preset_ref TEXT,
-  created_by               TEXT NOT NULL,
-  created_at               TEXT NOT NULL DEFAULT (datetime('now')),
-  last_transition_at       TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_v8_output_artifacts_org
-  ON v8_output_artifacts(organization_id);
-CREATE INDEX IF NOT EXISTS idx_v8_output_artifacts_org_type
-  ON v8_output_artifacts(organization_id, output_type);
-CREATE INDEX IF NOT EXISTS idx_v8_output_artifacts_state
-  ON v8_output_artifacts(organization_id, delivery_state);
-CREATE INDEX IF NOT EXISTS idx_v8_output_artifacts_initiative
-  ON v8_output_artifacts(source_initiative_id)
-  WHERE source_initiative_id IS NOT NULL;
-
--- ==========================================
--- 2. Template Families — Decision W6-3
+-- 1. Template Families — Decision W6-3
 -- ==========================================
 
 CREATE TABLE IF NOT EXISTS v8_template_families (
@@ -59,7 +29,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_v8_template_families_org_name
   ON v8_template_families(organization_id, family_name);
 
 -- ==========================================
--- 3. Recurring Output Programs — Decision W6-4
+-- 2. Recurring Output Programs — Decision W6-4
 -- ==========================================
 
 CREATE TABLE IF NOT EXISTS v8_recurring_output_programs (
@@ -91,7 +61,7 @@ CREATE INDEX IF NOT EXISTS idx_v8_recurring_programs_next
   WHERE is_active = 1 AND next_run_at IS NOT NULL;
 
 -- ==========================================
--- 4. Output AI Governance — Decisions W6-1, W6-2
+-- 3. Output AI Governance — Decisions W6-1, W6-2
 -- ==========================================
 
 CREATE TABLE IF NOT EXISTS v8_output_ai_governance (

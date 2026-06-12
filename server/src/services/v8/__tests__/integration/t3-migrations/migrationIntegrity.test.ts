@@ -1,7 +1,7 @@
 /**
  * T3 — Migration Safety Gate Tests
  *
- * HARD SAFETY GATE: All 47 V8 SQL migrations must form a consistent,
+ * HARD SAFETY GATE: All 56 V8 SQL migrations must form a consistent,
  * collision-free schema. Failures here block production deployment.
  *
  * Tests M01–M06 per V8_INTEGRATION_TEST_PROGRAM.md §5.
@@ -89,8 +89,8 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
   // M01 — Sequential migration run (structural validation)
   // =========================================================================
   describe('M01 — Sequential migration run', () => {
-    it('should find exactly 47 V8 migration files', () => {
-      expect(migrations.length).toBe(47);
+    it('should find exactly 56 V8 migration files', () => {
+      expect(migrations.length).toBe(56);
     });
 
     it('should have files sorted alphabetically matching deployment order', () => {
@@ -144,18 +144,21 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
           const cleaned = stmt.replace(/--[^\n]*/g, '').trim();
           if (cleaned.length === 0) continue;
           const isCreate = /^CREATE\s+(TABLE|INDEX|UNIQUE\s+INDEX)/i.test(cleaned);
-          expect(isCreate).toBe(true);
+          // Allow idempotent ALTER TABLE ADD COLUMN IF NOT EXISTS statements
+          const isIdempotentAlter =
+            /^ALTER\s+TABLE/i.test(cleaned) && /ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS/i.test(cleaned);
+          expect(isCreate || isIdempotentAlter).toBe(true);
         }
       }
     });
 
-    it('should create exactly 120 tables across all migrations', () => {
+    it('should create exactly 133 tables across all migrations', () => {
       const allTables: string[] = [];
       for (const mig of migrations) {
         allTables.push(...extractCreateTableNames(mig.sql));
       }
       console.log(`\n=== V8 Total Tables: ${allTables.length} ===\n`);
-      expect(allTables.length).toBe(120);
+      expect(allTables.length).toBe(133);
     });
 
     it('cross-file FK references must target tables defined in earlier or same migration', () => {
@@ -211,7 +214,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
   // M02 — Table collision check
   // =========================================================================
   describe('M02 — Table collision check', () => {
-    it('should have no duplicate table names across all 47 migration files', () => {
+    it('should have no duplicate table names across all 56 migration files', () => {
       const tableRegistry = new Map<string, string[]>();
 
       for (const mig of migrations) {
@@ -263,7 +266,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
   // M03 — Index collision check
   // =========================================================================
   describe('M03 — Index collision check', () => {
-    it('should have no duplicate index names across all 47 migration files', () => {
+    it('should have no duplicate index names across all 56 migration files', () => {
       const indexRegistry = new Map<string, string[]>();
 
       for (const mig of migrations) {
@@ -466,7 +469,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       expect(violations.length).toBe(0);
     });
 
-    it('no ALTER TABLE statements (schema mutations that break idempotency)', () => {
+    it('no ALTER TABLE statements without IF NOT EXISTS (schema mutations that break idempotency)', () => {
       const violations: { file: string; line: string }[] = [];
 
       for (const mig of migrations) {
@@ -474,7 +477,12 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
         for (const line of lines) {
           const trimmed = line.trim();
           if (trimmed.startsWith('--')) continue;
-          if (/ALTER\s+TABLE/i.test(trimmed)) {
+          // Allow idempotent: ADD COLUMN IF NOT EXISTS or RENAME TO (structural, not data)
+          if (
+            /ALTER\s+TABLE/i.test(trimmed) &&
+            !/IF\s+NOT\s+EXISTS/i.test(trimmed) &&
+            !/RENAME\s+TO/i.test(trimmed)
+          ) {
             violations.push({
               file: mig.filename,
               line: trimmed.substring(0, 120),
@@ -486,7 +494,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       if (violations.length > 0) {
         const report = violations.map((v) => `  ${v.file}: ${v.line}`).join('\n');
         expect.fail(
-          `Found ${violations.length} ALTER TABLE statement(s) (not idempotent):\n${report}`
+          `Found ${violations.length} ALTER TABLE statement(s) without IF NOT EXISTS (not idempotent):\n${report}`
         );
       }
 

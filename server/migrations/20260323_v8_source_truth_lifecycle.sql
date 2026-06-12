@@ -1,7 +1,7 @@
 -- V8 Source Truth — transformation lifecycle (entrypoints → materializations → initiatives)
 -- Extends WP-W3-LIFECYCLE-01 with pre-initiative entrypoints and promotion links.
 --
--- Prerequisite: tables are created here on first apply; ALTER adds validation timestamp for existing rows.
+-- Prerequisite: tables are created here on first apply (ALTER adds validation timestamp for existing rows).
 
 CREATE TABLE IF NOT EXISTS v8_initiative_entrypoints (
   entrypoint_id      TEXT PRIMARY KEY,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS v8_initiative_materializations (
   FOREIGN KEY (entrypoint_id) REFERENCES v8_initiative_entrypoints(entrypoint_id)
 );
 
-ALTER TABLE v8_initiative_entrypoints ADD COLUMN last_validated_at TEXT;
+ALTER TABLE v8_initiative_entrypoints ADD COLUMN IF NOT EXISTS last_validated_at TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_v8_entrypoints_source ON v8_initiative_entrypoints(source_id, organization_id);
 

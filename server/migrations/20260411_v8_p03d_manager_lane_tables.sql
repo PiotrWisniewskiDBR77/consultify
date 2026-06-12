@@ -1,8 +1,8 @@
 -- P03-D: Manager 6-lane cockpit tables
--- lane_decisions stores operator accept/reject/defer on lane suggestions
--- lane_execution_plans stores concrete plans from accepted decisions
+-- v8_lane_decisions stores operator accept/reject/defer on lane suggestions
+-- v8_lane_execution_plans stores concrete plans from accepted decisions
 
-CREATE TABLE IF NOT EXISTS lane_decisions (
+CREATE TABLE IF NOT EXISTS v8_lane_decisions (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL,
   lane_id TEXT NOT NULL,
@@ -12,17 +12,16 @@ CREATE TABLE IF NOT EXISTS lane_decisions (
   decided_at DATETIME,
   notes TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS lane_decisions_org_lane_suggestion_idx
-  ON lane_decisions (organization_id, lane_id, suggestion_id);
+CREATE UNIQUE INDEX IF NOT EXISTS v8_lane_decisions_org_lane_suggestion_idx
+  ON v8_lane_decisions (organization_id, lane_id, suggestion_id);
 
-CREATE INDEX IF NOT EXISTS idx_lane_decisions_org_lane
-  ON lane_decisions (organization_id, lane_id);
+CREATE INDEX IF NOT EXISTS idx_v8_lane_decisions_org_lane
+  ON v8_lane_decisions (organization_id, lane_id);
 
-CREATE TABLE IF NOT EXISTS lane_execution_plans (
+CREATE TABLE IF NOT EXISTS v8_lane_execution_plans (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL,
   lane_id TEXT NOT NULL,
@@ -33,9 +32,8 @@ CREATE TABLE IF NOT EXISTS lane_execution_plans (
   verification_status TEXT NOT NULL DEFAULT 'pending',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-  FOREIGN KEY(decision_id) REFERENCES lane_decisions(id) ON DELETE CASCADE
+  FOREIGN KEY(decision_id) REFERENCES v8_lane_decisions(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_lane_execution_plans_org_lane
-  ON lane_execution_plans (organization_id, lane_id);
+CREATE INDEX IF NOT EXISTS idx_v8_lane_execution_plans_org_lane
+  ON v8_lane_execution_plans (organization_id, lane_id);

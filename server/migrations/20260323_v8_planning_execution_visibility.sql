@@ -1,7 +1,7 @@
 -- Wave 11: Planning continuity + execution visibility query paths
 -- WBS rows live in v8_initiative_decompositions (canonical WBS / decomposition store).
--- v8_execution_signals has no initiative_id column; initiative scope is modeled as
--- source_object_type = 'initiative' + source_object_id.
+-- v8_execution_signals has no initiative_id column (initiative scope is modeled as
+-- source_object_type = 'initiative' + source_object_id).
 
 CREATE INDEX IF NOT EXISTS idx_v8_wbs_initiative
   ON v8_initiative_decompositions(initiative_id, organization_id);
