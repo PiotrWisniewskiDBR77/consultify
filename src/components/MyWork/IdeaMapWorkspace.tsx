@@ -450,14 +450,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [activeTool, externalOnSelectionChange]
   );
 
+  const conflictRefreshRef = useRef<(() => Promise<void>) | null>(null);
+
   const handleGraphConflict = useCallback(
-    (serverVersion: number, serverMap?: any) => {
+    (_serverVersion: number, _serverMap?: any) => {
       toast(
         isPolish
           ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
           : 'Change conflict detected. Refreshing map from server.',
         { icon: '⚠️' }
       );
+      conflictRefreshRef.current?.();
     },
     [isPolish]
   );
@@ -470,6 +473,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     language: i18n.language || 'en',
     onConflict: handleGraphConflict,
   });
+  // Wire refresh ref so handleGraphConflict can call it (ref avoids circular dep)
+  conflictRefreshRef.current = graphRuntime.refresh;
+
   // MM-01: These are READ-ONLY derived state from the workspace graph runtime.
   // The canonical graph owner is ReactFlow state inside IdeaRecommendationMap.
   const graphNodes = graphRuntime.graph.nodes as any[];

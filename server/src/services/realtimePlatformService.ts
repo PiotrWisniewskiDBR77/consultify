@@ -130,7 +130,7 @@ class RealtimePlatformService {
 
   async listPresence(channelId: string) {
     return queryHelpers.queryAll(
-      `SELECT * FROM realtime_presence WHERE channel_id=$1 AND is_connected=1 ORDER BY connected_at`,
+      `SELECT * FROM realtime_presence WHERE channel_id=$1 AND is_connected=1 AND last_heartbeat_at > NOW() - INTERVAL '30 seconds' ORDER BY connected_at`,
       [channelId]
     );
   }
