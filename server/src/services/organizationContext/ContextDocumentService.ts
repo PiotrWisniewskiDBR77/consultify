@@ -2407,7 +2407,10 @@ async function extractTextFromBuffer(file: Express.Multer.File): Promise<Extract
   }
 }
 
+let _schemaReady = false;
 async function ensureSchema(): Promise<void> {
+  if (_schemaReady) return;
+  _schemaReady = true;
   await dbRun(
     `CREATE TABLE IF NOT EXISTS knowledge_docs (
       id TEXT PRIMARY KEY,
