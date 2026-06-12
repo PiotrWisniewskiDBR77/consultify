@@ -166,8 +166,11 @@ WHERE c.is_active = 1
 -- same slug under a different id (was: ON CONFLICT (id), which missed slug dupes).
 ON CONFLICT DO NOTHING;
 
-INSERT INTO kb_collection_translations (collection_id, language, title, description)
-SELECT ct.category_id, ct.language, ct.name, ct.description
+-- Supply id explicitly: on drifted DBs the table may predate the
+-- DEFAULT gen_random_uuid() (CREATE TABLE IF NOT EXISTS won't add it), so
+-- relying on the column default throws a NOT NULL violation.
+INSERT INTO kb_collection_translations (id, collection_id, language, title, description)
+SELECT gen_random_uuid()::text, ct.category_id, ct.language, ct.name, ct.description
 FROM kb_category_translations ct
 WHERE ct.category_id IN (SELECT id FROM kb_collections)
 ON CONFLICT (collection_id, language) DO NOTHING;
