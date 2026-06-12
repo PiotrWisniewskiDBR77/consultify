@@ -21,14 +21,14 @@ describe('Sidebar menuConfig (L2)', () => {
     expect(item.label).toBe('sidebar.organization');
   });
 
-  it('includes affiliate dashboard only for ECOSYSTEM_NODE journey', () => {
-    const base = getMenuStructure(t);
-    expect(base.some((i) => i.id === 'AFFILIATE_DASHBOARD')).toBe(false);
-
-    const eco = getMenuStructure(t, 'ECOSYSTEM_NODE');
-    expect(eco.some((i) => i.id === 'AFFILIATE_DASHBOARD')).toBe(true);
-    const affiliate = eco.find((i) => i.id === 'AFFILIATE_DASHBOARD');
-    expect(affiliate?.viewId).toBe(AppView.AFFILIATE_DASHBOARD);
+  // Affiliate/Ecosystem dropped from navigation per decision #1 (Harvard): the
+  // dashboard was UI-complete but backend-stubbed. It must NOT appear in the
+  // sidebar for any journey state (route now redirects to /chat).
+  it('never includes affiliate dashboard (dropped per decision #1)', () => {
+    expect(getMenuStructure(t).some((i) => i.id === 'AFFILIATE_DASHBOARD')).toBe(false);
+    expect(
+      getMenuStructure(t, 'ECOSYSTEM_NODE').some((i) => i.id === 'AFFILIATE_DASHBOARD')
+    ).toBe(false);
   });
 
   it('keeps AI OS out of the main sidebar', () => {

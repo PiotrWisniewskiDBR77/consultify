@@ -83,6 +83,7 @@ const appState: any = {
   isSidebarCollapsed: false,
   toggleSidebarCollapse: vi.fn(),
   currentProjectId: 'project-1',
+  navigateWithChatContext: vi.fn(),
 };
 
 vi.mock('../../../src/store/useAppStore', () => ({
@@ -134,6 +135,16 @@ vi.mock('../../../src/components/navigation/Sidebar/menuConfig', () => ({
     id: 'SETTINGS',
     label: 'Settings',
     viewId: AppView.SETTINGS_PROFILE_MODULE,
+  }),
+  getInternalToolsMenuItem: () => ({
+    id: 'INTERNAL_TOOLS',
+    label: 'Internal Tools',
+    viewId: AppView.AI_OS,
+  }),
+  getPartnerMenuItem: () => ({
+    id: 'PARTNER',
+    label: 'Partner',
+    viewId: AppView.PARTNER_PORTAL,
   }),
   getViewName: () => 'view',
 }));

@@ -98,6 +98,7 @@ const appState: any = {
   isChatSlidingPanelOpen: false,
   toggleChatSlidingPanel: vi.fn(),
   currentProjectId: 'project-1',
+  navigateWithChatContext: vi.fn(),
 };
 vi.mock('../../../../src/store/useAppStore', () => ({
   useAppStore: (selector?: any) => (typeof selector === 'function' ? selector(appState) : appState),
@@ -174,7 +175,10 @@ describe('Sidebar (L2, real subcomponents)', () => {
     // Footer children are real NavItem buttons (label rendered in expanded mode)
     fireEvent.click(screen.getByRole('button', { name: /Organization/i }));
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
-    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.ORGANIZATION_PROFILE);
+    expect(appState.navigateWithChatContext).toHaveBeenCalledWith(
+      AppView.ORGANIZATION_PROFILE,
+      expect.objectContaining({ preserveChat: true })
+    );
     expect(screen.queryByRole('button', { name: /Partner Portal/i })).not.toBeInTheDocument();
   });
 

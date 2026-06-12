@@ -76,6 +76,7 @@ const appState: any = {
   isChatSlidingPanelOpen: false,
   toggleChatSlidingPanel: vi.fn(),
   currentProjectId: 'project-1',
+  navigateWithChatContext: vi.fn(),
 };
 vi.mock('../../../../src/store/useAppStore', () => ({
   useAppStore: (selector: any) => selector(appState),
@@ -234,7 +235,10 @@ describe('Sidebar (L2)', () => {
     fireEvent.click(screen.getByTestId('navitem-ORGANIZATION'));
 
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
-    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.ORGANIZATION_PROFILE);
+    expect(appState.navigateWithChatContext).toHaveBeenCalledWith(
+      AppView.ORGANIZATION_PROFILE,
+      expect.objectContaining({ preserveChat: true })
+    );
   });
 
   it('navigates Settings sidebar item to the settings profile module', () => {
@@ -251,7 +255,10 @@ describe('Sidebar (L2)', () => {
       { projectId: 'project-1' }
     );
     expect(conversationState.setWorkspaceContext).toHaveBeenCalledWith({ mock: true });
-    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.SETTINGS_PROFILE_MODULE);
+    expect(appState.navigateWithChatContext).toHaveBeenCalledWith(
+      AppView.SETTINGS_PROFILE_MODULE,
+      expect.objectContaining({ preserveChat: true })
+    );
   });
 
   it('AI_CHAT click navigates to full chat when not already on chat', () => {
@@ -353,7 +360,7 @@ describe('Sidebar (L2)', () => {
   });
 
   it('handles navigation errors gracefully', () => {
-    appState.setCurrentView.mockImplementationOnce(() => {
+    appState.navigateWithChatContext.mockImplementationOnce(() => {
       throw new Error('boom');
     });
     render(<Sidebar />);
@@ -382,7 +389,10 @@ describe('Sidebar (L2)', () => {
     render(<Sidebar />);
     fireEvent.click(screen.getByTestId('sidebarfooter-nav'));
     expect(conversationState.setDisplayMode).toHaveBeenCalledWith('split');
-    expect(appState.setCurrentView).toHaveBeenCalledWith(AppView.MY_WORK);
+    expect(appState.navigateWithChatContext).toHaveBeenCalledWith(
+      AppView.MY_WORK,
+      expect.objectContaining({ preserveChat: true })
+    );
   });
 
   it('auto-closes floating submenu on mouse leave timeout', async () => {
