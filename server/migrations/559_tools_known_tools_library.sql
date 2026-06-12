@@ -41,6 +41,21 @@ ALTER TABLE tools
   ADD COLUMN IF NOT EXISTS tags_json TEXT DEFAULT '[]'; -- JSON string array
 
 -- ==========================================
+-- Normalize is_licensed to the canonical INTEGER type before the integer seed.
+-- On drifted DBs the column became BOOLEAN, which (a) breaks the integer INSERT
+-- below and (b) already breaks toolsService.ts (`is_licensed === 1` is never
+-- true for a boolean). Convert true→1 / false→0; semantics preserved.
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'tools' AND column_name = 'is_licensed' AND data_type = 'boolean'
+  ) THEN
+    ALTER TABLE tools ALTER COLUMN is_licensed DROP DEFAULT;
+    ALTER TABLE tools ALTER COLUMN is_licensed TYPE INTEGER USING (CASE WHEN is_licensed THEN 1 ELSE 0 END);
+    ALTER TABLE tools ALTER COLUMN is_licensed SET DEFAULT 0;
+  END IF;
+END $$;
+
 -- SEED: TOP 10 KNOWN TOOLS (T019 list)
 -- Source of truth: `tool_type` values in the tools engine (`tool_sessions.tool_type`)
 -- ==========================================
