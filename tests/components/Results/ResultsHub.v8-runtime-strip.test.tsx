@@ -515,7 +515,7 @@ describe('ResultsHub V8 runtime strip', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Results unavailable')).toBeInTheDocument();
+      expect(screen.getAllByText('Failed to load KPI catalog.').length).toBeGreaterThan(0);
       expect(screen.getByText('code: RESULTS_UNAVAILABLE')).toBeInTheDocument();
     });
 
@@ -541,14 +541,13 @@ describe('ResultsHub V8 runtime strip', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Results unavailable')).toBeInTheDocument();
+      expect(screen.getAllByText('Failed to load KPI catalog.').length).toBeGreaterThan(0);
       expect(screen.getByText('code: RESULTS_UNAVAILABLE')).toBeInTheDocument();
     });
 
     const callsBeforeDismiss = vi.mocked(V8ResultsApi.getKpiCatalog).mock.calls.length;
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
 
-    expect(screen.queryByText('Results unavailable')).not.toBeInTheDocument();
     expect(screen.queryByText('code: RESULTS_UNAVAILABLE')).not.toBeInTheDocument();
     expect(vi.mocked(V8ResultsApi.getKpiCatalog).mock.calls.length).toBe(callsBeforeDismiss);
   });

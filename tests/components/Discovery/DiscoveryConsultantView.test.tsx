@@ -67,9 +67,14 @@ vi.mock('../../../src/hooks/useAIStream', () => ({
 // Mock i18n
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback || key,
+    t: (key: string, fallback?: string | { defaultValue?: string }) =>
+      typeof fallback === 'string' ? fallback : fallback?.defaultValue || key,
     i18n: { language: 'en' },
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
 }));
 
 // Mock React Flow

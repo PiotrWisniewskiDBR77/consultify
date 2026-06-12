@@ -13,6 +13,7 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
   queryAll: vi.fn(),
   queryOne: vi.fn(),
   queryRun: vi.fn(),
+  getTableColumns: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('../../../server/src/services/notificationService.js', () => ({
@@ -121,7 +122,10 @@ describe('InitiativeController', () => {
       await InitiativeController.getInitiativeById(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Initiative not found' });
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Initiative not found',
+        code: 'INITIATIVE_NOT_FOUND',
+      });
     });
   });
 

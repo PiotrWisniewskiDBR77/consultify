@@ -126,7 +126,7 @@ describe('PhaseIndicator Component', () => {
       render(<PhaseIndicator />);
 
       const phaseName = screen.getByText('Context');
-      expect(phaseName).toHaveClass('text-purple-500');
+      expect(phaseName).toHaveClass('text-primary-500');
     });
   });
 
@@ -160,7 +160,7 @@ describe('PhaseIndicator Component', () => {
 
       render(<PhaseIndicator />);
 
-      expect(document.querySelector('.text-purple-500')).toBeTruthy();
+      expect(document.querySelector('.text-primary-500')).toBeTruthy();
     });
   });
 
@@ -196,7 +196,7 @@ describe('PhaseIndicator Component', () => {
 
       render(<PhaseIndicator />);
 
-      const container = document.querySelector('.bg-purple-500\\/10');
+      const container = document.querySelector('.bg-primary-500\\/10');
       expect(container).toBeTruthy();
     });
   });

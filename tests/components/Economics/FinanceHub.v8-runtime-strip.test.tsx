@@ -365,7 +365,7 @@ describe('FinanceHub V8 runtime strip', () => {
     renderWithProviders(<FinanceHub />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
-    fireEvent.click(screen.getByRole('button', { name: '+ Importuj statement' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Importuj statement' }));
     fireEvent.click(screen.getByRole('button', { name: 'complete-import' }));
 
     await waitFor(() => {
@@ -410,7 +410,7 @@ describe('FinanceHub V8 runtime strip', () => {
     renderWithProviders(<FinanceHub />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Statements' }));
-    fireEvent.click(screen.getByRole('button', { name: '+ Importuj statement' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Importuj statement' }));
     fireEvent.click(screen.getByRole('button', { name: 'complete-import' }));
 
     await waitFor(() => {

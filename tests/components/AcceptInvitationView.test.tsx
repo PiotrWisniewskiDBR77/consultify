@@ -164,7 +164,7 @@ describe('AcceptInvitationView', () => {
     await screen.findByText('Join Org One');
     await user.type(screen.getByLabelText('First Name *'), 'Jane');
     await user.type(screen.getByLabelText('Last Name *'), 'Doe');
-    await user.type(screen.getByLabelText('Function / Job Title *'), 'Manager');
+    await user.type(screen.getByLabelText('Job Title *'), 'Manager');
     await user.type(screen.getByLabelText('Department *'), 'Ops');
     await user.type(screen.getByLabelText('Password *'), 'secret123');
     await user.type(screen.getByLabelText('Confirm Password *'), 'secret123');

@@ -29,7 +29,8 @@ vi.mock('../../../src/services/funnelAnalytics', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback: string) => fallback,
+    t: (key: string, fallback?: string | { defaultValue?: string }) =>
+      typeof fallback === 'string' ? fallback : fallback?.defaultValue || key,
   }),
 }));
 

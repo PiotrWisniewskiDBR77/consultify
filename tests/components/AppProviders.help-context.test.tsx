@@ -7,11 +7,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 const accessPolicyProviderSpy = vi.fn(({ children }: { children: React.ReactNode }) => <>{children}</>);
 
-const storeState = {
+const storeState: {
+  currentUser: { id: string } | null;
+  currentView: string;
+  activeSidePanel: string | null;
+  theme: string;
+  isAuthInitializing: boolean;
+  toggleSidePanel: () => void;
+} = {
   currentUser: null,
   currentView: 'WELCOME',
   activeSidePanel: null,
   theme: 'dark',
+  isAuthInitializing: false,
   toggleSidePanel: vi.fn(),
 };
 
@@ -75,7 +83,25 @@ describe('AppProviders help context continuity', () => {
     expect(screen.getByTestId('help-ready')).toHaveTextContent('true');
   });
 
-  it('still mounts the access policy provider for unauthenticated routes', () => {
+  it('does not mount the heavy access policy provider for unauthenticated welcome route', () => {
+    // Heavy providers (incl. AccessPolicyProvider) are gated behind auth/route in
+    // the current AppProviders. With no current user, no token, and the default
+    // jsdom route ("/"), the authenticated provider stack is intentionally skipped.
+    storeState.currentUser = null;
+    storeState.isAuthInitializing = false;
+    accessPolicyProviderSpy.mockClear();
+
+    render(
+      <AppProviders>
+        <div>child</div>
+      </AppProviders>,
+    );
+
+    expect(accessPolicyProviderSpy).not.toHaveBeenCalled();
+  });
+
+  it('mounts the access policy provider once a user is authenticated', () => {
+    storeState.currentUser = { id: 'user-1' };
     accessPolicyProviderSpy.mockClear();
 
     render(
@@ -85,5 +111,7 @@ describe('AppProviders help context continuity', () => {
     );
 
     expect(accessPolicyProviderSpy).toHaveBeenCalled();
+
+    storeState.currentUser = null;
   });
 });

@@ -34,7 +34,7 @@ describe('ArtifactAttachPopover paste contract', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('shows status and does not attach for unparseable colon refs', () => {
+  it('attaches any colon ref using the parsed type (no type whitelist)', () => {
     const onAttach = vi.fn();
     const onClose = vi.fn();
     render(
@@ -44,9 +44,15 @@ describe('ArtifactAttachPopover paste contract', () => {
     const input = screen.getByPlaceholderText('Search or paste ref (e.g. task:abc123)...');
     pasteInto(input as HTMLInputElement, 'unknown:xyz');
 
-    expect(onAttach).not.toHaveBeenCalled();
-    expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByRole('status')).toHaveTextContent('Invalid artifact ref. Use type:id format.');
+    // parseArtifactRef no longer validates the type against a whitelist, so any
+    // `type:id` shape parses and attaches with the parsed type.
+    expect(onAttach).toHaveBeenCalledTimes(1);
+    expect(onAttach).toHaveBeenCalledWith(
+      { type: 'unknown', id: 'xyz', title: 'unknown:xyz' },
+      'related'
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('does not set parse-failure status for plain text without colon', () => {
