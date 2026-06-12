@@ -158,6 +158,13 @@ function buildExcelePayload() {
   };
 }
 
+function buildIdeasPayload() {
+  return {
+    ideas_context: 'Map out the project launch strategy',
+    canvas_type: 'mind_map',
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -800,13 +807,14 @@ describe('P08-B §11 — Handoff context validation', () => {
 
   for (const target of P08_HANDOFF_TARGET_MODULES) {
     it(`validates ${target} target payload correctly`, () => {
-      const payloadMap: Record<HandoffTargetModule, () => Record<string, unknown>> = {
+      const payloadMap: Partial<Record<HandoffTargetModule, () => Record<string, unknown>>> = {
         radar: buildRadarPayload,
         initiatives: buildInitiativesPayload,
         calendar: buildCalendarPayload,
         notebook: buildNotebookPayload,
         interview: buildInterviewPayload,
         excele: buildExcelePayload,
+        ideas: buildIdeasPayload,
       };
       const result = validateTargetPayload(target, payloadMap[target]());
       expect(result.valid).toBe(true);

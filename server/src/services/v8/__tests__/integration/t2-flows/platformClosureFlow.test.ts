@@ -125,18 +125,18 @@ const ORG_ID = '00000000-0000-4000-8000-000000000001';
 
 function setupFullyHealthyPlatform() {
   mockGetOperatingEnvironmentStatus.mockResolvedValue({
-    layers: [
-      { name: 'context', status: 'active' },
-      { name: 'retrieval', status: 'active' },
-      { name: 'execution', status: 'active' },
-      { name: 'toolGovernance', status: 'active' },
-      { name: 'trustAudit', status: 'active' },
-    ],
+    layers: {
+      context: 'healthy',
+      retrieval: 'healthy',
+      execution: 'healthy',
+      toolGovernance: 'healthy',
+      trustAudit: 'healthy',
+    },
   });
 
   mockGetActiveRoomsByOrg.mockResolvedValue([
-    { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', state: 'active' },
-    { roomId: '00000000-0000-4000-8000-aaaaaaaaaaab', state: 'active' },
+    { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', roomState: 'active' },
+    { roomId: '00000000-0000-4000-8000-aaaaaaaaaaab', roomState: 'active' },
   ]);
 
   mockGetGovernanceDashboard.mockResolvedValue({
@@ -332,7 +332,7 @@ describe('F03 — Closure certification', () => {
 
   it('certifies even with degraded (non-critical) health', async () => {
     mockGetActiveRoomsByOrg.mockResolvedValue([
-      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', state: 'degraded' },
+      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', roomState: 'error' },
     ]);
 
     const cert = await getClosureCertification(ORG_ID);
@@ -433,9 +433,9 @@ describe('F05 — Domain readiness assessment', () => {
 describe('F06 — Degraded platform detection', () => {
   it('correctly detects degraded state from multiplayer domain', async () => {
     mockGetActiveRoomsByOrg.mockResolvedValue([
-      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', state: 'active' },
-      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaab', state: 'degraded' },
-      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaac', state: 'degraded' },
+      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', roomState: 'active' },
+      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaab', roomState: 'error' },
+      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaac', roomState: 'error' },
     ]);
 
     const health = await getPlatformHealth(ORG_ID);
@@ -477,7 +477,7 @@ describe('F06 — Degraded platform detection', () => {
     // AI Core critical + multiplayer degraded → overall critical
     mockGetOperatingEnvironmentStatus.mockRejectedValue(new Error('AI down'));
     mockGetActiveRoomsByOrg.mockResolvedValue([
-      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', state: 'degraded' },
+      { roomId: '00000000-0000-4000-8000-aaaaaaaaaaaa', roomState: 'error' },
     ]);
 
     const health = await getPlatformHealth(ORG_ID);

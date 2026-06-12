@@ -358,10 +358,10 @@ describe('C2 — Radar → Initiative / Execution handoff', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('C3 — Teresa copilot → handoff targets', () => {
-  it('all 4 P0 handoff targets are defined with required fields', () => {
-    expect(P08_HANDOFF_TARGET_MODULES).toHaveLength(4);
+  it('all P0 handoff targets are defined with required fields', () => {
+    expect(P08_HANDOFF_TARGET_MODULES).toHaveLength(7);
     expect(P08_HANDOFF_TARGET_MODULES).toEqual(
-      expect.arrayContaining(['radar', 'initiatives', 'calendar', 'notebook'])
+      expect.arrayContaining(['radar', 'initiatives', 'calendar', 'notebook', 'interview', 'excele', 'ideas'])
     );
 
     for (const mod of P08_HANDOFF_TARGET_MODULES) {

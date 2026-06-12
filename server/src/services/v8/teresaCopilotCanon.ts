@@ -196,6 +196,13 @@ export const P08_HANDOFF_TARGETS = {
     required_common_payload: true,
     required_extra_fields: ['prompt'] as const,
   },
+  ideas: {
+    module: 'Ideas' as const,
+    contract_ref: 'P09',
+    description: 'Visual workspace tools: Mind Map, Process Flow, Table, Whiteboard',
+    required_common_payload: true,
+    required_extra_fields: ['ideas_context', 'canvas_type'] as const,
+  },
 } as const;
 
 export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [

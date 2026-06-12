@@ -42,8 +42,9 @@ describe('P08 §2.3.1 — Handoff targets', () => {
       'notebook',
       'interview',
       'excele',
+      'ideas',
     ]);
-    expect(Object.keys(P08_HANDOFF_TARGETS)).toHaveLength(6);
+    expect(Object.keys(P08_HANDOFF_TARGETS)).toHaveLength(7);
   });
 
   it('radar target references P06 and requires correct extra fields', () => {
