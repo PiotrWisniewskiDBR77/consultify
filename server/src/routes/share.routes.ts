@@ -51,6 +51,29 @@ function getDb() {
 
 const router = Router();
 
+// JSON columns are TEXT on SQLite but JSONB on Postgres — the PG driver returns
+// an object already, so a blind JSON.parse throws `"[object Object]" is not
+// valid JSON`. Handle string, object, and null/garbage uniformly.
+function parseMaybeJson(v: unknown): unknown {
+  if (v == null) return undefined;
+  if (typeof v === 'object') return v;
+  if (typeof v === 'string') {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+// is_active is INTEGER/bigint on Postgres — node-pg serializes bigint as a
+// STRING ("0"/"1"), so a raw `!share.is_active` is always falsy-wrong (a
+// non-empty string "0" is truthy). Coerce uniformly across number/string/bool.
+function flagOn(v: unknown): boolean {
+  return v === true || Number(v) === 1;
+}
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -403,7 +426,7 @@ router.post('/share/:token/unlock', async (req: Request, res: Response) => {
     await ensureShareTables();
     const share = await db.get('SELECT * FROM conversation_shares WHERE share_token = ?', [token]);
     if (!share) return res.status(404).json({ error: 'Share not found' });
-    if (!share.is_active) return res.status(410).json({ error: 'Share has been revoked' });
+    if (!flagOn(share.is_active)) return res.status(410).json({ error: 'Share has been revoked' });
     const settings = JSON.parse(share.settings || '{}');
     if (!settings.passwordHash)
       return res.status(400).json({ error: 'Share is not password-protected' });
@@ -455,7 +478,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
       return res.status(404).json({ error: 'Share not found' });
     }
 
-    if (!share.is_active) {
+    if (!flagOn(share.is_active)) {
       return res.status(410).json({ error: 'Share has been revoked' });
     }
 
@@ -538,7 +561,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
         role: m.role,
         content: m.content,
         messageType: m.message_type,
-        metadata: m.metadata ? JSON.parse(m.metadata) : undefined,
+        metadata: parseMaybeJson(m.metadata),
         timestamp: settings.showTimestamps ? m.created_at : undefined,
       })),
       viewCount: share.view_count + 1,
@@ -687,7 +710,7 @@ router.get('/shares', authenticate, async (req: Request, res: Response) => {
         title: s.title || s.conversation_title,
         description: s.description,
         viewCount: s.view_count,
-        isActive: s.is_active === 1,
+        isActive: flagOn(s.is_active),
         expiresAt: s.expires_at,
         createdAt: s.created_at,
       })),
