@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 
+import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { Api } from '../../services/api';
 import {
   V8ExecutionControlApi,
@@ -347,6 +348,7 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
   ]);
 
   return (
+    <V8UnavailableBanner moduleName="Manager Cockpit">
     <div className="h-full flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
       {/* ─── Body: Table + Preview ─── */}
       <div className="flex-1 flex overflow-hidden">
@@ -424,5 +426,6 @@ export const ManagerModuleView: React.FC<ManagerModuleViewProps> = ({
         )}
       </div>
     </div>
+    </V8UnavailableBanner>
   );
 };
