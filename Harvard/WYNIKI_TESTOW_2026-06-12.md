@@ -50,4 +50,15 @@ Po znalezieniu w M01 dwóch bugów cross-env (node-pg: bigint→string, jsonb→
 - **bigint-as-bool:** gating webhooków (`v8_webhook_registrations.is_active`=boolean, `webhook_subscriptions.is_active`=integer) → bezpieczne; `webhooks`/`tools`/`access_codes`.is_active = integer → bezpieczne. **2 realne offendery: `vat_validations.is_valid` (bigint)** w `taxService.ts:535` (`=== 1` → ważny VAT z cache czytany jako nieważny) i `billing.routes.ts:3514` (`!!` → nieważny VAT jako ważny) → **naprawione** (commit `71cc36693d`, `Number(x)===1`).
 - **Uboczne (zgłoszone jako tło):** `billing.routes.ts:3506` używa SQLite-only `datetime("now")` → cache VAT zawsze pudłuje na PG (osobny portability bug, task `task_e820c8a6`).
 
-**Bilans sweepu: 4 realne bugi prod naprawione, reszta to false-positivy (int4 / TEXT) — kod poza tym czysty w tej klasie.** Trwała lekcja: `finding_pg_bigint_jsonb_serialization` (pamięć).
+**Bilans sweepu modułowego: 4 realne bugi prod naprawione, reszta false-positivy (int4 / TEXT).**
+
+## Sweep KOMPLETNY (cały server/src) — 2026-06-12
+Po znalezieniu klasy w M01/M10/billing uruchomiono **wyczerpujący cross-reference całego `server/src`**: wszystkie kolumny `bigint` (1044) i `jsonb` (213) ze staging × każdy JS-side read (`=== n`, `!col`, `!!`, `Boolean()`, `JSON.parse`), rozwiązywane **per (tabela, kolumna)**. Wynik: **54 potwierdzone bugi** poza już naprawionymi.
+- **1 SECURITY:** anonimowy gate publicznego artykułu KB (`v8/knowledge-base` + `KnowledgeBaseService.is_public`) — nie-publiczny opublikowany artykuł serwowany anonimom (`Boolean("0")===true`).
+- **18 LOGIC:** policyEngine global-enabled, faktury `is_system` (DELETE fail-closed), taxService `inclusive` (zła matematyka podatku), Initiative `is_gate`, adminP32 `tax_exempt`, ostatni `is_team_assignment`; **jsonb `JSON.parse` rzucające/cicho gubiące dane** (sponsorReport ×4, reportAgent ×4, reportBuilder ×2, managementReports, KB related_articles, v8/sync scopes).
+- **35 DISPLAY:** zgody GDPR (privacy!), KB is_featured/is_public, progi alertów billing+adminP32, economics, komentarze, decision-escalation, interview-insight eksport-flagi, industry templates, education-mode.
+
+**Wykonanie:** wspólny helper `server/src/utils/pgFlags.ts` (`flagOn`/`parseMaybeJson`) wpięty w 21 plików (6 równoległych agentów). **tsc: 0 błędów w całym projekcie** (pre-existing błąd InterviewController:2156 zniknął). Regresja: **434 testy PASS (30 plików)** w dotkniętych obszarach. Commit `64e5dba81a`.
+**Walidacja wyczerpaności:** ~20 dodatkowych `Boolean(is_*)` sprawdzonych vs definitywna lista bigint — wszystkie na kolumnach `integer` (decision_playbooks, llm_providers, task_automation_rules, report_builder_*, presentation_templates, scheduled_reports…) → bezpieczne. **7 unresolved** (kolumny nieobecne na staging: sso_configurations, notification_preferences, decision_playbooks, superadmin) → wymagają typu z PROD (task `task_c9c0f083`).
+
+**Bilans całości: 9 (modułowe) + 54 (kompletny sweep) = 63 bugi tej klasy naprawione przed deployem `Londyn`→prod.** Trwała lekcja: `finding_pg_bigint_jsonb_serialization` (pamięć).
