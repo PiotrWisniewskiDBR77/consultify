@@ -4,7 +4,8 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M16 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja FINANSE, poz.1-12) · poprzednia karta `docs/audit/2026-06-02/MODULE_08_finanse.md` (47/100) · SSOT `docs/product/FINANCIAL_ANALYSIS_V3.md`
 **Evidence:** `Harvard/modules/M16-finanse/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 57/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→7 (W1 `getModel` org-scope naprawiony dla całego legacy routera, commit `e3945bc7fc`, hard cap zdjęty).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -13,9 +14,9 @@
 | C. Testy automatyczne | 15 | 8 | 510 PASS/14 FAIL (drift, nie logika), ale **obliczenia finansowe tylko częściowo testowane** (DCF/WACC tylko `typeof`, ratio/forecast bez compute, `financialCalculatorService.test.js` = fałszywa zieleń); nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 7 | §27 zgodny (`ModuleHub`+`TableWithPreviewLayout`+`FilterableTable`), **degraded banner DZIAŁA i widoczny** (lepiej niż M13/M14); i18n 19× `isPolish`, empty-messages mieszane PL/EN. |
-| F. Bezpieczeństwo/dostęp | 10 | 3 | economics/statements/v8 czyste + Excel-guard + billing honest, ale **P0 IDOR legacy `/api/financial-modeling/models/:id`** (cross-org read/edit/DELETE/approve) + beta-lock nawigacyjny. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | W1 `getModel` org-scope naprawiony dla całego legacy routera (commit `e3945bc7fc`); economics/statements/v8 czyste; W7 beta-lock 3-warstwowy; pozostałe: P2 i18n i minor. |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **TAK — cross-org WRITE+DELETE `getModel` bez org (`financialModelingService.ts:1107`, legacy router) → max 50 + P0.** Zweryfikowane osobiście. Suma surowa 53 > 50 → cap wiąże na 50. Dodatkowo Faza 4 → max 70 + „NIEPEŁNY". |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `e3945bc7fc`), hard cap zdjęty.** Suma surowa 57 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Funkcjonalnie najsilniejszy moduł finansowy — **wszystkie analizy to realna matematyka, nie demo/placeholder** (NPV/IRR przez bisekcję ze zbieżnością <0.0001, payback z interpolacją `financialAnalysisService.ts:264-318`; ratios księgowe z safeDiv/safePct `:560`; DCF z WACC breakdown, terminal Gordon/exit-multiple, FCFF, dyskonto `valuationService.ts`; silnik modeli monthly z growth-factorem persistowany do `financial_model_outputs` `financialModelingService.ts:643`; import Excel = realny parsing xlsx z rankingiem arkuszy `finance-statements.routes.ts:221`), persystencja na realnych tabelach Postgres (`financial_statements/_values/_lines`, `financial_models/_outputs`, `financial_analyses`, `valuations` — **bez fasady `new Map()` z M18**, encje przeżywają restart), **billing honest** (mock `pm_..._mock` usunięty z runtime, self-serve kill-switch default OFF → „billing handled manually", token-billing 503 `not_configured` bez Stripe — żadnego fake-success), a degraded banner V8→legacy jest realny i WIDOCZNY (`FinanceDegradedBanner`, `useFinanceLane.ts:209` — inaczej niż cicha pustka M13/M14). **Główny blocker: P0 cross-org IDOR na legacy routerze `/api/financial-modeling`** — `getModel(modelId)` to `SELECT * FROM financial_models WHERE id = ?` BEZ `organization_id` (`:1107`), a wszystkie legacy by-id (GET/PUT/DELETE/compute/submit-review/events/approve, `financial-modeling.routes.ts:320-360+`) używają go pod samym `verifyToken+isAuthenticated` → **każdy zalogowany user czyta/edytuje/USUWA/zatwierdza modele finansowe innej firmy po UUID** (zweryfikowane osobiście). Wersja V8 (`v8/finance.routes.ts`) używa tego samego `getModel`, ale dokłada `model.organization_id !== organizationId → 403` — klasyczny wzorzec M20/M16: **V8 czyste, legacy raw-DB dziurawe**. Pozostałe routery (economics/finance-statements/v8) są org-scoped (`getStatementOrFail`, jawny re-check). Drugorzędne: beta-lock tylko nawigacyjny (P1); obliczenia finansowe niedostatecznie pokryte testami (ryzyko regresji liczb w module, gdzie liczby są produktem). Hard cap (cross-org write → 50) + niewykonane Fazy 3+4.
 

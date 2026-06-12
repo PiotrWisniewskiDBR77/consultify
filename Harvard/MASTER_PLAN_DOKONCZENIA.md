@@ -11,9 +11,10 @@
 ## 0. GDZIE JESTEŚMY (jednym ekranem)
 
 - **Zaudytowano:** 27 modułów (M01–M10, M12–M27) + A1 = **28/28 kart**. ⚠️ **M11 Narzędzia descoped** — karta to pusty szablon; brak zidentyfikowanego realnego modułu/kodu. Wszystkie 27 modułów + A1: status **🟦 NIEPEŁNY** (Fazy 3 Railway + 4 żywa przeglądarka odłożone do dostępu do Railway/staging).
-- **Średnia ocena:** ~**49/100** (liczona z 27 modułów M01–M27, z wyłączeniem A1-stub 13/100). Najwyżej: M02 Canvas 57, M06 Mind Map 57, M19 Prezentacje 55, M05 55. Najniżej: M14 42, M09 43, M07 44, M03 44, M23 44.
+- **Średnia ocena (pre-sprint):** ~**49/100** (liczona z 27 modułów M01–M27, z wyłączeniem A1-stub 13/100). Najwyżej: M02 Canvas 57, M06 Mind Map 57, M19 55, M05 55. Najniżej: M14 42, M09 43, M07 44.
+- **Średnia ocena (po Sprintach 1–5, 2026-06-11):** ~**52/100**. Najwyżej: M10 59, M02 58, M16/M01/M24/M27 57. Najniżej: M14 48, M07 44.
 - **Tier:** cała platforma na poziomie **Alpha**. Zero modułów GA-ready, zero Beta-ready bez poprawek.
-- **Co trzyma platformę w Alpha (3 zdania):** (1) systemowy dług bezpieczeństwa — cross-org IDOR + side-router-weak-gate w ~12 modułach; (2) „fake features" — funkcje, które kłamią użytkownikowi (toast „wysłano" bez zapisu, przyciski zawsze 404, persystencja in-memory znikająca po restarcie); (3) brak żywej weryfikacji (Faza 4) i niepewny stan migracji na prodzie (PROD = kod z 2026-05-18).
+- **Co trzyma platformę w Alpha (3 zdania):** (1) ~~systemowy dług bezpieczeństwa — cross-org IDOR + side-router-weak-gate w ~12 modułach~~ → **NAPRAWIONE** przez W1/W2/W3/Bramka D; (2) „fake features" — funkcje, które kłamią użytkownikowi (toast „wysłano" bez zapisu, przyciski zawsze 404) → częściowo naprawione przez W6; (3) brak żywej weryfikacji (Faza 4) i niepewny stan migracji na prodzie (PROD = kod z 2026-05-18) → blokuje przejście do Beta.
 
 **Ścieżka:** FAZA A (security) → FAZA B (fake features) → FAZA C (migracje+żywa weryfikacja) = **próg BETA**. Potem FAZA D (hardening) + FAZA E (szlif) = **próg GA**.
 
@@ -21,38 +22,40 @@
 
 ## 1. SNAPSHOT OCEN (28/28)
 
+> **Re-audit 2026-06-11 po Sprintach 1–5 (W1–W15 + Bramka D):** Oceny zaktualizowane. Skróty w kolumnie Hard-cap: `✅` = naprawione przez sprint. Średnia 27 modułów: ~**52/100** (↑3 vs pre-sprint ~49). Najwyżej: M10 59, M02 58, M16/M01/M24/M27 57. Najniżej: M14 48, M07/M12 44/47.
+
 | # | Moduł | Ocena | Tier | Hard-cap | Najcięższy bloker |
 |---|-------|-------|------|----------|-------------------|
-| M01 | Czat | 50 | Alpha | cross-org IDOR pamięci | `ai.routes.ts:5744,5812` memory/project bez org |
-| M02 | Canvas | 57 | Alpha↑ | — | (czysty) brak Fazy 4 + testy S6/S7 |
-| M03 | My Work — organizer | 44 | Alpha | cross-org write decyzji | `DecisionController.ts:985,1012` + inbox IDOR + 4 mocki decyzji |
-| M04 | Notatnik | 49 | Alpha | — (P1 cross-user) | v8 handoff bez owner-check + handoff pół-martwy |
-| M05 | Ideas — Zarządzanie | 55 | Alpha | — | conflict silent overwrite + brak migracji snapshots |
-| M06 | Ideas — Mind Map | 57 | Alpha | — | brak migracji snapshots/activity + WS bez org + korupcja „rose" |
+| M01 | Czat | **57** | Alpha | ✅ cross-org IDOR (W1) | brak Fazy 4 + testy |
+| M02 | Canvas | **58** | Alpha↑ | — | brak Fazy 4 + testy S6/S7 |
+| M03 | My Work — organizer | **50** | Alpha | ✅ cross-org write (W1) | conflict silent overwrite + inbox IDOR |
+| M04 | Notatnik | **50** | Alpha | — (P1 cross-user) | v8 handoff bez owner-check |
+| M05 | Ideas — Zarządzanie | **56** | Alpha | — | conflict silent overwrite + brak migracji snapshots |
+| M06 | Ideas — Mind Map | 57 | Alpha | — | brak migracji snapshots/activity + WS bez org |
 | M07 | Ideas — Process Flow | 44 | Alpha | — | connectMode OFF + V8 mirror garbage + 5 hooków 401 |
-| M08 | Ideas — Table | 52 | Alpha | — | 4 przyciski zawsze błąd + generate_table stub |
-| M09 | Ideas — Whiteboard | 43 | Alpha | cross-org write (cap 50, niewiążący) | per-user board blokuje multiplayer + WS bez org + facilitation cross-org |
-| M10 | Wywiad | 50 | Alpha | cross-org IDOR wniosków PII | `InterviewInsightService.ts:1618,1723` read+delete bez org |
+| M08 | Ideas — Table | **52** ✓ | Alpha | — | fałszywy streaming + generate_table stub |
+| M09 | Ideas — Whiteboard | **45** | Alpha | ✅ cross-org write (W1) | per-user board blokuje multiplayer + WS bez org |
+| M10 | Wywiad | **59** | Alpha górny | ✅ cross-org IDOR (W1) | brak Fazy 4 + testy |
 | M11 | Narzędzia/Assessment | **N/D** | — | — | **Descoped** — pusty szablon karty; brak zidentyfikowanego realnego kodu |
 | M12 | Audyty | 47 | Alpha | — | ZERO testów + P1 assignment injection cross-org |
-| M13 | Inicjatywy | 45 | Alpha | cross-org write governance | `initiativeGovernanceService.ts:119,130` + 3 CTA martwe |
-| M14 | Wdrożenie | 42 | Alpha | cross-org write budżetu | `executionBudgetService.ts:401-420` recalc bez org |
-| M15 | Rezultaty | 49 | Alpha | cross-org write + RBAC bypass | `benefits.routes.ts:468` + `x-kpi-role` z nagłówka |
-| M16 | Finanse | 50 | Alpha | cross-org R/W/DELETE | `financialModelingService.ts:1107` getModel bez org |
-| M17 | Outputs | 51 | Alpha | — | public viewer leak org_id/confidentiality |
-| M18 | Dokumenty | 47 | Alpha | — | persistencja-fasada: wersje/komentarze/approvals in-memory |
-| M19 | Prezentacje | 55 | Alpha↑ | — | public viewer leak (wspólny) + overrideQualityGate bez roli |
-| M20 | Tabele Studio | 43 | Alpha | cross-org WRITE (cap 50) | record-templates/form-submissions raw-DB bez org + SSO plaintext |
+| M13 | Inicjatywy | **52** | Alpha | ✅ cross-org write (W1) | fasada inicjatyw + brak Fazy 4 |
+| M14 | Wdrożenie | **48** | Alpha | ✅ cross-org write (W1+W2) | brak Fazy 4 + testy |
+| M15 | Rezultaty | **54** | Alpha | ✅ cross-org write + RBAC bypass (W1+W3) | brak Fazy 4 + testy |
+| M16 | Finanse | **57** | Alpha górny | ✅ cross-org R/W/DELETE (W1+W2) | brak Fazy 4 |
+| M17 | Outputs | **53** | Alpha | ✅ public viewer (W9) + ✅ beta-lock (W7) | overrideQualityGate bez roli (P2) |
+| M18 | Dokumenty | **54** | Alpha | — | fasada wersji/komentarzy naprawiona (W5); Mode3 placeholder P2 |
+| M19 | Prezentacje | **56** | Alpha↑ | ✅ public viewer (W9) | overrideQualityGate bez roli (P2) |
+| M20 | Tabele Studio | **47** | Alpha | ✅ cross-org WRITE (W2) | SSO plaintext + share_password nieweryfikowane |
 | M21 | Meeting | 52 | Alpha↑ | — | handoff pół-martwy + transkrypt prompt-injection |
-| M22 | AI OS | 51 | Alpha | Faza 4 deferred | 1188 l. `_actionDecisionRoutes` martwe + Artifacts 404 UX |
-| M23 | Organizacja | 44 | Alpha | Faza 4 deferred | `/api/competency` BEZ auth + org-export bez role-gate + kontekst-fasada |
-| M24 | Panel Admina | 50 | Alpha | cross-org IDOR | `admin-data.routes.ts:54,94,124` + `ai-settings.routes.ts:218,255` |
-| M25 | Ustawienia | 50 | Alpha | cross-user read-IDOR | `settings.routes.ts:868` notifications + sekrety plaintext |
+| M22 | AI OS | **54** | Alpha | — | Artifacts 404 UX + brak CI |
+| M23 | Organizacja | **52** | Alpha | ✅ competency/export (W2) + ✅ kontekst (W11) | podwójna implementacja admin (P2) |
+| M24 | Panel Admina | **57** | Alpha górny | ✅ cross-org IDOR (W2) | brak Fazy 4 |
+| M25 | Ustawienia | **53** | Alpha | ✅ cross-user IDOR (W1) + ✅ sekrety AES (Bramka D) | brak Fazy 4 |
 | M26 | Portal Partnerski | 52 | Alpha | — | silent earnings fallback 15% + brak E2E happy-path |
-| M27 | SuperAdmin | 50 | Alpha | brak auth llm tiers | `llm.routes.ts:793,799,805` + virtual-workers przepuszcza org-admina |
+| M27 | SuperAdmin | **57** | Alpha górny | ✅ llm-tiers auth (W2) | brak Fazy 4 |
 | A1 | Affiliate/Ecosystem | 13 | Broken | — (świadomy stub) | DECYZJA: budować albo wyciąć |
 
-> ¹ **Kolumna Hard-cap:** „cross-org IDOR/WRITE" = trigger bezpieczeństwa (ocena ≤50, wymiar F=0); „Faza 4 deferred" = wymiary D+G nieodblokowane (M22/M23 podane bo brak innych dominant blokerów — stan dotyczy faktycznie wszystkich 28); „—" = brak aktywnego hard-capu poza ograniczeniem Faz 3+4. Kolumna pokazuje DOMINUJĄCY czynnik blokujący, nie pełny profil ryzyka modułu.
+> ¹ **Kolumna Hard-cap:** `✅` = P0 naprawiony przez sprint (hard cap zdjęty); „—" = brak aktywnego hard-capu poza ograniczeniem Faz 3+4. Kolumna pokazuje DOMINUJĄCY czynnik blokujący, nie pełny profil ryzyka modułu.
 
 ---
 
@@ -190,11 +193,21 @@ W6: M03 zweryfikowany OK (false positive); M07 zweryfikowany OK; M08 AuditTrail 
 **Sprint 5 — Persistencja + migracje (pisanie plików SQL)** — FAZA B + W4-a ✅ UKOŃCZONY 2026-06-11
 W5: M18 — DAO + migr.776 już istniały; naprawiono stale refs `persistedSnapshotStore`/`persistedCommentStore` (commit `18fd9ca`). W4-a: `20260611_my_idea_map_snapshots_and_activity.sql` OK; process-flow migr. czeka na Railway; M20 kolizja 725/726 rozwiązana (archive); M26 5 plików partner match MIGRATION_PATTERN. **[DECYZJA #6]** M20 governed sync → defer (STUB, W6 decyzja #6 = NIE dokańczać bez Railway).
 
-**Sprint 6 — Railway + żywa weryfikacja** — FAZA C (wymaga dostępu)
+**Sprint 6 — Railway + żywa weryfikacja** — FAZA C ⏳ BLOKUJE Railway
 Promocja `Londyn`→prod → migracje → Faza 3 (schema verify) → Faza 4 (28× żywo wg scenariuszy S) → re-ocena. **= PRÓG BETA osiągnięty.**
 
-**Sprint 7+ — Hardening (FAZA D)** → **Szlif (FAZA E)**
-W7-W11 + Fale 2; potem W12-W15 + Fale 3. Kolejność modułów: core (M01,M03,M10,M13,M14,M25) → studia (M02,M17,M18,M19,M20) → reszta beta → Ideas → internal.
+**Sprint 7+ — Hardening (FAZA D)** → **Szlif (FAZA E)** — ✅ WIĘKSZOŚĆ UKOŃCZONA (wyprzedzono Sprint 6)
+W7: beta-lock route-guard+API-gating — ✅ `bc5579918d`
+W8: V8 degradation banners — ✅ `899f3a5018`
+W9: public viewer over-disclosure — ✅ `1b67579d7a`
+W10: SQLite-izmy — ✅ `1b67579d7a` + `7495c12ffb`
+W11: localStorage → backend persistence (org context store) — ✅ `d013ab7c4c`
+W12: dead-code removal (~3100 linii) — ✅ `42b070e4dc`
+W13: i18n M22 Wave5-9 + M14 Wave8 — ✅ `b77fd87ae7` + `84757dc672`
+W14: rose→red codemod + M17/M04 cleanup — ✅ `a1103f3b28` + `167b2757bf`
+W15: CI branch gates (Londyn → test-suite) — ✅ `99bda16792`
+Bramka D: AES-256-GCM secrets + M25/M21/M12 hardening — ✅ `9ef570ca1b` + `72d57e64a4` + `7df4b22d6d`
+**Pozostałe Fala 2 (moduł-poziom):** do realizacji po FAZA C. **Kolejność:** core → studia → beta → Ideas → internal.
 
 ---
 

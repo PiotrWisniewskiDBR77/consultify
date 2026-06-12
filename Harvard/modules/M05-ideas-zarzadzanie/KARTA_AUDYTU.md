@@ -4,7 +4,8 @@
 **Wejścia:** `Harvard/podzial/ideas/MODULE_02A_ideas-zarzadzanie.md` + `Harvard/podzial/inventory/INV_B_my-work.md` + kod + uruchomione testy
 **Evidence:** `Harvard/modules/M05-ideas-zarzadzanie/evidence/` (brak fizycznych plików — audyt statyczny)
 
-## OCENA: 55/100 — Tier: Alpha · NIEPEŁNY (bez Fazy 3 i 4)
+## OCENA: 56/100 — Tier: Alpha · NIEPEŁNY (bez Fazy 3 i 4)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 6→7 (W7 beta-lock 3-warstwowy — API-level gating dodany, commit `bc5579918d`). Suma: 18+9+9+0+7+7+6=56.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -13,7 +14,7 @@
 | C. Testy automatyczne | 15 | 9 | 12 plików testowych, 96 testów PASS (0 FAIL) — ale wyłącznie FE-unit + whitebox formaterów; zero testów serwerowych dla ~45 endpointów; E2E smoke (`qa-idea-mindmap-checklist`) w katalogu smoke (jest w CI nightly), ale weryfikuje UI checklist, nie kontrakt API. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana (brak dostępu do przeglądarki w tej sesji). |
 | E. Kanony/UI | 10 | 7 | MyIdeasListContent używa ResizableTable/canon; 3 widoki listy + Menu3-style filtry; ModuleHub wdrożony (MyWorkHub); beta plate z `betaAccess.ts` SSOT; traci: `canvasLocked=false` na sztywno (vestigial), 4× `console.log` w prodzie. |
-| F. Bezpieczeństwo/dostęp | 10 | 6 | Wszystkie read/write endpointy mają `WHERE user_id=? AND organization_id=?` — brak cross-org IDOR na danych; presence GET/POST nie weryfikuje własności idei przed użyciem `channelId` (P2, nie P0 bo mapa per-user); beta gate tylko nawigacyjny (API nie sprawdza flagi). |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | Wszystkie read/write endpointy z `WHERE user_id=? AND organization_id=?` — brak cross-org IDOR; W7 beta-lock 3-warstwowy (commit `bc5579918d`); presence GET/POST bez ownership check channelId pozostaje P2 |
 | G. Środowiska (Railway) | 10 | 6 | Faza 3 nieformalnie: migracje głównych tabel (`my_ideas`, `my_idea_maps`, `my_idea_edges`, `idea_node_comments`, `idea_exports`) istnieją i są w baseline v2; `my_idea_map_snapshots` BRAK — pewne 503 na prod; flagi bez weryfikacji live. |
 | **Hard cap zastosowany?** | — | — | Faza 4 niewykonana → cap 70; wynik surowy przed capem: ~55 → **cap 70 nie jest wiążący** (55 < 70). Zero cross-org WRITE (cap 50 nie dotyczy). |
 

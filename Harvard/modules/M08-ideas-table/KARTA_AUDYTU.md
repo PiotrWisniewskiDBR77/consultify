@@ -5,17 +5,18 @@
 **Evidence:** `Harvard/modules/M08-ideas-table/evidence/` (Faza 4 niewykonana — brak przeglądarki)
 
 ## OCENA: 52/100 — Tier: Alpha · „NIEPEŁNY (bez Fazy 4)"
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 15→17 (W6 4 zepsute przyciski usunięte + generate_table dead case, commit `f35aa8d7c8`); C: 7→8 (W15 CI gate, commit `99bda16792`); F: 8→9 (W1 2 pomocnicze zapytania org-scope, commit `b9f2dee9d2`). Suma: 17+11+8+0+7+9+0=52 (naprawia błąd arytmetyczny — poprzedni nagłówek wskazywał 52, ale suma = 48).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 15/25 | Rdzeń (persistence + AI + 25 typów kolumn + 7 widoków) REALNE, ale 4 widoczne przyciski zawsze kończą się błędem (404/401) + generate_table promowane a nigdy nie zwracane + fałszywy streaming + ciche degradacje AI |
+| A. Realność funkcji | 25 | 17/25 | Rdzeń (persistence + AI + 25 typów kolumn + 7 widoków) REALNE; 4 zepsute przyciski (Import/ActivityFeed/AuditTrail/Snapshot) usunięte (W6, `f35aa8d7c8`); generate_table dead case usunięty (W6); fałszywy streaming pozostaje P2 |
 | B. Wiring i dane | 15 | 11/15 | Ścieżka produkcyjna map-sync solidna, migracje kompleksowe; connector/activity/audit/snapshot trafiają w nieistniejące mounty; 2 zapytania `my_idea_maps` bez `organization_id` w kontekście pomocniczym (nie w głównej ścieżce zapisu) |
-| C. Testy automatyczne | 15 | 7/15 | 137 testów PASS (14 plików, 3.29 s), ale ŻADEN nie jest w CI (`tests/unit`/`tests/integration` w `.github`); testy pokrywają głównie ścieżkę platformy (wyłączoną w prod), zero dla useTablePersistence/FormulaEngineV2/useTableRows |
+| C. Testy automatyczne | 15 | 8/15 | 137 testów PASS + W15 CI gate Londyn (`99bda16792`); testy pokrywają głównie ścieżkę platformy, zero dla useTablePersistence/FormulaEngineV2/useTableRows |
 | D. Żywa użyteczność | 15 | 0/15 | Faza 4 niewykonana — brak przeglądarki; hard cap zastosowany |
 | E. Kanony/UI | 10 | 7/10 | i18n PL/EN kompletne dla canvasTools; IdeaTableTool nie jest tabelą listową (§27 nie dotyczy — to narzędzie canvas); EmptyStateInline / brak ModuleHub (narzędzie, nie hub) — właściwy wzorzec; beta-plate via MYWORK_IDEAS:'closed' |
-| F. Bezpieczeństwo/dostęp | 10 | 8/10 | Trzy warstwy spójne: beta nav-lock + ProtectedRoute + verifyToken na całym routerze my-work; org+user scope na wszystkich głównych endpointach; 2 pomocnicze zapytania bez org_id (P2 — własność id weryfikowana wcześniej w tym samym handlerze) |
+| F. Bezpieczeństwo/dostęp | 10 | 9/10 | Trzy warstwy spójne: beta nav-lock + ProtectedRoute + verifyToken; org+user scope na wszystkich endpointach; W1 naprawił 2 pomocnicze zapytania bez org_id (`b9f2dee9d2`) |
 | G. Środowiska (Railway) | 10 | 0/10 | Faza 3 niewykonana — brak dostępu do Railway; D=0, G=0 per instrukcję (deferred) |
-| **Hard cap zastosowany?** | — | — | Tak: Faza 4 niewykonana → max 70; wynik surowy przed capem = 48; cap nie jest wiążący (48 < 70) |
+| **Hard cap zastosowany?** | — | — | NIE: Faza 4 niewykonana → max 70; suma surowa 52 < 70; cap nie jest wiążący |
 
 **Werdykt:** Rdzeń narzędzia Ideas Table (blob-persist w map-sync, 25 typów kolumn, 7 widoków, realne AI przez llmService, 137 testów PASS) jest solidny i unikalny — lepszy grounding AI (kontekst assessmentów firmy) niż Airtable. Zaufanie użytkownika psuje jednak 4 widoczne przyciski zawsze kończące się błędem (Import→404, ActivityFeed→401, AuditTrail→404, Snapshot→404), fałszywy streaming w Copilot oraz promowana komenda `generate_table` której serwer nigdy nie zwraca. Blokadą do tier Beta jest: podłączenie 137 testów do CI + naprawa/ukrycie zepsutych przycisków.
 

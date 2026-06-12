@@ -4,11 +4,12 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M04 (NOWY, brak karty 06-02) · inwentarz `Harvard/podzial/inventory/INV_B_my-work.md` (sekcja Notatnik, poz.1-19) · program `[[project_notebook_structure_overhaul]]`
 **Evidence:** `Harvard/modules/M04-notatnik/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 49/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 19→20 (W6 handoff Radar/Inicjatywy usunięty — fake feature toast „wysłano" wycięty, commit `f35aa8d7c8`). Suma: 20+11+7+0+7+5+0=50.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 19 | Rdzeń (CRUD/TipTap/konwersje/Capture) realny na DB, AI 4/5 realny LLM; ale auto-klasyfikacja to heurystyka (mylnie „AI"), handoff Radar/Inicjatywy PÓŁ-MARTWY (toast „wysłano", 0 INSERT). |
+| A. Realność funkcji | 25 | 20 | Rdzeń (CRUD/TipTap/konwersje/Capture) realny na DB, AI 4/5 realny LLM; W6 usunął handoff Radar/Inicjatywy (fake toast „wysłano", commit `f35aa8d7c8`); auto-klasyfikacja = heurystyka pozostaje P2 |
 | B. Wiring i dane | 15 | 11 | Realne tabele (`notebooks`/`notebook_pages`, migracje), konwersje z `link_graph_edges`; minus: handoff buduje payload bez persystencji (FE kłamie). |
 | C. Testy automatyczne | 15 | 7 | 253 PASS/0 FAIL/8 todo, ale persystencja+AI 100% mockowane, **TipTap+SlashMenu ZERO testów**, „ekstrakcja AI" to fałszywa zieleń (INSERT proposala klienta); nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |

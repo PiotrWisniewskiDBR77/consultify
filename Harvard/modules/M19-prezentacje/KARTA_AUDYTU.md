@@ -4,7 +4,8 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M19 · inwentarz `Harvard/podzial/inventory/INV_E_outputs_studia_meeting.md` (sekcja PREZENTACJE, poz.1-16) · poprzednia karta `docs/audit/2026-06-02/MODULE_12_prezentacje.md` (58/100)
 **Evidence:** `Harvard/modules/M19-prezentacje/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 55/100 — Tier: Alpha (górny — kandydat na Beta) · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 56/100 — Tier: Alpha (górny — kandydat na Beta) · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 5→6 (W9 sanityzacja public viewera `/presentations/shared/:token` — whitelist pól, commit `1b67579d7a`; P1 over-disclosure naprawiony). Suma: 22+13+8+0+7+6+0=56.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -13,7 +14,7 @@
 | C. Testy automatyczne | 15 | 8 | 293 PASS/0 FAIL, ale **15/21 testów integracyjnych = fałszywa zieleń** (`fetch localhost:3001` z `if(status!==201)return` bez serwera); S4/S5 niezweryfikowane; nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 7 | **PresentationsHub §27 w pełni zgodny** (`TableWithPreviewLayout`+`EntityStatusChip` — najlepszy dotąd), MELS adapter OK, ale DeckBuilder 25× `isPolish`. |
-| F. Bezpieczeństwo/dostęp | 10 | 5 | Org-scope CZYSTY (5. moduł), quality gate serwerowy, approval-ticket wzorcowy; ale P1 public viewer leak (wspólny z M17) + P2 `?overrideQualityGate` bez roli. |
+| F. Bezpieczeństwo/dostęp | 10 | 6 | Org-scope CZYSTY, quality gate serwerowy, approval-ticket wzorcowy; W9 sanityzuje public viewer (wspólny fix z M17, commit `1b67579d7a`); P2 `?overrideQualityGate` bez roli pozostaje |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **Faza 4 niewykonana → max 70 + „NIEPEŁNY".** BRAK cap cross-org (org-scope czysty, zweryfikowane). Public viewer leak liczony w M17 (P1, zasięg potwierdzony na M19). Suma 55 < 70. |
 

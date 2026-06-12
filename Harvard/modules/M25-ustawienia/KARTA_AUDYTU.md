@@ -4,18 +4,19 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M25 · inwentarz `Harvard/podzial/inventory/INV_G_*.md` (sekcja USTAWIENIA, poz.1-12) · poprzednia karta `docs/audit/2026-06-02/MODULE_18_ustawienia.md` (56/100) · finding `[[finding_v10_voice_config_false_negative]]`
 **Evidence:** `Harvard/modules/M25-ustawienia/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 53/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 5→8 (W1 notifications read-IDOR naprawiony + Bramka D CalDAV/OAuth AES-256-GCM, commity `b9f2dee9d2` + `9ef570ca1b`, hard cap zdjęty).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 21 | 10/12 REALNE z trwałym `user_preferences` (próbka 6 toggli persystuje+read-back); Shortcuts UKRYTE/no-op, Feature flags read-only viewer, Billing route-only „Section not found". |
 | B. Wiring i dane | 15 | 12 | Rdzeń `user_preferences`/`gdpr_requests` realny, integracje org-scoped, GDPR z bcrypt+grace; minus: cicha degradacja `catch→[]` na login-history/connected-accounts + zerwany billing. |
-| C. Testy automatyczne | 15 | 6 | 286 PASS/43 FAIL/18 SKIP, ale większość FAIL to drift harnessu (i18n mock, brak Router); **S5 GDPR-delete bcrypt i S3 zmiana hasła bez testu**; nic w PR-gate na `Londyn`. |
+| C. Testy automatyczne | 15 | 6 | 286 PASS/43 FAIL/18 SKIP, ale większość FAIL to drift harnessu; **S5 GDPR-delete bcrypt i S3 zmiana hasła bez testu**; nic w PR-gate na `Londyn`. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | Własny spójny shell settings + i18n dobry, ale **2237 hardkodów palety Tailwind** zamiast tokenów + brak kanonu list (sesje/keys/webhooks = layouty kartowe, nie §27). |
-| F. Bezpieczeństwo/dostęp | 10 | 5 | GDPR/api-keys/webhooks/sesje czyste, ale read-IDOR `GET /notifications` + sekrety integracji plaintext + pilot tylko FE. |
+| F. Bezpieczeństwo/dostęp | 10 | 8 | W1 notifications read-IDOR naprawiony + Bramka D CalDAV/OAuth AES-256-GCM szyfrowanie (commity `b9f2dee9d2`, `9ef570ca1b`); GDPR/api-keys czyste; pozostałe: pilot tylko FE (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **TAK — cross-user read-IDOR `GET /api/settings/notifications` (leak prefs innego usera) → kryterium „cross-org leak", max 50.** Suma surowa = 50, pokrywa się z cap. Finding rated P1 (read-only, niska wrażliwość, asymetria do strzeżonego POST). Dodatkowo Faza 4 niewykonana → max 70 + „NIEPEŁNY". |
+| **Hard cap zastosowany?** | — | — | **NIE — read-IDOR P1 naprawiony (W1), hard cap zdjęty.** Suma surowa 53 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Najzdrowszy moduł puli core — przerywa serię cross-org write P0 (M01/M03/M10/M13/M14). Rdzeń to trwały magazyn `user_preferences (user_id, key, value)` przez `GET/PUT /settings/preferences/:key`; próbka 6 toggli z różnych grup persystuje i robi read-back. **Ścieżki krytyczne bezpieczeństwa zweryfikowane jako OK:** GDPR usunięcie konta naprawdę weryfikuje hasło bcrypt (`settings.routes.ts:3028`), jest self-scoped (`req.user.id` — nie da się usunąć cudzego), 30-dniowy grace realny, export user-scoped z 410 po wygaśnięciu; API Keys/Webhooks trzymane jako hash+prefix (GET nie zwraca sekretu), wszystkie mutacje `WHERE id=? AND user_id=?`; sesje/login-history user-scoped. **Znana czerwona flaga Voice & TTS false-negative OBALONA** — żywy `VoiceSettings.tsx` nie ma logiki „not configured"; defekt żyje w `VoiceSettingsPanel.tsx` (0 importerów, należy do AI OS, nie M25) — błędna atrybucja w inwentarzu. Zaufanie/wartość obniżają: **read-IDOR** `GET /settings/notifications` (`userId` z query bez guarda, podczas gdy bliźniaczy POST `:912` guard MA — asymetryczne przeoczenie), **sekrety integracji plaintext at rest** (CalDAV base64 `:2000`, OAuth tokeny bez encrypt), **pilot gating tylko FE** (serwer nie zna pilota → pilot przez API może api-keys/webhooks/notifications), oraz dług funkcjonalny: Shortcuts to UI bez globalnego dispatchera (rebind no-op `:523`), Feature flags w Developer to read-only viewer, `/settings/billing` daje „Section not found" mimo route/enum.
 

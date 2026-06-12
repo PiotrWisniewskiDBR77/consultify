@@ -4,16 +4,17 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M23 · inwentarz `Harvard/podzial/inventory/INV_F_*.md` (sekcja ORGANIZACJA, poz.1-14) · poprzednia karta `docs/audit/2026-06-02/MODULE_16` (52/100)
 **Evidence:** `Harvard/modules/M23-organizacja/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 44/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 52/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 17→20 i B: 9→11 (W11 org-context-store backend — Goals/Challenges/Strategy mają realną persystencję per-org + zasilają Teresę, commit `d013ab7c4c`); C: 7→8 (W15 CI gate, commit `99bda16792`); F: 5→7 (W2 `/api/competency` auth + org-data export role-gate, commit `e3945bc7fc`). Suma: 20+11+8+0+6+7+0=52.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 17 | Profil/KnowledgeGraph/Members/Domains/Branding/OrgContext realne, ale **Goals/Challenges/Strategy localStorage-only** (nie zasilają Teresy, nie per-org), Goals=MOCK-STUB, Billing/Limits CTA martwe. |
-| B. Wiring i dane | 15 | 9 | Profil ma realny backend SSOT, ale „dane organizacyjne" (cele/wyzwania/strategia) tylko w localStorage + podwójna implementacja admin (drift). |
-| C. Testy automatyczne | 15 | 7 | 185 PASS/3 FAIL(stale)/45 SKIP; **test izolacji multi-tenant SKIPPED** (za `RUN_DB_TESTS`), localStorage/org-switch JWT nietestowane; nic w PR-gate. |
+| A. Realność funkcji | 25 | 20 | Profil/KnowledgeGraph/Members/Domains/Branding/OrgContext realne; W11 Goals/Challenges/Strategy mają backend persystencję per-org + zasilają Teresę (commit `d013ab7c4c`); Billing/Limits CTA martwe P2 |
+| B. Wiring i dane | 15 | 11 | Profil realny SSOT; Goals/Challenges/Strategy teraz per-org backend (W11, `d013ab7c4c`); podwójna implementacja admin (drift) pozostaje P2 |
+| C. Testy automatyczne | 15 | 8 | 185 PASS/3 FAIL(stale)/45 SKIP; W15 CI gate (`99bda16792`); test izolacji multi-tenant nadal SKIPPED (za `RUN_DB_TESTS`); nic w PR-gate |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | Stany OK, org-switch wzorcowy; ale podwójna implementacja admin (drift), i18n `isPolish`+nieprzetłumaczone opcje ról. |
-| F. Bezpieczeństwo/dostęp | 10 | 5 | Profil firmy (strategia) CHRONIONY + org-switch bezpieczny, ale **P1 `/api/competency` bez auth** + **P1 org-data export bez role-gate** + route bez role-gate. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | Profil firmy CHRONIONY + org-switch bezpieczny; W2 naprawił `/api/competency` auth + org-data export role-gate (commit `e3945bc7fc`); route bez role-gate (deep-link member) pozostaje P2 |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **Faza 4 niewykonana → max 70 + „NIEPEŁNY".** BRAK cap cross-org — `competency` kolapsuje do org `''` (brak wycieku realnych danych), org-data export to within-org over-privilege (nie cross-org). Oba P1. Suma 44 < 70. |
 

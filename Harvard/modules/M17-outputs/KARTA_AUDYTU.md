@@ -4,7 +4,8 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M17 · inwentarz `Harvard/podzial/inventory/INV_E_outputs_studia_meeting.md` (sekcja OUTPUTS, poz.1-16) · poprzednia karta `docs/audit/2026-06-02/MODULE_09_outputs.md` (49/100) · finding v8-404 (`[[finding_staging_schema_drift_v8_404]]`)
 **Evidence:** `Harvard/modules/M17-outputs/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 51/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 53/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 5→7 (W9 public viewer sanityzacja — `normalizeDeckRow` whitelist pól, commit `1b67579d7a`; W7 beta-lock 3-warstwowy, commit `bc5579918d`). Suma: 21+12+7+0+6+7+0=53.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -13,7 +14,7 @@
 | C. Testy automatyczne | 15 | 7 | 330 PASS/30 FAIL, ale FAIL-e to harness (i18n mock, 25 stale testów middleware vs cofnięta impl, fixture gap); **bramka aprobaty eksportu bez testu serwerowego**; nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | §27 wysoka zgodność (kanoniczne `FilterableTable`+`TableWithPreviewLayout`), ale brak persistKey, brak `EntityStatusChip`, hardkody kolorów, i18n 18× `isPolish?` inline. |
-| F. Bezpieczeństwo/dostęp | 10 | 5 | Rejestr CZYSTY (brak IDOR), review/publish role-gated, ale **P1 public viewer wycieka org_id/confidentiality** + bramka eksportu governance tylko UI + beta-lock tylko nawigacyjny. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | Rejestr CZYSTY (brak IDOR), review/publish role-gated; W9 sanityzuje public viewer (whitelist pól, commit `1b67579d7a`); W7 beta-lock 3-warstwowy (commit `bc5579918d`); bramka eksportu governance tylko UI pozostaje P2 |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **Faza 4 niewykonana → max 70 + „NIEPEŁNY".** BRAK cap cross-org (rejestr org-scoped, zweryfikowane). Public-viewer leak to over-disclosure za tokenem (P1), nie IDOR. Suma 51 < 70. |
 

@@ -4,18 +4,19 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M03 · inwentarz `Harvard/podzial/inventory/INV_B_my-work.md` (sekcje 1,3-10; bez Notatnika=M04 i Ideas=M05-09) · poprzednia karta `docs/audit/2026-06-02/MODULE_02` (57/100)
 **Evidence:** `Harvard/modules/M03-my-work-organizer/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 44/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 DecisionController+inbox org-scope naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate + kontraktowe testy cross-org, commit `7ab1b8aace`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 19 | Inbox/Kalendarz/Zadania/Decyzje/Manager realne, ale linkowanie decyzji z zadania = 4 zaszyte mocki (WIDOCZNE-ALE-ZEPSUTE) + 2 stuby. |
 | B. Wiring i dane | 15 | 10 | Inbox ma graceful fallback v8→legacy, CRUD wpięte, ale odczyt session-context to martwy stub + cross-org gapy. |
-| C. Testy automatyczne | 15 | 7 | 595 PASS / 19 FAIL; ŻADEN funkcjonalny E2E w PR-gate (joby „deferred" na branchach feat/*), S3 bez pokrycia. |
+| C. Testy automatyczne | 15 | 8 | 595 PASS / 19 FAIL; +1 W15 CI gate na Londyn + kontraktowe testy cross-org (W1, commit `7ab1b8aace`). |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | §27 w większości spełnione, ale RC-4 (sticky thead łamany przez `overflow-hidden`) na wszystkich 3 tabelach + szerokości kolumn nieperzystowane. |
-| F. Bezpieczeństwo/dostęp | 10 | 2 | 2× cross-org IDOR (write decyzji + inbox triage/delegate) + leak executive-analytics + gating Managera tylko w UI. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | W1 DecisionController+inbox org-scope naprawiony (commit `b9f2dee9d2`); W7 beta-lock 3-warstwowy; pozostałe: Manager gating tylko UI (P2), executive-analytics (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **TAK — cross-org write (approve/reject decyzji cudzej org) → max 50 + P0.** Suma surowa 44 < 50, więc wiąże suma; cap pozostaje sufitem dopóki P0 nienaprawiony. |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 50 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Organizer to najbardziej rozbudowany moduł aplikacji — Inbox (triage v8 z uczciwym fallbackiem do legacy), Kalendarz (unified feed + drag-reschedule), Zadania (tabela+Kanban+detal 6.5k linii), Decyzje, Manager — wszystko zasadniczo realne i wpięte. Tier ciągnie w dół pięć rzeczy: **P0 widoczne-ale-zepsute** (linkowanie decyzji z zadania operuje na 4 zaszytych mockach `dec-1..dec-4` bez fetcha), **dwa cross-org IDOR-y na zapisie** (admin może zatwierdzić decyzję cudzej org; każdy może snooze/delegować element inboxa cudzej org), brak jakiegokolwiek funkcjonalnego E2E w PR-gate, kanon RC-4 (sticky thead) złamany na wszystkich trzech tabelach, oraz ~15 martwych komponentów. Gating Managera jest wyłącznie kosmetyczny (UI), bez egzekucji serwerowej.
 

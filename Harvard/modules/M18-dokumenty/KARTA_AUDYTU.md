@@ -4,12 +4,13 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M18 · inwentarz `Harvard/podzial/inventory/INV_E_outputs_studia_meeting.md` (sekcja DOKUMENTY, poz.1-9) · poprzednia karta `docs/audit/2026-06-02/MODULE_10_dokumenty.md` (53/100)
 **Evidence:** `Harvard/modules/M18-dokumenty/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 47/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 54/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 18→21 i B: 8→12 — W5 potwierdziło, że DAO (`documentVersionSnapshotService`, `documentCommentsService`) + migracja 776 już istniały i były write-through real; Sprint 5 usunął wyłącznie stale referencje `persistedSnapshotStore`/`persistedCommentStore` TS. Wersje/komentarze przeżywają restart (fasada-in-memory była błędem w pierwotnym audycie). Suma: 21+12+9+0+5+7+0=54.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 18 | Rdzeń realny (generacja, edytor proposalowy 6 poziomów, editor-state persist, QA-gate), ale **wersje/komentarze/approvals/audit to fasada in-memory** (znikają po restarcie) + Mode3 wymusza placeholder-szkielet. |
-| B. Wiring i dane | 15 | 8 | Editor-state ma realny DAO (migracja `20260603`), ale 8/~11 warstw stanu pisze do drugiej `Map` in-memory („until wave5 migration ships") — utrata po deployu. |
+| A. Realność funkcji | 25 | 21 | Rdzeń realny (generacja, edytor proposalowy 6 poziomów, editor-state persist, QA-gate); wersje/komentarze/approvals/audit mają realny DAO + migrację 776 (przeżywają restart — W5 potwierdziło); Mode3 wymusza placeholder-szkielet P2 |
+| B. Wiring i dane | 15 | 12 | Write-through real na wszystkich warstwach (editor-state migracja `20260603`, wersje/komentarze migracja 776); `documentVersionSnapshotService` + `documentCommentsService` — realny DAO, nie Map |
 | C. Testy automatyczne | 15 | 9 | **889 PASS / 0 FAIL** (najlepszy wolumen), ale test persistencji MOCKUJE DAO (nie dotyka PG), bramka eksportu testowana na serwisie nie HTTP 403; zielone maskuje fasadę; nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 5 | §27 głównie N/D (edytor), ale `DocumentStudioView` NIE używa `ExecutiveModuleShell` (ręczny header), i18n de-facto EN-only, ~150 hardkodów kolorów. |

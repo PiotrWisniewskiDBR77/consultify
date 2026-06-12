@@ -4,18 +4,19 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M13 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja INICJATYWY, poz.1-19) · poprzednia karta `docs/audit/2026-06-02/MODULE_05` (55/100) · SSOT `docs/initiatives/INITIATIVE_FORMULA.md`
 **Evidence:** `Harvard/modules/M13-inicjatywy/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 45/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 52/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 19→20 (W6 AI Wizard CTA aktywowany, commit `3aec45a21d`); F: 2→7 (W1 governance org-scope naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 8→9 (kontraktowe testy cross-org, commit `7ab1b8aace`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 19 | 12 REALNE + 2 z degradacją; rdzeń (portfolio/dokument ~30 sekcji/Analysis) realny, ale całe tworzenie z huba disabled „w przygotowaniu". |
-| B. Wiring i dane | 15 | 10 | Główny router scoped, dokument/archive/status realne, ale cicha degradacja V8 bez komunikatu + governance bez org. |
-| C. Testy automatyczne | 15 | 8 | ~520 zielonych, ale P0 test-bugi (stale import → 0 testów CRUD, i18n mock drift); zero w PR-gate. |
+| A. Realność funkcji | 25 | 20 | 13 REALNE + 2 z degradacją; rdzeń (portfolio/dokument ~30 sekcji/Analysis) realny; AI Wizard CTA aktywowany (W6, commit `3aec45a21d`); Charter i New Initiative były już aktywne. |
+| B. Wiring i dane | 15 | 10 | Główny router scoped, dokument/archive/status realne, ale cicha degradacja V8 bez komunikatu. |
+| C. Testy automatyczne | 15 | 9 | ~520 zielonych; stale import P0 nadal (0 testów CRUD); +1 kontraktowe testy cross-org (W1, commit `7ab1b8aace`). |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | §27 Portfolio bez resize, pusta strefa kebaba (§9), status `<select>`; korupcja „rose" poza tabelą; CARD formula 0/15 (treść). |
-| F. Bezpieczeństwo/dostęp | 10 | 2 | Cross-org IDOR w governance (cel↔inicjatywa, decyzja↔inicjatywa) + router governance org-spoofable + gating pilota tylko klient. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | W1 governance org-scope naprawiony (commit `b9f2dee9d2`); W7 beta-lock 3-warstwowy; pozostałe: pilot gating tylko klient (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **TAK — cross-org write powiązań (governance) → max 50 + P0.** Suma surowa 45 < 50, wiąże suma; cap pozostaje sufitem dopóki P0 nienaprawiony. |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 52 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Rdzeń Inicjatyw jest mocny — portfolio (4 widoki), dokument inicjatywy (~30 sekcji w rejestrze), zakładka Analysis (graf zależności + feasibility/completeness), generator z insightów wywiadu, archive/status z preflightem `initiativeWriteTruth`, ROI realny. Zaufanie i wartość łamią cztery rzeczy: **cross-org IDOR w `initiativeGovernanceService`** (powiązania cel↔inicjatywa i decyzja↔inicjatywa bez org — czwarty moduł z tym wzorcem), **całe tworzenie z huba martwe w UI** (Charter/AI Wizard/New disabled „w przygotowaniu", żywe tylko deep-link `?new=1` i ścieżka z Wywiadu), **cicha degradacja V8 bez komunikatu** (inaczej niż Finance/Results, które mają baner), oraz **gating pilota VTS tylko po stronie klienta** (serwer nie blokuje create/bulk). ROI jest realny, ale nieosiągalny nawigacyjnie (brak linku w sidebarze).
 

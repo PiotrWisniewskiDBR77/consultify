@@ -4,7 +4,8 @@
 **Wejścia:** `MODULE_02E_whiteboard.md` (pełna analiza kodu 2026-06-11) · `INV_B_my-work.md` §Whiteboard · Protokół V1
 **Evidence:** plik:linia zgodnie z MODULE_02E — wszystkie pozycje zweryfikowane w kodzie
 
-## OCENA: 43/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 4)
+## OCENA: 45/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 4)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 4→6 (W1 facilitation 5 endpointów org-scope + WS resource-auth naprawione, commit `b9f2dee9d2`; hard cap cross-org usunięty). Suma: 18+9+5+0+7+6+0=45.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -13,9 +14,9 @@
 | C. Testy automatyczne | 15 | 5 | 73 testów PASS: `p13-whiteboard-canon.test.ts` (57, testuje spec-stałe nie runtime), `facilitation.contracts.test.ts` (8, serwis zmockowany), `ideaMapSyncPersistence.smoke.test.ts` (8); zero testów komponentu whiteboardu, zero testów WS gateway, zero integracyjnych na realnej DB. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana — deferred. |
 | E. Kanony/UI | 10 | 7 | i18n 149 kluczy `myWork.whiteboard.*` PL/EN kompletne (0 braków); beta-gating SSOT; §27 nie dotyczy canvas; UX bogaty (skróty, sceny, align/distribute, frames, slash-menu). |
-| F. Bezpieczeństwo/dostęp | 10 | 4 | **[P0]** WS `/ws/collab/:ideaId` — JWT verify bez org-membership check na resource (kursory/locki/patche dla obcej org znając ideaId); **[P0]** facilitation: `PUT /outcomes/:id/export` `:816-849` + inne endpointy GET bez org-scope → cross-org odczyt/zapis po sessionId; governance (classification/watermark) — FE-only, brak BE enforcement. |
+| F. Bezpieczeństwo/dostęp | 10 | 6 | W1 naprawił facilitation 5 endpointów org-scope + WS resource-auth (commit `b9f2dee9d2`); governance (classification/watermark) — FE-only, brak BE enforcement pozostaje P2 |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana — deferred; PG datetime crash nienaprawiony = lock/clean-stale pada na prodzie. |
-| **Hard cap zastosowany?** | — | — | Cross-org WRITE: `PUT /outcomes/:id/export` (`:816`) bez org-scope → hard cap max 50 + P0; wynik 43 < 50 — cap niewiążący; P0 flag obligatory. Faza 4 deferred → max 70. |
+| **Hard cap zastosowany?** | — | — | NIE: W1 naprawił cross-org WRITE facilitation (hard cap zdjęty); Faza 4 niewykonana → max 70; suma 45 < 70 |
 
 **Werdykt jednym akapitem:** Whiteboard jest najlepiej wykonanym narzędziem canvas w pakiecie Ideas — solidny single-player z 11 typami node'ów, rysowaniem pen/highlighter, scenami prezentacyjnymi, realnym LLM AI (propose→accept/reject), pełnym i18n PL/EN i kompletnym API facilitation (12 endpointów DB-backed z migracjami w baseline prod). Dwa fundamentalne problemy blokują wyższy tier: (1) strukturalny P0 — `my_idea_maps` per-user sprawia, że drugi uczestnik nie może załadować tej samej tablicy, więc cała warstwa facilitation/multiplayer jest teatrem jednoosobowym niezależnie od jakości kodu; (2) WS `/ws/collab/:ideaId` oraz 5 facilitation endpointów (roles, votes, outcomes, export) nie sprawdzają org-membership — cross-org odczyt/zapis po zgadniętym sessionId/ideaId. Na prodzie dodatkowy crash: `datetime()` string-concat w PG nie tłumaczony przez DB adapter → lock/clean-stale crashuje. Fala 1 (shared board model) to blocker całej wartości workshopowej modułu.
 

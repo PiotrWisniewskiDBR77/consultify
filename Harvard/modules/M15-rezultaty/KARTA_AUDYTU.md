@@ -4,7 +4,8 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M15 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja REZULTATY, poz.1-8) · poprzednia karta `docs/audit/2026-06-02/MODULE_07_rezultaty.md` (45/100)
 **Evidence:** `Harvard/modules/M15-rezultaty/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 49/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 54/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 cross-org KPI write + W3 x-kpi-role naprawione, commity `b9f2dee9d2` + `e3945bc7fc`, hard cap zdjęty).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -13,9 +14,9 @@
 | C. Testy automatyczne | 15 | 8 | 239 PASS/5 FAIL (test-drift, nie bugi); approval-gating dobrze pokryty, ale szczelność showcase przy demo=ON nietestowana; nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 7 | §27 zgodny (KpisTableV3/Reports), **i18n najzdrowszy w audycie** (134× `t()`, 0× `isPolish`, 0 hex); ale degraded banner NIE działa (cicha pustka jak M13/M14). |
-| F. Bezpieczeństwo/dostęp | 10 | 2 | Większość by-id org-scoped, ale **DWA P0**: cross-org KPI write (time-series) + RBAC bypass przez podrabialny `x-kpi-role`; + connector plaintext. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | W1 cross-org KPI write + W3 x-kpi-role naprawione (commity `b9f2dee9d2`, `e3945bc7fc`); W7 beta-lock 3-warstwowy; pozostałe: connector IRIS plaintext (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **TAK — cross-org WRITE `UPDATE initiative_kpis SET current_value WHERE id=?` bez org (`benefits.routes.ts:468`) → max 50 + P0.** Zweryfikowane osobiście. Drugi P0: `x-kpi-role` self-escalation (`v8/results.routes.ts:108`). Suma 49 < 50. Dodatkowo Faza 4 → max 70 + „NIEPEŁNY". |
+| **Hard cap zastosowany?** | — | — | **NIE — oba P0 naprawione (W1+W3), hard cap zdjęty.** Suma surowa 54 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Moduł funkcjonalnie solidny — KPI (4 tryby: overview/queue/catalog/scorecards + time-series + signal sheet) i ROI (portfolio summary, ROI Analysis) to **realne obliczenia z realnych tabel** (`v8_kpi_definitions`, `kpi_time_series`, `v8_roi_realization_entries`, `kpi_financial_mappings` — AVG/COUNT/NPV/payback, bez fasady `new Map()`), Reports 5 trybów enterprise z **approval-gatingiem egzekwowanym serwerowo** (`resultsEnterpriseService.ts:796` blokuje wykonanie do `awaiting_approval`; pokryte testem `results-finalization-guard`), a **showcase/demo-data to wzorcowo bezpieczny mechanizm** — `shouldUseResultsShowcaseData()` = wyłącznie jawny toggle usera („Demo data must NEVER auto-activate", brak backdoora localhost/DEV), podstawia tylko gdy realne PUSTE, i renderuje widoczny chip „Showcase data — local" (`ResultsHub.tsx:909`) — NIE pokazuje fake-wyników klientowi bez świadomego włączenia. i18n najzdrowszy ze wszystkich studiów (134× `t()`, 0× `isPolish`, 0 hardkodów hex). **Dwa blockery bezpieczeństwa P0:** (1) **cross-org KPI write** — `POST /benefits/kpis/:kpiId/time-series` scope'uje INSERT do własnej org, ale następczy `UPDATE initiative_kpis SET current_value = ? WHERE id = ?` (`benefits.routes.ts:468`) jest **bez `organization_id`** → user org A nadpisuje `current_value` KPI org B po kpiId (wzorzec recalc M14, zweryfikowane osobiście); (2) **RBAC bypass** — `p04KpiRoleFromRequest` (`v8/results.routes.ts:108-113`) bierze rolę KPI **wyłącznie z nagłówka `x-kpi-role`** bez porównania z realną rolą usera → dowolny członek wysyła `x-kpi-role: kpi_owner` i przechodzi bramki `delete_kpi`/`edit_definition`/`create_report`/`manage_reconciliation` (in-org privilege escalation, defeat całego modelu RBAC + bramki tworzenia raportów). Reszta by-id (legacy benefits PUT/DELETE) jest org-scoped (`WHERE id=? AND organization_id=?` przed mutacją) — M15 NIE jest pełną hybrydą jak M16. Drugorzędne: degraded banner V8→legacy NIE renderowany (cicha pustka jak M13/M14, jedyny ślad `console.warn`); connector IRIS sekret plaintext w `mcp_providers.config` zwracany non-adminom (P2); beta-lock nawigacyjny (P2). Hard cap (cross-org write → 50) + niewykonane Fazy 3+4.
 

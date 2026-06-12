@@ -6,15 +6,16 @@
 
 ---
 
-## OCENA: 51/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 3 i Fazy 4)
+## OCENA: 54/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 3 i Fazy 4)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 19→20 (W6 `_actionDecisionRoutes` zamontowany — 1188 linii governance kodu teraz osiągalne, commit `f35aa8d7c8`); E: 4→6 (W13 i18n Wave panels PL/EN, commit `b77fd87ae7`). Suma: 20+11+10+0+6+7+0=54.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 19 | 23 z 26 funkcji REALNE; Artifacts za podwójną flagą (INTERNAL_TOOLS + ENABLE_V8_GLOBAL); OAuth-session symulowane; Build Milestones statyczne |
+| A. Realność funkcji | 25 | 20 | 23 z 26 funkcji REALNE; W6 `_actionDecisionRoutes` zamontowany (PolicyEngine/AsyncJob/audit-export osiągalne, commit `f35aa8d7c8`); Artifacts za podwójną flagą; OAuth-session symulowane |
 | B. Wiring i dane | 15 | 11 | 6 wave-service'ów z tabelami + migracjami; `_actionDecisionRoutes` importowany lecz nigdy mountowany (martwy import + 1188 linii nieosiągalnych) |
 | C. Testy automatyczne | 15 | 10 | Wave7/8/9 unit tests (612+538+801 linii); actionDecision+research unit; e2e smoke w CI nightly; brak route-integration tests dla wave backendu; Wave 6 bez unit testu |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 deferred — brak screenshotów |
-| E. Kanony/UI | 10 | 4 | Brak ModuleHub/MELS; brak TableCanon §27 we wszystkich listach; zero i18n (hardcoded EN) we wszystkich Wave panelach |
+| E. Kanony/UI | 10 | 6 | Brak ModuleHub/MELS; brak TableCanon §27 we wszystkich listach; W13 i18n Wave panels PL/EN (commit `b77fd87ae7`) |
 | F. Bezpieczeństwo/dostęp | 10 | 7 | Trzy warstwy spójne (betaAccess.ts + InternalToolsGate FE + internalTools.middleware.ts BE); org-scope na wszystkich serwisach; brak cross-org IDOR; brak x-*-role header abuse |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 deferred — brak smoke curl |
 | **Hard cap zastosowany?** | — | — | Faza 4 deferred → max 70; zero route-integration tests → max 70; wynik 51 < 70 — hard cap nie zmienia oceny |

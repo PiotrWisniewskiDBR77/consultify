@@ -4,7 +4,8 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M14 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja WDROŻENIE, poz.1-13) · poprzednia karta `docs/audit/2026-06-02/MODULE_06_realizacja.md` (51/100) · reuse dokumentu inicjatywy z M13
 **Evidence:** `Harvard/modules/M14-wdrozenie/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 42/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 48/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 recalcInitiativeActualTotal org-scope + W2 task_dependencies naprawione, commit `b9f2dee9d2` + `e3945bc7fc`, hard cap zdjęty); E: 5→6 (W13 M14 Wave8 i18n, commit `84757dc672`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -12,10 +13,10 @@
 | B. Wiring i dane | 15 | 9 | Rollout trwały (naprawione vs 06-02), CRUD/aggregate org-scoped, ale cicha degradacja V8→legacy bez banera + osierocony `execution.routes.ts` (404 na stats/escalations/calendar). |
 | C. Testy automatyczne | 15 | 6 | 633 PASS/23 FAIL lokalnie; S2 (DnD) i S6 (raporty) zero działającego pokrycia, `rollout.routes` bez testów BE; nic nie biegnie w PR-gate na `feat/*`. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
-| E. Kanony/UI | 10 | 5 | Hub zgodny + Portfel głównie OK, ale 5 tabel Rollout całkowicie poza §27 (surowy `<table>`), bulk-bar bez akcji, ~141 kluczy i18n brak w PL (inline fallback). |
-| F. Bezpieczeństwo/dostęp | 10 | 2 | Cross-org write budżetu (always-live, admin) + cross-org write `task_dependencies` (za flagą V8) + pilot tylko klient. |
+| E. Kanony/UI | 10 | 6 | Hub zgodny + Portfel głównie OK, ale 5 tabel Rollout poza §27 (surowy `<table>`); W13 i18n Wave8 naprawione (commit `84757dc672`). |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | W1 recalcInitiativeActualTotal + W2 task_dependencies org-scope naprawione (commity `b9f2dee9d2`, `e3945bc7fc`); W7 beta-lock 3-warstwowy; pozostałe: pilot tylko klient (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **TAK — cross-org write `initiatives.actual_budget_total` (always-mounted `/api/execution-control/budget/entries`) → max 50 + P0.** Suma surowa 42 < 50, wiąże suma; cap pozostaje sufitem dopóki P0 nienaprawiony. Dodatkowo Faza 4 niewykonana → max 70 + „NIEPEŁNY". |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1+W2), hard cap zdjęty.** Suma surowa 48 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Rdzeń Wdrożenia jest najsolidniejszy z dotąd zaudytowanych modułów core — executive dashboard (Health Score liczony z realnych danych, nie fabrykowany), trzy widoki portfela z kanban DnD i inline-statusem, Action Queue/RAID/Decisions na org-scoped SQL, zakładka Rollout (Plan/KPI/Risks/Change/Closure) z **trwałymi danymi na `/api/rollout/*`** (potwierdzona naprawa vs 06-02, migracja `20260608_rollout_tables.sql`), raporty z generacją z live-data bez zmyślonych liczb, reuse dokumentu inicjatywy z M13, handoff czatu Teresy. Zaufanie i wartość łamią cztery rzeczy: **cross-org write budżetu** — legacy `/api/execution-control/budget/entries` (zawsze zamontowany, bez bramki V8) wywołuje `recalcInitiativeActualTotal` z `UPDATE initiatives SET actual_budget_total WHERE id=?` **bez `organization_id`**, więc admin org A nadpisuje cachowany budżet inicjatywy org B (piąty moduł z wzorcem cross-org, tym razem write-tamper na cudzej encji); **Manager (people_change) cicho martwy bez `ENABLE_V8_GLOBAL`** — `getManagerProblems` bije w `/api/v8/...`, dostaje 404, `catch` zwraca zera, legacy nie ma `/manager/lanes/*`, użytkownik widzi puste lanes zamiast banera (jak cicha degradacja V8 w M13); **osierocony `routes/execution.routes.ts`** (niezamontowany — Gateway montuje `routes/pmo/execution.routes.ts`), przez co `/api/execution/stats|escalations|calendar` zwracają 404 (3 czerwone E2E); **`budgetHealth=100` hardcode** (`ExecutionHub.tsx:2216`) maluje fałszywie-zielony kafelek. Dług kanonowy skupiony w 5 tabelach Rollout (poza §27) i ~141 brakujących kluczach PL.
 

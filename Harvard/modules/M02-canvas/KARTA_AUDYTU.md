@@ -4,7 +4,8 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M02 · inwentarz `Harvard/podzial/inventory/INV_A_czat_canvas.md` (sekcja CANVAS, poz.1-33) · podkłady `CANVAS_MODULE_AUDITOR_BRIEF.md` + `DELIVERABLES_HARVARD_AUDIT_HANDOFF.md` (2026-06-11) · audyty `docs/audit/2026-06-10/CANVAS_*` i `DELIVERABLES_*` · `[[project_canvas_program]]`, `[[project_deliverables_light_l1]]`
 **Evidence:** `Harvard/modules/M02-canvas/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 57/100 — Tier: Alpha (górny — kandydat na Beta) · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 58/100 — Tier: Alpha (górny — kandydat na Beta) · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 7→8 (W7 beta-lock 3-warstwowy, commit `bc5579918d`). Suma: 22+13+9+0+6+8+0=58.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -13,7 +14,7 @@
 | C. Testy automatyczne | 15 | 9 | 99/99 PASS (brief zaniżał), ale S6 (share viewer/revoke) i S7 (org-guard materializacji) bez testu regresji; nic w PR-gate na `Londyn`, testy server/ poza CI. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 (osobista) niewykonana — brief deklaruje LIVE z 06-10, ale protokół wymaga własnego dowodu. |
 | E. Kanony/UI | 10 | 6 | §27 N/D (brak tabel-list), ale główny panel `WorkCanvasDocumentPanel` bez `useTranslation` (miesza PL/EN), ~61 surowych utili palety. |
-| F. Bezpieczeństwo/dostęp | 10 | 7 | **0× P0/P1** — org-scope szczelny (`ownedDraft`), guard cross-org realny, public viewer solidny; P2: 8/9 capabilities `canvas.*` martwe serwerowo + GUEST może edytować. |
+| F. Bezpieczeństwo/dostęp | 10 | 8 | **0× P0/P1** — org-scope szczelny (`ownedDraft`), guard cross-org realny, public viewer solidny; W7 beta-lock 3-warstwowy (commit `bc5579918d`); P2: 8/9 capabilities `canvas.*` martwe serwerowo + GUEST może edytować |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **Faza 4 niewykonana → max 70 + „NIEPEŁNY".** BRAK cap cross-org (pierwszy obok M25 moduł bez IDOR — zweryfikowane osobiście). Suma 57 < 70. |
 

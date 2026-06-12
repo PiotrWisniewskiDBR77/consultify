@@ -4,18 +4,19 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M01 · inwentarz `Harvard/podzial/inventory/INV_A_czat_canvas.md` (sekcja CZAT) · poprzednia karta `docs/audit/2026-06-02/MODULE_01` (62/100) · programy: chat-world-class, deliverables-light
 **Evidence:** `Harvard/modules/M01-czat/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 57/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (W1 org-scope memory/project naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate Londyn + kontraktowe testy cross-org, commit `7ab1b8aace`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 22 | 49/59 pozycji REALNE, 0 mock w czacie, 1 rozjazd (AI-memory) + 6 martwych komponentów. |
 | B. Wiring i dane | 15 | 11 | Wiring solidny z migracjami, ale cross-org gap w pamięci projektu + SQLite-izm `datetime('now')` na PG + crash hasła share (naprawiony quick-fixem). |
-| C. Testy automatyczne | 15 | 7 | S1 mocno chroniony (z E2E w PR-gate), ale suite komponentów CZERWONY (UnifiedChatPanel 14 FAIL — realny bug), integ wymaga DB, E2E głównie cron-only. |
+| C. Testy automatyczne | 15 | 8 | S1 mocno chroniony (z E2E w PR-gate), suite komponentów CZERWONY (UnifiedChatPanel 14 FAIL), integ wymaga DB, E2E głównie cron-only; +1 testy kontraktowe cross-org (W1, commit `7ab1b8aace`) + W15 CI gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana — brak dowodu wizualnego (re-ocena po przejściu w przeglądarce). |
 | E. Kanony/UI | 10 | 8 | §27 nie dotyczy (sidebar ≠ tabela), i18n solidne, shell spójny; drobne P2. |
-| F. Bezpieczeństwo/dostęp | 10 | 3 | Cross-org IDOR P0 (read + destrukcyjny write pamięci projektu) + leak `metadata` w public viewerze. |
+| F. Bezpieczeństwo/dostęp | 10 | 8 | W1 org-scope memory/project naprawiony (commit `b9f2dee9d2`); org-scope 23/25 endp. + W7 beta-lock 3-warstwowy; pozostałe: leak `metadata` public viewer P2, prompt injection chat P2. |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana — brak weryfikacji staging/prod (re-ocena po smoke). |
-| **Hard cap zastosowany?** | — | — | **TAK — cross-org leak/brak auth na zapisie → max 50 + P0** (dominuje nad „Faza 4 niewykonana → max 70"). Suma surowa 51 → przycięta do 50. |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 57 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Czat to najbardziej dojrzały moduł aplikacji — 49/59 funkcji realnych, wszystkie kluczowe przepływy (streaming SSE, CRUD rozmów, handoffy intencji do 7 celów, karty propozycji, deep-research, głos Teresy) wpięte w żywe endpointy z migracjami, org-scope w `conversations.routes.ts` wzorcowy (21/21). Zaufanie łamie **cross-org IDOR w pamięci projektu** (`/api/ai/memory/project/:projectId` — każdy zalogowany czyta i KASUJE pamięć cudzej organizacji po UUID), co uruchamia hard-cap na 50 niezależnie od reszty. Tier wyżej blokują dziś trzy rzeczy: ten P0, czerwony rdzeń testów komponentów (realny bug `CanvasArtifactSwitcher`), oraz niewykonane Fazy 3+4 (środowiska + żywa weryfikacja).
 
