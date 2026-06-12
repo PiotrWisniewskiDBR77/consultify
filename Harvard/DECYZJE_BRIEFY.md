@@ -86,6 +86,8 @@
 
 **Rekomendacja: B.** Czysty kontrakt od dziś, zero ryzyka na starych danych.
 
+> ⚠️ **KOREKTA 2026-06-12 (weryfikacja CTO przed wykonaniem — premisa nieaktualna):** „dual-write forward" jest **już faktycznym stanem**. FE Process Flow (`IdeaProcessFlowTool.tsx` → `useProcessFlowCRUD`) woła wyłącznie `/v8/process-flow` (V8 mirror), nie blob. `createNode`/`createEdge` w `processFlowService.ts` generują **UUID po stronie serwera** (`uuidv4()`) i zwracają je klientowi — kontrakt ID jest server-authoritative, czysty, BEZ „garbage". Blob `my_idea_maps.nodes_json` należy do INNEGO narzędzia (Mind Map), nie Process Flow — brak równoległego zapisu/mirroru do zdeprecjonowania. **Decyzja faktyczna: V8 mirror jest czysty i już kanoniczny — brak ślepego buildu.** Do zrobienia w FAZIE C: (1) żywy round-trip (utwórz węzeł+krawędź → reload → przetrwało), (2) sprawdzić ewentualny FE optimistic-ID timing przy `createEdge` (czy klient czeka na server-id węzła) — to M07 Fala 1 razem z `connectMode` (osobny realny P0, nie ta decyzja). **WYKONANE: brak ślepej zmiany; weryfikacja round-trip → FAZA C.**
+
 ---
 
 ## #8 — M21 Meeting→My Work: globalizować follow-upy/decyzje czy lokalnie?
@@ -124,8 +126,8 @@
 | 4 | M26 self-connect | **A** — zamknięty + doc flagi | ✅ WYKONANE | `b7b2e47e44` — 3× .env.example |
 | 5 | M08 dual-stack | **A** — zostawić za flagą | ✅ DECYZJA (no-op) | re-decyzja po FAZIE C z żywym tp_* |
 | 6 | M20 governed sync | **B** — neutralizować przycisk | ✅ WYKONANE | `b074760074` — „Coming soon", mapowanie zostaje |
-| 7 | M07 V8 mirror | **B** — dual-write forward | ⏳ w realizacji | — |
+| 7 | M07 V8 mirror | ~~B build~~ → **brak zmian** | ✅ ZAMKNIĘTE | premisa nieaktualna: FE już używa V8 mirror (server-UUID, czyste); round-trip→FAZA C |
 | 8 | M21 Meeting→MyWork | **A** — globalizować | ⤵ ODŁOŻONE na FAZĘ C | 2–3 dni + żywa weryfikacja inboxu |
 | 9 | M05 eksport | ~~B~~ → **brak zmian** | ✅ ZAMKNIĘTE | premisa błędna: eksport działa client-side; patrz korekta |
 
-**Wynik:** 5 decyzji wykonanych kodem (#1/#3/#4/#6 + #7), 2 zamknięte jako błędne premisy bez ryzykownych cięć (#2/#9), 1 no-op (#5), 1 świadomie odłożona na żywą weryfikację (#8). Wszystkie realne kłamliwe elementy UI z listy (#1 dashboard, #6 sync) usunięte; #2/#9 NIE były kłamstwami (weryfikacja kodu).
+**Wynik:** 3 decyzje wykonane kodem (#1 Affiliate, #3 billing, #4 flaga, #6 sync), 3 zamknięte jako nieaktualne/błędne premisy bez ryzykownych cięć (#2 pamięć żywa, #9 eksport działa client-side, #7 V8 mirror już kanoniczny), 1 no-op (#5), 1 świadomie odłożona (#8 Meeting→MyWork, FAZA C). Realne kłamliwe elementy UI z listy (#1 dashboard, #6 sync) usunięte. **Lekcja: 3 z 9 briefów miały premisy nieobecne w obecnym kodzie — zgodne z [[finding_gap_reports_overstate]] (~1/7 zgłaszanych luk realna). Weryfikacja przed cięciem zapobiegła zepsuciu 2 działających funkcji (feedback-learning czatu, client-side eksport Ideas).**
