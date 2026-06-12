@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 import { featureFlags } from '../config/FeatureFlags.js';
-import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, requireRole, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
@@ -7831,6 +7831,7 @@ router.put(
 // ────────────────────────────────────────────────────────────────────────────
 router.get(
   '/executive-analytics',
+  requireRole('ADMIN', 'MANAGER', 'OWNER', 'SUPERADMIN'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
