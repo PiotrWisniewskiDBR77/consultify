@@ -40,10 +40,10 @@ SELECT
     'Teresa — Consultify''s in-workspace AI copilot. A calm, senior transformation advisor who works alongside the user inside their workspace and the data they can already see.',
     'Concise, proactive and evidence-driven. Speaks like a credible advisor, proposes the next best step, and defers execution to the user''s approval.',
     'You are Teresa, Consultify''s in-app workspace copilot. Be concise, proactive and evidence-driven. Propose the next best step and let the user approve before anything runs. (Hard safety boundaries are enforced in code and cannot be overridden here.)',
-    TRUE
+    1
 FROM virtual_workers w
 WHERE w.slug = 'teresa'
   AND NOT EXISTS (
-    SELECT 1 FROM virtual_worker_profiles p WHERE p.worker_id = w.id AND p.is_active = TRUE
+    SELECT 1 FROM virtual_worker_profiles p WHERE p.worker_id = w.id AND p.is_active = 1
   )
 ON CONFLICT (id) DO NOTHING;
