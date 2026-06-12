@@ -394,7 +394,7 @@ router.post(
       ]
     );
 
-    return res.json({
+    return res.status(201).json({
       data: { id },
       meta: resultsWriteMeta(),
     });
@@ -1286,7 +1286,7 @@ router.post(
       })
       .catch(() => null);
 
-    return res.json({
+    return res.status(201).json({
       data: {
         id,
         kpiId,
@@ -1701,7 +1701,7 @@ router.get(
       signalType: 'deviation' as const,
       severity: String(d.severity || 'medium').toLowerCase() as KpiSignal['severity'],
       summary: String(d.deviation_summary || `Deviation on KPI ${d.kpi_id}`),
-      detectedAt: String(d.detected_at || d.created_at),
+      detectedAt: d.detected_at ? new Date(d.detected_at).toISOString() : (d.created_at ? new Date(d.created_at).toISOString() : ''),
     }));
 
     return res.json({ data: { signals, count: signals.length }, meta: p04Meta() });
@@ -1813,7 +1813,7 @@ router.get(
       signalType: 'deviation' as const,
       severity: String(s.severity || 'medium').toLowerCase() as KpiSignal['severity'],
       summary: String(s.deviation_summary || 'Deviation detected'),
-      detectedAt: String(s.detected_at || ''),
+      detectedAt: s.detected_at ? new Date(s.detected_at).toISOString() : '',
     }));
 
     return res.json({
