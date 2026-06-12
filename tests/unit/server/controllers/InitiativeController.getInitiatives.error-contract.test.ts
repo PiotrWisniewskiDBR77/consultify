@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockQueryAll = vi.fn();
 
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
-  queryHelpers: {
-    queryAll: (...args: unknown[]) => mockQueryAll(...args),
-    queryOne: vi.fn(),
-    queryRun: vi.fn(),
-  },
+  queryAll: (...args: unknown[]) => mockQueryAll(...args),
+  queryOne: vi.fn(),
+  queryRun: vi.fn(),
+  // not part of the real module, but the controller probes it via `typeof qh.getTableColumns`
+  // and vitest 4 throws on undefined-export access of a mocked module
+  getTableColumns: undefined,
 }));
 
 vi.mock('../../../../server/src/utils/Logger.js', () => ({

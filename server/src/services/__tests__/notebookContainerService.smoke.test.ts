@@ -102,6 +102,10 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
     req.user = { id: 'user-1', organizationId: 'org-1', email: 'u@e.com' };
     next();
   },
+  requireRole:
+    (..._roles: string[]) =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
 }));
 
 vi.mock('../../middleware/demoGuard.middleware.js', () => ({
