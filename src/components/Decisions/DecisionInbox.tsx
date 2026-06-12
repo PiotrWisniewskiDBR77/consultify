@@ -341,7 +341,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
               {onCreateDecision && (
                 <button
                   onClick={onCreateDecision}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium text-sm flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg text-white dark:text-navy-950 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] transition-colors font-medium text-sm flex items-center gap-2"
                 >
                   <Plus size={16} />
                   {t('decisions.new', 'New')}
@@ -550,7 +550,7 @@ export const DecisionInbox: React.FC<DecisionInboxProps> = ({
               {onCreateDecision && (
                 <button
                   onClick={onCreateDecision}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white dark:text-navy-950 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] transition-colors"
                 >
                   <Plus size={14} />
                   {t('decisions.create', 'Create Decision Request')}

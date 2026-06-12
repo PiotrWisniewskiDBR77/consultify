@@ -88,7 +88,7 @@ import {
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
-import { LoadingState } from '@/components/ui/primitives';
+import { Badge, type BadgeVariant, LoadingState } from '@/components/ui/primitives';
 import { AssigneeCell, ProgressCell } from '@/components/ui/primitives/cells';
 import {
   categoryTone,
@@ -729,7 +729,7 @@ function normalizeInterviewSessionRecord(session: InterviewSession): InterviewSe
 type OpenDocument = SharedOpenDocument;
 
 const INTERVIEW_TABLE_SELECTED_ROW_CLASS =
-  'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset';
+  'bg-slate-100 dark:bg-white/10 shadow-[inset_2px_0_0_var(--c-info)]';
 const INTERVIEW_TABLE_HOVER_ROW_CLASS = 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]';
 const INTERVIEW_TABLE_ICON_SURFACE_CLASS =
   'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-300/80 bg-slate-100 text-slate-500 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-300';
@@ -741,7 +741,7 @@ const INTERVIEW_DUE_CHIP_BASE_CLASS =
   'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium';
 const INTERVIEW_PROGRESS_TRACK_CLASS =
   'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-700';
-const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-primary-500 transition-all';
+const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-c-success transition-all';
 
 // V-A S5 — canonical template-status chip. The real status enum is
 // draft / in_review / approved / archived; the table cell previously showed a
@@ -5748,7 +5748,7 @@ export const InterviewHub: React.FC = () => {
                           setActiveTab('templates');
                           setActiveDocumentId(null);
                         }}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-crimson-600 px-4 text-xs font-semibold text-white transition hover:bg-crimson-700"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-navy-900 px-4 text-xs font-semibold text-white transition hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
                       >
                         <FileText size={14} />
                         {isPolish ? 'Użyj szablonu' : 'Use a template'}
@@ -7213,7 +7213,7 @@ export const InterviewHub: React.FC = () => {
                         setShowInsightModal(true);
                       }}
                       disabled={!canCreateInsights}
-                      className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                      className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                     >
                       <Sparkles size={16} />
                       {isPolish ? 'Generuj wnioski AI' : 'Generate AI Insights'}
@@ -8145,7 +8145,7 @@ export const InterviewHub: React.FC = () => {
                     {canAssign && (
                       <button
                         onClick={handleNewTemplate}
-                        className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                        className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                       >
                         <FilePlus size={16} />
                         {isPolish ? 'Nowy szablon' : 'New template'}
@@ -8175,7 +8175,7 @@ export const InterviewHub: React.FC = () => {
           {canAssign && (
             <button
               onClick={handleNewTemplate}
-              className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98]"
+              className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] active:scale-[0.98]"
             >
               <FilePlus size={16} />
               {isPolish ? 'Nowy szablon' : 'New template'}
@@ -8621,8 +8621,11 @@ export const InterviewHub: React.FC = () => {
       case 'in_progress':
         return 'border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100';
       case 'review':
-      case 'submitted':
         return 'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100';
+      // VISUAL_STANDARD §5.3 — Submitted belongs to the SUCCESS (green) family,
+      // a different color family than Assigned (blue), so the two scan apart.
+      case 'submitted':
+        return 'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100';
       case 'sent_back':
       case 'rejected':
         return 'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100';
@@ -8654,6 +8657,31 @@ export const InterviewHub: React.FC = () => {
     },
     [isPolish]
   );
+
+  // VISUAL_STANDARD §5.3 — assignment status badge = TINTED pill (color @~14%
+  // bg + full-color text), not a neutral shell with a dot. Submitted (green,
+  // success family) vs Assigned (blue, info family) must be distinguishable at
+  // a scan. Red stays reserved for destructive/error (sent_back/rejected).
+  const getAssignmentStatusBadgeVariant = useCallback((status: string): BadgeVariant => {
+    switch (status) {
+      case 'assigned':
+        return 'info';
+      case 'in_progress':
+      case 'review':
+        return 'warning';
+      case 'submitted':
+      case 'accepted':
+      case 'approved':
+      case 'completed':
+        return 'success';
+      case 'sent_back':
+      case 'rejected':
+        return 'danger';
+      case 'drafting':
+      default:
+        return 'neutral';
+    }
+  }, []);
 
   const getAssignmentDaysToDue = useCallback(
     (dueAt?: string | null) => {
@@ -10028,12 +10056,16 @@ Return ONLY the answer text (no markdown fences).`;
                       className="px-4 py-3 text-left align-middle"
                       style={{ width: columnWidths.status }}
                     >
-                      {/* Shared StatusPill (SSOT) for tone, with the
-                          assignment-specific bilingual label. */}
-                      <EntityStatusChip
-                        status={String(assignment.status || 'assigned')}
-                        label={getAssignmentStatusLabel(assignment.status)}
-                      />
+                      {/* VISUAL_STANDARD §5.3 — tinted status pill (Submitted=
+                          green / Assigned=blue), bilingual label. */}
+                      <Badge
+                        variant={getAssignmentStatusBadgeVariant(
+                          String(assignment.status || 'assigned')
+                        )}
+                        size="md"
+                      >
+                        {getAssignmentStatusLabel(assignment.status)}
+                      </Badge>
                     </td>
                   )}
                   {!hiddenSet.has('progress') && (
@@ -10273,8 +10305,11 @@ Return ONLY the answer text (no markdown fences).`;
 
             {/* Footer */}
             <div className="px-4 pb-4 flex items-center justify-between">
-              {/* canon §4.1/§8.1: status via EntityStatusChip (statusChipTone → c.*) */}
-              <EntityStatusChip status={status} label={statusLabel} />
+              {/* VISUAL_STANDARD §5.3 — tinted status pill (Submitted=green /
+                  Assigned=blue), same mapping as the table view. */}
+              <Badge variant={getAssignmentStatusBadgeVariant(status)} size="md">
+                {statusLabel}
+              </Badge>
               {dtd ? (
                 <DueChip
                   label={dtd.label}
@@ -12863,7 +12898,7 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <button
           onClick={handleNewSession}
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Nowa sesja' : 'New session'}</span>
         </button>
@@ -12873,7 +12908,7 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <button
           onClick={handleNewTemplate}
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Nowy szablon' : 'New template'}</span>
         </button>
@@ -12888,7 +12923,7 @@ Return ONLY the answer text (no markdown fences).`;
             setShowInsightModal(true);
           }}
           disabled={!canCreateInsights}
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
         </button>
@@ -12913,7 +12948,7 @@ Return ONLY the answer text (no markdown fences).`;
                 ? 'Brak uprawnien: poproś admina o capability initiative.create lub interview.insight.create.'
                 : 'No permission: request initiative.create or interview.insight.create capability from admin.'
           }
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}</span>
         </button>
@@ -12926,7 +12961,7 @@ Return ONLY the answer text (no markdown fences).`;
             setSelectedTemplateForAssign(null);
             setShowAssignModal(true);
           }}
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
         </button>

@@ -377,20 +377,27 @@ html.dark {
         @apply px-6 py-3 text-base gap-2.5;
     }
     
-    /* HIG Button Primary */
+    /* HIG Button Primary — neutral high-contrast (VISUAL_STANDARD §5.1);
+     * was legacy violet #7C3AED gradient. */
     .hig-btn-primary {
-        @apply hig-btn text-white;
-        background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
-        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+        @apply hig-btn text-white dark:text-navy-950;
+        background: #0f172a;
     }
-    
+
+    .dark .hig-btn-primary {
+        background: #f4f7fb;
+    }
+
     .hig-btn-primary:hover:not(:disabled) {
-        background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
-        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+        background: #1e293b;
     }
-    
+
+    .dark .hig-btn-primary:hover:not(:disabled) {
+        background: #dde5ef;
+    }
+
     .hig-btn-primary:focus-visible {
-        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25), 0 0 0 3px rgba(124, 58, 237, 0.3);
+        box-shadow: 0 0 0 3px var(--c-focus);
     }
     
     /* HIG Button Secondary */
@@ -403,7 +410,7 @@ html.dark {
     }
     
     .hig-btn-secondary:focus-visible {
-        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+        box-shadow: 0 0 0 3px var(--c-focus);
     }
     
     /* HIG Button Ghost */
@@ -574,19 +581,26 @@ html.dark {
         @apply inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.98];
     }
 
-    /* PRIMARY Button - Fiolet (główna akcja na stronie) */
+    /* PRIMARY Button — neutral high-contrast (VISUAL_STANDARD §5.1; was violet gradient) */
     .btn-primary {
-        @apply btn-base text-white shadow-lg border border-white/10 relative overflow-hidden;
-        background: linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%);
-        box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.25);
+        @apply btn-base text-white dark:text-navy-950 relative overflow-hidden;
+        background: #0f172a;
+    }
+
+    .dark .btn-primary {
+        background: #f4f7fb;
     }
 
     .btn-primary:hover {
-        background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);
+        background: #1e293b;
+    }
+
+    .dark .btn-primary:hover {
+        background: #dde5ef;
     }
 
     .btn-primary:focus-visible {
-        --tw-ring-color: #7C3AED;
+        --tw-ring-color: var(--c-focus-solid);
     }
 
     /* SECONDARY Button - Navy (akcja drugorzędna) */
@@ -611,7 +625,7 @@ html.dark {
     }
 
     .btn-ghost:focus-visible {
-        --tw-ring-color: #7C3AED;
+        --tw-ring-color: var(--c-focus-solid);
     }
 
     /* DANGER Button - Czerwony (TYLKO destrukcyjne akcje!) */

@@ -36,61 +36,64 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
   children?: React.ReactNode;
 }
 
+/* VISUAL_STANDARD.md §5.1:
+ * - primary = NEUTRAL high-contrast (navy-on-light / white-on-dark, OpenAI/Linear
+ *   dark pattern) — the single "main action" look across all modules.
+ * - brand (crimson) is reserved for brand moments (Talk to Teresa); red budget §2.3.
+ * - focus rings are blue (--c-focus), never crimson. */
 const variantStyles: Record<ButtonVariant, string> = {
   primary: `
-    text-white
-    bg-gradient-to-br from-primary-500 to-primary-600
-    shadow-[0_4px_14px_rgba(165,28,48,0.25)]
-    hover:from-primary-600 hover:to-primary-700
-    hover:shadow-[0_6px_20px_rgba(165,28,48,0.35)]
-    focus-visible:ring-primary-500/30
-    dark:from-primary-500 dark:to-primary-600
+    text-white dark:text-navy-950
+    bg-navy-900 dark:bg-[#F4F7FB]
+    hover:bg-navy-800 dark:hover:bg-[#DDE5EF]
+    active:bg-navy-950 dark:active:bg-[#C9D4E3]
+    focus-visible:ring-c-focus
   `,
   brand: `
     text-white
     bg-crimson-600
-    shadow-[0_4px_14px_rgba(165,28,48,0.25)]
     hover:bg-crimson-700
     active:bg-crimson-800
-    hover:shadow-[0_6px_20px_rgba(165,28,48,0.35)]
-    focus-visible:ring-crimson-600/30
+    focus-visible:ring-c-focus
     dark:bg-crimson-500 dark:hover:bg-crimson-600 dark:active:bg-crimson-700
   `,
   secondary: `
     text-navy-900 dark:text-white
     bg-slate-100 dark:bg-navy-800
     hover:bg-slate-200 dark:hover:bg-navy-700
-    focus-visible:ring-primary-500/20
+    focus-visible:ring-c-focus
   `,
   ghost: `
     text-slate-600 dark:text-slate-400
     bg-transparent
     hover:bg-slate-100 dark:hover:bg-white/5
     hover:text-navy-900 dark:hover:text-white
-    focus-visible:ring-primary-500/20
+    focus-visible:ring-c-focus
   `,
   danger: `
     text-white
-    bg-gradient-to-br from-danger-500 to-danger-600
-    shadow-[0_4px_14px_rgba(220,38,38,0.2)]
-    hover:from-danger-600 hover:to-danger-700
-    hover:shadow-[0_6px_20px_rgba(220,38,38,0.3)]
-    focus-visible:ring-danger-500/30
+    bg-danger-600
+    hover:bg-danger-700
+    active:bg-danger-800
+    dark:bg-danger-500 dark:hover:bg-danger-600
+    focus-visible:ring-c-focus
   `,
   outline: `
     text-slate-700 dark:text-slate-200
     bg-transparent
-    border border-slate-300 dark:border-navy-700
-    hover:border-primary-500 hover:text-primary-600
-    dark:hover:border-primary-500 dark:hover:text-primary-400
-    focus-visible:ring-primary-500/20
+    border border-slate-300 dark:border-c-border
+    hover:border-slate-400 dark:hover:border-c-border-strong dark:hover:bg-white/5
+    hover:bg-slate-50
+    focus-visible:ring-c-focus
   `,
 };
 
+/* Controls are 8px-radius rectangles (rounded-lg); pills are reserved for
+ * badges/chips/avatars (VISUAL_STANDARD.md §4). */
 const sizeStyles: Record<ButtonSize, string> = {
   sm: 'px-3 py-1.5 text-xs gap-1.5 rounded-lg',
-  md: 'px-4 py-2.5 text-sm gap-2 rounded-xl',
-  lg: 'px-6 py-3 text-base gap-2 rounded-xl',
+  md: 'px-4 py-2.5 text-sm gap-2 rounded-lg',
+  lg: 'px-6 py-3 text-base gap-2 rounded-lg',
 };
 
 const iconSizeMap: Record<ButtonSize, number> = {

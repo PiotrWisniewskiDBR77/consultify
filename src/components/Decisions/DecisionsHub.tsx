@@ -133,15 +133,14 @@ export const DecisionsHub: React.FC = () => {
                 /* TODO: open new-decision modal */
               }}
               className="
-                inline-flex items-center justify-center h-9 rounded-full border px-4
-                text-sm font-semibold text-white transition-colors duration-150
-                bg-amber-600 hover:bg-amber-700
-                border-amber-500/30
-                dark:bg-amber-500/80 dark:hover:bg-amber-500
-                dark:border-amber-400/20
+                inline-flex items-center justify-center h-9 rounded-lg px-4
+                text-sm font-medium transition-colors duration-150
+                text-white dark:text-navy-950
+                bg-navy-900 hover:bg-navy-800
+                dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF]
                 active:scale-[0.98]
                 focus-visible:outline-none focus-visible:ring-2
-                focus-visible:ring-primary-500/40 focus-visible:ring-offset-1
+                focus-visible:ring-c-focus focus-visible:ring-offset-1
                 ring-offset-white dark:ring-offset-navy-900
               "
               data-testid="decisions-cta-new"

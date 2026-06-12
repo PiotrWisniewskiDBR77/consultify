@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consultify — Visual Standard v1 Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-base:#0A0F1E; --bg-surface:#0F172A; --bg-elevated:#15213B;
+  --bg-hover:rgba(255,255,255,.05); --bg-active:rgba(255,255,255,.10);
+  --border-subtle:rgba(148,163,184,.12); --border-default:rgba(148,163,184,.22); --border-strong:rgba(148,163,184,.36);
+  --text-primary:#F4F7FB; --text-secondary:#B8C4D6; --text-muted:#8A99B0; --text-disabled:#5D6B82;
+  --brand:#C9344F; --brand-deep:#A82D49;
+  --info:#58A6FF; --success:#3FB950; --warning:#E8A33D; --danger:#ED5565; --violet:#9D7BEA; --focus:#5B8DEF;
+  --r-control:8px; --r-card:12px; --r-modal:16px; --r-pill:9999px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg-base);color:var(--text-primary);font-family:Inter,sans-serif;font-size:14px;line-height:1.45;padding:40px clamp(16px,5vw,64px) 80px}
+h1{font-size:32px;line-height:1.2;font-weight:600;margin-bottom:6px}
+.sub{color:var(--text-secondary);font-size:15px;margin-bottom:48px}
+.sec{margin-bottom:56px}
+.sec>h2{font-size:22px;line-height:1.3;font-weight:600;margin-bottom:4px}
+.sec>.d{color:var(--text-muted);font-size:13px;margin-bottom:20px}
+.ov{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.panel{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-card);padding:24px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.col{display:flex;flex-direction:column;gap:10px}
+.lbl{font-size:12px;color:var(--text-muted);margin-bottom:6px}
+
+.btn{height:36px;padding:0 16px;border-radius:var(--r-control);font:500 14px Inter;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:#F4F7FB;color:#0B1224}
+.btn-primary:hover{background:#DDE5EF}
+.btn-secondary{background:transparent;color:var(--text-primary);border:1px solid var(--border-default)}
+.btn-secondary:hover{border-color:var(--border-strong);background:var(--bg-hover)}
+.btn-ghost{background:transparent;color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--bg-hover);color:var(--text-primary)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-brand{background:var(--brand);color:#fff;border-radius:var(--r-pill)}
+.btn-tint-s{background:rgba(63,185,80,.14);color:var(--success);border:1px solid rgba(63,185,80,.3)}
+.btn-tint-d{background:rgba(237,85,101,.14);color:var(--danger);border:1px solid rgba(237,85,101,.3)}
+.btn-tint-w{background:rgba(232,163,61,.14);color:var(--warning);border:1px solid rgba(232,163,61,.3)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.inp{height:38px;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:var(--r-control);color:var(--text-primary);font:400 14px Inter;padding:0 12px;width:220px;outline:none}
+.inp::placeholder{color:var(--text-muted)}
+.inp:hover{border-color:var(--border-strong)}
+.inp-focus{border-color:var(--focus);box-shadow:0 0 0 3px rgba(91,141,239,.25)}
+.inp-error{border-color:var(--danger);box-shadow:0 0 0 3px rgba(237,85,101,.2)}
+.err-msg{font-size:12px;color:var(--danger);margin-top:5px}
+
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:var(--r-pill);font:600 11px Inter;padding:3px 10px}
+.b-info{background:rgba(88,166,255,.14);color:var(--info)}
+.b-success{background:rgba(63,185,80,.14);color:var(--success)}
+.b-warning{background:rgba(232,163,61,.14);color:var(--warning)}
+.b-danger{background:rgba(237,85,101,.14);color:var(--danger)}
+.b-violet{background:rgba(157,123,234,.14);color:var(--violet)}
+.b-gray{background:rgba(138,153,176,.14);color:var(--text-muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+.app{display:flex;border:1px solid var(--border-subtle);border-radius:var(--r-card);overflow:hidden;background:var(--bg-base);min-height:480px}
+.side{width:208px;background:var(--bg-base);border-right:1px solid var(--border-subtle);padding:16px 8px;flex-shrink:0}
+.logo{font-size:17px;font-weight:600;padding:0 12px;margin-bottom:20px}
+.logo span{color:var(--brand)}
+.nav-i{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r-control);color:var(--text-secondary);font-size:14px;margin-bottom:2px;cursor:pointer;border-left:2px solid transparent}
+.nav-i:hover{background:var(--bg-hover)}
+.nav-i.act{background:var(--bg-active);color:var(--text-primary);border-left:2px solid var(--brand);font-weight:500}
+.nav-i svg{flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;padding:24px 32px;min-width:0}
+
+.chip{border-radius:var(--r-pill);padding:5px 14px;font:500 12px Inter;cursor:pointer;border:1px solid var(--border-subtle);background:transparent;color:var(--text-muted)}
+.chip.act{background:var(--bg-active);color:var(--text-primary);border-color:var(--border-strong)}
+
+.bubble-u{background:var(--bg-elevated);border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:15px;max-width:65%;align-self:flex-end;line-height:1.6}
+.msg-t{font-size:15px;line-height:1.6;max-width:75%;color:var(--text-primary)}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font:600 11px Inter;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-subtle)}
+td{font-size:14px;padding:0 12px;height:44px;border-bottom:1px solid var(--border-subtle);color:var(--text-primary)}
+tr.hov{background:var(--bg-hover)}
+tr.selrow{background:var(--bg-active);box-shadow:inset 2px 0 0 var(--info)}
+
+.tabs{display:flex;gap:24px;border-bottom:1px solid var(--border-subtle);margin-bottom:16px}
+.tab{padding:8px 2px;font-size:14px;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent}
+.tab.act{color:var(--text-primary);border-bottom-color:var(--text-primary);font-weight:500}
+
+.modal-demo{position:relative;border-radius:var(--r-card);overflow:hidden;min-height:340px}
+.modal-bg{position:absolute;inset:0;background:rgba(2,6,18,.65);display:flex;align-items:center;justify-content:center}
+.modal{background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--r-modal);padding:24px;width:380px}
+
+.toast{display:flex;gap:12px;align-items:flex-start;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--r-card);padding:14px 16px;width:340px}
+
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:48px 24px;text-align:center}
+
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border-subtle);border-radius:var(--r-card);overflow:hidden}
+.ba>div{padding:20px 24px}
+.ba .before{background:#070b16;border-right:1px solid var(--border-subtle)}
+.ba .after{background:var(--bg-surface)}
+.ba-l{font:600 10px Inter;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;display:inline-block;padding:2px 8px;border-radius:4px}
+.ba .before .ba-l{background:rgba(237,85,101,.15);color:var(--danger)}
+.ba .after .ba-l{background:rgba(63,185,80,.15);color:var(--success)}
+.sw{display:inline-flex;align-items:center;gap:8px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--r-control);padding:8px 12px;font-size:12px;color:var(--text-secondary)}
+.sw i{width:18px;height:18px;border-radius:5px;display:inline-block;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<h1>Consultify — nowa szata graficzna</h1>
+<p class="sub">Visual Standard v1 · propozycja 2026-06-12 · benchmark: OpenAI / Apple / Google / Linear · pełna specyfikacja w VISUAL_STANDARD.md</p>
+
+<div class="sec">
+  <h2>1. Aplikacja w nowej szacie</h2>
+  <p class="d">Sidebar z czerwienią tylko jako 2px wskaźnik · biały primary button · niebieski focus · chat z watermarkiem zamiast wielkiego brandingu</p>
+  <div class="app">
+    <div class="side">
+      <div class="logo">Consultify<span>®</span></div>
+      <div class="nav-i act"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</div>
+      <div class="nav-i"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>My Work</div>
+      <div class="nav-i"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Interview</div>
+      <div class="nav-i"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v10"/></svg>Initiatives</div>
+      <div class="nav-i"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Tools</div>
+      <div class="nav-i" style="opacity:.55"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/></svg>Results <span class="badge b-violet" style="margin-left:auto;font-size:9px;padding:2px 7px">BETA</span></div>
+    </div>
+    <div class="main">
+      <div style="display:flex;justify-content:center;margin-bottom:18px"><button class="btn btn-brand">● Talk to Teresa</button></div>
+      <div class="row" style="justify-content:center;margin-bottom:20px">
+        <span class="ov" style="margin-right:4px">Output</span>
+        <button class="chip act">Auto</button><button class="chip">Documents</button><button class="chip">Tables</button><button class="chip">Presentations</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;flex:1">
+        <div class="bubble-u">Cześć Teresa, jakie mam dziś priorytety?</div>
+        <div class="msg-t">Dzień dobry, Piotr! Masz dziś 3 decyzje czekające na zatwierdzenie i 2 inicjatywy z bramką w tym tygodniu. <span class="badge b-success" style="margin-left:4px"><span class="dot"></span>2 sources</span></div>
+      </div>
+      <div style="margin-top:16px">
+        <div class="inp inp-focus" style="width:100%;display:flex;align-items:center;color:var(--text-muted)">Ask Teresa about your work…</div>
+        <div style="display:flex;justify-content:center;margin-top:18px"><span style="font-size:15px;font-weight:500;color:rgba(244,247,251,.22)">Consultify® <span style="font-size:10px;letter-spacing:.14em">DBR77 INDUSTRIAL INTELLIGENCE</span></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>2. Przyciski</h2>
+  <p class="d">Jeden primary (biały, wzorzec OpenAI dark) · radius 8px wszędzie · czerwień tylko destructive + brand CTA</p>
+  <div class="panel">
+    <div class="row" style="margin-bottom:20px">
+      <div><div class="lbl">Primary</div><button class="btn btn-primary">+ New initiative</button></div>
+      <div><div class="lbl">Secondary</div><button class="btn btn-secondary">Export DOCX</button></div>
+      <div><div class="lbl">Ghost</div><button class="btn btn-ghost">Cancel</button></div>
+      <div><div class="lbl">Destructive</div><button class="btn btn-danger">Delete</button></div>
+      <div><div class="lbl">Brand CTA (1 miejsce)</div><button class="btn btn-brand">● Talk to Teresa</button></div>
+    </div>
+    <div class="row">
+      <div><div class="lbl">Semantic tint — panele decyzji</div><div class="row"><button class="btn btn-tint-s" style="height:30px;font-size:13px">Approve</button><button class="btn btn-tint-d" style="height:30px;font-size:13px">Reject</button><button class="btn btn-tint-w" style="height:30px;font-size:13px">Escalate</button></div></div>
+      <div><div class="lbl">Disabled / Coming soon</div><button class="btn btn-secondary" disabled><span class="badge b-gray" style="font-size:9px;padding:2px 7px">SOON</span> New initiative</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>3. Inputy</h2>
+  <p class="d">Jedna specyfikacja · focus = niebieski (koniec mylenia z błędem) · error = czerwony z komunikatem</p>
+  <div class="panel"><div class="row" style="gap:24px;align-items:flex-start">
+    <div><div class="lbl">Default</div><input class="inp" placeholder="Topic…"></div>
+    <div><div class="lbl">Focus — niebieski ring</div><input class="inp inp-focus" value="Digital transformation"></div>
+    <div><div class="lbl">Error — czerwony + komunikat</div><input class="inp inp-error" value=""><div class="err-msg">To pole jest wymagane</div></div>
+    <div><div class="lbl">Disabled</div><input class="inp" disabled placeholder="Niedostępne" style="opacity:.45"></div>
+  </div></div>
+</div>
+
+<div class="sec">
+  <h2>4. Badge statusów — jedna semantyka</h2>
+  <p class="d">Niebieski=otwarte · pomarańcz=w toku · zielony=ukończone · czerwony=krytyczne · fiolet=przyszłe · szary=nieaktywne</p>
+  <div class="panel"><div class="row" style="gap:8px">
+    <span class="badge b-info"><span class="dot"></span>Open</span>
+    <span class="badge b-info"><span class="dot"></span>Assigned</span>
+    <span class="badge b-warning"><span class="dot"></span>In Progress</span>
+    <span class="badge b-warning"><span class="dot"></span>Escalated</span>
+    <span class="badge b-success"><span class="dot"></span>Approved</span>
+    <span class="badge b-success"><span class="dot"></span>Submitted</span>
+    <span class="badge b-success"><span class="dot"></span>Completed</span>
+    <span class="badge b-danger"><span class="dot"></span>Critical</span>
+    <span class="badge b-danger"><span class="dot"></span>Failed</span>
+    <span class="badge b-danger"><span class="dot"></span>High</span>
+    <span class="badge b-warning"><span class="dot"></span>Medium</span>
+    <span class="badge b-gray"><span class="dot"></span>Low</span>
+    <span class="badge b-violet"><span class="dot"></span>Scheduled</span>
+    <span class="badge b-violet"><span class="dot"></span>Beta</span>
+    <span class="badge b-gray"><span class="dot"></span>Archived</span>
+    <span class="badge b-gray"><span class="dot"></span>Coming Soon</span>
+  </div></div>
+</div>
+
+<div class="sec">
+  <h2>5. Tabela + taby</h2>
+  <p class="d">Nagłówek 11px caps muted (≠ dane 14px) · widoczny hover · selected z niebieską kreską · badge nigdy nie ucięte</p>
+  <div class="panel">
+    <div class="tabs"><div class="tab act">Inbox</div><div class="tab">Decisions</div><div class="tab">Notebook</div><div class="tab">Tasks</div><div class="tab">Calendar</div></div>
+    <table>
+      <tr><th>Template</th><th>Assignee</th><th>Status</th><th>Type</th><th>Progress</th></tr>
+      <tr><td>DBR77 — How to Sell Better</td><td>Anna Kowalska</td><td><span class="badge b-success"><span class="dot"></span>Submitted</span></td><td><span class="badge b-gray">Approval</span></td><td><div style="width:110px;height:4px;background:rgba(255,255,255,.08);border-radius:9999px"><div style="width:100%;height:100%;background:var(--success);border-radius:9999px"></div></div></td></tr>
+      <tr class="hov"><td>Process Mapping Q2 <span style="font-size:11px;color:var(--text-muted)">← hover</span></td><td>Jan Nowak</td><td><span class="badge b-info"><span class="dot"></span>Assigned</span></td><td><span class="badge b-gray">Strategic</span></td><td><div style="width:110px;height:4px;background:rgba(255,255,255,.08);border-radius:9999px"><div style="width:45%;height:100%;background:var(--success);border-radius:9999px"></div></div></td></tr>
+      <tr class="selrow"><td>AI Readiness Survey <span style="font-size:11px;color:var(--text-muted)">← selected</span></td><td>Maria Wiśniewska</td><td><span class="badge b-warning"><span class="dot"></span>In Progress</span></td><td><span class="badge b-gray">Diagnostic</span></td><td><div style="width:110px;height:4px;background:rgba(255,255,255,.08);border-radius:9999px"><div style="width:70%;height:100%;background:var(--success);border-radius:9999px"></div></div></td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>6. Modal — backdrop zawsze</h2>
+  <p class="d">rgba(2,6,18,0.65) na każdym modalu · kontener elevated 16px radius</p>
+  <div class="modal-demo">
+    <div style="padding:24px;color:var(--text-disabled);font-size:13px;line-height:2">Interview Inbox — treść aplikacji za modalem<br>DBR77 — How to Sell Better · Anna Kowalska · Submitted<br>Process Mapping Q2 · Jan Nowak · Assigned</div>
+    <div class="modal-bg"><div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:17px;font-weight:600">Assign interview</span><button class="btn btn-ghost" style="height:32px;width:32px;padding:0;justify-content:center">✕</button></div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">Wybierz osobę, która otrzyma ten szablon.</p>
+      <div class="lbl">Assignee</div>
+      <div class="inp" style="width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;color:var(--text-muted)">Select user… <span>▾</span></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn btn-ghost">Cancel</button><button class="btn btn-primary">Assign</button></div>
+    </div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>7. Toast + empty state</h2>
+  <div class="row" style="gap:24px;align-items:flex-start">
+    <div class="col">
+      <div class="toast"><span style="color:var(--success);font-size:16px">✓</span><div><div style="font-size:14px;font-weight:500">Interview assigned</div><div style="font-size:12px;color:var(--text-secondary)">Anna Kowalska otrzyma powiadomienie.</div></div><span style="margin-left:auto;color:var(--text-muted);cursor:pointer">✕</span></div>
+      <div class="toast"><span style="color:var(--danger);font-size:16px">✕</span><div><div style="font-size:14px;font-weight:500">Export failed</div><div style="font-size:12px;color:var(--text-secondary)">Spróbuj ponownie lub zmień format.</div></div><span style="margin-left:auto;color:var(--text-muted);cursor:pointer">✕</span></div>
+    </div>
+    <div class="panel empty" style="flex:1;min-width:300px">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8A99B0" stroke-width="1.5"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <div style="font-size:15px;font-weight:500">No tasks yet</div>
+      <div style="font-size:13px;color:var(--text-secondary);max-width:280px">Zadania z decyzji i inicjatyw pojawią się tutaj automatycznie.</div>
+      <button class="btn btn-secondary" style="margin-top:8px">+ Create task</button>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>8. Przed → Po — kluczowe naprawy</h2>
+  <div class="col" style="gap:16px">
+    <div class="ba">
+      <div class="before"><span class="ba-l">Przed</span><div class="lbl">Focus = error (oba czerwone)</div><div style="border:2px solid #c8324a;border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text-secondary);width:200px;background:var(--bg-surface)">Aktywne pole…</div></div>
+      <div class="after"><span class="ba-l">Po</span><div class="lbl">Focus niebieski ≠ error czerwony</div><input class="inp inp-focus" value="Aktywne pole…" style="width:200px"></div>
+    </div>
+    <div class="ba">
+      <div class="before"><span class="ba-l">Przed</span><div class="lbl">4 kolory primary action</div><div class="row" style="gap:6px"><span style="background:#a82d49;color:#fff;border-radius:6px;padding:6px 10px;font-size:11px">Save</span><span style="background:#e87d1e;color:#fff;border-radius:9999px;padding:6px 10px;font-size:11px">+ New</span><span style="background:linear-gradient(135deg,#c8324a,#85182f);color:#fff;border-radius:12px;padding:6px 10px;font-size:11px">Assign</span><span style="background:#7C3AED;color:#fff;border-radius:8px;padding:6px 10px;font-size:11px">+ New</span></div></div>
+      <div class="after"><span class="ba-l">Po</span><div class="lbl">Jeden primary w całej aplikacji</div><button class="btn btn-primary">+ New initiative</button></div>
+    </div>
+    <div class="ba">
+      <div class="before"><span class="ba-l">Przed</span><div class="lbl">"Open" w 2 kolorach</div><div class="row" style="gap:6px"><span style="background:rgba(168,45,73,.3);color:#f6b8be;border-radius:9999px;padding:3px 10px;font-size:11px">Open</span><span style="background:rgba(232,125,30,.15);color:#f7c76b;border-radius:9999px;padding:3px 10px;font-size:11px">Open</span></div></div>
+      <div class="after"><span class="ba-l">Po</span><div class="lbl">Open = zawsze niebieski (info)</div><span class="badge b-info"><span class="dot"></span>Open</span></div>
+    </div>
+    <div class="ba">
+      <div class="before"><span class="ba-l">Przed</span><div class="lbl">Tekst informacyjny 3.1:1 — nieczytelny</div><div style="font-size:13px;color:#3d4860">Przykładowy opis pomocniczy w tabeli…</div></div>
+      <div class="after"><span class="ba-l">Po</span><div class="lbl">Minimum 5.5:1 dla każdej informacji</div><div style="font-size:13px;color:var(--text-muted)">Przykładowy opis pomocniczy w tabeli…</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>9. Paleta — ściąga</h2>
+  <div class="row" style="gap:10px">
+    <span class="sw"><i style="background:#0A0F1E;border:1px solid var(--border-default)"></i>bg-base #0A0F1E</span>
+    <span class="sw"><i style="background:#0F172A;border:1px solid var(--border-default)"></i>bg-surface #0F172A</span>
+    <span class="sw"><i style="background:#15213B"></i>bg-elevated #15213B</span>
+    <span class="sw"><i style="background:#F4F7FB"></i>text-primary #F4F7FB</span>
+    <span class="sw"><i style="background:#B8C4D6"></i>text-secondary #B8C4D6</span>
+    <span class="sw"><i style="background:#8A99B0"></i>text-muted #8A99B0</span>
+    <span class="sw"><i style="background:#C9344F"></i>brand #C9344F</span>
+    <span class="sw"><i style="background:#5B8DEF"></i>focus #5B8DEF</span>
+    <span class="sw"><i style="background:#58A6FF"></i>info #58A6FF</span>
+    <span class="sw"><i style="background:#3FB950"></i>success #3FB950</span>
+    <span class="sw"><i style="background:#E8A33D"></i>warning #E8A33D</span>
+    <span class="sw"><i style="background:#ED5565"></i>danger #ED5565</span>
+    <span class="sw"><i style="background:#9D7BEA"></i>violet #9D7BEA</span>
+  </div>
+</div>
+
+</body>
+</html>

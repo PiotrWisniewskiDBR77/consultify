@@ -128,7 +128,7 @@ export const PillNavigation: React.FC<PillNavigationProps> = ({
         <button
           onClick={onCreateNew}
           data-testid="mywork-create-button"
-          className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-lg shadow-sm hover:shadow transition-all duration-150"
+          className="flex items-center gap-1.5 h-8 px-3 text-[12px] font-medium rounded-lg shadow-sm transition-all duration-150 text-white dark:text-navy-950 bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:hover:bg-[#DDE5EF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Plus size={14} />
           <span>{getButtonLabel()}</span>

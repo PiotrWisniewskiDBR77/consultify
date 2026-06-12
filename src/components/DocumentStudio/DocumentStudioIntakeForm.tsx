@@ -148,7 +148,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={selectedTemplateId}
             onChange={(e) => setSelectedTemplateId(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           >
             <option value="">No template — Mode 1 (free generation)</option>
             {approvedTemplates?.map((t) => (
@@ -201,7 +201,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           onChange={(e) => setDescription(e.target.value)}
           rows={5}
           placeholder="e.g., Prepare an interview summary report for the client board: scope, key findings, risks, recommendations."
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           required
           minLength={10}
         />
@@ -214,7 +214,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Auto-derived from description if empty"
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
         />
       </label>
 
@@ -224,7 +224,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey | '')}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           >
             {DOCUMENT_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -239,7 +239,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           >
             <option value="pl">Polish</option>
             <option value="en">English</option>
@@ -251,7 +251,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={density}
             onChange={(e) => setDensity(e.target.value as DocumentDensity)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           >
             {DENSITY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -266,7 +266,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           <select
             value={goal}
             onChange={(e) => setGoal(e.target.value as DocumentGoal)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           >
             {GOAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -286,7 +286,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           value={audience}
           onChange={(e) => setAudience(e.target.value)}
           placeholder="e.g., CEO, CFO, Transformation Officer"
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-navy-900 focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-white"
         />
       </label>
 
@@ -296,7 +296,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
             type="checkbox"
             checked={useLlm}
             onChange={(e) => setUseLlm(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-c-focus-solid focus:ring-c-focus"
           />
           <span>
             <span className="font-medium text-slate-700 dark:text-slate-200">

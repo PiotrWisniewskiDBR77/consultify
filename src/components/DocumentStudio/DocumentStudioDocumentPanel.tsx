@@ -548,7 +548,7 @@ function CommentsPanel({ artifactId }: { artifactId: string }): React.ReactEleme
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Add document-level review comment…"
-          className="min-h-[80px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-navy-900 outline-none focus:border-primary-500 dark:border-navy-700 dark:bg-navy-950 dark:text-slate-100"
+          className="min-h-[80px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-navy-900 outline-none focus:border-c-focus-solid focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950 dark:text-slate-100"
         />
         <div className="mt-2 flex justify-end">
           <Button type="button" size="sm" onClick={submit} disabled={submitting || !draft.trim()}>

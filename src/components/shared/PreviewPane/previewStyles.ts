@@ -7,8 +7,10 @@
 
 // ── Pill bases ──────────────────────────────────────────────────────────────
 
+/* VISUAL_STANDARD.md §5.1/§4 — controls are 8px-radius rectangles (rounded-lg);
+ * pills are reserved for badges/chips. Focus ring is blue (--c-focus). */
 export const PREVIEW_PILL_BASE =
-  'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
 export const PREVIEW_META_PILL =
   'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
@@ -44,8 +46,10 @@ const COLOR_MAP: Record<PillColorScheme, string> = {
   red: 'border-rose-300/40 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-100/70 dark:hover:bg-rose-500/15',
   green:
     'border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15',
+  /* VISUAL_STANDARD.md §5.1 — primary action = neutral high-contrast
+   * (navy-on-light / white-on-dark), never crimson. */
   primary:
-    'border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15',
+    'border-transparent bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
 };
 
 export function pillColorScheme(scheme: PillColorScheme): string {

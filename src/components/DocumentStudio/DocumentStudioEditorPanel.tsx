@@ -370,7 +370,7 @@ export const DocumentStudioEditorPanel: React.FC<DocumentStudioEditorPanelProps>
         <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+            className="h-4 w-4 rounded border-slate-300 text-c-focus-solid focus:ring-c-focus"
             checked={useLlm}
             onChange={(e) => setUseLlm(e.target.checked)}
             disabled={submitting}

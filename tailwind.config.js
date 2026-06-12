@@ -44,12 +44,14 @@ export default {
           'surface-raised': 'var(--c-surface-raised)',
           'border-subtle': 'var(--c-border-subtle)',
           border: 'var(--c-border)',
+          'border-strong': 'var(--c-border-strong)',
           text: 'var(--c-text)',
           'text-secondary': 'var(--c-text-secondary)',
           'text-muted': 'var(--c-text-muted)',
           accent: 'var(--c-accent)',
           'accent-soft': 'var(--c-accent-soft)',
           focus: 'var(--c-focus)',
+          'focus-solid': 'var(--c-focus-solid)',
           success: 'var(--c-success)',
           warning: 'var(--c-warning)',
           danger: 'var(--c-danger)',
@@ -600,15 +602,15 @@ export default {
         // Elevated card hover state
         'hig-hover': '0 8px 16px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.06)',
         'hig-hover-dark': '0 8px 16px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3)',
-        // Focus ring — crimson brand (was violet rgba(124,58,237,.3))
-        'hig-focus': '0 0 0 3px rgba(133, 24, 47, 0.3)',
+        // Focus ring — NEUTRAL BLUE, never crimson (focus ≠ error; VISUAL_STANDARD §2.2)
+        'hig-focus': '0 0 0 3px var(--c-focus)',
         'hig-focus-danger': '0 0 0 3px rgba(220, 38, 38, 0.3)',
         // ----------------------------------------
         // Semantic shadow tokens — canonical names for shared primitives
         // ----------------------------------------
         'token-card': '0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06)',
         'token-card-hover': '0 8px 16px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.06)',
-        'token-focus': '0 0 0 3px rgba(133, 24, 47, 0.30)', // crimson brand focus ring
+        'token-focus': '0 0 0 3px var(--c-focus)', // blue focus ring — never crimson (focus ≠ error)
       },
       backgroundImage: {
         // Legacy gradients

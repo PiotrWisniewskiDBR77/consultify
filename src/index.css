@@ -28,7 +28,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 347 69% 31%; /* focus ring = crimson-600 #85182F */
+    --ring: 221 83% 53%; /* focus ring = blue #2563EB — never crimson (focus ≠ error) */
     --radius: 0.75rem; /* hig-md = 12px, global default */
 
     /* ========================================================================
@@ -45,12 +45,16 @@
     --c-surface-raised: #f8fafc; /* popovers / chips — slight tint so a chip reads off a white row */
     --c-border-subtle: #e6e9ed; /* hairlines */
     --c-border: #cbd2da; /* default borders — strengthened so chip outline is visible on white (light mode) */
+    --c-border-strong: #9aa6b5; /* hover/active borders */
     --c-text: #0f172a; /* primary text */
     --c-text-secondary: #475569; /* secondary text */
     --c-text-muted: #64748b; /* muted / placeholder */
     --c-accent: #85182f; /* Harvard Crimson — SOLE brand accent */
     --c-accent-soft: rgba(133, 24, 47, 0.08); /* accent tint (selected bg) */
-    --c-focus: rgba(133, 24, 47, 0.35); /* focus ring (was violet) */
+    /* Focus ring is NEUTRAL BLUE, never crimson — crimson focus reads as a
+     * validation error (VISUAL_STANDARD.md §2.2/§5.2, audit INPUT-01). */
+    --c-focus: rgba(37, 99, 235, 0.4); /* focus ring — blue, distinct from error */
+    --c-focus-solid: #2563eb; /* focus border color */
     /* Status tokens — Harvard complementary anchors (light mode).
      * Each value is the DARK family member (HBS "1") so text-on-white is AA.
      * Approx contrast on #ffffff:
@@ -104,23 +108,28 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 354 72% 62%; /* crimson-400 readable in dark */
+    --ring: 220 82% 65%; /* focus ring = lifted blue #5B8DEF — never crimson (focus ≠ error) */
 
     /* ========================================================================
      * CANONICAL SEMANTIC PALETTE — single source of truth (dark mode)
      * Mirrors :root --c-* tokens; crimson lifted for dark contrast.
      * ======================================================================== */
-    --c-bg: #0b1220; /* navy-950 — app background */
+    --c-bg: #0a0f1e; /* DBR77 navy — app background (unified with --hig-bg-primary) */
     --c-surface: #0f172a; /* navy-900 — cards / panels */
     --c-surface-raised: #15213b; /* navy-800 — popovers / chips */
-    --c-border-subtle: rgba(255, 255, 255, 0.06); /* hairlines */
-    --c-border: rgba(255, 255, 255, 0.1); /* default borders */
-    --c-text: #f1f5f9; /* primary text */
-    --c-text-secondary: #94a3b8; /* secondary text */
-    --c-text-muted: #64748b; /* muted / placeholder */
+    --c-border-subtle: rgba(148, 163, 184, 0.12); /* hairlines — lifted for visibility */
+    --c-border: rgba(148, 163, 184, 0.22); /* default borders — lifted for visibility */
+    --c-border-strong: rgba(148, 163, 184, 0.36); /* hover/active borders */
+    /* Text scale — HARD CONTRAST FLOOR (VISUAL_STANDARD.md §1.3):
+     * nothing informational below --c-text-muted (≈5.5:1 on --c-bg).
+     * Previous secondary #94a3b8 / muted #64748b were too dark on navy. */
+    --c-text: #f4f7fb; /* primary text ~16:1 */
+    --c-text-secondary: #b8c4d6; /* secondary text ~9:1 */
+    --c-text-muted: #8a99b0; /* muted / placeholder ~5.5:1 — the floor */
     --c-accent: #c8324a; /* crimson lifted for dark contrast */
     --c-accent-soft: rgba(200, 50, 74, 0.14); /* accent tint (selected bg) */
-    --c-focus: rgba(133, 24, 47, 0.35); /* focus ring */
+    --c-focus: rgba(91, 141, 239, 0.45); /* focus ring — blue, distinct from error */
+    --c-focus-solid: #5b8def; /* focus border color (lifted for dark) */
     /* Status tokens — Harvard complementary lifted for dark backgrounds.
      * Each value is the LIGHT/mid family member so contrast on navy is good.
      *   success #9EC44D (HBS Green 3)  — lifted from #026833
@@ -128,10 +137,14 @@
      *   danger  #ED5541 (HBS Red 3)    — lifted from #E80538
      *   info    #AAC8EB (HBS Blue 4)   — lifted from #3B2883
      */
-    --c-success: #9ec44d; /* was #34d399 — HBS Green 3 */
-    --c-warning: #f7c76b; /* was #fbbf24 — HBS Orange 4 */
-    --c-danger: #ed5541; /* was #f87171 — HBS Red 3 */
-    --c-info: #aac8eb; /* was #60a5fa — HBS Blue 4 */
+    /* Dark status tones — clean saturated hues (2026 leaders' dark palettes);
+     * previous lifted-HBS pastels (#9EC44D lime, #AAC8EB powder) read washed-out
+     * as badge/progress accents on navy (audit BADGE/SPECIAL). Light mode keeps
+     * the HBS anchors untouched. */
+    --c-success: #3fb950; /* was #9ec44d (lime) */
+    --c-warning: #e8a33d; /* was #f7c76b (pale gold) */
+    --c-danger: #ed5565; /* was #ed5541 */
+    --c-info: #58a6ff; /* was #aac8eb (powder blue) */
     /* Tag/identity palette (dark) — lifted for contrast on navy. */
     --c-tag-1: #5ab0c4;
     --c-tag-2: #8e96e6;

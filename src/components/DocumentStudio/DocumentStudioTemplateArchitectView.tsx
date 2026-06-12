@@ -176,7 +176,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Quarterly Board Memo template"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -184,7 +184,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             <select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as DocumentTypeKey)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
             >
               {DOCUMENT_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -202,7 +202,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               onChange={(e) => setPurpose(e.target.value)}
               rows={3}
               placeholder="What kind of documents will this template produce, and for whom?"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
               minLength={8}
               required
             />
@@ -216,7 +216,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
               placeholder="e.g., Board, CEO, CFO"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm">
@@ -224,7 +224,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as 'pl' | 'en')}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-navy-700 dark:bg-navy-950"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-950"
             >
               <option value="pl">Polish</option>
               <option value="en">English</option>
@@ -235,7 +235,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
               type="checkbox"
               checked={useLlm}
               onChange={(e) => setUseLlm(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-c-focus-solid focus:ring-c-focus"
             />
             <span>
               <span className="font-medium text-slate-700 dark:text-slate-200">

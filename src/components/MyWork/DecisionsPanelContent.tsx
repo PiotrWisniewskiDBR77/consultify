@@ -266,11 +266,13 @@ const DECISION_COLUMNS: ColumnDef[] = [
     filterable: false,
   },
   {
+    // VISUAL_STANDARD.md §5.3 / VIS-008 — badges are never truncated:
+    // column wide enough for full type labels (APPROVAL, STRATEGIC, …).
     id: 'type',
     label: 'Type',
-    width: 100,
-    minWidth: 80,
-    maxWidth: 140,
+    width: 130,
+    minWidth: 110,
+    maxWidth: 180,
     resizable: true,
     filterable: false,
   },
@@ -329,7 +331,7 @@ const DECISION_COLUMNS: ColumnDef[] = [
 type DecisionResizableColumn = 'type' | 'title' | 'status' | 'priority' | 'date' | 'project';
 
 const DECISION_RESIZE_BOUNDS: Record<DecisionResizableColumn, { min: number; max: number }> = {
-  type: { min: 80, max: 140 },
+  type: { min: 110, max: 180 },
   title: { min: 360, max: 900 },
   status: { min: 100, max: 170 },
   priority: { min: 90, max: 160 },
@@ -569,6 +571,7 @@ const DecisionTableRow: React.FC<{
           <MetaChip
             icon={getDecisionTypeIcon(decision.decisionType || decision.type)}
             label={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
+            title={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
           />
         </td>
       )}
@@ -843,6 +846,7 @@ const AwaitingDecisionTableRow: React.FC<{
           <MetaChip
             icon={getDecisionTypeIcon(decision.decisionType || decision.type)}
             label={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
+            title={decision.decisionType || decision.type || (isPolish ? 'Ogólne' : 'General')}
           />
         </td>
       )}

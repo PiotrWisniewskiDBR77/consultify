@@ -80,10 +80,10 @@ export const OutputToolSelector: React.FC = () => {
           <button
             key={tool.id}
             onClick={() => setChatOutputTool(tool.id)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
               isActive
-                ? 'bg-brand/15 text-brand ring-1 ring-brand/30 dark:bg-brand/20'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-slate-200 dark:bg-white/10 text-c-text border-c-border-strong'
+                : 'bg-transparent text-c-text-muted border-c-border-subtle hover:bg-slate-100 dark:hover:bg-white/5 hover:text-c-text'
             }`}
             title={title}
           >

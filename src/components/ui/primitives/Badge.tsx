@@ -12,7 +12,15 @@
 
 import React, { forwardRef } from 'react';
 
-export type BadgeVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+export type BadgeVariant =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'danger'
+  | 'warning'
+  | 'info'
+  | 'violet'
+  | 'neutral';
 export type BadgeSize = 'sm' | 'md' | 'lg';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -53,6 +61,14 @@ const variantStyles: Record<BadgeVariant, string> = {
     bg-amber-100 text-amber-700
     dark:bg-amber-900/30 dark:text-amber-300
   `,
+  info: `
+    bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)]
+    text-c-info
+  `,
+  violet: `
+    bg-purple-100 text-purple-700
+    dark:bg-purple-900/30 dark:text-purple-300
+  `,
   neutral: `
     bg-slate-100 dark:bg-navy-800/40 text-slate-700 dark:text-slate-300
     dark:bg-slate-800 dark:text-slate-300
@@ -65,6 +81,8 @@ const dotColors: Record<BadgeVariant, string> = {
   success: 'bg-success-500',
   danger: 'bg-danger-500',
   warning: 'bg-amber-500',
+  info: 'bg-c-info',
+  violet: 'bg-purple-500',
   neutral: 'bg-slate-500',
 };
 

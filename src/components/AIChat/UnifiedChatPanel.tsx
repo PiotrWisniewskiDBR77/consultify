@@ -5403,7 +5403,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 Teresa
               </div>
               <h3
-                className={`${isCompact ? 'text-2xl' : 'text-4xl md:text-5xl'} font-semibold text-navy-900 dark:text-white`}
+                className={`${isCompact ? 'text-2xl' : 'text-[32px]'} leading-tight font-semibold text-navy-900 dark:text-white`}
               >
                 {t('aiChat.teresaWelcome', 'Talk to Teresa')}
                 {currentUser?.firstName && (
@@ -5628,21 +5628,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </p>
 
               <div className="mt-12 flex flex-col items-center gap-1 pointer-events-none select-none">
-                <img
-                  src="/assets/logos/logo-dark.svg?v=20260319"
-                  alt="Consultify"
-                  className="hidden h-20 w-auto opacity-100 drop-shadow-[0_18px_40px_rgba(0,0,0,0.35)] dark:block sm:h-24 md:h-28"
-                  draggable={false}
-                />
-                <img
-                  src="/assets/logos/logo-light.svg?v=20260319"
-                  alt="Consultify"
-                  className="h-20 w-auto opacity-50 dark:hidden sm:h-24 md:h-28"
-                  draggable={false}
-                />
-                <p className="-mt-0.5 text-center text-[11px] uppercase tracking-[0.25em] text-slate-600 dark:text-slate-400">
-                  <span className="text-primary-600 dark:text-primary-400">DBR77</span>{' '}
-                  <span>Industrial Intelligence</span>
+                <p className="text-[15px] font-medium text-slate-900/25 dark:text-white/25">
+                  Consultify®
+                </p>
+                <p className="text-center text-[10px] uppercase tracking-[0.25em] text-slate-900/15 dark:text-white/15">
+                  DBR77 Industrial Intelligence
                 </p>
               </div>
             </div>

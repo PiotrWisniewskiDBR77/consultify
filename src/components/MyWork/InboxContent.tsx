@@ -2513,9 +2513,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               const st = item.itemStatus || (item.triaged ? 'done' : 'open');
               const cfg: Record<string, { color: string; dot: string; label: string }> = {
                 open: {
+                  // VISUAL_STANDARD.md §5.3 — Open = info (blue), never orange.
                   color:
-                    'border border-slate-200 bg-white text-slate-700 dark:bg-amber-500/15 dark:text-amber-300 dark:border-transparent',
-                  dot: 'bg-amber-500',
+                    'border border-slate-200 bg-white text-slate-700 dark:bg-[color-mix(in_srgb,var(--c-info)_15%,transparent)] dark:text-c-info dark:border-transparent',
+                  dot: 'bg-c-info',
                   label: isPolish ? 'Otwarte' : 'Open',
                 },
                 done: {

@@ -69,11 +69,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const hasError = Boolean(error);
     const hasSuccess = success && !hasError;
 
+    /* Focus is BLUE (--c-focus), error is red — never the same hue
+     * (VISUAL_STANDARD.md §5.2, audit INPUT-01). Default border is visible. */
     const borderColor = hasError
       ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-500/20'
       : hasSuccess
         ? 'border-success-500 focus:border-success-500 focus:ring-success-500/20'
-        : 'border-transparent focus:border-primary-500 focus:ring-primary-500/20';
+        : 'border-slate-200 dark:border-c-border hover:border-slate-300 dark:hover:border-c-border-strong focus:border-c-focus-solid focus:ring-c-focus';
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''} ${containerClassName}`}>
@@ -102,8 +104,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               w-full
               bg-slate-50 dark:bg-navy-900
               text-navy-900 dark:text-white
-              placeholder-slate-400 dark:placeholder-slate-500
-              rounded-xl
+              placeholder-slate-400 dark:placeholder-c-text-muted
+              rounded-lg
               border
               ${borderColor}
               transition-all duration-150 ease-out

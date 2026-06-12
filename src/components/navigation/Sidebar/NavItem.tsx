@@ -106,10 +106,10 @@ export const NavItem: React.FC<NavItemProps> = ({
           showFull ? 'px-2.5 gap-2.5' : 'px-0 justify-center',
           isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
           isHighlighted
-            ? 'bg-primary-50 dark:bg-white/[0.08] text-primary-700 dark:text-slate-100 font-medium'
+            ? 'bg-slate-200/60 dark:bg-white/10 text-c-text font-medium'
             : isParentActive
               ? 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/[0.04]'
-              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-slate-100',
+              : 'text-c-text-secondary hover:bg-slate-100 dark:hover:bg-white/5 hover:text-c-text',
         ].join(' ')}
         title={getTooltip()}
         aria-current={isHighlighted ? 'page' : undefined}
@@ -120,7 +120,7 @@ export const NavItem: React.FC<NavItemProps> = ({
             className={[
               'shrink-0 transition-colors',
               isHighlighted
-                ? 'text-primary-500 dark:text-primary-400'
+                ? 'text-c-text'
                 : isParentActive
                   ? 'text-slate-500 dark:text-slate-400'
                   : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300',
@@ -147,9 +147,9 @@ export const NavItem: React.FC<NavItemProps> = ({
             {item.badge && (
               <span
                 className={[
-                  'px-1.5 py-px text-[10px] font-medium rounded tracking-wide',
+                  'px-1.5 py-px text-[10px] font-medium rounded-full tracking-wide',
                   item.badge === 'beta'
-                    ? 'bg-amber-500/10 text-amber-400'
+                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-300'
                     : item.badge === 'new'
                       ? 'bg-emerald-500/10 text-emerald-400'
                       : 'bg-primary-500/10 text-primary-400',
@@ -178,7 +178,7 @@ export const NavItem: React.FC<NavItemProps> = ({
         {isHighlighted && (
           <motion.div
             layoutId="activeIndicator"
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-primary-500 rounded-r-full"
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-crimson-500 rounded-r-full"
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
         )}

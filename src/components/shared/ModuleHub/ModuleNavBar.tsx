@@ -112,27 +112,27 @@ interface ModuleNavBarProps {
 }
 
 /**
- * V3-A03: 3-level button system (visual-language.md 8.3)
- * Level A — Pill / Outline + Surface: main tabs, important chips
- * Level B — Pill / Soft: helper actions, view toggles
- * Level C — Ghost / Text: link-like, per-row actions
+ * VISUAL_STANDARD.md §5.5 — main tabs use the ONE app-wide underline pattern:
+ * active = text-primary + 2px bottom bar in the text color (neutral, NOT
+ * crimson — red budget §2.3); inactive = muted text, transparent underline,
+ * hover only brightens the text. No pill background, no border, no tint.
  */
 const TAB_BASE = `
-  inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium
-  transition-colors duration-150
+  inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium
+  border-b-2 transition-colors duration-150
 `;
 
 const TAB_INACTIVE = `
   ${TAB_BASE}
-  border border-slate-200 dark:border-navy-700
-  text-slate-700 dark:text-slate-300
-  hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
+  border-transparent
+  text-c-text-muted
+  hover:text-c-text
 `;
 
 const TAB_ACTIVE = `
   ${TAB_BASE}
-  border border-primary-500/40
-  bg-primary-500/10 text-slate-900 dark:text-slate-100
+  border-navy-900 dark:border-white/80
+  text-c-text
 `;
 
 const BUTTON_BASE = `
@@ -272,7 +272,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 w-full pl-10 pr-10 py-2 rounded-lg
                 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
                 text-slate-900 dark:text-white placeholder-slate-500
-                focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50
+                focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus
                 transition-all
               "
             />
@@ -395,7 +395,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                       px-1.5 py-0.5 text-[11px] rounded-full
                       ${
                         isActive
-                          ? 'bg-primary-500/30 text-primary-600 dark:text-primary-300'
+                          ? 'bg-navy-900/10 dark:bg-white/10 text-c-text'
                           : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
                       }
                     `}
@@ -495,9 +495,9 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               type="button"
               onClick={onNewItem}
               className="
-                inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium
-                bg-purple-600 text-white
-                hover:bg-purple-700
+                inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium
+                bg-navy-900 text-white hover:bg-navy-800
+                dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]
                 transition-colors duration-150
               "
             >
