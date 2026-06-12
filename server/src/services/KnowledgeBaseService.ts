@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { flagOn, parseMaybeJson } from '../utils/pgFlags.js';
 
 // ============================================
 // TYPES
@@ -152,7 +153,7 @@ class KnowledgeBaseService {
         ...rest,
         tags: tagsByArticleId.get(String(row.id)) || [],
         ...this.resolveLanguage(language, Boolean(requested_title)),
-        is_featured: Boolean(row.is_featured),
+        is_featured: flagOn(row.is_featured),
       };
     });
   }
@@ -206,8 +207,8 @@ class KnowledgeBaseService {
         return {
           ...rest,
           ...this.resolveLanguage(language, Boolean(requested_name)),
-          is_active: Boolean(row.is_active),
-          is_public: Boolean(row.is_public),
+          is_active: flagOn(row.is_active),
+          is_public: flagOn(row.is_public),
         };
       });
     } catch (error) {
@@ -452,8 +453,8 @@ class KnowledgeBaseService {
         ...langMeta,
         translation_status: translationStatus,
         next_action: parsedNextAction,
-        is_featured: Boolean(row.is_featured),
-        is_public: Boolean(row.is_public),
+        is_featured: flagOn(row.is_featured),
+        is_public: flagOn(row.is_public),
         related_modules: JSON.parse(row.related_modules || '[]'),
         target_audience: JSON.parse(row.target_audience || '[]'),
         hero_asset_refs: (() => {
@@ -835,7 +836,7 @@ class KnowledgeBaseService {
       return {
         articles: articles.map((row: any) => ({
           ...row,
-          is_featured: Boolean(row.is_featured),
+          is_featured: flagOn(row.is_featured),
         })),
         total,
       };
@@ -937,7 +938,7 @@ class KnowledgeBaseService {
       const articles = await dbAll(sql, [language, language, tagSlug, limit]);
       return articles.map((row: any) => ({
         ...row,
-        is_featured: Boolean(row.is_featured),
+        is_featured: flagOn(row.is_featured),
       }));
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting articles by tag:', error);
@@ -1151,7 +1152,7 @@ class KnowledgeBaseService {
       return {
         articles: articles.map((row: any) => ({
           ...row,
-          is_featured: Boolean(row.is_featured),
+          is_featured: flagOn(row.is_featured),
         })),
         facets: { collections: collectionFacets, tags: tagFacets },
         total,
@@ -1180,7 +1181,7 @@ class KnowledgeBaseService {
 
       let relatedIds: string[];
       try {
-        relatedIds = JSON.parse(article.related_article_ids);
+        relatedIds = parseMaybeJson(article.related_article_ids, []);
       } catch {
         return [];
       }
@@ -1209,7 +1210,7 @@ class KnowledgeBaseService {
       const articles = await dbAll(sql, [language, language, ...bounded]);
       return articles.map((row: any) => ({
         ...row,
-        is_featured: Boolean(row.is_featured),
+        is_featured: flagOn(row.is_featured),
       }));
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting related articles:', error);
@@ -1316,7 +1317,7 @@ class KnowledgeBaseService {
       const articles = await dbAll(sql, [language, language, ...queryParams, limit]);
       return articles.map((row: any) => ({
         ...row,
-        is_featured: Boolean(row.is_featured),
+        is_featured: flagOn(row.is_featured),
       }));
     } catch (error) {
       logger.error('[KnowledgeBaseService] Error getting articles for surface:', error);

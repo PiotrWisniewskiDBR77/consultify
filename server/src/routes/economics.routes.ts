@@ -27,6 +27,7 @@ import * as valuationSvc from '../services/valuationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 
 logger.info('[Economics Routes] Module loaded - TypeScript version');
 logger.info('[Economics Routes] Router type:', typeof Router);
@@ -854,7 +855,7 @@ router.get(
       assumptions: safeJsonParse(row.assumptions, []),
       financialData: safeJsonParse(row.financial_data, {}),
       metrics: safeJsonParse(row.metrics, {}),
-      isActive: !!row.is_active,
+      isActive: flagOn(row.is_active),
       updatedAt: row.updated_at,
     }));
 

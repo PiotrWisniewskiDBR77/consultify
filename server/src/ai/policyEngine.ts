@@ -14,6 +14,7 @@
  */
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 const db = getDatabase();
 
 // Type definitions for database rows
@@ -134,7 +135,7 @@ const PolicyEngine = {
         [],
         (err: Error | null, row: PolicySettingsRow | undefined) => {
           if (err || !row) return resolve(true); // Default to enabled
-          resolve(row.policy_engine_enabled === 1);
+          resolve(flagOn(row.policy_engine_enabled));
         }
       );
     });
@@ -427,7 +428,7 @@ const PolicyEngine = {
           return resolve({ policy_engine_enabled: true, updated_by: null, updated_at: null });
         }
         resolve({
-          policy_engine_enabled: row.policy_engine_enabled === 1,
+          policy_engine_enabled: flagOn(row.policy_engine_enabled),
           updated_by: row.updated_by,
           updated_at: row.updated_at,
         });

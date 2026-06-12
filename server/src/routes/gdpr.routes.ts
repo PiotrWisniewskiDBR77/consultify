@@ -19,6 +19,7 @@ import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 import { verifyUserPassword } from '../utils/verifyUserPassword.js';
 
 // Apply rate limiting
@@ -163,11 +164,11 @@ router.get(
         return res.json({
           success: true,
           consents: {
-            analytics: !!row.analytics,
-            personalization: !!row.personalization,
-            marketing: !!row.marketing,
-            thirdPartySharing: !!row.thirdPartySharing,
-            aiTraining: !!row.aiTraining,
+            analytics: flagOn(row.analytics),
+            personalization: flagOn(row.personalization),
+            marketing: flagOn(row.marketing),
+            thirdPartySharing: flagOn(row.thirdPartySharing),
+            aiTraining: flagOn(row.aiTraining),
           },
         });
       } else {

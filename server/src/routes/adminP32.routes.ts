@@ -9,6 +9,7 @@ import adminAuditService from '../services/adminAuditService.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { flagOn } from '../utils/pgFlags.js';
 
 const router = Router();
 
@@ -840,11 +841,11 @@ async function readBillingSummary(orgId: string) {
       aiCallsLimit: Number(policySnapshot?.limits?.maxAICallsPerDay || 0),
     },
     alerts: {
-      tokenThreshold80: Boolean(alertsRow?.token_threshold_80),
-      tokenThreshold90: Boolean(alertsRow?.token_threshold_90),
-      tokenThreshold100: Boolean(alertsRow?.token_threshold_100),
+      tokenThreshold80: flagOn(alertsRow?.token_threshold_80),
+      tokenThreshold90: flagOn(alertsRow?.token_threshold_90),
+      tokenThreshold100: flagOn(alertsRow?.token_threshold_100),
       costCapMonthly: Number(alertsRow?.cost_cap_monthly || 0),
-      emailNotifications: Boolean(alertsRow?.email_notifications),
+      emailNotifications: flagOn(alertsRow?.email_notifications),
     },
     policySnapshot,
   };
@@ -1126,9 +1127,9 @@ async function readBillingUsageDetails(orgId: string) {
       userOverageRate: 5,
     },
     alerts: {
-      emailThreshold: alerts?.token_threshold_80 ? 0.8 : null,
+      emailThreshold: flagOn(alerts?.token_threshold_80) ? 0.8 : null,
       costCapMonthly: alerts?.cost_cap_monthly || null,
-      emailNotifications: !!alerts?.email_notifications,
+      emailNotifications: flagOn(alerts?.email_notifications),
     },
   };
 }
@@ -1234,7 +1235,7 @@ async function readBillingAlerts(orgId: string) {
         type: 'tokens',
         threshold: 80,
         notifyEmails: ['billing@example.com'],
-        isActive: !!record?.token_threshold_80,
+        isActive: flagOn(record?.token_threshold_80),
       },
       {
         id: `${record?.id || 'alert'}-spend`,
@@ -1292,7 +1293,7 @@ async function readBillingTaxSettings(orgId: string) {
     tax: {
       taxIdType: settings.tax_id_type,
       taxId: settings.tax_id,
-      taxExempt: !!settings.tax_exempt,
+      taxExempt: flagOn(settings.tax_exempt),
     },
     address: {
       line1: settings.billing_address_line1,

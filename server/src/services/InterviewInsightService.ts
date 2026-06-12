@@ -13,6 +13,7 @@ import logger from '../utils/Logger.js';
 import { llmService } from './ai/llmService.js';
 import { canonicalizeContextDocumentStatus } from './organizationContext/ContextDocumentService.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
+import { flagOn } from '../utils/pgFlags.js';
 
 // ==========================================
 // TYPES
@@ -2450,8 +2451,8 @@ ${answerText}
           : sourceSessionIds.length,
       tokensUsed: row.tokens_used || 0,
       generationTimeMs: row.generation_time_ms || undefined,
-      exportedToTools: row.exported_to_tools === 1,
-      exportedToAssessment: row.exported_to_assessment === 1,
+      exportedToTools: flagOn(row.exported_to_tools),
+      exportedToAssessment: flagOn(row.exported_to_assessment),
       archivedAt: row.archived_at || null,
       sectionCompletions: row.section_completions
         ? safeJsonObject<Record<string, boolean>>(row.section_completions, {})

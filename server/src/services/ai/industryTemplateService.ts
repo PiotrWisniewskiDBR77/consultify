@@ -10,6 +10,7 @@
 
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { flagOn } from '../../utils/pgFlags.js';
 
 // ==========================================
 // TYPES
@@ -201,7 +202,7 @@ function parseTemplateRow(row: any): IndustryTemplate {
     typicalMetrics: row.typical_metrics ? JSON.parse(row.typical_metrics) : [],
     promptAddon: row.prompt_addon || null,
     reportTemplate: row.report_template || null,
-    isActive: row.is_active === 1,
+    isActive: flagOn(row.is_active),
   };
 }
 

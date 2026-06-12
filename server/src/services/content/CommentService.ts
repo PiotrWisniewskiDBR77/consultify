@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../../database/Database.js';
 import type { IDatabase, RunResult } from '../../database/IDatabase.js';
 import logger from '../../utils/Logger.js';
+import { flagOn } from '../../utils/pgFlags.js';
 
 export interface CommentRecord {
   id: string;
@@ -359,13 +360,13 @@ export class CommentService {
       parentCommentId: row.parent_comment_id ?? null,
       threadId: row.thread_id,
       positionRef: row.position_ref ?? null,
-      isResolved: !!row.is_resolved,
+      isResolved: flagOn(row.is_resolved),
       resolvedBy: row.resolved_by ?? null,
       resolvedAt: row.resolved_at ?? null,
       mentionedUserIds: row.mentioned_user_ids
         ? (JSON.parse(row.mentioned_user_ids) as string[])
         : [],
-      isEdited: !!row.is_edited,
+      isEdited: flagOn(row.is_edited),
       editedAt: row.edited_at ?? null,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

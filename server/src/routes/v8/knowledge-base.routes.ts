@@ -12,6 +12,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import KnowledgeBaseService from '../../services/KnowledgeBaseService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { flagOn } from '../../utils/pgFlags.js';
 
 const router = Router();
 export const publicKnowledgeBaseRoutes = Router();
@@ -157,7 +158,7 @@ publicKnowledgeBaseRoutes.get(
     }
 
     const article = await KnowledgeBaseService.getArticleBySlug(slug, language);
-    if (!article || !article.is_public) {
+    if (!article || !flagOn(article.is_public)) {
       return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
     }
 

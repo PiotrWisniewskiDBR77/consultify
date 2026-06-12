@@ -12,6 +12,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import notificationService from './notificationService.js';
 
@@ -661,7 +662,7 @@ export class DecisionEscalationChainService {
       organizationId: row.organization_id,
       name: row.name,
       description: row.description,
-      isDefault: !!row.is_default,
+      isDefault: flagOn(row.is_default),
       chainConfig: row.chain_config ? JSON.parse(row.chain_config) : [],
       warningHours: row.warning_hours,
       criticalHours: row.critical_hours,

@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 
 // ==========================================
 // TYPES
@@ -334,7 +335,7 @@ class TaxServiceClass {
 
     if (fields.length === 0) return null;
 
-    fields.push('updated_at = datetime("now")');
+    fields.push('updated_at = CURRENT_TIMESTAMP');
     values.push(taxRateId);
 
     const result = await this.dbRun(
@@ -359,8 +360,8 @@ class TaxServiceClass {
     return await this.dbAll<TaxRate>(
       `SELECT * FROM tax_rates 
              WHERE country = ? AND is_active = 1
-             AND (effective_from IS NULL OR effective_from <= datetime('now'))
-             AND (effective_until IS NULL OR effective_until >= datetime('now'))
+             AND (effective_from IS NULL OR effective_from <= CURRENT_TIMESTAMP)
+             AND (effective_until IS NULL OR effective_until >= CURRENT_TIMESTAMP)
              ORDER BY percentage DESC`,
       [countryCode]
     );
@@ -465,7 +466,7 @@ class TaxServiceClass {
       };
     }
 
-    const taxAmount = applicableRate.inclusive
+    const taxAmount = flagOn(applicableRate.inclusive)
       ? Math.round(amount - amount / (1 + applicableRate.percentage / 100))
       : Math.round(amount * (applicableRate.percentage / 100));
 
@@ -473,7 +474,7 @@ class TaxServiceClass {
       taxAmount,
       taxRate: applicableRate.percentage,
       taxType: applicableRate.tax_type,
-      taxBehavior: applicableRate.inclusive ? 'inclusive' : 'exclusive',
+      taxBehavior: flagOn(applicableRate.inclusive) ? 'inclusive' : 'exclusive',
       taxRateId: applicableRate.id,
       description: applicableRate.display_name,
       breakdown: [
@@ -498,8 +499,8 @@ class TaxServiceClass {
     let query = `
             SELECT * FROM tax_rates 
             WHERE is_active = 1 
-            AND (effective_from IS NULL OR effective_from <= datetime('now'))
-            AND (effective_until IS NULL OR effective_until >= datetime('now'))
+            AND (effective_from IS NULL OR effective_from <= CURRENT_TIMESTAMP)
+            AND (effective_until IS NULL OR effective_until >= CURRENT_TIMESTAMP)
         `;
     const params: unknown[] = [];
 

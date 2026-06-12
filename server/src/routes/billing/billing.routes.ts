@@ -24,6 +24,7 @@ import BillingWebhookService, {
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { flagOn } from '../../utils/pgFlags.js';
 import {
   BillingStatsQuerySchema,
   CancelSubscriptionRequestSchema,
@@ -255,13 +256,13 @@ router.get(
       const tokenRow = (await dbGet(`
         SELECT COALESCE(SUM(tokens_used), 0) as total_tokens
         FROM ai_usage_logs
-        WHERE created_at >= datetime('now', '-30 days')
+        WHERE created_at >= NOW() - INTERVAL '30 days'
       `)) as any;
 
       const orgRow = (await dbGet(`
         SELECT COUNT(DISTINCT organization_id) as active_orgs
         FROM ai_usage_logs
-        WHERE created_at >= datetime('now', '-30 days')
+        WHERE created_at >= NOW() - INTERVAL '30 days'
       `)) as any;
 
       return res.json({
@@ -286,7 +287,7 @@ router.get(
           COUNT(*) as request_count,
           COALESCE(SUM(cost), 0) as total_cost
         FROM ai_usage_logs
-        WHERE created_at >= datetime('now', '-30 days')
+        WHERE created_at >= NOW() - INTERVAL '30 days'
         GROUP BY provider, model_id
         ORDER BY total_cost DESC
         LIMIT 20
@@ -878,7 +879,7 @@ router.put(
         return res.status(400).json({ error: 'No updates provided' });
       }
 
-      updates.push('updated_at = datetime("now")');
+      updates.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
 
       const result = await dbRun(
@@ -1313,7 +1314,7 @@ router.put(
         params.push(status);
 
         if (status === 'paid') {
-          updates.push('paid_at = datetime("now")');
+          updates.push('paid_at = CURRENT_TIMESTAMP');
           updates.push('amount_paid = total');
           updates.push('amount_due = 0');
         }
@@ -1348,7 +1349,7 @@ router.put(
         return;
       }
 
-      updates.push('updated_at = datetime("now")');
+      updates.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
 
       await dbRun(`UPDATE invoices SET ${updates.join(', ')} WHERE id = ?`, params);
@@ -1373,7 +1374,7 @@ router.post(
       await dbRun(
         `
             UPDATE invoices 
-            SET status = 'open', updated_at = datetime('now')
+            SET status = 'open', updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND status = 'draft'
         `,
         [id]
@@ -1836,7 +1837,7 @@ router.put(
         updates.push('status = ?');
         params.push(status);
         if (status === 'canceled') {
-          updates.push('canceled_at = datetime("now")');
+          updates.push('canceled_at = CURRENT_TIMESTAMP');
         }
       }
 
@@ -1860,7 +1861,7 @@ router.put(
         return;
       }
 
-      updates.push('updated_at = datetime("now")');
+      updates.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
 
       await dbRun(`UPDATE subscriptions SET ${updates.join(', ')} WHERE id = ?`, params);
@@ -1901,7 +1902,7 @@ router.post(
         await dbRun(
           `
                 UPDATE subscriptions 
-                SET status = 'canceled', canceled_at = datetime('now'), updated_at = datetime('now')
+                SET status = 'canceled', canceled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             `,
           [id]
@@ -1910,7 +1911,7 @@ router.post(
         await dbRun(
           `
                 UPDATE subscriptions 
-                SET cancel_at_period_end = 1, updated_at = datetime('now')
+                SET cancel_at_period_end = 1, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             `,
           [id]
@@ -2000,7 +2001,7 @@ router.post(
 
       await dbRun(
         `UPDATE organization_billing
-         SET status = 'active', updated_at = datetime('now')
+         SET status = 'active', updated_at = CURRENT_TIMESTAMP
          WHERE organization_id = ?`,
         [orgId]
       );
@@ -2268,7 +2269,7 @@ router.put(
         return;
       }
 
-      updates.push('updated_at = datetime("now")');
+      updates.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
 
       await dbRun(`UPDATE subscription_plans SET ${updates.join(', ')} WHERE id = ?`, params);
@@ -2351,7 +2352,7 @@ router.post(
         `INSERT INTO credit_notes (
                     id, organization_id, invoice_id, credit_note_number, total, amount_remaining, 
                     currency, reason, memo, status, issued_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'issued', datetime('now'))`,
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'issued', CURRENT_TIMESTAMP)`,
         [
           id,
           organizationId,
@@ -2474,7 +2475,7 @@ router.get(
                     COUNT(*) as count,
                     COALESCE(SUM(total), 0) as value
                 FROM credit_notes
-                WHERE created_at >= datetime('now', 'start of month')
+                WHERE created_at >= date_trunc('month', NOW())
             `)) as any;
 
       return res.json({
@@ -2544,7 +2545,7 @@ router.post(
       const applicationId = uuidv4();
       await dbRun(
         `INSERT INTO credit_applications (id, credit_note_id, invoice_id, amount, applied_at, applied_by)
-                 VALUES (?, ?, ?, ?, datetime('now'), ?)`,
+                 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
         [applicationId, creditNoteId, invoiceId, applyAmount, req.user!.id]
       );
 
@@ -2558,7 +2559,7 @@ router.post(
                     amount_applied = ?, 
                     amount_remaining = ?, 
                     status = ?,
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
         [newApplied, newRemaining, newStatus, creditNoteId]
       );
@@ -2574,7 +2575,7 @@ router.post(
                     amount_paid = ?,
                     credit_note_id = ?,
                     status = ?,
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
         [newInvoiceDue, newInvoicePaid, creditNoteId, invoiceStatus, invoiceId]
       );
@@ -2625,9 +2626,9 @@ router.post(
                     refund_amount = ?,
                     refund_method = ?,
                     refund_notes = ?,
-                    refunded_at = datetime('now'),
+                    refunded_at = CURRENT_TIMESTAMP,
                     amount_remaining = 0,
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
         [refundAmount, refundMethod || 'original_payment', notes || null, creditNoteId]
       );
@@ -2672,8 +2673,8 @@ router.post(
         `UPDATE credit_notes SET 
                     status = 'voided',
                     void_reason = ?,
-                    voided_at = datetime('now'),
-                    updated_at = datetime('now')
+                    voided_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
         [reason || 'Voided by admin', creditNoteId]
       );
@@ -3172,7 +3173,7 @@ router.put(
         `
             UPDATE spending_alerts SET
                 type = ?, threshold = ?, threshold_type = ?, action = ?, 
-                notify_emails = ?, is_active = ?, updated_at = datetime('now')
+                notify_emails = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND organization_id = ?
         `,
         [
@@ -3208,7 +3209,7 @@ router.post(
       await dbRun(
         `
             UPDATE spending_alerts 
-            SET is_active = 1 - is_active, updated_at = datetime('now')
+            SET is_active = 1 - is_active, updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND organization_id = ?
         `,
         [id, orgId]
@@ -3267,7 +3268,7 @@ router.get(
           type: 'tokens',
           threshold: 80,
           notifyEmails: ['billing@example.com'],
-          isActive: !!record.token_threshold_80,
+          isActive: flagOn(record.token_threshold_80),
         },
         {
           id: `${record.id}-spend`,
@@ -3503,7 +3504,7 @@ router.post(
 
       // Check cache first
       const cached = (await dbGet(
-        'SELECT * FROM vat_validations WHERE vat_number = ? AND country_code = ? AND expires_at > datetime("now")',
+        'SELECT * FROM vat_validations WHERE vat_number = ? AND country_code = ? AND expires_at > CURRENT_TIMESTAMP',
         [vatNumber, countryCode],
         { fallback: false }
       )) as any;
@@ -3705,7 +3706,7 @@ router.put(
                     country = COALESCE(?, country),
                     region = COALESCE(?, region),
                     is_active = COALESCE(?, is_active),
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
         [
           resolvedDisplayName,
@@ -3734,7 +3735,7 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      await dbRun('UPDATE tax_rates SET is_active = 0, updated_at = datetime("now") WHERE id = ?', [
+      await dbRun('UPDATE tax_rates SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [
         id,
       ]);
       return res.json({ success: true });
@@ -3979,7 +3980,7 @@ router.put(
                     show_logo = COALESCE(?, show_logo),
                     show_payment_terms = COALESCE(?, show_payment_terms),
                     is_default = COALESCE(?, is_default),
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                  WHERE id = ?`,
         [
           name,
@@ -4019,7 +4020,7 @@ router.delete(
       if (!template) {
         return res.status(404).json({ error: 'Template not found' });
       }
-      if (template.is_system) {
+      if (flagOn(template.is_system)) {
         return res.status(403).json({ error: 'Cannot delete system templates' });
       }
       if (template.organization_id !== orgId && !req.user?.isSuperAdmin) {
@@ -4111,9 +4112,9 @@ router.get(
         storageOverageRate: subscription?.storage_overage_rate || 0.1,
         userOverageRate: 5,
         alerts: {
-          emailThreshold: alerts?.token_threshold_80 ? 0.8 : null,
+          emailThreshold: flagOn(alerts?.token_threshold_80) ? 0.8 : null,
           costCapMonthly: alerts?.cost_cap_monthly || null,
-          emailNotifications: !!alerts?.email_notifications,
+          emailNotifications: flagOn(alerts?.email_notifications),
         },
       });
     } catch (error: any) {
@@ -4137,7 +4138,7 @@ router.put(
           `UPDATE subscription_plans SET 
                         token_overage_rate = COALESCE(?, token_overage_rate),
                         storage_overage_rate = COALESCE(?, storage_overage_rate),
-                        updated_at = datetime('now')`,
+                        updated_at = CURRENT_TIMESTAMP`,
           [tokenOverageRate, storageOverageRate]
         );
       }
@@ -4576,9 +4577,9 @@ router.post(
                 UPDATE subscription_changes 
                 SET status = 'approved', 
                     approved_by = ?, 
-                    approved_at = datetime('now'),
+                    approved_at = CURRENT_TIMESTAMP,
                     notes = COALESCE(?, notes),
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             `,
         [req.user!.id, notes, id]
@@ -4610,7 +4611,7 @@ router.post(
                 UPDATE subscription_changes 
                 SET status = 'rejected', 
                     rejection_reason = ?,
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             `,
         [reason, id]
@@ -4733,9 +4734,9 @@ router.post(
         `
                 UPDATE revenue_recognition 
                 SET status = 'recognized', 
-                    recognized_at = datetime('now'),
+                    recognized_at = CURRENT_TIMESTAMP,
                     recognized_by = ?,
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             `,
         [req.user!.id, id]
@@ -4767,7 +4768,7 @@ router.post(
                 INSERT INTO revenue_recognition (
                     id, organization_id, invoice_id, amount, recognition_date, 
                     description, status, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', datetime('now'), datetime('now'))
+                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
             `,
         [id, organization_id, invoice_id, amount, recognition_date, description]
       );
@@ -4917,7 +4918,7 @@ router.post(
                 INSERT INTO revenue_forecasts (
                     id, scenario, forecast_date, forecast_data, 
                     assumptions, accuracy, created_by, created_at
-                ) VALUES (?, ?, datetime('now'), ?, ?, 0, ?, datetime('now'))
+                ) VALUES (?, ?, CURRENT_TIMESTAMP, ?, ?, 0, ?, CURRENT_TIMESTAMP)
             `,
         [
           id,
@@ -5131,7 +5132,7 @@ router.put(
       if (fields.length === 0) {
         return res.status(400).json({ error: 'No fields to update' });
       }
-      fields.push("updated_at = datetime('now')");
+      fields.push("updated_at = CURRENT_TIMESTAMP");
       values.push(req.params.id);
 
       await dbRun(`UPDATE usage_pricing_tiers SET ${fields.join(', ')} WHERE id = ?`, values);

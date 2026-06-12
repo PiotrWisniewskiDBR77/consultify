@@ -2162,7 +2162,7 @@ export async function loadManagedInterviewSessionsForManager(
       status: String(row.session_runtime_status || 'in_progress'),
       sessionRuntimeStatus: row.session_runtime_status || undefined,
       assignmentId: undefined,
-      assignmentStatus: undefined,
+      assignmentStatus: undefined as string | undefined,
       assignmentPriority: undefined,
       assignmentCreatedBy: undefined,
       totalQuestions: row.total_questions || 0,
@@ -2182,7 +2182,7 @@ export async function loadManagedInterviewSessionsForManager(
       submittedAt: undefined,
       sentBackAt: undefined,
       sentBackReason: undefined,
-    }));
+    })) as typeof managed;
   } catch {
     /* ad-hoc augmentation is best-effort; managed list is the floor */
   }
@@ -4417,7 +4417,7 @@ export const InterviewController = {
       aiReviewedAt: r.ai_reviewed_at || null,
       reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
       notes: r.notes || null,
-      isTeamAssignment: r.is_team_assignment === 1,
+      isTeamAssignment: flagOn(r.is_team_assignment),
       reminderSentAt: r.reminder_sent_at || null,
       reminderCount: r.reminder_count || 0,
       escalatedAt: r.escalated_at || null,

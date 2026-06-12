@@ -9,6 +9,7 @@
  *  - Show diff preview before applying
  */
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { parseMaybeJson } from '../utils/pgFlags.js';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -189,8 +190,8 @@ export async function applyAgentAction(
 
   if (!msg) return { success: false, message: 'Message not found' };
 
-  const action = JSON.parse(msg.structured_action || '{}') as AgentAction;
-  const diff = JSON.parse(msg.diff_preview || '{}') as DiffPreview;
+  const action = parseMaybeJson(msg.structured_action, {}) as AgentAction;
+  const diff = parseMaybeJson(msg.diff_preview, {}) as DiffPreview;
 
   if (diff?.changes) {
     for (const change of diff.changes) {
@@ -266,8 +267,8 @@ export async function getAgentMessages(
     reportId: r.report_id,
     role: r.role as 'user' | 'assistant' | 'system',
     content: r.content,
-    structuredAction: r.structured_action ? JSON.parse(r.structured_action) : null,
-    diffPreview: r.diff_preview ? JSON.parse(r.diff_preview) : null,
+    structuredAction: parseMaybeJson(r.structured_action, null),
+    diffPreview: parseMaybeJson(r.diff_preview, null),
     applied: r.applied,
     createdAt: r.created_at,
   }));

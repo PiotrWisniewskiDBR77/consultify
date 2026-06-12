@@ -11,6 +11,7 @@ import { DRD_STRUCTURE } from '../data/drdStructure.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
+import { parseMaybeJson } from '../utils/pgFlags.js';
 import { upsertAssessmentReportForBuilder } from './assessmentReportBuilderLinkService.js';
 import * as artifactRegistryService from './v8/artifactRegistryService.js';
 
@@ -378,7 +379,7 @@ async function getFinancialAnalysisSourceData(
     currency: row.currency || 'PLN',
     periods: (() => {
       try {
-        const p = JSON.parse(row.periods || '[]');
+        const p = parseMaybeJson(row.periods, []);
         return Array.isArray(p) ? p : [];
       } catch {
         return [];
@@ -386,7 +387,7 @@ async function getFinancialAnalysisSourceData(
     })(),
     sourceStatementIds: (() => {
       try {
-        const ids = JSON.parse(row.source_statement_ids || '[]');
+        const ids = parseMaybeJson(row.source_statement_ids, []);
         return Array.isArray(ids) ? ids : [];
       } catch {
         return [];

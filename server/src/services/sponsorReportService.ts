@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { parseMaybeJson } from '../utils/pgFlags.js';
 
 export interface SponsorReportSection {
   id: string;
@@ -424,10 +425,10 @@ export async function getReportForExport(
       evidenceSources: [],
       sectionType: s.section_type || 'key_findings',
     })),
-    assumptions: JSON.parse(report.assumptions_json || '[]'),
-    unknowns: JSON.parse(report.unknowns_json || '[]'),
-    counterpoints: JSON.parse(report.counterpoints_json || '[]'),
-    insightSourceIds: JSON.parse(report.insight_source_ids || '[]'),
+    assumptions: parseMaybeJson(report.assumptions_json, []),
+    unknowns: parseMaybeJson(report.unknowns_json, []),
+    counterpoints: parseMaybeJson(report.counterpoints_json, []),
+    insightSourceIds: parseMaybeJson(report.insight_source_ids, []),
     language: report.language || 'en',
   };
 }

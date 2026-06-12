@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import managementReportRepository from '../repositories/ManagementReportRepository.js';
 import { all, get, run } from '../utils/DbPromise.js';
+import { parseMaybeJson } from '../utils/pgFlags.js';
 
 type ExportDeps = {
   PDFDocument: any | null;
@@ -1184,7 +1185,7 @@ class ManagementReportsService {
       name: row.name,
       description: row.description,
       reportType: row.report_type,
-      sections: row.sections ? JSON.parse(row.sections) : [],
+      sections: parseMaybeJson(row.sections, []),
       createdAt: row.created_at,
       createdByName: row.created_by_name,
     }));

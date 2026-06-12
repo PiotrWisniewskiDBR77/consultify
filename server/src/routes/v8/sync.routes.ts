@@ -60,6 +60,7 @@ import { LastRefreshResultValues, ProviderFamilyValues } from '../../types/pmSyn
 import { ConflictResolutionPathValues, ConnectorAuthStateValues } from '../../types/pmSyncTruth.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { parseMaybeJson } from '../../utils/pgFlags.js';
 
 const router = Router();
 
@@ -505,7 +506,7 @@ router.get(
 
       let scopes: string[] = [];
       try {
-        scopes = JSON.parse(String(r.scopes || '[]'));
+        scopes = parseMaybeJson(r.scopes, []);
       } catch {
         /* */
       }

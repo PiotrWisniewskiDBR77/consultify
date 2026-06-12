@@ -45,6 +45,7 @@ import {
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type {
   CreateInitiativeRequest,
@@ -1525,7 +1526,7 @@ export class InitiativeController {
             actualDate: mm.actual_date || null,
             status: mm.status || null,
             orderIndex: mm.order_index ?? 0,
-            isGate: !!mm.is_gate,
+            isGate: flagOn(mm.is_gate),
             gateDecisionId: mm.gate_decision_id || null,
           })),
           dependencies: (deps || []).map((d) => ({

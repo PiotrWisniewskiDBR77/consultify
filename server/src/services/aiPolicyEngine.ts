@@ -6,6 +6,7 @@
 import { get as dbGetOrig, run as dbRunOrig } from '../utils/DbPromise.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 
 // Mutable dependency references for injection
 let dbGet = dbGetOrig;
@@ -243,7 +244,7 @@ const AIPolicyEngine = {
         orgPolicy.active_roles || '["ADVISOR","PMO_MANAGER","EXECUTOR","EDUCATOR"]'
       ),
       userTone: userPreferences.preferred_tone || 'EXPERT',
-      educationMode: userPreferences.education_mode === 1,
+      educationMode: flagOn(userPreferences.education_mode),
       projectAIRole,
       roleCapabilities,
       roleDescription: AIRoleGuard ? AIRoleGuard.getRoleDescription(projectAIRole) : '',
