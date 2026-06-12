@@ -108,20 +108,24 @@
 
 **Rekomendacja: B teraz** (uczciwość UI), A jako pozycja roadmapy gdy Ideas dostanie falę Miro-grade (i tak planowaną).
 
+> ⚠️ **KOREKTA 2026-06-12 (weryfikacja CTO przed wykonaniem — brief się mylił, jak #2):** przyciski eksportu Ideas (`IdeaExportMenu.tsx`) generują pliki **realnie po stronie klienta** (`new Blob`/`URL.createObjectURL` — PNG/SVG/PDF/Markdown/JSON). Wywołanie `Api.ideaRequestExport` to fire-and-forget zapis audytowy (`.catch(()=>undefined)`), a `ideaGetExports` NIE jest nigdzie konsumowane — brak UI „processing/pending". **Nie ma user-visible lie.** Jedyny realny brak = niezbudowany serwerowy worker eksportu-do-Outputs (INTEGRACJE §C #3), który NIE ma kłamliwej powierzchni FE. **Decyzja faktyczna: NIE wycinać działających przycisków.** Latentny dług: `requestExport` zapisuje wiecznie-pending wiersze do `idea_exports`, których nikt nie czyta — do sprzątnięcia razem z budową eksportu-do-Outputs (fala Miro-grade). **WYKONANE: brak zmian UI.**
+
 ---
 
-## ZBIORCZO — rekomendowany pakiet
+## ZBIORCZO — decyzje + wykonanie (CTO, 2026-06-12)
 
-| # | Decyzja | Rekomendacja | Koszt realizacji |
-|---|---------|--------------|------------------|
-| 1 | A1 Affiliate | **B** — wyciąć z UI, zostawić fundamenty | ~2 h |
-| 2 | M01 pamięć AI | **A** — usunąć martwą fasadę FE | ~30 min |
-| 3 | M25 billing | **A** — wpiąć | ~2 h |
-| 4 | M26 self-connect | **A** — zamknięty + dokumentacja flagi | ~15 min |
-| 5 | M08 dual-stack | **A** — zostawić za flagą, re-decyzja po FAZIE C | 0 |
-| 6 | M20 governed sync | **B** — schować przyciski, sync po FAZIE C | ~1 h |
-| 7 | M07 V8 mirror | **B** — dual-write forward | ~1 dzień |
-| 8 | M21 Meeting→MyWork | **A** — globalizować (po FAZIE C) | 2–3 dni |
-| 9 | M05 eksport | **B** — wyciąć przycisk, worker w fali Miro-grade | ~4 h |
+> Właściciel 2026-06-12: „opieramy się na Twoich rekomendacjach, jesteś CTO". Wykonano cały pakiet offline; każda zmiana zweryfikowana przed commitem (2 premisy briefów okazały się błędne — patrz korekty #2/#9).
 
-**Pakiet „szybkie TAK":** #1B+#2A+#3A+#4A+#6B+#9B = ~1 dzień roboczy łącznie, zamyka 6 z 9 decyzji i czyści wszystkie kłamliwe elementy UI z tej listy.
+| # | Decyzja | Wybór | Status | Commit / uwaga |
+|---|---------|-------|--------|----------------|
+| 1 | A1 Affiliate | **B** — drop z nawigacji, fundamenty zostają | ✅ WYKONANE | `42b71cfe09` — route→/chat, 2 sidebary, widok dormant |
+| 2 | M01 pamięć AI | ~~A~~ → **brak zmian** | ✅ ZAMKNIĘTE | premisa błędna: metody są żywe (feedback-learning czatu); patrz korekta |
+| 3 | M25 billing | **A** — wpiąć | ✅ WYKONANE | `87ac0824b5` — sekcja + sidebar + sectionMeta |
+| 4 | M26 self-connect | **A** — zamknięty + doc flagi | ✅ WYKONANE | `b7b2e47e44` — 3× .env.example |
+| 5 | M08 dual-stack | **A** — zostawić za flagą | ✅ DECYZJA (no-op) | re-decyzja po FAZIE C z żywym tp_* |
+| 6 | M20 governed sync | **B** — neutralizować przycisk | ✅ WYKONANE | `b074760074` — „Coming soon", mapowanie zostaje |
+| 7 | M07 V8 mirror | **B** — dual-write forward | ⏳ w realizacji | — |
+| 8 | M21 Meeting→MyWork | **A** — globalizować | ⤵ ODŁOŻONE na FAZĘ C | 2–3 dni + żywa weryfikacja inboxu |
+| 9 | M05 eksport | ~~B~~ → **brak zmian** | ✅ ZAMKNIĘTE | premisa błędna: eksport działa client-side; patrz korekta |
+
+**Wynik:** 5 decyzji wykonanych kodem (#1/#3/#4/#6 + #7), 2 zamknięte jako błędne premisy bez ryzykownych cięć (#2/#9), 1 no-op (#5), 1 świadomie odłożona na żywą weryfikację (#8). Wszystkie realne kłamliwe elementy UI z listy (#1 dashboard, #6 sync) usunięte; #2/#9 NIE były kłamstwami (weryfikacja kodu).
