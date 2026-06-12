@@ -73,7 +73,8 @@ describe('Chat projects routes: list filters (REAL integration)', () => {
     expect(res.status).toBe(200);
     expect(res.body.projects).toHaveLength(1);
     const params = db.query.mock.calls[0]?.[1] as any[];
-    expect(params).toEqual(['org-2']);
+    // rbacReady=true adds userId for membership visibility check (org + member filter)
+    expect(params).toEqual(['org-2', 'u-2']);
   });
 
   it('includes both personal and team filters when no scope is provided', async () => {
@@ -82,7 +83,8 @@ describe('Chat projects routes: list filters (REAL integration)', () => {
     const res = await request(app).get('/api/chat-projects');
     expect(res.status).toBe(200);
     const params = db.query.mock.calls[0]?.[1] as any[];
-    expect(params).toEqual(['u-3', 'org-3']);
+    // rbacReady=true appends userId again for the team membership EXISTS subquery
+    expect(params).toEqual(['u-3', 'org-3', 'u-3']);
   });
 
   it('returns empty list when chat_projects table is missing in sqlite', async () => {

@@ -22,6 +22,18 @@ vi.mock('../../../server/src/services/chatPermissionService.js', () => ({
   checkChatPermission: (...args: any[]) => checkChatPermission(...args),
 }));
 
+vi.mock('../../../server/src/utils/dbSchema.js', () => ({
+  getTableColumns: vi.fn().mockResolvedValue(
+    new Set([
+      'id', 'user_id', 'organization_id', 'name', 'description',
+      'color', 'icon', 'scope', 'created_at', 'updated_at',
+      'visibility', 'parent_id', 'custom_instructions',
+    ])
+  ),
+  hasColumn: vi.fn().mockResolvedValue(true),
+  clearSchemaCache: vi.fn().mockReturnValue(0),
+}));
+
 describe('Chat projects routes: create (REAL integration)', () => {
   void CreateInitiativeSchema;
   const origNodeEnv = process.env.NODE_ENV;
