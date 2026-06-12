@@ -7,9 +7,17 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { SettingsTaxonomyPanel } from '../../../src/components/settings/SettingsTaxonomyPanel';
 
+const TAXONOMY_COPY: Record<string, string> = {
+  'settings.taxonomy.title': 'One settings root with clear ownership',
+  'settings.taxonomy.scopes.personal.title': 'Personal settings',
+  'settings.taxonomy.scopes.tenant.title': 'Tenant handoff',
+  'settings.taxonomy.impactTitle': 'Runtime-impact controls',
+};
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    i18n: { language: 'en' },
+    t: (key: string, fallback?: string) => TAXONOMY_COPY[key] ?? fallback ?? key,
+    i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
 }));
 

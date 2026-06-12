@@ -24,7 +24,12 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || _key,
+    t: (_key: string, fallback?: string | { defaultValue?: string }) => {
+      if (typeof fallback === 'string') return fallback || _key;
+      if (fallback && typeof fallback === 'object') return fallback.defaultValue ?? _key;
+      return _key;
+    },
+    i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
 }));
 

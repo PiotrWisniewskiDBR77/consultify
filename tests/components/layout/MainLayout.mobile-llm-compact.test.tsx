@@ -39,9 +39,10 @@ const conversationState = {
 };
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
   useTranslation: () => ({
     t: (_key: string, fallback?: string) => fallback ?? _key,
-    i18n: { language: 'en' },
+    i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
 }));
 
@@ -50,7 +51,8 @@ vi.mock('../../../src/hooks/useDeviceType', () => ({
 }));
 
 vi.mock('../../../src/store/useAppStore', () => ({
-  useAppStore: (selector: (state: typeof appState) => unknown) => selector(appState),
+  useAppStore: (selector?: (state: typeof appState) => unknown) =>
+    typeof selector === 'function' ? selector(appState) : appState,
 }));
 
 vi.mock('../../../src/store/useConversationStore', () => ({

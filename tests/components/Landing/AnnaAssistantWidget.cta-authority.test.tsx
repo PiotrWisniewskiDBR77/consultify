@@ -619,7 +619,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
         if (url.includes('/api/public/anna/voice-config')) {
           return Promise.resolve({
             ok: true,
-            json: async () => ({ apiKey: 'voice-test-key' }),
+            json: async () => ({ session: { clientToken: 'voice-test-key' }, enabled: true }),
           });
         }
 
@@ -740,7 +740,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
         if (url.includes('/api/public/anna/voice-config')) {
           return Promise.resolve({
             ok: true,
-            json: async () => ({ apiKey: 'voice-test-key' }),
+            json: async () => ({ session: { clientToken: 'voice-test-key' }, enabled: true }),
           });
         }
 
@@ -875,7 +875,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
       if (url.includes('/api/public/anna/voice-config')) {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ apiKey: 'voice-test-key', voiceName: 'Aoede' }),
+          json: async () => ({ session: { clientToken: 'voice-test-key' }, voiceName: 'Aoede', enabled: true }),
         });
       }
 
@@ -1045,7 +1045,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
       if (url.includes('/api/public/anna/voice-config')) {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ apiKey: 'voice-test-key' }),
+          json: async () => ({ session: { clientToken: 'voice-test-key' }, enabled: true }),
         });
       }
 
@@ -1154,7 +1154,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
         if (url.includes('/api/public/anna/voice-config')) {
           return Promise.resolve({
             ok: true,
-            json: async () => ({ apiKey: 'voice-test-key', voiceName: 'Aoede', enabled: false }),
+            json: async () => ({ session: { clientToken: 'voice-test-key' }, voiceName: 'Aoede', enabled: false }),
           });
         }
 
@@ -1241,7 +1241,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
       if (url.includes('/api/public/anna/voice-config')) {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ apiKey: 'voice-test-key' }),
+          json: async () => ({ session: { clientToken: 'voice-test-key' }, enabled: true }),
         });
       }
 
@@ -1348,7 +1348,7 @@ describe('AnnaAssistantWidget CTA authority', () => {
       if (url.includes('/api/public/anna/voice-config')) {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ apiKey: 'voice-test-key' }),
+          json: async () => ({ session: { clientToken: 'voice-test-key' }, enabled: true }),
         });
       }
 

@@ -24,9 +24,24 @@ vi.mock('react-hot-toast', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || _key,
+    t: (_key: string, fallback?: string | { defaultValue?: string }) => {
+      if (typeof fallback === 'string') return fallback || _key;
+      if (fallback && typeof fallback === 'object') return fallback.defaultValue ?? _key;
+      return _key;
+    },
+    i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
 }));
+
+const DEMO_KEY = {
+  id: 'key-1',
+  name: 'Demo API key',
+  keyPrefix: 'sk_demo_12',
+  createdAt: '2026-04-25T08:00:00.000Z',
+  permissions: ['read'],
+};
+
+const keysResponse = (keys: any[]) => ({ data: { keys } });
 
 describe('APIAccessSettings persistence', () => {
   beforeEach(() => {
@@ -35,33 +50,25 @@ describe('APIAccessSettings persistence', () => {
       'confirm',
       vi.fn(() => true)
     );
-    (Api.get as any).mockResolvedValue({
-      data: {
-        keys: [
-          {
-            id: 'key-1',
-            name: 'Demo API key',
-            keyPrefix: 'sk_demo_12',
-            createdAt: '2026-04-25T08:00:00.000Z',
-            permissions: ['read'],
-          },
-        ],
-      },
-    });
+    (Api.get as any).mockResolvedValue(keysResponse([DEMO_KEY]));
   });
 
   it('loads keys from /api/settings/api-keys and creates a persisted key through the API', async () => {
-    (Api.post as any).mockResolvedValue({
-      data: {
-        key: {
-          id: 'key-2',
-          name: 'Production API',
-          key: 'sk_live_created_once',
-          keyPrefix: 'sk_live_cr',
-          createdAt: '2026-04-25T09:00:00.000Z',
-        },
-      },
-    });
+    const CREATED_KEY = {
+      id: 'key-2',
+      name: 'Production API',
+      key: 'sk_live_created_once',
+      keyPrefix: 'sk_live_cr',
+      createdAt: '2026-04-25T09:00:00.000Z',
+    };
+
+    // Initial load returns just the demo key; after creation the component
+    // re-fetches to confirm persistence, so the refreshed list includes key-2.
+    (Api.get as any)
+      .mockResolvedValueOnce(keysResponse([DEMO_KEY]))
+      .mockResolvedValue(keysResponse([DEMO_KEY, CREATED_KEY]));
+
+    (Api.post as any).mockResolvedValue({ data: { key: CREATED_KEY } });
 
     render(<APIAccessSettings />);
 
@@ -79,6 +86,12 @@ describe('APIAccessSettings persistence', () => {
   });
 
   it('deletes an existing key through /api/settings/api-keys/:id', async () => {
+    // Initial load returns the demo key; after deletion the component
+    // re-fetches to confirm removal, so the refreshed list is empty.
+    (Api.get as any)
+      .mockResolvedValueOnce(keysResponse([DEMO_KEY]))
+      .mockResolvedValue(keysResponse([]));
+
     (Api.delete as any).mockResolvedValue({ success: true });
 
     render(<APIAccessSettings />);
