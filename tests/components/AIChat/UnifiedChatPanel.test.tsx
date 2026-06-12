@@ -105,6 +105,7 @@ let conversationStoreState: any = {
   collapseToSplit: collapseToSplitMock,
   draftChatLanguage: null,
   chatLanguageByConversationId: {},
+  setConversationChatLanguage: vi.fn(),
 };
 
 const useConversationStoreMock: any = () => conversationStoreState;
@@ -117,12 +118,21 @@ vi.doMock('../../../src/store/useConversationStore', () => ({
 const addArtifactMock = vi.fn();
 const toggleArtifactsPanelMock = vi.fn();
 const exportArtifactMock = vi.fn();
+const artifactsStoreState: any = {
+  addArtifact: addArtifactMock,
+  togglePanel: toggleArtifactsPanelMock,
+  exportArtifact: exportArtifactMock,
+  conversationArtifacts: {},
+  activeArtifactId: null,
+  setActiveArtifact: vi.fn(),
+  registerConversationDeliverable: vi.fn(),
+  loadConversationArtifacts: vi.fn(),
+};
+const useArtifactsStoreMock: any = (selector?: any) =>
+  typeof selector === 'function' ? selector(artifactsStoreState) : artifactsStoreState;
+useArtifactsStoreMock.getState = () => artifactsStoreState;
 vi.doMock('../../../src/store/useArtifactsStore', () => ({
-  useArtifactsStore: () => ({
-    addArtifact: addArtifactMock,
-    togglePanel: toggleArtifactsPanelMock,
-    exportArtifact: exportArtifactMock,
-  }),
+  useArtifactsStore: useArtifactsStoreMock,
 }));
 
 let pendingActionsCountState = 0;
