@@ -123,6 +123,12 @@ export async function createBudgetEntry(
 
   // Update cached total on initiative
   await recalcInitiativeActualTotal(organizationId, data.initiativeId);
+
+  // M14→M15 feed-forward: surface budget health in Results (non-blocking)
+  if (data.entryType === 'ACTUAL') {
+    const { fireBudgetHealthExport } = await import('./executionResultsBridge.js');
+    fireBudgetHealthExport(organizationId, data.initiativeId);
+  }
   return id;
 }
 
@@ -180,6 +186,10 @@ export async function deleteBudgetEntry(
     organizationId,
   ]);
   await recalcInitiativeActualTotal(organizationId, initiativeId);
+
+  // M14→M15 feed-forward: budget composition changed (non-blocking)
+  const { fireBudgetHealthExport } = await import('./executionResultsBridge.js');
+  fireBudgetHealthExport(organizationId, initiativeId);
 }
 
 // ── Budget Summary (Initiative Level) ──────────────────────────

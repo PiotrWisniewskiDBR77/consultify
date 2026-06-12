@@ -19,6 +19,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import {
   shouldFallbackToLegacyExecutionControl,
@@ -92,6 +93,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
   onSaved,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [portfolio, setPortfolio] = useState<PortfolioBudgetSummary | null>(null);
   const [initSummary, setInitSummary] = useState<InitiativeBudgetSummary | null>(null);
   const [overspendSignals, setOverspendSignals] = useState<OverspendSignal[]>([]);
@@ -225,11 +227,22 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('execution.budget.title')}
           </h3>
-          <span
-            className={`px-2 py-0.5 text-xs font-medium rounded-full ${style.bg} ${style.text}`}
-          >
-            {t(`execution.budget.status.${initSummary.status.toLowerCase()}`)}
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(`/benefits?initiativeId=${encodeURIComponent(initiativeId)}`)}
+              className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-blue-500 hover:text-blue-400 transition-colors"
+              title={t('execution.budget.viewInResults', 'View in Results')}
+            >
+              {t('execution.budget.viewInResults', 'View in Results')}
+              <ArrowUpRight size={12} />
+            </button>
+            <span
+              className={`px-2 py-0.5 text-xs font-medium rounded-full ${style.bg} ${style.text}`}
+            >
+              {t(`execution.budget.status.${initSummary.status.toLowerCase()}`)}
+            </span>
+          </div>
         </div>
 
         {/* Summary Cards */}

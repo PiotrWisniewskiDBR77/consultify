@@ -3199,7 +3199,8 @@
         "green": "On Track",
         "amber": "Warning",
         "red": "Over Budget"
-      }
+      },
+      "viewInResults": "View in Results"
     }
   },
   "benefits": {

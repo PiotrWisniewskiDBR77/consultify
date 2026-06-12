@@ -2092,6 +2092,7 @@ export const KpiSignalTypeValues = [
   'data_quality',
   'reconciliation_needed',
   'freshness',
+  'budget_health',
 ] as const;
 export type KpiSignalType = (typeof KpiSignalTypeValues)[number];
 
