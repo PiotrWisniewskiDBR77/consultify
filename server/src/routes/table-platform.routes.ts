@@ -2803,9 +2803,24 @@ router.delete('/forms/:formId', async (req: Request, res: Response) => {
 
 router.get('/forms/:formId/submissions', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const { formId } = req.params;
     const { limit, offset } = req.query;
     if (!formId) return res.status(400).json({ error: 'formId is required' });
+    const db = (await import('../database/Database.js')).getDatabase();
+    const baseRow = await db.query(
+      `SELECT b.id as base_id FROM tp_forms f
+       JOIN tp_tables t ON t.id = f.table_id
+       JOIN tp_bases b ON b.id = t.base_id
+       WHERE f.id = $1`,
+      [formId]
+    );
+    if (baseRow.rows.length === 0) return res.status(404).json({ error: 'Form not found' });
+    const baseId = (baseRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const FormService = (await import('../services/tablePlatform/FormService.js')).default;
     const result = await FormService.getSubmissions(formId, {
       limit: limit ? parseInt(String(limit), 10) : undefined,
@@ -3412,12 +3427,17 @@ router.post('/kpis/:kpiId/compute', async (req: Request, res: Response) => {
 
 router.post('/governed-models/:modelId/publish-to-results', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const { modelId } = req.params;
     if (!modelId) return res.status(400).json({ error: 'modelId is required' });
     const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
       .default;
     const model = await GovernedModelService.getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, model.base_id as string);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const { kpiIds, fieldMapping } = req.body ?? {};
     if (!kpiIds || !Array.isArray(kpiIds))
       return res.status(400).json({ error: 'kpiIds array is required' });
@@ -3439,12 +3459,17 @@ router.post('/governed-models/:modelId/publish-to-results', async (req: Request,
 
 router.post('/governed-models/:modelId/sync-to-finance', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const { modelId } = req.params;
     if (!modelId) return res.status(400).json({ error: 'modelId is required' });
     const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
       .default;
     const model = await GovernedModelService.getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, model.base_id as string);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const { fieldMappings, fieldMapping, tableId } = req.body ?? {};
     const mapping = fieldMappings ?? fieldMapping;
     if (!mapping || typeof mapping !== 'object')
@@ -3468,12 +3493,17 @@ router.post('/governed-models/:modelId/sync-to-finance', async (req: Request, re
 
 router.post('/governed-models/:modelId/sync-to-execution', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const { modelId } = req.params;
     if (!modelId) return res.status(400).json({ error: 'modelId is required' });
     const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js'))
       .default;
     const model = await GovernedModelService.getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, model.base_id as string);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const { fieldMappings, fieldMapping, tableId } = req.body ?? {};
     const mapping = fieldMappings ?? fieldMapping;
     if (!mapping || typeof mapping !== 'object')
@@ -4391,8 +4421,22 @@ router.get('/admin/service-accounts', async (req: Request, res: Response) => {
 
 router.delete('/admin/service-accounts/:id', async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: 'id is required' });
+    const db = (await import('../database/Database.js')).getDatabase();
+    const row = await db.query(
+      'SELECT organization_id FROM tp_service_accounts WHERE id = $1',
+      [id]
+    );
+    if (
+      row.rows.length === 0 ||
+      String((row.rows[0] as any).organization_id) !== String(organizationId)
+    ) {
+      return res.status(404).json({ error: 'Service account not found' });
+    }
     await serviceAccountService.revokeServiceAccount(id);
     return res.status(204).send();
   } catch (err) {
@@ -4406,8 +4450,17 @@ router.delete('/admin/service-accounts/:id', async (req: Request, res: Response)
 
 router.post('/tables/:tableId/row-policies', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const { tableId } = req.params;
     if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const db = (await import('../database/Database.js')).getDatabase();
+    const tableRow = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+    if (tableRow.rows.length === 0) return res.status(404).json({ error: 'Table not found' });
+    const baseId = (tableRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const { name, role, conditionFieldId, conditionOperator, conditionValue, permission } =
       req.body ?? {};
     if (!name || typeof name !== 'string')
@@ -4433,8 +4486,17 @@ router.post('/tables/:tableId/row-policies', async (req: Request, res: Response)
 
 router.get('/tables/:tableId/row-policies', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const { tableId } = req.params;
     if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const db = (await import('../database/Database.js')).getDatabase();
+    const tableRow = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+    if (tableRow.rows.length === 0) return res.status(404).json({ error: 'Table not found' });
+    const baseId = (tableRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const RowPolicyService = (await import('../services/tablePlatform/RowPolicyService.js'))
       .default;
     const policies = await RowPolicyService.listPolicies(tableId);
@@ -4446,8 +4508,20 @@ router.get('/tables/:tableId/row-policies', async (req: Request, res: Response) 
 
 router.patch('/row-policies/:policyId', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const { policyId } = req.params;
     if (!policyId) return res.status(400).json({ error: 'policyId is required' });
+    const db = (await import('../database/Database.js')).getDatabase();
+    const policyRow = await db.query(
+      `SELECT t.base_id FROM tp_row_policies p JOIN tp_tables t ON t.id = p.table_id WHERE p.id = $1`,
+      [policyId]
+    );
+    if (policyRow.rows.length === 0) return res.status(404).json({ error: 'Policy not found' });
+    const baseId = (policyRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const updates = req.body ?? {};
     const RowPolicyService = (await import('../services/tablePlatform/RowPolicyService.js'))
       .default;
@@ -4463,8 +4537,20 @@ router.patch('/row-policies/:policyId', async (req: Request, res: Response) => {
 
 router.delete('/row-policies/:policyId', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const { policyId } = req.params;
     if (!policyId) return res.status(400).json({ error: 'policyId is required' });
+    const db = (await import('../database/Database.js')).getDatabase();
+    const policyRow = await db.query(
+      `SELECT t.base_id FROM tp_row_policies p JOIN tp_tables t ON t.id = p.table_id WHERE p.id = $1`,
+      [policyId]
+    );
+    if (policyRow.rows.length === 0) return res.status(404).json({ error: 'Policy not found' });
+    const baseId = (policyRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const RowPolicyService = (await import('../services/tablePlatform/RowPolicyService.js'))
       .default;
     const ok = await RowPolicyService.deletePolicy(policyId);
@@ -4801,8 +4887,16 @@ router.use('/scim/v2', scimRouter);
 
 router.get('/tables/:tableId/record-templates', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const db = (await import('../database/Database.js')).getDatabase();
     const { tableId } = req.params;
+    const tableRow = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+    if (tableRow.rows.length === 0) return res.status(404).json({ error: 'Table not found' });
+    const baseId = (tableRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const result = await db.query(
       `SELECT * FROM tp_records WHERE table_id = $1 AND (data->>'_is_template')::boolean = true ORDER BY created_at DESC`,
       [tableId]
@@ -4822,8 +4916,16 @@ router.get('/tables/:tableId/record-templates', async (req: Request, res: Respon
 
 router.post('/tables/:tableId/record-templates', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const db = (await import('../database/Database.js')).getDatabase();
     const { tableId } = req.params;
+    const tableRow = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+    if (tableRow.rows.length === 0) return res.status(404).json({ error: 'Table not found' });
+    const baseId = (tableRow.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const { name, data } = req.body;
     const templateData = { ...data, _is_template: true, _template_name: name };
     const result = await db.query(
@@ -4839,11 +4941,20 @@ router.post('/tables/:tableId/record-templates', async (req: Request, res: Respo
 
 router.patch('/record-templates/:templateId', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const db = (await import('../database/Database.js')).getDatabase();
     const { templateId } = req.params;
     const { name, data } = req.body;
-    const existing = await db.query('SELECT * FROM tp_records WHERE id = $1', [templateId]);
+    const existing = await db.query(
+      `SELECT r.*, t.base_id FROM tp_records r JOIN tp_tables t ON t.id = r.table_id WHERE r.id = $1`,
+      [templateId]
+    );
     if (existing.rows.length === 0) return res.status(404).json({ error: 'Template not found' });
+    const baseId = (existing.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     const oldData = (existing.rows[0] as any).data ?? {};
     const newData = {
       ...oldData,
