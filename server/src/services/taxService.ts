@@ -532,7 +532,10 @@ class TaxServiceClass {
     const cached = await this.getCachedValidation(cleanedNumber, countryCode);
     if (cached && new Date(cached.expires_at) > new Date()) {
       return {
-        is_valid: cached.is_valid === 1,
+        // is_valid is stored as 1/0 but the column is bigint on Postgres, which
+        // node-pg returns as a STRING ("1"/"0") — `=== 1` would always be false
+        // and a genuinely-valid cached VAT would read back as invalid. Coerce.
+        is_valid: Number(cached.is_valid) === 1,
         company_name: cached.company_name,
         company_address: cached.company_address,
         cached: true,

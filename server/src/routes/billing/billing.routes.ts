@@ -3511,7 +3511,10 @@ router.post(
       if (cached && String(cached.validation_source || '').toLowerCase() !== 'demo') {
         return res.json({
           validation: {
-            isValid: !!cached.is_valid,
+            // is_valid is bigint on Postgres → node-pg returns "1"/"0" as STRINGS;
+            // `!!"0"` is true, which would report an INVALID cached VAT as valid.
+            // Coerce numerically.
+            isValid: Number(cached.is_valid) === 1,
             companyName: cached.company_name,
             companyAddress: cached.company_address,
             validationSource: cached.validation_source,
