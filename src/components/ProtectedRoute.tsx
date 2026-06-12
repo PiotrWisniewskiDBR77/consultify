@@ -5,7 +5,11 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { normalizeAppRole } from '@/utils/roleGuards';
-import { dispatchBetaAccessBlocked, isBetaClosed } from '@/utils/betaAccess';
+import {
+  dispatchBetaAccessBlocked,
+  isBetaClosed,
+  isBetaLockedForRole,
+} from '@/utils/betaAccess';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -98,7 +102,13 @@ interface BetaGateProps {
  * On block: fires the access:blocked event (shows the modal) and redirects to chat.
  */
 export const BetaGate: React.FC<BetaGateProps> = ({ moduleId, children }) => {
-  const isLocked = isBetaClosed(moduleId);
+  const { currentUser } = useAppStore();
+  // Honor BETA_ADMINS_EXEMPT like the sidebar's lockClosedBetaModules: a closed
+  // beta only blocks the route when it is also locked for this role. While
+  // BETA_ADMINS_EXEMPT is false this is identical to before (locked for all);
+  // when flipped true, ADMIN/OWNER/SUPERADMIN keep route access too — matching
+  // the betaAccess.ts contract ("administrators always keep full access").
+  const isLocked = isBetaClosed(moduleId) && isBetaLockedForRole(currentUser?.role);
 
   React.useEffect(() => {
     if (isLocked) dispatchBetaAccessBlocked();
