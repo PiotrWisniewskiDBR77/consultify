@@ -1295,6 +1295,8 @@ router.post(
         periodStart,
         periodEnd,
         periodKey,
+        source: source || 'manual',
+        notes: notes || null,
       },
       meta: resultsWriteMeta(),
     });
