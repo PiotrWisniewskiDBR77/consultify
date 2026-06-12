@@ -40,8 +40,20 @@ import {
 
 const router = Router();
 
-// Apply auth middleware to all routes
+// Apply auth middleware to all routes — admin-data is admin/owner only
 router.use(verifyToken);
+router.use(requireRole('super_admin', 'admin', 'owner'));
+
+// Enforce org-scope on every route that takes :orgId — prevents cross-org reads
+router.param('orgId', (req: AuthRequest, res, next, orgId: string) => {
+  const callerRole = req.user?.role;
+  const callerOrgId = req.user?.organizationId;
+  if (callerRole !== 'super_admin' && callerOrgId !== orgId) {
+    res.status(403).json({ error: 'Access denied to this organization' });
+    return;
+  }
+  next();
+});
 
 // ==========================================
 // USER TIERS & COST ATTRIBUTION
@@ -57,12 +69,6 @@ router.get(
   validateQuery(UserTiersQuerySchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
-
-    const callerRole = req.user?.role;
-    const callerOrgId = req.user?.organizationId;
-    if (callerRole !== 'super_admin' && callerOrgId !== orgId) {
-      return res.status(403).json({ error: 'Access denied to this organization' });
-    }
 
     const users = await dbAll<{
       userId: string;
@@ -106,12 +112,6 @@ router.put(
     const { orgId, userId } = req.params;
     const { tier } = req.body;
 
-    const callerRole = req.user?.role;
-    const callerOrgId = req.user?.organizationId;
-    if (callerRole !== 'super_admin' && callerOrgId !== orgId) {
-      return res.status(403).json({ error: 'Access denied to this organization' });
-    }
-
     const runResult = await dbRun(
       `
             INSERT INTO ai_usage_stats (id, organization_id, user_id, tier, period_start, period_end)
@@ -138,12 +138,6 @@ router.get(
   validateParams(OrgIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { orgId } = req.params;
-
-    const callerRole = req.user?.role;
-    const callerOrgId = req.user?.organizationId;
-    if (callerRole !== 'super_admin' && callerOrgId !== orgId) {
-      return res.status(403).json({ error: 'Access denied to this organization' });
-    }
 
     const userCosts = await dbAll<{
       entityType: string;

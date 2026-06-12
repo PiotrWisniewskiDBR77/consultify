@@ -211,9 +211,11 @@ router.get(
       const userRole = req.user?.role;
       const userOrgId = req.user?.organizationId || req.user?.organization_id;
 
-      // Check if user has access to this org
-      if (userRole !== 'superadmin' && userRole !== 'SUPERADMIN' && userOrgId !== orgId) {
-        return res.status(403).json({ error: 'Access denied to this organization' });
+      const normalizedGetRole = String(userRole || '').trim().toLowerCase();
+      const isSuperAdmin = normalizedGetRole === 'superadmin' || normalizedGetRole === 'super_admin';
+      const isOrgAdmin = userOrgId === orgId && ['owner', 'admin', 'administrator'].includes(normalizedGetRole);
+      if (!isSuperAdmin && !isOrgAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
       }
 
       const settings = await AISettingsService.getOrgSettings(orgId);
