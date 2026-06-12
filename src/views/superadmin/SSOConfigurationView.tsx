@@ -481,7 +481,7 @@ export const SSOConfigurationView: React.FC = () => {
                         <Shield size={18} className="text-indigo-500" />
                       )}
                       <span className="text-slate-700 dark:text-slate-300 capitalize">
-                        {config.providerName || config.providerType.replace('_', ' ')}
+                        {config.providerName || (config.providerType ?? '').replace('_', ' ')}
                       </span>
                     </div>
                   </td>

@@ -50,9 +50,9 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
     } catch (e: any) {
       console.error('[SuperAdminFeedbackBacklogView] Failed to load backlog tasks', e);
       setTasks([]);
-      setError(e?.message || 'Feedback backlog is temporarily unavailable.');
+      setError('Feedback backlog is temporarily unavailable.');
       setErrorCode(e?.code || e?.errorCode || e?.response?.data?.code || null);
-      toast.error(e?.message || 'Failed to load feedback backlog');
+      toast.error('Failed to load feedback backlog');
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
       }
     } catch (e: any) {
       console.error('[SuperAdminFeedbackBacklogView] Failed to update backlog task', e);
-      toast.error(e?.message || 'Failed to update backlog task');
+      toast.error('Failed to update backlog task');
     } finally {
       setSavingId(null);
     }
