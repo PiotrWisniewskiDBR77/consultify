@@ -576,7 +576,7 @@ const BRANCH_COLORS: Record<
     ring: 'ring-primary-400',
     edge: '#6366f1',
   },
-  sharose_values: {
+  shared_values: {
     bg: 'bg-rose-100 dark:bg-rose-900/25',
     border: 'border-rose-400/70',
     text: 'text-rose-700 dark:text-rose-300',
@@ -2124,7 +2124,7 @@ function MindMapInner({
     [enrichedNodes]
   );
 
-  // ── Undo/Redo (sharose hook pattern) ──────────────────────────────────────
+  // ── Undo/Redo (shared hook pattern) ──────────────────────────────────────
   const undoStackRef = useRef<MapSnapshot[]>([]);
   const redoStackRef = useRef<MapSnapshot[]>([]);
   const MAX_UNDO = 50;

@@ -1,6 +1,6 @@
 /**
  * AIChatInlinePanel — Notebook workspace tools panel.
- * Composes sharose Workspace sections (AI, Transform, Share) with
+ * Composes shared Workspace sections (AI, Transform, Share) with
  * notebook-specific sections (Insert blocks, Create from note, Page, Compose).
  */
 import type { Editor } from '@tiptap/react';
@@ -446,7 +446,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
         </button>
       </div>
 
-      {/* ─── AI (sharose) ─── */}
+      {/* ─── AI (shared) ─── */}
       <AIQuickActions isPl={isPl} onFocusAICommand={onFocusAICommand} onOpenAIChat={onOpenAIChat} />
 
       {/* ─── Create from note (notebook-specific) ─── */}
@@ -494,10 +494,10 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
         </div>
       </div>
 
-      {/* ─── Transform (sharose) ─── */}
+      {/* ─── Transform (shared) ─── */}
       <TransformTextSection isPl={isPl} context={wsContext} />
 
-      {/* ─── Share (sharose) ─── */}
+      {/* ─── Share (shared) ─── */}
       <ShareSection isPl={isPl} context={wsContext} />
 
       {/* ─── Page metadata (notebook-specific) ─── */}
