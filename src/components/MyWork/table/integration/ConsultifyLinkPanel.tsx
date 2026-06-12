@@ -270,21 +270,29 @@ function ModuleLinkSection({
             </div>
           )}
 
-          {/* Sync button */}
+          {/* Sync button — decision #6 (Harvard): real sync to target modules is
+              not implemented (syncToModule only logs metadata to
+              tp_module_sync_results, no data lands in Results/Finance). The
+              button is disabled until the governed-sync release (FAZA C) so it
+              cannot falsely report "sync completed". handleSync is retained for
+              the revival. */}
           <button
-            disabled={syncing || !selectedTableId || !modelId}
+            disabled
             onClick={handleSync}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+            title={
+              isPl
+                ? 'Synchronizacja danych do modułu docelowego będzie dostępna wkrótce'
+                : 'Data sync to the target module is coming soon'
+            }
+            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-200 dark:bg-navy-800 text-slate-500 dark:text-slate-400 cursor-not-allowed transition-colors"
           >
-            {syncing && <Loader2 size={12} className="animate-spin" />}
-            {moduleKey === 'results'
-              ? isPl
-                ? 'Publikuj do Wyników'
-                : 'Publish to Results'
-              : isPl
-                ? `Synchronizuj z ${moduleLabels[moduleKey].pl}`
-                : `Sync to ${moduleLabels[moduleKey].en}`}
+            {isPl ? 'Wkrótce' : 'Coming soon'}
           </button>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
+            {isPl
+              ? 'Mapowanie pól możesz przygotować już teraz — przesył danych włączymy w kolejnym wydaniu.'
+              : 'You can prepare the field mapping now — data transfer ships in an upcoming release.'}
+          </p>
         </div>
       )}
     </div>
