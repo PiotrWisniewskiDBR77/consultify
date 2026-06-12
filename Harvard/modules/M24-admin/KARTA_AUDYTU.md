@@ -4,14 +4,15 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M24 · inwentarz `Harvard/podzial/inventory/INV_G_*.md` (sekcja PANEL ADMINISTRATORA, poz.1-7) · poprzednia karta `docs/audit/2026-06-02/MODULE_17` (54/100) + plan 2026-06-07 · `[[project_admin_firmy_shell]]`
 **Evidence:** `Harvard/modules/M24-admin/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 57/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 58/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
 > **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (admin-data router-level requireRole + param :orgId org-scope + ai-settings admin/owner-only, commity `1f9ed50f05` + `fd8707c5b2`; /debug-memberships dropped; members POST/PATCH/DELETE requireRole added; hard cap zdjęty).
+> **Fala 6 (2026-06-12):** C: 8→9 — drift testy naprawione (`8f3992ccf2`): `effectiveAccessService.test.ts` (usunięte nieeksportowane symbole, capability `initiative.submit` zamiast `create`, `initiative.unblock` zamiast `complete` w sponsor); `roles.routes.test.ts` (`name` zamiast `label`, dedup capabilities w POST). 44 PASS / 0 FAIL.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 22 | 5/5 paneli REALNE (Team&Access, Billing 7 endp., AI Controls 9/9 pod-zakładek, Security 6/6, Audit+CSV); 2 pozycje martwy kod; karta-checkout fasada (honest, flag-gated). |
 | B. Wiring i dane | 15 | 13 | Wszystkie panele na realnych backendach + tabelach; org-scope rdzenia (adminP32) szczelny. |
-| C. Testy automatyczne | 15 | 8 | 40 PASS/4 FAIL (stale/drift); RBAC anti-escalation dobrze testowany, ale **org-scope (cross-org) nietestowany nigdzie**, E2E fałszywa zieleń. |
+| C. Testy automatyczne | 15 | 9 | 44 PASS/0 FAIL (drift naprawiony `8f3992ccf2`); RBAC anti-escalation dobrze testowany, ale **org-scope (cross-org) NIE testowany nigdzie**, E2E fałszywa zieleń. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | i18n 0× `isPolish` (dobrze) + shell spójny, ale §27 NIE użyty na 4 tabelach admina (surowe `<table>`); security/audit hardkod EN. |
 | F. Bezpieczeństwo/dostęp | 10 | 8 | W2 admin-data org-scope + ai-settings admin-only naprawiony (commity `1f9ed50f05` + `fd8707c5b2`); adminP32 WZORCOWY; W7 beta-lock 3-warstwowy; pozostałe: §27 tabele P2. |
@@ -76,8 +77,8 @@
 
 ## 2. Testy automatyczne (FAZA 2)
 > Raport: `evidence/f2_tests_report.md` · log: `f2_tests.log`.
-**Uruchomienie (lokalnie @ `7808e4717f`):** **40 PASS / 4 FAIL / 0 SKIP.**
-**Root-cause 4 FAIL (stale/drift, nie regresja):** 3× `effectiveAccessService.test.ts` (test importuje symbole już nieeksportowane: `WORKFLOW_CAPABILITIES`, `mapLegacyPermissionObjectToCapabilities`, `FACTORY_ROLE_TEMPLATES`; capability `initiative.create`→`submit`); 1× `roles.routes.test.ts` (handler wymaga `name`, test wysyła `label` → 400).
+**Uruchomienie (lokalnie @ `8f3992ccf2`):** **44 PASS / 0 FAIL / 0 SKIP.**
+**Root-cause 4 FAIL (stale/drift) — NAPRAWIONE `8f3992ccf2`:** 3× `effectiveAccessService.test.ts` (usunięte nieeksportowane symbole: `WORKFLOW_CAPABILITIES`, `mapLegacyPermissionObjectToCapabilities`, `LEGACY_PERMISSION_CAPABILITY_MAP`; capability `initiative.create`→`initiative.submit`, `initiative.promote`/`complete`→`initiative.promote`/`unblock` w sponsor; dodano `MANAGE_STAGE_GATES→initiative.approve` do serwisu); 1× `roles.routes.test.ts` (`label`→`name` + dedup capabilities w POST handlerzę).
 **RBAC: testowany (najmocniejsza część)** — `OrganizationController.membership.test.ts` weryfikuje anty-eskalację ADMIN→OWNER, last-owner, anty-self-lockout, odmowę non-admin, audyt. **Org-scope (cross-org): NIE testowany NIGDZIE** — krytyczna luka (zgodna z odkrytymi dziurami bocznych routerów).
 **Pokrycie scenariuszy:**
 | Scenariusz | FE | BE | E2E | PR-gate | Luka |
@@ -89,7 +90,7 @@
 | S5 Audit+CSV | ✗ | emisja; odczyt/export=0 | fake | ✗ | export |
 | S6/S7 transfer/invite | ✗ | częśc. | ✗ | ✗ | — |
 **CI:** `test-suite.yml` tylko `[main,develop]`; default `Londyn` → PR-gate ≈ 0; E2E admin smoke-only (fałszywa zieleń: goto+url-truthy, bez logowania/asercji).
-**Backlog testowy:** [P0] B1 testy cross-org IDOR (admin org A→org B = 403/404) members/billing/audit/**admin-data/ai-settings**; [P0] B2 privilege-escalation (brak SUPERADMIN przez updateMemberRole); [P1] B3/B4 stale testy, B5 billing 7 endp.+Stripe OFF, B6 audit+CSV; [P2] B7-B11 SCIM/panele/transfer/invite/realne E2E RBAC.
+**Backlog testowy:** [P0] B1 testy cross-org IDOR (admin org A→org B = 403/404) members/billing/audit/**admin-data/ai-settings**; [P0] B2 privilege-escalation (brak SUPERADMIN przez updateMemberRole); ~~[P1] B3/B4 stale testy~~ **DONE `8f3992ccf2`**; B5 billing 7 endp.+Stripe OFF, B6 audit+CSV; [P2] B7-B11 SCIM/panele/transfer/invite/realne E2E RBAC.
 
 ## 3. Środowiska / Railway (FAZA 3)
 **Status: NIEWYKONANE (PENDING).** **Test bezpieczeństwa na żywo (KRYTYCZNY):** curl `GET /api/admin-data/user-tiers/<obca-org>` na koncie zwykłego usera → czy zwraca e-maile obcej org (P0 read); `PUT` tier + `ai-settings PUT /org/<obca>` jako owner innej org (P0 write — read-only/ostrożnie!). Smoke: members CRUD, billing, audit CSV. **Uwaga DB:** dev `.env` może wskazywać Railway PROD.

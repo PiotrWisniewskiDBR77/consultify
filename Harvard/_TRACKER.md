@@ -29,7 +29,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M09 | Ideas — Whiteboard | 3 (Ideas) | 🟦 | **49** ↑6 | Alpha | 2026-06-11 | `modules/M09-ideas-whiteboard/KARTA_AUDYTU.md` |
 | M22 | AI OS / Internal Tools | 4 (internal) | 🟦 | **54** ↑3 | Alpha | 2026-06-11 | `modules/M22-ai-os/KARTA_AUDYTU.md` |
 | M23 | Organizacja | 4 (internal) | 🟦 | **52** ↑8 | Alpha | 2026-06-11 | `modules/M23-organizacja/KARTA_AUDYTU.md` |
-| M24 | Panel Administratora | 4 (internal) | 🟦 | **57** ↑7 | Alpha górny | 2026-06-11 | `modules/M24-admin/KARTA_AUDYTU.md` |
+| M24 | Panel Administratora | 4 (internal) | 🟦 | **58** ↑8 | Alpha górny | 2026-06-12 | `modules/M24-admin/KARTA_AUDYTU.md` |
 | M27 | SuperAdmin | 4 (internal) | 🟦 | **58** ↑8 | Alpha górny | 2026-06-11 | `modules/M27-superadmin/KARTA_AUDYTU.md` |
 | M26 | Portal Partnerski | 4 (internal) | 🟦 | **53** ↑1 | Alpha | 2026-06-11 | `modules/M26-portal-partnerski/KARTA_AUDYTU.md` |
 | A1 | Ecosystem/Affiliate | 4 (decyzja) | 🟦 | 13 | Broken | 2026-06-11 | `modules/A1-affiliate/KARTA_AUDYTU.md` (świadomy STUB) |
@@ -39,6 +39,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 \* Fala 2/3 (2026-06-11/12): korekty kart za pominięte naprawy Sprint 5 — M01(59), M03(54), M04(52), M05(60), M06(60), M07(55), M08(54), M09(49), M12(49), M13(53), M14(52), M16(58), M17(54), M19(56+role gate), M20(48), M21(55), M25(54), M26(53), M27(58); korekty atrybucji M23/M24; średnia 27 modułów (bez A1) ~53.
 \* Fala 4 (2026-06-12): naprawy kodu P0 — M10(59→60, dead import usunięty `ea77dc678c`), M13(53→54, CRUD 5/5 PASS `ea77dc678c`); react-i18next mock-drift naprawiony; `InitiativesHub` error UI uzupełniony; średnia ~54.
 \* Fala 5 (2026-06-12): M01(59→60) — UnifiedChatPanel test mock-drift: `useArtifactsStore` selector-aware + `setConversationChatLanguage` stub; 29/29 PASS (`e0b368b218`); C: 8→9; średnia ~54. M02(58→59) — `regenerateSlide` STUB naprawiony: real narrative engine + contextPack snapshot + route + CardCanvas hover menu (`36a6f240ff`); A: 22→23. M12(49→55) — korekta: 17 testów PASS w `audit-programs.test.ts` (commit `7df4b22d6d`, dodane razem z P1 SEC-3 fix); C: 2→8; średnia ~55.
+\* Fala 6 (2026-06-12): M24(57→58) — drift testy naprawione (`8f3992ccf2`): `effectiveAccessService.test.ts` (nieeksportowane symbole, `initiative.submit`/`unblock`); `roles.routes.test.ts` (`name` zamiast `label`, dedup POST); serwis: `MANAGE_STAGE_GATES→initiative.approve` dodane; 44 PASS / 0 FAIL; C: 8→9; średnia ~55.
 
 ## Reguły aktualizacji
 - Po każdym audycie: wpis statusu+oceny+linku TUTAJ, w karcie pełna rubryka.
