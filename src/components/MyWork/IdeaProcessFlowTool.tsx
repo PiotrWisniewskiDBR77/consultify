@@ -122,6 +122,7 @@ import { ProcessFlowToolbar } from './processflow/ProcessFlowToolbar';
 import { ReadbackPanel } from './processflow/ReadbackPanel';
 import { useProcessFlowAIProposal } from './processflow/useProcessFlowAIProposal';
 import { useProcessFlowCRUD } from './processflow/useProcessFlowCRUD';
+import { useV8 } from '@/providers/V8Provider';
 import { useProcessFlowDegraded } from './processflow/useProcessFlowDegraded';
 import { useProcessFlowExport } from './processflow/useProcessFlowExport';
 import { useProcessFlowNodes } from './processflow/useProcessFlowNodes';
@@ -584,10 +585,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     checkHealth,
   } = useProcessFlowDegraded({ processId });
 
-  // Structural V8 CRUD — persists semantic nodes/edges to the dedicated
-  // v8_process_flow_* tables alongside the shared map-sync blob. Fire-and-forget;
-  // never blocks the canvas. Enabled (was dead code before WS-02 unification).
-  const pfCrud = useProcessFlowCRUD({ processId, enabled: !locked });
+  const { isV8Enabled } = useV8();
+  // Structural V8 CRUD — persists semantic nodes/edges alongside the blob.
+  // Only fires when V8 is globally enabled; otherwise silently disabled.
+  const pfCrud = useProcessFlowCRUD({ processId, enabled: !locked && isV8Enabled });
 
   // ── New UI state: panels, context menu, export dialog ─────────────────
   const [showValidationPanel, setShowValidationPanel] = useState(false);
