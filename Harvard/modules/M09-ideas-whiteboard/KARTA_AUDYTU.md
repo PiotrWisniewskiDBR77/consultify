@@ -4,13 +4,18 @@
 **Wejścia:** `MODULE_02E_whiteboard.md` (pełna analiza kodu 2026-06-11) · `INV_B_my-work.md` §Whiteboard · Protokół V1
 **Evidence:** plik:linia zgodnie z MODULE_02E — wszystkie pozycje zweryfikowane w kodzie
 
-## OCENA: 45/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 4)
+## OCENA: 49/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 4)
 > **Re-audit 2026-06-11 po Sprintach 1–5:** F: 4→6 (W1 facilitation 5 endpointów org-scope + WS resource-auth naprawione, commit `b9f2dee9d2`; hard cap cross-org usunięty). Suma: 18+9+5+0+7+6+0=45.
+> **Re-audit 2026-06-11 Fala 2 — pominięte naprawy Sprint 5:**
+> - W10 PG datetime crash NAPRAWIONY (commit `1b67579d7a`): `cleanStalePresence:141` + `acquireEditLock:511`; B: 9→11.
+> - Presence TTL filter NAPRAWIONY (commit `0b81310448`): duchy-awatary usunięte; B: +1 (w powyższym).
+> - WS + facilitation P0 już naprawione przez W1 (b9f2dee9d2); A: 18→20 (P0 cross-org fixed).
+> Suma: 20+11+5+0+7+6+0=49.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 18 | Rdzeń single-player (11 typów node'ów, rysowanie, undo/redo, AI generate/accept/reject, sceny, eksport PNG/SVG/MD) — solidny i realny; facilitation API DB-backed (12 endpointów, realne tabele); ale multiplayer strukturalnie niemożliwy — `my_idea_maps` per-user, drugi uczestnik nie może załadować tej samej tablicy. |
-| B. Wiring i dane | 15 | 9 | Blob-sync (PUT/GET `/api/my-work/my-ideas/:id/map`) solidny z optimistic-lock; facilitation: migracje w baseline prod; ale PG `datetime()` concat crashuje na prodzie (`realtimePlatformService.ts:141,511`); per-user document kills multiplayer; presenza bez TTL → duchy. |
+| A. Realność funkcji | 25 | 20 | Rdzeń single-player + facilitation API DB-backed REALNE; P0 WS resource-auth + cross-org facilitation NAPRAWIONE (W1+W10); multiplayer strukturalnie niemożliwy — `my_idea_maps` per-user pozostaje. |
+| B. Wiring i dane | 15 | 11 | Blob-sync solidny; facilitation: migracje w baseline prod; PG `datetime()` crash NAPRAWIONY (W10, commit `1b67579d7a`); TTL-filter presence NAPRAWIONY (0b81310448); per-user document kills multiplayer. |
 | C. Testy automatyczne | 15 | 5 | 73 testów PASS: `p13-whiteboard-canon.test.ts` (57, testuje spec-stałe nie runtime), `facilitation.contracts.test.ts` (8, serwis zmockowany), `ideaMapSyncPersistence.smoke.test.ts` (8); zero testów komponentu whiteboardu, zero testów WS gateway, zero integracyjnych na realnej DB. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana — deferred. |
 | E. Kanony/UI | 10 | 7 | i18n 149 kluczy `myWork.whiteboard.*` PL/EN kompletne (0 braków); beta-gating SSOT; §27 nie dotyczy canvas; UX bogaty (skróty, sceny, align/distribute, frames, slash-menu). |
@@ -55,14 +60,11 @@
 **[P0-strukturalne] Per-user document blokuje multiplayer:**
 `my_idea_maps`: `WHERE idea_id AND user_id AND organization_id` (`my-work.routes.ts:3677,3656-3660`) — cudzy pomysł → 404. Facilitation celuje w tablicę, której drugi użytkownik nie może załadować. Multiplayer niemożliwy niezależnie od jakości API facilitation.
 
-**[P0] WS bez resource-auth:**
-`/ws/collab/:ideaId` (`ideaCollabWs.gateway.ts:201-239`) — weryfikacja JWT przy upgrade, brak sprawdzenia DB czy `organizationId` pasuje do właściciela idei → kursory/locki/graph_patch dostępne dla obcej org znającej ideaId.
+~~**[P0] WS bez resource-auth**~~ NAPRAWIONE (W1, commit `b9f2dee9d2`): `ideaCollabWs.gateway.ts:235-252` weryfikuje `WHERE id=? AND organization_id=?`.
 
-**[P0] Cross-org facilitation writes:**
-`facilitationGetVotes` (`:686`), `facilitationGetVoteSummary` (`:696`), `facilitationGetRoles` (`:750`), `facilitationGetOutcomes` (`:807`), `PUT outcomes/export` (`:816-849`) — brak sprawdzenia org → cross-org odczyt i zapis po zgadniętym sessionId.
+~~**[P0] Cross-org facilitation writes**~~ NAPRAWIONE (W1, commit `b9f2dee9d2`): wszystkie 5 GET/PUT endpointów facilitation wywołują `getFacilitationSession(id.orgId, ...)` przed dostępem.
 
-**[P1] Postgres datetime crash:**
-`cleanStalePresence` (`realtimePlatformService.ts:141`): `datetime('now','-'||$1||' minutes')` i `acquireEditLock` (`:511`): `CURRENT_TIMESTAMP - ($1 || ' seconds')::INTERVAL` — nie tłumaczone przez `PostgresDatabase.ts:385-407` → crashują na prodzie. `listToolPresence` bez TTL-filtru → duchy-awatary permanentne.
+~~**[P1] Postgres datetime crash**~~ NAPRAWIONE (W10, commit `1b67579d7a`): `cleanStalePresence:141` i `acquireEditLock:511` używają `NOW() ± ($N * INTERVAL '1 minute')`; TTL-filter presence NAPRAWIONY (commit `0b81310448`).
 
 **[P1] Whiteboard nie ma realtime syncu treści:**
 `graph_patch` z WS konsumowany wyłącznie przez mind-mapę (`IdeaRecommendationMap.tsx:2811`); whiteboard nie nadaje i nie odbiera patchy.
