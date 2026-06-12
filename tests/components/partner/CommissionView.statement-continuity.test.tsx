@@ -5,16 +5,33 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('react-hot-toast', () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string) => fallback || _key,
+    i18n: { language: 'en' },
+  }),
+}));
+
 vi.mock('@/services/api', () => ({
   Api: {
     get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
 vi.mock('@/services/api/v8', () => ({
   V8PartnerApi: {
-    getPayouts: vi.fn(),
     getCommissionTransactions: vi.fn(),
+    getEarningsSummary: vi.fn(),
+    getProgramStatus: vi.fn(),
+    getPayouts: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
     const status = Number(error?.status);
@@ -22,97 +39,109 @@ vi.mock('@/services/api/v8', () => ({
   },
 }));
 
-const setCurrentView = vi.fn();
-
-vi.mock('@/store/useAppStore', () => ({
-  useAppStore: () => ({
-    setCurrentView,
-  }),
-}));
-
+import { EarningsSection } from '@/views/partner/sections/EarningsSection';
 import { Api } from '@/services/api';
 import { V8PartnerApi } from '@/services/api/v8';
-import { CommissionView } from '@/views/partner/CommissionView';
 
-describe('CommissionView statement continuity seam', () => {
+// The standalone CommissionView was consolidated into the EarningsSection
+// statements surface during partner production-hardening (commit 8404b892f6).
+// The commission-statement continuity seam — prefer governed V8 reads, fall back
+// to legacy partner reads on bounded compatibility statuses — now lives in
+// EarningsSection. This test pins that surviving statement-continuity contract.
+describe('Commission statement continuity seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8PartnerApi.getEarningsSummary).mockResolvedValue({
+      earnings: {
+        totalEarned: 1200,
+        totalPending: 200,
+        totalApproved: 700,
+        totalPaid: 500,
+        thisMonth: 120,
+        thisMonthCount: 2,
+        lastMonth: 90,
+        readyForPayout: 150,
+        currency: 'EUR',
+      },
+    } as any);
+    vi.mocked(V8PartnerApi.getProgramStatus).mockResolvedValue(null as any);
+    vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({ payouts: [] } as any);
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/partners/earnings') {
+        return { success: true, data: { currency: 'EUR' } } as any;
+      }
+      if (url === '/api/partners/payouts') {
+        return { success: true, data: [] } as any;
+      }
       throw new Error(`Unexpected GET ${url}`);
     });
   });
 
-  it('prefers governed payout and commission seams for statement history', async () => {
-    vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({
-      payouts: [
+  it('prefers the governed commission statement seam for statement history', async () => {
+    vi.mocked(V8PartnerApi.getCommissionTransactions).mockResolvedValue({
+      transactions: [
         {
-          id: 'payout-1',
-          status: 'COMPLETED',
-          netAmount: 1200,
-          periodStart: '2026-01-01',
-          periodEnd: '2026-01-31',
-          completedAt: '2026-02-15T00:00:00.000Z',
+          id: 'tx-v8-1',
+          organizationName: 'ACME GmbH',
+          transactionType: 'RECURRING',
+          transactionDate: '2026-01-31',
+          grossAmount: 1000,
+          commissionRate: 15,
+          commissionAmount: 150,
+          currency: 'EUR',
+          status: 'PAID',
         },
       ],
     } as any);
-    vi.mocked(V8PartnerApi.getCommissionTransactions).mockResolvedValue({
-      transactions: [],
-    } as any);
 
-    render(<CommissionView />);
+    render(<EarningsSection subsection="statements" />);
 
     await waitFor(() => {
-      expect(screen.getByText('2026-01-01 - 2026-01-31')).toBeInTheDocument();
+      expect(screen.getByText('ACME GmbH')).toBeInTheDocument();
     });
 
-    expect(V8PartnerApi.getPayouts).toHaveBeenCalled();
     expect(V8PartnerApi.getCommissionTransactions).toHaveBeenCalled();
-    expect(Api.get).not.toHaveBeenCalledWith('/api/partners/payouts');
     expect(Api.get).not.toHaveBeenCalledWith('/api/partners/commission-transactions');
-    expect(screen.getAllByText(/\$1,?200/).length).toBeGreaterThan(0);
-    expect(screen.getByText('Commission Runtime Summary')).toBeInTheDocument();
-    expect(screen.getByText('Deal intelligence unavailable on governed runtime')).toBeInTheDocument();
-    expect(screen.getByText('Commission inquiry routing unavailable')).toBeInTheDocument();
-    expect(screen.queryByText('Submit Inquiry')).not.toBeInTheDocument();
+    expect(screen.getByText('2026-01-31')).toBeInTheDocument();
   });
 
-  it('falls back to legacy partner statement reads on bounded compatibility statuses', async () => {
-    vi.mocked(V8PartnerApi.getPayouts).mockRejectedValue({ status: 404 });
+  it('falls back to legacy commission statement reads on bounded compatibility statuses', async () => {
     vi.mocked(V8PartnerApi.getCommissionTransactions).mockRejectedValue({ status: 404 });
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/partners/earnings') {
+        return { success: true, data: { currency: 'EUR' } } as any;
+      }
       if (url === '/api/partners/payouts') {
+        return { success: true, data: [] } as any;
+      }
+      if (url === '/api/partners/commission-transactions') {
         return {
           success: true,
           data: [
             {
-              id: 'payout-legacy-1',
-              status: 'COMPLETED',
-              netAmount: 980,
-              periodStart: '2026-02-01',
-              periodEnd: '2026-02-28',
-              completedAt: '2026-03-15T00:00:00.000Z',
+              id: 'tx-legacy-1',
+              organizationName: 'Legacy Org Sp. z o.o.',
+              transactionType: 'NEW',
+              transactionDate: '2026-02-28',
+              grossAmount: 800,
+              commissionRate: 12,
+              commissionAmount: 96,
+              currency: 'EUR',
+              status: 'APPROVED',
             },
           ],
         } as any;
       }
-
-      if (url === '/api/partners/commission-transactions') {
-        return {
-          success: true,
-          data: [],
-        } as any;
-      }
-
       throw new Error(`Unexpected GET ${url}`);
     });
 
-    render(<CommissionView />);
+    render(<EarningsSection subsection="statements" />);
 
     await waitFor(() => {
-      expect(screen.getByText('2026-02-01 - 2026-02-28')).toBeInTheDocument();
+      expect(screen.getByText('Legacy Org Sp. z o.o.')).toBeInTheDocument();
     });
 
-    expect(Api.get).toHaveBeenCalledWith('/api/partners/payouts');
     expect(Api.get).toHaveBeenCalledWith('/api/partners/commission-transactions');
+    expect(screen.getByText('2026-02-28')).toBeInTheDocument();
   });
 });

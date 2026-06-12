@@ -1,24 +1,23 @@
 /**
  * @vitest-environment jsdom
  */
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { ResourcesView } from '../../../src/views/partner/ResourcesView';
+import { ROUTES } from '../../../src/routes/routeConfig';
+import { getLegacyPartnerSection } from '../../../src/views/partner/partnerLegacyRoutes';
 
-const navigateMock = vi.fn();
+// The standalone ResourcesView surface was consolidated into PartnerPortalView
+// during partner production-hardening (commit 8404b892f6). The deprecated
+// /partner/resources route no longer renders its own view; PartnerPortalView now
+// resolves the legacy path to its canonical `documentation` section via
+// getLegacyPartnerSection. This test pins that surviving
+// deprecated-path -> tab contract.
+describe('Partner resources redirect contract', () => {
+  it('resolves the deprecated resources route to the canonical documentation section', () => {
+    expect(getLegacyPartnerSection(ROUTES.PARTNER.RESOURCES)).toBe('documentation');
+  });
 
-vi.mock('react-router-dom', () => ({
-  Navigate: ({ to }: { to: string }) => <div data-testid="navigate-target">{to}</div>,
-  useNavigate: () => navigateMock,
-}));
-
-describe('ResourcesView redirect shim', () => {
-  it('renders the deprecated resources surface with a route to canonical partner documentation', () => {
-    render(<ResourcesView />);
-
-    screen.getByRole('button', { name: /Open portal resources/i }).click();
-    expect(navigateMock).toHaveBeenCalledWith('/partner?tab=documentation');
+  it('tolerates a trailing slash on the deprecated resources route', () => {
+    expect(getLegacyPartnerSection(`${ROUTES.PARTNER.RESOURCES}/`)).toBe('documentation');
   });
 });

@@ -271,10 +271,10 @@ describe('EarningsSection V8 payout request seam', () => {
     render(<EarningsSection subsection="earnings" />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Request Payout' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Zażądaj wypłaty' })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Request Payout' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zażądaj wypłaty' }));
 
     await waitFor(() => {
       expect(V8PartnerApi.requestPayout).toHaveBeenCalledWith({ amount: 150 });
@@ -296,10 +296,10 @@ describe('EarningsSection V8 payout request seam', () => {
     render(<EarningsSection subsection="earnings" />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Request Payout' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Zażądaj wypłaty' })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Request Payout' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zażądaj wypłaty' }));
 
     await waitFor(() => {
       expect(V8PartnerApi.requestPayout).toHaveBeenCalledWith({ amount: 150 });

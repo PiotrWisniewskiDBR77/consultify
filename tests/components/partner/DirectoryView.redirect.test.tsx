@@ -1,20 +1,23 @@
 /**
  * @vitest-environment jsdom
  */
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { DirectoryView } from '../../../src/views/partner/DirectoryView';
+import { ROUTES } from '../../../src/routes/routeConfig';
+import { getLegacyPartnerSection } from '../../../src/views/partner/partnerLegacyRoutes';
 
-vi.mock('react-router-dom', () => ({
-  Navigate: ({ to }: { to: string }) => <div data-testid="navigate-target">{to}</div>,
-}));
+// The standalone DirectoryView redirect shim was consolidated into
+// PartnerPortalView during partner production-hardening (commit 8404b892f6).
+// The deprecated /partner/directory surface no longer renders its own <Navigate>
+// shim; PartnerPortalView now resolves the legacy path to its canonical
+// `public-listing` section via getLegacyPartnerSection. This test pins that
+// surviving deprecated-path -> tab contract.
+describe('Partner directory redirect contract', () => {
+  it('resolves the deprecated directory route to the canonical public-listing section', () => {
+    expect(getLegacyPartnerSection(ROUTES.PARTNER.DIRECTORY)).toBe('public-listing');
+  });
 
-describe('DirectoryView redirect shim', () => {
-  it('redirects the deprecated directory surface to the canonical partner listing tab', () => {
-    render(<DirectoryView />);
-
-    expect(screen.getByTestId('navigate-target')).toHaveTextContent('/partner?tab=public-listing');
+  it('tolerates a trailing slash on the deprecated directory route', () => {
+    expect(getLegacyPartnerSection(`${ROUTES.PARTNER.DIRECTORY}/`)).toBe('public-listing');
   });
 });

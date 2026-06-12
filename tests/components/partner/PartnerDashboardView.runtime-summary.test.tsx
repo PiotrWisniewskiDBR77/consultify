@@ -5,43 +5,86 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const setCurrentView = vi.fn();
-
-vi.mock('@/store/useAppStore', () => ({
-  useAppStore: () => ({
-    setCurrentView,
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string) => fallback || _key,
+    i18n: { language: 'en' },
   }),
 }));
 
-vi.mock('@/components/Partner/PartnerRuntimeSummaryStrip', async () => {
-  const actual = await vi.importActual<typeof import('@/components/Partner/PartnerRuntimeSummaryStrip')>(
-    '@/components/Partner/PartnerRuntimeSummaryStrip'
-  );
+vi.mock('@/services/api', () => ({
+  Api: {
+    get: vi.fn(),
+  },
+}));
 
-  return {
-    ...actual,
-    loadPartnerRuntimeSummary: vi.fn(),
-  };
-});
-
-vi.mock('@/components/Partner/partnerTrustRuntime', () => ({
-  loadPartnerTrustSnapshot: vi.fn(),
+vi.mock('@/services/api/v8', () => ({
+  V8PartnerApi: {
+    getReferralAnalytics: vi.fn(),
+    getEarningsSummary: vi.fn(),
+    getProgramStatus: vi.fn(),
+  },
+  shouldFallbackToLegacyPartner: (error: any) => {
+    const status = Number(error?.status);
+    return [400, 404, 405, 501].includes(status);
+  },
 }));
 
 import {
   loadPartnerRuntimeSummary,
   PartnerRuntimeSummaryStrip,
+  type PartnerRuntimeSummary,
 } from '@/components/Partner/PartnerRuntimeSummaryStrip';
-import { loadPartnerTrustSnapshot } from '@/components/Partner/partnerTrustRuntime';
-import { PartnerDashboardView } from '@/views/partner/PartnerDashboardView';
+import { V8PartnerApi } from '@/services/api/v8';
 
-describe('PartnerDashboardView runtime summary seam', () => {
+// PartnerDashboardView was consolidated into PartnerPortalView during partner
+// production-hardening (commit 8404b892f6). The governed runtime-summary surface
+// it used to host now lives in the shared PartnerRuntimeSummaryStrip component
+// plus the loadPartnerRuntimeSummary seam, which PartnerPortalView consumes.
+// This test pins the surviving canonical contract.
+describe('Partner runtime summary seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders the governed partner runtime summary above quick navigation', async () => {
-    vi.mocked(loadPartnerRuntimeSummary).mockResolvedValue({
+  it('loads governed analytics/earnings/program through the runtime seam', async () => {
+    vi.mocked(V8PartnerApi.getReferralAnalytics).mockResolvedValue({
+      analytics: {
+        totalClicks: 42,
+        uniqueClicks: 30,
+        signups: 8,
+        trials: 5,
+        paidCustomers: 3,
+        conversionRate: 37.5,
+        clicksByDay: [],
+        clicksBySource: [],
+      },
+    } as any);
+    vi.mocked(V8PartnerApi.getEarningsSummary).mockResolvedValue({
+      earnings: {
+        totalEarned: 1200,
+        totalPending: 200,
+        totalApproved: 700,
+        totalPaid: 500,
+        thisMonth: 120,
+        thisMonthCount: 2,
+        lastMonth: 90,
+        readyForPayout: 150,
+        currency: 'EUR',
+      },
+    } as any);
+    vi.mocked(V8PartnerApi.getProgramStatus).mockResolvedValue(null as any);
+
+    const summary = await loadPartnerRuntimeSummary();
+
+    expect(V8PartnerApi.getReferralAnalytics).toHaveBeenCalled();
+    expect(V8PartnerApi.getEarningsSummary).toHaveBeenCalled();
+    expect(summary.analytics.totalClicks).toBe(42);
+    expect(summary.earnings.readyForPayout).toBe(150);
+  });
+
+  it('renders the governed partner runtime summary strip', async () => {
+    const summary: PartnerRuntimeSummary = {
       analytics: {
         totalClicks: 42,
         uniqueClicks: 30,
@@ -63,43 +106,20 @@ describe('PartnerDashboardView runtime summary seam', () => {
         readyForPayout: 150,
         currency: 'EUR',
       },
-    });
-    vi.mocked(loadPartnerTrustSnapshot).mockResolvedValue({
-      currentTrustPhase: 'G4_ACTIVATION',
-      trustProgression: [
-        {
-          phase: 'G1_DISCOVERY',
-          label: 'Discovery',
-          description: '',
-          requirements: [],
-          completed: true,
-        },
-        {
-          phase: 'G2_QUALIFICATION',
-          label: 'Qualification',
-          description: '',
-          requirements: [],
-          completed: true,
-        },
-        { phase: 'G3_ONBOARDING', label: 'Onboarding', description: '', requirements: [] },
-        { phase: 'G4_ACTIVATION', label: 'Activation', description: '', requirements: [] },
-        { phase: 'G5_ECOSYSTEM', label: 'Ecosystem', description: '', requirements: [] },
-      ],
-    });
+      program: null,
+    };
 
-    render(<PartnerDashboardView />);
+    render(<PartnerRuntimeSummaryStrip summary={summary} />);
 
     await waitFor(() => {
-      expect(loadPartnerRuntimeSummary).toHaveBeenCalled();
-      expect(loadPartnerTrustSnapshot).toHaveBeenCalled();
+      expect(screen.getByText('Partner Runtime Summary')).toBeInTheDocument();
     });
 
-    expect(PartnerRuntimeSummaryStrip).toBeTypeOf('function');
-    expect(screen.getByText('Partner Runtime Summary')).toBeInTheDocument();
     expect(screen.getByText('Referral clicks')).toBeInTheDocument();
     expect(screen.getByText('Ready for payout')).toBeInTheDocument();
     expect(screen.getByText('30 unique')).toBeInTheDocument();
-    expect(screen.getByText('Trust Progression')).toBeInTheDocument();
+    // Trust Progression / Network Effect lived on the deleted dashboard wrapper,
+    // not on the surviving runtime-summary strip.
     expect(screen.queryByText('Network Effect')).not.toBeInTheDocument();
   });
 });

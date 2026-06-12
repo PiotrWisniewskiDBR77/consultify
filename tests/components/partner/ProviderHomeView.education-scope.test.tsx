@@ -10,14 +10,19 @@ import ProviderHomeView from '../../../src/views/partner/ProviderHomeView';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: any) => {
+    t: (key: string, fallbackOrOptions?: any, maybeOptions?: any) => {
+      const fallback = typeof fallbackOrOptions === 'string' ? fallbackOrOptions : undefined;
+      const options =
+        typeof fallbackOrOptions === 'object' && fallbackOrOptions !== null
+          ? fallbackOrOptions
+          : maybeOptions;
       if (options?.returnObjects) {
         if (String(key).includes('.results')) {
           return ['Result item'];
         }
         return [];
       }
-      return options?.defaultValue || key;
+      return options?.defaultValue || fallback || key;
     },
   }),
 }));
@@ -60,20 +65,20 @@ describe('ProviderHomeView education scope', () => {
       expect(V8PartnerApi.getOnboardingStatus).toHaveBeenCalled();
     });
 
-    expect(screen.getByText('Sharpen Your Skills with Partner Academy')).toBeInTheDocument();
+    expect(screen.getByText('Rozwijaj umiejętności z Partner Academy')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Structured partner enablement beyond support docs: foundations, role-specific tracks, and certification readiness.'
+        'Ustrukturyzowane wsparcie partnera wykraczające poza dokumentację: podstawy, ścieżki dla ról i gotowość do certyfikacji.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('Academy boundary')).toBeInTheDocument();
+    expect(screen.getByText('Zakres Academy')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Help and partner docs explain workflows when you are working. Partner Academy is the separate learning layer for structured progression, repeatable enablement, and certification signals.'
+        'Pomoc i dokumentacja partnera wyjaśniają procesy podczas pracy. Partner Academy to oddzielna warstwa szkoleniowa do ustrukturyzowanego rozwoju, powtarzalnego enablementu i sygnałów certyfikacji.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('Foundations')).toBeInTheDocument();
-    expect(screen.getByText('Role path')).toBeInTheDocument();
-    expect(screen.getByText('Certification')).toBeInTheDocument();
+    expect(screen.getByText('Podstawy')).toBeInTheDocument();
+    expect(screen.getByText('Ścieżka roli')).toBeInTheDocument();
+    expect(screen.getByText('Certyfikacja')).toBeInTheDocument();
   });
 });

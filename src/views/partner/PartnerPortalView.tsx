@@ -52,6 +52,7 @@ import {
   PARTNER_DOC_HREF_BY_SLUG,
 } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
+import { getLegacyPartnerSection } from './partnerLegacyRoutes';
 import { Api } from '../../services/api';
 import {
   shouldFallbackToLegacyPartner,
@@ -92,22 +93,8 @@ const PARTNER_SECTIONS = new Set<PartnerSection>([
   'public-listing',
 ]);
 
-const LEGACY_PARTNER_PATH_TO_SECTION: Array<{ path: string; section: PartnerSection }> = [
-  { path: ROUTES.PARTNER.DASHBOARD, section: 'dashboard' },
-  { path: ROUTES.PARTNER.CLIENTS, section: 'client-access' },
-  { path: ROUTES.PARTNER.COMMISSION, section: 'earnings' },
-  { path: ROUTES.PARTNER.DIRECTORY, section: 'public-listing' },
-  { path: ROUTES.PARTNER.RESOURCES, section: 'documentation' },
-];
-
 function isPartnerSection(value: string | null): value is PartnerSection {
   return Boolean(value && PARTNER_SECTIONS.has(value as PartnerSection));
-}
-
-function getLegacyPartnerSection(pathname: string): PartnerSection | null {
-  const normalized = pathname.replace(/\/+$/, '') || '/';
-  const match = LEGACY_PARTNER_PATH_TO_SECTION.find(({ path }) => normalized === path);
-  return match?.section ?? null;
 }
 
 // Lazy load new sections

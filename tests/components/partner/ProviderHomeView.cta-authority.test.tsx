@@ -112,8 +112,8 @@ describe('ProviderHomeView CTA authority', () => {
       expect(screen.getByText('Get Started in 10 Minutes')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Open application guide')).toBeInTheDocument();
-    expect(screen.getByText('Review proof case')).toBeInTheDocument();
+    expect(screen.getByText('Otwórz przewodnik aplikacji')).toBeInTheDocument();
+    expect(screen.getByText('Zobacz case potwierdzający')).toBeInTheDocument();
     expect(screen.getByText('Your Path to Partnership Success')).toBeInTheDocument();
   });
 });
