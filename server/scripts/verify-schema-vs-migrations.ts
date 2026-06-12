@@ -40,6 +40,10 @@ export type ExpectedSchema = {
 const TABLE_RE = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
 const ALTER_COL_RE =
   /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
+// A table created and then dropped or renamed-away within the migrations is
+// transient (rename-swap or marker tables) and must not count as expected.
+const DROP_RE = /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
+const RENAME_RE = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?\s+RENAME\s+TO/gi;
 
 // Mirror of migrate.postgres.ts isSqliteOnlyMigration: the Postgres runner
 // deliberately skips these files, so verify must NOT expect their schema (else
@@ -80,6 +84,7 @@ export function parseExpectedSchema(dir: string, onlyPrefix?: string): ExpectedS
     .filter((f) => !onlyPrefix || f.startsWith(onlyPrefix))
     .sort();
 
+  const droppedOrRenamed = new Set<string>();
   for (const file of files) {
     const sql = fs.readFileSync(path.join(dir, file), 'utf-8');
     // strip line comments so commented-out DDL is not counted
@@ -91,6 +96,16 @@ export function parseExpectedSchema(dir: string, onlyPrefix?: string): ExpectedS
     for (const m of cleaned.matchAll(ALTER_COL_RE)) {
       const key = `${m[1].toLowerCase()}.${m[2].toLowerCase()}`;
       if (!columns.has(key)) columns.set(key, file);
+    }
+    for (const m of cleaned.matchAll(DROP_RE)) droppedOrRenamed.add(m[1].toLowerCase());
+    for (const m of cleaned.matchAll(RENAME_RE)) droppedOrRenamed.add(m[1].toLowerCase());
+  }
+  // Transient tables (created then dropped/renamed-away within the migration set)
+  // are not part of the final schema — don't expect them on the live DB.
+  for (const t of droppedOrRenamed) {
+    tables.delete(t);
+    for (const key of [...columns.keys()]) {
+      if (key.startsWith(`${t}.`)) columns.delete(key);
     }
   }
   return { tables, columns };
