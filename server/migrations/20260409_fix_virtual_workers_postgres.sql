@@ -122,9 +122,12 @@ ON CONFLICT (slug) DO NOTHING;
 -- may already exist under a different id on drifted DBs, where the literal
 -- 'anna-default-001' was never inserted — that caused an FK violation). Only
 -- seed when the worker has no profile yet, so existing profiles are preserved.
+-- is_active is INTEGER NOT NULL in the canonical schema (see CREATE above), so
+-- seed it as 1 (active). The earlier TRUE was staging-only where the column had
+-- drifted to boolean; prod and fresh DBs use the integer column.
 INSERT INTO virtual_worker_profiles (id, worker_id, version, system_prompt, is_active)
 SELECT 'anna-profile-001', vw.id, 1,
-       'You are Anna, a knowledgeable and friendly AI sales assistant.', TRUE
+       'You are Anna, a knowledgeable and friendly AI sales assistant.', 1
 FROM virtual_workers vw
 WHERE vw.slug = 'anna'
   AND NOT EXISTS (
