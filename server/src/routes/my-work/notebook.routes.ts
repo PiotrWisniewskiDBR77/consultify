@@ -384,7 +384,7 @@ router.delete(
     }
 
     await queryHelpers.queryRun(`DELETE FROM notebooks WHERE id = ?`, [id]);
-    res.json({ ok: true });
+    res.status(204).send();
   })
 );
 
@@ -616,7 +616,7 @@ router.post(
     ];
     if (nbCols.has('capture_source')) {
       insertColumns.push('capture_source');
-      insertValues.push('interview_insight');
+      insertValues.push(req.body?.captureSource ?? null);
     }
     if (nbCols.has('capture_metadata')) {
       insertColumns.push('capture_metadata');
@@ -805,6 +805,8 @@ router.get(
     };
     res.json({
       id: row.id,
+      ownerUserId: row.ownerUserId ?? null,
+      organizationId: row.organizationId ?? null,
       projectId: row.project_id || null,
       visibility: row.visibility,
       title: row.title,

@@ -546,7 +546,7 @@ class AISettingsService {
     const rows = await dbAll(
       `SELECT date(created_at) as date,
               COUNT(*) as requests,
-              COALESCE(SUM(cost_usd), 0) as cost,
+              COALESCE(SUM(estimated_cost_usd), 0) as cost,
               COALESCE(SUM(tokens_used), 0) as tokens
              FROM ai_usage_logs
              WHERE user_id = ? AND created_at > ${dateWindowSql(days)}

@@ -128,13 +128,13 @@ router.get(
                 coalesce(dimensions_json, '[]') as dimensions_json,
                 coalesce(slices_json, '[]') as slices_json,
                 coalesce(version, 1) as version, is_active,
-                coalesce(is_global, 0) as is_global
+                COALESCE(is_global, FALSE) as is_global
          FROM kpi_definitions
          WHERE (
            organization_id = ?
-           OR (? = 'org_plus_global' AND is_global = 1 AND organization_id = '*')
+           OR (? = 'org_plus_global' AND is_global = TRUE AND organization_id = '*')
          )
-           AND (is_active = 1 OR is_active IS NULL)
+           AND (is_active = TRUE OR is_active IS NULL)
          ORDER BY category, coalesce(code, name), coalesce(version, 1) DESC, name`,
         [orgId, scope]
       );

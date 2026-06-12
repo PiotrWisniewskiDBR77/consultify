@@ -143,7 +143,7 @@ router.get(
         `
             SELECT 
                 SUM(tokens_used) as total_tokens,
-                SUM(COALESCE(estimated_cost_usd, cost_usd, 0)) as total_cost,
+                SUM(COALESCE(estimated_cost_usd, 0)) as total_cost,
                 COUNT(*) as total_requests,
                 AVG(latency_ms) as avg_latency,
                 SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful_requests
@@ -225,7 +225,7 @@ router.get(
                 u.email,
                 COUNT(*) as request_count,
                 SUM(a.tokens_used) as total_tokens,
-                SUM(COALESCE(a.estimated_cost_usd, a.cost_usd, 0)) as total_cost
+                SUM(COALESCE(a.estimated_cost_usd, 0)) as total_cost
             FROM ai_usage_logs a
             LEFT JOIN users u ON a.user_id = u.id
             WHERE a.organization_id = ?
@@ -244,7 +244,7 @@ router.get(
                 DATE(created_at) as date,
                 COUNT(*) as requests,
                 SUM(tokens_used) as tokens,
-                SUM(COALESCE(estimated_cost_usd, cost_usd, 0)) as cost
+                SUM(COALESCE(estimated_cost_usd, 0)) as cost
             FROM ai_usage_logs
             WHERE organization_id = ?
             AND created_at > datetime('now', '-${daysBack} days')
@@ -273,9 +273,9 @@ router.get(
       return res.json({
         success: true,
         period,
-        userUsage,
-        dailyTrends,
-        capabilityDistribution,
+        userUsage: (userUsage || []).map((r: any) => ({ ...r, request_count: Number(r.request_count ?? 0), total_tokens: Number(r.total_tokens ?? 0) })),
+        dailyTrends: (dailyTrends || []).map((r: any) => ({ ...r, requests: Number(r.requests ?? 0), tokens: Number(r.tokens ?? 0) })),
+        capabilityDistribution: (capabilityDistribution || []).map((r: any) => ({ ...r, count: Number(r.count ?? 0), tokens: Number(r.tokens ?? 0) })),
       });
     } catch (error: unknown) {
       if (aiLogger?.error) {
@@ -449,20 +449,23 @@ router.get(
       return res.json({
         success: true,
         period,
-        latency: latencyStats.map((l) => ({
+        latency: latencyStats.map((l: any) => ({
           ...l,
-          avg_latency: Math.round(l.avg_latency || 0),
-          min_latency: Math.round(l.min_latency || 0),
-          max_latency: Math.round(l.max_latency || 0),
+          sample_count: Number(l.sample_count ?? 0),
+          avg_latency: Math.round(Number(l.avg_latency) || 0),
+          min_latency: Math.round(Number(l.min_latency) || 0),
+          max_latency: Math.round(Number(l.max_latency) || 0),
         })),
-        errorRates: errorRates.map((e) => ({
-          ...e,
-          errorRate: e.total && e.total > 0 ? (((e.errors || 0) / e.total) * 100).toFixed(2) : 0,
-        })),
-        contextUtilization:
-          cacheStats && cacheStats.total && cacheStats.total > 0
-            ? (((cacheStats.with_context || 0) / cacheStats.total) * 100).toFixed(1)
-            : 0,
+        errorRates: errorRates.map((e) => {
+          const tot = Number(e.total ?? 0);
+          const err = Number(e.errors ?? 0);
+          return { ...e, total: tot, errors: err, errorRate: tot > 0 ? ((err / tot) * 100).toFixed(2) : 0 };
+        }),
+        contextUtilization: (() => {
+          const tot = Number(cacheStats?.total ?? 0);
+          const ctx = Number(cacheStats?.with_context ?? 0);
+          return tot > 0 ? ((ctx / tot) * 100).toFixed(1) : 0;
+        })(),
       });
     } catch (error: unknown) {
       if (aiLogger?.error) {

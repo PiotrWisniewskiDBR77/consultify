@@ -1426,14 +1426,14 @@ export async function getReferralAnalytics(
       [partnerOrgId, startDate.toISOString()]
     );
 
-    const totalClicks = clickStats?.total_clicks || 0;
-    const paidCustomers = attrStats?.paid || 0;
+    const totalClicks = Number(clickStats?.total_clicks ?? 0);
+    const paidCustomers = Number(attrStats?.paid ?? 0);
 
     return {
       totalClicks,
-      uniqueClicks: clickStats?.unique_clicks || 0,
-      signups: clickStats?.signups || 0,
-      trials: attrStats?.trials || 0,
+      uniqueClicks: Number(clickStats?.unique_clicks ?? 0),
+      signups: Number(clickStats?.signups ?? 0),
+      trials: Number(attrStats?.trials ?? 0),
       paidCustomers,
       conversionRate: totalClicks > 0 ? Math.round((paidCustomers / totalClicks) * 10000) / 100 : 0,
       clicksByDay: clicksByDay || [],

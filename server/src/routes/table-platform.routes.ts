@@ -515,7 +515,8 @@ router.get('/workspaces/:workspaceId/bases', async (req: Request, res: Response)
     if (!workspaceId) {
       return res.status(400).json({ error: 'workspaceId is required' });
     }
-    const bases = await MetadataService.listBases(workspaceId);
+    const organizationId = (req as any).organizationId as string | undefined;
+    const bases = await MetadataService.listBases(workspaceId, organizationId);
     return res.status(200).json(bases);
   } catch (err) {
     handleRouteError(err, res, 'listBases');

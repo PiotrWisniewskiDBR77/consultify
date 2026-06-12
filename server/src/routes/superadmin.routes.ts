@@ -1853,7 +1853,7 @@ const ensureAlertsTable = async () => {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       metric TEXT NOT NULL,
-      condition TEXT NOT NULL,
+      operator TEXT NOT NULL,
       threshold REAL NOT NULL,
       severity TEXT DEFAULT 'warning',
       channels TEXT DEFAULT '[]',
@@ -1937,7 +1937,7 @@ router.post(
     if (!name || !metric) return res.status(400).json({ error: 'name and metric are required' });
     const id = `alert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await dbRun(
-      `INSERT INTO system_health_alerts (id, name, metric, condition, threshold, severity, channels)
+      `INSERT INTO system_health_alerts (id, name, metric, operator, threshold, severity, channels)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         id,

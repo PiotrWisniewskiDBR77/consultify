@@ -156,11 +156,15 @@ class AuditEventsService {
       `SELECT COUNT(*) as count FROM audit_events WHERE ${where}`,
       params
     );
-    const total = countResult?.count ?? 0;
+    const total = Number(countResult?.count ?? 0);
 
     const data = await db.all(
-      `SELECT id, ts as timestamp, actor_id as "actorId", actor_type as "actorType",
-              action, resource_type as "resourceType", resource_id as "resourceId",
+      `SELECT id, ts as timestamp,
+              COALESCE(actor_id, actor_user_id) as "actorId",
+              actor_type as "actorType",
+              COALESCE(action, action_type) as action,
+              COALESCE(resource_type, entity_type) as "resourceType",
+              COALESCE(resource_id, entity_id) as "resourceId",
               before_json as "before", after_json as "after", metadata_json as metadata
        FROM audit_events WHERE ${where} ORDER BY ts DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset]

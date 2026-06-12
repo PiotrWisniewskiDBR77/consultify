@@ -1533,7 +1533,7 @@ async function backfillReportTemplatesForOrg(organizationId: string): Promise<nu
       AND l.origin_runtime = 'report_template'
       AND l.origin_record_id = t.id
      WHERE (t.organization_id IS NULL OR t.organization_id = ?)
-       AND (t.is_active IS NULL OR t.is_active = 1)
+       AND (t.is_active IS NULL OR t.is_active = TRUE)
        AND l.link_id IS NULL`,
     [organizationId, organizationId],
     { fallback: true }

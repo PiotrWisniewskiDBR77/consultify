@@ -784,7 +784,7 @@ export class ToolController {
       const countResult = (await queryHelpers.queryOne(countSql, countParams)) as {
         total: number;
       } | null;
-      const total = countResult?.total || 0;
+      const total = Number(countResult?.total ?? 0);
 
       // Transform to frontend format
       const items = sessions.map((session) => ({

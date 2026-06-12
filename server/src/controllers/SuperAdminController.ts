@@ -180,7 +180,7 @@ const getOrganizations = catchAsync(async (req, res, next) => {
       logger.error('[SuperAdmin] Organizations query error:', err);
       return next(new AppError('Failed to fetch organizations', 500));
     }
-    res.json(rows || []);
+    res.json((rows || []).map((r: any) => ({ ...r, user_count: Number(r.user_count ?? 0) })));
   });
 });
 
@@ -276,10 +276,28 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
     );
   });
 
+  const aiS = aiStats as any;
+  const cts = counts as any;
   res.json({
-    activity: activityStats,
-    ai: aiStats,
-    counts,
+    activity: {
+      ...(activityStats as any),
+      total: Number((activityStats as any)?.total ?? 0),
+      last_hour: Number((activityStats as any)?.last_hour ?? 0),
+      last_24h: Number((activityStats as any)?.last_24h ?? 0),
+      last_7d: Number((activityStats as any)?.last_7d ?? 0),
+    },
+    ai: {
+      ...aiS,
+      total_ai_calls: Number(aiS?.total_ai_calls ?? 0),
+      total_tokens: Number(aiS?.total_tokens ?? 0),
+      active_users: Number(aiS?.active_users ?? 0),
+    },
+    counts: {
+      ...cts,
+      total_users: Number(cts?.total_users ?? 0),
+      total_orgs: Number(cts?.total_orgs ?? 0),
+      active_users_7d: Number(cts?.active_users_7d ?? 0),
+    },
     live: deps.RealtimeService.getGlobalStats(),
     activities: activities || [],
   });
@@ -986,7 +1004,12 @@ const rejectAccessRequest = catchAsync(async (req, res, next) => {
 const getAccessCodes = catchAsync(async (req, res, next) => {
   deps.db.all(`SELECT * FROM access_codes ORDER BY created_at DESC`, [], (err, rows) => {
     if (err) return next(new AppError(err.message, 500));
-    res.json(rows);
+    res.json((rows || []).map((r: any) => ({
+      ...r,
+      is_active: flagOn(r.is_active),
+      max_uses: r.max_uses != null ? Number(r.max_uses) : null,
+      current_uses: r.current_uses != null ? Number(r.current_uses) : 0,
+    })));
   });
 });
 
@@ -1490,7 +1513,12 @@ const getUsageByOrganization = catchAsync(async (req, res, next) => {
 
   deps.db.all(query, [], (err, rows) => {
     if (err) return next(new AppError('Failed to fetch usage data', 500));
-    res.json(rows || []);
+    res.json((rows || []).map((r: any) => ({
+      ...r,
+      user_count: Number(r.user_count ?? 0),
+      tokens_used: Number(r.tokens_used ?? 0),
+      ai_calls: Number(r.ai_calls ?? 0),
+    })));
   });
 });
 
@@ -3579,63 +3607,72 @@ const getSystemAnalytics = catchAsync(async (req, res, next) => {
     return Math.round(((current - previous) / previous) * 1000) / 10;
   };
 
+  const apiTot = Number(apiStats.total_requests ?? 0);
+  const apiErr = Number(apiStats.error_count ?? 0);
+  const aiTot = Number(aiStats.total_requests ?? 0);
+  const aiTok = Number(aiStats.total_tokens ?? 0);
+  const aiLat = Number(aiStats.avg_latency ?? 0);
+  const aiErrC = Number(aiStats.error_count ?? 0);
+  const uTot = Number(userStats.total_users ?? 0);
+  const uAct = Number(userStats.active_users ?? 0);
+  const prevApiTot = Number(prevApiStats.total_requests ?? 0);
+  const prevAiTot = Number(prevAiStats.total_requests ?? 0);
+  const prevAiTok = Number(prevAiStats.total_tokens ?? 0);
+
   res.json({
     metrics: {
       api: {
-        total_requests: apiStats.total_requests || 0,
-        error_count: apiStats.error_count || 0,
-        error_rate:
-          apiStats.total_requests > 0
-            ? Math.round((apiStats.error_count / apiStats.total_requests) * 10000) / 100
-            : 0,
-        change: calcChange(apiStats.total_requests, prevApiStats.total_requests),
+        total_requests: apiTot,
+        error_count: apiErr,
+        error_rate: apiTot > 0 ? Math.round((apiErr / apiTot) * 10000) / 100 : 0,
+        change: calcChange(apiTot, prevApiTot),
       },
       ai: {
-        total_requests: aiStats.total_requests || 0,
-        total_tokens: aiStats.total_tokens || 0,
-        avg_latency: Math.round(aiStats.avg_latency || 0),
-        error_count: aiStats.error_count || 0,
-        change: calcChange(aiStats.total_requests, prevAiStats.total_requests),
+        total_requests: aiTot,
+        total_tokens: aiTok,
+        avg_latency: Math.round(aiLat),
+        error_count: aiErrC,
+        change: calcChange(aiTot, prevAiTot),
       },
       users: {
-        total_users: userStats.total_users || 0,
-        active_today: userStats.active_users || 0,
+        total_users: uTot,
+        active_today: uAct,
       },
       database: {
-        total_queries: apiStats.total_requests || 0, // Approximation
+        total_queries: apiTot,
       },
     },
     charts: {
       api: {
         labels: apiDaily.map((d) => d.date),
-        requests: apiDaily.map((d) => d.requests),
-        errors: apiDaily.map((d) => d.errors),
+        requests: apiDaily.map((d) => Number(d.requests ?? 0)),
+        errors: apiDaily.map((d) => Number(d.errors ?? 0)),
       },
       ai: {
         labels: aiDaily.map((d) => d.date),
-        requests: aiDaily.map((d) => d.requests),
-        tokens: aiDaily.map((d) => Math.round((d.tokens || 0) / 1000)), // In thousands
+        requests: aiDaily.map((d) => Number(d.requests ?? 0)),
+        tokens: aiDaily.map((d) => Math.round(Number(d.tokens ?? 0) / 1000)),
       },
     },
     topEndpoints: topEndpoints.slice(0, 4).map((e) => ({
       endpoint: `/api/${e.endpoint || 'unknown'}`,
-      calls: e.calls,
+      calls: Number(e.calls ?? 0),
     })),
     comparison: {
       api_requests: {
-        current: apiStats.total_requests,
-        previous: prevApiStats.total_requests,
-        change: calcChange(apiStats.total_requests, prevApiStats.total_requests),
+        current: apiTot,
+        previous: prevApiTot,
+        change: calcChange(apiTot, prevApiTot),
       },
       ai_requests: {
-        current: aiStats.total_requests,
-        previous: prevAiStats.total_requests,
-        change: calcChange(aiStats.total_requests, prevAiStats.total_requests),
+        current: aiTot,
+        previous: prevAiTot,
+        change: calcChange(aiTot, prevAiTot),
       },
       ai_tokens: {
-        current: aiStats.total_tokens || 0,
-        previous: prevAiStats.total_tokens || 0,
-        change: calcChange(aiStats.total_tokens || 0, prevAiStats.total_tokens || 0),
+        current: aiTok,
+        previous: prevAiTok,
+        change: calcChange(aiTok, prevAiTok),
       },
     },
     timeRange,
@@ -4989,7 +5026,7 @@ const getApprovalWorkflows = catchAsync(async (req, res, next) => {
       ...w,
       triggerConditions: JSON.parse(w.trigger_conditions_json || '{}'),
       approvers: JSON.parse(w.approvers_json || '[]'),
-      isActive: w.is_active === 1,
+      isActive: flagOn(w.is_active),
     }))
   );
 });
@@ -5535,7 +5572,7 @@ const getPredictiveModels = catchAsync(async (req, res, next) => {
       ...m,
       trainingData: JSON.parse(m.training_data_json || '{}'),
       modelConfig: JSON.parse(m.model_config_json || '{}'),
-      isActive: m.is_active === 1,
+      isActive: flagOn(m.is_active),
     }))
   );
 });

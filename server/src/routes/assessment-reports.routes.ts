@@ -790,7 +790,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 
     const assessment = await new Promise<any>((resolve, reject) => {
       db.get(
-        `SELECT id, name, organization_id, project_id, assessment_type, status, answers
+        `SELECT id, name, organization_id, project_id, assessment_type, status, answers_json as answers
          FROM assessments
          WHERE id = ? AND organization_id = ?`,
         [assessmentId, organizationId],
@@ -1002,7 +1002,7 @@ router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {
     // Load assessment answers for context
     let assessmentAnswers: Record<string, any> = {};
     try {
-      const assessmentRow = await get<any>(`SELECT answers FROM assessments WHERE id = ?`, [
+      const assessmentRow = await get<any>(`SELECT answers_json as answers FROM assessments WHERE id = ?`, [
         reportRow.assessment_id,
       ]);
       assessmentAnswers = safeJsonParse(assessmentRow?.answers, {});

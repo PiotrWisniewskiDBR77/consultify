@@ -222,7 +222,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         params.push(projectId);
       }
 
-      sql += ' ORDER BY created_at DESC';
+      sql += ' ORDER BY a.created_at DESC';
 
       db.all(sql, params, (err: Error | null, rows: any[]) => {
         if (err) reject(err);

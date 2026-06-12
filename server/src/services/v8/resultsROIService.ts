@@ -723,7 +723,7 @@ export async function getKPIScorecard(
     [organizationId, ...initiativeParams],
     { fallback: true }
   );
-  const totalKpis = totalRow?.total ?? 0;
+  const totalKpis = Number(totalRow?.total ?? 0);
 
   const statusRows = await dbAll<{ status: string; cnt: number }>(
     `SELECT status, COUNT(*) AS cnt FROM v8_kpi_definitions
@@ -1244,8 +1244,8 @@ export async function getROIDashboard(
     { fallback: true }
   );
 
-  const totalEntries = totalRow?.total_entries ?? 0;
-  const totalRealized = totalRow?.total_realized ?? 0;
+  const totalEntries = Number(totalRow?.total_entries ?? 0);
+  const totalRealized = Number(totalRow?.total_realized ?? 0);
   const projectedFromKpiTargets = projectedRow?.projected ?? 0;
   const overallRealizationRate =
     projectedFromKpiTargets > 0 ? totalRealized / projectedFromKpiTargets : null;
@@ -2029,7 +2029,7 @@ export async function getReconciliationHealth(
     }
   }
 
-  const total = totalRow?.total ?? 0;
+  const total = Number(totalRow?.total ?? 0);
   const unresolvedCount =
     (byStatus.pending ?? 0) + (byStatus.disputed ?? 0) + (byStatus.escalated ?? 0);
 

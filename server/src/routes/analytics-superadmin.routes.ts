@@ -16,6 +16,7 @@ import {
 import { getPublicAnnaFunnelSummary } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { flagOn } from '../utils/pgFlags.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -642,7 +643,7 @@ router.get(
                 ORDER BY bm.category, bm.name
             `);
 
-      return res.json({ metrics: metrics || [] });
+      return res.json({ metrics: (metrics || []).map((m: any) => ({ ...m, isActive: flagOn(m.is_active) })) });
     } catch (error: any) {
       logger.error('[Analytics] Get metrics error:', error);
       return analyticsFailure(res, 500, 'Failed to fetch metrics', { metrics: [] });
@@ -661,7 +662,7 @@ router.get(
         `
           SELECT
             COUNT(*) as totalMetrics,
-            SUM(CASE WHEN bm.is_active = 1 THEN 1 ELSE 0 END) as activeMetrics,
+            SUM(CASE WHEN bm.is_active = true OR bm.is_active = 1 THEN 1 ELSE 0 END) as activeMetrics,
             COUNT(DISTINCT bm.category) as categories,
             SUM(CASE 
                   WHEN bm.target_value IS NOT NULL 
@@ -692,12 +693,12 @@ router.get(
       )) as any;
 
       return res.json({
-        totalMetrics: stats?.totalMetrics || 0,
-        activeMetrics: stats?.activeMetrics || 0,
-        categories: stats?.categories || 0,
-        onTarget: stats?.onTarget || 0,
-        needsAttention: stats?.needsAttention || 0,
-        critical: stats?.critical || 0,
+        totalMetrics: Number(stats?.totalMetrics ?? 0),
+        activeMetrics: Number(stats?.activeMetrics ?? 0),
+        categories: Number(stats?.categories ?? 0),
+        onTarget: Number(stats?.onTarget ?? 0),
+        needsAttention: Number(stats?.needsAttention ?? 0),
+        critical: Number(stats?.critical ?? 0),
       });
     } catch (error: any) {
       logger.error('[Analytics] Get metrics stats error:', error);

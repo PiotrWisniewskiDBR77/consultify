@@ -29,7 +29,7 @@ async function resolveUserName(userId: string): Promise<string> {
   try {
     const pool = getDatabase();
     const r = await pool.query(
-      'SELECT COALESCE(name, email, id) as display_name FROM users WHERE id = $1',
+      "SELECT COALESCE(TRIM(first_name || ' ' || last_name), email, id::text) as display_name FROM users WHERE id = $1",
       [userId]
     );
     if (r.rows.length > 0) return (r.rows[0] as any).display_name;

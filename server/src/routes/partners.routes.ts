@@ -291,8 +291,8 @@ router.get('/connection', async (req: Request, res: Response, next: NextFunction
           tier: org.tier,
           status: org.status,
           partnerSince: org.partner_since || undefined,
-          licenseDiscountPercent: org.license_discount_percent ?? undefined,
-          commissionRatePercent: org.commission_rate_percent ?? undefined,
+          licenseDiscountPercent: org.license_discount_percent != null ? Number(org.license_discount_percent) : undefined,
+          commissionRatePercent: org.commission_rate_percent != null ? Number(org.commission_rate_percent) : undefined,
           performanceScore: org.performance_score ?? undefined,
           publicListingEnabled: Boolean(org.public_listing_enabled),
           specializations: specializations.map((s) => s.framework),
@@ -1145,20 +1145,20 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
 
       const thisMonthRevenue = await dbGet<{ total: number }>(
         db,
-        `SELECT COALESCE(SUM(gross_amount), 0) as total 
-               FROM partner_commission_transactions 
-               WHERE partner_org_id = ? 
-               AND transaction_date >= date('now', 'start of month')`,
+        `SELECT COALESCE(SUM(gross_amount), 0) as total
+               FROM partner_commission_transactions
+               WHERE partner_org_id = ?
+               AND transaction_date >= DATE_TRUNC('month', NOW())`,
         [partnerOrgId]
       );
 
       const lastMonthRevenue = await dbGet<{ total: number }>(
         db,
-        `SELECT COALESCE(SUM(gross_amount), 0) as total 
-               FROM partner_commission_transactions 
-               WHERE partner_org_id = ? 
-               AND transaction_date >= date('now', 'start of month', '-1 month')
-               AND transaction_date < date('now', 'start of month')`,
+        `SELECT COALESCE(SUM(gross_amount), 0) as total
+               FROM partner_commission_transactions
+               WHERE partner_org_id = ?
+               AND transaction_date >= DATE_TRUNC('month', NOW()) - INTERVAL '1 month'
+               AND transaction_date < DATE_TRUNC('month', NOW())`,
         [partnerOrgId]
       );
 
@@ -1200,7 +1200,7 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
         const timeAgo = getTimeAgo(new Date(comm.created_at));
         recentActivity.push({
           type: 'commission',
-          text: `Commission earned: €${comm.gross_amount.toFixed(2)} (${comm.transaction_type})`,
+          text: `Commission earned: €${Number(comm.gross_amount ?? 0).toFixed(2)} (${comm.transaction_type})`,
           time: timeAgo,
         });
       }

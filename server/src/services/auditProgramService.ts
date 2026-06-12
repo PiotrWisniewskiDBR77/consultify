@@ -173,8 +173,8 @@ function mapRow(row: Record<string, unknown> | undefined | null): AuditProgram |
     preset: (row.preset as string) ?? null,
     config: parseConfig(row.config),
     createdBy: String(row.created_by ?? ''),
-    createdAt: String(row.created_at ?? ''),
-    updatedAt: String(row.updated_at ?? ''),
+    createdAt: row.created_at instanceof Date ? (row.created_at as Date).toISOString() : String(row.created_at ?? ''),
+    updatedAt: row.updated_at instanceof Date ? (row.updated_at as Date).toISOString() : String(row.updated_at ?? ''),
   };
 }
 

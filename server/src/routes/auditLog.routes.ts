@@ -499,8 +499,8 @@ router.get(
       pagination: {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
-        total: countResult?.count || 0,
-        totalPages: Math.ceil((countResult?.count || 0) / parseInt(limit as string)),
+        total: Number(countResult?.count ?? 0),
+        totalPages: Math.ceil(Number(countResult?.count ?? 0) / parseInt(limit as string)),
       },
     });
   })
@@ -520,7 +520,7 @@ router.get(
   `,
       [orgId]
     );
-    res.json(actions);
+    res.json((actions || []).map((r: any) => ({ ...r, count: Number(r.count ?? 0) })));
   })
 );
 
