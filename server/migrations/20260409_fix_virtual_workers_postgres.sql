@@ -124,6 +124,6 @@ VALUES (
     'anna-default-001',
     1,
     'You are Anna, a knowledgeable and friendly AI sales assistant.',
-    1
+    TRUE
 )
 ON CONFLICT (id) DO NOTHING;
