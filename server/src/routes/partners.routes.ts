@@ -963,17 +963,8 @@ router.get('/earnings', async (req: Request, res: Response, next: NextFunction) 
     try {
       earnings = await PartnerCommissionService.getEarningsSummary(partnerOrgId);
     } catch (dbError: any) {
-      logger.warn('Earnings: DB query failed, using fallback data:', dbError?.message);
-      earnings = {
-        totalEarnedYTD: 0,
-        thisMonth: 0,
-        pendingApproval: 0,
-        readyForPayout: 0,
-        totalPaidOut: 0,
-        commissionRate: 15,
-        nextPaymentDate: null,
-        bankInfoComplete: true,
-      };
+      logger.error('Earnings: DB query failed:', dbError?.message);
+      return res.status(503).json({ success: false, error: 'Earnings temporarily unavailable', code: 'DB_ERROR' });
     }
 
     res.json({ success: true, data: earnings });

@@ -955,7 +955,7 @@ export const MeetingHub: React.FC = () => {
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200 dark:border-navy-700">
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-slate-900 dark:text-white inline-flex items-center gap-2">
-                  <Sparkles size={16} className="text-[#A51C30]" />
+                  <Sparkles size={16} className="text-primary-600" />
                   {isPolish ? 'Notatki AI ze spotkania' : 'AI Meeting Notes'}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -1069,7 +1069,7 @@ export const MeetingHub: React.FC = () => {
                   type="button"
                   onClick={handleGenerateNotes}
                   disabled={generatingNotes || !notesTranscript.trim()}
-                  className="h-9 px-4 rounded-full bg-[#A51C30] text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:bg-[#8a1828]"
+                  className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 hover:bg-primary-700"
                 >
                   <Sparkles className="w-4 h-4" />
                   {generatingNotes
@@ -1221,7 +1221,7 @@ const MeetingDetailView: React.FC<{
           <button
             type="button"
             onClick={onGenerateNotes}
-            className="h-9 px-4 rounded-full bg-[#A51C30] text-white text-sm font-medium inline-flex items-center gap-1.5 hover:bg-[#8a1828]"
+            className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium inline-flex items-center gap-1.5 hover:bg-primary-700"
             title={
               isPolish
                 ? 'Wygeneruj notatki AI z transkrypcji (Teresa)'
