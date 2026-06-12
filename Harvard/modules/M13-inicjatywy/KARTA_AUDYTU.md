@@ -18,7 +18,7 @@
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 52 < 70 (Faza 4 niewykonana). |
 
-**Werdykt jednym akapitem:** Rdzeń Inicjatyw jest mocny — portfolio (4 widoki), dokument inicjatywy (~30 sekcji w rejestrze), zakładka Analysis (graf zależności + feasibility/completeness), generator z insightów wywiadu, archive/status z preflightem `initiativeWriteTruth`, ROI realny. Zaufanie i wartość łamią cztery rzeczy: **cross-org IDOR w `initiativeGovernanceService`** (powiązania cel↔inicjatywa i decyzja↔inicjatywa bez org — czwarty moduł z tym wzorcem), **całe tworzenie z huba martwe w UI** (Charter/AI Wizard/New disabled „w przygotowaniu", żywe tylko deep-link `?new=1` i ścieżka z Wywiadu), **cicha degradacja V8 bez komunikatu** (inaczej niż Finance/Results, które mają baner), oraz **gating pilota VTS tylko po stronie klienta** (serwer nie blokuje create/bulk). ROI jest realny, ale nieosiągalny nawigacyjnie (brak linku w sidebarze).
+**Werdykt jednym akapitem:** Rdzeń Inicjatyw jest mocny — portfolio (4 widoki), dokument inicjatywy (~30 sekcji w rejestrze), zakładka Analysis (graf zależności + feasibility/completeness), generator z insightów wywiadu, archive/status z preflightem `initiativeWriteTruth`, ROI realny. Zaufanie i wartość łamią cztery rzeczy: **cross-org IDOR w `initiativeGovernanceService`** (powiązania cel↔inicjatywa i decyzja↔inicjatywa bez org — czwarty moduł z tym wzorcem), **całe tworzenie z huba martwe w UI** (Charter/AI Wizard/New disabled „w przygotowaniu", żywe tylko deep-link `?new=1` i ścieżka z Wywiadu), **cicha degradacja V8 bez komunikatu** (inaczej niż Finance/Results, które mają baner), oraz **gating pilota VTS tylko po stronie klienta** (serwer nie blokuje create/bulk). ROI realny i osiągalny (nav button naprawiony, `dc1dd6154d`).
 
 ---
 
@@ -57,9 +57,9 @@
 | Dokument ~30 sekcji save | InitiativeController + sections | initiative_* | tak | DZIAŁA |
 | Archive/status | `initiativeWriteTruth` preflight | initiatives | tak | DZIAŁA |
 | Analysis/graf | additive/analysis | initiative deps | tak | DZIAŁA |
-| ROI | `/api/economics/analyses` | economics_analyses | tak | DZIAŁA (bez wejścia z nav) |
+| ROI | `/api/economics/analyses` | economics_analyses | tak | DZIAŁA + nav button (`dc1dd6154d`) |
 | V8 Planning chip | v8 planning | — | — | DZIAŁA z **cichą** degradacją (bez komunikatu) |
-| Powiązania cel/decyzja | `initiativeGovernanceService` (link/get/unlink) | goal_initiative_links, decision links | tak | **bez org-scope (P0)** |
+| Powiązania cel/decyzja | `initiativeGovernanceService` (link/get/unlink) | goal_initiative_links, decision links | tak | NAPRAWIONE (`b9f2dee9d2`) |
 
 ### 1f. Flagi
 | Flaga | Default BE | Default FE | Kto włącza | Wpływ |
@@ -74,8 +74,8 @@
 | WEJŚCIE ← | M10 Wywiad | Charter/generate_from_evidence | `InterviewHub.tsx:12955` | DZIAŁA |
 | WYJŚCIE → | M14 Wdrożenie | reuse dokumentu inicjatywy | INV_D Wdrożenie poz.6 | DZIAŁA |
 | WYJŚCIE → | M15/M16 | ROI/economics (`/api/economics/analyses`) | poz.16 | DZIAŁA |
-| WEJŚCIE ← | M23 Organizacja | powiązania cel↔inicjatywa (governance) | `initiativeGovernanceService` | **ZEPSUTE-cross-org** |
-| WEJŚCIE ← | M03 My Work | powiązania decyzja↔inicjatywa | `initiativeGovernanceService` | **ZEPSUTE-cross-org** |
+| WEJŚCIE ← | M23 Organizacja | powiązania cel↔inicjatywa (governance) | `initiativeGovernanceService` | NAPRAWIONE (`b9f2dee9d2`) |
+| WEJŚCIE ← | M03 My Work | powiązania decyzja↔inicjatywa | `initiativeGovernanceService` | NAPRAWIONE (`b9f2dee9d2`) |
 | przekrój | M01 Czat | czat Teresy z kontekstem inicjatywy | poz.15 | DZIAŁA |
 
 ## 2. Testy automatyczne (FAZA 2)
@@ -134,7 +134,7 @@
 | Warstwa | Nawigacja | Route | API | Dziura? |
 |---|---|---|---|---|
 | Inicjatywy (core) | sidebar otwarty | zalogowany | verifyToken + requireOrgAccess + rate-limit | — |
-| Governance (-v4) | — | — | service ignoruje org | **TAK (P0)** |
+| Governance (-v4) | — | — | org-scope naprawiony (`b9f2dee9d2`) | **NIE** |
 | Pilot VTS | UI hub | — | brak gatingu serwerowego | **TAK (P1)** |
 
 **Findingi:**

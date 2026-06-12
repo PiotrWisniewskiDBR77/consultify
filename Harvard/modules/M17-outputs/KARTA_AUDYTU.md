@@ -4,12 +4,13 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M17 · inwentarz `Harvard/podzial/inventory/INV_E_outputs_studia_meeting.md` (sekcja OUTPUTS, poz.1-16) · poprzednia karta `docs/audit/2026-06-02/MODULE_09_outputs.md` (49/100) · finding v8-404 (`[[finding_staging_schema_drift_v8_404]]`)
 **Evidence:** `Harvard/modules/M17-outputs/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 53/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 54/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
 > **Re-audit 2026-06-11 po Sprintach 1–5:** F: 5→7 (W9 public viewer sanityzacja — `normalizeDeckRow` whitelist pól, commit `1b67579d7a`; W7 beta-lock 3-warstwowy, commit `bc5579918d`). Suma: 21+12+7+0+6+7+0=53.
+> **Fala 2 korekta atrybucji (2026-06-12):** A: 21→22 (DEMO_* blok 203 linii usunięty z `useRapData.ts:187-389`, commit `167b2757bf` — 1 MARTWY zniknął; Fala 2 poz.4 DONE). Suma: 22+12+7+0+6+7+0=54.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 21 | 14/16 REALNE (większość za flagami, ale realne); 1 MARTWE (DEMO_*), register-in-outputs realny+skommitowany; czerwone flagi w większości obalone. |
+| A. Realność funkcji | 25 | 22 | 14/16 REALNE (większość za flagami, ale realne); DEMO_* usunięty; register-in-outputs realny+skommitowany; czerwone flagi w większości obalone. |
 | B. Wiring i dane | 15 | 12 | Rejestr org-scoped, export ledger, review/publish role-gated serwerowo, podwójna bramka v8 (global+org); czysto. |
 | C. Testy automatyczne | 15 | 7 | 330 PASS/30 FAIL, ale FAIL-e to harness (i18n mock, 25 stale testów middleware vs cofnięta impl, fixture gap); **bramka aprobaty eksportu bez testu serwerowego**; nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
@@ -48,7 +49,7 @@
 - **[P3] v8 OFF → komunikat generyczny** „failed to load" zamiast „moduł wyłączony".
 
 ### 1d. UKRYTE / MARTWY KOD
-- **[MARTWY] DEMO_* w `useRapData.ts:187-389`** — blok komentarza, 0 konsumentów runtime → wytnij (demo idzie przez seed Atelier Toys za toggle).
+- ~~**[MARTWY] DEMO_* w `useRapData.ts:187-389`**~~ **USUNIĘTY** (`167b2757bf`) — 203-liniowy blok komentarza.
 
 ### 1e. Wiring FE↔BE↔DB
 | Funkcja | Endpoint/serwis | Tabela DB | Status |
@@ -58,7 +59,7 @@
 | Review/publish | `artifacts.routes.ts:717,1002` | artifact_registry | DZIAŁA (role-gated ADMIN/OWNER) |
 | Bramka eksportu | report-builder/presentations routes | quality state | DZIAŁA (quality serwerowo; approval tylko UI) |
 | Canvas → Outputs | `work-canvas.routes.ts:4424` | artifact_registry + origin | DZIAŁA |
-| Public deck share | `presentations.routes.ts:606` | presentation_decks | DZIAŁA (**over-disclosure P1**) |
+| Public deck share | `presentations.routes.ts:606` | presentation_decks | DZIAŁA (over-disclosure naprawione `1b67579d7a`) |
 
 ### 1f. Flagi (realne defaulty RUNTIME)
 | Flaga | Default | Runtime | OFF → | Kto włącza |
@@ -74,7 +75,7 @@
 | WEJŚCIE ← | M18/M19/M20 studia | artefakty do rejestru | DZIAŁA |
 | WYJŚCIE → | edytory natywne | `resolveArtifactOpenPath` (open) | DZIAŁA |
 | WYJŚCIE → | pliki | eksport PDF/PPTX (za quality-gate) | DZIAŁA |
-| WYJŚCIE → | public | `/presentations/shared/:token` | DZIAŁA (P1 over-disclosure) |
+| WYJŚCIE → | public | `/presentations/shared/:token` | DZIAŁA (over-disclosure NAPRAWIONE `1b67579d7a`) |
 
 ## 2. Testy automatyczne (FAZA 2)
 > Raport: `evidence/f2_tests_report.md` · log: `f2_tests.log`.
@@ -136,11 +137,11 @@
 | Org-scope rejestru | CZYSTY (brak IDOR) | `artifactRegistryService.ts:1891,1944` |
 | Review/publish | role-gated serwerowo | `artifacts.routes.ts:1011` (ADMIN/OWNER) |
 | Bramka eksportu | quality serwerowo / approval tylko UI | `OutputsAggregateTabContent.tsx:1000` |
-| Public deck viewer | over-disclosure | `presentations.routes.ts:412,621` |
+| Public deck viewer | NAPRAWIONE (`1b67579d7a`) | `presentations.routes.ts:412,621` |
 | Beta-lock | tylko nawigacyjny | `Sidebar.tsx:156` vs route bez beta-guarda |
 
 **Findingi:**
-- **[P1] SEC-4a: public viewer wycieka org_id/confidentiality** — `GET /presentations/shared/:token` → `normalizeDeckRow(row)={...row}` (`presentations.routes.ts:412,621`) zwraca cały wiersz `presentation_decks` (`organization_id`, `created_by`/`generated_by`, `confidentiality`, wewnętrzne ID, share_token) nieuwierzytelnionemu klientowi (FE czyta `row.organization_id` w `SharedPresentationView.tsx:70`). **Zweryfikowane osobiście.** Bounded tokenem 122-bit (nie IDOR/enumeracja), ale ujawnia metadane tenanta ponad potrzebę. Fix: whitelist pól jak `/api/public/artifacts`.
+- ~~**[P1] SEC-4a: public viewer wycieka org_id/confidentiality**~~ **NAPRAWIONY** (`1b67579d7a`) — `normalizeDeckRow` whitelist pól; historycznie zwracał `{...row}` z całym wierszem `presentation_decks` nieuwierzytelnionemu klientowi.
 - **[P2] SEC-3: bramka aprobaty eksportu tylko UI** — serwer pilnuje quality, nie publish-approval → eksport nieapprobowanego artefaktu bezpośrednim API (org-scope+quality nadal chronią).
 - **[P2] SEC-1: beta-lock tylko nawigacyjny** — `/presentations` ma `ProductionModuleGate` bez beta-guarda; direct URL omija plate BETA_LOCKED (API org-gated → brak wycieku danych, defense-in-depth).
 - **[P2] SEC-4b/c: share decku bez rate-limit i bez revoke** — `/shared/:token` brak limitu (vs 30/min na `/api/public/artifacts`), brak unshare (link żyje do expiry ~7 dni); expired → 404 zamiast 410.
@@ -149,7 +150,7 @@
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P1)
-1. **`[INTEGRACJA — INTEGRACJE.md §C poz.9 / Sprint 7+ / W9]`** Sanityzacja public viewera — `/presentations/shared/:token` zwraca whitelistę pól (bez `organization_id`/`confidentiality`/wewnętrznych ID/tokenu). **NAPRAWIĆ RAZ RAZEM Z M19** (wspólny leak `presentations.routes.ts:412`), wzór `/api/public/artifacts` — Weryfikacja: odpowiedź sieciowa nie zawiera org/confidentiality.
+1. ~~**Sanityzacja public viewera**~~ **[DONE `1b67579d7a`]** — `/presentations/shared/:token` whitelist pól, `normalizeDeckRow` naprawiony; zrobione razem z M19.
 2. **Serwerowa bramka aprobaty eksportu** — handlery eksportu odrzucają artefakt nie-`approved`/`published` (nie tylko quality) — Weryfikacja: export `draft` przez API → 403; test serwerowy (T4).
 3. **Fix testów** — mock i18n (T1) + decyzja o 25 stale testach middleware (T2: skasuj lub przywróć hardening) — Weryfikacja: zielono, intencja jasna.
 
@@ -157,7 +158,7 @@
 1. **Beta-guard na route** `/presentations` (nie tylko sidebar) — Weryfikacja: direct URL → plate BETA_LOCKED.
 2. **Rate-limit + revoke** dla share decku; expired → 410 — Weryfikacja: limit działa, unshare unieważnia.
 3. **Dedykowany baner „moduł wyłączony"** przy v8 OFF (zamiast „failed to load") — Weryfikacja: jasny komunikat.
-4. **Wytnij DEMO_*** (`useRapData.ts:187-389`) — Weryfikacja: 0 referencji.
+4. ~~**Wytnij DEMO_***~~ **[DONE `167b2757bf`]** (`useRapData.ts:187-389`) — 203-liniowy blok komentarza usunięty.
 
 ### Fala 3 — Jakość i kanony (P2/P3)
 1. **§27** — persistKey, `EntityStatusChip`, tokeny kolorów, ujednolicić i18n (usunąć 18× `isPolish?`), włączyć bulk lub usunąć — Weryfikacja: §27 A-S czyste.

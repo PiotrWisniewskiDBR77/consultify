@@ -58,7 +58,7 @@
 | Analytics | share analytics | presentation_analytics | 610 | DZIAŁA (real) |
 | Generacja | `/api/artifact-runs` | artifact runs | — | DZIAŁA (za `ENABLE_V8_GLOBAL`) |
 | Quality gate eksportu | `enforceQualityGateForExport:358` | quality state | — | DZIAŁA (serwerowo 422; **override bez roli P2**) |
-| Public share | `/presentations/shared/:token` | presentation_decks | — | DZIAŁA (**over-disclosure P1, wspólny z M17**) |
+| Public share | `/presentations/shared/:token` | presentation_decks | — | DZIAŁA (over-disclosure NAPRAWIONE `1b67579d7a`) |
 
 ### 1f. Flagi
 | Flaga | Default | OFF → | Uwaga |
@@ -72,7 +72,7 @@
 | WYJŚCIE → | M17 Outputs | rejestracja decka + reopen `?artifactId=` | DZIAŁA |
 | przekrój | M01 Czat/Teresa | agent-edit w deckach + auto-trigger z czatu | DZIAŁA |
 | WYJŚCIE → | pliki | eksport PPTX/PDF/HTML/PNG (za quality gate) | DZIAŁA |
-| WYJŚCIE → | public | `/presentations/shared/:token` viewer | DZIAŁA (P1 over-disclosure) |
+| WYJŚCIE → | public | `/presentations/shared/:token` viewer | DZIAŁA (over-disclosure NAPRAWIONE `1b67579d7a`) |
 
 ## 2. Testy automatyczne (FAZA 2)
 > Raport: `evidence/f2_tests_report.md` · log: `f2_tests.log`.
@@ -130,10 +130,10 @@
 | Org-scope (by-id) | CZYSTY (18/19) | `getOrgId:184`; autosave `:2171`, agent-edit `:2190`, share `:1816`, versions/restore |
 | Quality gate eksportu | serwerowy | `enforceQualityGateForExport:358`→422 (4 ścieżki) |
 | Approval-ticket S5/S7 | wzorcowy | single-use, org+user+fingerprint, `/generate` bez → 403 |
-| Public viewer | over-disclosure | `presentations.routes.ts:412,606` (wspólny z M17) |
+| Public viewer | NAPRAWIONE (`1b67579d7a`) | `presentations.routes.ts:412,606` (wspólny z M17) |
 
 **Findingi:**
-- **[P1] public viewer over-disclosure (wspólny z M17)** — `GET /presentations/shared/:token`→`normalizeDeckRow={...row}` (`:412,606`) wycieka `organization_id`/`confidentiality`/`created_by`/`share_token` nieuwierzytelnionemu; FE czyta `row.organization_id` (`SharedPresentationView.tsx:70`). DeckBuilder/P20 NIE ma osobnego viewera. **Liczony raz (M17), zasięg potwierdzony na M19.** Fix wspólny: whitelist pól.
+- ~~**[P1] public viewer over-disclosure (wspólny z M17)**~~ **NAPRAWIONY** (`1b67579d7a`) — `normalizeDeckRow` whitelist pól; historycznie zwracał `{...row}` z `organization_id`/`confidentiality`/share_token nieuwierzytelnionemu.
 - **[P2] `?overrideQualityGate=true` bez roli** — `:1448` flaga z query, `enforceQualityGateForExport:366` omija blokadę bez sprawdzenia roli (funkcja nie bierze `role`). **Zweryfikowane osobiście.** Każdy z `presentation_export` defeatuje governance jednym paramem. Fix: ogranicz override do ADMIN/OWNER.
 - **[P2] beta-lock tylko nawigacyjny** — `/prezentacje`, `/builder`, `/presentation-studio` tylko `ProtectedRoute`/`ProductionModuleGate`; direct URL omija plate.
 - **[P2] share bez rate-limit i revoke** — `/shared/:token` bez limitu, brak unshare (link żyje do expiry).
@@ -143,7 +143,7 @@
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P1)
-1. **`[INTEGRACJA — INTEGRACJE.md §C poz.9 / Sprint 7+ / W9]`** Sanityzacja public viewera (wspólne z M17) — **NAPRAWIĆ RAZ RAZEM Z M17** — whitelist pól w `/presentations/shared/:token` (`presentations.routes.ts:412,606`) — Weryfikacja: odpowiedź bez org/confidentiality/token.
+1. ~~**Sanityzacja public viewera**~~ **[DONE `1b67579d7a`]** — `/presentations/shared/:token` whitelist pól; zrobione razem z M17.
 2. **Role-gate `overrideQualityGate`** — override tylko ADMIN/OWNER (przekaż rolę do `enforceQualityGateForExport`) — Weryfikacja: nie-admin z `?overrideQualityGate=true` → 422/403.
 3. **Naprawa fałszywej zieleni** — 15 vacuous testów p20 (realny webServer/supertest lub skreślić); test round-trip snapshotów na DB (S4) + route 422 (S5) — Weryfikacja: testy realnie asertują, dotykają DB.
 
@@ -163,7 +163,7 @@
 - [ ] 3. Railway: migracje 752/641/610 + flagi + smoke 200 + czyste logi
 - [ ] 4. Kanony: i18n DeckBuilder, tokeny kolorów
 - [ ] 5. Zero WIDOCZNE-ALE-ZEPSUTE (collaborate)
-- [ ] 6. Public viewer bez over-disclosure + override role-gated
+- [x] 6. Public viewer bez over-disclosure (DONE `1b67579d7a`) — override role-gated pozostaje (P2)
 
 ---
-**Pozostałe do domknięcia audytu M19:** Faza 3 (Railway) + Faza 4 (żywe 8 scenariuszy). Blockery bezpieczeństwa: P1 public viewer (wspólny z M17 — naprawić raz dla obu) + P2 override-bez-roli. Persistencja realna (przeciwieństwo M18), §27 wzorcowy — moduł silny; po Fazach 3/4 realnie Beta.
+**Pozostałe do domknięcia audytu M19:** Faza 3 (Railway) + Faza 4 (żywe 8 scenariuszy). P1 public viewer NAPRAWIONY (`1b67579d7a`). Pozostały blocker bezpieczeństwa: P2 override-bez-roli. Persistencja realna (przeciwieństwo M18), §27 wzorcowy — moduł silny; po Fazach 3/4 realnie Beta.
