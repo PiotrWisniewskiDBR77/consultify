@@ -74,6 +74,7 @@ export interface ModuleConfig {
   route: string;
   statuses: InitiativeStatus[];
   color: string;
+  betaModuleId?: string;
 }
 
 /**
@@ -134,6 +135,7 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
     route: '/benefits',
     statuses: [InitiativeStatus.TRACKING],
     color: 'teal',
+    betaModuleId: 'MODULE_BENEFITS',
   },
   reporting: {
     id: 'reporting',

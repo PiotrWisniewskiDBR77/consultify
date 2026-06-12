@@ -4072,9 +4072,20 @@ publicFormRouter.get('/public/views/:token', async (req: Request, res: Response)
     if (!token || typeof token !== 'string') {
       return res.status(400).json({ error: 'token is required' });
     }
-    const result = await MetadataService.getSharedView(token);
+    const result = (await MetadataService.getSharedView(token)) as any;
     if (!result) return res.status(404).json({ error: 'Shared view not found or expired' });
-    return res.status(200).json(result);
+    if (result._sharePassword) {
+      const provided = req.headers['x-share-password'] as string | undefined;
+      if (!provided || provided !== result._sharePassword) {
+        return res.status(401).json({
+          error: 'Password required',
+          code: 'VIEW_PASSWORD_REQUIRED',
+          hasPassword: true,
+        });
+      }
+    }
+    const { _sharePassword: _pw, ...safeResult } = result;
+    return res.status(200).json(safeResult);
   } catch (err) {
     handleRouteError(err, res, 'getPublicSharedView');
   }
@@ -4086,8 +4097,18 @@ publicFormRouter.get('/public/views/:token/records', async (req: Request, res: R
     if (!token || typeof token !== 'string') {
       return res.status(400).json({ error: 'token is required' });
     }
-    const viewData = await MetadataService.getSharedView(token);
+    const viewData = (await MetadataService.getSharedView(token)) as any;
     if (!viewData) return res.status(404).json({ error: 'Shared view not found or expired' });
+    if (viewData._sharePassword) {
+      const provided = req.headers['x-share-password'] as string | undefined;
+      if (!provided || provided !== viewData._sharePassword) {
+        return res.status(401).json({
+          error: 'Password required',
+          code: 'VIEW_PASSWORD_REQUIRED',
+          hasPassword: true,
+        });
+      }
+    }
 
     const { pageSize, cursor } = req.query;
     const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js')).default;
@@ -4981,8 +5002,19 @@ router.patch('/record-templates/:templateId', async (req: Request, res: Response
 
 router.delete('/record-templates/:templateId', async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+    const userId = authReq.userId || authReq.user?.id;
+    const orgId = authReq.organizationId;
     const db = (await import('../database/Database.js')).getDatabase();
     const { templateId } = req.params;
+    const existing = await db.query(
+      `SELECT r.*, t.base_id FROM tp_records r JOIN tp_tables t ON t.id = r.table_id WHERE r.id = $1`,
+      [templateId]
+    );
+    if (existing.rows.length === 0) return res.status(404).json({ error: 'Template not found' });
+    const baseId = (existing.rows[0] as any).base_id;
+    const allowed = await PermissionsService.canAccessBase(userId, orgId, baseId);
+    if (!allowed) return res.status(403).json({ error: 'Access denied' });
     await db.query('DELETE FROM tp_records WHERE id = $1', [templateId]);
     return res.status(204).send();
   } catch (err) {

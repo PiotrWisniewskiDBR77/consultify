@@ -27,6 +27,7 @@ import {
 } from '@/services/api/v8/execution-control';
 
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { isBetaClosed } from '../../utils/betaAccess';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -228,15 +229,17 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             {t('execution.budget.title')}
           </h3>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(`/benefits?initiativeId=${encodeURIComponent(initiativeId)}`)}
-              className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-blue-500 hover:text-blue-400 transition-colors"
-              title={t('execution.budget.viewInResults', 'View in Results')}
-            >
-              {t('execution.budget.viewInResults', 'View in Results')}
-              <ArrowUpRight size={12} />
-            </button>
+            {!isBetaClosed('MODULE_BENEFITS') && (
+              <button
+                type="button"
+                onClick={() => navigate(`/benefits?initiativeId=${encodeURIComponent(initiativeId)}`)}
+                className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-blue-500 hover:text-blue-400 transition-colors"
+                title={t('execution.budget.viewInResults', 'View in Results')}
+              >
+                {t('execution.budget.viewInResults', 'View in Results')}
+                <ArrowUpRight size={12} />
+              </button>
+            )}
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded-full ${style.bg} ${style.text}`}
             >

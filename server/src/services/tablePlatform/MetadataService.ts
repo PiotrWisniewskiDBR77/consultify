@@ -1315,6 +1315,7 @@ const metadataService = {
     config: any;
     tableName: string;
     fields: any[];
+    hasPassword: boolean;
   } | null> {
     const db = getDatabase();
     try {
@@ -1345,7 +1346,9 @@ const metadataService = {
         config: view.config,
         tableName: view.table_name,
         fields: fieldsResult.rows,
-      };
+        hasPassword: !!view.share_password,
+        _sharePassword: view.share_password as string | null,
+      } as any;
     } catch (e) {
       logger.error('[MetadataService] getSharedView failed', {
         token,

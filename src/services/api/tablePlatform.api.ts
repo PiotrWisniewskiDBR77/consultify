@@ -961,18 +961,23 @@ export async function publishTemplate(
 // SHARED VIEW PUBLIC ACCESS
 // ============================================================================
 
-export async function getSharedViewData(token: string): Promise<any> {
-  const res = await fetch(`${BASE_PATH}/public/views/${encodeURIComponent(token)}`);
+export async function getSharedViewData(token: string, password?: string): Promise<any> {
+  const headers: Record<string, string> = {};
+  if (password) headers['x-share-password'] = password;
+  const res = await fetch(`${BASE_PATH}/public/views/${encodeURIComponent(token)}`, { headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error((body as any).error || 'Shared view not found');
+    const err: any = new Error((body as any).error || 'Shared view not found');
+    err.code = (body as any).code;
+    err.hasPassword = (body as any).hasPassword;
+    throw err;
   }
   return res.json();
 }
 
 export async function getSharedViewRecords(
   token: string,
-  options?: { pageSize?: number; cursor?: string }
+  options?: { pageSize?: number; cursor?: string; password?: string }
 ): Promise<any> {
   const params = new URLSearchParams();
   if (options?.pageSize) params.set('pageSize', String(options.pageSize));
@@ -981,10 +986,15 @@ export async function getSharedViewRecords(
   const url = query
     ? `${BASE_PATH}/public/views/${encodeURIComponent(token)}/records?${query}`
     : `${BASE_PATH}/public/views/${encodeURIComponent(token)}/records`;
-  const res = await fetch(url);
+  const headers: Record<string, string> = {};
+  if (options?.password) headers['x-share-password'] = options.password;
+  const res = await fetch(url, { headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error((body as any).error || 'Failed to fetch shared view records');
+    const err: any = new Error((body as any).error || 'Failed to fetch shared view records');
+    err.code = (body as any).code;
+    err.hasPassword = (body as any).hasPassword;
+    throw err;
   }
   return res.json();
 }

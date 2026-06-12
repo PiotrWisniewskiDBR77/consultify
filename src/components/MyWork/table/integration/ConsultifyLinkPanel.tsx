@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import * as Api from '@/services/api/tablePlatform.api';
+import { isBetaClosed } from '@/utils/betaAccess';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -57,12 +58,14 @@ const MODULE_CONFIG = {
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
     borderColor: 'border-emerald-200 dark:border-emerald-500/20',
+    betaModuleId: 'MODULE_BENEFITS',
   },
   finance: {
     icon: DollarSign,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50 dark:bg-blue-500/10',
     borderColor: 'border-blue-200 dark:border-blue-500/20',
+    betaModuleId: 'MODULE_ECONOMICS',
   },
   execution: {
     icon: Zap,
@@ -413,7 +416,9 @@ export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
             <Loader2 className="animate-spin text-slate-600" size={20} />
           </div>
         ) : (
-          (['results', 'finance', 'execution', 'initiatives'] as ModuleKey[]).map((mk) => (
+          (['results', 'finance', 'execution', 'initiatives'] as ModuleKey[])
+            .filter((mk) => !isBetaClosed((MODULE_CONFIG[mk] as any).betaModuleId))
+            .map((mk) => (
             <ModuleLinkSection
               key={mk}
               moduleKey={mk}

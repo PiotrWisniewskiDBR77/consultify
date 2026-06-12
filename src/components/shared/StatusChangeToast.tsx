@@ -16,6 +16,7 @@ import {
   ModuleId,
   MODULES,
 } from '@/services/initiativeLifecycle';
+import { isBetaClosed } from '@/utils/betaAccess';
 
 import { InitiativeStatus } from '../../types';
 
@@ -37,7 +38,10 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
   const newModule = getModuleForStatus(newStatus);
   const moduleConfig = MODULES[newModule];
 
-  const hasModuleChanged = previousModule && previousModule !== newModule;
+  const hasModuleChanged =
+    previousModule &&
+    previousModule !== newModule &&
+    !isBetaClosed(moduleConfig.betaModuleId);
 
   const handleNavigate = () => {
     navigate(moduleConfig.route);
