@@ -1,5 +1,13 @@
 # RUNBOOK FAZY C — migracje + promocja + żywa weryfikacja (próg BETA)
 
+> ## 📓 LOG WYKONANIA — STAGING, 2026-06-12 (autonomicznie)
+> Railway CLI był zalogowany + `.env.staging.local` celuje w `caboose.proxy.rlwy.net` (publiczny proxy staging). Wykonano **Krok 2 (staging) + Faza 3** częściowo:
+> - **`db:verify:schema:staging` (Faza 3) URUCHOMIONA** na żywej bazie → start: **64 brakujące tabele + 179 kolumn**.
+> - **Migracje staging zaaplikowane** (`migrate.postgres.ts`, strict): 97 oczekujących → **0**. Po drodze naprawiono **13 realnych bugów migracji** (wszystkie pomagają też prod, wszystkie scommitowane): idempotencja seedów (kb_collections slug, Anna/Teresa profile FK+slug), SQLite-izmy boolean (is_active=1→TRUE), legacy `FREE` tier→BUDGET, `date_trunc` IMMUTABLE (UTC), FK type-mismatch (subscriber_tokens TEXT), retrofit kolumn na zdryfowanych tabelach (partner_learning_modules ×4, data_export_requests.org_id, webhook_deliveries.success).
+> - **`✅ Postgres migrations complete`** — wszystkie przeszły. Drift: **64→28 tabel, 179→153 kolumn** (zamknięte 36 tabel).
+> - **POZOSTAŁE 28 tabel + 153 kolumny = „phantom-applied"** — migracje (281 knowledge_hub, 563, 569, 573 people-change, stare `.sql.sql` 010/019/020/023/027) mają `status=success` w `schema_migrations`, ALE ich tabel/kolumn brak. Runner je pomija. **To dokładnie pułapka „schema_migrations kłamie".** Nie domknie tego normalny przebieg — wymaga **force-re-run** konkretnych migracji (`--from`/`--only`) albo czyszczenia ich wpisów w `schema_migrations` i ponownej aplikacji. Operacja z większym ryzykiem na współdzielonym staging → wykonać świadomie (NASTĘPNY KROK).
+> - **Wniosek operacyjny:** potwierdza zalecenie `CUTOVER_RUNBOOK` (świeża baza). Na zdryfowanej bazie migracje wymagają łatania pod realny stan; na świeżej pustej bazie te 13 bugów i tak są już naprawione w repo.
+
 **Data:** 2026-06-12 · **Cel:** dzień z dostępem do Railway = wykonanie, nie planowanie.
 **Bramka C (MASTER_PLAN §3):** backup DB → migracje zastosowane+zweryfikowane przez `information_schema` → 27 modułów żywo wg scenariuszy S → karty 🟦→✅ + re-ocena → testy przekrojowe zainicjowane.
 **Twarde fakty środowiska:** prod = kod z 2026-05-18 (dryf ~1 mies. vs `Londyn`); staging miał schema-drift (raport `docs/qa/runs/2026-06-08/`); oficjalny deploy = `.github/workflows/railway-deploy.yml` (push na `develop` → staging auto; prod przez `workflow_dispatch` z `environment=production` + `confirm_production=yes`).
