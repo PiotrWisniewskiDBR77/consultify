@@ -1040,20 +1040,27 @@ router.get(
         `)) as { count: number; total_amount: number } | null;
 
       return res.json({
-        mrr: mrrResult?.mrr || 0,
-        arr: (mrrResult?.mrr || 0) * 12,
+        mrr: Number(mrrResult?.mrr || 0),
+        arr: Number(mrrResult?.mrr || 0) * 12,
         revenue: {
-          total: revenueResult?.total_revenue || 0,
-          invoiceCount: revenueResult?.invoice_count || 0,
+          total: Number(revenueResult?.total_revenue || 0),
+          invoiceCount: Number(revenueResult?.invoice_count || 0),
           period: parseInt(period),
         },
         subscriptions: {
-          byPlan: subscriptionsByPlan,
-          trends,
+          byPlan: subscriptionsByPlan.map((p) => ({
+            ...p,
+            subscriber_count: Number(p.subscriber_count || 0),
+          })),
+          trends: trends.map((t) => ({
+            ...t,
+            new_subscriptions: Number(t.new_subscriptions || 0),
+            churned: Number(t.churned || 0),
+          })),
         },
         unpaidInvoices: {
-          count: unpaidResult?.count || 0,
-          totalAmount: unpaidResult?.total_amount || 0,
+          count: Number(unpaidResult?.count || 0),
+          totalAmount: Number(unpaidResult?.total_amount || 0),
         },
       });
     } catch (error: unknown) {
@@ -1128,7 +1135,7 @@ router.get(
 
       return res.json({
         invoices: mapped,
-        total: total?.total || mapped.length,
+        total: Number(total?.total ?? mapped.length),
         page,
         pageSize,
       });
@@ -2325,7 +2332,16 @@ router.get(
 
       const creditNotes = await dbAll(query, params);
 
-      return res.json({ creditNotes });
+      return res.json({
+        creditNotes: (creditNotes as any[]).map((cn) => ({
+          ...cn,
+          subtotal: Number(cn.subtotal ?? 0),
+          total: Number(cn.total ?? 0),
+          amount_remaining: Number(cn.amount_remaining ?? 0),
+          base_total: cn.base_total != null ? Number(cn.base_total) : undefined,
+          tax_amount: cn.tax_amount != null ? Number(cn.tax_amount) : undefined,
+        })),
+      });
     } catch (error: unknown) {
       logger.warn('[Billing] List credit notes fallback (returning empty):', error);
       return res.json({ creditNotes: [] });
@@ -2480,19 +2496,19 @@ router.get(
 
       return res.json({
         stats: {
-          totalCount: stats?.total_count || 0,
-          issuedCount: stats?.issued_count || 0,
-          appliedCount: stats?.applied_count || 0,
-          partiallyAppliedCount: stats?.partially_applied_count || 0,
-          refundedCount: stats?.refunded_count || 0,
-          voidedCount: stats?.voided_count || 0,
-          totalValue: stats?.total_value || 0,
-          totalApplied: stats?.total_applied || 0,
-          totalRefunded: stats?.total_refunded || 0,
-          totalRemaining: stats?.total_remaining || 0,
+          totalCount: Number(stats?.total_count ?? 0),
+          issuedCount: Number(stats?.issued_count ?? 0),
+          appliedCount: Number(stats?.applied_count ?? 0),
+          partiallyAppliedCount: Number(stats?.partially_applied_count ?? 0),
+          refundedCount: Number(stats?.refunded_count ?? 0),
+          voidedCount: Number(stats?.voided_count ?? 0),
+          totalValue: Number(stats?.total_value ?? 0),
+          totalApplied: Number(stats?.total_applied ?? 0),
+          totalRefunded: Number(stats?.total_refunded ?? 0),
+          totalRemaining: Number(stats?.total_remaining ?? 0),
           thisMonth: {
-            count: monthStats?.count || 0,
-            value: monthStats?.value || 0,
+            count: Number(monthStats?.count ?? 0),
+            value: Number(monthStats?.value ?? 0),
           },
         },
       });
@@ -3459,7 +3475,15 @@ router.get(
       }
       query += ' ORDER BY country, percentage DESC';
       const rates = await dbAll(query, params);
-      return res.json({ rates });
+      return res.json({
+        rates: (rates as any[]).map((r) => ({
+          ...r,
+          is_active: Boolean(r.is_active),
+          automatic_tax: Boolean(r.automatic_tax),
+          inclusive: Boolean(r.inclusive),
+          percentage: Number(r.percentage),
+        })),
+      });
     } catch (error: any) {
       logger.error('[Billing] Get tax rates error:', error);
       return res.status(500).json({ error: 'Failed to get tax rates' });
@@ -3482,7 +3506,15 @@ router.get(
       }
       query += ' ORDER BY country, percentage DESC';
       const rates = await dbAll(query, params);
-      return res.json({ rates });
+      return res.json({
+        rates: (rates as any[]).map((r) => ({
+          ...r,
+          is_active: Boolean(r.is_active),
+          automatic_tax: Boolean(r.automatic_tax),
+          inclusive: Boolean(r.inclusive),
+          percentage: Number(r.percentage),
+        })),
+      });
     } catch (error: any) {
       logger.error('[Billing] Get tax rates error:', error);
       return res.status(500).json({ error: 'Failed to get tax rates' });

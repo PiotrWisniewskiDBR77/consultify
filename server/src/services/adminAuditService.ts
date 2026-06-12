@@ -58,8 +58,8 @@ class AdminAuditServiceClass {
     const riskLevel = this.getRiskLevel(riskScore);
 
     await this.db.run(
-      'INSERT INTO admin_audit_logs (id, admin_id, action_type, metadata_json, risk_score, risk_level, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, adminId, actionType, JSON.stringify(details), riskScore, riskLevel, 'unresolved']
+      'INSERT INTO admin_audit_logs (id, admin_id, action_type, metadata_json, risk_score, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, adminId, actionType, JSON.stringify(details), riskScore, 'unresolved']
     );
 
     return { id, adminId, actionType, riskScore, riskLevel };

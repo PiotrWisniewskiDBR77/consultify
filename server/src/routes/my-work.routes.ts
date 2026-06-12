@@ -2491,6 +2491,14 @@ router.get(
     if (favoriteOnly && ideaColumns.has('is_favorite')) {
       whereExtra += ' AND is_favorite = 1';
     }
+    if (req.query.stage && ideaColumns.has('stage')) {
+      whereExtra += ' AND stage = ?';
+      params.push(String(req.query.stage).trim());
+    }
+    if (req.query.area && ideaColumns.has('area')) {
+      whereExtra += ' AND area = ?';
+      params.push(String(req.query.area).trim());
+    }
     params.push(limit);
 
     const rows =
@@ -2653,6 +2661,10 @@ router.post(
       insertColumns.push('evidence_refs_json');
       insertValues.push(JSON.stringify(evidenceRefs));
     }
+    if (hasIdeaColumn('folder_id') && req.body?.folderId) {
+      insertColumns.push('folder_id');
+      insertValues.push(String(req.body.folderId));
+    }
 
     await queryHelpers.queryRun(
       `
@@ -2672,9 +2684,19 @@ router.post(
         source_type as "sourceType",
         source_conversation_id as "sourceConversationId",
         source_message_id as "sourceMessageId",
+        stage,
+        potential,
+        complexity,
+        area,
+        priority,
+        branch,
+        promoted_to as "promotedTo",
         ${hasIdeaColumn('action_contract_json') ? 'action_contract_json' : "'{}' as action_contract_json"},
         ${hasIdeaColumn('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json"},
         ${hasIdeaColumn('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json"},
+        ${hasIdeaColumn('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"'},
+        ${hasIdeaColumn('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"'},
+        ${hasIdeaColumn('last_opened_at') ? 'last_opened_at as "lastOpenedAt"' : 'NULL as "lastOpenedAt"'},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -2712,7 +2734,7 @@ router.post(
       },
     });
 
-    res.status(201).json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags) }));
+    res.status(201).json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
   })
 );
 
@@ -2732,6 +2754,13 @@ router.get(
         : "'{}' as action_contract_json",
       ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
       ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+    ].join(',\n        ');
+    const homeSelectDetail = [
+      ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"',
+      ideaColumns.has('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"',
+      ideaColumns.has('last_opened_at')
+        ? 'last_opened_at as "lastOpenedAt"'
+        : 'NULL as "lastOpenedAt"',
     ].join(',\n        ');
     const row = await queryHelpers.queryOne<any>(
       `
@@ -2757,6 +2786,7 @@ router.get(
         promoted_to as "promotedTo",
         promoted_entity_id as "promotedEntityId",
         ${lineageSelect},
+        ${homeSelectDetail},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -2771,7 +2801,7 @@ router.get(
       return;
     }
 
-    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags) }));
+    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
   })
 );
 
@@ -2861,6 +2891,19 @@ router.put(
         source_type as "sourceType",
         source_conversation_id as "sourceConversationId",
         source_message_id as "sourceMessageId",
+        stage,
+        potential,
+        complexity,
+        area,
+        priority,
+        branch,
+        promoted_to as "promotedTo",
+        ${ideaColumns.has('action_contract_json') ? 'action_contract_json' : "'{}' as action_contract_json"},
+        ${ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json"},
+        ${ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json"},
+        ${ideaColumns.has('folder_id') ? 'folder_id as "folderId"' : 'NULL as "folderId"'},
+        ${ideaColumns.has('is_favorite') ? 'is_favorite as "isFavorite"' : '0 as "isFavorite"'},
+        ${ideaColumns.has('last_opened_at') ? 'last_opened_at as "lastOpenedAt"' : 'NULL as "lastOpenedAt"'},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -2907,7 +2950,7 @@ router.put(
       },
     });
 
-    res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags), isFavorite: !!(row as any)?.isFavorite }));
   })
 );
 
@@ -2980,7 +3023,7 @@ router.post(
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [id, userId, orgId, name, description, color, parentFolderId]
     );
-    res.json({ id, name, description, color, parentFolderId });
+    res.status(201).json({ id, name, description, color, parentFolderId });
   })
 );
 
