@@ -10,7 +10,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { materializePlannedVisual } from './ai/deckVisualsService.js';
-import { buildContextPack, saveContextPackSnapshot } from './contextPackBuilder.js';
+import {
+  buildContextPack,
+  getContextPackSnapshot,
+  saveContextPackSnapshot,
+} from './contextPackBuilder.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
 import { recordDeckGeneration } from './organizationStyleProfileService.js';
@@ -1667,6 +1671,68 @@ export async function regenerateSlide(
   const unifiedJson: UnifiedReportJSON = JSON.parse(deck.unified_json);
   if (slideIndex < 0 || slideIndex >= unifiedJson.slides.length)
     throw new Error('Invalid slide index');
+
+  const slide = unifiedJson.slides[slideIndex];
+
+  // Try narrative enrichment for text-heavy slides using the saved context pack.
+  const narrativeIntents: SlideIntent[] = [
+    'executive_summary',
+    'key_messages',
+    'next_steps',
+    'recommendation_portfolio',
+  ];
+
+  if (narrativeIntents.includes(slide.intent)) {
+    const contextPack = await getContextPackSnapshot(deckId);
+    if (contextPack) {
+      try {
+        const language: 'en' | 'pl' = unifiedJson.meta?.language === 'pl' ? 'pl' : 'en';
+        const narrativeOutput = await generateNarrative({
+          context_pack: contextPack,
+          organizationId,
+          report_config: {
+            report_type_v3: 'presentation',
+            goal_v3: 'inform',
+            communication_register: 'executive',
+            density: 'concise',
+            form: 'presentation',
+            data_level: 'summary',
+            language,
+          },
+          section_key: slide.intent,
+          section_type: slide.intent,
+          section_title: slide.key_message || slide.intent,
+          aiPurpose: 'presentation_slide_copy',
+        });
+
+        if (narrativeOutput.post_check.passed && narrativeOutput.content) {
+          (slide as any)._narrative_enrichment = {
+            content: polishDeckText(narrativeOutput.content, language),
+            facts_used: narrativeOutput.facts_used.length,
+            observations_used: narrativeOutput.observations_used.length,
+            regenerated_at: new Date().toISOString(),
+          };
+          unifiedJson.slides[slideIndex] = slide;
+        }
+      } catch (err) {
+        logger.warn(`[PresentationGen] Narrative Engine skipped for regenerateSlide: ${err}`);
+      }
+    }
+  }
+
+  // Rebuild deck_json from updated unified_json (surgical: just updates the affected card).
+  const updatedDeckDocument = deckDocumentFromUnifiedJson({
+    deckId,
+    organizationId,
+    title: unifiedJson.meta?.project || deck.title || '',
+    unifiedJson,
+    setup: { language: unifiedJson.meta?.language || 'en' },
+  });
+
+  await dbRun(
+    `UPDATE presentation_decks SET unified_json = ?, deck_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+    [JSON.stringify(unifiedJson), JSON.stringify(updatedDeckDocument), deckId, organizationId]
+  );
 
   return { slide: unifiedJson.slides[slideIndex] };
 }

@@ -40,6 +40,7 @@ import {
   type PresentationCapability,
 } from '../services/presentationAccessPolicyService.js';
 import type { DeckSetup, OutlineItem } from '../services/presentationGeneratorService.js';
+import { regenerateSlide } from '../services/presentationGeneratorService.js';
 import {
   executeLayoutCapacityOverrides,
   executeLayoutCapacityReset,
@@ -1093,6 +1094,28 @@ router.post(
       return;
     }
     res.json({ success: true, data: result.result });
+  })
+);
+
+/**
+ * POST /api/presentation-studio/decks/:deckId/slides/:slideIndex/regenerate
+ * Per-slide AI regeneration (E3). Uses saved ContextPack snapshot for narrative slides.
+ * AC: regeneration of 1 card does not touch other cards.
+ */
+router.post(
+  '/decks/:deckId/slides/:slideIndex/regenerate',
+  asyncHandler(async (req, res) => {
+    const orgId = String((req as any).organizationId ?? '');
+    const deckId = String(req.params.deckId ?? '');
+    const slideIndex = parseInt(String(req.params.slideIndex ?? ''), 10);
+
+    if (!deckId || isNaN(slideIndex) || slideIndex < 0) {
+      res.status(400).json({ success: false, code: 'INVALID_PARAMS' });
+      return;
+    }
+
+    const result = await regenerateSlide(deckId, slideIndex, orgId);
+    res.json({ success: true, data: result });
   })
 );
 

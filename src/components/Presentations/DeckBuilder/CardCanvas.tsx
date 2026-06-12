@@ -1,5 +1,5 @@
-import { Plus, Sparkles } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import { Plus, RefreshCw, Sparkles } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { DeckCard } from '../wizard/types';
@@ -12,6 +12,7 @@ interface CardCanvasProps {
   onSelectCard: (index: number) => void;
   onBlockClick?: (cardId: string, blockId: string) => void;
   onAddCard?: (atIndex: number) => void;
+  onRegenerateCard?: (cardIndex: number) => Promise<void>;
   speakerNotes?: string;
   showNotes: boolean;
   animationsEnabled?: boolean;
@@ -24,6 +25,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   onSelectCard,
   onBlockClick,
   onAddCard,
+  onRegenerateCard,
   speakerNotes,
   showNotes,
   animationsEnabled = true,
@@ -31,6 +33,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const el = cardRefs.current[activeCardIndex];
@@ -70,7 +73,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                 cardRefs.current[index] = el;
               }}
               onClick={() => onSelectCard(index)}
-              className="max-w-4xl mx-auto cursor-pointer"
+              className="max-w-4xl mx-auto cursor-pointer relative group"
             >
               <CardRenderer
                 card={card}
@@ -79,6 +82,29 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                 onBlockClick={(blockId) => onBlockClick?.(card.card_id, blockId)}
                 animationsEnabled={animationsEnabled}
               />
+              {onRegenerateCard && (
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (regeneratingIndex === index) return;
+                      setRegeneratingIndex(index);
+                      onRegenerateCard(index).finally(() => setRegeneratingIndex(null));
+                    }}
+                    disabled={regeneratingIndex === index}
+                    title={t('presentations.builder.regenerateSlide', 'Regenerate slide')}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
+                  >
+                    <RefreshCw
+                      size={11}
+                      className={regeneratingIndex === index ? 'animate-spin' : ''}
+                    />
+                    {regeneratingIndex === index
+                      ? t('presentations.builder.regenerating', 'Regenerating…')
+                      : t('presentations.builder.regenerateSlide', 'Regenerate')}
+                  </button>
+                </div>
+              )}
             </div>
           </React.Fragment>
         ))}

@@ -53,6 +53,7 @@ import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
+import { PresentationStudioApi } from '@/services/api/presentationStudio.api';
 
 function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (!raw) return fallback;
@@ -293,6 +294,7 @@ export const DeckBuilder: React.FC = () => {
 
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [deckReloadKey, setDeckReloadKey] = useState(0);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
   const serverVersionRef = useRef<number>(1);
@@ -530,7 +532,7 @@ export const DeckBuilder: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [deckId, setDeck]);
+  }, [deckId, setDeck, deckReloadKey]);
 
   const deckForAutosave = useMemo(() => {
     if (!deckId || !deck) return null;
@@ -868,6 +870,20 @@ export const DeckBuilder: React.FC = () => {
     [deck, handleAiPrompt, isPolish]
   );
 
+  const handleRegenerateCard = useCallback(
+    async (cardIndex: number) => {
+      if (!deckId) return;
+      try {
+        await PresentationStudioApi.regenerateSlide(deckId, cardIndex);
+        toast.success(isPolish ? 'Slajd odświeżony.' : 'Slide regenerated.', { duration: 2000 });
+        setDeckReloadKey((k) => k + 1);
+      } catch (err) {
+        toast.error(isPolish ? 'Nie udało się odświeżyć slajdu.' : 'Failed to regenerate slide.');
+      }
+    },
+    [deckId, isPolish]
+  );
+
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
       return (
@@ -986,6 +1002,7 @@ export const DeckBuilder: React.FC = () => {
               onSelectCard={setActiveCardIndex}
               onBlockClick={() => {}}
               onAddCard={handleAddBlankCard}
+              onRegenerateCard={handleRegenerateCard}
               speakerNotes={activeCard?.speaker_notes}
               showNotes={showNotes}
               animationsEnabled={animationsEnabled}
@@ -1261,6 +1278,7 @@ export const DeckBuilder: React.FC = () => {
             onSelectCard={setActiveCardIndex}
             onBlockClick={() => {}}
             onAddCard={handleAddBlankCard}
+            onRegenerateCard={handleRegenerateCard}
             speakerNotes={activeCard?.speaker_notes}
             showNotes={showNotes}
             animationsEnabled={animationsEnabled}

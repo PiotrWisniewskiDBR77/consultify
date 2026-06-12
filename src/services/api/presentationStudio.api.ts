@@ -492,6 +492,16 @@ export const PresentationStudioApi = {
       limit && Number.isFinite(limit) ? `?limit=${encodeURIComponent(String(limit))}` : '';
     return studioGet<PresentationStudioSourceArtifactList>(`/source-artifacts${query}`);
   },
+
+  /**
+   * E3 — Per-slide AI regeneration. Uses saved ContextPack snapshot (narrative slides)
+   * or rebuilds from existing unified_json. Does NOT touch other slides.
+   */
+  regenerateSlide: (deckId: string, slideIndex: number) =>
+    studioPostTyped<{ slide: Record<string, unknown> }>(
+      `/decks/${encodeURIComponent(deckId)}/slides/${encodeURIComponent(String(slideIndex))}/regenerate`,
+      {}
+    ),
 };
 
 export type PresentationStudioApiType = typeof PresentationStudioApi;

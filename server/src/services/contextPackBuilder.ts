@@ -737,6 +737,24 @@ async function extractArtifactGovernanceData(
 }
 
 /**
+ * Load a previously saved ContextPack snapshot from the database.
+ * Returns null when no snapshot exists (e.g., deck was generated before snapshots were introduced).
+ */
+export async function getContextPackSnapshot(deckId: string): Promise<ContextPack | null> {
+  try {
+    const row = (await dbAll(
+      `SELECT pack_data FROM context_pack_snapshots WHERE deck_id = ? LIMIT 1`,
+      [deckId]
+    )) as any[];
+    if (!row || row.length === 0) return null;
+    return JSON.parse(row[0].pack_data) as ContextPack;
+  } catch (error) {
+    logger.warn('[ContextPack] Failed to load snapshot', { error });
+    return null;
+  }
+}
+
+/**
  * Save a ContextPack snapshot to the database for refresh/audit purposes.
  */
 export async function saveContextPackSnapshot(deckId: string, pack: ContextPack): Promise<void> {
