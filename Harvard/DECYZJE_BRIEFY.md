@@ -28,6 +28,8 @@
 
 **Rekomendacja: A** teraz; B jako świadoma pozycja roadmapy, nie dług audytowy.
 
+> ⚠️ **KOREKTA 2026-06-12 (weryfikacja CTO przed wykonaniem — brief się mylił):** metody `getUserMemory/updateUserMemory/getOrganizationMemory/...` w `api.ts:14118` NIE są martwe — używa ich `memoryService.ts` → `feedbackLearningService.ts` → `InlineResponseFeedback.tsx` (żywy komponent czatu, pętla feedback-learning). Usunięcie złamałoby produkcyjną funkcję. Research-agent zgłosił „0 referencji" bo szukał tylko bezpośrednich wywołań `Api.getUserMemory()` w `.tsx`, pomijając warstwę serwisową. **Decyzja faktyczna: NIE USUWAĆ.** Właściwy przedmiot decyzji #2 (endpoint `/ai/memory/project/:projectId`) nie ma konsumenta FE (tylko typy) i ma poprawne guardy (verifyToken+org-check, NIE internalToolsGuard jak zakładała karta) — nieszkodliwa martwa powierzchnia backendu, nie warto ruszać. **WYKONANE: brak zmian, premisa zamknięta.**
+
 ---
 
 ## #3 — M25 billing: wpiąć `BillingSettings` czy usunąć route?
