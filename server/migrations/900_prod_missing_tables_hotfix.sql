@@ -478,6 +478,10 @@ CREATE TABLE IF NOT EXISTS data_export_requests (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- data_export_requests exists on drifted DBs without organization_id; the
+-- CREATE above is a no-op, so retrofit the column the index needs.
+ALTER TABLE data_export_requests ADD COLUMN IF NOT EXISTS organization_id TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_data_export_requests_org ON data_export_requests(organization_id);
 CREATE INDEX IF NOT EXISTS idx_data_export_requests_status ON data_export_requests(status);
 
