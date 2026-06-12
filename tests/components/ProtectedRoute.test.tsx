@@ -35,6 +35,7 @@ describe('ProtectedRoute triad role hierarchy', () => {
         <Routes>
           <Route path="/login" element={<div>Login Screen</div>} />
           <Route path="/chat" element={<div>Chat Screen</div>} />
+          <Route path="/superadmin" element={<div>Superadmin Screen</div>} />
           <Route
             path="/protected"
             element={
@@ -71,7 +72,10 @@ describe('ProtectedRoute triad role hierarchy', () => {
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
 
-  it('allows SUPERADMIN to access routes requiring ADMIN', () => {
+  // Security ADM-RAW-P0-001: SUPERADMIN must NOT silently inherit tenant ADMIN
+  // access via the role hierarchy — they are redirected to their own control
+  // plane (/superadmin), not let into /admin/*.
+  it('redirects SUPERADMIN away from ADMIN routes to the superadmin control plane', () => {
     authState.currentUser = {
       isAuthenticated: true,
       role: 'SUPERADMIN',
@@ -79,7 +83,8 @@ describe('ProtectedRoute triad role hierarchy', () => {
 
     renderProtectedRoute('ADMIN');
 
-    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+    expect(screen.getByText('Superadmin Screen')).toBeInTheDocument();
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
   });
 
   it('blocks ADMIN from accessing routes requiring SUPERADMIN', () => {
