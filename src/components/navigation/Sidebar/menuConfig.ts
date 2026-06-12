@@ -25,7 +25,6 @@ import {
   GitBranch,
   LayoutDashboard,
   Lightbulb,
-  Map,
   MessageSquare,
   Presentation,
   Rocket,
@@ -44,7 +43,7 @@ import { MenuItem } from './types';
 
 type TranslationFn = (key: string, options?: any) => any;
 
-export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuItem[] {
+export function getMenuStructure(t: TranslationFn, _journeyState?: string): MenuItem[] {
   return [
     // 1. Czat - podstawowa rozmowa z AI
     {
@@ -173,17 +172,9 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
     },
     // MCP IRIS (14) and MCP Marketplace (15) removed from navigation per decision
     // D7 (placeholder-only modules dropped). Their routes now redirect to /chat.
-    // Ecosystem affiliate dashboard (Phase G - conditional)
-    ...(journeyState === 'ECOSYSTEM_NODE'
-      ? [
-          {
-            id: 'AFFILIATE_DASHBOARD',
-            label: t('sidebar.affiliateDashboard', 'Ecosystem Impact'),
-            icon: React.createElement(Map, { size: 20 }),
-            viewId: AppView.AFFILIATE_DASHBOARD,
-          },
-        ]
-      : []),
+    // Ecosystem affiliate dashboard dropped per decision #1 (Harvard): the dashboard
+    // was UI-complete but backend-stubbed (always 503/zeros). Route redirects to /chat;
+    // DB + backend kept as dormant foundations. Re-add this item when it ships real.
   ];
 }
 

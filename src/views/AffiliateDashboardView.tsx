@@ -1,3 +1,12 @@
+/**
+ * DORMANT FOUNDATION — not routed. Affiliate/Ecosystem was dropped from
+ * navigation per decision #1 (Harvard) because the dashboard was UI-complete
+ * but backend-stubbed (always 503 / zeros). The route (/affiliate) now
+ * redirects to /chat and no sidebar links here. Kept intentionally (with the
+ * referrals migrations + backend) so a future real build can revive it.
+ * If reviving: wire api.ts referral stubs to real endpoints first, then
+ * re-add the route + a sidebar item. Do NOT delete in dead-code sweeps.
+ */
 import {
   CheckCircle2,
   Clock as ClockIcon,

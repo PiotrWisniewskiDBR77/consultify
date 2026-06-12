@@ -302,11 +302,6 @@ const TrialEntryView = lazyWithRetry(() =>
   import('@/views/TrialEntryView').then((m) => ({ default: m.TrialEntryView }))
 );
 
-// Affiliate
-const AffiliateDashboardView = lazyWithRetry(() =>
-  import('@/views/AffiliateDashboardView').then((m) => ({ default: m.AffiliateDashboardView }))
-);
-
 // Legal Pages
 const AboutView = lazyWithRetry(() =>
   import('@/views/legal/AboutView').then((m) => ({ default: m.AboutView }))
@@ -2366,17 +2361,11 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Affiliate */}
-        <Route
-          path={ROUTES.AFFILIATE}
-          element={
-            <ProtectedRoute requireAuth={true}>
-              <AnimationWrapper variant="slideUp">
-                <AffiliateDashboardView />
-              </AnimationWrapper>
-            </ProtectedRoute>
-          }
-        />
+        {/* Affiliate/Ecosystem dropped from navigation (decision #1, Harvard).
+            The dashboard was UI-complete but backend-stubbed (always 503 / zeros) —
+            a lying surface. Route redirects to /chat; DB migrations + referrals
+            backend kept as dormant foundations for a future real build. */}
+        <Route path={ROUTES.AFFILIATE} element={<Navigate to={ROUTES.AI_CHAT} replace />} />
 
         {/* Legal Pages - Public */}
         <Route

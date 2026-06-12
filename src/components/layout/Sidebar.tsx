@@ -29,7 +29,6 @@ import {
   Link, // Integrations
   Lock,
   LogOut,
-  Map,
   MessageSquare, // Feedback
   Palette, // Studio
   PanelLeftClose,
@@ -389,17 +388,9 @@ export const Sidebar: React.FC = () => {
       icon: <Calculator size={20} />,
       viewId: AppView.ECONOMICS,
     },
-    // Phase G: Ecosystem Affiliate Dashboard (conditional)
-    ...(currentUser?.journeyState === 'ECOSYSTEM_NODE'
-      ? [
-          {
-            id: 'AFFILIATE_DASHBOARD',
-            label: t('sidebar.affiliateDashboard', 'Ecosystem Impact'),
-            icon: <Map size={20} />,
-            viewId: AppView.AFFILIATE_DASHBOARD,
-          },
-        ]
-      : []),
+    // Ecosystem Affiliate dropped per decision #1 (Harvard): dashboard was
+    // UI-complete but backend-stubbed (always 503/zeros). Route redirects to
+    // /chat; DB + backend kept as dormant foundations.
   ];
 
   const adminMenuItem: MenuItem = {
