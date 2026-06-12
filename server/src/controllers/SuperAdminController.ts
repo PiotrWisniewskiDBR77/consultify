@@ -7,6 +7,7 @@
 import auditEventsService from '../services/AuditEventsService.js';
 import { hasColumn } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 import * as customerCtrl from './superadmin/customerController.js';
 import {
   createContractAmendment,
@@ -5403,7 +5404,7 @@ const getBusinessMetrics = catchAsync(async (req, res, next) => {
     metric.lastCalculated = latest?.calculated_at || null;
   }
 
-  res.json(metrics.map((m) => ({ ...m, isActive: m.is_active === 1 })));
+  res.json(metrics.map((m) => ({ ...m, isActive: flagOn(m.is_active) })));
 });
 
 const createBusinessMetric = catchAsync(async (req, res, next) => {

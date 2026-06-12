@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import { flagOn } from '../utils/pgFlags.js';
 import logger from '../utils/Logger.js';
 import { send as sendEmail } from './emailService.js';
 import { SlackServiceClass } from './slackService.js';
@@ -457,8 +458,8 @@ class NotificationService {
       actionUrl: r.action_url,
       actorId: r.actor_id,
       actorName: r.actor_name,
-      isRead: r.read === 1 || r.is_read === 1,
-      isActionable: r.is_actionable === 1,
+      isRead: flagOn(r.read) || flagOn(r.is_read),
+      isActionable: flagOn(r.is_actionable),
       data: { ...metadata, ...data },
       metadata,
       readAt: r.read_at,
@@ -810,12 +811,12 @@ class NotificationService {
 
     return {
       userId: row.user_id,
-      globalEnabled: row.global_enabled === 1,
-      quietHoursEnabled: row.quiet_hours_enabled === 1,
+      globalEnabled: flagOn(row.global_enabled),
+      quietHoursEnabled: flagOn(row.quiet_hours_enabled),
       quietHoursStart: row.quiet_hours_start,
       quietHoursEnd: row.quiet_hours_end,
-      emailEnabled: row.email_enabled === 1,
-      emailDigestEnabled: row.email_digest_enabled === 1,
+      emailEnabled: flagOn(row.email_enabled),
+      emailDigestEnabled: flagOn(row.email_digest_enabled),
       emailDigestFrequency: row.email_digest_frequency as 'daily' | 'weekly',
       typeSettings: JSON.parse(row.type_settings || '{}'),
     };
