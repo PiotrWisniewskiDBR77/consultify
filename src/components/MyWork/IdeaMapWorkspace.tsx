@@ -431,10 +431,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const handleSelectionChange = useCallback(
     (next: IdeaWorkspaceSelection) => {
-      console.log(
-        `%c[Workspace] selectionChange: type=${next.type} count=${next.count} ids=[${(next.ids || []).slice(0, 3).join(',')}]`,
-        'color: #3b82f6'
-      );
       if (isSameSelection(selectionRef.current, next)) return;
       selectionRef.current = next;
       setSelection(next);
@@ -723,10 +719,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const handleQuickAction = useCallback(
     async (action: string, eventDetail?: Record<string, any>) => {
-      console.log(
-        `%c[Workspace] handleQuickAction: "${action}"`,
-        'color: #3b82f6; font-weight: bold'
-      );
       // V5-IDEA-26: Cross-system transforms
       const XFORM_MAP: Record<string, CanvasToolType> = {
         xform_to_mindmap: 'mindmap',
@@ -1176,7 +1168,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // ── Panel management ────────────────────────────────────────────────────────
   const handlePanelChange = useCallback(
     (next: WorkspacePanelKey) => {
-      console.log(`%c[Workspace] panelChange: ${next}`, 'color: #3b82f6');
       setActivePanel(next);
     },
     [setActivePanel]
@@ -1839,7 +1830,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // ── Accept challenge ────────────────────────────────────────────────────────
   const handleAcceptChallenge = useCallback(async () => {
-    console.log(`%c[Workspace] handleAcceptChallenge`, 'color: #3b82f6; font-weight: bold');
     if (isDraft) return;
     const nextTitle = (title || safeTitleFromSeed(seedText, isPolish)).trim().slice(0, 255);
     if (!seedText.trim()) {

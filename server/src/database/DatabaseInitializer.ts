@@ -3098,6 +3098,43 @@ async function ensureSchemaColumnGaps(): Promise<void> {
   await db.query(
     `ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1`
   );
+
+  // my_idea_map_snapshots: migration 20260611 never auto-ran on existing prod DB.
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS my_idea_map_snapshots (
+      id TEXT PRIMARY KEY,
+      idea_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      label TEXT,
+      node_count INTEGER DEFAULT 0,
+      edge_count INTEGER DEFAULT 0,
+      data_json TEXT NOT NULL DEFAULT '{}',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_idea ON my_idea_map_snapshots(idea_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_org ON my_idea_map_snapshots(organization_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_map_snapshots_created ON my_idea_map_snapshots(created_at DESC)`);
+
+  // my_idea_activity: same — missing from prod until this guard runs.
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS my_idea_activity (
+      id TEXT PRIMARY KEY,
+      idea_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      actor TEXT,
+      node_id TEXT,
+      node_label TEXT,
+      detail TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_activity_idea ON my_idea_activity(idea_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_activity_org ON my_idea_activity(organization_id)`);
+  await db.query(`CREATE INDEX IF NOT EXISTS idx_my_idea_activity_created ON my_idea_activity(created_at DESC)`);
 }
 
 // ==========================================
