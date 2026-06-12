@@ -4,19 +4,20 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M01 · inwentarz `Harvard/podzial/inventory/INV_A_czat_canvas.md` (sekcja CZAT) · poprzednia karta `docs/audit/2026-06-02/MODULE_01` (62/100) · programy: chat-world-class, deliverables-light
 **Evidence:** `Harvard/modules/M01-czat/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 60/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 61/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
 > **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (W1 org-scope memory/project naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate Londyn + kontraktowe testy cross-org, commit `7ab1b8aace`). **Fala 2 (pominięte):** A: 22→23 (4 AIChat orphans deleted `dc1dd6154d` — WorkModeMenu/ChatOverlay/ChatToggleButton/ActiveModeStrip; 678 linii); B: 11→12 (`b9f2dee9d2` zamknął też cross-org gap w pamięci projektu — pominięte w B, kreditowane tylko w F). Suma: 59. **Fala 5 (2026-06-12):** C: 8→9 — UnifiedChatPanel test mock-drift naprawiony (`e0b368b218`): `useArtifactsStore` selector-aware mock + `setConversationChatLanguage` stub; 29/29 PASS (poprz. 0/14). Suma: 60.
+> **Fala 7 (2026-06-12):** C: 9→10 — chat-projects.list.filters 2 FAIL naprawione (`ca0e632e4d`): scope=team params `['org-2','u-2']` + scope=all `['u-3','org-3','u-3']` (rbacReady=true dodaje userId dla membership EXISTS subquery); chat-projects.create.team-permissions 2 FAIL naprawione: mock dbSchema.js → getTableColumns nie trafia na Postgres path bez DB. 31/31 PASS. Suma: 61.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 23 | 49/59 pozycji REALNE, 0 mock w czacie; 4 AIChat orphans deleted (`dc1dd6154d`) — pozostają 2 (CodeInterpreter, OrganizationMemoryPanel). |
 | B. Wiring i dane | 15 | 12 | Wiring solidny z migracjami; cross-org gap w pamięci projektu NAPRAWIONE (`b9f2dee9d2`); SQLite-izm `datetime('now')` na PG pozostaje + crash hasła share (naprawiony quick-fixem). |
-| C. Testy automatyczne | 15 | 9 | S1 mocno chroniony (z E2E w PR-gate), suite komponentów ZIELONA (UnifiedChatPanel 29/29 PASS `e0b368b218`), integ wymaga DB, E2E głównie cron-only; +1 testy kontraktowe cross-org (W1, commit `7ab1b8aace`) + W15 CI gate. |
+| C. Testy automatyczne | 15 | 10 | Suite komponentów ZIELONA (UnifiedChatPanel 29/29 PASS `e0b368b218`); chat-projects integ 31/31 PASS (`ca0e632e4d`); P0 list.filters + create drift naprawione; +1 cross-org (`7ab1b8aace`) + W15 CI gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana — brak dowodu wizualnego (re-ocena po przejściu w przeglądarce). |
 | E. Kanony/UI | 10 | 8 | §27 nie dotyczy (sidebar ≠ tabela), i18n solidne, shell spójny; drobne P2. |
 | F. Bezpieczeństwo/dostęp | 10 | 8 | W1 org-scope memory/project naprawiony (commit `b9f2dee9d2`); org-scope 23/25 endp. + W7 beta-lock 3-warstwowy; pozostałe: leak `metadata` public viewer P2, prompt injection chat P2. |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana — brak weryfikacji staging/prod (re-ocena po smoke). |
-| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 57 < 70 (Faza 4 niewykonana). |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 61 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Czat to najbardziej dojrzały moduł aplikacji — 49/59 funkcji realnych, wszystkie kluczowe przepływy (streaming SSE, CRUD rozmów, handoffy intencji do 7 celów, karty propozycji, deep-research, głos Teresy) wpięte w żywe endpointy z migracjami, org-scope w `conversations.routes.ts` wzorcowy (21/21). Zaufanie łamie **cross-org IDOR w pamięci projektu** (`/api/ai/memory/project/:projectId` — każdy zalogowany czyta i KASUJE pamięć cudzej organizacji po UUID), co uruchamia hard-cap na 50 niezależnie od reszty. Tier wyżej blokują dziś: ten P0 oraz niewykonane Fazy 3+4 (środowiska + żywa weryfikacja). **Brak otwartych P0 w testach** — `UnifiedChatPanel` 29/29 PASS (`e0b368b218`). Brak otwartych P0.
 
@@ -115,8 +116,8 @@
 **Pułapka CI potwierdzona:** `e2e-nightly.yml` i `e2e-weekly.yml` = cron/manual-only, NIE na push/PR. Jedyny E2E czatu blokujący PR to `tests/e2e/runtime` (1 test); cały `tests/e2e/smoke/*` (canvas/refresh-persistence) nie liczy się jako ochrona PR.
 
 **Backlog testowy (→ plan dokończenia):**
-1. [P0] unit/component — `CanvasArtifactSwitcher` — guard nie-iterowalnej wartości + naprawa mocka UnifiedChatPanel.
-2. [P0] integration — `chat-projects` — wyciek wiersza w team-scope filter.
+1. ~~[P0] unit/component — `CanvasArtifactSwitcher` — guard nie-iterowalnej wartości + naprawa mocka UnifiedChatPanel~~ **DONE (`e0b368b218` + `|| []` guard in code)**.
+2. ~~[P0] integration — `chat-projects` — wyciek wiersza w team-scope filter~~ **DONE `ca0e632e4d`**: list.filters 5/5, create.team-permissions 5/5; 31/31 PASS.
 3. [P1] E2E/integ — S3 ingest załącznika (brak pokrycia).
 4. [P1] CI — przenieść kluczowe smoke (refresh-persistence, canvas) do triggera PR.
 5. [P1] cleanup — usunąć test-sierotę `deepThinkingRuntime`; przepisać voice boundary na asercję zachowania.

@@ -6,7 +6,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 
 | # | Moduł | Pula | Status | Ocena | Tier | Data | Karta |
 |---|-------|------|--------|-------|------|------|-------|
-| M01 | Czat | 1 (core) | 🟦 | **60** ↑10 | Alpha górny | 2026-06-12 | `modules/M01-czat/KARTA_AUDYTU.md` |
+| M01 | Czat | 1 (core) | 🟦 | **61** ↑11 | Alpha górny | 2026-06-12 | `modules/M01-czat/KARTA_AUDYTU.md` |
 | M03 | Moja Praca — organizer | 1 (core) | 🟦 | **54** ↑10 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
 | M10 | Wywiad | 1 (core) | 🟦 | **60** ↑10 | Alpha górny | 2026-06-12 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
 | M13 | Inicjatywy | 1 (core) | 🟦 | **54** ↑9 | Alpha | 2026-06-12 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
@@ -40,6 +40,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 \* Fala 4 (2026-06-12): naprawy kodu P0 — M10(59→60, dead import usunięty `ea77dc678c`), M13(53→54, CRUD 5/5 PASS `ea77dc678c`); react-i18next mock-drift naprawiony; `InitiativesHub` error UI uzupełniony; średnia ~54.
 \* Fala 5 (2026-06-12): M01(59→60) — UnifiedChatPanel test mock-drift: `useArtifactsStore` selector-aware + `setConversationChatLanguage` stub; 29/29 PASS (`e0b368b218`); C: 8→9; średnia ~54. M02(58→59) — `regenerateSlide` STUB naprawiony: real narrative engine + contextPack snapshot + route + CardCanvas hover menu (`36a6f240ff`); A: 22→23. M12(49→55) — korekta: 17 testów PASS w `audit-programs.test.ts` (commit `7df4b22d6d`, dodane razem z P1 SEC-3 fix); C: 2→8; średnia ~55.
 \* Fala 6 (2026-06-12): M24(57→58) — drift testy naprawione (`8f3992ccf2`): `effectiveAccessService.test.ts` (nieeksportowane symbole, `initiative.submit`/`unblock`); `roles.routes.test.ts` (`name` zamiast `label`, dedup POST); serwis: `MANAGE_STAGE_GATES→initiative.approve` dodane; 44 PASS / 0 FAIL; C: 8→9; średnia ~55.
+\* Fala 7 (2026-06-12): M01(60→61) — chat-projects integ drift naprawiony (`ca0e632e4d`): list.filters 2 FAIL (rbacReady=true params), create.team-permissions 2 FAIL (dbSchema mock); 31/31 PASS; C: 9→10; średnia ~55.
 
 ## Reguły aktualizacji
 - Po każdym audycie: wpis statusu+oceny+linku TUTAJ, w karcie pełna rubryka.
