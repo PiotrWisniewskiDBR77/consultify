@@ -1133,6 +1133,23 @@ router.post(
       req.body;
 
     if (fromEntityType === 'TASK' && toEntityType === 'TASK') {
+      // Verify both tasks belong to the caller's org before mutating dependencies
+      const fromTask = await dbGet<{ organization_id: string }>(
+        `SELECT organization_id FROM tasks WHERE id = ?`,
+        [fromEntityId]
+      );
+      const toTask = await dbGet<{ organization_id: string }>(
+        `SELECT organization_id FROM tasks WHERE id = ?`,
+        [toEntityId]
+      );
+      if (
+        !fromTask ||
+        !toTask ||
+        String(fromTask.organization_id) !== organizationId ||
+        String(toTask.organization_id) !== organizationId
+      ) {
+        return res.status(403).json({ error: 'Forbidden', code: 'EXECUTION_TASK_ORG_MISMATCH' });
+      }
       if (action === 'link') {
         const depId = `dep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         await dbRun(
