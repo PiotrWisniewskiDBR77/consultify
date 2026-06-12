@@ -4,13 +4,13 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M14 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja WDROŻENIE, poz.1-13) · poprzednia karta `docs/audit/2026-06-02/MODULE_06_realizacja.md` (51/100) · reuse dokumentu inicjatywy z M13
 **Evidence:** `Harvard/modules/M14-wdrozenie/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 51/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 recalcInitiativeActualTotal org-scope, commit `b9f2dee9d2`; task_dependencies org-scope, commit `9974596da7`; hard cap zdjęty); E: 5→6 (W13 M14 Wave8 i18n, commit `84757dc672`). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 20→21 (budgetHealth real calculation, commit `84757dc672`); B: 9→10 (execution.routes.ts deleted, commit `2fe1c81be3`). **Fala 2d:** B: 10→11 (Manager lanes V8 degradation banner, commit `229cb35565`).
+## OCENA: 52/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 recalcInitiativeActualTotal org-scope, commit `b9f2dee9d2`; task_dependencies org-scope, commit `9974596da7`; hard cap zdjęty); E: 5→6 (W13 M14 Wave8 i18n, commit `84757dc672`). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 20→21 (budgetHealth real calculation, commit `84757dc672`); B: 9→10 (execution.routes.ts deleted, commit `2fe1c81be3`). **Fala 2d:** B: 10→11 (Manager lanes V8 degradation banner, commit `229cb35565`). **Fala 2e:** B: 11→12 (control tower outer-catch banner).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 21 | 11/13 REALNE z żywymi tabelami+migracjami; Manager (poz.9) wymaga V8 — amber baner gdy niedostępne; budgetHealth real calculation (Sprint 5, `84757dc672`). |
-| B. Wiring i dane | 15 | 11 | Rollout trwały (naprawione vs 06-02), CRUD/aggregate org-scoped; Manager V8 degradation baner (`229cb35565`); osierocony `execution.routes.ts` USUNIĘTY; cicha degradacja execution-health/action-queue pozostaje. |
+| B. Wiring i dane | 15 | 12 | Rollout trwały (naprawione vs 06-02), CRUD/aggregate org-scoped; Manager V8 degradation baner (`229cb35565`); osierocony `execution.routes.ts` USUNIĘTY; control tower outer-catch baner (Fala 2e); cicha degradacja PMO health/action-queue pozostaje (P2). |
 | C. Testy automatyczne | 15 | 6 | 633 PASS/23 FAIL lokalnie; S2 (DnD) i S6 (raporty) zero działającego pokrycia, `rollout.routes` bez testów BE; nic nie biegnie w PR-gate na `feat/*`. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | Hub zgodny + Portfel głównie OK, ale 5 tabel Rollout poza §27 (surowy `<table>`); W13 i18n Wave8 naprawione (commit `84757dc672`). |
@@ -174,7 +174,7 @@
 
 ### Fala 2 — Domknięcie wartości (P1)
 1. ~~**Manager (people_change) bez V8**~~ — **DONE** (`229cb35565`) — amber Callout „Manager cockpit requires V8" gdy 404/501.
-2. **Komunikat przy degradacji V8→legacy** (execution-health/action-queue/sygnały `catch→[]`) — baner jak Finance/Results — Weryfikacja: odcięcie V8 pokazuje baner, nie puste tabele.
+2. ~~**Komunikat przy degradacji V8→legacy**~~ — **DONE** (pendng) — control tower outer-catch baner w timeline view (V8→legacy fallback już graceful; baner gdy obydwa fail); PMO health/action-queue silent catch pozostaje jako P2.
 3. ~~**Usuń `budgetHealth=100` hardcode**~~ — **DONE** (`84757dc672`) — real calculation.
 4. **Gating pilota serwerowo** — Rollout CRUD odrzuca rolę pilota (`requireOrgRole` + capability) — Weryfikacja: pilot API → 403.
 5. **Pokrycie testowe S2/S5/S6** — test BE `rollout.routes`, kanban-DnD, raporty z live-data; wprowadzić do PR-gate — Weryfikacja: zielone w CI.

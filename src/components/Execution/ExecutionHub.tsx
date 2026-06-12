@@ -645,6 +645,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [timelineWarningTotal, setTimelineWarningTotal] = useState(0);
   const [capacityAlerts, setCapacityAlerts] = useState<GovernedCapacityAlert[]>([]);
   const [capacityTimeline, setCapacityTimeline] = useState<GovernedCapacityWeek[]>([]);
+  const [controlTowerFailed, setControlTowerFailed] = useState(false);
   const [executionTruthRefreshKey, setExecutionTruthRefreshKey] = useState(0);
   /** V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */
   const [actionQueueItems, setActionQueueItems] = useState<
@@ -1216,12 +1217,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         setCapacityTimeline(
           normalizeExecutionArrayEnvelope<GovernedCapacityWeek>(timelineData, ['weeks'])
         );
+        setControlTowerFailed(false);
       } catch {
         if (cancelled) return;
         setTimelineWarnings([]);
         setTimelineWarningTotal(0);
         setCapacityAlerts([]);
         setCapacityTimeline([]);
+        setControlTowerFailed(true);
       }
     };
 
@@ -4799,6 +4802,19 @@ Please return:
       if (viewMode === 'timeline') {
         return (
           <div className="min-h-[420px]">
+            {controlTowerFailed && (
+              <div className="px-4 pt-3">
+                <Callout
+                  variant="warning"
+                  title={t('execution.controlTower.failed', 'Control tower signals unavailable')}
+                >
+                  {t(
+                    'execution.controlTower.failedDesc',
+                    'Timeline warnings and capacity signals could not be loaded. The view is operating without risk and delay overlays.'
+                  )}
+                </Callout>
+              </div>
+            )}
             <ExecutionTimelineView
               initiatives={
                 (summaryInitiatives.length
