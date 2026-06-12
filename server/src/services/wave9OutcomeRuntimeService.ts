@@ -825,17 +825,18 @@ async function resolveAcceptanceRunEvidence(params: {
 
 export async function createWave9Outcome(input: CreateWave9OutcomeInput): Promise<any> {
   await ensureWave9OutcomeRuntimeSchema();
+  const validationErr = (msg: string) => Object.assign(new Error(msg), { statusCode: 400 });
   if (!input.assumptions || input.assumptions.length === 0) {
-    throw new Error('Wave 9 outcome requires explicit assumptions');
+    throw validationErr('Wave 9 outcome requires explicit assumptions');
   }
   if (!input.initiativeId || !input.kpiName || !input.ownerUserId) {
-    throw new Error('Wave 9 outcome requires initiative, KPI and owner');
+    throw validationErr('Wave 9 outcome requires initiative, KPI and owner');
   }
   if (!input.sourceRefs || input.sourceRefs.length === 0) {
-    throw new Error('Wave 9 outcome requires source references for KPI grounding');
+    throw validationErr('Wave 9 outcome requires source references for KPI grounding');
   }
   if (!input.taskIds || input.taskIds.length === 0) {
-    throw new Error('Wave 9 outcome requires task linkage');
+    throw validationErr('Wave 9 outcome requires task linkage');
   }
   await requireRegisteredSourceRefs(input.organizationId, input.sourceRefs);
   await requireRegisteredTaskEvidence(input.organizationId, input.taskIds);
