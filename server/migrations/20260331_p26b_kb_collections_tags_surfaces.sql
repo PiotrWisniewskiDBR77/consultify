@@ -184,14 +184,16 @@ WHERE a.category_id IS NOT NULL
 ON CONFLICT (article_id, collection_id) DO NOTHING;
 
 -- Default surface bindings for existing published articles
-INSERT INTO kb_surface_bindings (article_id, surface)
-SELECT a.id, 'public_docs'
+-- Supply id explicitly: on drifted DBs the table predates DEFAULT gen_random_uuid()
+-- (CREATE TABLE IF NOT EXISTS won't retrofit it), so omitting id throws NOT NULL.
+INSERT INTO kb_surface_bindings (id, article_id, surface)
+SELECT gen_random_uuid()::text, a.id, 'public_docs'
 FROM kb_articles a
 WHERE a.status = 'published' AND a.is_public = 1
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
 
-INSERT INTO kb_surface_bindings (article_id, surface)
-SELECT a.id, 'help'
+INSERT INTO kb_surface_bindings (id, article_id, surface)
+SELECT gen_random_uuid()::text, a.id, 'help'
 FROM kb_articles a
 WHERE a.status = 'published'
 ON CONFLICT (article_id, surface, tool_context) DO NOTHING;
