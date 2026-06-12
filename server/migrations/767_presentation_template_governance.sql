@@ -68,7 +68,8 @@ UPDATE presentation_templates
    SET lifecycle_state = 'approved',
        approved_at = COALESCE(approved_at, CURRENT_TIMESTAMP),
        approved_by = COALESCE(approved_by, 'system')
- WHERE is_system = TRUE
+ -- presentation_templates.is_system is INTEGER (canonical); compare to 1 not TRUE.
+ WHERE is_system = 1
    AND lifecycle_state = 'draft';
 
 -- Backfill lineage_root_id for every existing row so each template is
