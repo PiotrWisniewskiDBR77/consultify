@@ -33,6 +33,11 @@ ON CONFLICT (id) DO UPDATE SET
 ALTER TABLE llm_tier_assignments
   DROP CONSTRAINT IF EXISTS llm_tier_assignments_tier_check;
 
+-- Normalize legacy tier values before tightening the constraint: the old 'FREE'
+-- tier maps to the cheapest current tier 'BUDGET'. Without this, the CHECK below
+-- fails on drifted DBs that still hold pre-taxonomy rows.
+UPDATE llm_tier_assignments SET tier = 'BUDGET' WHERE tier = 'FREE';
+
 ALTER TABLE llm_tier_assignments
   ADD CONSTRAINT llm_tier_assignments_tier_check
   CHECK(tier IN ('BUDGET', 'STANDARD', 'PREMIUM', 'REASONING', 'PLATFORM'));
