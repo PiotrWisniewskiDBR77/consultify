@@ -43,7 +43,7 @@ ALTER TABLE llm_tier_assignments
   CHECK(tier IN ('BUDGET', 'STANDARD', 'PREMIUM', 'REASONING', 'PLATFORM'));
 
 INSERT INTO llm_tier_assignments (id, provider_id, tier, priority, is_active) VALUES
-    ('tier-platform-vector', 'vector-dbr77', 'PLATFORM', 0, 1),
-    ('tier-premium-vector', 'vector-dbr77', 'PREMIUM', 0, 1),
-    ('tier-reasoning-vector', 'vector-dbr77', 'REASONING', 0, 1)
+    ('tier-platform-vector', 'vector-dbr77', 'PLATFORM', 0, TRUE),
+    ('tier-premium-vector', 'vector-dbr77', 'PREMIUM', 0, TRUE),
+    ('tier-reasoning-vector', 'vector-dbr77', 'REASONING', 0, TRUE)
 ON CONFLICT (id) DO NOTHING;
