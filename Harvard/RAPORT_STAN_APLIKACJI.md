@@ -65,7 +65,7 @@ Consultify przeszło pełny cykl Harvard: **audyt 28/28 → plany dokończenia �
 - **Sekrety** (Bramka D): AES-256-GCM.
 - **Beta-lock:** 3-warstwowy (sidebar + route BetaGate role-aware + API).
 - **RBAC:** rola z DB, nie z nagłówka klienta (W3 `x-kpi-role` usunięty).
-- **Test-drift:** suity zielone — **pełny suite serwera 6975 passed / 0 failed** (2026-06-12, po 25 fixach migracji); nowe suity Harvard 79/79.
+- **Test-drift:** **backend zielony** — pełny suite serwera **6975 passed / 0 failed** (2026-06-12, po 25 fixach migracji); nowe suity Harvard 80/80 (kontrakt modułów + przekrojowe przepływy + parser schematu). ⚠️ **Frontend component-suite ma pre-existing drift: ~68 testów (55 plików) FAIL** — głównie dryf tekstu UI / mocków (np. partner „Partner Academy", AIChat, MyWork, SuperAdmin), niezwiązany z pracą tej sesji (zweryfikowane). To osobny backlog jakościowy do dociągnięcia (nie blokuje BETA, ale do CI-gate przed GA).
 - **tsc:** czysty.
 
 ---
