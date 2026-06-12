@@ -1,25 +1,29 @@
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { describe, expect, it } from 'vitest';
+
 /**
- * @vitest-environment jsdom
+ * SuperadminRootClosurePanel was an orphaned legacy panel removed in the SA-4
+ * cleanup (commit 778fe2204e — "remove orphaned legacy panels and views").
+ *
+ * This test pins the current contract: the panel no longer exists as a source
+ * module and must not be reintroduced as a live SuperAdmin component. It fails
+ * closed if the file is ever resurrected without an explicit decision.
+ *
+ * NOTE: we assert on the filesystem rather than a dynamic import() because
+ * Vite's static import analysis rejects an unresolvable specifier at transform
+ * time (before any runtime assertion could catch it).
  */
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+const REPO_ROOT = path.resolve(fileURLToPath(import.meta.url), '../../../..');
 
-import { SuperadminRootClosurePanel } from '../../../src/components/SuperAdmin/SuperadminRootClosurePanel';
-
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    i18n: { language: 'en' },
-  }),
-}));
-
-describe('SuperadminRootClosurePanel', () => {
-  it('renders the visible platform control plane canon', () => {
-    render(<SuperadminRootClosurePanel compact />);
-
-    expect(screen.getByText('One visible platform control plane')).toBeInTheDocument();
-    expect(screen.getByText('Tenants and customers')).toBeInTheDocument();
-    expect(screen.getByText('AI and connector platform ops')).toBeInTheDocument();
-    expect(screen.getByText('Control-plane closure rules')).toBeInTheDocument();
+describe('SuperadminRootClosurePanel (removed in SA-4 cleanup)', () => {
+  it('no longer exists as a SuperAdmin source module', () => {
+    const candidate = path.join(
+      REPO_ROOT,
+      'src/components/SuperAdmin/SuperadminRootClosurePanel.tsx'
+    );
+    expect(existsSync(candidate)).toBe(false);
   });
 });

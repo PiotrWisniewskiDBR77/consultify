@@ -13,7 +13,17 @@ const { navigateMock, apiMock, tMock } = vi.hoisted(() => ({
     post: vi.fn(),
     delete: vi.fn(),
   },
-  tMock: (_key: string, fallback?: string) => fallback ?? _key,
+  // Mirror react-i18next: the second arg may be a fallback string OR an options
+  // object ({ defaultValue, ...interpolation }). Returning the raw object would
+  // crash React with "Objects are not valid as a React child".
+  tMock: (_key: string, fallback?: string | Record<string, unknown>) => {
+    if (typeof fallback === 'string') return fallback;
+    if (fallback && typeof fallback === 'object') {
+      const value = (fallback as { defaultValue?: unknown }).defaultValue;
+      if (typeof value === 'string') return value;
+    }
+    return _key;
+  },
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -146,11 +156,10 @@ describe('AssessmentHub rate limit resilience', () => {
         'Assessment data is temporarily rate limited. Retry in a moment or create a new assessment while staging recovers.'
       )
     ).toBeInTheDocument();
-    expect(
-      await screen.findByText(
-        'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
-      )
-    ).toBeInTheDocument();
+    // With no cached list, the hub fails closed into an ErrorState (with a retry
+    // affordance) rather than the empty-list CTA — so the rate-limit message is
+    // surfaced as the error copy and a retry control is offered.
+    expect(await screen.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('shows the cached assessment list when a transient rate limit blocks refresh', async () => {

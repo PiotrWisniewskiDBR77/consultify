@@ -32,7 +32,18 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || '',
+    // Mirror react-i18next: the second arg may be a fallback string OR an
+    // options object carrying { defaultValue, ...interpolation }. Returning the
+    // raw object (as a naive mock did) crashes React with "Objects are not valid
+    // as a React child", so resolve it to a string here.
+    t: (_key: string, fallback?: string | Record<string, unknown>) => {
+      if (typeof fallback === 'string') return fallback;
+      if (fallback && typeof fallback === 'object') {
+        const value = (fallback as { defaultValue?: unknown }).defaultValue;
+        return typeof value === 'string' ? value : '';
+      }
+      return '';
+    },
     i18n: { language: 'en' },
   }),
 }));

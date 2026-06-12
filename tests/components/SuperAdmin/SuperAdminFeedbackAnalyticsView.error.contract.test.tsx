@@ -7,6 +7,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getFeedbackAnalyticsOverviewMock = vi.fn();
 
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
 vi.mock('../../../src/services/api', () => ({
   Api: {
     getFeedbackAnalyticsOverview: (...args: unknown[]) => getFeedbackAnalyticsOverviewMock(...args),
