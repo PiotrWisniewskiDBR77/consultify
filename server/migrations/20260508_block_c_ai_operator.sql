@@ -112,8 +112,10 @@ CREATE TABLE IF NOT EXISTS tp_ai_usage (
 
 CREATE INDEX IF NOT EXISTS idx_tp_ai_usage_workspace
   ON tp_ai_usage(workspace_id);
+-- Anchor to UTC so the expression is IMMUTABLE: date_trunc on a timestamptz is
+-- session-timezone dependent (not immutable) and cannot be indexed directly.
 CREATE INDEX IF NOT EXISTS idx_tp_ai_usage_workspace_day
-  ON tp_ai_usage(workspace_id, date_trunc('day', occurred_at));
+  ON tp_ai_usage(workspace_id, date_trunc('day', occurred_at AT TIME ZONE 'UTC'));
 CREATE INDEX IF NOT EXISTS idx_tp_ai_usage_proposal
   ON tp_ai_usage(proposal_id) WHERE proposal_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_tp_ai_usage_actor
