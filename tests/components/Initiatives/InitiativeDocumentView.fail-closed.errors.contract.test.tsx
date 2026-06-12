@@ -5,12 +5,6 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_key: string, fallback: string) => fallback,
-    i18n: { language: 'en' },
-  }),
-}));
 
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: () => ({

@@ -1291,21 +1291,27 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (loadError) {
       return (
         <div className="flex items-center justify-center h-full px-6">
-          <div className="max-w-xl w-full p-5 rounded-2xl border border-rose-500/20 bg-rose-900/10">
+          <div
+            className="max-w-xl w-full p-5 rounded-2xl border border-rose-500/20 bg-rose-900/10"
+            role="alert"
+          >
             <div className="text-sm font-semibold text-rose-300">
               {t('initiatives.hub.failedToLoad')}
             </div>
             <div className="text-sm text-rose-200/80 mt-1">{loadError}</div>
+            {loadErrorCode ? (
+              <p className="mt-1 text-xs text-rose-200/70 font-mono">code: {loadErrorCode}</p>
+            ) : null}
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => fetchData(true)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 transition-colors"
+                className="h-9 rounded-lg border border-rose-400/40 px-3 text-sm text-rose-100 hover:bg-rose-500/20"
               >
                 {t('initiatives.hub.retry')}
               </button>
               <button
                 onClick={() => setLoadError(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                className="h-9 rounded-lg border border-white/20 px-3 text-sm text-slate-200 hover:bg-white/10"
               >
                 {t('initiatives.hub.dismiss')}
               </button>

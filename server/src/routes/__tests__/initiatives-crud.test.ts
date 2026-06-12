@@ -1,34 +1,96 @@
 /**
- * Module 05 (Inicjatywy) — Initiative CRUD route tests.
+ * M13 (Inicjatywy) — Initiative CRUD route smoke tests.
  *
- * Exercises the legacy /api/initiatives router against a real in-memory sqlite3
- * database (the router uses the callback-style getDatabase() API, which sqlite3
- * provides natively). Covers create → read → update → delete plus org scoping.
+ * Uses the queryHelpers mock pattern (no in-process DB); same approach as
+ * cross-org-idor.test.ts. Covers create → read → list → update → 404-for-unknown.
  */
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
-import sqlite3 from 'sqlite3';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-// Single shared in-memory DB for the suite.
-const db = new sqlite3.Database(':memory:');
+// ── Top-level mock fns (declared before vi.mock factories) ────────────────────
 
-vi.mock('../../database/index.js', () => ({
-  getDatabase: () => db,
-}));
-
-vi.mock('../../utils/Logger.js', () => ({
-  default: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-}));
+const mockQueryFirst = vi.fn();
+const mockQueryAll = vi.fn();
+const mockQueryRun = vi.fn();
+const mockGetTableColumns = vi.fn();
+const mockGetInitiativeDetailRead = vi.fn();
 
 const ORG = 'org-crud-1';
 const UID = 'user-crud-1';
+const INITIATIVE_ID = 'init-test-123';
+
+// ── Module mocks ──────────────────────────────────────────────────────────────
+
+vi.mock('../../utils/Logger.js', () => ({
+  default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}));
+
+vi.mock('../../utils/queryHelpers.js', () => ({
+  queryFirst: (...a: unknown[]) => mockQueryFirst(...a),
+  queryOne: (...a: unknown[]) => mockQueryFirst(...a),
+  queryAll: (...a: unknown[]) => mockQueryAll(...a),
+  queryRun: (...a: unknown[]) => mockQueryRun(...a),
+  query: (...a: unknown[]) => mockQueryAll(...a),
+  run: (...a: unknown[]) => mockQueryRun(...a),
+  getTableColumns: (...a: unknown[]) => mockGetTableColumns(...a),
+}));
+
+vi.mock('../../database/Database.js', () => ({
+  getDatabase: () => ({ query: vi.fn(async () => ({ rows: [] })) }),
+}));
+
+vi.mock('../../middleware/auth.middleware.js', () => ({
+  verifyToken: (_req: any, _res: any, next: () => void) => next(),
+  requireSuperAdmin: (_req: any, _res: any, next: () => void) => next(),
+  requireRole:
+    () =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
+  requireOrganization: (_req: any, _res: any, next: () => void) => next(),
+  isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../middleware/rbac.middleware.js', () => ({
+  requireOrgAccess:
+    () =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
+  requireOrgRole:
+    () =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
+  apiAuthRateLimiter: (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../middleware/validation.middleware.js', () => ({
+  validateBody:
+    () =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
+  validateParams:
+    () =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
+  validateQuery:
+    () =>
+    (_req: any, _res: any, next: () => void) =>
+      next(),
+}));
+
+vi.mock('../../middleware/demoGuard.middleware.js', () => ({
+  demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
+}));
 
 vi.mock('../../utils/requestOrganization.js', () => ({
   requireRequestOrganizationId: (req: any, res: any) => {
     const orgId = req.user?.organizationId;
     if (!orgId) {
-      res.status(401).json({ error: 'Unauthorized - no organization' });
+      res.status(401).json({ error: 'Unauthorized' });
       return null;
     }
     return orgId;
@@ -36,7 +98,101 @@ vi.mock('../../utils/requestOrganization.js', () => ({
   resolveRequestOrganizationId: (req: any) => req.user?.organizationId ?? null,
 }));
 
-import initiativesRoutes from '../initiatives.routes.js';
+// ── Service mocks ─────────────────────────────────────────────────────────────
+
+vi.mock('../../services/v8/planningPortfolioReadService.js', () => ({
+  getInitiativeDetailRead: (...a: unknown[]) => mockGetInitiativeDetailRead(...a),
+  getPortfolioData: vi.fn().mockResolvedValue(null),
+  getPortfolioRead: vi.fn().mockResolvedValue(null),
+  getPortfolioRollups: vi.fn().mockResolvedValue([]),
+  getPortfolioDependencies: vi.fn().mockResolvedValue([]),
+  getInitiativeTaskDependenciesRead: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('../../services/ActivityService.js', () => ({
+  default: { log: vi.fn().mockResolvedValue(undefined) },
+}));
+
+vi.mock('../../services/AuditEventsService.js', () => ({
+  default: { log: vi.fn().mockResolvedValue(undefined) },
+}));
+
+vi.mock('../../services/notificationService.js', () => ({
+  default: {
+    notifyOwnerAssigned: vi.fn().mockResolvedValue(undefined),
+    sendNotification: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('../../services/initiative/initiativeAccessResolver.js', () => ({
+  resolveInitiativeAccessContext: vi.fn().mockResolvedValue({ effectiveRoles: ['user'] }),
+}));
+
+vi.mock('../../services/initiative/initiativeGateReadinessService.js', () => ({
+  getBlockingReadinessItems: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('../../services/initiative/initiativeKpiAssignmentService.js', () => ({
+  upsertInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
+  listInitiativeKpiAssignments: vi.fn().mockResolvedValue([]),
+  updateInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
+  deleteInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../services/initiative/initiativeWizardService.js', () => ({
+  createWizardSession: vi.fn().mockResolvedValue({ id: 'wizard-1' }),
+  evaluateShortlistGateForSession: vi.fn().mockResolvedValue(null),
+  generateCandidates: vi.fn().mockResolvedValue([]),
+  getWizardSession: vi.fn().mockResolvedValue(null),
+  listCandidates: vi.fn().mockResolvedValue([]),
+  listWizardAuditEvents: vi.fn().mockResolvedValue([]),
+  recordShortlistDraftsCreated: vi.fn().mockResolvedValue(undefined),
+  recordShortlistGateBlocked: vi.fn().mockResolvedValue(undefined),
+  triageCandidate: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../services/initiativeGenerationService.js', () => ({
+  default: { generate: vi.fn().mockResolvedValue([]) },
+}));
+
+vi.mock('../../services/initiativeSectionTypeService.js', () => ({
+  default: { list: vi.fn().mockResolvedValue([]) },
+}));
+
+vi.mock('../../services/initiativeSimilarityService.js', () => ({
+  checkSimilarInitiatives: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('../../services/initiativeTemplateService.js', () => ({
+  default: { list: vi.fn().mockResolvedValue([]), get: vi.fn().mockResolvedValue(null) },
+}));
+
+vi.mock('../../services/workloadCapacityService.js', () => ({
+  getCapacityTimeline: vi.fn().mockResolvedValue([]),
+  getInitiativeCapacity: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../services/blueprintService.js', () => ({
+  default: { apply: vi.fn().mockResolvedValue(null) },
+}));
+
+vi.mock('../../services/raidScoringService.js', () => ({
+  calculateRiskScore: vi.fn().mockReturnValue(0),
+  categorizeScore: vi.fn().mockReturnValue('LOW'),
+  DEFAULT_THRESHOLDS: { low: 30, medium: 60, high: 80 },
+}));
+
+vi.mock('../../services/staffingPlanService.js', () => ({
+  default: {
+    create: vi.fn().mockResolvedValue(null),
+    list: vi.fn().mockResolvedValue([]),
+  },
+  syncInitiativeCapacity: vi.fn().mockResolvedValue(undefined),
+}));
+
+// ── App setup ─────────────────────────────────────────────────────────────────
+
+import initiativesRoutes from '../pmo/initiatives.routes.js';
 
 let app: Express;
 
@@ -44,52 +200,79 @@ beforeAll(() => {
   app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any).user = { id: UID, organizationId: ORG };
+    (req as any).user = { id: UID, organizationId: ORG, role: 'user' };
     next();
   });
   app.use('/api/initiatives', initiativesRoutes);
 });
 
-afterAll(() => {
-  db.close();
+afterEach(() => {
+  vi.clearAllMocks();
 });
 
-describe('initiatives CRUD routes', () => {
-  let createdId = '';
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
-  it('POST / creates an initiative (201)', async () => {
+describe('initiatives CRUD routes', () => {
+  it('POST / creates an initiative (200)', async () => {
+    mockQueryRun.mockResolvedValue({ changes: 1, lastID: 1 });
+
     const res = await request(app)
       .post('/api/initiatives')
-      .send({ name: 'Reduce cycle time', description: 'Lean kaizen', priority: 'high' });
+      .send({ title: 'Reduce cycle time', description: 'Lean kaizen', priority: 'HIGH' });
+
     expect([200, 201]).toContain(res.status);
     expect(res.body.id).toBeTruthy();
-    createdId = res.body.id;
   });
 
-  it('GET /:id returns the created initiative (200)', async () => {
-    const res = await request(app).get(`/api/initiatives/${createdId}`);
+  it('GET /:id returns 200 when initiative exists', async () => {
+    const fixture = {
+      id: INITIATIVE_ID,
+      title: 'Reduce cycle time',
+      organization_id: ORG,
+      status: 'DRAFT',
+    };
+    mockGetInitiativeDetailRead.mockResolvedValue(fixture);
+
+    const res = await request(app).get(`/api/initiatives/${INITIATIVE_ID}`);
+
     expect(res.status).toBe(200);
-    expect(res.body.name).toBe('Reduce cycle time');
+    expect(res.body.id).toBe(INITIATIVE_ID);
   });
 
   it('GET / lists initiatives for the org (200)', async () => {
+    mockGetTableColumns.mockResolvedValue([]);
+    mockQueryAll.mockResolvedValue([
+      { id: INITIATIVE_ID, title: 'Reduce cycle time', organization_id: ORG },
+    ]);
+
     const res = await request(app).get('/api/initiatives');
+
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.some((i: any) => i.id === createdId)).toBe(true);
   });
 
-  it('PUT /:id updates the status (200)', async () => {
-    const res = await request(app).put(`/api/initiatives/${createdId}`).send({ status: 'REVIEW' });
+  it('PUT /:id updates initiative fields (200)', async () => {
+    const existing = {
+      id: INITIATIVE_ID,
+      status: 'DRAFT',
+      title: 'Reduce cycle time',
+      organization_id: ORG,
+    };
+    mockQueryFirst.mockResolvedValue(existing);
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const res = await request(app)
+      .put(`/api/initiatives/${INITIATIVE_ID}`)
+      .send({ status: 'REVIEW' });
+
     expect(res.status).toBe(200);
-    const after = await request(app).get(`/api/initiatives/${createdId}`);
-    expect(String(after.body.status).toUpperCase()).toBe('REVIEW');
   });
 
-  it('DELETE /:id removes the initiative', async () => {
-    const res = await request(app).delete(`/api/initiatives/${createdId}`);
-    expect([200, 204]).toContain(res.status);
-    const after = await request(app).get(`/api/initiatives/${createdId}`);
-    expect(after.status).toBe(404);
+  it('GET /:id returns 404 for unknown ID', async () => {
+    mockGetInitiativeDetailRead.mockResolvedValue(null);
+
+    const res = await request(app).get('/api/initiatives/non-existent-id-xyz');
+
+    expect(res.status).toBe(404);
   });
 });

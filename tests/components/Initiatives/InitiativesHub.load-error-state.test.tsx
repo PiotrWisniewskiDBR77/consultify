@@ -9,12 +9,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockGetPortfolio = vi.fn();
 const mockGetInitiatives = vi.fn();
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback || _key,
-    i18n: { language: 'en' },
-  }),
-}));
 
 vi.mock('../../../src/store/useAppStore', () => ({
   useAppStore: () => ({
@@ -75,6 +69,13 @@ vi.mock('../../../src/utils/pilotAccess', () => ({
 
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
   ModuleHub: ({ children }: any) => <div>{children}</div>,
+  HubWorkAreaLoading: () => <div>loading</div>,
+  HubWorkAreaLoadError: ({ error, onDismiss }: any) => (
+    <div role="alert" data-error-code={error?.code}>
+      {error?.code}
+      <button onClick={onDismiss}>Dismiss</button>
+    </div>
+  ),
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub/useModuleOpenDocuments', () => ({
