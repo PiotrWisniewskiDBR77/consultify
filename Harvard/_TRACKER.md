@@ -7,7 +7,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | # | Moduł | Pula | Status | Ocena | Tier | Data | Karta |
 |---|-------|------|--------|-------|------|------|-------|
 | M01 | Czat | 1 (core) | 🟦 | **59** ↑9 | Alpha górny | 2026-06-11 | `modules/M01-czat/KARTA_AUDYTU.md` |
-| M03 | Moja Praca — organizer | 1 (core) | 🟦 | **53** ↑9 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
+| M03 | Moja Praca — organizer | 1 (core) | 🟦 | **54** ↑10 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
 | M10 | Wywiad | 1 (core) | 🟦 | **59** ↑9 | Alpha górny | 2026-06-11 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
 | M13 | Inicjatywy | 1 (core) | 🟦 | **53** ↑8 | Alpha | 2026-06-11 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
 | M14 | Wdrożenie | 1 (core) | 🟦 | **52** ↑10 | Alpha | 2026-06-11 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
