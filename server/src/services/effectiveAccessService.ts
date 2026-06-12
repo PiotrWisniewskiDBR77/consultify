@@ -708,6 +708,7 @@ export function mapLegacyPermissionToCapability(permissionKey: string): string {
     TASK_UPDATE: 'task.update',
     TASK_STATUS_UPDATE: 'task.status.update',
     TASK_CLOSE: 'task.close',
+    MANAGE_STAGE_GATES: 'initiative.approve',
     PROJECT_VIEW: 'project.view',
     PROJECT_TEAM_MANAGE: 'project.team.manage',
     PROJECT_ROLES_MANAGE: 'admin.project_roles.manage',

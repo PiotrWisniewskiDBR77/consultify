@@ -124,11 +124,12 @@ router.post(
     const id = uuidv4();
     const now = new Date().toISOString();
     const name = rawName.trim();
-    const permissions = Array.isArray(req.body?.permissions)
+    const rawPermissions = Array.isArray(req.body?.permissions)
       ? req.body.permissions
       : Array.isArray(req.body?.capabilities)
         ? req.body.capabilities
         : [];
+    const permissions = [...new Set<string>(rawPermissions)];
 
     await dbRun(
       `INSERT INTO security_roles (id, organization_id, name, permissions_json, created_at, updated_at, created_by, updated_by)

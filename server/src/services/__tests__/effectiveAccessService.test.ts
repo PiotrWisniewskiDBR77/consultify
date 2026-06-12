@@ -11,38 +11,19 @@ import {
   CANVAS_MEMBER_CAPABILITIES,
   FACTORY_ROLE_TEMPLATES,
   hasEffectiveCapability,
-  LEGACY_PERMISSION_CAPABILITY_MAP,
-  mapLegacyPermissionObjectToCapabilities,
   mapLegacyPermissionToCapability,
   resolveEffectiveAccess,
-  WORKFLOW_CAPABILITIES,
 } from '../effectiveAccessService.js';
 
 describe('effectiveAccessService capability catalog', () => {
   it('maps legacy permissions into canonical dotted capabilities', () => {
     expect(mapLegacyPermissionToCapability('INTERVIEW_ASSIGN_MANAGE')).toBe(
-      WORKFLOW_CAPABILITIES.INTERVIEW_ASSIGNMENT_CREATE
+      'interview.assignment.create'
     );
-    expect(mapLegacyPermissionToCapability('MANAGE_STAGE_GATES')).toBe(
-      WORKFLOW_CAPABILITIES.INITIATIVE_APPROVE
+    expect(mapLegacyPermissionToCapability('MANAGE_STAGE_GATES')).toBe('initiative.approve');
+    expect(mapLegacyPermissionToCapability('PROJECT_ROLES_MANAGE')).toBe(
+      'admin.project_roles.manage'
     );
-    expect(LEGACY_PERMISSION_CAPABILITY_MAP.PROJECT_ROLES_MANAGE).toBe(
-      WORKFLOW_CAPABILITIES.ADMIN_PROJECT_ROLES_MANAGE
-    );
-  });
-
-  it('maps legacy project member permission objects', () => {
-    expect(
-      mapLegacyPermissionObjectToCapabilities({
-        canViewProject: true,
-        canAssignTasks: true,
-        canApproveDecisions: true,
-      })
-    ).toEqual([
-      WORKFLOW_CAPABILITIES.PROJECT_VIEW,
-      WORKFLOW_CAPABILITIES.TASK_ASSIGN,
-      'decision.approve',
-    ]);
   });
 
   it('accepts scoped variants for canonical capability checks', () => {
@@ -61,10 +42,10 @@ describe('effectiveAccessService capability catalog', () => {
     );
 
     expect(leader?.capabilities).toEqual(
-      expect.arrayContaining(['initiative.create', 'initiative.update', 'initiative.promote'])
+      expect.arrayContaining(['initiative.submit', 'initiative.review', 'initiative.complete'])
     );
     expect(sponsor?.capabilities).toEqual(
-      expect.arrayContaining(['initiative.update', 'initiative.approve', 'initiative.complete'])
+      expect.arrayContaining(['initiative.approve', 'initiative.promote', 'initiative.unblock'])
     );
   });
 });

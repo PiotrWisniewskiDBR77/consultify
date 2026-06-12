@@ -100,12 +100,12 @@ describe('security roles routes validation', () => {
     expect(String(res.body.error)).toContain('array');
   });
 
-  it('accepts POST with label + capabilities alias', async () => {
+  it('accepts POST with name + capabilities (deduplicates)', async () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/security/roles')
       .send({
-        label: 'Auditor',
+        name: 'Auditor',
         capabilities: ['project.view', 'project.view'],
       });
     expect(res.status).toBe(200);
