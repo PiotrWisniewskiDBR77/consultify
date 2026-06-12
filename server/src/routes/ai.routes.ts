@@ -5772,6 +5772,19 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { decisionId, title, outcome, rationale } = req.body;
 
+    // Cross-org write guard (parity with GET/DELETE on this resource): a logged-in
+    // user must not be able to inject decision memory into another org's project
+    // by guessing its id — that pollutes the other tenant's AI memory feeding chat.
+    const orgId = req.user?.organizationId || req.organizationId;
+    const projectRow = await dbGet<{ organization_id: string }>(
+      `SELECT organization_id FROM projects WHERE id = ?`,
+      [req.params.projectId]
+    );
+    if (!projectRow) return res.status(404).json({ error: 'Project not found' });
+    if (String(projectRow.organization_id) !== String(orgId)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     try {
       const AIMemoryManager = await getAIMemoryManager();
       const result = await AIMemoryManager.recordDecision(
