@@ -118,12 +118,16 @@ VALUES (
 )
 ON CONFLICT (slug) DO NOTHING;
 
+-- Seed Anna's default profile by resolving the worker via slug (the worker row
+-- may already exist under a different id on drifted DBs, where the literal
+-- 'anna-default-001' was never inserted — that caused an FK violation). Only
+-- seed when the worker has no profile yet, so existing profiles are preserved.
 INSERT INTO virtual_worker_profiles (id, worker_id, version, system_prompt, is_active)
-VALUES (
-    'anna-profile-001',
-    'anna-default-001',
-    1,
-    'You are Anna, a knowledgeable and friendly AI sales assistant.',
-    TRUE
-)
+SELECT 'anna-profile-001', vw.id, 1,
+       'You are Anna, a knowledgeable and friendly AI sales assistant.', TRUE
+FROM virtual_workers vw
+WHERE vw.slug = 'anna'
+  AND NOT EXISTS (
+    SELECT 1 FROM virtual_worker_profiles p WHERE p.worker_id = vw.id
+  )
 ON CONFLICT (id) DO NOTHING;
