@@ -21,6 +21,5 @@ declare module 'cheerio';
 declare namespace Express {
   interface Request {
     _rateLimitUserId?: string;
-    emitAuditEvent?: (input: any) => void | Promise<void>;
   }
 }
