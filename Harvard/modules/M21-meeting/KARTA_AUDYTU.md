@@ -4,15 +4,16 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M21 · inwentarz `Harvard/podzial/inventory/INV_E_outputs_studia_meeting.md` (sekcja MEETING, poz.1-8) · poprzednia karta `docs/audit/2026-06-02/MODULE_13_meeting.md` (38/100 — stan „unmounted" NIEAKTUALNY)
 **Evidence:** `Harvard/modules/M21-meeting/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 52/100 — Tier: Alpha (górny — kandydat na Beta) · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 55/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Fala 2 (pominięte w re-audycie 2026-06-11):** B: 12→13 (LLM transparency: `source:'ai'|'heuristic'` pole + amber banner w `MeetingHub` gdy heurystyka, commit `72d57e64a4`); E: 6→8 (degradacja LLM transparentna +1; 3× hardkod `#A51C30/#8a1828` → tokeny `bg-primary-600/hover:bg-primary-700` commit `7cf315b4b9` +1). Suma: 55.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 21 | 8/8 REALNE (notatki AI realny LLM + uczciwy regex-fallback, persystowane), „coming soon" nieaktualne; poz.8 „otwórz jako dokument" lokalny (nie handoff). |
-| B. Wiring i dane | 15 | 12 | Realne tabele (`meetings`, `meeting_follow_ups`), bez fasady; minus: `persistNote` INSERT do nieistniejącej `notebook_entries` (dead-path, cichy catch). |
+| B. Wiring i dane | 15 | 13 | Realne tabele (`meetings`, `meeting_follow_ups`), bez fasady; `source:'ai'|'heuristic'` NAPRAWIONE (`72d57e64a4`); minus: `persistNote` INSERT do nieistniejącej `notebook_entries` (dead-path, cichy catch). |
 | C. Testy automatyczne | 15 | 6 | 23 PASS/3 FAIL (FE mock-drift, nie bugi), ale **S6 notatki AI i S7 brief = ZERO testów**, persystencja tylko sqlite (nie PG); nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
-| E. Kanony/UI | 10 | 6 | §27 zgodny (`TableWithPreviewLayout`+`EntityStatusChip`+kanon Menu 3), ModuleHub; ale i18n hybryda 78× `isPolish`, degradacja LLM nietransparentna. |
+| E. Kanony/UI | 10 | 8 | §27 zgodny (`TableWithPreviewLayout`+`EntityStatusChip`+kanon Menu 3), ModuleHub; degradacja LLM NAPRAWIONA (`72d57e64a4`); tokeny kolorów NAPRAWIONE (`7cf315b4b9`); pozostaje i18n hybryda 78× `isPolish`. |
 | F. Bezpieczeństwo/dostęp | 10 | 7 | **Org-scope CZYSTY** (PII transkryptów chronione, brak IDOR — kohorta czystych); P2: beta-gating tylko FE, transkrypt bez guarda + prompt-injection. |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **Faza 4 niewykonana → max 70 + „NIEPEŁNY".** BRAK cap cross-org (org-scope czysty, zweryfikowane). Suma 52 < 70. |
@@ -137,12 +138,12 @@
 
 ### Fala 2 — Domknięcie wartości (P2)
 1. **Beta/role-gate na `/api/meeting`** (nie tylko FE) — Weryfikacja: non-beta/non-uprawniony → 403.
-2. **Transparentność degradacji LLM** — pole `source` (`ai`/`heuristic`) w odpowiedzi + oznaczenie FE — Weryfikacja: user widzi gdy to regex, nie „AI".
+2. ~~**Transparentność degradacji LLM**~~ — **DONE** (`72d57e64a4`) — `source:'ai'|'heuristic'` w `MeetingNote`, amber Callout w `MeetingHub` gdy heurystyka.
 3. **Decyzja o „otwórz jako dokument"** — realny handoff do Canvas/Doc Studio lub zostawić lokalny split-view świadomie — Weryfikacja: spójność z deklaracją.
 
 ### Fala 3 — Jakość i kanony (P2/P3)
 1. **i18n** — zredukować 78× `isPolish` → `t()` (wzorzec M15) — Weryfikacja: spójny i18n.
-2. **Tokeny kolorów** (3× crimson hardkod) — Weryfikacja: token zamiast `#A51C30`.
+2. ~~**Tokeny kolorów** (3× crimson hardkod)~~ — **DONE** (`7cf315b4b9`) — `bg-primary-600/hover:bg-primary-700`.
 3. **CI** — `Londyn` w PR-gate + test PG (nie tylko sqlite) — Weryfikacja: biegnie na PR, wykrywa schema-drift.
 
 ### Definition of Done (odhaczane przy realizacji)

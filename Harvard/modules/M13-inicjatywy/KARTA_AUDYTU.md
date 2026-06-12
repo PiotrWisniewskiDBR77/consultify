@@ -4,12 +4,12 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M13 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja INICJATYWY, poz.1-19) · poprzednia karta `docs/audit/2026-06-02/MODULE_05` (55/100) · SSOT `docs/initiatives/INITIATIVE_FORMULA.md`
 **Evidence:** `Harvard/modules/M13-inicjatywy/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 52/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 19→20 (W6 AI Wizard CTA aktywowany, commit `3aec45a21d`); F: 2→7 (W1 governance org-scope naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 8→9 (kontraktowe testy cross-org, commit `7ab1b8aace`).
+## OCENA: 53/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** A: 19→20 (W6 AI Wizard CTA aktywowany, commit `3aec45a21d`); F: 2→7 (W1 governance org-scope naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 8→9 (kontraktowe testy cross-org, commit `7ab1b8aace`). **Fala 2 (pominięte):** A: 20→21 (ROI navigation button `dc1dd6154d` — TrendingUp w `InitiativesHub` rightControls; `InitiativeConflictsPanel` deleted `2dbebfdd74`). Suma: 53.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 20 | 13 REALNE + 2 z degradacją; rdzeń (portfolio/dokument ~30 sekcji/Analysis) realny; AI Wizard CTA aktywowany (W6, commit `3aec45a21d`); Charter i New Initiative były już aktywne. |
+| A. Realność funkcji | 25 | 21 | 13 REALNE + 2 z degradacją; rdzeń realny; AI Wizard CTA aktywowany (W6, `3aec45a21d`); ROI nav button NAPRAWIONE (`dc1dd6154d`); `InitiativeConflictsPanel` USUNIĘTY (`2dbebfdd74`). |
 | B. Wiring i dane | 15 | 10 | Główny router scoped, dokument/archive/status realne, ale cicha degradacja V8 bez komunikatu. |
 | C. Testy automatyczne | 15 | 9 | ~520 zielonych; stale import P0 nadal (0 testów CRUD); +1 kontraktowe testy cross-org (W1, commit `7ab1b8aace`). |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
@@ -153,12 +153,12 @@
 1. **Włączyć tworzenie z huba** — odblokować New/Charter/AI Wizard (komponenty gotowe) lub świadomie usunąć CTA — Weryfikacja: CTA tworzy inicjatywę albo znika.
 2. **Gating pilota serwerowo** — `createInitiative`/bulk/generator odrzucają rolę pilota — Weryfikacja: pilot API → 403.
 3. **Komunikat przy degradacji V8** (zamiast cichej pustki) — Weryfikacja: baner/log widoczny jak w Finance/Results.
-4. **Wejście do ROI z nawigacji** — link w sidebarze/hubie do `/roi` — Weryfikacja: ROI osiągalny klikiem.
+4. ~~**Wejście do ROI z nawigacji**~~ — **DONE** (`dc1dd6154d`) — TrendingUp nav button w `InitiativesHub` rightControls.
 
 ### Fala 3 — Jakość i kanony (P2)
 1. **§27 Portfolio** — resize kolumn + popover „widoczne kolumny" + strefa kebaba per status (§9) — Weryfikacja: §27 A-S czyste.
 2. **Korupcja „rose"** w `InitiativeFullView`/`InitiativeDrawer` → `EntityStatusChip`/`c.*` — Weryfikacja: 0× hardkod.
-3. **Wytnij `InitiativeConflictsPanel`** (martwy) + popraw docstring — Weryfikacja: 0 referencji.
+3. ~~**Wytnij `InitiativeConflictsPanel`**~~ — **DONE** (`2dbebfdd74`) — 154 linie usunięte, 0 referencji.
 4. **bulk Tag/Due/Delete** — wpiąć BE lub ukryć przyciski — Weryfikacja: brak przycisków-zawsze-disabled.
 5. (Treść kart VTS — `project_vts_card_audit`, nie M13.)
 

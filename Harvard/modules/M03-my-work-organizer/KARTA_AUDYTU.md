@@ -4,17 +4,17 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M03 · inwentarz `Harvard/podzial/inventory/INV_B_my-work.md` (sekcje 1,3-10; bez Notatnika=M04 i Ideas=M05-09) · poprzednia karta `docs/audit/2026-06-02/MODULE_02` (57/100)
 **Evidence:** `Harvard/modules/M03-my-work-organizer/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 DecisionController+inbox org-scope naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate + kontraktowe testy cross-org, commit `7ab1b8aace`).
+## OCENA: 53/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 DecisionController+inbox org-scope naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate + kontraktowe testy cross-org, commit `7ab1b8aace`). **Fala 2 (pominięte w re-audycie):** F: 7→9 (inbox canonical IDOR `45d74b0de1` — delegate/snooze/SLA routes org-scope 2-step +1; executive-analytics server role-guard `d05382fb44` — requireRole(ADMIN/MANAGER/OWNER/SUPERADMIN) +1); A: 19→20 (15 dead components deleted `d05382fb44`). Suma: 53.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 19 | Inbox/Kalendarz/Zadania/Decyzje/Manager realne, ale linkowanie decyzji z zadania = 4 zaszyte mocki (WIDOCZNE-ALE-ZEPSUTE) + 2 stuby. |
+| A. Realność funkcji | 25 | 20 | Inbox/Kalendarz/Zadania/Decyzje/Manager realne; 15 dead components deleted (`d05382fb44`); linkowanie decyzji z zadania = 4 zaszyte mocki (WIDOCZNE-ALE-ZEPSUTE) + 2 stuby. |
 | B. Wiring i dane | 15 | 10 | Inbox ma graceful fallback v8→legacy, CRUD wpięte, ale odczyt session-context to martwy stub + cross-org gapy. |
 | C. Testy automatyczne | 15 | 8 | 595 PASS / 19 FAIL; +1 W15 CI gate na Londyn + kontraktowe testy cross-org (W1, commit `7ab1b8aace`). |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | §27 w większości spełnione, ale RC-4 (sticky thead łamany przez `overflow-hidden`) na wszystkich 3 tabelach + szerokości kolumn nieperzystowane. |
-| F. Bezpieczeństwo/dostęp | 10 | 7 | W1 DecisionController+inbox org-scope naprawiony (commit `b9f2dee9d2`); W7 beta-lock 3-warstwowy; pozostałe: Manager gating tylko UI (P2), executive-analytics (P2). |
+| F. Bezpieczeństwo/dostęp | 10 | 9 | W1 DecisionController+inbox org-scope (`b9f2dee9d2`); inbox canonical IDOR NAPRAWIONE (`45d74b0de1` — delegate/snooze/SLA 2-step org-verify); executive-analytics server role-guard NAPRAWIONE (`d05382fb44`); W7 beta-lock 3-warstwowy; pozostałe: pilot gating tylko klient (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 50 < 70 (Faza 4 niewykonana). |
 

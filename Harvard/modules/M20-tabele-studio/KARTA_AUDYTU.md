@@ -4,13 +4,13 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M20 · inwentarz `Harvard/podzial/inventory/INV_E_outputs_studia_meeting.md` (sekcja TABELE STUDIO, poz.1-16) · poprzednia karta `docs/audit/2026-06-02/MODULE_11_tabele.md` (44/100)
 **Evidence:** `Harvard/modules/M20-tabele-studio/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests*.log, f56_kanon_sec.md)
 
-## OCENA: 47/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→6 (W2 record-templates+form submissions+row-policies org-guard przez `PermissionsService.canAccessBase`, commit `e3945bc7fc`; hard cap cross-org write usunięty). Suma: 19+9+7+0+6+6+0=47.
+## OCENA: 48/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→6 (W2 record-templates+form submissions+row-policies org-guard przez `PermissionsService.canAccessBase`, commit `e3945bc7fc`; hard cap cross-org write usunięty). Suma: 19+9+7+0+6+6+0=47. **Fala 2 (korekta):** B: 9→10 — kolizja numerów migracji 725×2/726×2 NAPRAWIONA (725_organizations_missing_columns → 777, 726_partner_users_missing_columns → 778; tylko 1 plik na numer, test ModuleSyncService 5/5 PASS). Suma: 48.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 19 | Rdzeń realny (records/CRUD/widoki/formuły/AI-editor/automatyzacje na realnych `tp_*`, bez fasady M18), ale governed sync-to-results/finance = STUB (pisze tylko wiersz-log) + rozjazd 4 flag komentarz↔runtime. |
-| B. Wiring i dane | 15 | 9 | Realny Postgres `tp_*` (8 migracji), ale **kolizja numerów migracji 725×2/726×2** (realny bug danych) + governed-sync fake + flagi mylące. |
+| B. Wiring i dane | 15 | 10 | Realny Postgres `tp_*` (8 migracji 700-726 + 777-778); kolizja 725×2/726×2 NAPRAWIONA (→ 777/778, test 5/5 PASS); governed-sync fake + flagi mylące pozostają. |
 | C. Testy automatyczne | 15 | 7 | 894 PASS/9 FAIL, ale **fundament Records API w 100% zmockowany** (żaden test nie dotyka realnej `tp_records`), E2E fałszywa zieleń (`test.skip` na 404/no-token); nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | MELS zgodny, `TabeleView` i18n czyste (37× `t()`, najlepsze), ale §27 N/D (data-grid bez własnego kanonu), PublicViewPage EN-only, cicha degradacja flag-OFF (`catch→null`), 322 hardkody hex. |
@@ -145,7 +145,7 @@
 1. **Org-guard na endpointy wtórne** — record-templates (`:4802-4849`), form submissions (`:2804`), row-policies (`:4407`), governed-models cross-module (`:3413-3469`) przez `PermissionsService.canAccessBase`/scope org — Weryfikacja: cross-org read/write/sync → 403/404; testy IDOR.
 2. **Szyfrowanie SSO config + webhook secret** at rest — Weryfikacja: brak plaintext `clientSecret`/SAML/hmac w `tp_sso_configs`/webhooks.
 3. **Weryfikacja `share_password`** przy konsumpcji widoku (lub usunąć obietnicę hasła) — Weryfikacja: „chroniony" widok wymaga hasła.
-4. **Usunąć kolizję migracji** 725×2/726×2 + test ModuleSync — Weryfikacja: unikalne numery, test deterministyczny.
+4. ~~**Usunąć kolizję migracji** 725×2/726×2 + test ModuleSync~~ — **DONE** (pre-Fala 2, migr. 777/778; test 5/5 PASS lokalnie).
 
 ### Fala 2 — Domknięcie wartości (P1/P2)
 1. **`[INTEGRACJA — INTEGRACJE.md §C poz.1 / Sprint 5 / DECYZJA #6]`** Governed sync realny — `ModuleSyncService.ts:89` pisze wyłącznie do `tp_module_sync_results` (log-only); grep potwierdza ZERO czytelników w M15/M16. `syncToModule` musi faktycznie pisać do Results/Finance/Execution ALBO jawnie oznaczyć jako „preview" i ukryć przyciski sync — Weryfikacja: rekord pojawia się w module docelowym.
@@ -161,7 +161,7 @@
 ### Definition of Done (odhaczane przy realizacji)
 - [ ] 1. Testy auto FE+BE scenariuszy krytycznych (zwł. S1 realny DB, IDOR wtórne) zielone w CI
 - [ ] 2. Żywa weryfikacja Claude'a: pełny skrypt Fazy 4 PASS z dowodami
-- [ ] 3. Railway: migracje (bez kolizji 725/726) + flagi udokumentowane + smoke 200 + czyste logi
+- [ ] 3. Railway: migracje (kolizja 725/726 naprawiona ✓) + flagi udokumentowane + smoke 200 + czyste logi
 - [ ] 4. Kanony: grid-canon, i18n PublicViewPage, tokeny kolorów
 - [ ] 5. Zero WIDOCZNE-ALE-ZEPSUTE (governed sync, share_password, rozjazd flag)
 - [ ] 6. Zero cichych degradacji bez komunikatu (503/404 flag-OFF)
