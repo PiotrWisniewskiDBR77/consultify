@@ -232,9 +232,23 @@ export function attachIdeaCollabWs(server: HttpServer): void {
       return;
     }
 
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      (ws as CollabSocket).__user = { userId, organizationId, userName };
-      wss.emit('connection', ws, request, ideaId);
+    // Verify ideaId belongs to the user's org before allowing collab join
+    db.get<{ id: string }>(
+      'SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?',
+      [ideaId, organizationId]
+    ).then((idea) => {
+      if (!idea) {
+        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        (ws as CollabSocket).__user = { userId, organizationId, userName };
+        wss.emit('connection', ws, request, ideaId);
+      });
+    }).catch(() => {
+      socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+      socket.destroy();
     });
   });
 

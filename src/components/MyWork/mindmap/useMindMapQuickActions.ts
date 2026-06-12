@@ -77,7 +77,6 @@ export interface MindMapQuickActionSetters {
   setShowExportDiagramCode: React.Dispatch<React.SetStateAction<boolean>>;
   setShowImportExternalMap: React.Dispatch<React.SetStateAction<boolean>>;
   setShowMindMap3D: React.Dispatch<React.SetStateAction<boolean>>;
-  setShowWebhookSettings: React.Dispatch<React.SetStateAction<boolean>>;
   setStructureType?: React.Dispatch<React.SetStateAction<MapStructureType>>;
   setShowStructurePicker?: React.Dispatch<React.SetStateAction<boolean>>;
   setCommentNodeId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -291,8 +290,6 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
     if (action === 'mm_import_external') setters.setShowImportExternalMap(true);
     if (action === 'mm_3d_view') setters.setShowMindMap3D(true);
-    if (action === 'mm_webhooks') setters.setShowWebhookSettings(true);
-
     if (action === 'mm_export') {
       if (setters.setExportMenuOpen) {
         setters.setExportMenuOpen(true);

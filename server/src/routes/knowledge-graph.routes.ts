@@ -19,11 +19,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
-  const orgId =
-    req.user?.organizationId ||
-    req.organizationId ||
-    (req.headers['x-organization-id'] as string) ||
-    (req.query.organizationId as string);
+  const orgId = req.user?.organizationId || req.organizationId;
   if (!userId || !orgId) {
     res.status(401).json({ error: 'Authentication required' });
     return null;

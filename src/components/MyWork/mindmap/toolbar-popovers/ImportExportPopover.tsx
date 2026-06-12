@@ -64,8 +64,8 @@ const EXPORT_ACTIONS = [
   {
     action: 'mm_export_pptx',
     iconEl: Presentation,
-    labelPl: 'Prezentacja (PPTX)',
-    labelEn: 'Presentation (PPTX)',
+    labelPl: 'Prezentacja HTML',
+    labelEn: 'HTML Presentation',
   },
   {
     action: 'mm_embed_report',

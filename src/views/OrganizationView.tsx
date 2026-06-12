@@ -136,6 +136,13 @@ export const OrganizationView: React.FC = () => {
     if (path === `${ROUTES.ORGANIZATION.ROOT}/megatrends`) {
       trackFunnelEvent('megatrends_redirect_used', { fromRoute: '/organization/megatrends' });
       navigate(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, { replace: true });
+      return;
+    }
+    const section = path.replace(`${ROUTES.ORGANIZATION.ROOT}/`, '').replace(/^\/+|\/+$/g, '') || 'profile';
+    const adminRedirect = ADMIN_REDIRECTS[section as OrganizationSection];
+    if (adminRedirect) {
+      trackFunnelEvent('org_workspace_admin_handoff', { section, target: adminRedirect, via: 'url' });
+      navigate(adminRedirect, { replace: true });
     }
   }, [location.pathname, navigate]);
 

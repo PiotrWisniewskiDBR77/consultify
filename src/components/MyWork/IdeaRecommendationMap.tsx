@@ -146,7 +146,6 @@ import {
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
-import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
 type IdeaNodeData = NodeDetailData & {
   _depth?: number;
 };
@@ -1821,7 +1820,7 @@ function MindMapInner({
               }),
               source: 'lifecycle',
               message: 'REAL_PAGE_RELOAD',
-              detail: 'Recoverose previous debug session',
+              detail: 'Recover previous debug session',
               severity: 'warn',
             },
           ];
@@ -3766,7 +3765,6 @@ function MindMapInner({
   const [showMindMap3D, setShowMindMap3D] = useState(false);
 
   // ── R4.5: Webhook Settings ─────────────────────────────────────────
-  const [showWebhookSettings, setShowWebhookSettings] = useState(false);
 
   // ── Branch Summary Panel ──────────────────────────────────────────
   const [summaryPanelOpen, setSummaryPanelOpen] = useState(false);
@@ -4084,7 +4082,6 @@ function MindMapInner({
       setShowExportDiagramCode,
       setShowImportExternalMap,
       setShowMindMap3D,
-      setShowWebhookSettings,
       setCommentNodeId,
       setExportMenuOpen,
       setShowMiniMap,
@@ -6016,15 +6013,6 @@ function MindMapInner({
           selectedNodeIds={selectedNodeIds}
           onSessionStateChange={handleCollabSessionStateChange}
           onRegisterSend={registerCollabSend}
-        />
-      ) : null}
-
-      {/* R4.5: Webhook Settings */}
-      {showWebhookSettings ? (
-        <WebhookSettings
-          open={showWebhookSettings}
-          onClose={() => setShowWebhookSettings(false)}
-          ideaId={ideaId}
         />
       ) : null}
 

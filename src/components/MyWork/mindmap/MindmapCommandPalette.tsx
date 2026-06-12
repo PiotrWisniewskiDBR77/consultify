@@ -206,8 +206,8 @@ const COMMANDS: CommandItem[] = [
   },
   {
     id: 'export_pptx',
-    labelPl: 'Eksport: PPTX',
-    labelEn: 'Export: PPTX',
+    labelPl: 'Eksport: Prezentacja HTML',
+    labelEn: 'Export: HTML Presentation',
     category: 'export',
     action: 'mm_export_pptx',
   },
