@@ -1452,12 +1452,12 @@ router.get(
       const weekProgress = Math.round((dayOfWeek / 5) * 100);
 
       const overdueTasksResult = await db.query<{ id: string; title: string }>(
-        `SELECT id, title FROM tasks WHERE assigned_to = ? AND organization_id = ? AND status NOT IN ('done','cancelled') AND due_date < ${nowSql()} ORDER BY due_date ASC LIMIT 3`,
+        `SELECT id, title FROM tasks WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done','cancelled') AND due_date < ${nowSql()} ORDER BY due_date ASC LIMIT 3`,
         [userId, orgId]
       );
 
       const pendingDecisionsResult = await db.query<{ id: string; title: string }>(
-        `SELECT id, title FROM decisions WHERE organization_id = ? AND status = 'pending' AND (created_by = ? OR assigned_to = ?) ORDER BY created_at DESC LIMIT 3`,
+        `SELECT id, title FROM decisions WHERE organization_id = ? AND status = 'pending' AND (created_by = ? OR decision_maker_id = ?) ORDER BY created_at DESC LIMIT 3`,
         [orgId, userId, userId]
       );
 
@@ -1554,10 +1554,10 @@ router.get(
       const notesResult = await db.query<{
         id: string;
         title: string;
-        content: string | null;
+        content_text: string | null;
         updated_at: string;
       }>(
-        `SELECT id, title, content, updated_at FROM notebook_pages WHERE user_id = ? AND organization_id = ? ORDER BY updated_at DESC LIMIT 2`,
+        `SELECT id, title, content_text, updated_at FROM notebook_pages WHERE owner_user_id = ? AND organization_id = ? ORDER BY updated_at DESC LIMIT 2`,
         [userId, orgId]
       );
 
@@ -1592,7 +1592,7 @@ router.get(
           id: n.id,
           type: 'note',
           title: n.title,
-          snippet: (n.content || '').replace(/<[^>]*>/g, '').substring(0, 200),
+          snippet: (n.content_text || '').replace(/<[^>]*>/g, '').substring(0, 200),
           updatedAt: n.updated_at,
         })),
         aiNudge,
@@ -1641,12 +1641,12 @@ router.get(
 
     try {
       const pendingDecisionsResult = await db.query(
-        `SELECT COUNT(*) as cnt FROM decisions WHERE organization_id = ? AND status = 'pending' AND (created_by = ? OR assigned_to = ?) AND created_at < ${daysAgoSql(1)}`,
+        `SELECT COUNT(*) as cnt FROM decisions WHERE organization_id = ? AND status = 'pending' AND (created_by = ? OR decision_maker_id = ?) AND created_at < ${daysAgoSql(1)}`,
         [orgId, userId, userId]
       );
 
       const overdueTasksResult = await db.query(
-        `SELECT COUNT(*) as cnt FROM tasks WHERE assigned_to = ? AND organization_id = ? AND status NOT IN ('done','cancelled') AND due_date < ${nowSql()}`,
+        `SELECT COUNT(*) as cnt FROM tasks WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done','cancelled') AND due_date < ${nowSql()}`,
         [userId, orgId]
       );
 
