@@ -79,7 +79,15 @@ type Report = {
 async function verify(dir: string, onlyPrefix?: string, asJson = false): Promise<number> {
   const expected = parseExpectedSchema(dir, onlyPrefix);
 
-  const url = resolveReachableDatabaseUrl();
+  const resolved = resolveReachableDatabaseUrl();
+  const url = resolved.databaseUrl;
+  if (!url) {
+    throw new Error(
+      `No reachable database URL (source=${resolved.source}${
+        resolved.reason ? `: ${resolved.reason}` : ''
+      }). Set DATABASE_URL or DATABASE_PUBLIC_URL.`
+    );
+  }
   const hostHint = (() => {
     try {
       return new URL(url).host;
