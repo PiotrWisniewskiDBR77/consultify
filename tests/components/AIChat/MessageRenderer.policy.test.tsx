@@ -236,6 +236,11 @@ describe('MessageRenderer policy UX (P34-B)', () => {
 
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
+    // Trust details now live behind the compact "More actions" → "Sources
+    // details" disclosure rather than rendering inline by default.
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources details' }));
+
     expect(screen.getByTestId('sources-strip')).toHaveTextContent('Product Knowledge');
     expect(screen.getByTestId('trust-panel')).toHaveTextContent('Why this answer? Trust details');
     expect(screen.getByTestId('trust-panel')).toHaveTextContent('Confidence: 86%');
@@ -273,6 +278,10 @@ describe('MessageRenderer policy UX (P34-B)', () => {
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
     expect(screen.queryByText('No sources found')).not.toBeInTheDocument();
+
+    // The deep-search sources list is revealed via the compact disclosure.
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources details' }));
     expect(screen.getByText('Deep search sources')).toBeInTheDocument();
   });
 
@@ -297,6 +306,8 @@ describe('MessageRenderer policy UX (P34-B)', () => {
 
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources details' }));
     fireEvent.click(screen.getByText('Deep search sources'));
     expect(screen.getByText('Regular chat source')).toBeInTheDocument();
   });
@@ -386,6 +397,8 @@ describe('MessageRenderer policy UX (P34-B)', () => {
 
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources details' }));
     fireEvent.click(screen.getByText('Deep search sources'));
     expect(screen.getByText('Decision memory')).toBeInTheDocument();
     expect(screen.getByText('prior decision log')).toBeInTheDocument();
@@ -414,6 +427,8 @@ describe('MessageRenderer policy UX (P34-B)', () => {
 
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sources details' }));
     fireEvent.click(screen.getByText('Deep search sources'));
     expect(screen.getAllByText('External source').length).toBeGreaterThan(0);
     expect(screen.queryByText(/\brag_2\b/)).not.toBeInTheDocument();

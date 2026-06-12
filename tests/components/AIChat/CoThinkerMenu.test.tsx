@@ -42,8 +42,10 @@ describe('CoThinkerMenu (L2)', () => {
     fireEvent.click(screen.getByTestId('chat-cothinker-button'));
     fireEvent.click(screen.getByRole('menuitem', { name: /market researcher/i }));
 
+    // C6: Market Researcher is now a symmetric persona — it maps to its own
+    // coThinkerMode AND keeps the live-web flags as a secondary effect.
     expect(setAIConfigMock).toHaveBeenCalledWith({
-      coThinkerMode: null,
+      coThinkerMode: 'market_researcher',
       marketResearch: true,
       webSearch: true,
     });
@@ -81,12 +83,18 @@ describe('CoThinkerMenu (L2)', () => {
     expect(screen.getByText(/analyst/i)).toBeInTheDocument();
   });
 
-  it('renders persona descriptions in menu rows', () => {
+  it('renders all persona rows as menuitems', () => {
     render(<CoThinkerMenu />);
     fireEvent.click(screen.getByTestId('chat-cothinker-button'));
 
-    expect(screen.getByText(/broad strategy framing/i)).toBeInTheDocument();
-    expect(screen.getByText(/web-backed market signals/i)).toBeInTheDocument();
+    // The menu rows are compact label-only rows (descriptions are not surfaced
+    // in the row UI). Assert the persona labels render as selectable menuitems.
+    expect(screen.getByRole('menuitem', { name: /consultant/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /idea creator/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /analyst/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /auditor/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /editor/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /market researcher/i })).toBeInTheDocument();
   });
 });
 

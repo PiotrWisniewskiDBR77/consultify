@@ -15,6 +15,7 @@ const mockState = vi.hoisted(() => ({
   handleRemixMock: vi.fn(),
   handleDownloadMock: vi.fn().mockResolvedValue(undefined),
   openTableBuilderInNewTabMock: vi.fn().mockResolvedValue(true),
+  buildTableBuilderOpenPathMock: vi.fn().mockResolvedValue('/presentations?tab=sheets&tableId=table-1'),
   downloadTabeleArtifactCsvMock: vi.fn().mockResolvedValue(true),
   proposeSchemaChangeMock: vi.fn().mockResolvedValue({ id: 'proposal-1' }),
   explainRelationMock: vi.fn().mockResolvedValue({
@@ -55,6 +56,7 @@ vi.mock('../../../../src/components/AIChat/KimiWorkspace/KimiWorkspaceShell', ()
 
 vi.mock('../../../../src/utils/tabeleArtifactOpen', () => ({
   openTableBuilderInNewTab: (...args: any[]) => mockState.openTableBuilderInNewTabMock(...args),
+  buildTableBuilderOpenPath: (...args: any[]) => mockState.buildTableBuilderOpenPathMock(...args),
   downloadTabeleArtifactCsv: (...args: any[]) => mockState.downloadTabeleArtifactCsvMock(...args),
 }));
 
@@ -181,7 +183,7 @@ describe('TabeleView — Sprint 4 orchestrator', () => {
     expect(screen.getByTestId('shell-completed')).toHaveTextContent('true');
   });
 
-  it('opens the Table Builder in a new tab via the Sprint 4 utility', async () => {
+  it('resolves the Table Builder path and navigates via the Sprint 4 utility', async () => {
     resetPipeline({
       isCompleted: true,
       preview: {
@@ -196,11 +198,10 @@ describe('TabeleView — Sprint 4 orchestrator', () => {
     renderTabele('/tabele?view=new');
     fireEvent.click(screen.getByRole('button', { name: /Preview file/i }));
 
+    // The builder now opens via in-SPA navigation: resolve the path for the
+    // table, then navigate to it (no separate new-tab utility).
     await waitFor(() => {
-      expect(mockState.openTableBuilderInNewTabMock).toHaveBeenCalledWith(
-        'table-1',
-        expect.any(Function)
-      );
+      expect(mockState.buildTableBuilderOpenPathMock).toHaveBeenCalledWith('table-1');
     });
   });
 
@@ -270,10 +271,7 @@ describe('TabeleView — Sprint 4 orchestrator', () => {
     renderTabele('/tabele?view=new');
 
     await waitFor(() => {
-      expect(mockState.openTableBuilderInNewTabMock).toHaveBeenCalledWith(
-        'table-1',
-        expect.any(Function)
-      );
+      expect(mockState.buildTableBuilderOpenPathMock).toHaveBeenCalledWith('table-1');
     });
   });
 

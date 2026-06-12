@@ -181,8 +181,10 @@ describe('CanvasRichEditor', () => {
     expect(await screen.findByTitle('Ask Teresa')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Ask AI/i })).toBeInTheDocument();
 
-    // Opening Quick actions reveals the preset prompts.
+    // Opening Quick actions reveals the preset prompts. "Final polish" is a
+    // dropdown-only preset (the inline toolbar has its own Expand/Shorten
+    // buttons), so it unambiguously proves the Quick actions panel opened.
     await user.click(screen.getByRole('button', { name: /Actions/i }));
-    expect(await screen.findByRole('button', { name: 'Expand' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Final polish' })).toBeInTheDocument();
   });
 });

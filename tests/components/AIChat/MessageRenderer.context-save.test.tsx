@@ -88,6 +88,9 @@ describe('MessageRenderer context save action', () => {
 
     render(<MessageRenderer {...buildProps({ handleSaveToContext })} />);
 
+    // For AI messages the save-to-context action now lives inside the compact
+    // "More actions" dropdown, which must be opened first.
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
     fireEvent.click(screen.getByTitle('Save to Context OS'));
 
     expect(handleSaveToContext).toHaveBeenCalledWith('m-ai-1', 'Structured answer to save.', 'ai');

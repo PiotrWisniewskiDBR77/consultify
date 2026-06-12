@@ -3,9 +3,19 @@
  */
 import React from 'react';
 import { render } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 
 import { EnhancedChatInput } from '../../../src/components/AIChat/EnhancedChatInput';
+
+const makeQueryWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
 
 const { toastErrorMock } = vi.hoisted(() => ({
   toastErrorMock: vi.fn(),
@@ -20,6 +30,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: () => {} },
   useTranslation: () => ({
     i18n: { language: 'en' },
     t: (_k: string, fallback?: string) => fallback || _k,
@@ -30,8 +41,16 @@ vi.mock('../../../src/store/useAppStore', () => ({
   useAppStore: () => ({ aiFreezeStatus: { isFrozen: false } }),
 }));
 
+const conversationState = { activeConversationId: null, conversations: [], activeMessages: [] };
 vi.mock('../../../src/store/useConversationStore', () => ({
-  useConversationStore: () => ({ activeConversationId: null, conversations: [] }),
+  useConversationStore: (selector?: (s: typeof conversationState) => unknown) =>
+    selector ? selector(conversationState) : conversationState,
+}));
+
+const chatProjectState = { projects: [] };
+vi.mock('../../../src/store/useChatProjectStore', () => ({
+  useChatProjectStore: (selector?: (s: typeof chatProjectState) => unknown) =>
+    selector ? selector(chatProjectState) : chatProjectState,
 }));
 
 vi.mock('../../../src/hooks/useCloudIntegrations', () => ({
@@ -75,7 +94,8 @@ describe('EnhancedChatInput Teresa toast lifecycle', () => {
     };
 
     const view = render(
-      <EnhancedChatInput {...props} teresaVoiceStatus="error" teresaVoiceError="boom" />
+      <EnhancedChatInput {...props} teresaVoiceStatus="error" teresaVoiceError="boom" />,
+      { wrapper: makeQueryWrapper() }
     );
     expect(toastErrorMock).toHaveBeenCalledTimes(1);
 
@@ -90,7 +110,7 @@ describe('EnhancedChatInput Teresa toast lifecycle', () => {
 
   it('wires AddFilesMenu callbacks and forwards add-to-project guard info', () => {
     const onSend = vi.fn();
-    render(<EnhancedChatInput onSend={onSend} />);
+    render(<EnhancedChatInput onSend={onSend} />, { wrapper: makeQueryWrapper() });
 
     expect(addFilesMenuPropsRef.current).toBeTruthy();
     expect(typeof addFilesMenuPropsRef.current.onUrlAdd).toBe('function');

@@ -83,14 +83,13 @@ describe('ToolsMenu (L2)', () => {
     Object.defineProperty(window, 'speechSynthesis', { value: synth, writable: true });
   });
 
-  it('toggles an AI mode and emits tool select (showReasoning syncs maxMode)', () => {
+  it('toggles an AI mode and emits tool select', () => {
     render(<ToolsMenu onToolSelect={onToolSelect} />);
 
     fireEvent.click(screen.getByTestId('chat-tools-button'));
     fireEvent.click(screen.getByRole('button', { name: 'aiChat.menu.modes.showReasoning.label' }));
 
     expect(setAIConfigMock).toHaveBeenCalledWith({ showReasoning: true });
-    expect(setAIConfigMock).toHaveBeenCalledWith({ maxMode: true });
     expect(onToolSelect).toHaveBeenCalledWith('toggle:showReasoning');
     expect(toast.success).toHaveBeenCalled();
   });
@@ -164,7 +163,7 @@ describe('ToolsMenu (L2)', () => {
     expect(screen.queryByText(/ai modes/i)).not.toBeInTheDocument();
   });
 
-  it('toggling showReasoning twice disables maxMode', () => {
+  it('toggling showReasoning twice flips it on then off', () => {
     const { rerender } = render(<ToolsMenu onToolSelect={onToolSelect} />);
 
     fireEvent.click(screen.getByTestId('chat-tools-button'));
@@ -173,9 +172,8 @@ describe('ToolsMenu (L2)', () => {
     const btn = screen.getByRole('button', { name: 'aiChat.menu.modes.showReasoning.label' });
     fireEvent.click(btn);
     expect(setAIConfigMock).toHaveBeenCalledWith({ showReasoning: true });
-    expect(setAIConfigMock).toHaveBeenCalledWith({ maxMode: true });
 
-    aiConfigState = { ...aiConfigState, showReasoning: true, maxMode: true };
+    aiConfigState = { ...aiConfigState, showReasoning: true };
     rerender(<ToolsMenu onToolSelect={onToolSelect} />);
 
     fireEvent.mouseDown(document.body);
@@ -184,7 +182,6 @@ describe('ToolsMenu (L2)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'aiChat.menu.modes.showReasoning.label' }));
     expect(setAIConfigMock).toHaveBeenCalledWith({ showReasoning: false });
-    expect(setAIConfigMock).toHaveBeenCalledWith({ maxMode: false });
   });
 
   it('shows toast error when saving custom instructions fails', async () => {
