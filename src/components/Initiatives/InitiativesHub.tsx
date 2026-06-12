@@ -23,6 +23,7 @@ import {
   Sparkles,
   Tag,
   Target,
+  TrendingUp,
   Trash2,
   UserPlus,
   Users,
@@ -1628,7 +1629,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  const rightControls = <div className="flex items-center gap-2">{scopeToggle}</div>;
+  const rightControls = (
+    <div className="flex items-center gap-2">
+      {scopeToggle}
+      <button
+        type="button"
+        onClick={() => navigate(ROUTES.ROI)}
+        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+        title={i18n.language?.startsWith('pl') ? 'Widok ROI i realizacji wartości' : 'ROI & Value Realization'}
+      >
+        <TrendingUp size={13} />
+        ROI
+      </button>
+    </div>
+  );
 
   const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
     (sum, chain) =>
