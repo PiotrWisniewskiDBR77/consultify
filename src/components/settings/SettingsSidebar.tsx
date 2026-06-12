@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Clock,
   Code2,
+  CreditCard,
   Database,
   Download,
   ExternalLink,
@@ -101,6 +102,8 @@ export type SettingsSection =
   // Data & Privacy
   | 'data-controls'
   | 'privacy'
+  // Billing
+  | 'billing'
   // Appearance
   | 'theme'
   | 'accessibility'
@@ -393,6 +396,26 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 label: t('settings.sidebar.privacy', 'Privacy & Visibility'),
                 icon: Shield,
                 keywords: ['visibility', 'sharing', 'online', 'profile', 'activity', 'mentions'],
+              },
+            ],
+          },
+          {
+            id: 'billing',
+            label: t('settings.sidebar.groups.billing', 'BILLING'),
+            items: [
+              {
+                id: 'billing',
+                label: t('settings.sidebar.billing', 'Subscription & Billing'),
+                icon: CreditCard,
+                keywords: [
+                  'subscription',
+                  'plan',
+                  'invoice',
+                  'payment',
+                  'credits',
+                  'license',
+                  'usage',
+                ],
               },
             ],
           },

@@ -36,6 +36,7 @@ import { AIUsageDashboard } from '../components/settings/AIUsageDashboard';
 import { APIAccessSettings } from '../components/settings/APIAccessSettings';
 import { AvailabilitySettings } from '../components/settings/AvailabilitySettings';
 import { AvatarPhotoSettings } from '../components/settings/AvatarPhotoSettings';
+import { BillingSettings } from '../components/settings/BillingSettings';
 import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
 import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
@@ -203,6 +204,10 @@ const sectionMeta: Record<SettingsSection, { title: string; subtitle: string }> 
   'data-controls': {
     title: 'Data & Consent',
     subtitle: 'GDPR compliance, consent management, data retention, and account actions',
+  },
+  billing: {
+    title: 'Subscription & Billing',
+    subtitle: 'Manage your plan, invoices, usage, and billing terms',
   },
   privacy: {
     title: 'Privacy & Visibility',
@@ -417,6 +422,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         return <DataControlsSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
       case 'privacy':
         return <PrivacySettings currentUser={currentUser} onUpdateUser={onUpdateUser} />;
+
+      // Billing
+      case 'billing':
+        return <BillingSettings currentUser={currentUser} />;
 
       // Appearance
       case 'theme':
