@@ -678,6 +678,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [managerLaneCounts, setManagerLaneCounts] = useState<
     Record<string, { total: number; critical: number; warning: number }>
   >({});
+  const [managerV8Degraded, setManagerV8Degraded] = useState(false);
 
   useEffect(() => {
     setOpenDocuments((prev) =>
@@ -1139,7 +1140,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             critical: problems.filter((p) => p.severity === 'critical').length,
             warning: problems.filter((p) => p.severity === 'warning').length,
           };
-        } catch {
+        } catch (err: any) {
+          if ([404, 501].includes(Number(err?.status))) {
+            setManagerV8Degraded(true);
+          }
           return { laneId, total: 0, critical: 0, warning: 0 };
         }
       })
@@ -4732,6 +4736,7 @@ Please return:
       return (
         <ExecutionManagementView
           managerLaneCounts={managerLaneCounts}
+          v8Degraded={managerV8Degraded}
           projectId={currentProjectId || undefined}
           searchQuery={searchQuery}
           hasExecutingInitiatives={dashboardBaseInitiatives.length > 0}

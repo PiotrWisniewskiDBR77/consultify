@@ -22,6 +22,7 @@ interface ManagerLaneCount {
 
 interface ExecutionManagementViewProps {
   managerLaneCounts: Record<string, ManagerLaneCount>;
+  v8Degraded?: boolean;
   projectId?: string;
   searchQuery: string;
   hasExecutingInitiatives: boolean;
@@ -34,6 +35,7 @@ type ManagementSubview = 'all' | ManagerModuleId;
 
 export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = ({
   managerLaneCounts,
+  v8Degraded,
   projectId,
   searchQuery,
   hasExecutingInitiatives,
@@ -283,6 +285,17 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
       <div className="flex-1 min-h-0 overflow-hidden">
         {subview === 'all' ? (
           <div className="p-4 space-y-5 h-full overflow-auto">
+            {v8Degraded && (
+              <Callout
+                variant="warning"
+                title={t('execution.manager.v8Degraded', 'Manager cockpit requires V8')}
+              >
+                {t(
+                  'execution.manager.v8DegradedDesc',
+                  'The Manager cockpit (lanes, AI recommendations) is not available because V8 is not enabled on this environment. Contact your administrator to enable V8.'
+                )}
+              </Callout>
+            )}
             {!hasExecutingInitiatives && (
               <Callout
                 variant="info"
