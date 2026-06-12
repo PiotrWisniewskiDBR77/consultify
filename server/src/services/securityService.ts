@@ -10,6 +10,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { flagOn } from '../utils/pgFlags.js';
 
 // ==========================================
 // TYPES
@@ -108,9 +109,9 @@ class SecurityService {
       protocol: row.protocol as SSOConfiguration['protocol'],
       providerName: row.provider_name,
       providerType: row.provider_type,
-      isEnabled: row.is_enabled === 1,
-      isDefault: row.is_default === 1,
-      jitProvisioning: row.jit_provisioning === 1,
+      isEnabled: flagOn(row.is_enabled),
+      isDefault: flagOn(row.is_default),
+      jitProvisioning: flagOn(row.jit_provisioning),
       defaultRole: row.default_role,
     };
   }

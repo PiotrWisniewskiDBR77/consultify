@@ -1057,13 +1057,16 @@ export function createAIProposal(
   return proposal;
 }
 
-export function getAIProposal(proposalId: string): AIProposal | null {
-  return aiProposalStore.get(proposalId) ?? null;
+export function getAIProposal(proposalId: string, organizationId: string): AIProposal | null {
+  const proposal = aiProposalStore.get(proposalId);
+  if (!proposal || proposal.organization_id !== organizationId) return null;
+  return proposal;
 }
 
 export async function resolveAIProposal(
   proposalId: string,
-  action: 'accept' | 'reject'
+  action: 'accept' | 'reject',
+  organizationId: string
 ): Promise<{
   success: boolean;
   proposal?: AIProposal;
@@ -1072,7 +1075,7 @@ export async function resolveAIProposal(
   error_code?: string;
 }> {
   const proposal = aiProposalStore.get(proposalId);
-  if (!proposal) {
+  if (!proposal || proposal.organization_id !== organizationId) {
     return { success: false, error: 'Proposal not found', error_code: 'PROPOSAL_NOT_FOUND' };
   }
   if (proposal.status !== 'pending') {

@@ -3064,6 +3064,43 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
 }
 
 // ==========================================
+// SCHEMA COLUMN GAP FIXER
+// ==========================================
+
+// Three tables were created by early migrations that predate columns added later.
+// CREATE TABLE IF NOT EXISTS in follow-up migrations is a no-op when the table exists,
+// so the columns were never backfilled.  This function patches them safely.
+async function ensureSchemaColumnGaps(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  if (dbType !== 'postgres') return; // SQLite local dev recreates tables fresh
+
+  // sso_configurations: migration 032 created the table with `is_active` only;
+  // migration 258 (which adds is_enabled/is_default/jit_provisioning) was a no-op.
+  await db.query(
+    `ALTER TABLE sso_configurations ADD COLUMN IF NOT EXISTS is_enabled INTEGER DEFAULT 0`
+  );
+  await db.query(
+    `ALTER TABLE sso_configurations ADD COLUMN IF NOT EXISTS is_default INTEGER DEFAULT 0`
+  );
+  await db.query(
+    `ALTER TABLE sso_configurations ADD COLUMN IF NOT EXISTS jit_provisioning INTEGER DEFAULT 1`
+  );
+
+  // admin_approval_workflows: ensureApprovalWorkflowTables() only runs CREATE TABLE IF NOT EXISTS,
+  // so existing tables never got is_active added.
+  await db.query(
+    `ALTER TABLE admin_approval_workflows ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1`
+  );
+
+  // payment_methods: migration 091 never included is_active.
+  await db.query(
+    `ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1`
+  );
+}
+
+// ==========================================
 // TABLE PLATFORM MIGRATION RUNNER
 // ==========================================
 
@@ -3643,6 +3680,16 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     } catch (e: any) {
       logger.warn(
         '[DatabaseInitializer] ensureInitiativeSectionTypesTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Backfill columns missing from early migrations (sso_configurations, admin_approval_workflows, payment_methods).
+    try {
+      await ensureSchemaColumnGaps();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureSchemaColumnGaps failed (continuing):',
         e?.message || e
       );
     }

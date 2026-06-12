@@ -1,4 +1,5 @@
 import { AppError, type AuthenticatedRequest, catchAsync, deps } from './shared.js';
+import { flagOn } from '../../utils/pgFlags.js';
 
 // =========================================
 // PHASE 5: REVENUE MANAGEMENT MODULE
@@ -422,8 +423,8 @@ export const getPaymentMethods = catchAsync(async (req, res, next) => {
     methods.map((m: any) => ({
       ...m,
       paymentDetails: JSON.parse(m.payment_details_json || '{}'),
-      isDefault: m.is_default === 1,
-      isActive: m.is_active === 1,
+      isDefault: flagOn(m.is_default),
+      isActive: flagOn(m.is_active),
     }))
   );
 });

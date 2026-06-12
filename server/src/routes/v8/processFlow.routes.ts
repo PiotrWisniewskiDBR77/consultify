@@ -443,7 +443,8 @@ router.post(
 router.get(
   '/ai-proposals/:proposalId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const proposal = pfService.getAIProposal(req.params.proposalId);
+    const { organizationId } = getV8Context(req);
+    const proposal = pfService.getAIProposal(req.params.proposalId, organizationId);
     if (!proposal) {
       return res
         .status(HTTP.NOT_FOUND)
@@ -460,13 +461,14 @@ router.get(
 router.post(
   '/ai-proposals/:proposalId/resolve',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
     const action = req.body?.action;
     if (action !== 'accept' && action !== 'reject') {
       return res
         .status(HTTP.BAD_REQUEST)
         .json({ error: "action must be 'accept' or 'reject'", code: 'VALIDATION', meta: pfMeta() });
     }
-    const result = await pfService.resolveAIProposal(req.params.proposalId, action);
+    const result = await pfService.resolveAIProposal(req.params.proposalId, action, organizationId);
     if (!result.success) {
       const status =
         result.error_code === 'PROPOSAL_NOT_FOUND'

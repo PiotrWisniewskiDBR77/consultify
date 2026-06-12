@@ -648,7 +648,7 @@ function toDraft(row: DraftRow): WorkCanvasDraft {
   const contentEnvelope = createArtifactContentEnvelope({
     artifactType: row.kind,
     canonicalFormat: row.canonical_format || undefined,
-    contentMd: row.content_md || (typeof legacyContent === 'string' ? legacyContent : ''),
+    contentMd: (() => { const raw = row.content_md || (typeof legacyContent === 'string' ? legacyContent : ''); return raw && raw.startsWith('"') ? JSON.parse(raw) : raw; })(),
     contentJson: contentJson ?? (row.canonical_format === 'json' ? legacyContent : undefined),
     blocks,
     contentSchemaVersion: row.content_schema_version || undefined,

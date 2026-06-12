@@ -460,7 +460,7 @@ export async function updateDraft(params: {
   // content_md a client autosave froze earlier (audit P0-1/D2 — generated
   // documents were lost to the skeleton). String content therefore must land
   // in content_md too; non-string content leaves the projection untouched.
-  const nextContentMd = typeof nextContent === 'string' ? nextContent : null;
+  const nextContentMd = typeof nextContent === 'string' ? (nextContent.startsWith('"') ? JSON.parse(nextContent) : nextContent) : null;
   await dbRun(
     `UPDATE work_canvas_drafts
      SET kind = ?, title = ?, content_json = ?, content_md = COALESCE(?, content_md),
