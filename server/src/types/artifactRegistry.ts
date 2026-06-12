@@ -21,6 +21,7 @@ export const ArtifactOriginRuntimeValues = [
   'native_artifact',
   'report_template',
   'presentation_template',
+  'work_canvas',
 ] as const;
 export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];
 

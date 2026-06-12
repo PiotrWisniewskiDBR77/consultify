@@ -4554,13 +4554,11 @@ router.post('/drafts/:draftId/send-to-document-studio', async (req: AuthRequest,
       // /generate route already calls).
       sourceRefs: [
         {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          type: 'work_canvas' as any,
-          id: draft.id,
-          title,
+          sourceType: 'work_canvas',
+          sourceId: draft.id,
+          sourceTitle: title,
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ] as any,
+      ],
       projectId: draft.projectId || null,
       useLlm,
     });
