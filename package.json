@@ -179,6 +179,7 @@
     "db:migrate:postgres": "DB_TYPE=postgres tsx server/scripts/migrate.postgres.ts",
     "db:migrate:postgres:dry": "DB_TYPE=postgres tsx server/scripts/migrate.postgres.ts --dry-run",
     "db:migrate:staging": "ENV_FILE=.env.staging.local node scripts/dev/require-env-file.mjs && DOTENV_IGNORE_LOCAL=1 ENV_FILE=.env.staging.local DB_TYPE=postgres tsx server/scripts/migrate.postgres.ts",
+    "smoke:modules": "tsx server/scripts/harvard-module-smoke.ts",
     "db:verify:schema": "DB_TYPE=postgres tsx server/scripts/verify-schema-vs-migrations.ts",
     "db:verify:schema:staging": "ENV_FILE=.env.staging.local node scripts/dev/require-env-file.mjs && DOTENV_IGNORE_LOCAL=1 ENV_FILE=.env.staging.local DB_TYPE=postgres tsx server/scripts/verify-schema-vs-migrations.ts",
     "db:inventory": "DB_TYPE=postgres tsx server/scripts/db-inventory.ts --mode postgres --counts exact",
