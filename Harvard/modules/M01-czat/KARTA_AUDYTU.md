@@ -4,21 +4,21 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M01 · inwentarz `Harvard/podzial/inventory/INV_A_czat_canvas.md` (sekcja CZAT) · poprzednia karta `docs/audit/2026-06-02/MODULE_01` (62/100) · programy: chat-world-class, deliverables-light
 **Evidence:** `Harvard/modules/M01-czat/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 59/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (W1 org-scope memory/project naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate Londyn + kontraktowe testy cross-org, commit `7ab1b8aace`). **Fala 2 (pominięte):** A: 22→23 (4 AIChat orphans deleted `dc1dd6154d` — WorkModeMenu/ChatOverlay/ChatToggleButton/ActiveModeStrip; 678 linii); B: 11→12 (`b9f2dee9d2` zamknął też cross-org gap w pamięci projektu — pominięte w B, kreditowane tylko w F). Suma: 59.
+## OCENA: 60/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (W1 org-scope memory/project naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate Londyn + kontraktowe testy cross-org, commit `7ab1b8aace`). **Fala 2 (pominięte):** A: 22→23 (4 AIChat orphans deleted `dc1dd6154d` — WorkModeMenu/ChatOverlay/ChatToggleButton/ActiveModeStrip; 678 linii); B: 11→12 (`b9f2dee9d2` zamknął też cross-org gap w pamięci projektu — pominięte w B, kreditowane tylko w F). Suma: 59. **Fala 5 (2026-06-12):** C: 8→9 — UnifiedChatPanel test mock-drift naprawiony (`e0b368b218`): `useArtifactsStore` selector-aware mock + `setConversationChatLanguage` stub; 29/29 PASS (poprz. 0/14). Suma: 60.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 23 | 49/59 pozycji REALNE, 0 mock w czacie; 4 AIChat orphans deleted (`dc1dd6154d`) — pozostają 2 (CodeInterpreter, OrganizationMemoryPanel). |
 | B. Wiring i dane | 15 | 12 | Wiring solidny z migracjami; cross-org gap w pamięci projektu NAPRAWIONE (`b9f2dee9d2`); SQLite-izm `datetime('now')` na PG pozostaje + crash hasła share (naprawiony quick-fixem). |
-| C. Testy automatyczne | 15 | 8 | S1 mocno chroniony (z E2E w PR-gate), suite komponentów CZERWONY (UnifiedChatPanel 14 FAIL), integ wymaga DB, E2E głównie cron-only; +1 testy kontraktowe cross-org (W1, commit `7ab1b8aace`) + W15 CI gate. |
+| C. Testy automatyczne | 15 | 9 | S1 mocno chroniony (z E2E w PR-gate), suite komponentów ZIELONA (UnifiedChatPanel 29/29 PASS `e0b368b218`), integ wymaga DB, E2E głównie cron-only; +1 testy kontraktowe cross-org (W1, commit `7ab1b8aace`) + W15 CI gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana — brak dowodu wizualnego (re-ocena po przejściu w przeglądarce). |
 | E. Kanony/UI | 10 | 8 | §27 nie dotyczy (sidebar ≠ tabela), i18n solidne, shell spójny; drobne P2. |
 | F. Bezpieczeństwo/dostęp | 10 | 8 | W1 org-scope memory/project naprawiony (commit `b9f2dee9d2`); org-scope 23/25 endp. + W7 beta-lock 3-warstwowy; pozostałe: leak `metadata` public viewer P2, prompt injection chat P2. |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana — brak weryfikacji staging/prod (re-ocena po smoke). |
 | **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 57 < 70 (Faza 4 niewykonana). |
 
-**Werdykt jednym akapitem:** Czat to najbardziej dojrzały moduł aplikacji — 49/59 funkcji realnych, wszystkie kluczowe przepływy (streaming SSE, CRUD rozmów, handoffy intencji do 7 celów, karty propozycji, deep-research, głos Teresy) wpięte w żywe endpointy z migracjami, org-scope w `conversations.routes.ts` wzorcowy (21/21). Zaufanie łamie **cross-org IDOR w pamięci projektu** (`/api/ai/memory/project/:projectId` — każdy zalogowany czyta i KASUJE pamięć cudzej organizacji po UUID), co uruchamia hard-cap na 50 niezależnie od reszty. Tier wyżej blokują dziś trzy rzeczy: ten P0, czerwony rdzeń testów komponentów (realny bug `CanvasArtifactSwitcher`), oraz niewykonane Fazy 3+4 (środowiska + żywa weryfikacja).
+**Werdykt jednym akapitem:** Czat to najbardziej dojrzały moduł aplikacji — 49/59 funkcji realnych, wszystkie kluczowe przepływy (streaming SSE, CRUD rozmów, handoffy intencji do 7 celów, karty propozycji, deep-research, głos Teresy) wpięte w żywe endpointy z migracjami, org-scope w `conversations.routes.ts` wzorcowy (21/21). Zaufanie łamie **cross-org IDOR w pamięci projektu** (`/api/ai/memory/project/:projectId` — każdy zalogowany czyta i KASUJE pamięć cudzej organizacji po UUID), co uruchamia hard-cap na 50 niezależnie od reszty. Tier wyżej blokują dziś: ten P0 oraz niewykonane Fazy 3+4 (środowiska + żywa weryfikacja). **Brak otwartych P0 w testach** — `UnifiedChatPanel` 29/29 PASS (`e0b368b218`). Brak otwartych P0.
 
 ---
 
