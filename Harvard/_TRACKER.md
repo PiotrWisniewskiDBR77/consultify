@@ -6,7 +6,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 
 | # | Moduł | Pula | Status | Ocena | Tier | Data | Karta |
 |---|-------|------|--------|-------|------|------|-------|
-| M01 | Czat | 1 (core) | 🟦 | **57** ↑7 | Alpha | 2026-06-11 | `modules/M01-czat/KARTA_AUDYTU.md` |
+| M01 | Czat | 1 (core) | 🟦 | **59** ↑9 | Alpha górny | 2026-06-11 | `modules/M01-czat/KARTA_AUDYTU.md` |
 | M03 | Moja Praca — organizer | 1 (core) | 🟦 | **53** ↑9 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
 | M10 | Wywiad | 1 (core) | 🟦 | **59** ↑9 | Alpha górny | 2026-06-11 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
 | M13 | Inicjatywy | 1 (core) | 🟦 | **53** ↑8 | Alpha | 2026-06-11 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
@@ -31,7 +31,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M23 | Organizacja | 4 (internal) | 🟦 | **52** ↑8 | Alpha | 2026-06-11 | `modules/M23-organizacja/KARTA_AUDYTU.md` |
 | M24 | Panel Administratora | 4 (internal) | 🟦 | **57** ↑7 | Alpha górny | 2026-06-11 | `modules/M24-admin/KARTA_AUDYTU.md` |
 | M27 | SuperAdmin | 4 (internal) | 🟦 | **58** ↑8 | Alpha górny | 2026-06-11 | `modules/M27-superadmin/KARTA_AUDYTU.md` |
-| M26 | Portal Partnerski | 4 (internal) | 🟦 | 52 | Alpha | 2026-06-11 | `modules/M26-portal-partnerski/KARTA_AUDYTU.md` |
+| M26 | Portal Partnerski | 4 (internal) | 🟦 | **53** ↑1 | Alpha | 2026-06-11 | `modules/M26-portal-partnerski/KARTA_AUDYTU.md` |
 | A1 | Ecosystem/Affiliate | 4 (decyzja) | 🟦 | 13 | Broken | 2026-06-11 | `modules/A1-affiliate/KARTA_AUDYTU.md` (świadomy STUB) |
 
 \* Oceny Ideas (M05–M09) przeliczone 2026-06-11 do pełnego Protokołu V1 (Fazy 0–2,5–6,7+plan); status zmieniony z 🔁 na 🟦 NIEPEŁNY. Wszystkie 27+A1 = 28 modułów zaudytowane statycznie. Fazy 3+4 zbiorczo po dostępie do Railway.

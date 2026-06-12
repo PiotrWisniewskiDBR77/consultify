@@ -4,13 +4,13 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M01 · inwentarz `Harvard/podzial/inventory/INV_A_czat_canvas.md` (sekcja CZAT) · poprzednia karta `docs/audit/2026-06-02/MODULE_01` (62/100) · programy: chat-world-class, deliverables-light
 **Evidence:** `Harvard/modules/M01-czat/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 57/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (W1 org-scope memory/project naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate Londyn + kontraktowe testy cross-org, commit `7ab1b8aace`).
+## OCENA: 59/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (W1 org-scope memory/project naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 7→8 (W15 CI gate Londyn + kontraktowe testy cross-org, commit `7ab1b8aace`). **Fala 2 (pominięte):** A: 22→23 (4 AIChat orphans deleted `dc1dd6154d` — WorkModeMenu/ChatOverlay/ChatToggleButton/ActiveModeStrip; 678 linii); B: 11→12 (`b9f2dee9d2` zamknął też cross-org gap w pamięci projektu — pominięte w B, kreditowane tylko w F). Suma: 59.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 22 | 49/59 pozycji REALNE, 0 mock w czacie, 1 rozjazd (AI-memory) + 6 martwych komponentów. |
-| B. Wiring i dane | 15 | 11 | Wiring solidny z migracjami, ale cross-org gap w pamięci projektu + SQLite-izm `datetime('now')` na PG + crash hasła share (naprawiony quick-fixem). |
+| A. Realność funkcji | 25 | 23 | 49/59 pozycji REALNE, 0 mock w czacie; 4 AIChat orphans deleted (`dc1dd6154d`) — pozostają 2 (CodeInterpreter, OrganizationMemoryPanel). |
+| B. Wiring i dane | 15 | 12 | Wiring solidny z migracjami; cross-org gap w pamięci projektu NAPRAWIONE (`b9f2dee9d2`); SQLite-izm `datetime('now')` na PG pozostaje + crash hasła share (naprawiony quick-fixem). |
 | C. Testy automatyczne | 15 | 8 | S1 mocno chroniony (z E2E w PR-gate), suite komponentów CZERWONY (UnifiedChatPanel 14 FAIL), integ wymaga DB, E2E głównie cron-only; +1 testy kontraktowe cross-org (W1, commit `7ab1b8aace`) + W15 CI gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana — brak dowodu wizualnego (re-ocena po przejściu w przeglądarce). |
 | E. Kanony/UI | 10 | 8 | §27 nie dotyczy (sidebar ≠ tabela), i18n solidne, shell spójny; drobne P2. |
@@ -174,7 +174,7 @@
 4. **F-3 metadata w public viewerze** — whitelist pól zamiast verbatim — Weryfikacja: response nie zawiera pól wewnętrznych.
 
 ### Fala 3 — Jakość i kanony (P2)
-1. **Wycięcie martwego kodu** — WorkModeMenu, ChatOverlay+ChatToggleButton, CodeInterpreter, ActiveModeStrip (+ decyzja o OrganizationMemoryPanel) — Weryfikacja: build zielony, 0 referencji.
+1. ~~**Wycięcie martwego kodu**~~ — **DONE** (częściowo, `dc1dd6154d`) — WorkModeMenu/ChatOverlay/ChatToggleButton/ActiveModeStrip usunięte (678 l.); pozostają CodeInterpreter + OrganizationMemoryPanel (do decyzji).
 2. **SQLite-izm `datetime('now')`** w cleanup pamięci → składnia PG — Weryfikacja: zapytanie cleanup nie pada na Postgresie.
 3. **Audyt hardcoded-stringów i18n** (63 pliki) + UI błędu przerwanego strumienia — Weryfikacja: Faza 4 screenshot + brak hardcodów.
 4. **Test-sierota `deepThinkingRuntime`** + brittle voice boundary — Weryfikacja: suite bez sieroty, voice test na asercji zachowania.

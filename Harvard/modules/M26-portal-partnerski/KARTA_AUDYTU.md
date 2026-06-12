@@ -4,12 +4,13 @@
 **Wejścia:** `Harvard/podzial/inventory/INV_G_admin_ustawienia_partner_superadmin.md` §M26 · protokół `Harvard/protokol/MODULE_AUDIT_PROTOCOL_V1.md`
 **Evidence:** brak screenshotów (Faza 4 deferred) — dowody z kodu w sekcjach poniżej
 
-## OCENA: 52/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 4 i bez Fazy 3)
+## OCENA: 53/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 4 i bez Fazy 3)
+> **Fala 2 (korekta 2026-06-11):** B: 11→12 — silent earnings fallback NAPRAWIONE (`7cf315b4b9`) — commissionRate:15 hardkod zastąpiony `res.status(503).json({ error: 'Earnings temporarily unavailable', code: 'DB_ERROR' })`. Suma: 53.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 17 | Główne przepływy read/write realne przez v8 + legacy, ale 5 endpointów POST/GET to świadome stubs (clients, employees, stats, access-links, tiers) + 3 stubs w superadmin (attributions listing/delete, licenses) |
-| B. Wiring i dane | 15 | 11 | Dual-router (legacy /api/partners + v8 /api/v8/partner) spójny, scoping przez `getActivePartnerOrgIdForUser` konsekwentny, migracje istnieją; legacy router ma silent fallback na hardcoded earnings przy DB fail (lines 967–977) |
+| B. Wiring i dane | 15 | 12 | Dual-router (legacy /api/partners + v8 /api/v8/partner) spójny, scoping konsekwentny, migracje istnieją; silent earnings fallback NAPRAWIONE (`7cf315b4b9` — 503 DB_ERROR zamiast hardkod). |
 | C. Testy automatyczne | 15 | 10 | ~23 pliki testów (unit+component+integration), testy w CI (vitest.config.ts:200-208); brak testu E2E dla kluczowego happy path connect→dashboard; v8-partner-read.test.ts mockuje serwisy (nie weryfikuje SQL) |
 | D. Żywa użyteczność | 15 | 0 | DEFERRED — Faza 4 niewykonana |
 | E. Kanony/UI | 10 | 7 | i18n PL/EN: klucze `partner.dashboard.*`, `partner.metrics.*` istnieją w obu lokalizacjach z identycznym pokryciem; PartnerPortalView 3310 l. z `useTranslation` (99 użyć); brak sprawdzenia §27 dla tabel listowych live |
@@ -290,7 +291,7 @@ Brak P0 (zero cross-org WRITE, zero cichych overwrite danych produkcyjnych).
 
 ### Fala 2 — Domknięcie wartości (P1)
 
-1. **Silent earnings fallback** — `partners.routes.ts:966-977`: `catch` z hardcoded `commissionRate: 15` wraca do klienta bez erroru; zamienić na `res.status(503).json({ success: false, error: 'Earnings temporarily unavailable', code: 'DB_ERROR' })` i zalogować. Weryfikacja: test BE sprawdzający 503 przy mock DB fail.
+1. ~~**Silent earnings fallback**~~ — **DONE** (`7cf315b4b9`) — `commissionRate: 15` hardkod zastąpiony `res.status(503).json({ error: 'Earnings temporarily unavailable', code: 'DB_ERROR' })` w `partners.routes.ts`.
 
 2. **Testy integracyjne happy path S1** — brak testu `POST /connect → GET /connection = connected:true`; dodać w `tests/integration/partners/`. Weryfikacja: nowy test zielony w CI.
 
