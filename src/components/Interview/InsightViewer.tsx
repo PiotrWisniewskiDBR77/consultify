@@ -1547,7 +1547,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 .map((s) => s.trim())
                 .filter(Boolean)
             : [];
-      const alt = mq as Record<string, unknown>;
+      const alt = mq as unknown as Record<string, unknown>;
       return {
         ...mq,
         overall_material_score:

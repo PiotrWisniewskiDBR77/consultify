@@ -884,6 +884,15 @@ export const DeckBuilder: React.FC = () => {
     [deckId, isPolish]
   );
 
+  const handleChangeLayout = useCallback(
+    (cardIndex: number, layoutId: string) => {
+      const card = deck?.cards[cardIndex];
+      if (!card) return;
+      updateCard(card.card_id, { layout_id: layoutId });
+    },
+    [deck, updateCard]
+  );
+
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
       return (
@@ -1003,6 +1012,7 @@ export const DeckBuilder: React.FC = () => {
               onBlockClick={() => {}}
               onAddCard={handleAddBlankCard}
               onRegenerateCard={handleRegenerateCard}
+              onChangeLayout={handleChangeLayout}
               speakerNotes={activeCard?.speaker_notes}
               showNotes={showNotes}
               animationsEnabled={animationsEnabled}
@@ -1279,6 +1289,7 @@ export const DeckBuilder: React.FC = () => {
             onBlockClick={() => {}}
             onAddCard={handleAddBlankCard}
             onRegenerateCard={handleRegenerateCard}
+            onChangeLayout={handleChangeLayout}
             speakerNotes={activeCard?.speaker_notes}
             showNotes={showNotes}
             animationsEnabled={animationsEnabled}

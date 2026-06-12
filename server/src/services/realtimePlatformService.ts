@@ -492,7 +492,7 @@ class RealtimePlatformService {
 
   async listToolPresence(orgId: string, toolSessionId: string) {
     return queryHelpers.queryAll(
-      `SELECT * FROM tool_session_presence WHERE organization_id=$1 AND tool_session_id=$2 AND is_connected=1 ORDER BY connected_at`,
+      `SELECT * FROM tool_session_presence WHERE organization_id=$1 AND tool_session_id=$2 AND is_connected=1 AND last_heartbeat_at > NOW() - INTERVAL '30 seconds' ORDER BY connected_at`,
       [orgId, toolSessionId]
     );
   }
