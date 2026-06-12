@@ -567,6 +567,47 @@ type InterviewTab =
   | 'initiatives'
   | 'managed'
   | 'pending_review';
+
+/**
+ * Pure tab-resolution contract for the Interview hub. Encodes which `?tab=`
+ * deep-links are honored and how restricted tabs degrade to the always-safe
+ * `my_assignments` inbox when the viewer lacks the relevant permission.
+ * Kept side-effect-free so it can be unit-tested in isolation (see
+ * `__private__` below).
+ */
+function isInterviewTab(value: string): value is InterviewTab {
+  return (
+    value === 'my_assignments' ||
+    value === 'sessions' ||
+    value === 'templates' ||
+    value === 'insights' ||
+    value === 'initiatives' ||
+    value === 'managed' ||
+    value === 'pending_review'
+  );
+}
+
+function resolveInterviewTabFromSearchParams(
+  searchParams: URLSearchParams,
+  permissions: { canViewManaged: boolean; canViewTemplates: boolean; canViewInsights: boolean }
+): InterviewTab | null {
+  const rawTab = String(searchParams.get('tab') || '')
+    .trim()
+    .toLowerCase();
+  if (!isInterviewTab(rawTab)) return null;
+
+  if (rawTab === 'managed' || rawTab === 'sessions') {
+    return permissions.canViewManaged ? rawTab : 'my_assignments';
+  }
+  if (rawTab === 'templates') {
+    return permissions.canViewTemplates ? 'templates' : 'my_assignments';
+  }
+  if (rawTab === 'insights' || rawTab === 'pending_review' || rawTab === 'initiatives') {
+    return permissions.canViewInsights ? rawTab : 'my_assignments';
+  }
+  return rawTab;
+}
+
 type InsightsViewMode = 'flat' | 'report';
 type ItemStatus =
   | 'draft'
@@ -13600,6 +13641,15 @@ Return ONLY the answer text (no markdown fences).`;
       />
     </div>
   );
+};
+
+/**
+ * Test-only surface for the hub's pure routing helpers. Not part of the public
+ * component API — consumed by tests/components/Interview/InterviewHub.test.tsx.
+ */
+export const __private__ = {
+  isInterviewTab,
+  resolveInterviewTabFromSearchParams,
 };
 
 export default InterviewHub;

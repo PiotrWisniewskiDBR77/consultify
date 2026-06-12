@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const apiGetMock = vi.fn();
 const listContextDocumentsMock = vi.fn();
+const listInsightsMock = vi.fn();
+const checkInsightSimilarityMock = vi.fn();
 const createInsightMock = vi.fn();
 
 vi.mock('react-i18next', () => ({
@@ -25,6 +27,8 @@ vi.mock('@/services/api', () => ({
 vi.mock('@/services/api/v8/interview', () => ({
   V8InterviewApi: {
     listContextDocuments: (...args: any[]) => listContextDocumentsMock(...args),
+    listInsights: (...args: any[]) => listInsightsMock(...args),
+    checkInsightSimilarity: (...args: any[]) => checkInsightSimilarityMock(...args),
     createInsight: (...args: any[]) => createInsightMock(...args),
     uploadContextDocument: vi.fn(),
   },
@@ -36,8 +40,12 @@ describe('InsightCreatorModal context documents', () => {
   beforeEach(() => {
     apiGetMock.mockReset();
     listContextDocumentsMock.mockReset();
+    listInsightsMock.mockReset();
+    checkInsightSimilarityMock.mockReset();
     createInsightMock.mockReset();
     createInsightMock.mockResolvedValue({ insight: { id: 'insight-1' } });
+    listInsightsMock.mockResolvedValue({ insights: [] });
+    checkInsightSimilarityMock.mockResolvedValue({ matches: [] });
 
     apiGetMock.mockImplementation((path: string) => {
       if (path === '/interview/sessions/completed') {
@@ -92,13 +100,13 @@ describe('InsightCreatorModal context documents', () => {
       expect(screen.getByText('AI Insight Creator')).toBeInTheDocument();
     });
 
+    // --- Step 1: Define (title) ---
     fireEvent.change(screen.getByPlaceholderText('e.g. Digital Transformation Analysis Q1 2024'), {
       target: { value: 'Context-doc insight' },
     });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
+    // --- Step 2: Source (pick a session) ---
     await waitFor(() => {
       expect(screen.getByText('Interview 1')).toBeInTheDocument();
     });
@@ -108,7 +116,9 @@ describe('InsightCreatorModal context documents', () => {
     ) as HTMLInputElement;
     fireEvent.click(sessionCheckbox);
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    // --- Step 3: Refine — context documents live inside the "Advanced" disclosure ---
+    fireEvent.click(screen.getByRole('button', { name: /Advanced/i }));
 
     await waitFor(() => {
       expect(screen.getByText('ready-doc.pdf')).toBeInTheDocument();

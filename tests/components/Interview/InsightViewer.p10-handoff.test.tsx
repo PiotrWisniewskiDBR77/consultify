@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 
@@ -32,9 +32,20 @@ vi.mock('@/components/shared/NModeLayout/NModeHeader', () => ({
 }));
 
 vi.mock('@/components/shared/NModeLayout/NModeShell', () => ({
-  NModeShell: ({ header, sections, renderActionBar }: any) => (
+  NModeShell: ({ header, sections, properties, renderActionBar }: any) => (
     <div>
       <div data-testid="nmode-header">{header?.title}</div>
+      {/* Render the properties strip fields (incl. the custom status pill) so
+          status-badge assertions exercise the real component output. */}
+      <div data-testid="nmode-properties-strip">
+        {properties?.map((field: any, index: number) => (
+          <div key={field.id || index} data-testid={`property-${field.id}`}>
+            {typeof field.render === 'function'
+              ? field.render()
+              : field.label?.en ?? field.label}
+          </div>
+        ))}
+      </div>
       <div>{renderActionBar?.()}</div>
       <div data-testid="nmode-canvas">
         {sections?.map((section: any, index: number) => (
@@ -224,7 +235,11 @@ describe('InsightViewer P10 handoff', () => {
     renderViewer();
 
     await waitFor(() => {
-      expect(screen.getByText('Published')).toBeInTheDocument();
+      const statusField = screen.getByTestId('property-status');
+      // The published status surfaces in the Properties Strip status field
+      // (visible pill label + governance select option), so there are several
+      // "Published" nodes within it.
+      expect(within(statusField).getAllByText('Published').length).toBeGreaterThanOrEqual(1);
     });
   });
 
