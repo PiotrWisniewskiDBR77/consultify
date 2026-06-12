@@ -2310,13 +2310,22 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId } = identity;
+    const { userId, orgId } = identity;
     if (!(await requireTables(res, ['canonical_inbox_items']))) return;
 
     const { id } = req.params;
     const { toUserId, notes } = req.body || {};
     if (!toUserId || typeof toUserId !== 'string') {
       return res.status(400).json({ error: 'toUserId is required' });
+    }
+
+    const ownerRow = await queryHelpers.queryOne<{ organization_id: string }>(
+      `SELECT organization_id FROM canonical_inbox_items WHERE id = ?`,
+      [id]
+    );
+    if (!ownerRow) return res.status(404).json({ error: 'Inbox item not found' });
+    if (String(ownerRow.organization_id) !== String(orgId)) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     const item = await inboxService.delegateItem(id, toUserId, notes, userId);
@@ -2334,12 +2343,22 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
+    const { orgId } = identity;
     if (!(await requireTables(res, ['canonical_inbox_items']))) return;
 
     const { id } = req.params;
     const { until } = req.body || {};
     if (!until || typeof until !== 'string') {
       return res.status(400).json({ error: 'until (ISO date) is required' });
+    }
+
+    const ownerRow = await queryHelpers.queryOne<{ organization_id: string }>(
+      `SELECT organization_id FROM canonical_inbox_items WHERE id = ?`,
+      [id]
+    );
+    if (!ownerRow) return res.status(404).json({ error: 'Inbox item not found' });
+    if (String(ownerRow.organization_id) !== String(orgId)) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     const item = await inboxService.triageItem(id, 'snooze', { snoozedUntil: until });
@@ -2357,12 +2376,22 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
+    const { orgId } = identity;
     if (!(await requireTables(res, ['canonical_inbox_items']))) return;
 
     const { id } = req.params;
     const { slaDeadline } = req.body || {};
     if (!slaDeadline || typeof slaDeadline !== 'string') {
       return res.status(400).json({ error: 'slaDeadline (ISO datetime) is required' });
+    }
+
+    const ownerRow = await queryHelpers.queryOne<{ organization_id: string }>(
+      `SELECT organization_id FROM canonical_inbox_items WHERE id = ?`,
+      [id]
+    );
+    if (!ownerRow) return res.status(404).json({ error: 'Inbox item not found' });
+    if (String(ownerRow.organization_id) !== String(orgId)) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     const now = new Date().toISOString();
