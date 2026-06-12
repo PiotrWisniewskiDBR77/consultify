@@ -8,6 +8,8 @@ import { Activity, ChevronRight, Clock, Edit3, Loader2, Plus, Trash2, X } from '
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../../services/api';
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface AuditEvent {
@@ -145,11 +147,9 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       if (!tableId) return;
       setLoading(true);
       try {
-        let url = `/api/table-platform/tables/${tableId}/audit?limit=50`;
-        if (since) url += `&since=${encodeURIComponent(since)}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Failed to fetch activity');
-        const json = await res.json();
+        let path = `/table-platform/tables/${tableId}/audit?limit=50`;
+        if (since) path += `&since=${encodeURIComponent(since)}`;
+        const json = await (Api as any).get(path);
         const raw: any[] = json.events ?? json;
         const data: AuditEvent[] = raw.map((r: any) => ({
           id: r.id,
