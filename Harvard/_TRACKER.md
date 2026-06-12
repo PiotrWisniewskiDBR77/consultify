@@ -10,7 +10,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M03 | Moja Praca — organizer | 1 (core) | 🟦 | **50** ↑6 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
 | M10 | Wywiad | 1 (core) | 🟦 | **59** ↑9 | Alpha górny | 2026-06-11 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
 | M13 | Inicjatywy | 1 (core) | 🟦 | **52** ↑7 | Alpha | 2026-06-11 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
-| M14 | Wdrożenie | 1 (core) | 🟦 | **50** ↑8 | Alpha | 2026-06-11 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
+| M14 | Wdrożenie | 1 (core) | 🟦 | **51** ↑9 | Alpha | 2026-06-11 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
 | M25 | Ustawienia | 1 (core) | 🟦 | **54** ↑4 | Alpha | 2026-06-11 | `modules/M25-ustawienia/KARTA_AUDYTU.md` |
 | M02 | Canvas | 2 (beta) | 🟦 | **58** ↑1 | Alpha górny | 2026-06-11 | `modules/M02-canvas/KARTA_AUDYTU.md` |
 | M17 | Outputs | 2 (beta) | 🟦 | **53** ↑2 | Alpha | 2026-06-11 | `modules/M17-outputs/KARTA_AUDYTU.md` |
@@ -25,7 +25,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M05 | Ideas — Zarządzanie | 3 (Ideas) | 🟦 | **60** ↑5 | Alpha górny | 2026-06-11 | `modules/M05-ideas-zarzadzanie/KARTA_AUDYTU.md` |
 | M06 | Ideas — Mind Map | 3 (Ideas) | 🟦 | **60** ↑3 | Alpha górny | 2026-06-11 | `modules/M06-ideas-mind-map/KARTA_AUDYTU.md` |
 | M07 | Ideas — Process Flow | 3 (Ideas) | 🟦 | **55** ↑11 | Alpha | 2026-06-11 | `modules/M07-ideas-process-flow/KARTA_AUDYTU.md` |
-| M08 | Ideas — Table | 3 (Ideas) | 🟦 | **53** ↑1 | Alpha | 2026-06-11 | `modules/M08-ideas-table/KARTA_AUDYTU.md` |
+| M08 | Ideas — Table | 3 (Ideas) | 🟦 | **54** ↑2 | Alpha | 2026-06-11 | `modules/M08-ideas-table/KARTA_AUDYTU.md` |
 | M09 | Ideas — Whiteboard | 3 (Ideas) | 🟦 | **49** ↑6 | Alpha | 2026-06-11 | `modules/M09-ideas-whiteboard/KARTA_AUDYTU.md` |
 | M22 | AI OS / Internal Tools | 4 (internal) | 🟦 | **54** ↑3 | Alpha | 2026-06-11 | `modules/M22-ai-os/KARTA_AUDYTU.md` |
 | M23 | Organizacja | 4 (internal) | 🟦 | **52** ↑8 | Alpha | 2026-06-11 | `modules/M23-organizacja/KARTA_AUDYTU.md` |

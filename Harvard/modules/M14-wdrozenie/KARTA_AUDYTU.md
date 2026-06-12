@@ -4,19 +4,19 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M14 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja WDROŻENIE, poz.1-13) · poprzednia karta `docs/audit/2026-06-02/MODULE_06_realizacja.md` (51/100) · reuse dokumentu inicjatywy z M13
 **Evidence:** `Harvard/modules/M14-wdrozenie/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 recalcInitiativeActualTotal org-scope, commit `b9f2dee9d2`; task_dependencies org-scope, commit `9974596da7`; hard cap zdjęty); E: 5→6 (W13 M14 Wave8 i18n, commit `84757dc672`). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 20→21 (budgetHealth real calculation, commit `84757dc672`); B: 9→10 (execution.routes.ts deleted, commit `2fe1c81be3`).
+## OCENA: 51/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 2→7 (W1 recalcInitiativeActualTotal org-scope, commit `b9f2dee9d2`; task_dependencies org-scope, commit `9974596da7`; hard cap zdjęty); E: 5→6 (W13 M14 Wave8 i18n, commit `84757dc672`). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 20→21 (budgetHealth real calculation, commit `84757dc672`); B: 9→10 (execution.routes.ts deleted, commit `2fe1c81be3`). **Fala 2d:** B: 10→11 (Manager lanes V8 degradation banner, commit `229cb35565`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 21 | 11/13 REALNE z żywymi tabelami+migracjami; Manager (poz.9) cicho martwy bez V8; budgetHealth real calculation (Sprint 5, `84757dc672`). |
-| B. Wiring i dane | 15 | 10 | Rollout trwały (naprawione vs 06-02), CRUD/aggregate org-scoped, ale cicha degradacja V8→legacy bez banera; osierocony `execution.routes.ts` USUNIĘTY (`2fe1c81be3`). |
+| A. Realność funkcji | 25 | 21 | 11/13 REALNE z żywymi tabelami+migracjami; Manager (poz.9) wymaga V8 — amber baner gdy niedostępne; budgetHealth real calculation (Sprint 5, `84757dc672`). |
+| B. Wiring i dane | 15 | 11 | Rollout trwały (naprawione vs 06-02), CRUD/aggregate org-scoped; Manager V8 degradation baner (`229cb35565`); osierocony `execution.routes.ts` USUNIĘTY; cicha degradacja execution-health/action-queue pozostaje. |
 | C. Testy automatyczne | 15 | 6 | 633 PASS/23 FAIL lokalnie; S2 (DnD) i S6 (raporty) zero działającego pokrycia, `rollout.routes` bez testów BE; nic nie biegnie w PR-gate na `feat/*`. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | Hub zgodny + Portfel głównie OK, ale 5 tabel Rollout poza §27 (surowy `<table>`); W13 i18n Wave8 naprawione (commit `84757dc672`). |
 | F. Bezpieczeństwo/dostęp | 10 | 7 | recalcInitiativeActualTotal org-scope (`b9f2dee9d2`); task_dependencies 2-step verify (`9974596da7`); W7 beta-lock 3-warstwowy; pozostałe: pilot tylko klient (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1+W2), hard cap zdjęty.** Suma surowa 48 < 70 (Faza 4 niewykonana). |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1+W2), hard cap zdjęty.** Suma surowa 51 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Rdzeń Wdrożenia jest najsolidniejszy z dotąd zaudytowanych modułów core — executive dashboard (Health Score liczony z realnych danych, nie fabrykowany), trzy widoki portfela z kanban DnD i inline-statusem, Action Queue/RAID/Decisions na org-scoped SQL, zakładka Rollout (Plan/KPI/Risks/Change/Closure) z **trwałymi danymi na `/api/rollout/*`** (potwierdzona naprawa vs 06-02, migracja `20260608_rollout_tables.sql`), raporty z generacją z live-data bez zmyślonych liczb, reuse dokumentu inicjatywy z M13, handoff czatu Teresy. Zaufanie i wartość łamią cztery rzeczy: **cross-org write budżetu** — legacy `/api/execution-control/budget/entries` (zawsze zamontowany, bez bramki V8) wywołuje `recalcInitiativeActualTotal` z `UPDATE initiatives SET actual_budget_total WHERE id=?` **bez `organization_id`**, więc admin org A nadpisuje cachowany budżet inicjatywy org B (piąty moduł z wzorcem cross-org, tym razem write-tamper na cudzej encji); **Manager (people_change) cicho martwy bez `ENABLE_V8_GLOBAL`** — `getManagerProblems` bije w `/api/v8/...`, dostaje 404, `catch` zwraca zera, legacy nie ma `/manager/lanes/*`, użytkownik widzi puste lanes zamiast banera (jak cicha degradacja V8 w M13); **osierocony `routes/execution.routes.ts`** (niezamontowany — Gateway montuje `routes/pmo/execution.routes.ts`), przez co `/api/execution/stats|escalations|calendar` zwracają 404 (3 czerwone E2E); **`budgetHealth=100` hardcode** (`ExecutionHub.tsx:2216`) maluje fałszywie-zielony kafelek. Dług kanonowy skupiony w 5 tabelach Rollout (poza §27) i ~141 brakujących kluczach PL.
 
@@ -173,9 +173,9 @@
 4. **Napraw env-drift testów decision-management** (seed/role „iris") + hardcoded `localhost:3005` — Weryfikacja: integracyjne+E2E zielone lokalnie.
 
 ### Fala 2 — Domknięcie wartości (P1)
-1. **Manager (people_change) bez V8** — dodać legacy `/manager/lanes/*` LUB baner „Wymaga V8" zamiast cichych zer (`ExecutionHub.tsx:1142`) — Weryfikacja: bez `ENABLE_V8_GLOBAL` user widzi komunikat, nie pustkę.
+1. ~~**Manager (people_change) bez V8**~~ — **DONE** (`229cb35565`) — amber Callout „Manager cockpit requires V8" gdy 404/501.
 2. **Komunikat przy degradacji V8→legacy** (execution-health/action-queue/sygnały `catch→[]`) — baner jak Finance/Results — Weryfikacja: odcięcie V8 pokazuje baner, nie puste tabele.
-3. **Usuń `budgetHealth=100` hardcode** (`ExecutionHub.tsx:2216`) — licz z realnego budżetu lub ukryj kafelek gdy brak danych — Weryfikacja: kafelek odzwierciedla dane.
+3. ~~**Usuń `budgetHealth=100` hardcode**~~ — **DONE** (`84757dc672`) — real calculation.
 4. **Gating pilota serwerowo** — Rollout CRUD odrzuca rolę pilota (`requireOrgRole` + capability) — Weryfikacja: pilot API → 403.
 5. **Pokrycie testowe S2/S5/S6** — test BE `rollout.routes`, kanban-DnD, raporty z live-data; wprowadzić do PR-gate — Weryfikacja: zielone w CI.
 
