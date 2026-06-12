@@ -42,8 +42,11 @@ ALTER TABLE llm_tier_assignments
   ADD CONSTRAINT llm_tier_assignments_tier_check
   CHECK(tier IN ('BUDGET', 'STANDARD', 'PREMIUM', 'REASONING', 'PLATFORM'));
 
-INSERT INTO llm_tier_assignments (id, provider_id, tier, priority, is_active) VALUES
-    ('tier-platform-vector', 'vector-dbr77', 'PLATFORM', 0, TRUE),
-    ('tier-premium-vector', 'vector-dbr77', 'PREMIUM', 0, TRUE),
-    ('tier-reasoning-vector', 'vector-dbr77', 'REASONING', 0, TRUE)
+-- Omit is_active and rely on its column default: the column is boolean on some
+-- DBs and integer on others (cross-env type drift), so neither TRUE nor 1 is
+-- portable. The default (active) is correct for these seed rows.
+INSERT INTO llm_tier_assignments (id, provider_id, tier, priority) VALUES
+    ('tier-platform-vector', 'vector-dbr77', 'PLATFORM', 0),
+    ('tier-premium-vector', 'vector-dbr77', 'PREMIUM', 0),
+    ('tier-reasoning-vector', 'vector-dbr77', 'REASONING', 0)
 ON CONFLICT (id) DO NOTHING;
