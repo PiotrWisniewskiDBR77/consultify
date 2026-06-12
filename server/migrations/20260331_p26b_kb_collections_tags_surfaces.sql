@@ -161,7 +161,10 @@ SELECT c.id, c.slug,
        FALSE, c.sort_order, c.created_at
 FROM kb_categories c
 WHERE c.is_active = 1
-ON CONFLICT (id) DO NOTHING;
+-- Backfill is idempotent against BOTH unique keys (id AND slug): an untargeted
+-- DO NOTHING swallows a slug collision when a collection already exists with the
+-- same slug under a different id (was: ON CONFLICT (id), which missed slug dupes).
+ON CONFLICT DO NOTHING;
 
 INSERT INTO kb_collection_translations (collection_id, language, title, description)
 SELECT ct.category_id, ct.language, ct.name, ct.description
