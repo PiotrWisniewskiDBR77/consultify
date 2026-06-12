@@ -44,7 +44,7 @@ BEGIN
       ALTER TABLE api_keys ADD COLUMN status TEXT DEFAULT 'active';
       UPDATE api_keys SET status = CASE
         WHEN revoked_at IS NOT NULL THEN 'revoked'
-        WHEN COALESCE(is_active, 1) = 0 THEN 'revoked'
+        WHEN COALESCE(is_active, TRUE) = FALSE THEN 'revoked'
         WHEN expires_at IS NOT NULL AND expires_at < CURRENT_TIMESTAMP THEN 'expired'
         ELSE 'active'
       END;
