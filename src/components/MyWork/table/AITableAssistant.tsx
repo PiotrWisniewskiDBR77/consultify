@@ -207,43 +207,6 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
         case 'summarize':
           setLastResult(action.summary || action.message || '');
           break;
-        case 'generate_table':
-          if (onProposal && action.proposal) {
-            const proposal: TableProposal = {
-              title: action.proposal.title,
-              description: action.proposal.description,
-              columns: (action.proposal.columns || []).map((c: any, idx: number) => ({
-                key: c.key || `col_${idx}`,
-                header: c.header || c.name || c.key,
-                type: c.type || 'text',
-                visible: true,
-                width: c.width || 160,
-                options: c.options,
-                optionColors: c.optionColors,
-                formula: c.formula,
-                aiPrompt: c.aiPrompt,
-              })),
-              views: (action.proposal.views || []).map((v: any, idx: number) => ({
-                id: `ai-view-${idx}`,
-                name: v.name || `View ${idx + 1}`,
-                icon: v.icon,
-                layout: v.layout || 'table',
-                sort: v.sort,
-                filters: v.filters,
-                groupBy: v.groupBy,
-              })),
-              rows: (action.proposal.rows || []).map((r: any, idx: number) => ({
-                id: `ai-row-${Date.now()}-${idx}`,
-                type: 'idea',
-                data: { label: r.label || r.name || '', ...r },
-                position: { x: 0, y: 0 },
-              })),
-              contextHints: action.proposal.contextHints,
-            };
-            onProposal(proposal);
-            toast.success(isPl ? 'Propozycja tabeli wygenerowana' : 'Table proposal generated');
-          }
-          break;
         case 'error':
           toast.error(action.message || (isPl ? 'Błąd' : 'Error'));
           break;

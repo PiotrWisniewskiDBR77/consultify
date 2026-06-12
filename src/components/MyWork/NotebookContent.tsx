@@ -2535,7 +2535,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         })
                       }
                       onConvert={() => void handleConvertFromPanel('report')}
-                      onHandoffRadar={handleHandoffRadar}
                       onHandoffInitiatives={handleHandoffInitiatives}
                     />
                   </div>

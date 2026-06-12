@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Brain,
   Calendar,
-  Camera,
   ChevronDown,
   ClipboardCopy,
   Columns3,
@@ -718,12 +717,6 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           <Activity size={12} />
         </ToolbarIconButton>
         <ToolbarIconButton
-          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showSnapshots' })}
-          title={isPl ? 'Migawki' : 'Snapshots'}
-        >
-          <Camera size={12} />
-        </ToolbarIconButton>
-        <ToolbarIconButton
           onClick={props.onShowKeyboardShortcuts}
           title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
         >
@@ -924,11 +917,6 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                     icon: <LayoutTemplate size={14} className="text-emerald-500" />,
                     label: isPl ? 'Szablony' : 'Templates',
                   },
-                  {
-                    onClick: props.onShowConnectorWizard,
-                    icon: <Download size={14} className="text-blue-500" />,
-                    label: isPl ? 'Konektory' : 'Connectors',
-                  },
                 ].map((item, i) => (
                   <button
                     key={i}
@@ -1023,12 +1011,6 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
         </button>
         <button
-          onClick={() => uiDispatch({ type: 'TOGGLE_PANEL', panel: 'showSnapshots' })}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-        >
-          <Camera size={14} /> {isPl ? 'Migawki' : 'Snapshots'}
-        </button>
-        <button
           onClick={props.onShowConditionalFmt}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
         >
@@ -1054,15 +1036,6 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
 
       {/* CSV import/export + Connectors */}
       <div className="flex items-center gap-0.5">
-        {!locked && (
-          <button
-            onClick={props.onShowConnectorWizard}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
-            title={isPl ? 'Importuj dane' : 'Import data'}
-          >
-            <Network size={12} /> {isPl ? 'Import' : 'Import'}
-          </button>
-        )}
         {props.connectors.connectors.length > 0 && (
           <button
             onClick={props.onShowConnectorList}

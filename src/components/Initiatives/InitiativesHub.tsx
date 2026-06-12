@@ -1951,18 +1951,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         )}
       </div>
       {/* Stable right group — AI Initiative Wizard + Charter. Present at all times
-          (not conditional), separated from the status filters. Both are COMING
-          SOON: disabled + "w przygotowaniu" badge until wired. */}
+          (not conditional), separated from the status filters. */}
       <div className={MENU_3_RIGHT_CLASS}>
         <button
           type="button"
-          disabled
-          className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-          title={comingSoonPrep}
+          onClick={() => setShowInitiativeWizard(true)}
+          className={MENU_3_ACTION_NEUTRAL}
         >
           <Sparkles className="h-3.5 w-3.5" />
           AI Initiative Wizard
-          <span className={COMING_SOON_BADGE}>{comingSoonPrep}</span>
         </button>
         <button
           type="button"

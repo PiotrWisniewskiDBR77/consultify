@@ -8,6 +8,8 @@ import { Calendar, ChevronDown, Clock, Filter, Loader2, Plus, Trash2, User, X } 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getHeaders } from '@/services/api';
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface FieldChange {
@@ -175,7 +177,8 @@ export const AuditTrailPanel: React.FC<AuditTrailPanelProps> = ({
       try {
         const newOffset = reset ? 0 : offset;
         const res = await fetch(
-          `/api/table-platform/tables/${tableId}/audit?recordId=${recordId}&limit=${PAGE_SIZE}&offset=${newOffset}`
+          `/api/table-platform/tables/${tableId}/audit?recordId=${recordId}&limit=${PAGE_SIZE}&offset=${newOffset}`,
+          { headers: getHeaders() }
         );
         if (!res.ok) throw new Error('Failed to fetch audit trail');
         const data: RecordRevision[] = await res.json();
