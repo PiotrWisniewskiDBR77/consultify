@@ -96,6 +96,12 @@ const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
   }
 };
 
+// Robust 0/1 flag coercion. Some boolean-intent columns are BIGINT on Postgres,
+// which node-pg returns as a STRING ("1"/"0") — a bare `x === 1` is then always
+// false (e.g. template/required/team-assignment flags silently flip off). Coerce
+// numerically so it works for int4 (number), int8 (string) and boolean alike.
+const flagOn = (v: unknown): boolean => v === true || Number(v) === 1;
+
 const INTERVIEW_TEMPLATE_AREA_TAGS = new Set([
   'strategy',
   'operations',
@@ -1135,7 +1141,7 @@ const buildQuestionResponse = (row: any) => {
     answeredAt: row.answered_at,
     tags: parseJson(row.tags, []),
     sortOrder: row.sort_order || 0,
-    isTemplate: row.is_template === 1,
+    isTemplate: flagOn(row.is_template), // bigint on PG → coerce
   };
 };
 
@@ -1362,7 +1368,7 @@ const buildTemplateQuestionResponse = (row: any) => {
     questionText: row.question_text,
     sortOrder: row.sort_order || 0,
     answerType: row.answer_type || 'open',
-    isRequired: row.is_required === 1,
+    isRequired: flagOn(row.is_required), // interview_question_templates.is_required is bigint on PG
     sectionTitle: row.section_title || null,
     helpHint: row.help_hint || null,
     answerOptions: parseJson(row.answer_options, [] as unknown[]),
@@ -4001,7 +4007,7 @@ export const InterviewController = {
         aiReview: parseAiReviewSnapshot(r.ai_review_snapshot_json),
         aiReviewedAt: r.ai_reviewed_at || null,
         reviewDecisionMemory: parseReviewDecisionMemory(r.review_decision_memory_json),
-        isTeamAssignment: r.is_team_assignment === 1,
+        isTeamAssignment: flagOn(r.is_team_assignment), // bigint on PG → coerce
         reminderCount: r.reminder_count || 0,
         escalationCount: r.escalation_count || 0,
         escalatedAt: r.escalated_at || null,
@@ -4385,7 +4391,7 @@ export const InterviewController = {
 
     // Load team members if team assignment
     let members: any[] = [];
-    if (r.is_team_assignment === 1) {
+    if (flagOn(r.is_team_assignment)) {
       members = await queryHelpers.queryAll(
         `SELECT m.*, TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) as user_name, u.email as user_email
          FROM interview_assignment_members m

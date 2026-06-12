@@ -29,6 +29,10 @@ const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
   }
 };
 
+// Robust 0/1 flag coercion — is_team_assignment is BIGINT on Postgres, returned
+// by node-pg as a STRING ("1"/"0"), so a bare `x === 1` is always false.
+const flagOn = (v: unknown): boolean => v === true || Number(v) === 1;
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -1390,7 +1394,7 @@ class InterviewAssignmentService {
       escalatedAt: row.escalated_at || undefined,
       escalationCount: row.escalation_count || 0,
       escalateTo: row.escalate_to || undefined,
-      isTeamAssignment: row.is_team_assignment === 1,
+      isTeamAssignment: flagOn(row.is_team_assignment), // bigint on PG → coerce
       notes: row.notes || undefined,
       createdBy: row.created_by,
       createdAt: row.created_at,
