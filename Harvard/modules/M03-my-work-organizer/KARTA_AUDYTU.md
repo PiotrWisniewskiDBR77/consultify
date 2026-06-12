@@ -18,7 +18,7 @@
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
 | **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 50 < 70 (Faza 4 niewykonana). |
 
-**Werdykt jednym akapitem:** Organizer to najbardziej rozbudowany moduł aplikacji — Inbox (triage v8 z uczciwym fallbackiem do legacy), Kalendarz (unified feed + drag-reschedule), Zadania (tabela+Kanban+detal 6.5k linii), Decyzje, Manager — wszystko zasadniczo realne i wpięte. Tier ciągnie w dół pięć rzeczy: **P0 widoczne-ale-zepsute** (linkowanie decyzji z zadania operuje na 4 zaszytych mockach `dec-1..dec-4` bez fetcha), **dwa cross-org IDOR-y na zapisie** (admin może zatwierdzić decyzję cudzej org; każdy może snooze/delegować element inboxa cudzej org), brak jakiegokolwiek funkcjonalnego E2E w PR-gate, kanon RC-4 (sticky thead) złamany na wszystkich trzech tabelach, oraz ~15 martwych komponentów. Gating Managera jest wyłącznie kosmetyczny (UI), bez egzekucji serwerowej.
+**Werdykt jednym akapitem:** Organizer to najbardziej rozbudowany moduł aplikacji — Inbox (triage v8 z uczciwym fallbackiem do legacy), Kalendarz (unified feed + drag-reschedule), Zadania (tabela+Kanban+detal 6.5k linii), Decyzje, Manager — wszystko zasadniczo realne i wpięte. Tier ciągnie w dół cztery rzeczy: ~~P0 linkowanie decyzji na mockach~~ (NAPRAWIONE `f35aa8d7c8`); ~~dwa cross-org IDOR-y~~ (NAPRAWIONE `b9f2dee9d2`+`45d74b0de1`); brak jakiegokolwiek funkcjonalnego E2E w PR-gate; kanon RC-4 (sticky thead) złamany na wszystkich trzech tabelach. Gating Managera jest wyłącznie kosmetyczny (UI), bez egzekucji serwerowej.
 
 ---
 
@@ -40,12 +40,12 @@
 - Inbox (triage, quick actions, bulk, skróty J/K/T/W/E/B/A/X, presety z licznikami), Kalendarz (unified feed, drag-reschedule etag), Zadania (tabela+Kanban+detal), Decyzje (approve/reject/escalate), Manager/Executive, EventBus `mywork-open-item`, ConvertToOutput, focus-zapis, inbox-v4 API.
 
 ### 1b. MOCK / STUB / fabrykowane klientem
-- **[P0] `TaskDetailView.tsx:318-325`** — `availableDecisions` = 4 zaszyte (`dec-1..dec-4`); `setAvailableDecisions` woła się tylko lokalnie (`:5407`), **zero fetcha z BE**; picker (`:5487,:5533`) operuje na fikcji.
+- ~~**[P0] `TaskDetailView.tsx:318-325`**~~ — ~~`availableDecisions` = 4 zaszyte (`dec-1..dec-4`); zero fetcha z BE~~ **NAPRAWIONY (`f35aa8d7c8`)** — `setAvailableDecisions` zasilane z `Api.getDecisions()` (`:1143-1149`); picker na realnych danych.
 - **[P1] session-context odczyt** (`MyWorkHub.tsx:946-951`) — GET wykonany, ciało `if(...){}` to tylko komentarz, wynik wyrzucany → „ciągłość sesji L7" po stronie odczytu nie istnieje.
 - **[P1] task-advisor** (`task-advisor.routes.ts:12-20`, mount `Gateway.ts:483`) — każdy request 503, zero konsumenta FE.
 
 ### 1c. ZEPSUTE / WIDOCZNE-ALE-ZEPSUTE
-- Linkowanie decyzji z zadania (1b P0) — UI w pełni wyrenderowane na danych-atrapach.
+- ~~Linkowanie decyzji z zadania~~ — NAPRAWIONY (`f35aa8d7c8`).
 - **[P1] mylący komentarz beta** `MyWorkHub.tsx:604-605` „Admins keep access" sprzeczny z runtime (`betaAccess.ts:71` zwraca `true` dla wszystkich, `BETA_ADMINS_EXEMPT=false:32`) → Ideas zablokowane też adminom.
 
 ### 1d. UKRYTE / MARTWY KOD
@@ -57,8 +57,8 @@
 |---|---|---|---|---|
 | Inbox kanoniczny | `GET /api/v8/my-work/inbox/canonical` (gate) → fallback `/my-work/inbox` | notifications, inbox | tak | DZIAŁA (graceful 404→legacy) |
 | Zadania CRUD | `/my-work/personal-tasks` + `tasks.routes.ts` | tasks | tak | DZIAŁA |
-| Linkowanie decyzji z zadania | — (brak fetcha) | — | — | **ZEPSUTE — mock** |
-| Decyzje decide | `DecisionController.decide` | decisions, decision_history | tak | DZIAŁA, ale **bez org-scope (P0)** |
+| Linkowanie decyzji z zadania | `GET /api/decisions` | decisions | tak | DZIAŁA (`f35aa8d7c8`) |
+| Decyzje decide | `DecisionController.decide` | decisions, decision_history | tak | DZIAŁA, org-scope NAPRAWIONY (`b9f2dee9d2`) |
 | Kalendarz | `GET /my-work/calendar/unified` + calendarIntegrations | calendar_events | tak | DZIAŁA |
 | Executive | `GET /my-work/executive-analytics` | wiele | tak | DZIAŁA, ale **leak (P1)** |
 | Focus | `focus.routes.ts` | focus_state | tak | DZIAŁA (zapis) / UKRYTE (odczyt) |

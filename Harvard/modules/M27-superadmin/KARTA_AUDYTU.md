@@ -5,7 +5,7 @@
 **Evidence:** `Harvard/modules/M27-superadmin/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
 ## OCENA: 58/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
-> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→7 (W2 llm-tiers verifySuperAdmin + virtual-workers org-admin block naprawione, commit `e3945bc7fc`, hard cap zdjęty). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 23→24 (P0 FeedbackBacklog secret-path leak + SSO crash guard naprawione, commit `69ffc1fd86`).
+> **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→7 (W2 llm-tiers verifySuperAdmin + virtual-workers org-admin block naprawione, commit `91c8245559`, hard cap zdjęty). **Fala 2 (pominięte w re-audycie 2026-06-11):** A: 23→24 (P0 FeedbackBacklog secret-path leak + SSO crash guard naprawione, commit `69ffc1fd86`).
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
@@ -14,9 +14,9 @@
 | C. Testy automatyczne | 15 | 8 | ~502 PASS/9 FAIL; superadmin middleware-gate 42/42, ale brak E2E non-superadmin→403, słabe asercje `[401,403,404]`, 2 realne P0 bugi wykryte; nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | Dedykowany shell spójny, stany OK, ale i18n 114/124 plików bez `t()` (hardkod), 45 hex, martwy płaski moduł. |
-| F. Bezpieczeństwo/dostęp | 10 | 7 | W2 llm-tiers verifySuperAdmin + virtual-workers org-admin block naprawione (commit `e3945bc7fc`); główny `/superadmin` WZORCOWY; pozostałe: P1 llm purposes/market global writes. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | W2 llm-tiers verifySuperAdmin + virtual-workers org-admin block naprawione (commit `91c8245559`); główny `/superadmin` WZORCOWY; pozostałe: P1 llm purposes/market global writes. |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W2, commit `e3945bc7fc`), hard cap zdjęty.** Suma surowa 57 < 70 (Faza 4 niewykonana). |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W2, commit `91c8245559`), hard cap zdjęty.** Suma surowa 57 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Control plane jest **w ~95% realny** (nie fasada) i **główna bramka jest wzorcowa** — ale dwa boczne routery przebijają ją katastrofalnie. Pozytywy: `superadmin.routes.ts` ma router-level `verifyToken→requireSuperAdmin→requireAudit` + capability sub-gates, a `verifySuperAdmin` (`superAdmin.middleware.ts:403-426`) ZAWSZE odpytuje DB o rolę (DB = źródło prawdy, token-role ignorowany dla elewacji, fail-closed 403 przy błędzie); P0 „superadmin dziedziczy admin" zamknięty dwukierunkowo (`ProtectedRoute.tsx:72-73` + level 2<3 redirect); ~60+ zakładek to realne backendy (Tenant Ops 20 zakł., AI Operations 27 pod-zakł. jako cienkie wrappery do realnych widoków 1000-2000 l., System 14, Platform Security 15, Governance) z persystencją (feature flags + `feature_flag_history`, AI providers/tiers, Stripe `webhooks/stripe.routes.ts` 786 l., module-access granty + bootstrap DBR77); known feedback 500 NAPRAWIONE w kodzie (`feedback.routes.ts:158/177` CREATE TABLE IF NOT EXISTS + `:466` CAST is_active, commit `36ceb52c60` — wymaga live-weryfikacji deploy). **Ale dwa P0 w bocznych routerach (zweryfikowane osobiście) — powtórka wzorca M24/M20 „boczny router słabszy gate niż główny", tym razem na PLATFORMOWEJ konfiguracji:** (1) **`POST/DELETE /api/llm/tiers/assign` + `PUT /tiers/priority`** (`llm.routes.ts:793,799,805`) chronione **TYLKO `verifyToken`** (gdy sąsiedni `/providers/:id/tier:779` ma poprawnie `verifySuperAdmin`) → DOWOLNY zalogowany user dowolnego tenanta przepina globalny routing AI (zapis do globalnej `llm_tier_assignments`, `LLMController.ts:2042`) — platform-wide AI hijack; (2) **`virtual-workers.routes.ts`** `router.use(requireRole('super_admin','admin'))` — komentarz „admin role", ale przepuszcza zwykłego **org-admina**; create/update/delete worker bez `organizationId` na globalnej tabeli `virtual_workers` → org-admin edytuje/usuwa platformowe persony Teresa/Anna (voice/slug/surface) dla WSZYSTKICH tenantów. Plus 2× P1 (llm purposes/market global writes przez verifyAdmin/verifyToken) i 2 realne bugi wykryte testami: `SuperAdminFeedbackBacklogView` wycieka surowy `internal: SQLSTATE[HY000] /var/app/secrets` (P0 info-disclosure ścieżki sekretów), `SSOConfigurationView.tsx:484` crash na `providerType.replace()`. Hard cap (brak-auth-na-zapisie globalnym → 50) + niewykonane Fazy 3+4.
 
@@ -55,8 +55,8 @@
 | Funkcja | Endpoint/serwis | Tabela DB | Status |
 |---|---|---|---|
 | Feature flags | feature-flags routes | feature_flags + _history | DZIAŁA (CRUD+audyt) |
-| AI providers/tiers | llm routes + LLMController | llm_providers, llm_tier_assignments | DZIAŁA; **tiers/assign bez gate (P0)** |
-| Virtual workers | virtual-workers routes | virtual_workers (global) | DZIAŁA; **gate przepuszcza admin (P0)** |
+| AI providers/tiers | llm routes + LLMController | llm_providers, llm_tier_assignments | DZIAŁA; tiers/assign gate NAPRAWIONY (`91c8245559`) |
+| Virtual workers | virtual-workers routes | virtual_workers (global) | DZIAŁA; gate → tylko super_admin (`91c8245559`) |
 | Billing cross-tenant | billingAdmin/revenue + Stripe | billing/invoices | DZIAŁA (gated) |
 | Module access | module-access/admin | grants | DZIAŁA (verifySuperAdmin) |
 
@@ -69,8 +69,8 @@
 | Kierunek | Moduł | Mechanizm | Status |
 |---|---|---|---|
 | WYJŚCIE → | wszystkie org | tenant ops / billing / module-access (cross-tenant) | DZIAŁA (gated) |
-| WYJŚCIE → | cała platforma | feature flags + AI config/routing | DZIAŁA; **llm tiers/virtual-workers dziurawe** |
-| WYJŚCIE → | M22 AI OS / runtime | AI providers/tiers/personas | DZIAŁA (P0 boczne) |
+| WYJŚCIE → | cała platforma | feature flags + AI config/routing | DZIAŁA; llm tiers/virtual-workers NAPRAWIONE (`91c8245559`) |
+| WYJŚCIE → | M22 AI OS / runtime | AI providers/tiers/personas | DZIAŁA |
 
 ## 2. Testy automatyczne (FAZA 2)
 > Raport: `evidence/f2_tests_report.md` · log: `f2_tests.log`.
@@ -116,12 +116,12 @@
 | feature-flags | `router.use(requireSuperAdmin)` na mutacjach | OK |
 | module-access / partner-* / scim / sso | verifySuperAdmin na mutacjach | OK |
 | ai-settings (/superadmin) | inline `requirePlatformSuperAdmin` (rola z tokenu) | OK (słabszy) |
-| **llm.routes (tiers/assign, priority)** | **tylko verifyToken** | **DZIURA P0** |
-| **virtual-workers.routes** | `requireRole('super_admin','admin')` | **DZIURA P0** |
+| ~~llm.routes (tiers/assign, priority)~~ | ~~tylko verifyToken~~ | **NAPRAWIONY (`91c8245559`)** |
+| ~~virtual-workers.routes~~ | ~~requireRole('super_admin','admin')~~ | **NAPRAWIONY (`91c8245559`)** |
 
 **Findingi:**
-- **[P0] SEC-01 brak gate na llm tiers** — `POST/DELETE /api/llm/tiers/assign` (`llm.routes.ts:793,799`), `PUT /tiers/priority` (`:805`) tylko `verifyToken`; controller pisze do globalnej `llm_tier_assignments` bez org (`LLMController.ts:2042/2085/2112`). Dowolny zalogowany user przepina globalny routing AI. **Zweryfikowane osobiście.** Fix: `verifySuperAdmin`.
-- **[P0] SEC-02 virtual-workers przepuszcza admina** — `virtual-workers.routes.ts` `requireRole('super_admin','admin')` → org-admin create/update/delete platformowych person Teresa/Anna (global `virtual_workers`, service `:587/632`). **Zweryfikowane osobiście.** Fix: `requireSuperAdmin`.
+- ~~**[P0] SEC-01 brak gate na llm tiers**~~ — ~~`POST/DELETE /api/llm/tiers/assign` (`llm.routes.ts:793,799`), `PUT /tiers/priority` (`:805`) tylko `verifyToken`; controller pisze do globalnej `llm_tier_assignments` bez org (`LLMController.ts:2042/2085/2112`). Dowolny zalogowany user przepina globalny routing AI.~~ **NAPRAWIONY (`91c8245559`)** — `verifySuperAdmin` dodany.
+- ~~**[P0] SEC-02 virtual-workers przepuszcza admina**~~ — ~~`virtual-workers.routes.ts` `requireRole('super_admin','admin')` → org-admin create/update/delete platformowych person Teresa/Anna (global `virtual_workers`, service `:587/632`).~~ **NAPRAWIONY (`91c8245559`)** — `requireRole('super_admin')` tylko.
 - **[P1] SEC-03** `POST /llm/purposes` + `/purposes/:purpose/assignments` (verifyAdmin) piszą globalne `ai_purposes`/`ai_purpose_assignments` (org_id NULL); `PUT /llm/org/:id/policy` (verifyAdmin) cudze `:id`.
 - **[P1] SEC-04** `POST /llm/market/openrouter/sync` + `PUT /llm/market/inbox/:id` tylko verifyToken (global `ai_market_inbox`).
 - **[P0-bug] FeedbackBacklog secret-path leak** + **SSO crash** (z testów).
@@ -130,8 +130,8 @@
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 ### Fala 1 — Integralność (P0)
-1. **`verifySuperAdmin` na llm tiers/assign+priority+purposes+market** (`llm.routes.ts:793-805` i pokrewne) + org-scope/global-guard w `LLMController` — Weryfikacja: zwykły user na tiers/assign → 403; test.
-2. **`requireSuperAdmin` na virtual-workers** (zamiast `('super_admin','admin')`) — Weryfikacja: org-admin → 403 na worker CRUD.
+1. ~~**`verifySuperAdmin` na llm tiers/assign+priority+purposes+market**~~ — **[DONE `91c8245559`]** `verifySuperAdmin` na llm tiers/assign+priority.
+2. ~~**`requireSuperAdmin` na virtual-workers**~~ — **[DONE `91c8245559`]** `requireRole('super_admin')` only.
 3. **Fix secret-leak FeedbackBacklog** (non-leaking copy) + **SSO crash guard** (`providerType` optional) — Weryfikacja: brak SQLSTATE/ścieżki w odpowiedzi; SSO renderuje.
 4. **E2E + integration RBAC-reject** (non-superadmin → 403 na każdej sekcji + bocznych routerach) — Weryfikacja: twarde `=== 403`.
 
@@ -151,7 +151,7 @@
 - [ ] 3. Railway: P0 boczne zamknięte (proof) + feedback 500 fix wdrożony + czyste logi
 - [ ] 4. Kanony: martwy kod, i18n, tokeny
 - [ ] 5. Zero WIDOCZNE-ALE-ZEPSUTE (secret-leak, SSO crash)
-- [ ] 6. Boczne routery (llm/virtual-workers) z gate SUPERADMIN
+- [x] 6. Boczne routery (llm/virtual-workers) z gate SUPERADMIN — DONE (`91c8245559`)
 
 ---
-**Pozostałe do domknięcia audytu M27:** Faza 3 (Railway — żywy proof P0 + feedback fix) + Faza 4 (żywe 7 scenariuszy). **Dwa blockery P0 w bocznych routerach: `llm/tiers` (any-user global AI-routing write) + `virtual-workers` (org-admin global persony)** — główny `/superadmin` WZORCOWY, dziury w torach „dosadzonych" (wzorzec M20/M24, teraz na control plane). Po naprawie 2× P0 + 2 bugów + Fazach 3/4 realnie Beta. **Wniosek systemowy: side-router-weak-gate to powtarzalny wzorzec (M20/M16/M24/M27) — Krok 6 powinien przeskanować WSZYSTKIE mounty pod kątem routerów ze słabszym gate niż ich „główny" odpowiednik.**
+**Pozostałe do domknięcia audytu M27:** Faza 3 (Railway — żywy proof + feedback fix) + Faza 4 (żywe 7 scenariuszy). ~~Dwa blockery P0 w bocznych routerach~~ — **P0 NAPRAWIONE (`91c8245559`)**: llm tiers `verifySuperAdmin` + virtual-workers `requireRole('super_admin')` only. Główny `/superadmin` WZORCOWY. Pozostałe: P1 llm purposes/market global writes, P2 i18n/dead code. Po Fazach 3/4 realnie Beta. **Wniosek systemowy: side-router-weak-gate to powtarzalny wzorzec (M20/M16/M24/M27) — Krok 6 powinien przeskanować WSZYSTKIE mounty pod kątem routerów ze słabszym gate niż ich „główny" odpowiednik.**

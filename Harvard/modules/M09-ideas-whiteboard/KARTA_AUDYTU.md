@@ -34,7 +34,7 @@
 | S1: Single-player whiteboard (rysowanie, sticky, AI, eksport) | DZIAŁA — solidny |
 | S2: Facilitation + voting (multiplayer) | FASADA — per-user document, drugi uczestnik nie może załadować tablicy |
 | S3: Realtime presence/cursors | CZĘŚCIOWO — kursory/locki przez WS, ale bez wspólnego dokumentu |
-| S4: WS resource authorization | ZEPSUTE — P0 (JWT bez org-membership) |
+| S4: WS resource authorization | NAPRAWIONE (`b9f2dee9d2`) — DB org-check dodany |
 | S5: Postgres acquireLock / clean-stale | ZEPSUTE — P1 (datetime crash na PG) |
 
 ## 1. Prawda kodu (FAZA 1)
@@ -131,9 +131,9 @@ PG datetime crash w `acquireEditLock` i `cleanStalePresence` = prod crashes do n
 
 ## 6. Bezpieczeństwo i dostęp (FAZA 6)
 
-**[P0] WS resource-auth gap** (`ideaCollabWs.gateway.ts:201-239`): JWT verify przy upgrade, brak DB-check org-membership dla ideaId. Obca org znająca ideaId dołącza do pokoju WS.
+~~**[P0] WS resource-auth gap**~~ **NAPRAWIONY** (`b9f2dee9d2`) — DB-check `WHERE id=? AND organization_id=?` dodany (`:235-252`).
 
-**[P0] Cross-org WRITE facilitation** (`PUT /outcomes/:id/export` `:816-849`): brak org-scope. Uruchamia hard cap max 50. Dodatkowe cross-org GET: votes, summary, roles, outcomes (`:686,696,750,807`).
+~~**[P0] Cross-org WRITE facilitation**~~ **NAPRAWIONY** (`b9f2dee9d2`) — wszystkie 5 endpointów facilitation wywołują `getFacilitationSession(id, orgId)` przed dostępem (hard cap zdjęty).
 
 **[P2] Governance FE-only**: classification/watermark — blokada eksportu tylko w UI (`IdeaExportMenu.tsx:177`); BE nie weryfikuje governance przy `/api/my-work/my-ideas/:id/map` PUT.
 

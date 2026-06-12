@@ -58,7 +58,7 @@
 | Inference (wnioski) | `interviewInferenceService.executeInference` | interview_insights, inference_runs | tak | DZIAŁA |
 | Konwersacyjny AI parse | `aiParseSessionAnswers` (`:5982`) | transcripts, sessions | tak | DZIAŁA |
 | Generacja inicjatyw | `generate_from_evidence` | initiatives | tak | DZIAŁA |
-| getInsight / deleteInsight | `InterviewInsightService.ts:1618/1723` | interview_insights | tak | **bez org-scope (P0)** |
+| getInsight / deleteInsight | `InterviewInsightService.ts:1618/1723` | interview_insights | tak | org-scope NAPRAWIONY (`b9f2dee9d2`) |
 
 ### 1f. Flagi
 | Flaga | Default BE | Default FE | Kto włącza | Wpływ |
@@ -163,4 +163,4 @@
 - [ ] 6. Zero cichych degradacji bez komunikatu
 
 ---
-**Pozostałe do domknięcia audytu M10:** Faza 3 (Railway) + Faza 4 (żywe 6 scenariuszy, rola assignee vs manager). Ocena ≤50 dopóki P0 cross-org (get/delete wniosku) nienaprawione — po naprawie 2 zapytań + testów moduł realnie wchodzi w Beta.
+**Pozostałe do domknięcia audytu M10:** Faza 3 (Railway) + Faza 4 (żywe 6 scenariuszy, rola assignee vs manager). ~~P0 cross-org (get/delete wniosku)~~ — NAPRAWIONE (`b9f2dee9d2`). Pozostały otwarty P0: martwy import `InsightPackView.p10-alignment.test.tsx` (26 testów S5 nieaktywnych) — fix przez usunięcie pliku lub odtworzenie komponentu.
