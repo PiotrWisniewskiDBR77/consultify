@@ -80,26 +80,22 @@ export function loadFeatureFlags(): FeatureFlags {
     ENABLE_RECORD_PROVENANCE: process.env.ENABLE_RECORD_PROVENANCE === 'true',
 
     // Block C (AI Operator): 8-level AI Editor on top of TableAiEditorService.
-    // Disabled by default until C-S2 lands real handlers; route layer still
-    // honours the budget gate + audit pipeline so QA can exercise the wiring.
+    // Enabled by default; set ENABLE_TABLE_AI_EDITOR=false to disable.
     ENABLE_TABLE_AI_EDITOR: process.env.ENABLE_TABLE_AI_EDITOR !== 'false',
 
     // Block C (Table QA Engine): deterministic 5-axis health scoring +
-    // suggestion synthesis on top of TableQaService. Disabled by default until
-    // C-S5 ships TabeleQaPanel; routes still honour cross-tenant defenses so
-    // backend QA can exercise the pipeline before the UI lands.
+    // suggestion synthesis on top of TableQaService.
+    // Enabled by default; set ENABLE_TABLE_QA_ENGINE=false to disable.
     ENABLE_TABLE_QA_ENGINE: process.env.ENABLE_TABLE_QA_ENGINE !== 'false',
 
     // Block C (Source Pack Builder): curator-driven bundle of records that the
-    // AI Editor can later consume (`payload.sourcePackId`). Disabled by default
-    // until C-S6 frontend lands; the route layer still applies cross-tenant
-    // defenses so backend QA can exercise the pipeline.
+    // AI Editor can later consume (`payload.sourcePackId`).
+    // Enabled by default; set ENABLE_TABLE_SOURCE_PACK=false to disable.
     ENABLE_TABLE_SOURCE_PACK: process.env.ENABLE_TABLE_SOURCE_PACK !== 'false',
 
     // Block D (Table → Doc/Deck Conversion): bridges Tabele tables into
-    // Document Studio v1 / DeckBuilder. Disabled by default until D-S3 ships
-    // the lane UI; backend route still applies tenant guards so QA can
-    // exercise the pipeline before the UI surface lands.
+    // Document Studio v1 / DeckBuilder.
+    // Enabled by default; set ENABLE_TABLE_ARTIFACT_CONVERSION=false to disable.
     ENABLE_TABLE_ARTIFACT_CONVERSION: process.env.ENABLE_TABLE_ARTIFACT_CONVERSION !== 'false',
 
     // Block D (Form Intake JWT): per-recipient JWT links + field allow-list
