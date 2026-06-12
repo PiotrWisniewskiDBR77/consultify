@@ -2718,7 +2718,7 @@ export class InitiativeController {
       }
 
       // Get initiative
-      const initiative = await queryHelpers.dbGet<any>(
+      const initiative = await queryHelpers.queryOne<any>(
         'SELECT * FROM initiatives WHERE id = ? AND organization_id = ?',
         [initiativeId, orgId]
       );
@@ -2812,7 +2812,7 @@ export class InitiativeController {
       }
 
       // Check current status is planning
-      const initiative = await queryHelpers.dbGet<{ status: string }>(
+      const initiative = await queryHelpers.queryOne<{ status: string }>(
         'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
         [initiativeId, orgId]
       );
@@ -2830,12 +2830,12 @@ export class InitiativeController {
       }
 
       // Update status to review
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 status = 'review',
-                review_requested_at = datetime('now'),
+                review_requested_at = CURRENT_TIMESTAMP,
                 review_requested_by = ?,
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
         [userId, initiativeId]
       );
@@ -2864,7 +2864,7 @@ export class InitiativeController {
         return;
       }
 
-      const initiative = await queryHelpers.dbGet<{ status: string }>(
+      const initiative = await queryHelpers.queryOne<{ status: string }>(
         'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
         [initiativeId, orgId]
       );
@@ -2879,15 +2879,15 @@ export class InitiativeController {
         return;
       }
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 status = 'approved',
-                approved_at = datetime('now'),
+                approved_at = CURRENT_TIMESTAMP,
                 approved_by = ?,
                 approval_comment = ?,
                 roadmap_quarter = ?,
                 roadmap_year = ?,
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
         [userId, comment || null, roadmapQuarter || null, roadmapYear || null, initiativeId]
       );
@@ -2916,7 +2916,7 @@ export class InitiativeController {
         return;
       }
 
-      const initiative = await queryHelpers.dbGet<{ status: string }>(
+      const initiative = await queryHelpers.queryOne<{ status: string }>(
         'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
         [initiativeId, orgId]
       );
@@ -2931,11 +2931,11 @@ export class InitiativeController {
         return;
       }
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 status = 'planning',
                 approval_comment = ?,
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
         [reason || 'Rejected - needs more work', initiativeId]
       );
@@ -2963,7 +2963,7 @@ export class InitiativeController {
         return;
       }
 
-      const initiative = await queryHelpers.dbGet<{ status: string }>(
+      const initiative = await queryHelpers.queryOne<{ status: string }>(
         'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
         [initiativeId, orgId]
       );
@@ -2978,11 +2978,11 @@ export class InitiativeController {
         return;
       }
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 status = 'executing',
-                execution_started_at = datetime('now'),
-                updated_at = datetime('now')
+                execution_started_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
         [initiativeId]
       );
@@ -3011,12 +3011,12 @@ export class InitiativeController {
         return;
       }
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 status = 'blocked',
-                blocked_at = datetime('now'),
+                blocked_at = CURRENT_TIMESTAMP,
                 blocked_reason = ?,
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND organization_id = ?`,
         [reason || 'Blocked', initiativeId, orgId]
       );
@@ -3043,12 +3043,12 @@ export class InitiativeController {
         return;
       }
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 status = 'executing',
-                unblocked_at = datetime('now'),
+                unblocked_at = CURRENT_TIMESTAMP,
                 blocked_reason = NULL,
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND organization_id = ?`,
         [initiativeId, orgId]
       );
@@ -3077,13 +3077,13 @@ export class InitiativeController {
         return;
       }
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 status = 'done',
-                done_at = datetime('now'),
+                done_at = CURRENT_TIMESTAMP,
                 done_by = ?,
                 benefits_tracking_enabled = ?,
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND organization_id = ?`,
         [userId, enableBenefitsTracking ? 1 : 0, initiativeId, orgId]
       );
@@ -3119,7 +3119,7 @@ export class InitiativeController {
       }
 
       // Verify target project exists and belongs to org
-      const targetProject = await queryHelpers.dbGet<{ id: string }>(
+      const targetProject = await queryHelpers.queryOne<{ id: string }>(
         'SELECT id FROM projects WHERE id = ? AND organization_id = ?',
         [targetProjectId, orgId]
       );
@@ -3130,7 +3130,7 @@ export class InitiativeController {
       }
 
       // Get current project
-      const initiative = await queryHelpers.dbGet<{ project_id: string }>(
+      const initiative = await queryHelpers.queryOne<{ project_id: string }>(
         'SELECT project_id FROM initiatives WHERE id = ? AND organization_id = ?',
         [initiativeId, orgId]
       );
@@ -3143,27 +3143,27 @@ export class InitiativeController {
       const oldProjectId = initiative.project_id;
 
       // Move initiative
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 project_id = ?,
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
         [targetProjectId, initiativeId]
       );
 
       // Optionally move associated tasks
       if (moveTasks) {
-        await queryHelpers.dbRun(
+        await queryHelpers.queryRun(
           `UPDATE tasks SET 
                     project_id = ?,
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                  WHERE initiative_id = ?`,
           [targetProjectId, initiativeId]
         );
       }
 
       // Record history
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)
              VALUES (?, ?, 'moved', ?, ?, ?, ?)`,
         [
@@ -3200,7 +3200,7 @@ export class InitiativeController {
         return;
       }
 
-      const initiative = await queryHelpers.dbGet<{ status: string }>(
+      const initiative = await queryHelpers.queryOne<{ status: string }>(
         'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
         [initiativeId, orgId]
       );
@@ -3215,10 +3215,10 @@ export class InitiativeController {
         return;
       }
 
-      await queryHelpers.dbRun(
+      await queryHelpers.queryRun(
         `UPDATE initiatives SET 
                 status = 'archived',
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
         [initiativeId]
       );
@@ -5043,7 +5043,7 @@ export class InitiativeController {
              score_category = ?,
              due_date = COALESCE(?, due_date),
              owner_id = COALESCE(?, owner_id),
-             updated_at = datetime('now')
+             updated_at = CURRENT_TIMESTAMP
          WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
         [
           title ?? null,

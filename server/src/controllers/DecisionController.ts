@@ -435,7 +435,7 @@ export class DecisionController {
             daysOverdue: escalation.overdueDays,
             relatedObjectType,
             relatedObjectId: relatedObjectIdValue,
-            blockedItemsCount: row.blocked_items_count || 0,
+            blockedItemsCount: Number(row.blocked_items_count ?? 0),
           };
         })
       );
