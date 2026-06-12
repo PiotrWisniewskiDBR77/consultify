@@ -2449,8 +2449,8 @@ ${answerText}
         typeof row.source_session_count === 'number'
           ? row.source_session_count
           : sourceSessionIds.length,
-      tokensUsed: row.tokens_used || 0,
-      generationTimeMs: row.generation_time_ms || undefined,
+      tokensUsed: Number(row.tokens_used || 0),
+      generationTimeMs: row.generation_time_ms ? Number(row.generation_time_ms) : undefined,
       exportedToTools: flagOn(row.exported_to_tools),
       exportedToAssessment: flagOn(row.exported_to_assessment),
       archivedAt: row.archived_at || null,
