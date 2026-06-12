@@ -45,8 +45,8 @@ export function useProcessFlowValidation({
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
       });
       if (res.ok) {
-        const data = await res.json();
-        setResult(data);
+        const json = await res.json();
+        setResult(json.data);
       }
     } catch (err) {
       onError?.(err instanceof Error ? err.message : 'Validation failed');

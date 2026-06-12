@@ -4,19 +4,20 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M04 (NOWY, brak karty 06-02) · inwentarz `Harvard/podzial/inventory/INV_B_my-work.md` (sekcja Notatnik, poz.1-19) · program `[[project_notebook_structure_overhaul]]`
 **Evidence:** `Harvard/modules/M04-notatnik/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 50/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 52/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
 > **Re-audit 2026-06-11 po Sprintach 1–5:** A: 19→20 (W6 handoff Radar/Inicjatywy usunięty — fake feature toast „wysłano" wycięty, commit `f35aa8d7c8`). Suma: 20+11+7+0+7+5+0=50.
+> **Re-audit 2026-06-11 Fala 2:** F: 5→7 — P1 cross-user wyciek prywatnej notatki NAPRAWIONY: `loadNotebookRow` dodaje `AND (visibility != 'private' OR owner_user_id = ?)` + `userId` propagowany przez `buildHandoffCommon/buildRadarHandoff/buildInitiativeHandoff/buildTeresaHandoff`. Suma: 52.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 20 | Rdzeń (CRUD/TipTap/konwersje/Capture) realny na DB, AI 4/5 realny LLM; W6 usunął handoff Radar/Inicjatywy (fake toast „wysłano", commit `f35aa8d7c8`); auto-klasyfikacja = heurystyka pozostaje P2 |
-| B. Wiring i dane | 15 | 11 | Realne tabele (`notebooks`/`notebook_pages`, migracje), konwersje z `link_graph_edges`; minus: handoff buduje payload bez persystencji (FE kłamie). |
+| B. Wiring i dane | 15 | 11 | Realne tabele (`notebooks`/`notebook_pages`, migracje), konwersje z `link_graph_edges`; handoff buduje payload bez persystencji (no INSERT), ale FE już nie kłamie (W6). |
 | C. Testy automatyczne | 15 | 7 | 253 PASS/0 FAIL/8 todo, ale persystencja+AI 100% mockowane, **TipTap+SlashMenu ZERO testów**, „ekstrakcja AI" to fałszywa zieleń (INSERT proposala klienta); nic w PR-gate. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 7 | **§27 biblioteki L1 wzorcowa (A-tier)** + hub zgodny z NOTEBOOK_STRUCTURE_SSOT; ale korupcja „rose" (18 hardkodów) + i18n `isPolish`. |
-| F. Bezpieczeństwo/dostęp | 10 | 5 | Live route CZYSTY (org+owner+visibility, Capture+załączniki guarded), ale **P1 cross-user wyciek prywatnej notatki przez v8 handoff** + P2 search project-leak. |
+| F. Bezpieczeństwo/dostęp | 10 | 7 | Live route CZYSTY (org+owner+visibility, Capture+załączniki guarded); P1 cross-user wyciek NAPRAWIONY (2026-06-11); pozostaje P2 search project-leak. |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **Faza 4 niewykonana → max 70 + „NIEPEŁNY".** BRAK cap cross-org (live route org+owner scoped; P1 to within-org cross-user leak, nie cross-org). Suma 49 < 70. |
+| **Hard cap zastosowany?** | — | — | **Faza 4 niewykonana → max 70 + „NIEPEŁNY".** BRAK cap cross-org (live route org+owner scoped). Suma 52 < 70. |
 
 **Werdykt jednym akapitem:** Moduł dojrzały na powierzchni rdzeniowej — biblioteka L1 i edytor stron TipTap działają na realnych tabelach (`notebooks`, `notebook_pages`, migracje `20260602_notebook_containers.sql` + `20260306_notebook_pages.sql`, **bez fasady `new Map()`**; runtime `my-work/notebook.routes.ts`), konwersje są żywe z realną persystencją (→task/decision/initiative/report/presentation przez `notebookConversionService` z INSERT-ami + `link_graph_edges`, →zadania z checklisty, →Canvas draft do M02), Capture API (web-clip/email/import/upload) realny i zasilany spoza huba, a 4/5 funkcji AI to realny LLM (`extract-actions`, `suggest-topics`, inline czat, AI-compose w slash). **§27 biblioteki L1 jest wzorcowa (A-tier)** — `ResizableTable`, filtry scope Wszystkie/Osobiste/Zespołowe, liczniki, RowActionsMenu Menu 1/2/3, RBAC owner-only w wierszu, pełne stany. **Live route bezpieczny — M04 dołącza do kohorty czystej** w warstwie głównej: każdy handler `my-work/notebook.routes.ts` robi org-match + owner-only (mutacje)/`canAccessNotebookRow` (odczyt z `project_members`), typologia personal/team egzekwowana, załączniki guarded (25MB, blocked-ext exe/sh/ps1, path-traversal), Capture wymusza `visibility='private'`. **Cztery realne długi obniżają zaufanie:** (1) **P1 cross-user wyciek prywatnej notatki przez v8 handoff** — `/handoff/radar|inicjatywy|teresa` (`notebookHandoffService.ts:322`) ładuje notatkę `WHERE id=? AND organization_id=?` **bez owner/visibility check** (selektuje `owner_user_id`, ale nie filtruje), więc dowolny kolega z org podaje `noteId` cudzej **prywatnej** notatki i dostaje 201 z jej treścią (do 5 akapitów `content_text`) + `download_ref` do załączników — omija owner-check live route'a (zweryfikowane osobiście; FE woła z `NotebookContent.tsx:1651,1667`); (2) **handoff PÓŁ-MARTWY** — `notebookHandoffService` (619 l.) NIE MA żadnego INSERT, buduje payload i zwraca, a FE pokazuje toast „Wysłano do Radar/Inicjatyw" mimo że nic nie powstaje (fake feature + powyższy leak); (3) **auto-klasyfikacja (#9) to keyword-scoring, nie LLM** (`notebook.routes.ts:1633-1692`) podpięte pod nazwę „AI classify"; (4) **testy hollow** — 253 zielonych, ale persystencja+AI w 100% mockowane, TipTap+SlashMenu bez testów, „ekstrakcja AI" w teście to INSERT proposala klienta (fałszywa zieleń). Drobne: P2 search `/api/v8/notebook/search` zwraca notatki `visibility='project'` bez `project_members` (wyciek tytułów/snippetów między zespołami); korupcja „rose" (18 hardkodów palety w `AIChatInlinePanel`, kosmetyczna, quick-fix `sharose`→`shared`); martwy `KnowledgePulse.tsx`/`InsertMenu.tsx`. Sufit oceny: niewykonane Fazy 3+4 + hollow testy.
 
@@ -124,11 +125,11 @@
 | Live route (`my-work/notebook`) | CZYSTY | org-match + owner-only/`canAccessNotebookRow` (`notebookContainerService.ts:74-99`) |
 | Załączniki | guarded | 25MB, blocked-ext, path-traversal, owner-only, org+page-scoped |
 | Capture API | czyste | `verifyToken`, org-header walidowany membership, `visibility='private'` |
-| v8 handoff | **DZIURAWE (owner/visibility skip)** | `notebookHandoffService.ts:322` |
+| v8 handoff | **NAPRAWIONE (2026-06-11)** | `notebookHandoffService.ts:322` — dodano `AND (visibility != 'private' OR owner_user_id = ?)` |
 | v8 search | **luźne (project bez membership)** | `notebookSearchService.ts:188-196` |
 
 **Findingi:**
-- **[P1] cross-user wyciek prywatnej notatki przez v8 handoff** — `/handoff/radar|inicjatywy|teresa` (`v8/notebook.routes.ts:119-174`, `notebookHandoffService.ts:322`) `SELECT ... WHERE id=? AND organization_id=?` **bez owner/visibility** → dowolny user org podaje `noteId` cudzej prywatnej notatki → 201 z treścią (do 5 akapitów) + `download_ref` załączników. **Zweryfikowane osobiście.** Within-org cross-user leak (nie cross-org → nie hard cap, ale defeat modelu „private"). Fix: dodać owner/visibility check jak live route.
+- ~~**[P1]**~~ **NAPRAWIONE (2026-06-11):** cross-user wyciek prywatnej notatki przez v8 handoff — `loadNotebookRow` teraz `WHERE id=? AND organization_id=? AND (visibility != 'private' OR owner_user_id=?)`; `userId` propagowany przez cały stos: `buildHandoffCommon/buildRadarHandoff/buildInitiativeHandoff/buildTeresaHandoff` i route handlery.
 - **[P2] search project-leak** — `/api/v8/notebook/search` (`notebookSearchService.ts:188`) zwraca `visibility='project'` bez `project_members` (warunek tylko `project_id IS NOT NULL`) → wyciek tytułów/snippetów notatek projektowych między zespołami w org.
 - **[P3]** `/handoff/validate` bez autoryzacji obiektu (czysta walidacja kształtu); prompt-injection przez treść w extract-actions (bounded — propozycje za zgodą).
 

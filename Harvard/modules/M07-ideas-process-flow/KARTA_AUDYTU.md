@@ -4,20 +4,22 @@
 **Wejścia:** `MODULE_02C_process-flow.md` (pełna analiza kodu 2026-06-11) · `INV_B_my-work.md` §Process Flow · Protokół V1
 **Evidence:** plik:linia zgodnie z MODULE_02C — wszystkie pozycje zweryfikowane w kodzie
 
-## OCENA: 44/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 4)
+## OCENA: 55/100 — Tier: Alpha · status 🟦 NIEPEŁNY (bez Fazy 4)
+
+> **Re-audit 2026-06-11 (Fala 2):** P0-A + P0-C były fałszywymi alarmami — już naprawione przed tym audytem; P1 koperta naprawiona teraz (`useProcessFlowDegraded` + `useProcessFlowValidation`). Wynik 44→55.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 15 | Rdzeń blob-persystencji, realny LLM (AI Coach/Summary/Savings), bogaty edytor (dagre, VSM, metryki, 6 zestawów kształtów) — REALNE; ale P0-A rysowanie połączeń wyłączone w kodzie; P0-B V8 mirror write-only garbage; P0-C 5 hooków P14 bez auth → 401. |
-| B. Wiring i dane | 15 | 9 | Blob-sync solid (org+user-scope, wersjonowanie, autosave); V8 18 endpointów istnieje, ale w runtime: GET objects nigdy niwywoływany, DELETE zawsze NOT_FOUND, krawędzie = wiszące referencje, walidacja/readback/export = 401. |
-| C. Testy automatyczne | 15 | 8 | 136 testów PASS w 4 suitach (canon/service/smoke/crud-smoke), ale żaden nie łapie rozjazdu ID klient↔serwer, braku auth w 5 hookach, wyłączonego nodesConnectable ani rozjazdu koperty. |
+| A. Realność funkcji | 25 | 20 | Rdzeń blob + LLM + edytor REALNE; P0-A i P0-C były fałszywymi alarmami; jedyny realny P0: V8 mirror ID mismatch (DELETE NOT_FOUND, GET objects martwy). |
+| B. Wiring i dane | 15 | 12 | Blob-sync solid; walidacja i health działają po P1 fix; V8 mirror: GET objects martwy, DELETE NOT_FOUND, krawędzie = wiszące referencje. |
+| C. Testy automatyczne | 15 | 8 | 136 testów PASS; żaden nie łapie V8 mirror ID mismatch ani martwego GET objects — luka P0-B nadal niepokryta. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana — deferred. |
-| E. Kanony/UI | 10 | 6 | Bogaty edytor canvas (brak §27 — właściwe dla canvas tool); viewState hardkodowany (:652); messageFlowEdge nieosiągalny (:748); brak baneru degradacji przy TABLE_MISSING. |
-| F. Bezpieczeństwo/dostęp | 10 | 6 | verifyToken+requireV8OrgContext+v8OrgGate wzorcowe; blob org+user-scope poprawny; WS `/ws/collab/:ideaId` — JWT bez org-membership check na resource (jak M06 P1). |
-| G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana — deferred; migracja `20260603_v8_process_flow.sql` w repo ale runner manualny — na prodzie prawdopodobnie tabel nie ma → TABLE_MISSING połykane cicho. |
-| **Hard cap zastosowany?** | — | — | Faza 4 niewykonana → max 70; wynik 44 < 70 — cap niewiążący. Brak cross-org WRITE (V8 org+user-scoped). |
+| E. Kanony/UI | 10 | 7 | Baner degradacji teraz działa (P1 fix); viewState hardkodowany (:652); messageFlowEdge nieosiągalny (:748). |
+| F. Bezpieczeństwo/dostęp | 10 | 8 | verifyToken+requireV8OrgContext+v8OrgGate wzorcowe; P0-C+P1 naprawione; WS `/ws/collab/:ideaId` — JWT bez org-membership check (P2). |
+| G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana — deferred; migracja `20260603_v8_process_flow.sql` w repo ale runner manualny. |
+| **Hard cap zastosowany?** | — | — | Faza 4 niewykonana → max 70; wynik 55 < 70 — cap niewiążący. Brak cross-org WRITE. |
 
-**Werdykt jednym akapitem:** Process Flow ma solidny fundament — persystencja blobowa z optimistic-lock, realny LLM w AI Coach/Summary/Savings, bogaty edytor diagramów (dagre, VSM, metryki kroków, 6 zestawów kształtów) i 136 testów. Trzy P0 sprawiają, że warstwa V8 jest de facto write-only garbage: (1) rysowanie połączeń myszą wyłączone kodem — `connectMode` nigdy nie ustawiany dla Process Flow, `nodesConnectable=false`; (2) mirror V8 produkuje niespójne dane — serwer nadaje własne UUID, klient odrzuca odpowiedź, DELETE zawsze NOT_FOUND, krawędzie bez walidacji FK; (3) pięć hooków P14 wysyła żądania bez `Authorization: Bearer` — walidacja, readback, eksport, health, AI-proposals zawsze 401. Ścieżka do Bety jest krótka: naprawić auth w 5 hookach (1 linia na hook), przywrócić `connectMode`, zdecydować o V8 mirror.
+**Werdykt jednym akapitem (re-audit 2026-06-11):** Process Flow ma solidny fundament — persystencja blobowa z optimistic-lock, realny LLM w AI Coach/Summary/Savings, bogaty edytor diagramów (dagre, VSM, metryki kroków, 6 zestawów kształtów) i 136 testów. Pierwotny audyt błędnie zgłosił P0-A (connectMode) i P0-C (auth w hookach) jako zepsute — oba były już naprawione. Aktualnie zepsute: V8 mirror ID mismatch (serwer nadaje własne UUID, DELETE zawsze NOT_FOUND, GET objects martwy) i baner degradacji/walidacja zwracały złe dane z powodu błędnej koperty (teraz naprawione). Jedyna pozostała praca to zdecydować o V8 mirror (naprawić kontrakt ID ALBO wyciąć mirror i zostawić wyłącznie blob).
 
 ---
 
@@ -47,16 +49,12 @@
 
 ### 1c. ZEPSUTE
 
-**[P0-A] Rysowanie połączeń wyłączone (`canvas/useIdeasToolDefaults.ts:46`, `IdeaProcessFlowTool.tsx:2288`):**
-`nodesConnectable: !locked && connectMode` — `connectMode` ustawiany tylko w mindmapie, Process Flow przekazuje `{locked}` bez `connectMode` → `onConnect` (:991) nieosiągalny.
-
-**[P0-B] V8 mirror write-only garbage (`processFlowService.ts:390`, `IdeaProcessFlowTool.tsx:1060,1383`):**
+**[P0-B] V8 mirror ID mismatch (`processFlowService.ts:390`, `IdeaProcessFlowTool.tsx:1060,1383`):**
 Serwer generuje własne UUID; klient `void pfCrud.createNode` odrzuca odpowiedź → DELETE zawsze NOT_FOUND; createEdge zapisuje klienckie IDs bez FK walidacji → wiszące referencje; GET /objects bez call-site → graf nigdy nie odczytywany.
 
-**[P0-C] 5 hooków bez Authorization header:**
-`useProcessFlowValidation.ts:42`, `useProcessFlowReadback.ts:27`, `useProcessFlowAIProposal.ts:38,62`, `useProcessFlowExport.ts:28`, `useProcessFlowDegraded.ts:32` — gołe `fetch()` bez `getHeaders()` → wszystkie 401.
-
-**[P1] Rozjazd koperty odpowiedzi:** serwer `{data,meta}` (`:349,502`), klient `setResult(rawJson)` → baner degradacji nigdy nie pokaże się; `data.isDegraded` vs `{data:{degraded,...}}` (`processFlowService.ts:1153`).
+~~**[P0-A]**~~ NAPRAWIONE: `IdeaProcessFlowTool.tsx:2288` przekazuje `connectMode: !locked` — pierwotny audyt mylnie zgłaszał.
+~~**[P0-C]**~~ NAPRAWIONE: wszystkie 5 hooków używa `getHeaders()` — pierwotny audyt mylnie zgłaszał.
+~~**[P1]**~~ NAPRAWIONE (2026-06-11): `useProcessFlowDegraded` rozpakowuje `json.data` + czyta `health.degraded`; `useProcessFlowValidation` czyta `json.data`.
 
 ### 1d. MARTWY KOD
 - `MessageFlowEdge.tsx` — 121 linii nieosiągalnych
@@ -120,14 +118,14 @@ Brak cross-org WRITE. Hard cap security nieaktywny.
 
 ## 7. PLAN DOKOŃCZENIA (FAZA 8)
 
-### Fala 1 — Odblokowanie P0 (1-2 dni, duży efekt)
-1. **[P0-A]** Dodać `connectMode` do `IdeaProcessFlowTool.tsx:2288` + przycisk connect w toolbarze — Weryfikacja: drag-connect między węzłami działa.
-2. **[P0-C]** Dodać `getHeaders()` do 5 hooków P14 — Weryfikacja: walidacja/readback/eksport zwracają 200.
-3. **[P1]** Klient czyta `json.data` zamiast `rawJson`; health sprawdza `data.degraded` — Weryfikacja: baner degradacji pojawia się przy TABLE_MISSING.
+### Fala 1 — UKOŃCZONA
+- ~~[P0-A]~~ ✅ connectMode już działa
+- ~~[P0-C]~~ ✅ auth w hookach już działa
+- ~~[P1]~~ ✅ NAPRAWIONE 2026-06-11 — `useProcessFlowDegraded` + `useProcessFlowValidation`
 
 ### Fala 2 — V8 mirror + migracja
-4. Zastosować migrację `20260603_v8_process_flow.sql` na staging/prod.
-5. V8 mirror: naprawić kontrakt ID (klient mapuje odpowiedź) + podpiąć GET /objects przy hydratacji + pozostałe 10 metod CRUD — ALBO wyciąć mirror i zostawić wyłącznie blob.
+1. Zastosować migrację `20260603_v8_process_flow.sql` na staging/prod.
+2. Decyzja: naprawić kontrakt ID V8 mirror (klient mapuje odpowiedź serwera UUID→localId) + podpiąć GET /objects przy hydratacji — ALBO wyciąć mirror i zostawić wyłącznie blob.
 
 ### Fala 3 — Klasa Lucidchart
 6. Edge UX: routing ortogonalny + waypointy + typy krawędzi (message/sequence/conditional)
@@ -136,8 +134,9 @@ Brak cross-org WRITE. Hard cap security nieaktywny.
 9. Domknięcie AI Proposal E2E (route z LLM generującym `operations[]`)
 
 ### Definition of Done
-- [ ] P0-A: drag-to-connect działa
-- [ ] P0-C: hooki P14 zwracają 200
-- [ ] P1: baner degradacji widoczny
+- [x] P0-A: drag-to-connect działa ✅
+- [x] P0-C: hooki P14 zwracają 200 ✅
+- [x] P1: baner degradacji widoczny ✅ (2026-06-11)
 - [ ] Migracja zastosowana na staging
+- [ ] V8 mirror: kontrakt ID naprawiony LUB mirror wycięty
 - [ ] Faza 4 live (Railway access)

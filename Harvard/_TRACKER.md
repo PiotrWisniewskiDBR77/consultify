@@ -21,10 +21,10 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M15 | Rezultaty | 2 (beta) | 🟦 | **54** ↑5 | Alpha | 2026-06-11 | `modules/M15-rezultaty/KARTA_AUDYTU.md` |
 | M21 | Meeting | 2 (beta) | 🟦 | 52 | Alpha | 2026-06-11 | `modules/M21-meeting/KARTA_AUDYTU.md` |
 | M12 | Audyty | 2 (beta) | 🟦 | 47 | Alpha | 2026-06-11 | `modules/M12-audyty/KARTA_AUDYTU.md` |
-| M04 | Notatnik | 2 (beta) | 🟦 | **50** ↑1 | Alpha | 2026-06-11 | `modules/M04-notatnik/KARTA_AUDYTU.md` |
-| M05 | Ideas — Zarządzanie | 3 (Ideas) | 🟦 | **56** ↑1 | Alpha | 2026-06-11 | `modules/M05-ideas-zarzadzanie/KARTA_AUDYTU.md` |
+| M04 | Notatnik | 2 (beta) | 🟦 | **52** ↑3 | Alpha | 2026-06-11 | `modules/M04-notatnik/KARTA_AUDYTU.md` |
+| M05 | Ideas — Zarządzanie | 3 (Ideas) | 🟦 | **60** ↑5 | Alpha górny | 2026-06-11 | `modules/M05-ideas-zarzadzanie/KARTA_AUDYTU.md` |
 | M06 | Ideas — Mind Map | 3 (Ideas) | 🟦 | 57 | Alpha | 2026-06-11 | `modules/M06-ideas-mind-map/KARTA_AUDYTU.md` |
-| M07 | Ideas — Process Flow | 3 (Ideas) | 🟦 | 44 | Alpha | 2026-06-11 | `modules/M07-ideas-process-flow/KARTA_AUDYTU.md` |
+| M07 | Ideas — Process Flow | 3 (Ideas) | 🟦 | **55** ↑11 | Alpha | 2026-06-11 | `modules/M07-ideas-process-flow/KARTA_AUDYTU.md` |
 | M08 | Ideas — Table | 3 (Ideas) | 🟦 | **52** ✓ | Alpha | 2026-06-11 | `modules/M08-ideas-table/KARTA_AUDYTU.md` |
 | M09 | Ideas — Whiteboard | 3 (Ideas) | 🟦 | **45** ↑2 | Alpha | 2026-06-11 | `modules/M09-ideas-whiteboard/KARTA_AUDYTU.md` |
 | M22 | AI OS / Internal Tools | 4 (internal) | 🟦 | **54** ↑3 | Alpha | 2026-06-11 | `modules/M22-ai-os/KARTA_AUDYTU.md` |

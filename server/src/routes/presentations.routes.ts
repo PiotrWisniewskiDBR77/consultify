@@ -1462,7 +1462,7 @@ router.get(
       organizationId: orgId,
       deckId: String(req.params.id || ''),
       format: 'pptx',
-      allowOverride: String(req.query.overrideQualityGate || '') === 'true',
+      allowOverride: ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(req.user?.role || req.userRole || '') && String(req.query.overrideQualityGate || '') === 'true',
     });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
@@ -1604,7 +1604,7 @@ router.get(
       organizationId: orgId,
       deckId: String(deckId || ''),
       format: 'pdf',
-      allowOverride: String(req.query.overrideQualityGate || '') === 'true',
+      allowOverride: ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(req.user?.role || req.userRole || '') && String(req.query.overrideQualityGate || '') === 'true',
     });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
@@ -1922,7 +1922,7 @@ router.post(
       organizationId: orgId,
       deckId: String(deckId || ''),
       format: 'html',
-      allowOverride: String(req.query.overrideQualityGate || '') === 'true',
+      allowOverride: ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(req.user?.role || req.userRole || '') && String(req.query.overrideQualityGate || '') === 'true',
     });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
@@ -5776,7 +5776,7 @@ router.post(
       organizationId: orgId,
       deckId: String(deckId || ''),
       format: 'png',
-      allowOverride: String(req.query.overrideQualityGate || '') === 'true',
+      allowOverride: ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(req.user?.role || req.userRole || '') && String(req.query.overrideQualityGate || '') === 'true',
     });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({

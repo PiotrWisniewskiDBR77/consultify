@@ -310,7 +310,8 @@ async function loadLinkedArtifactsAndEvidence(
 
 async function loadNotebookRow(
   noteId: string,
-  organizationId: string
+  organizationId: string,
+  userId: string
 ): Promise<NotebookRow | null> {
   const cols = await getTableColumns('notebook_pages');
   if (!cols || cols.size === 0) {
@@ -319,9 +320,9 @@ async function loadNotebookRow(
   }
 
   const selectList = buildNotebookHandoffSelectList(cols);
-  const sql = `SELECT ${selectList} FROM notebook_pages WHERE id = ? AND organization_id = ? LIMIT 1`;
+  const sql = `SELECT ${selectList} FROM notebook_pages WHERE id = ? AND organization_id = ? AND (visibility != 'private' OR owner_user_id = ?) LIMIT 1`;
 
-  return dbGet<NotebookRow>(sql, [noteId, organizationId], { fallback: false });
+  return dbGet<NotebookRow>(sql, [noteId, organizationId, userId], { fallback: false });
 }
 
 function mapAttachmentsForHandoff(
@@ -367,9 +368,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 export async function buildHandoffCommon(
   noteId: string,
-  organizationId: string
+  organizationId: string,
+  userId: string
 ): Promise<NotebookHandoffCommon> {
-  const row = await loadNotebookRow(noteId, organizationId);
+  const row = await loadNotebookRow(noteId, organizationId, userId);
   if (!row) {
     const cols = await getTableColumns('notebook_pages');
     if (!cols || cols.size === 0) {
@@ -429,9 +431,10 @@ export async function buildHandoffCommon(
 export async function buildRadarHandoff(
   noteId: string,
   organizationId: string,
+  userId: string,
   suggestion: Partial<RadarSignalSuggestion> = {}
 ): Promise<NotebookToRadarPayload> {
-  const common = await buildHandoffCommon(noteId, organizationId);
+  const common = await buildHandoffCommon(noteId, organizationId, userId);
   const ub = common.uncertainty_boundary;
 
   const defaults: RadarSignalSuggestion = {
@@ -467,9 +470,10 @@ export async function buildRadarHandoff(
 export async function buildInitiativeHandoff(
   noteId: string,
   organizationId: string,
+  userId: string,
   seed: Partial<InitiativeSeed> = {}
 ): Promise<NotebookToInitiativePayload> {
-  const common = await buildHandoffCommon(noteId, organizationId);
+  const common = await buildHandoffCommon(noteId, organizationId, userId);
 
   const defaults: InitiativeSeed = {
     problem_statement: common.title,
@@ -495,9 +499,10 @@ export async function buildInitiativeHandoff(
 export async function buildTeresaHandoff(
   noteId: string,
   organizationId: string,
+  userId: string,
   context: Partial<AssistantContext> = {}
 ): Promise<NotebookToTeresaPayload> {
-  const common = await buildHandoffCommon(noteId, organizationId);
+  const common = await buildHandoffCommon(noteId, organizationId, userId);
 
   const defaults: AssistantContext = {
     user_intent: `Continue from notebook note: ${common.title}`,

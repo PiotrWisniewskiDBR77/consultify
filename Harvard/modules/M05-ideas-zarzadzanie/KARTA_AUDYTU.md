@@ -4,21 +4,25 @@
 **Wejścia:** `Harvard/podzial/ideas/MODULE_02A_ideas-zarzadzanie.md` + `Harvard/podzial/inventory/INV_B_my-work.md` + kod + uruchomione testy
 **Evidence:** `Harvard/modules/M05-ideas-zarzadzanie/evidence/` (brak fizycznych plików — audyt statyczny)
 
-## OCENA: 56/100 — Tier: Alpha · NIEPEŁNY (bez Fazy 3 i 4)
+## OCENA: 60/100 — Tier: Alpha górny · NIEPEŁNY (bez Fazy 3 i 4)
 > **Re-audit 2026-06-11 po Sprintach 1–5:** F: 6→7 (W7 beta-lock 3-warstwowy — API-level gating dodany, commit `bc5579918d`). Suma: 18+9+9+0+7+7+6=56.
+> **Re-audit 2026-06-11 Fala 2 — wykryte pominięte naprawy Sprint 5:**
+> - P0 conflict handler: NAPRAWIONY — commit `0b81310448` dodał `conflictRefreshRef.current?.()` (refresh z serwera po 409); `IdeaMapWorkspace.tsx:463` A: 18→21.
+> - P0 snapshoty: NAPRAWIONA MIGRACJA — `20260611_my_idea_map_snapshots_and_activity.sql` (commit `0fc53cd9f1`); B: 9→10.
+> Suma: 21+10+9+0+7+7+6=60.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
-| A. Realność funkcji | 25 | 18 | Rdzeń CRUD/mapa/AI/konwersja realne i dojrzałe; traci: 2× P0 (conflict handler kłamie → silent overwrite, snapshoty wieczne 503), eksport serwerowy to rejestr bez pliku, notatki efemeryczne, presence fasada. |
-| B. Wiring i dane | 15 | 9 | Wszystkie główne tabele mają migracje i org-scope; dwa broken wires: `my_idea_map_snapshots` bez migracji (→ wieczne 503), `my_idea_map_versions` ma migrację ale zero konsumentów w kodzie (split-brain); `my_idea_edges` backend bez FE. |
+| A. Realność funkcji | 25 | 21 | Rdzeń CRUD/mapa/AI/konwersja realne i dojrzałe; conflict handler NAPRAWIONY (commit `0b81310448`); snapshot 503 NAPRAWIONE (migracja `0fc53cd9f1`); traci: eksport serwerowy rejestr bez pliku, notatki efemeryczne, presence fasada. |
+| B. Wiring i dane | 15 | 10 | Wszystkie główne tabele + `my_idea_map_snapshots` (migracja `20260611`) mają org-scope i migracje; nadal: `my_idea_map_versions` zero konsumentów (split-brain); `my_idea_edges` backend bez FE. |
 | C. Testy automatyczne | 15 | 9 | 12 plików testowych, 96 testów PASS (0 FAIL) — ale wyłącznie FE-unit + whitebox formaterów; zero testów serwerowych dla ~45 endpointów; E2E smoke (`qa-idea-mindmap-checklist`) w katalogu smoke (jest w CI nightly), ale weryfikuje UI checklist, nie kontrakt API. |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana (brak dostępu do przeglądarki w tej sesji). |
 | E. Kanony/UI | 10 | 7 | MyIdeasListContent używa ResizableTable/canon; 3 widoki listy + Menu3-style filtry; ModuleHub wdrożony (MyWorkHub); beta plate z `betaAccess.ts` SSOT; traci: `canvasLocked=false` na sztywno (vestigial), 4× `console.log` w prodzie. |
 | F. Bezpieczeństwo/dostęp | 10 | 7 | Wszystkie read/write endpointy z `WHERE user_id=? AND organization_id=?` — brak cross-org IDOR; W7 beta-lock 3-warstwowy (commit `bc5579918d`); presence GET/POST bez ownership check channelId pozostaje P2 |
-| G. Środowiska (Railway) | 10 | 6 | Faza 3 nieformalnie: migracje głównych tabel (`my_ideas`, `my_idea_maps`, `my_idea_edges`, `idea_node_comments`, `idea_exports`) istnieją i są w baseline v2; `my_idea_map_snapshots` BRAK — pewne 503 na prod; flagi bez weryfikacji live. |
-| **Hard cap zastosowany?** | — | — | Faza 4 niewykonana → cap 70; wynik surowy przed capem: ~55 → **cap 70 nie jest wiążący** (55 < 70). Zero cross-org WRITE (cap 50 nie dotyczy). |
+| G. Środowiska (Railway) | 10 | 6 | Faza 3 nieformalnie: migracje głównych tabel + `my_idea_map_snapshots` (commit `0fc53cd9f1`) istnieją; flagi bez weryfikacji live — Railway deployment Faza 4. |
+| **Hard cap zastosowany?** | — | — | Faza 4 niewykonana → cap 70; wynik 60 < 70 — cap niewiążący. Zero cross-org WRITE. |
 
-**Werdykt jednym akapitem:** Moduł Ideas — Zarządzanie to najdojrzalszy obszar sekcji My Work: realny CRUD per-user+org, optimistic concurrency z baseVersion, bogata AI (sugestie/generacja/expand/gap-analysis przez prawdziwy LLM), konwersja do 6 outputów z INSERT-ami i traceability, 96 testów FE zielonych. Zaufanie łamią dwa P0: `handleGraphConflict` pokazuje toast i robi nic — następny autosave cicho nadpisuje dane serwera (`IdeaMapWorkspace.tsx:451–461` + `useIdeaMapSync.ts:264–268`); snapshoty (`my_idea_map_snapshots`) nie mają migracji nigdzie w repo → każde żądanie do endpointów snapshotów zwraca 503 na produkcji — feature checkpointów jest martwym UI. Na plus: org-scope konsekwentny we wszystkich 45+ endpointach; brak cross-org IDOR. Blokuje tier Beta: naprawienie P0 konfliktu, migracja snapshots, testy serwerowe kontraktu map-sync.
+**Werdykt jednym akapitem (re-audit 2026-06-11):** Moduł Ideas — Zarządzanie to najdojrzalszy obszar My Work: realny CRUD per-user+org, optimistic concurrency z baseVersion, bogata AI (LLM), konwersja do 6 outputów z INSERT-ami, 96 testów FE. Oba P0 z oryginalnego audytu NAPRAWIONE w Sprint 5: conflict handler teraz odświeża z serwera po 409 (commit `0b81310448`); snapshot migration istnieje (commit `0fc53cd9f1`). Org-scope konsekwentny we wszystkich 45+ endpointach; brak cross-org IDOR. Blokuje tier Beta: testy serwerowe kontraktu map-sync, Fazy 3+4 Railway.
 
 ---
 

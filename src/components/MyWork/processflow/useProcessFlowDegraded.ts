@@ -33,10 +33,20 @@ export function useProcessFlowDegraded({
     try {
       const res = await fetch(`/api/v8/process-flow/${processId}/health`, { headers: getHeaders() });
       if (res.ok) {
-        const data = await res.json();
+        const json = await res.json();
+        const health = json.data;
         setState({
-          isDegraded: Boolean(data?.isDegraded),
-          scenarios: Array.isArray(data?.scenarios) ? data.scenarios : [],
+          isDegraded: Boolean(health?.degraded),
+          scenarios: health?.scenario
+            ? [
+                {
+                  scenario: health.scenario,
+                  active: Boolean(health.degraded),
+                  posture: health.posture ?? '',
+                  recovery: health.recovery ?? '',
+                },
+              ]
+            : [],
         });
       }
     } catch {

@@ -119,7 +119,7 @@ router.get(
 router.post(
   '/handoff/radar',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const { noteId, suggestion } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
       return res
@@ -129,6 +129,7 @@ router.post(
     const payload = await notebookHandoffService.buildRadarHandoff(
       noteId,
       organizationId,
+      userId,
       suggestion && typeof suggestion === 'object' ? suggestion : {}
     );
     return res.status(201).json({ data: payload, meta: notebookMeta({ handoff: 'radar' }) });
@@ -138,7 +139,7 @@ router.post(
 router.post(
   '/handoff/inicjatywy',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const { noteId, seed } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
       return res
@@ -148,6 +149,7 @@ router.post(
     const payload = await notebookHandoffService.buildInitiativeHandoff(
       noteId,
       organizationId,
+      userId,
       seed && typeof seed === 'object' ? seed : {}
     );
     return res.status(201).json({ data: payload, meta: notebookMeta({ handoff: 'inicjatywy' }) });
@@ -157,7 +159,7 @@ router.post(
 router.post(
   '/handoff/teresa',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const { noteId, context } = req.body ?? {};
     if (!noteId || typeof noteId !== 'string') {
       return res
@@ -167,6 +169,7 @@ router.post(
     const payload = await notebookHandoffService.buildTeresaHandoff(
       noteId,
       organizationId,
+      userId,
       context && typeof context === 'object' ? context : {}
     );
     return res.status(201).json({ data: payload, meta: notebookMeta({ handoff: 'teresa' }) });
