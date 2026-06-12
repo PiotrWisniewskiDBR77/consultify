@@ -8,8 +8,8 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 |---|-------|------|--------|-------|------|------|-------|
 | M01 | Czat | 1 (core) | 🟦 | **59** ↑9 | Alpha górny | 2026-06-11 | `modules/M01-czat/KARTA_AUDYTU.md` |
 | M03 | Moja Praca — organizer | 1 (core) | 🟦 | **54** ↑10 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
-| M10 | Wywiad | 1 (core) | 🟦 | **59** ↑9 | Alpha górny | 2026-06-11 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
-| M13 | Inicjatywy | 1 (core) | 🟦 | **53** ↑8 | Alpha | 2026-06-11 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
+| M10 | Wywiad | 1 (core) | 🟦 | **60** ↑10 | Alpha górny | 2026-06-12 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
+| M13 | Inicjatywy | 1 (core) | 🟦 | **54** ↑9 | Alpha | 2026-06-12 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
 | M14 | Wdrożenie | 1 (core) | 🟦 | **52** ↑10 | Alpha | 2026-06-11 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
 | M25 | Ustawienia | 1 (core) | 🟦 | **54** ↑4 | Alpha | 2026-06-11 | `modules/M25-ustawienia/KARTA_AUDYTU.md` |
 | M02 | Canvas | 2 (beta) | 🟦 | **58** ↑1 | Alpha górny | 2026-06-11 | `modules/M02-canvas/KARTA_AUDYTU.md` |
@@ -37,6 +37,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 \* Oceny Ideas (M05–M09) przeliczone 2026-06-11 do pełnego Protokołu V1 (Fazy 0–2,5–6,7+plan); status zmieniony z 🔁 na 🟦 NIEPEŁNY. Wszystkie 27+A1 = 28 modułów zaudytowane statycznie. Fazy 3+4 zbiorczo po dostępie do Railway.
 \* Re-audit 2026-06-11 po Sprintach 1–5 (W1–W15 + Bramka D): 21 modułów zaktualizowanych; ↑ = delta vs pre-sprint; ✓ = korekta błędu arytmetycznego. Średnia 28 modułów: ~52 (poprz. ~49). Hard capy zdjęte gdzie security P0 naprawiony.
 \* Fala 2/3 (2026-06-11/12): korekty kart za pominięte naprawy Sprint 5 — M01(59), M03(54), M04(52), M05(60), M06(60), M07(55), M08(54), M09(49), M12(49), M13(53), M14(52), M16(58), M17(54), M19(56+role gate), M20(48), M21(55), M25(54), M26(53), M27(58); korekty atrybucji M23/M24; średnia 27 modułów (bez A1) ~53.
+\* Fala 4 (2026-06-12): naprawy kodu P0 — M10(59→60, dead import usunięty `ea77dc678c`), M13(53→54, CRUD 5/5 PASS `ea77dc678c`); react-i18next mock-drift naprawiony; `InitiativesHub` error UI uzupełniony; średnia ~54.
 
 ## Reguły aktualizacji
 - Po każdym audycie: wpis statusu+oceny+linku TUTAJ, w karcie pełna rubryka.

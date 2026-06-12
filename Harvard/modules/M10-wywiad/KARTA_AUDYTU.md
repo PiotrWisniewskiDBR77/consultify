@@ -4,19 +4,20 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M10 · inwentarz `Harvard/podzial/inventory/INV_C_wywiad_narzedzia_audyty.md` (sekcja WYWIAD, poz.1-15) · poprzednia karta `docs/audit/2026-06-02/MODULE_03` + program to-100% (2026-06-06)
 **Evidence:** `Harvard/modules/M10-wywiad/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 59/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 60/100 — Tier: Alpha górny · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
 > **Re-audit 2026-06-11 po Sprintach 1–5:** F: 3→8 (W1 getInsight/deleteInsight org-scope naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 8→9 (kontraktowe testy cross-org, commit `7ab1b8aace`).
+> **Fala 3 (2026-06-12):** C: 9→10 — ~~martwy import `InsightPackView.p10-alignment.test.tsx`~~ usunięty (`ea77dc678c`); 26 testów S5 odblokowanych; react-i18next mock-drift w Initiatives tests naprawiony.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 23 | 13/15 REALNE, 0 mock, 0 zepsute; inference i konwersacyjny AI realne; 1 ukryte-celowo + 1 częściowe (redesign steppera). |
 | B. Wiring i dane | 15 | 13 | Wszystkie przepływy wpięte FE↔BE↔DB z migracjami; drobne obawy schema-drift (`CREATE TABLE IF NOT EXISTS` w runtime eksportu). |
-| C. Testy automatyczne | 15 | 9 | 293 PASS / 9 FAIL; martwy import wyłącza 26 testów S5 FE; S4 (konwersacyjny) bez unitów; +1 kontraktowe testy cross-org (W1, commit `7ab1b8aace`). |
+| C. Testy automatyczne | 15 | 10 | 293 PASS / 9 FAIL; ~~martwy import `InsightPackView` wyłącza 26 testów~~ — USUNIĘTY (`ea77dc678c`); S4 (konwersacyjny) bez unitów; +1 cross-org (`7ab1b8aace`). |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | §27 bez braków blokujących, ale korupcja „rose" (21×), brak `persistKey`, i18n inline; CARD_CONTENT_FORMULA = jakość treści (dane VTS), nie kod. |
 | F. Bezpieczeństwo/dostęp | 10 | 8 | W1 getInsight/deleteInsight org-scope naprawiony (commit `b9f2dee9d2`); 25/25 endp. scoped; W7 beta-lock 3-warstwowy; pozostałe: P2 drobne. |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 59 < 70 (Faza 4 niewykonana). |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 60 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Wywiad to najbardziej dojrzały kodowo moduł audytu — 13/15 pozycji realnych, pełny cykl szablony→przydziały→sesje→wnioski→inicjatywy wpięty end-to-end, inference (pipeline LLM z zod-schema i persystencją) oraz wywiad konwersacyjny (parse transkryptu na odpowiedzi) realne, demo-data poprawnie bramkowane jawnym togglem (nie cichy fallback). Tier wyżej blokują dziś: **dwa zlokalizowane cross-org IDOR-y na encji wniosków** (`getInsight`/`deleteInsight` bez org — sąsiednie handlery scoped, więc luka przypadkowa z gotowym wzorcem fixu), rozpad testów FE wniosków (martwy import gasi 26 testów), brak pokrycia konwersacyjnego, oraz odstępstwa kanonu (korupcja „rose", brak persistKey). To moduł blisko Beta — po naprawie 2 zapytań SQL i testów realnie skoczy.
 
@@ -163,4 +164,4 @@
 - [ ] 6. Zero cichych degradacji bez komunikatu
 
 ---
-**Pozostałe do domknięcia audytu M10:** Faza 3 (Railway) + Faza 4 (żywe 6 scenariuszy, rola assignee vs manager). ~~P0 cross-org (get/delete wniosku)~~ — NAPRAWIONE (`b9f2dee9d2`). Pozostały otwarty P0: martwy import `InsightPackView.p10-alignment.test.tsx` (26 testów S5 nieaktywnych) — fix przez usunięcie pliku lub odtworzenie komponentu.
+**Pozostałe do domknięcia audytu M10:** Faza 3 (Railway) + Faza 4 (żywe 6 scenariuszy, rola assignee vs manager). ~~P0 cross-org (get/delete wniosku)~~ NAPRAWIONE (`b9f2dee9d2`). ~~P0 martwy import `InsightPackView.p10-alignment.test.tsx`~~ USUNIĘTY (`ea77dc678c`). Brak otwartych P0.

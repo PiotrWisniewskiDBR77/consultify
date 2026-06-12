@@ -4,19 +4,20 @@
 **Wejścia:** _MODULE_MAP_V2 wpis M13 · inwentarz `Harvard/podzial/inventory/INV_D_*.md` (sekcja INICJATYWY, poz.1-19) · poprzednia karta `docs/audit/2026-06-02/MODULE_05` (55/100) · SSOT `docs/initiatives/INITIATIVE_FORMULA.md`
 **Evidence:** `Harvard/modules/M13-inicjatywy/evidence/` (f1_code_truth.md, f2_tests_report.md, f2_tests.log, f56_kanon_sec.md)
 
-## OCENA: 53/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
+## OCENA: 54/100 — Tier: Alpha · status 🟦 NIEPEŁNY (Fazy 3+4 do wykonania)
 > **Re-audit 2026-06-11 po Sprintach 1–5:** A: 19→20 (W6 AI Wizard CTA aktywowany, commit `3aec45a21d`); F: 2→7 (W1 governance org-scope naprawiony, commit `b9f2dee9d2`, hard cap zdjęty); C: 8→9 (kontraktowe testy cross-org, commit `7ab1b8aace`). **Fala 2 (pominięte):** A: 20→21 (ROI navigation button `dc1dd6154d` — TrendingUp w `InitiativesHub` rightControls; `InitiativeConflictsPanel` deleted `2dbebfdd74`). Suma: 53.
+> **Fala 3 (2026-06-12):** C: 9→10 — ~~stale import P0 / 0 testów CRUD~~ — pełny rewrite `initiatives-crud.test.ts` (`ea77dc678c`), queryHelpers mock pattern, 5/5 PASS. Suma: 54.
 
 | Wymiar | Waga | Punkty | Uzasadnienie (1 zdanie) |
 |---|---|---|---|
 | A. Realność funkcji | 25 | 21 | 13 REALNE + 2 z degradacją; rdzeń realny; AI Wizard CTA aktywowany (W6, `3aec45a21d`); ROI nav button NAPRAWIONE (`dc1dd6154d`); `InitiativeConflictsPanel` USUNIĘTY (`2dbebfdd74`). |
 | B. Wiring i dane | 15 | 10 | Główny router scoped, dokument/archive/status realne, ale cicha degradacja V8 bez komunikatu. |
-| C. Testy automatyczne | 15 | 9 | ~520 zielonych; stale import P0 nadal (0 testów CRUD); +1 kontraktowe testy cross-org (W1, commit `7ab1b8aace`). |
+| C. Testy automatyczne | 15 | 10 | ~520 zielonych; ~~stale import P0 / 0 testów CRUD~~ — CRUD 5/5 PASS po rewrite (`ea77dc678c`); +1 kontraktowe testy cross-org (W1, commit `7ab1b8aace`). |
 | D. Żywa użyteczność | 15 | 0 | Faza 4 niewykonana. |
 | E. Kanony/UI | 10 | 6 | §27 Portfolio bez resize, pusta strefa kebaba (§9), status `<select>`; korupcja „rose" poza tabelą; CARD formula 0/15 (treść). |
 | F. Bezpieczeństwo/dostęp | 10 | 7 | W1 governance org-scope naprawiony (commit `b9f2dee9d2`); W7 beta-lock 3-warstwowy; pozostałe: pilot gating tylko klient (P2). |
 | G. Środowiska (Railway) | 10 | 0 | Faza 3 niewykonana. |
-| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 52 < 70 (Faza 4 niewykonana). |
+| **Hard cap zastosowany?** | — | — | **NIE — cross-org P0 naprawiony (W1, commit `b9f2dee9d2`), hard cap zdjęty.** Suma surowa 54 < 70 (Faza 4 niewykonana). |
 
 **Werdykt jednym akapitem:** Rdzeń Inicjatyw jest mocny — portfolio (4 widoki), dokument inicjatywy (~30 sekcji w rejestrze), zakładka Analysis (graf zależności + feasibility/completeness), generator z insightów wywiadu, archive/status z preflightem `initiativeWriteTruth`, ROI realny. Zaufanie i wartość łamią cztery rzeczy: **cross-org IDOR w `initiativeGovernanceService`** (powiązania cel↔inicjatywa i decyzja↔inicjatywa bez org — czwarty moduł z tym wzorcem), **całe tworzenie z huba martwe w UI** (Charter/AI Wizard/New disabled „w przygotowaniu", żywe tylko deep-link `?new=1` i ścieżka z Wywiadu), **cicha degradacja V8 bez komunikatu** (inaczej niż Finance/Results, które mają baner), oraz **gating pilota VTS tylko po stronie klienta** (serwer nie blokuje create/bulk). ROI realny i osiągalny (nav button naprawiony, `dc1dd6154d`).
 
@@ -171,4 +172,4 @@
 - [ ] 6. Zero cichych degradacji bez komunikatu
 
 ---
-**Pozostałe do domknięcia audytu M13:** Faza 3 (Railway) + Faza 4 (żywe 6 scenariuszy). Ocena ≤50 dopóki P0 cross-org governance nienaprawione.
+**Pozostałe do domknięcia audytu M13:** Faza 3 (Railway) + Faza 4 (żywe 6 scenariuszy). ~~P0 cross-org governance~~ NAPRAWIONE (`b9f2dee9d2`). ~~P0 CRUD 0 testów~~ NAPRAWIONE (`ea77dc678c`). Brak otwartych P0.
