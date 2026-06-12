@@ -177,113 +177,112 @@ describe('P04 KPI Workflow Canon', () => {
 
   describe('P04 permission enforcement — viewer/commenter blocked on write routes', () => {
     it('POST /kpis returns 403 for viewer', async () => {
+      mockUser = { ...mockUser!, role: 'viewer' };
       const res = await request(app)
         .post('/api/v8/results/kpis')
-        .set('x-kpi-role', 'viewer')
         .send({ name: 'Test KPI', kpiType: 'STANDARD' });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('POST /kpis returns 403 for commenter', async () => {
+      mockUser = { ...mockUser!, role: 'commenter' };
       const res = await request(app)
         .post('/api/v8/results/kpis')
-        .set('x-kpi-role', 'commenter')
         .send({ name: 'Test KPI', kpiType: 'STANDARD' });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('PUT /kpis/:kpiId returns 403 for viewer', async () => {
+      mockUser = { ...mockUser!, role: 'viewer' };
       const res = await request(app)
         .put('/api/v8/results/kpis/kpi-001')
-        .set('x-kpi-role', 'viewer')
         .send({ name: 'Updated' });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('DELETE /kpis/:kpiId returns 403 for viewer', async () => {
+      mockUser = { ...mockUser!, role: 'viewer' };
       const res = await request(app)
-        .delete('/api/v8/results/kpis/kpi-001')
-        .set('x-kpi-role', 'viewer');
+        .delete('/api/v8/results/kpis/kpi-001');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('DELETE /kpis/:kpiId returns 403 for finance_owner', async () => {
+      mockUser = { ...mockUser!, role: 'manager' };
       const res = await request(app)
-        .delete('/api/v8/results/kpis/kpi-001')
-        .set('x-kpi-role', 'finance_owner');
+        .delete('/api/v8/results/kpis/kpi-001');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('POST /kpis/:kpiId/time-series returns 403 for viewer', async () => {
+      mockUser = { ...mockUser!, role: 'viewer' };
       const res = await request(app)
         .post('/api/v8/results/kpis/kpi-001/time-series')
-        .set('x-kpi-role', 'viewer')
         .send({ value: 42, measuredAt: '2026-04-01' });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('POST /kpi-reports returns 403 for viewer', async () => {
+      mockUser = { ...mockUser!, role: 'viewer' };
       const res = await request(app)
         .post('/api/v8/results/kpi-reports')
-        .set('x-kpi-role', 'viewer')
         .send({ periodStart: '2026-01-01', periodEnd: '2026-03-31' });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('POST /kpi-reports/:snapshotId/refresh returns 403 for commenter', async () => {
+      mockUser = { ...mockUser!, role: 'commenter' };
       const res = await request(app)
-        .post('/api/v8/results/kpi-reports/snap-001/refresh')
-        .set('x-kpi-role', 'commenter');
+        .post('/api/v8/results/kpi-reports/snap-001/refresh');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('POST /deviation-cases/:caseId/acknowledge returns 403 for viewer', async () => {
+      mockUser = { ...mockUser!, role: 'viewer' };
       const res = await request(app)
-        .post('/api/v8/results/deviation-cases/case-001/acknowledge')
-        .set('x-kpi-role', 'viewer');
+        .post('/api/v8/results/deviation-cases/case-001/acknowledge');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('PUT /deviation-cases/:caseId/rca returns 403 for commenter', async () => {
+      mockUser = { ...mockUser!, role: 'commenter' };
       const res = await request(app)
         .put('/api/v8/results/deviation-cases/case-001/rca')
-        .set('x-kpi-role', 'commenter')
         .send({ rcaText: 'Root cause' });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('POST /deviation-cases/:caseId/resolve returns 403 for viewer', async () => {
+      mockUser = { ...mockUser!, role: 'viewer' };
       const res = await request(app)
-        .post('/api/v8/results/deviation-cases/case-001/resolve')
-        .set('x-kpi-role', 'viewer');
+        .post('/api/v8/results/deviation-cases/case-001/resolve');
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
     it('POST /deviation-cases/:caseId/close returns 403 for viewer', async () => {
+      mockUser = { ...mockUser!, role: 'viewer' };
       const res = await request(app)
         .post('/api/v8/results/deviation-cases/case-001/close')
-        .set('x-kpi-role', 'viewer')
         .send({ evidenceText: 'Evidence' });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('P04_PERMISSION_DENIED');
     });
 
-    it('POST /kpis succeeds with x-kpi-role: kpi_owner', async () => {
+    it('POST /kpis succeeds with kpi_owner role (admin)', async () => {
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
       const res = await request(app)
         .post('/api/v8/results/kpis')
-        .set('x-kpi-role', 'kpi_owner')
         .send({ name: 'Test KPI', kpiType: 'STANDARD' });
       expect(res.status).not.toBe(403);
     });

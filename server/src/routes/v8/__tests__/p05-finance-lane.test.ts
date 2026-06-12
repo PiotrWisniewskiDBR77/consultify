@@ -180,6 +180,14 @@ vi.mock('../../../utils/financeTraceId.js', () => ({
   logFinanceEvent: vi.fn(),
 }));
 
+vi.mock('../../../services/v8/financeIntegrationHooks.js', () => ({
+  registerLaneRunArtifact: vi.fn().mockResolvedValue(undefined),
+  upsertFinanceInboxItems: vi.fn().mockResolvedValue(undefined),
+  pushDegradedToRadar: vi.fn().mockResolvedValue(undefined),
+  captureFinanceContextSnapshot: vi.fn().mockResolvedValue(undefined),
+  recordSwitchoverDecision: vi.fn().mockResolvedValue(undefined),
+}));
+
 let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null =
   null;
 
@@ -264,7 +272,10 @@ describe('P05 Finance Lane', () => {
         created_at: '2026-03-01',
         updated_at: '2026-03-01',
       };
-      mockDbGet.mockResolvedValueOnce(run);
+      mockDbGet
+        .mockResolvedValueOnce({ role: 'admin' })  // permission check
+        .mockResolvedValueOnce(null)                // model check
+        .mockResolvedValueOnce(run);                // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const res = await request(app)
@@ -291,7 +302,10 @@ describe('P05 Finance Lane', () => {
         created_at: '2026-03-01',
         updated_at: '2026-03-01',
       };
-      mockDbGet.mockResolvedValueOnce(run);
+      mockDbGet
+        .mockResolvedValueOnce({ role: 'admin' })  // permission check
+        .mockResolvedValueOnce(null)                // model check
+        .mockResolvedValueOnce(run);                // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const res = await request(app)
@@ -540,7 +554,10 @@ describe('P05 Finance Lane', () => {
         created_at: '2026-03-01',
         updated_at: '2026-03-01',
       };
-      mockDbGet.mockResolvedValueOnce(importRun);
+      mockDbGet
+        .mockResolvedValueOnce({ role: 'admin' })  // permission
+        .mockResolvedValueOnce(null)                // model
+        .mockResolvedValueOnce(importRun);          // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const importRes = await request(app)
@@ -555,7 +572,10 @@ describe('P05 Finance Lane', () => {
         import_outcome: 'completed',
         audit_trail_json: JSON.stringify(importRes.body.data.auditTrail),
       };
-      mockDbGet.mockResolvedValueOnce(analysisRun);
+      mockDbGet
+        .mockResolvedValueOnce({ role: 'admin' })  // permission
+        .mockResolvedValueOnce(null)                // model
+        .mockResolvedValueOnce(analysisRun);        // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const analysisRes = await request(app)
@@ -582,7 +602,10 @@ describe('P05 Finance Lane', () => {
         analysis_completed: 1,
         audit_trail_json: JSON.stringify(analysisRes.body.data.auditTrail),
       };
-      mockDbGet.mockResolvedValueOnce(mutationRun);
+      mockDbGet
+        .mockResolvedValueOnce({ role: 'admin' })  // permission
+        .mockResolvedValueOnce(null)                // model
+        .mockResolvedValueOnce(mutationRun);        // getLaneRun
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const mutationRes = await request(app)
@@ -597,7 +620,10 @@ describe('P05 Finance Lane', () => {
         mutation_outcome: 'applied',
         audit_trail_json: JSON.stringify(mutationRes.body.data.auditTrail),
       };
-      mockDbGet.mockResolvedValueOnce(readbackRun);
+      mockDbGet
+        .mockResolvedValueOnce({ role: 'admin' })  // permission
+        .mockResolvedValueOnce(null)                // model
+        .mockResolvedValueOnce(readbackRun);        // getLaneRun
       // getMutationAudits query
       mockDbAll.mockResolvedValueOnce([
         {
@@ -768,8 +794,7 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .mockResolvedValueOnce({ role: 'viewer' })
-      .mockResolvedValueOnce(null);
+      .mockResolvedValueOnce({ role: 'viewer' });
 
     mockDbRun.mockResolvedValue(undefined);
 
@@ -783,6 +808,7 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
 
   it('returns 422 for invalid outcome on import step (P05_INVALID_OUTCOME)', async () => {
     mockDbGet
+      .mockResolvedValueOnce({ role: 'admin' })
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
         run_id: 'run-1',
@@ -798,9 +824,7 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
         kpi_linkage_status: 'coherent',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
-      .mockResolvedValueOnce({ role: 'admin' })
-      .mockResolvedValueOnce(null);
+      });
     mockDbRun.mockResolvedValue(undefined);
 
     const res = await request(app)
@@ -813,6 +837,7 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
 
   it('advances from import to analysis on completed_with_warnings and adds degraded', async () => {
     mockDbGet
+      .mockResolvedValueOnce({ role: 'admin' })
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
         run_id: 'run-1',
@@ -828,9 +853,7 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
         kpi_linkage_status: 'coherent',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
-      .mockResolvedValueOnce({ role: 'admin' })
-      .mockResolvedValueOnce(null);
+      });
     mockDbRun.mockResolvedValue(undefined);
 
     const res = await request(app)
@@ -850,7 +873,8 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
     const oldDate = new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString();
 
     mockDbGet
-      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ role: 'admin' })
+      .mockResolvedValueOnce({ max_updated: oldDate })
       .mockResolvedValueOnce({
         run_id: 'run-1',
         organization_id: 'org-1',
@@ -865,9 +889,7 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
         kpi_linkage_status: 'coherent',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
-      .mockResolvedValueOnce({ role: 'admin' })
-      .mockResolvedValueOnce({ max_updated: oldDate });
+      });
 
     mockDbRun.mockResolvedValue(undefined);
 

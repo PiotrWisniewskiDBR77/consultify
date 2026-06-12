@@ -629,7 +629,7 @@ router.patch(
     }
 
     if (updates.length === 0) {
-      return res.status(400).json({ data: null, error: 'No fields to update' });
+      return res.status(400).json({ data: null, error: 'No fields to update', code: 'INTERVIEW_INSIGHT_NO_FIELDS' });
     }
 
     updates.push('updated_at = ?');

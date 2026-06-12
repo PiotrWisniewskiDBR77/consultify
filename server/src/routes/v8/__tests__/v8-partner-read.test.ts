@@ -82,6 +82,10 @@ vi.mock('../../../database/Database.js', () => ({
   getDatabase: () => ({ mocked: true }),
 }));
 
+vi.mock('../../../utils/ensureUserOnboardingStatusTable.js', () => ({
+  ensureUserOnboardingStatusTable: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('../../../utils/DbPromise.js', () => ({
   get: (...args: unknown[]) => mockDbGet(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
@@ -435,6 +439,13 @@ describe('V8 partner read bridge', () => {
   });
 
   it('GET /api/v8/partner/onboarding-status returns onboarding readback with partner meta', async () => {
+    mockDbGet.mockResolvedValueOnce({
+      terms_accepted: true,
+      privacy_accepted: true,
+      pricing_tier: 'professional',
+      payment_setup: false,
+      completed: false,
+    });
     const app = createApp();
     const res = await request(app).get('/api/v8/partner/onboarding-status');
 

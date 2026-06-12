@@ -103,7 +103,7 @@ async function createV8KpiReportArtifact(params: {
  *          manager → finance_owner, everything else → viewer.
  */
 function p04KpiRoleFromRequest(req: AuthRequest): KpiPermissionRole {
-  const orgRole = req.user?.role ?? '';
+  const orgRole = (req.user?.role ?? '').toLowerCase();
   if (['super_admin', 'owner', 'administrator', 'admin'].includes(orgRole)) return 'kpi_owner';
   if (orgRole === 'manager') return 'finance_owner';
   return 'viewer';

@@ -924,8 +924,7 @@ describe('C8 — Source Truth → Initiative materialization chain', () => {
 
   it('validateMaterializationChain reports gaps when no materializations exist', async () => {
     mockDbAll
-      .mockResolvedValueOnce([]) // JOIN query
-      .mockResolvedValueOnce([]); // promotion records
+      .mockResolvedValueOnce([]); // JOIN query — function returns early, no second call
 
     const result = await validateMaterializationChain(INITIATIVE_ID, ORG);
 

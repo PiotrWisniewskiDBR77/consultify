@@ -1299,6 +1299,7 @@ describe('V8 Interview insight routes', () => {
   });
 
   it('PATCH /api/v8/interview/insights/:id updates fields', async () => {
+    mockInsightGetById.mockResolvedValueOnce({ id: 'ins-1', organizationId: ORG });
     mockQueryRun.mockResolvedValue(undefined);
 
     const res = await request(createApp())
@@ -1312,6 +1313,7 @@ describe('V8 Interview insight routes', () => {
   });
 
   it('PATCH /api/v8/interview/insights/:id returns 400 with no fields', async () => {
+    mockInsightGetById.mockResolvedValueOnce({ id: 'ins-1', organizationId: ORG });
     const res = await request(createApp())
       .patch('/api/v8/interview/insights/ins-1')
       .set('Authorization', 'Bearer x')
