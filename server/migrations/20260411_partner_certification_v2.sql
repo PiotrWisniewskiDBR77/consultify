@@ -140,7 +140,14 @@ ALTER TABLE partner_learning_modules
   ADD COLUMN IF NOT EXISTS prerequisite_module_id UUID,
   ADD COLUMN IF NOT EXISTS partner_lifecycle_step TEXT,
   ADD COLUMN IF NOT EXISTS owner_role TEXT,
-  ADD COLUMN IF NOT EXISTS review_required BOOLEAN DEFAULT FALSE;
+  ADD COLUMN IF NOT EXISTS review_required BOOLEAN DEFAULT FALSE,
+  -- These exist in the CREATE TABLE above, but CREATE TABLE IF NOT EXISTS is a
+  -- no-op on drifted DBs where the table predates them; the index + seed below
+  -- reference them, so retrofit them here too.
+  ADD COLUMN IF NOT EXISTS category TEXT,
+  ADD COLUMN IF NOT EXISTS required_for_certification BOOLEAN DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'en',
+  ADD COLUMN IF NOT EXISTS minutes INTEGER;
 
 UPDATE partner_learning_modules
 SET certification_track = COALESCE(certification_track, CASE
