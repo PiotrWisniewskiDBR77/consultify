@@ -8,7 +8,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 |---|-------|------|--------|-------|------|------|-------|
 | M01 | Czat | 1 (core) | 🟦 | **61** ↑11 | Alpha górny | 2026-06-12 | `modules/M01-czat/KARTA_AUDYTU.md` |
 | M03 | Moja Praca — organizer | 1 (core) | 🟦 | **54** ↑10 | Alpha | 2026-06-11 | `modules/M03-my-work-organizer/KARTA_AUDYTU.md` |
-| M10 | Wywiad | 1 (core) | 🟦 | **60** ↑10 | Alpha górny | 2026-06-12 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
+| M10 | Wywiad | 1 (core) | 🟦 | **61** ↑11 | Alpha górny | 2026-06-12 | `modules/M10-wywiad/KARTA_AUDYTU.md` |
 | M13 | Inicjatywy | 1 (core) | 🟦 | **54** ↑9 | Alpha | 2026-06-12 | `modules/M13-inicjatywy/KARTA_AUDYTU.md` |
 | M14 | Wdrożenie | 1 (core) | 🟦 | **52** ↑10 | Alpha | 2026-06-11 | `modules/M14-wdrozenie/KARTA_AUDYTU.md` |
 | M25 | Ustawienia | 1 (core) | 🟦 | **54** ↑4 | Alpha | 2026-06-11 | `modules/M25-ustawienia/KARTA_AUDYTU.md` |
@@ -18,7 +18,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 | M19 | Prezentacje | 2 (beta) | 🟦 | **56** ↑1 | Alpha górny | 2026-06-11 | `modules/M19-prezentacje/KARTA_AUDYTU.md` |
 | M20 | Tabele Studio | 2 (beta) | 🟦 | **48** ↑5 | Alpha | 2026-06-11 | `modules/M20-tabele-studio/KARTA_AUDYTU.md` |
 | M16 | Finanse | 2 (beta) | 🟦 | **58** ↑8 | Alpha górny | 2026-06-11 | `modules/M16-finanse/KARTA_AUDYTU.md` |
-| M15 | Rezultaty | 2 (beta) | 🟦 | **54** ↑5 | Alpha | 2026-06-11 | `modules/M15-rezultaty/KARTA_AUDYTU.md` |
+| M15 | Rezultaty | 2 (beta) | 🟦 | **55** ↑6 | Alpha górny | 2026-06-12 | `modules/M15-rezultaty/KARTA_AUDYTU.md` |
 | M21 | Meeting | 2 (beta) | 🟦 | **55** ↑3 | Alpha górny | 2026-06-11 | `modules/M21-meeting/KARTA_AUDYTU.md` |
 | M12 | Audyty | 2 (beta) | 🟦 | **55** ↑8 | Alpha górny | 2026-06-12 | `modules/M12-audyty/KARTA_AUDYTU.md` |
 | M04 | Notatnik | 2 (beta) | 🟦 | **52** ↑3 | Alpha | 2026-06-11 | `modules/M04-notatnik/KARTA_AUDYTU.md` |
@@ -41,6 +41,7 @@ Statusy: ⬜ do zrobienia · 🟨 w toku · 🟦 NIEPEŁNY (bez Fazy 4) · ✅ z
 \* Fala 5 (2026-06-12): M01(59→60) — UnifiedChatPanel test mock-drift: `useArtifactsStore` selector-aware + `setConversationChatLanguage` stub; 29/29 PASS (`e0b368b218`); C: 8→9; średnia ~54. M02(58→59) — `regenerateSlide` STUB naprawiony: real narrative engine + contextPack snapshot + route + CardCanvas hover menu (`36a6f240ff`); A: 22→23. M12(49→55) — korekta: 17 testów PASS w `audit-programs.test.ts` (commit `7df4b22d6d`, dodane razem z P1 SEC-3 fix); C: 2→8; średnia ~55.
 \* Fala 6 (2026-06-12): M24(57→58) — drift testy naprawione (`8f3992ccf2`): `effectiveAccessService.test.ts` (nieeksportowane symbole, `initiative.submit`/`unblock`); `roles.routes.test.ts` (`name` zamiast `label`, dedup POST); serwis: `MANAGE_STAGE_GATES→initiative.approve` dodane; 44 PASS / 0 FAIL; C: 8→9; średnia ~55.
 \* Fala 7 (2026-06-12): M01(60→61) — chat-projects integ drift naprawiony (`ca0e632e4d`): list.filters 2 FAIL (rbacReady=true params), create.team-permissions 2 FAIL (dbSchema mock); 31/31 PASS; C: 9→10; średnia ~55.
+\* Fala 8 (2026-06-12): drift 6 test-plików + 2 produkcyjne (`a9b6be81e5`): M10(60→61, interview.routes: PATCH mock + 400 code pole) — 49/49 PASS; M15(54→55, results.routes: `p04KpiRoleFromRequest` case-insensitive — był security bug, ADMIN→viewer; p04-kpi-workflow: wszystkie 13 perm-testów przez `mockUser.role`) — 55/55; M16(58, p05-finance-lane: advance route 3×dbGet pattern + async hooks mock) — 32/32; M26(53, v8-partner-read: `ensureUserOnboardingStatusTable` mock) — 26/26; cross-module handoff inverted results naprawiony; ModuleSyncService+migrationRunner.test złe ścieżki przywrócone do HEAD; 421/421 file-PASS (5 pre-existing outside scope); średnia ~55.
 
 ## Reguły aktualizacji
 - Po każdym audycie: wpis statusu+oceny+linku TUTAJ, w karcie pełna rubryka.
