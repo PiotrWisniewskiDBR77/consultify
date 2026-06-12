@@ -31,12 +31,16 @@ export interface CrossModuleFlow {
   chain: string; // e.g. 'M01→M02→M17'
   status: FlowStatus;
   anchors: FlowAnchor[];
+  // Destination tables the flow writes into. Asserted to exist in the
+  // migration-defined schema (the data has somewhere real to land).
+  targetTables?: string[];
   note?: string;
 }
 
 export const FLOWS: CrossModuleFlow[] = [
   {
     id: 'B1', name: 'Czat → Canvas → registry → Outputs', chain: 'M01→M02→M17', status: 'works',
+    targetTables: ['v8_output_artifacts', 'v8_artifact_origin_links'],
     anchors: [
       { file: 'server/src/services/v8/artifactRegistryService.ts', needle: 'registerArtifactOrigin' },
       { file: 'server/src/services/v8/artifactRegistryService.ts', needle: 'v8_artifact_origin_links' },
@@ -53,6 +57,7 @@ export const FLOWS: CrossModuleFlow[] = [
   },
   {
     id: 'B4', name: 'Wywiad → Inicjatywy → Wdrożenie → Rezultaty (kręgosłup)', chain: 'M10→M13→M14→M15', status: 'partial',
+    targetTables: ['v8_kpi_signals', 'initiatives'],
     anchors: [
       { file: 'server/src/services/executionResultsBridge.ts', needle: 'exportBudgetHealthToResults' },
       { file: 'server/src/services/v8/resultsROIService.ts', needle: 'budget_health' },
@@ -61,6 +66,7 @@ export const FLOWS: CrossModuleFlow[] = [
   },
   {
     id: 'B6', name: 'Audyty → fan-out wywiadów → Inbox', chain: 'M12→M10→M03', status: 'works',
+    targetTables: ['interview_assignments'],
     anchors: [
       { file: 'server/src/services/auditProgramService.ts', needle: 'InterviewAssignment' },
     ],
@@ -78,6 +84,7 @@ export const FLOWS: CrossModuleFlow[] = [
   },
   {
     id: 'B8b', name: 'Ideas — eksport serwerowy → Outputs', chain: 'M05→M17', status: 'stub',
+    targetTables: ['idea_exports'],
     anchors: [
       { file: 'server/src/services/finalBatchService.ts', needle: 'requestExport' },
       { file: 'server/src/services/finalBatchService.ts', needle: 'idea_exports' },
@@ -86,6 +93,7 @@ export const FLOWS: CrossModuleFlow[] = [
   },
   {
     id: 'B9', name: 'Tabele Studio governed → Results/Finance/Execution', chain: 'M20→M15/M16/M14', status: 'stub',
+    targetTables: ['tp_module_sync_results'],
     anchors: [
       { file: 'server/src/services/tablePlatform/ModuleSyncService.ts', needle: 'syncToModule' },
       { file: 'server/src/services/tablePlatform/ModuleSyncService.ts', needle: 'tp_module_sync_results' },
@@ -115,6 +123,7 @@ export const FLOWS: CrossModuleFlow[] = [
   },
   {
     id: 'B19', name: 'Ideas Table → Prezentacje deck', chain: 'M08→M19', status: 'works',
+    targetTables: ['presentation_decks'],
     anchors: [
       { file: 'server/src/routes/presentations.routes.ts', needle: 'presentation_decks' },
     ],

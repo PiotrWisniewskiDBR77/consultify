@@ -6,6 +6,7 @@ import path from 'path';
 import { describe, expect, it } from 'vitest';
 
 import { FLOWS } from '../../../server/scripts/harvard-cross-module-flows.js';
+import { parseExpectedSchema } from '../../../server/scripts/verify-schema-vs-migrations.js';
 
 // Krok 8 — cross-module flow contracts. For each of the canonical INTEGRACJE §B
 // flows, every anchor (route/service/table that wires the handoff) must exist in
@@ -34,6 +35,17 @@ describe('Harvard cross-module flows — contract anchors exist', () => {
       expect(content.includes(needle), `"${needle}" not found in ${file}`).toBe(true);
     }
   );
+
+  it('every flow targetTable lands in a migration-defined table (data has somewhere real to go)', () => {
+    const schema = parseExpectedSchema(path.resolve(root, 'server/migrations'));
+    const flowsWithTargets = FLOWS.filter((f) => f.targetTables && f.targetTables.length);
+    expect(flowsWithTargets.length).toBeGreaterThanOrEqual(5);
+    for (const f of flowsWithTargets) {
+      for (const t of f.targetTables!) {
+        expect(schema.tables.has(t.toLowerCase()), `${f.id}: target table "${t}" not defined in migrations`).toBe(true);
+      }
+    }
+  });
 
   it('tracks known-broken (stub) flows explicitly so they cannot silently pass as healthy', () => {
     const stubs = FLOWS.filter((f) => f.status === 'stub').map((f) => f.id);
