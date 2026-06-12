@@ -228,7 +228,7 @@ export interface CreateRunParams {
 }
 
 export const CreateRunParamsSchema = z.object({
-  organizationId: z.string().min(1),
+  organizationId: z.string().uuid(),
   contextSnapshotId: z.string().uuid(),
   initiatorUserId: z.string().uuid(),
   goal: z.string().min(1),

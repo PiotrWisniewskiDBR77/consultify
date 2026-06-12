@@ -114,7 +114,7 @@ describe('V8 Knowledge Base read-only routes', () => {
     const res = await request(createApp()).get('/api/public/kb-v8/public?lang=pl&limit=2');
 
     expect(res.status).toBe(200);
-    expect(mockGetPublicPreview).toHaveBeenCalledWith('pl', 2);
+    expect(mockGetPublicPreview).toHaveBeenCalledWith('pl', 2, undefined);
     expect(res.body.data.articles).toHaveLength(1);
     expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
   });
@@ -126,7 +126,7 @@ describe('V8 Knowledge Base read-only routes', () => {
     const res = await request(createApp()).get('/api/public/kb-v8/categories?lang=en');
 
     expect(res.status).toBe(200);
-    expect(mockGetCategories).toHaveBeenCalledWith('en', false);
+    expect(mockGetCategories).toHaveBeenCalledWith('en', false, undefined);
     expect(res.body.data.categories).toHaveLength(1);
     expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
   });
@@ -138,7 +138,7 @@ describe('V8 Knowledge Base read-only routes', () => {
     const res = await request(createApp()).get('/api/public/kb-v8/categories?lang=en&all=true');
 
     expect(res.status).toBe(200);
-    expect(mockGetCategories).toHaveBeenCalledWith('en', false);
+    expect(mockGetCategories).toHaveBeenCalledWith('en', false, undefined);
     expect(res.body.data.categories).toHaveLength(1);
     expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
   });
@@ -152,7 +152,7 @@ describe('V8 Knowledge Base read-only routes', () => {
     const res = await request(createApp()).get('/api/public/kb-v8/featured?lang=en&limit=5');
 
     expect(res.status).toBe(200);
-    expect(mockGetFeaturedArticles).toHaveBeenCalledWith('en', 5);
+    expect(mockGetFeaturedArticles).toHaveBeenCalledWith('en', 5, undefined);
     expect(res.body.data.articles).toHaveLength(1);
     expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
   });
@@ -202,7 +202,7 @@ describe('V8 Knowledge Base read-only routes', () => {
     const res = await request(createApp()).get('/api/public/kb-v8/search?q=hello&lang=pl&limit=3');
 
     expect(res.status).toBe(200);
-    expect(mockSearchArticles).toHaveBeenCalledWith('hello', 'pl', 3);
+    expect(mockSearchArticles).toHaveBeenCalledWith('hello', 'pl', 3, undefined);
     expect(res.body.data.articles).toHaveLength(1);
     expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
   });
@@ -270,7 +270,7 @@ describe('V8 Knowledge Base read-only routes', () => {
       .set('Authorization', 'Bearer x');
 
     expect(res.status).toBe(200);
-    expect(mockGetCategories).toHaveBeenCalledWith('pl', true);
+    expect(mockGetCategories).toHaveBeenCalledWith('pl', true, undefined);
     expect(res.body.data.categories).toHaveLength(1);
     expect(res.body.meta.contract).toBe(V8_KB_READ_CONTRACT);
   });
@@ -331,7 +331,7 @@ describe('V8 Knowledge Base read-only routes', () => {
       .set('Authorization', 'Bearer x');
 
     expect(res.status).toBe(200);
-    expect(mockSearchArticles).toHaveBeenCalledWith('hello', 'pl', 3);
+    expect(mockSearchArticles).toHaveBeenCalledWith('hello', 'pl', 3, undefined);
     expect(res.body.data.articles).toHaveLength(1);
     expect(res.body.meta.version).toBe('v8');
   });

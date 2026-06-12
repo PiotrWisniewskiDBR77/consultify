@@ -1560,7 +1560,7 @@ router.post(
     try {
       const existing = await dbAll<{ id: string }>(
         `SELECT id
-         FROM lane_decisions
+         FROM v8_lane_decisions
          WHERE organization_id = ? AND lane_id = ? AND suggestion_id = ?
          ORDER BY created_at DESC
          LIMIT 1`,
@@ -1571,7 +1571,7 @@ router.post(
       }
 
       await dbRun(
-        `INSERT INTO lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
+        `INSERT INTO v8_lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
          ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()`,
         [decisionId, organizationId, laneId, suggestionId, state, userId, notes || null]
@@ -1580,7 +1580,7 @@ router.post(
       // table may not exist — create it on the fly
       await dbRun(
         `
-        CREATE TABLE IF NOT EXISTS lane_decisions (
+        CREATE TABLE IF NOT EXISTS v8_lane_decisions (
           id TEXT PRIMARY KEY,
           organization_id TEXT NOT NULL,
           lane_id TEXT NOT NULL,
@@ -1597,15 +1597,15 @@ router.post(
       );
       try {
         await dbRun(
-          `CREATE UNIQUE INDEX IF NOT EXISTS lane_decisions_org_lane_suggestion_idx
-           ON lane_decisions (organization_id, lane_id, suggestion_id)`,
+          `CREATE UNIQUE INDEX IF NOT EXISTS v8_lane_decisions_org_lane_suggestion_idx
+           ON v8_lane_decisions (organization_id, lane_id, suggestion_id)`,
           []
         );
       } catch {
         // best effort for older DBs
       }
       await dbRun(
-        `INSERT INTO lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
+        `INSERT INTO v8_lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
          ON CONFLICT (organization_id, lane_id, suggestion_id)
          DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()`,
@@ -1639,7 +1639,7 @@ router.post(
     try {
       await dbRun(
         `
-        CREATE TABLE IF NOT EXISTS lane_execution_plans (
+        CREATE TABLE IF NOT EXISTS v8_lane_execution_plans (
           id TEXT PRIMARY KEY,
           organization_id TEXT NOT NULL,
           lane_id TEXT NOT NULL,
@@ -1659,7 +1659,7 @@ router.post(
     }
 
     await dbRun(
-      `INSERT INTO lane_execution_plans (id, organization_id, lane_id, decision_id, tasks_json, verification_status, created_at, updated_at)
+      `INSERT INTO v8_lane_execution_plans (id, organization_id, lane_id, decision_id, tasks_json, verification_status, created_at, updated_at)
        VALUES (?, ?, ?, ?, '[]', 'pending', NOW(), NOW())`,
       [planId, organizationId, laneId, decisionId]
     );
@@ -1667,7 +1667,7 @@ router.post(
     // Update the decision state to in_execution
     try {
       await dbRun(
-        `UPDATE lane_decisions SET state = 'in_execution', updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+        `UPDATE v8_lane_decisions SET state = 'in_execution', updated_at = NOW() WHERE id = ? AND organization_id = ?`,
         [decisionId, organizationId]
       );
     } catch {
@@ -1700,7 +1700,7 @@ router.get(
         `SELECT id, decision_id as "decisionId", tasks_json as "tasksJson",
                 before_state as "beforeState", after_state as "afterState",
                 verification_status as "verificationStatus"
-         FROM lane_execution_plans
+         FROM v8_lane_execution_plans
          WHERE organization_id = ? AND lane_id = ?
          ORDER BY created_at DESC`,
         [organizationId, laneId]

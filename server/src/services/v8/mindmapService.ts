@@ -787,10 +787,11 @@ async function buildProposalTransactionStatements(
 
 export async function resolveAIProposal(
   proposalId: string,
-  action: 'accept' | 'reject'
+  action: 'accept' | 'reject',
+  organizationId?: string
 ): Promise<ResolveAIProposalResult> {
   const stored = aiProposalStore.get(proposalId);
-  if (!stored) {
+  if (!stored || (organizationId && stored.organization_id !== organizationId)) {
     return { success: false, error: 'Proposal not found', error_code: 'PROPOSAL_NOT_FOUND' };
   }
   if (stored.status !== 'pending') {

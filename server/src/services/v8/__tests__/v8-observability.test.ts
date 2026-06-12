@@ -189,22 +189,24 @@ describe('v8MetricsMiddleware', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it('records a successful request on finish', () => {
+  it('records a successful request on finish', async () => {
     const { req, res, next } = createMockReqRes(200);
 
     v8MetricsMiddleware(req, res, next);
     res.emit('finish');
+    await new Promise((r) => setTimeout(r, 0));
 
     const snap = getV8MetricsSnapshot();
     expect(snap.requests).toBe(1);
     expect(snap.errors).toBe(0);
   });
 
-  it('records an error request when status >= 400', () => {
+  it('records an error request when status >= 400', async () => {
     const { req, res, next } = createMockReqRes(500);
 
     v8MetricsMiddleware(req, res, next);
     res.emit('finish');
+    await new Promise((r) => setTimeout(r, 0));
 
     const snap = getV8MetricsSnapshot();
     expect(snap.requests).toBe(1);
@@ -217,6 +219,7 @@ describe('v8MetricsMiddleware', () => {
     v8MetricsMiddleware(req, res, next);
     await new Promise((r) => setTimeout(r, 15));
     res.emit('finish');
+    await new Promise((r) => setTimeout(r, 0));
 
     const snap = getV8MetricsSnapshot();
     expect(snap.avgLatencyMs).toBeGreaterThanOrEqual(10);

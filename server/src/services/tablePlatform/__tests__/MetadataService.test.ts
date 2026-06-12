@@ -127,6 +127,7 @@ describe('MetadataService', () => {
       table_id: 't-1',
     };
     mockQuery
+      .mockResolvedValueOnce({ rows: [{ governance_mode: 'operational' }] }) // assertNotGoverned
       .mockResolvedValueOnce({ rows: [{ next_order: 1 }] }) // MAX order
       .mockResolvedValueOnce({ rows: [] }) // INSERT
       .mockResolvedValueOnce({ rows: [fieldRow] }) // SELECT field

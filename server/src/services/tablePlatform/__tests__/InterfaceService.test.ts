@@ -75,14 +75,15 @@ describe('InterfaceService', () => {
         theme: { primaryColor: '#3B82F6' },
       };
       const updatedRow = { id: 'ifc-1', layout: JSON.stringify(layout) };
-      mockQuery.mockResolvedValueOnce({ rows: [updatedRow] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ locked: false }] }); // lock check
+      mockQuery.mockResolvedValueOnce({ rows: [updatedRow] }); // update result
 
       const result = await service.updateLayout('ifc-1', layout);
 
       expect(result).not.toBeNull();
       expect(result.id).toBe('ifc-1');
 
-      const updateCall = mockQuery.mock.calls[0];
+      const updateCall = mockQuery.mock.calls[1];
       expect(updateCall[0]).toContain('UPDATE tp_interfaces SET layout');
       expect(updateCall[1][0]).toBe('ifc-1');
       const storedLayout = JSON.parse(updateCall[1][1]);
@@ -91,7 +92,8 @@ describe('InterfaceService', () => {
     });
 
     it('returns null when interface not found', async () => {
-      mockQuery.mockResolvedValueOnce({ rows: [] });
+      mockQuery.mockResolvedValueOnce({ rows: [{ locked: false }] }); // lock check
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // update result - not found
 
       const result = await service.updateLayout('nonexistent', { blocks: [] });
       expect(result).toBeNull();

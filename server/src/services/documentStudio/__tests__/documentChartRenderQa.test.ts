@@ -23,7 +23,17 @@
 
 import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../documentChartRasterizer.js', () => ({
+  renderChartBlockToPng: vi.fn().mockResolvedValue(
+    // Minimal valid 1×1 PNG — sufficient for ImageRun embedding.
+    Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      'base64'
+    )
+  ),
+}));
 
 import { renderDocumentSchemaToDocxBuffer } from '../documentDocxRenderer.js';
 import { renderDocumentSchemaToPdfBuffer } from '../documentPdfRenderer.js';

@@ -72,6 +72,11 @@ vi.mock('../../../services/v8ExecutionControlTowerService.js', () => ({
 vi.mock('../../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
+  get: vi.fn().mockResolvedValue(null),
+}));
+vi.mock('../../../middleware/permission.middleware.js', () => ({
+  requirePermission: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireAnyPermission: () => (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   getV8Flags: vi.fn().mockResolvedValue({ v8_enabled: true }),

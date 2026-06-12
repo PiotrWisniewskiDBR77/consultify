@@ -153,13 +153,14 @@ function getDatePartsInTimezone(
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
 
   const dowMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const normalizeWeekday = (s: string) => s.replace(/\.$/, '').trim();
 
   return {
     minute: parseInt(get('minute'), 10),
     hour: parseInt(get('hour'), 10) % 24,
     day: parseInt(get('day'), 10),
     month: parseInt(get('month'), 10),
-    dow: dowMap[get('weekday')] ?? 0,
+    dow: dowMap[normalizeWeekday(get('weekday'))] ?? 0,
   };
 }
 
@@ -367,7 +368,7 @@ export class ScheduledAutomationExecutor {
     candidate.setSeconds(0, 0);
     candidate.setMinutes(candidate.getMinutes() + 1);
 
-    const maxIterations = 48 * 60;
+    const maxIterations = 7 * 24 * 60;
     for (let i = 0; i < maxIterations; i++) {
       const p = getDatePartsInTimezone(candidate, tz);
 

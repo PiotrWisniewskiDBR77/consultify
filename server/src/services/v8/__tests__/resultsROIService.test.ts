@@ -60,6 +60,10 @@ vi.mock('../../../utils/Logger.js', () => ({
   },
 }));
 
+vi.mock('../../../services/notificationService.js', () => ({
+  send: vi.fn().mockResolvedValue(undefined),
+}));
+
 import {
   createExecutiveReviewPack,
   createKPI,

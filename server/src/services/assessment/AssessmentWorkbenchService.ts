@@ -447,20 +447,29 @@ async function createInsightProposalFromAssessment(params: {
     }
   };
 
-  await addFinding(insightId, {
-    finding_statement: findingStatement,
-    confidence_level: confidenceLevel,
-    limits: String(payload.limits || 'Bounded assessment proposal'),
-    next_action:
-      params.state.interpretationProposal?.nextActions?.[0] ||
-      'Review this assessment proposal before promoting it beyond P10.',
-    evidence_pointers: activeEvidencePointers.map((pointer) => ({
-      type: pointerTypeForKind(pointer.kind),
-      sourceRef: pointer.ref,
-      sourceFingerprint: `${pointer.kind}:${pointer.ref}`,
-      capturedExcerpt: pointer.label || null,
-    })),
-  });
+  await addFinding(
+    insightId,
+    {
+      finding_statement: findingStatement,
+      confidence_level: confidenceLevel,
+      limits: String(payload.limits || 'Bounded assessment proposal'),
+      next_action:
+        params.state.interpretationProposal?.nextActions?.[0] ||
+        'Review this assessment proposal before promoting it beyond P10.',
+      evidence_pointers: activeEvidencePointers.map((pointer) => ({
+        type: pointerTypeForKind(pointer.kind),
+        sourceRef: pointer.ref,
+        sourceFingerprint: `${pointer.kind}:${pointer.ref}`,
+        capturedExcerpt: pointer.label || null,
+      })),
+    },
+    {
+      organizationId: params.organizationId,
+      actorUserId: params.userId,
+      sourceSectionType: 'assessment_promotion',
+      auditAction: 'assessment_promotion_finding',
+    }
+  );
 
   return insightId;
 }

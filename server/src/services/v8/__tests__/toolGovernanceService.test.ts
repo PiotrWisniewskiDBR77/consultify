@@ -478,7 +478,9 @@ describe('getEffectivePolicy', () => {
 
 describe('requestInvocation', () => {
   it('creates an invocation request and evaluates policy', async () => {
-    // getEffectivePolicy → getTool → dbGet
+    // requestInvocation → getTool → dbGet (first call)
+    mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
+    // getEffectivePolicy → getTool → dbGet (second call)
     mockDbGet.mockResolvedValueOnce(makeFakeToolRow({ default_approval_mode: 'auto_executable' }));
     // getEffectivePolicy → org policies → dbAll
     mockDbAll.mockResolvedValueOnce([]);

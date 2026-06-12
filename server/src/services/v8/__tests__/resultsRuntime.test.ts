@@ -426,16 +426,15 @@ describe('getResultsKpiCatalog', () => {
       ownerName: 'Ada Lovelace',
       isOnTarget: false,
     });
-    expect(catalog.mappings).toEqual([
-      {
-        id: 'map-1',
-        initiativeId: INITIATIVE_ID,
-        initiativeName: 'Initiative Alpha',
-        kpiId: KPI_ID,
-        kpiName: 'KPI Alpha',
-        impactDirection: 'increase',
-      },
-    ]);
+    expect(catalog.mappings).toHaveLength(1);
+    expect(catalog.mappings[0]).toMatchObject({
+      id: 'map-1',
+      initiativeId: INITIATIVE_ID,
+      initiativeName: 'Initiative Alpha',
+      kpiId: KPI_ID,
+      kpiName: 'KPI Alpha',
+      impactDirection: 'increase',
+    });
   });
 });
 

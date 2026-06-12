@@ -330,7 +330,7 @@ describe('P14-B Process Flow Service', () => {
     });
 
     it('rejects when table missing', async () => {
-      mockTableExists.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+      mockTableExists.mockResolvedValueOnce(false);
       const result = await createEdge(PROCESS, ORG, {
         edge_type: 'sequence_flow',
         source_node_id: 'n1',

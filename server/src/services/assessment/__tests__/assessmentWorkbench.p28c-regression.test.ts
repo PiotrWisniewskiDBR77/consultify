@@ -10,12 +10,13 @@ import AssessmentWorkbenchService, {
 
 const mockQueryOne = vi.fn();
 const mockQueryRun = vi.fn();
+const mockQueryAll = vi.fn();
 const mockRegisterArtifactOrigin = vi.fn().mockResolvedValue({ artifactId: 'art-mock' });
 
 vi.mock('../../../utils/queryHelpers.js', () => ({
   queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
-  queryAll: vi.fn(),
+  queryAll: (...args: unknown[]) => mockQueryAll(...args),
 }));
 
 vi.mock('../../v8/artifactRegistryService.js', () => ({
@@ -34,6 +35,9 @@ describe('AssessmentWorkbenchService — P28-C regression', () => {
     p28Column = null;
     definitionRow = null;
     vi.clearAllMocks();
+
+    const capturedFindings: any[] = [];
+
     mockQueryOne.mockImplementation(async (sql: string, params: unknown[]) => {
       if (String(sql).includes('FROM assessment_definitions')) {
         if (!definitionRow) return null;
@@ -80,7 +84,36 @@ describe('AssessmentWorkbenchService — P28-C regression', () => {
       }
       if (String(sql).includes('p28_workbench_v1')) {
         p28Column = params[0] as string;
+        return;
       }
+      if (String(sql).includes('INSERT INTO interview_insight_findings')) {
+        const now = new Date().toISOString();
+        capturedFindings.push({
+          id: params[0],
+          organization_id: params[1],
+          insight_id: params[2],
+          source_section_type: params[3] ?? 'manual',
+          source_section_index: params[4] ?? null,
+          source_key: params[5] ?? null,
+          finding_statement: params[6],
+          confidence_level: params[7],
+          limits_text: params[8],
+          next_action_text: params[10],
+          review_status: 'draft',
+          readback_status: 'draft_interpretation',
+          readback_summary: null,
+          readback_updated_at: null,
+          created_at: now,
+          updated_at: now,
+        });
+      }
+    });
+    mockQueryAll.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (String(sql).includes('FROM interview_insight_findings')) {
+        const insightId = params?.[0];
+        return capturedFindings.filter((f) => f.insight_id === insightId);
+      }
+      return [];
     });
   });
 

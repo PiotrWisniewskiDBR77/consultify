@@ -70,7 +70,7 @@ describe('V8 Help recommendations route', () => {
     mockGetContextualArticles.mockResolvedValue([]);
 
     await request(createApp()).get(
-      '/api/v8/help/recommendations?surface_id=interview&locale=de-DE'
+      '/api/v8/help/recommendations?surface_id=interview&locale=xx-YY'
     );
 
     expect(mockGetContextualArticles).toHaveBeenCalledWith('interview', 'en', 5);

@@ -111,6 +111,7 @@ import recordsService from '../RecordsService.js';
 describe('Table Platform Smoke Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockQuery.mockResolvedValue({ rows: [] });
     mockValidateRecord.mockResolvedValue({ valid: true, errors: [] });
     mockValidateRecordSize.mockReturnValue(undefined);
     mockOnRecordDeleted.mockResolvedValue(undefined);
@@ -242,6 +243,7 @@ describe('Table Platform Smoke Tests', () => {
     it('createRecord calls validation, inserts, and returns record', async () => {
       const recordRow = { id: 'smoke-uuid-001', table_id: 't-1', data: { Name: 'Smoke Item' } };
       mockQuery
+        .mockResolvedValueOnce({ rows: [] }) // SELECT tp_fields for default values
         .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
         .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
         .mockResolvedValueOnce({ rows: [] }) // INSERT
@@ -352,7 +354,10 @@ describe('Table Platform Smoke Tests', () => {
         created_at: new Date().toISOString(),
       };
 
-      mockQuery.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [proposalRow] });
+      mockQuery
+        .mockResolvedValueOnce({ rows: [] }) // SELECT schema_version from tp_bases
+        .mockResolvedValueOnce({ rows: [] }) // INSERT tp_schema_proposals
+        .mockResolvedValueOnce({ rows: [proposalRow] }); // SELECT after insert
 
       const proposal = await chatToSchemaService.generateProposal(
         'ws-1',
