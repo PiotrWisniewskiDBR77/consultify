@@ -22,6 +22,7 @@ import {
   getQaAiModeLabel,
   isQaAiMode,
 } from './qaAiRuntime.js';
+import { normalizeTokenUsage } from './tokenUsage.js';
 
 // Concurrency and rate limits per provider (process-level guard)
 const PROVIDER_CONCURRENCY_LIMITS: Record<string, number> = {
@@ -94,7 +95,7 @@ async function withGuards<T>(
   try {
     const result = await circuitBreaker.execute(providerId, fn, breakerOptions);
     const durationMs = Date.now() - startedAt;
-    const usage = (result as any)?.usage || {};
+    const usage: Record<string, any> = normalizeTokenUsage((result as any)?.usage) || {};
     aiLogger.info('LLMServiceMetrics', `LLM call success for ${providerId}`, {
       providerId,
       durationMs,
@@ -368,6 +369,25 @@ function getModel(modelConfig: ModelConfig) {
 
 function getProvider(modelConfig: ModelConfig) {
   return getProviderSync(modelConfig);
+}
+
+export { normalizeTokenUsage } from './tokenUsage.js';
+
+/**
+ * Extract the post-stream usage promise from a streamText() result.
+ * Prefers totalUsage (multi-step aggregate, AI SDK v5/v6) over usage.
+ * Both SDK promises are marked handled so a mid-stream provider error can
+ * never escalate into an unhandled promise rejection; the returned promise
+ * always resolves (normalized usage or undefined).
+ */
+function buildStreamUsagePromise(result: unknown): Promise<ReturnType<typeof normalizeTokenUsage>> {
+  const totalUsageP = (result as { totalUsage?: unknown })?.totalUsage;
+  const usageP = (result as { usage?: unknown })?.usage;
+  Promise.resolve(totalUsageP).catch(() => undefined);
+  Promise.resolve(usageP).catch(() => undefined);
+  return Promise.resolve(totalUsageP ?? usageP)
+    .then((u) => normalizeTokenUsage(u))
+    .catch(() => undefined);
 }
 
 export const MagicWandSchema = z.object({
@@ -659,7 +679,7 @@ export class LLMService {
 
     return {
       content: result.text,
-      usage: result.usage,
+      usage: normalizeTokenUsage(result.usage),
       isReasoningModel: true,
       model: modelConfig.id,
     };
@@ -723,7 +743,7 @@ export class LLMService {
 
     return {
       content: result.text,
-      usage: result.usage,
+      usage: normalizeTokenUsage(result.usage),
       toolCalls: toolCalls.map((tc) => ({
         name: tc.toolName,
         args: tc.args,
@@ -789,7 +809,8 @@ export class LLMService {
           } as any);
 
           await circuitBreaker.recordSuccess(providerId);
-          return { stream: result.textStream };
+          const usagePromise = buildStreamUsagePromise(result);
+          return { stream: result.textStream, usagePromise };
         } catch (error: unknown) {
           lastError = error as Error;
           aiLogger.warn(
@@ -847,7 +868,7 @@ export class LLMService {
 
     return {
       content: result.text,
-      usage: result.usage,
+      usage: normalizeTokenUsage(result.usage),
     };
   }
 
@@ -929,7 +950,13 @@ export class LLMService {
           }
 
           await circuitBreaker.recordSuccess(providerId);
-          return { stream: prependedStream() };
+          // result.usage resolves only after the stream is fully consumed —
+          // hand it to the caller so streamed calls can log real token usage
+          // (ai_usage_logs) instead of 0/0. Never let it reject the request,
+          // and mark BOTH SDK promises handled (a stream error rejects them
+          // and the unconsumed one would surface as an unhandled rejection).
+          const usagePromise = buildStreamUsagePromise(result);
+          return { stream: prependedStream(), usagePromise };
         } catch (error: unknown) {
           lastError = error as Error;
           aiLogger.warn(
@@ -1002,7 +1029,7 @@ export class LLMService {
 
     return {
       object: result.object,
-      usage: result.usage,
+      usage: normalizeTokenUsage(result.usage),
     };
   }
 

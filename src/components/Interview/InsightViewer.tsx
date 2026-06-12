@@ -1535,13 +1535,41 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       // insights). The panel below calls .length/.map/.join on these array fields,
       // so coalesce every one to [] — a missing field must not white-screen the view.
       const mq = insight.materialQuality;
+      // Authored/imported insights may store these as a single string (or under
+      // alternate keys: score/posture/coverage). Normalize to the shapes the
+      // panel renders — every list field must be a real array.
+      const toArr = (v: unknown): string[] =>
+        Array.isArray(v)
+          ? v.map(String)
+          : typeof v === 'string' && v.trim()
+            ? v
+                .split(/\s*[;,•·]\s*|\s\+\s/)
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : [];
+      const alt = mq as Record<string, unknown>;
       return {
         ...mq,
-        role_coverage: mq.role_coverage ?? [],
-        department_coverage: mq.department_coverage ?? [],
-        missing_voices: mq.missing_voices ?? [],
-        limitations: mq.limitations ?? [],
-        recommended_followups: mq.recommended_followups ?? [],
+        overall_material_score:
+          mq.overall_material_score ??
+          (typeof alt.score === 'number'
+            ? Math.max(0, Math.min(100, Math.round((alt.score as number) * 20)))
+            : 0),
+        answer_quality_posture:
+          mq.answer_quality_posture ?? (typeof alt.posture === 'string' ? alt.posture : 'usable'),
+        coverage_posture:
+          mq.coverage_posture ??
+          (typeof alt.coverage === 'string' ? alt.coverage : 'partial_coverage'),
+        approved_session_count: mq.approved_session_count ?? 0,
+        respondent_count: mq.respondent_count ?? 0,
+        thin_answer_count: mq.thin_answer_count ?? 0,
+        evidence_gap_count: mq.evidence_gap_count ?? 0,
+        contradiction_count: mq.contradiction_count ?? 0,
+        role_coverage: toArr(mq.role_coverage),
+        department_coverage: toArr(mq.department_coverage),
+        missing_voices: toArr(mq.missing_voices),
+        limitations: toArr(mq.limitations),
+        recommended_followups: toArr(mq.recommended_followups),
       };
     }
     if (!insight || insight.status === 'generating') return null;

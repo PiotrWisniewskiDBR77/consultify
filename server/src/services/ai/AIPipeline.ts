@@ -391,31 +391,74 @@ export class AIPipeline {
           throw lastError || new Error('All streaming providers failed');
         }
 
-        // Best-effort budget usage record for streaming (requestCount only).
-        try {
+        // QA-2026-06-10: this branch used to return the stream WITHOUT ever
+        // calling logRequest — the main streamed chat call (most AI traffic)
+        // produced no ai_usage_logs row at all, and budgets only got a request
+        // count. Wrap the stream so that once it is consumed (or aborted) we
+        // log real provider usage (resolved by the AI SDK after the final
+        // chunk; OpenRouter/OpenAI surface it via stream usage), falling back
+        // to a ~4 chars/token estimate (same heuristic as preflightCostService).
+        const usagePromise = (streamResponse as { usagePromise?: Promise<TokenUsage | undefined> })
+          .usagePromise;
+        const finalizeStreamUsage = async (streamedText: string) => {
+          let usage: TokenUsage | undefined;
+          if (usagePromise) {
+            // The usage promise settles only when the provider stream ends; on
+            // client disconnect it may never settle — give it a 2s grace window.
+            usage = await Promise.race([
+              usagePromise,
+              new Promise<undefined>((resolve) => {
+                const t = setTimeout(() => resolve(undefined), 2000);
+                (t as any).unref?.();
+              }),
+            ]).catch(() => undefined);
+          }
+          if (!usage || (!(usage.promptTokens > 0) && !(usage.completionTokens > 0))) {
+            const { estimateTokenUsage } = await import('./tokenUsage.js');
+            const inputChars = prompt.reduce((n, m) => n + (m?.content?.length || 0), 0);
+            usage = estimateTokenUsage(inputChars, streamedText.length);
+          }
+
+          try {
+            await this.logRequest(request, { content: '', usage }, Date.now() - startTime, traceId);
+          } catch {
+            /* best-effort */
+          }
+
           if (budgetsEnabled && orgId && userId) {
-            const svc = await getAiBudgetService();
-            const streamIt = (streamResponse as { stream?: AsyncIterable<string> }).stream;
-            if (streamIt) {
-              const usedModelNorm = normalizeModelId(String(usedModel || ''));
-              const wrapped = (async function* () {
-                try {
-                  for await (const chunk of streamIt) yield chunk;
-                } finally {
-                  await svc.recordUsage(String(orgId), String(userId), {
-                    model: usedModelNorm,
-                    requestCount: 1,
-                  });
-                }
-              })();
-              (streamResponse as any).stream = wrapped;
+            try {
+              const svc = await getAiBudgetService();
+              await svc.recordUsage(String(orgId), String(userId), {
+                model: normalizeModelId(String(usedModel || '')),
+                inputTokens: usage.promptTokens,
+                outputTokens: usage.completionTokens,
+                requestCount: 1,
+              });
+            } catch (e: any) {
+              logger.warn(
+                '[AIPipeline] Streaming budget record failed:',
+                String(e?.message || e || '').slice(0, 200)
+              );
             }
           }
-        } catch (e: any) {
-          logger.warn(
-            '[AIPipeline] Streaming budget record failed:',
-            String(e?.message || e || '').slice(0, 200)
-          );
+        };
+
+        const innerStream = (streamResponse as { stream?: AsyncIterable<string> }).stream;
+        if (innerStream) {
+          const wrapped = (async function* () {
+            let streamedText = '';
+            try {
+              for await (const chunk of innerStream) {
+                if (typeof chunk === 'string') streamedText += chunk;
+                yield chunk;
+              }
+            } finally {
+              // Fires on normal completion AND consumer break/abort.
+              // Fire-and-forget: never block or fail the stream teardown.
+              finalizeStreamUsage(streamedText).catch(() => undefined);
+            }
+          })();
+          (streamResponse as any).stream = wrapped;
         }
 
         return {
@@ -2459,7 +2502,20 @@ export class AIPipeline {
       // chats, which is most chat traffic). Prefer the provider's real usage if it
       // surfaces one; otherwise estimate from input+streamed output (~4 chars/token,
       // same heuristic as preflightCostService.estimateTokens).
-      const realUsage = (response as { usage?: Partial<TokenUsage> }).usage;
+      // QA-2026-06-10: real usage arrives via callStream's usagePromise (settles
+      // after the stream ends), not as a static property — await it with a grace
+      // window so a hung promise can't stall the request.
+      const usagePromise = (response as { usagePromise?: Promise<TokenUsage | undefined> })
+        .usagePromise;
+      const realUsage: Partial<TokenUsage> | undefined = usagePromise
+        ? await Promise.race([
+            usagePromise,
+            new Promise<undefined>((resolve) => {
+              const t = setTimeout(() => resolve(undefined), 2000);
+              (t as any).unref?.();
+            }),
+          ]).catch(() => undefined)
+        : (response as { usage?: Partial<TokenUsage> }).usage;
       let usage: TokenUsage;
       if (
         realUsage &&
@@ -2473,10 +2529,9 @@ export class AIPipeline {
           totalTokens: Number(realUsage.totalTokens) || p + ccount,
         };
       } else {
+        const { estimateTokenUsage } = await import('./tokenUsage.js');
         const inputChars = messages.reduce((n, m) => n + (m?.content?.length || 0), 0);
-        const promptTokens = Math.ceil(inputChars / 4);
-        const completionTokens = Math.ceil(fullText.length / 4);
-        usage = { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens };
+        usage = estimateTokenUsage(inputChars, fullText.length);
       }
       return { usage };
     } catch (error: any) {
@@ -2533,7 +2588,11 @@ export class AIPipeline {
       const { run: dbRun, get: dbGet } = await import('../../utils/DbPromise.js');
       const { v4: uuidv4 } = await import('uuid');
 
-      const usage = _response?.usage || ({} as any);
+      // Normalize defensively: some callers still pass raw AI SDK v5/v6 usage
+      // ({inputTokens, outputTokens}) — reading only the v4 names here was one
+      // of the reasons prompt_tokens/completion_tokens persisted as 0/0.
+      const { normalizeTokenUsage } = await import('./tokenUsage.js');
+      const usage = normalizeTokenUsage(_response?.usage) || (_response?.usage as any) || {};
       const promptTokens = Number(usage?.promptTokens || 0);
       const completionTokens = Number(usage?.completionTokens || 0);
       const tokensUsed = Number(
