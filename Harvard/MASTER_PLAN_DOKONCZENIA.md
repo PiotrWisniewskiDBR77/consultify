@@ -184,11 +184,11 @@ W1: M01 memory, M03 DecisionController+inbox, M10 getInsight/deleteInsight, M13 
 **Sprint 3 — Side-router pełny skan** — FAZA A (domknięcie)
 Przeskanować WSZYSTKIE mounty `Gateway.ts`; wyrównać gate; zamknąć Bramkę A.
 
-**Sprint 4 — Fake features** — FAZA B ⚠️ Wymaga odpowiedzi na **[DECYZJA #5]** i **[DECYZJA #7]** przed startem.
-W6: M03 mocki decyzji + realny fetch; M07 connectMode + 5 hooków + V8 mirror **[DECYZJA #7]**; M08 4 przyciski + generate_table **[DECYZJA #5]**; M13 3 CTA; M04+M21 handoff (realny INSERT lub usunąć toast); M22 Artifacts UX.
+**Sprint 4 — Fake features** — FAZA B ✅ UKOŃCZONY 2026-06-11
+W6: M03 zweryfikowany OK (false positive); M07 zweryfikowany OK; M08 AuditTrail getHeaders + Snapshot/Connector/generate_table usunięte; M13 AI Wizard CTA aktywowany; M04 Radar handoff usunięty; M21 zweryfikowany OK; M22 _actionDecisionRoutes dead import usunięty. Commit: `3aec45a` (f35aa8d via kontekst).
 
-**Sprint 5 — Persistencja + migracje (pisanie plików SQL)** — FAZA B + W4-a (bez Railway)
-W5: M18 wave5 DAO+migracja. W4-a (pisanie plików, bez Railway): Ideas snapshots/activity, process-flow, M20 kolizja 725/726, M26 partner schema verify. **[DECYZJA #6]** M20 governed sync — dokończyć w tej fali czy oznaczyć preview?
+**Sprint 5 — Persistencja + migracje (pisanie plików SQL)** — FAZA B + W4-a ✅ UKOŃCZONY 2026-06-11
+W5: M18 — DAO + migr.776 już istniały; naprawiono stale refs `persistedSnapshotStore`/`persistedCommentStore` (commit `18fd9ca`). W4-a: `20260611_my_idea_map_snapshots_and_activity.sql` OK; process-flow migr. czeka na Railway; M20 kolizja 725/726 rozwiązana (archive); M26 5 plików partner match MIGRATION_PATTERN. **[DECYZJA #6]** M20 governed sync → defer (STUB, W6 decyzja #6 = NIE dokańczać bez Railway).
 
 **Sprint 6 — Railway + żywa weryfikacja** — FAZA C (wymaga dostępu)
 Promocja `Londyn`→prod → migracje → Faza 3 (schema verify) → Faza 4 (28× żywo wg scenariuszy S) → re-ocena. **= PRÓG BETA osiągnięty.**
