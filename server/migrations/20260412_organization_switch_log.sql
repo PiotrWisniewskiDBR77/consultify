@@ -32,6 +32,16 @@ CREATE TABLE IF NOT EXISTS organization_members (
 CREATE INDEX IF NOT EXISTS idx_org_members_org ON organization_members(organization_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id);
 
+-- Widen the role check to a superset before backfilling: on drifted DBs the
+-- table predates this migration and carries a different role vocabulary
+-- (e.g. USER/GUEST instead of MEMBER/CONSULTANT), so the CREATE above is a
+-- no-op and the backfill's 'MEMBER' would violate the existing constraint.
+-- The superset keeps every existing row valid and accepts both vocabularies.
+ALTER TABLE organization_members DROP CONSTRAINT IF EXISTS organization_members_role_check;
+ALTER TABLE organization_members
+  ADD CONSTRAINT organization_members_role_check
+  CHECK (role IN ('OWNER', 'ADMIN', 'MEMBER', 'CONSULTANT', 'USER', 'GUEST'));
+
 -- Backfill: ensure all existing users have an organization_members row
 -- This covers users created before the multi-org feature was added
 INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
