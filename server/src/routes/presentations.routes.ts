@@ -5988,12 +5988,13 @@ router.get(
       [deckId]
     );
 
+    const tv: any = totalViews || {};
     res.json({
       success: true,
       data: {
-        summary: totalViews || { unique_viewers: 0, total_views: 0 },
-        perCard: perCard || [],
-        dailyViews: dailyViews || [],
+        summary: { unique_viewers: Number(tv.unique_viewers ?? 0), total_views: Number(tv.total_views ?? 0) },
+        perCard: (perCard || []).map((r: any) => ({ ...r, views: Number(r.views ?? 0), avg_duration_ms: Number(r.avg_duration_ms ?? 0) })),
+        dailyViews: (dailyViews || []).map((r: any) => ({ ...r, viewers: Number(r.viewers ?? 0) })),
       },
     });
   })
