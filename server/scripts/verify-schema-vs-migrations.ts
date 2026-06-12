@@ -41,12 +41,42 @@ const TABLE_RE = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/
 const ALTER_COL_RE =
   /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
 
+// Mirror of migrate.postgres.ts isSqliteOnlyMigration: the Postgres runner
+// deliberately skips these files, so verify must NOT expect their schema (else
+// it reports phantom drift for migrations that are never applied on Postgres).
+export function isSqliteOnlyMigration(filename: string): boolean {
+  const f = filename.toLowerCase();
+  const versionNum = Number.parseInt(filename.split('_')[0] || '', 10);
+  if (/\s+\d+\.sql$/.test(f)) return true;
+  if (
+    f.includes('seed') ||
+    f.includes('mock') ||
+    f.includes('demo') ||
+    f.startsWith('add_') ||
+    f === 'assessment-module.sql' ||
+    f === 'fix_conversations_table.sql'
+  ) {
+    return true;
+  }
+  if (Number.isFinite(versionNum) && versionNum > 0 && versionNum < 500) {
+    if (!f.startsWith('000_z_core_baseline')) return true;
+  }
+  if (f.startsWith('000_initdb_')) return true;
+  if (f.includes('_sqlite')) return true;
+  if (f.includes('fts5')) return true;
+  if (f.includes('repair_sqlite')) return true;
+  if (f.includes('sqlite') && !f.includes('postgres')) return true;
+  if (f.endsWith('.sql.sql')) return true;
+  return false;
+}
+
 export function parseExpectedSchema(dir: string, onlyPrefix?: string): ExpectedSchema {
   const tables = new Map<string, string>();
   const columns = new Map<string, string>();
   const files = fs
     .readdirSync(dir)
     .filter((f) => f.endsWith('.sql'))
+    .filter((f) => !isSqliteOnlyMigration(f))
     .filter((f) => !onlyPrefix || f.startsWith(onlyPrefix))
     .sort();
 

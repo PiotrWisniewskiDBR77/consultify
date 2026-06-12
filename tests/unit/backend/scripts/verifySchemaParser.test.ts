@@ -6,7 +6,10 @@ import path from 'path';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { parseExpectedSchema } from '../../../../server/scripts/verify-schema-vs-migrations.js';
+import {
+  isSqliteOnlyMigration,
+  parseExpectedSchema,
+} from '../../../../server/scripts/verify-schema-vs-migrations.js';
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-schema-'));
 
@@ -16,8 +19,10 @@ afterAll(() => {
 
 describe('parseExpectedSchema', () => {
   it('extracts CREATE TABLE and ALTER TABLE ADD COLUMN, skipping comments', () => {
+    // Versions >= 500 so the Postgres-runner exclusion (legacy <500 = sqlite-first)
+    // does not drop them.
     fs.writeFileSync(
-      path.join(tmpDir, '001_a.sql'),
+      path.join(tmpDir, '700_a.sql'),
       `
       CREATE TABLE IF NOT EXISTS foo_bar (id TEXT PRIMARY KEY);
       CREATE TABLE "quoted_table" (id TEXT);
@@ -27,23 +32,48 @@ describe('parseExpectedSchema', () => {
       `
     );
     fs.writeFileSync(
-      path.join(tmpDir, '002_b.sql'),
+      path.join(tmpDir, '701_b.sql'),
       `CREATE TABLE foo_bar (id TEXT); -- duplicate definition, first file wins`
     );
 
     const schema = parseExpectedSchema(tmpDir);
 
-    expect(schema.tables.get('foo_bar')).toBe('001_a.sql');
-    expect(schema.tables.get('quoted_table')).toBe('001_a.sql');
+    expect(schema.tables.get('foo_bar')).toBe('700_a.sql');
+    expect(schema.tables.get('quoted_table')).toBe('700_a.sql');
     expect(schema.tables.has('commented_out')).toBe(false);
-    expect(schema.columns.get('foo_bar.extra_col')).toBe('001_a.sql');
-    expect(schema.columns.get('quoted_table.other_col')).toBe('001_a.sql');
+    expect(schema.columns.get('foo_bar.extra_col')).toBe('700_a.sql');
+    expect(schema.columns.get('quoted_table.other_col')).toBe('700_a.sql');
   });
 
   it('respects the onlyPrefix filter', () => {
-    const schema = parseExpectedSchema(tmpDir, '002_');
-    expect(schema.tables.get('foo_bar')).toBe('002_b.sql');
+    const schema = parseExpectedSchema(tmpDir, '701_');
+    expect(schema.tables.get('foo_bar')).toBe('701_b.sql');
     expect(schema.tables.has('quoted_table')).toBe(false);
+  });
+
+  it('excludes sqlite-only / Postgres-skipped migrations from expected schema', () => {
+    // These mirror migrate.postgres.ts isSqliteOnlyMigration and must NOT count.
+    fs.writeFileSync(
+      path.join(tmpDir, '027_legacy.sql.sql'),
+      `CREATE TABLE legacy_sqlite_only (id TEXT);`
+    );
+    fs.writeFileSync(
+      path.join(tmpDir, '042_old_prebaseline.sql'),
+      `CREATE TABLE prebaseline_skip (id TEXT);`
+    );
+    const schema = parseExpectedSchema(tmpDir);
+    expect(schema.tables.has('legacy_sqlite_only')).toBe(false);
+    expect(schema.tables.has('prebaseline_skip')).toBe(false);
+  });
+
+  it('isSqliteOnlyMigration matches the runner exclusion rules', () => {
+    expect(isSqliteOnlyMigration('027_email_verification.sql.sql')).toBe(true);
+    expect(isSqliteOnlyMigration('281_knowledge_hub.sql')).toBe(true); // <500
+    expect(isSqliteOnlyMigration('000_initdb_core_tables.sql')).toBe(true);
+    expect(isSqliteOnlyMigration('123_seed_demo.sql')).toBe(true);
+    expect(isSqliteOnlyMigration('700_real_postgres.sql')).toBe(false);
+    expect(isSqliteOnlyMigration('20260611_recent.sql')).toBe(false);
+    expect(isSqliteOnlyMigration('000_z_core_baseline.sql')).toBe(false);
   });
 
   it('parses the real migrations dir without throwing and finds known tables', () => {
