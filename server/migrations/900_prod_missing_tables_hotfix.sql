@@ -442,6 +442,11 @@ CREATE TABLE IF NOT EXISTS webhook_deliveries (
     FOREIGN KEY (webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
 );
 
+-- Drifted DBs may already have an older webhook_deliveries (status/response_code
+-- shape) without `success`; CREATE TABLE IF NOT EXISTS won't add it, so the
+-- index below would fail. Retrofit the column the index needs.
+ALTER TABLE webhook_deliveries ADD COLUMN IF NOT EXISTS success INTEGER DEFAULT 0;
+
 CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook ON webhook_deliveries(webhook_id);
 CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_success ON webhook_deliveries(success);
 CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_date ON webhook_deliveries(delivered_at);
