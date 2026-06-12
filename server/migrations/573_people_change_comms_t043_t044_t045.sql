@@ -211,7 +211,9 @@ CREATE INDEX IF NOT EXISTS idx_comm_plans_next_due ON communication_plans(next_d
 
 CREATE TABLE IF NOT EXISTS communication_plan_items (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  plan_id         UUID NOT NULL REFERENCES communication_plans(id) ON DELETE CASCADE,
+  -- plan_id is TEXT to match communication_plans.id (TEXT on the live schema,
+  -- where the table predates this migration); a UUID FK can't reference TEXT.
+  plan_id         TEXT NOT NULL REFERENCES communication_plans(id) ON DELETE CASCADE,
   comm_type       TEXT NOT NULL CHECK (comm_type IN ('update', 'announcement', 'newsletter', 'escalation', 'ad_hoc')),
   segment_ids     JSONB DEFAULT '[]'::jsonb,
   subject         TEXT,
