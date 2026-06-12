@@ -336,7 +336,6 @@ export function getDocumentVersionSnapshotByNumber(
 /** @internal */
 export function __resetDocumentVersionSnapshotsForTests(): void {
   snapshotStore.clear();
-  persistedSnapshotStore.clear();
   versionIndex.clear();
   hydratedOrgs.clear();
   hydrationInflight.clear();

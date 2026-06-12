@@ -808,7 +808,6 @@ export function getDocumentCommentSectionCounts(
 export function __resetDocumentCommentsForTests(): void {
   commentStore.clear();
   commentIndex.clear();
-  persistedCommentStore.clear();
   hydratedOrgs.clear();
   hydrationInflight.clear();
 }
