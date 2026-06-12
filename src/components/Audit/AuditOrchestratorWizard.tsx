@@ -464,11 +464,10 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
                 value={String(selectedAssigneeIds.length)}
               />
 
-              {/* MVP boundary: bulk survey generation is a documented next step. */}
               <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-3 text-xs text-amber-700 dark:text-amber-300">
                 {tr(
-                  'The program record will be created now. Generating the individual surveys/assignments from the chosen templates × assignees is the next step (not yet automated in this MVP).',
-                  'Rekord programu zostanie utworzony teraz. Wygenerowanie pojedynczych ankiet/przypisań z wybranych szablonów × osób to kolejny krok (jeszcze niezautomatyzowany w tym MVP).'
+                  'The program record will be created now. Individual surveys and assignments can be generated from the program page after creation.',
+                  'Rekord programu zostanie utworzony teraz. Ankiety i przypisania można wygenerować ze strony programu po jego utworzeniu.'
                 )}
               </div>
 
