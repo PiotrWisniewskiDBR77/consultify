@@ -913,6 +913,13 @@ export const ResultsHub: React.FC = () => {
             dotClassName="bg-sky-400"
           />
         )}
+        {resultsSource === 'legacy' && (
+          <ResultsRuntimeChip
+            label={t('results.runtime.legacy', 'Legacy data')}
+            value={t('results.runtime.fallback', 'fallback')}
+            dotClassName="bg-amber-400"
+          />
+        )}
         <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
         <ResultsRuntimeChip
           label={t('results.runtime.governedKpis', 'Governed KPIs')}
