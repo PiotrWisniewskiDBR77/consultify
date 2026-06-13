@@ -2,6 +2,13 @@
 
 > ~60 wpisów `D-xx` z teczek zwinięte w **12 decyzji** (wiele to ten sam wzorzec powtórzony). Każda ma **rekomendację** — możesz zatwierdzić hurtem („wszystkie rekomendacje oprócz…"). Po rozstrzygnięciu wpisuję wynik do `Rejestru Decyzji` każdej teczki i odblokowuję epiki.
 
+## ✅ ROZSTRZYGNIĘTE (2026-06-13, Piotr)
+- **DP-1 = OPENAI** — głos STT na prod = OPENAI/Whisper. Egzekucja (potwierdzić/ustawić klucz na Railway centerbeam + zacommitować FE interim-flush) = Faza 1, **wymaga Twojego działania/zgody na env prod**.
+- **DP-2 = Globalny dok IDE-tabs** — jeden workspace-rail; inicjatywa/notatka/zadanie in-context, deck/doc→Canvas, ciężkie→pełny moduł. Zamyka M03-D02/D03, M04-D01/D02, M13-D01, M09 nawigacja.
+- **DP-3 = Per-resource multiplayer** (M09) — przebudowa `my_idea_maps` na model współdzielony + membership/share; koordynacja z M05.
+- **DP-4 = Wyciąć A1** — usunąć stub affiliate (brak roadmapy).
+- **DP-5..DP-12:** _do hurtowego zatwierdzenia (rekomendacje niżej)._
+
 ---
 
 ## A · PILNE / STRUKTURALNE (rozstrzygnąć pierwsze)
