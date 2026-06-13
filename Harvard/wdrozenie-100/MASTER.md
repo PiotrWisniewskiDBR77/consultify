@@ -119,19 +119,19 @@ i18n (`isPolish`→`t()`, ~141 kluczy PL M14, hardkody EN), tokeny (korupcja ros
 
 ## 6. INDEKS WORK-PACKAGE'ÓW (27 modułów)
 
-Każdy plik w `Harvard/wdrozenie-100/`. Format: stan obecny → luki FE/BE/integracja (`plik:linia`) → kroki → DoD (6 kryteriów) → weryfikacja → rozmiar.
+Każdy plik w `Harvard/wdrozenie-100/` = pełna teczka 8 warstw (00 nagłówek · MAPA POKRYCIA · A intencja · B UX docelowe · C dane+API+reguły · D AI/Teresa · E integracje · F epiki→stories · G DoD/jakość · H governance) wg [`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md). Kolumna „Status blokera" odzwierciedla weryfikację R3 (✅=naprawione, STALE=nieaktualny finding karty, ŻYWY=do naprawy).
 
-| # | Moduł | WP | Pula | Rozmiar | Żywy bloker |
+| # | Moduł | WP | Pula | Rozmiar | Status blokera (po R3) |
 |---|---|---|---|---|---|
 | M01 | Czat | `M01-czat.md` | core | M | — |
 | M02 | Canvas | `M02-canvas.md` | beta | M | — |
 | M03 | My Work — organizer | `M03-my-work-organizer.md` | core | M | — |
 | M04 | Notatnik | `M04-notatnik.md` | beta | L | handoff pół-martwy (z M21) |
-| M05 | Ideas — Zarządzanie | `M05-ideas-zarzadzanie.md` | ideas | M-L | **P0 struct** |
-| M06 | Ideas — Mind Map | `M06-ideas-mind-map.md` | ideas | M | **P1 WS** |
-| M07 | Ideas — Process Flow | `M07-ideas-process-flow.md` | ideas | M | **P0 struct** |
+| M05 | Ideas — Zarządzanie | `M05-ideas-zarzadzanie.md` | ideas | M-L | do weryfikacji (kod `0b81310448`; apply migracji?) |
+| M06 | Ideas — Mind Map | `M06-ideas-mind-map.md` | ideas | M | do weryfikacji (WS org-scope naprawiony) |
+| M07 | Ideas — Process Flow | `M07-ideas-process-flow.md` | ideas | M | **ŻYWY P0 struct** (V8 mirror — DP-7 cut) |
 | M08 | Ideas — Table | `M08-ideas-table.md` | ideas | M | — |
-| M09 | Ideas — Whiteboard | `M09-ideas-whiteboard.md` | ideas | L | **P0 struct** |
+| M09 | Ideas — Whiteboard | `M09-ideas-whiteboard.md` | ideas | L | **ŻYWY P0 struct** (multiplayer — DP-3) |
 | M10 | Wywiad | `M10-wywiad.md` | core | M-L | **P0 prod (VTS)** |
 | M12 | Audyty | `M12-audyty.md` | beta | M | — |
 | M13 | Inicjatywy | `M13-inicjatywy.md` | core | M→L (i18n ~1820×) | — |
@@ -139,12 +139,12 @@ Każdy plik w `Harvard/wdrozenie-100/`. Format: stan obecny → luki FE/BE/integ
 | M15 | Rezultaty | `M15-rezultaty.md` | beta | M | — |
 | M16 | Finanse | `M16-finanse.md` | beta | M | — |
 | M17 | Outputs | `M17-outputs.md` | beta | M | — |
-| M18 | Dokumenty | `M18-dokumenty.md` | beta | M-L | **P1 data-loss** |
+| M18 | Dokumenty | `M18-dokumenty.md` | beta | M-L | ✅ naprawione kod (mig.780/781) — cold-start proof |
 | M19 | Prezentacje | `M19-prezentacje.md` | beta | S-M | — |
-| M20 | Tabele Studio | `M20-tabele-studio.md` | beta | L | **P0 security** |
+| M20 | Tabele Studio | `M20-tabele-studio.md` | beta | L | ✅ IDOR naprawione (`e9c6cb9c0a`) — test regresji |
 | M21 | Meeting | `M21-meeting.md` | beta | M | — |
-| M22 | AI OS | `M22-ai-os.md` | internal | M | **P1 dead** |
-| M23 | Organizacja | `M23-organizacja.md` | internal | M | **3×P1** |
+| M22 | AI OS | `M22-ai-os.md` | internal | M | STALE (routy zamontowane; `_actionDecisionRoutes` usunięty) |
+| M23 | Organizacja | `M23-organizacja.md` | internal | M | ✅ naprawione (3×P1 w kodzie) |
 | M24 | Admin | `M24-admin.md` | internal | S-M | — |
 | M25 | Ustawienia | `M25-ustawienia.md` | core | S | — |
 | M26 | Portal Partnerski | `M26-portal-partnerski.md` | internal | S-M | — |
