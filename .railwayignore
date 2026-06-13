@@ -21,25 +21,12 @@
 *.zip
 /Logo consultinity/
 
-# Large knowledge/doc corpora (keep uploads small)
-# NOTE: We DO deploy the markdown knowledge packs needed for AI re-indexing:
-# - knowledge/tool-kb/**
-# - knowledge/Pigułki wiedzy */**
-#
-# Railway ignore does not reliably support negation patterns, so we explicitly
-# exclude the heavyweight knowledge subfolders and keep only the packs.
-/knowledge/ADMA/
-/knowledge/DRD/
-/knowledge/Finanse/
-/knowledge/KPI/
-/knowledge/Prezentacje */
-/knowledge/SIRI/
-/knowledge/vector-website/
-/knowledge/**/*.pdf
-/knowledge/**/*.xlsx
-/knowledge/**/*.pptx
-/knowledge/**/*.docx
-/knowledge/**/*.zip
+# Large knowledge/doc corpora — exclude entirely from uploads.
+# knowledge/ is gitignored so git-triggered builds also have no knowledge files.
+# The Dockerfile knowledge test is now non-fatal (logs a warning, does not exit 1).
+# Re-indexing knowledge packs is done manually via railway up or a separate job.
+knowledge/
+Harvard/
 /knowledge/Pigułki wiedzy /**/*.zip
 /docs/
 /wdrozenia/
