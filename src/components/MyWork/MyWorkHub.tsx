@@ -601,8 +601,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
   const canViewManager = isAdmin || isManager || isSuperAdmin;
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
-  // Beta gating: Ideas is a closed beta — blocked for non-admins, who see the
-  // branded "access restricted" plate. Admins keep access to keep building.
+  // Beta gating: Ideas is a closed beta. BETA_ADMINS_EXEMPT=false means everyone
+  // is blocked (isBetaLockedForRole always returns true). Plate shown to all roles.
   const ideasBetaLocked =
     isBetaSubareaClosed('MYWORK_IDEAS') && isBetaLockedForRole(currentUser?.role);
 
@@ -935,23 +935,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         });
         if (res.ok) setContextSummary(await res.json());
 
-        // L7: Restore previous session context for continuity
-        try {
-          const sessionRes = await fetch('/api/my-work/session-context', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          if (sessionRes.ok) {
-            const { context } = await sessionRes.json();
-            if (context?.lastViewedItems?.length) {
-              // Could append to system prompt: "In your last session, you worked on..."
-            }
-          }
-        } catch {
-          /* ignore */
-        }
       } catch {
         /* ignore — partial enrichment is fine */
       }
