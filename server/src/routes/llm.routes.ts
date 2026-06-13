@@ -1368,11 +1368,11 @@ router.get(
 
 /**
  * POST /api/llm/purposes
- * Upsert a purpose definition.
+ * Upsert a purpose definition. Requires superadmin — writes to global ai_purposes.
  */
 router.post(
   '/purposes',
-  verifyAdmin,
+  verifySuperAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const purpose = String(req.body?.purpose || '').trim();
@@ -1496,6 +1496,18 @@ router.post(
 
     if (!purpose || !providerId) {
       return res.status(400).json({ success: false, error: 'purpose and providerId are required' });
+    }
+    // Global assignments (org_id=null) require superadmin; org-scoped require that
+    // the caller's org matches the requested organizationId.
+    const callerIsSuperAdmin = (req as any).user?.isSuperAdmin === true;
+    if (!organizationId && !callerIsSuperAdmin) {
+      return res.status(403).json({ success: false, error: 'Super admin required for global purpose assignments' });
+    }
+    if (organizationId && !callerIsSuperAdmin) {
+      const callerOrgId = (req as any).organizationId || (req as any).user?.organizationId;
+      if (callerOrgId !== organizationId) {
+        return res.status(403).json({ success: false, error: 'Cannot create assignments for a different organization' });
+      }
     }
     const executivePurposes = new Set(
       EXECUTIVE_USE_CASES.flatMap((useCase) => useCase.purposes).flatMap((item) =>
