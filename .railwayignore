@@ -36,7 +36,8 @@ Harvard/
 /Softs/
 
 # Tests & artifacts (not required at runtime)
-/tests/
+# Use no-leading-slash so Railway's ignore engine reliably matches
+tests/
 /playwright-report/
 /test-results*/
 /test-screenshots/
@@ -56,7 +57,14 @@ Harvard/
 /public/demo/
 /public/demo/**
 
+# SQLite test artifacts (can be large, never needed for Railway builds)
+**/*.test.db
+**/*.test.db-journal
+**/*.test.db-shm
+**/*.test.db-wal
+
 # Local uploads / exports (not required for build)
+uploads/
 /uploads/
 /server/exports/
 /server/exports/**
