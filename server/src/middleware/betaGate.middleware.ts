@@ -9,22 +9,15 @@ import type { NextFunction, Request, Response } from 'express';
  * For modules with public sub-paths (e.g. presentations share links) use
  * createBetaGate(skipPaths) to pass prefixes that should remain accessible.
  */
+// All beta modules are currently 'open' in the client-side betaAccess.ts SSOT.
+// This middleware mirrors that state: pass through all requests.
+// Re-enable per-module gating here when any module is set back to 'closed'.
 export function betaGate(req: Request, res: Response, next: NextFunction): void {
-  res.status(403).json({
-    error: 'BETA_LOCKED',
-    message: 'This module is currently in closed beta and is not yet accessible.',
-  });
+  next();
 }
 
-export function createBetaGate(skipPaths: string[]) {
+export function createBetaGate(_skipPaths: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (skipPaths.some((p) => req.path.startsWith(p))) {
-      next();
-      return;
-    }
-    res.status(403).json({
-      error: 'BETA_LOCKED',
-      message: 'This module is currently in closed beta and is not yet accessible.',
-    });
+    next();
   };
 }
