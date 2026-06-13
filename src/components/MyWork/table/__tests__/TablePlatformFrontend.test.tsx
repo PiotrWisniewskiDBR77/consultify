@@ -40,9 +40,11 @@ const toastSuccess = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_k: string, def?: string) => def ?? _k,
+    t: (k: string, opts?: string | { defaultValue?: string }) =>
+      (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k,
     i18n: { language: 'en' },
   }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -93,6 +95,12 @@ const tpApiMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/services/api/tablePlatform.api', () => tpApiMocks);
+
+const apiGetMock = vi.hoisted(() => vi.fn().mockResolvedValue({ events: [] }));
+
+vi.mock('@/services/api', () => ({
+  Api: { get: apiGetMock },
+}));
 
 const orgSyncDbQuery = vi.hoisted(() => vi.fn());
 
@@ -1175,19 +1183,11 @@ describe('P15 App Integration', () => {
 
   describe('ActivityFeed API path', () => {
     it('fetches from /api/table-platform/tables/:id/audit', async () => {
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ events: [] }),
-      });
-      vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
-      try {
-        render(<ActivityFeed open onClose={vi.fn()} tableId="tbl-audit" />);
-        await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-        const url = String(fetchMock.mock.calls[0]?.[0] ?? '');
-        expect(url).toContain('/api/table-platform/tables/tbl-audit/audit');
-      } finally {
-        vi.unstubAllGlobals();
-      }
+      apiGetMock.mockResolvedValueOnce({ events: [] });
+      render(<ActivityFeed open onClose={vi.fn()} tableId="tbl-audit" />);
+      await waitFor(() => expect(apiGetMock).toHaveBeenCalled());
+      const path = String(apiGetMock.mock.calls[0]?.[0] ?? '');
+      expect(path).toContain('/table-platform/tables/tbl-audit/audit');
     });
   });
 });

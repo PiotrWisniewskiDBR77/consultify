@@ -13,7 +13,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_k: string, fallback?: string) => fallback ?? _k,
+    t: (k: string, opts?: string | { defaultValue?: string }) =>
+      (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k,
     i18n: { language: 'en' },
   }),
 }));

@@ -72,7 +72,8 @@ describe('RolloutTab smoke', () => {
     emptyLists();
     render(<RolloutTab projectId="proj-1" initiatives={[]} />);
     await waitFor(() => {
-      expect(screen.getByText('Add KPI')).toBeInTheDocument();
+      // KPI section heading is always visible in the KPI subview
+      expect(screen.getByText('KPI Tracking')).toBeInTheDocument();
     });
     // Fetched all four sub-resources from the real API.
     expect(apiGet).toHaveBeenCalledWith(expect.stringContaining('/rollout/kpis'));
@@ -88,9 +89,10 @@ describe('RolloutTab smoke', () => {
     });
 
     render(<RolloutTab projectId="proj-1" initiatives={[]} />);
-    await waitFor(() => expect(screen.getByText('Add KPI')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('KPI Tracking')).toBeInTheDocument());
 
-    fireEvent.click(screen.getByText('Add KPI'));
+    // RolloutTab wires addKpi via the execution:add-kpi window event dispatched by ExecutionHub.
+    fireEvent(window, new CustomEvent('execution:add-kpi'));
 
     await waitFor(() => {
       expect(apiPost).toHaveBeenCalledWith('/rollout/kpis', { projectId: 'proj-1' });

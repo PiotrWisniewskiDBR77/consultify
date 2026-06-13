@@ -21,6 +21,9 @@ vi.mock('@/i18n', () => ({
   changeLanguage: vi.fn(async () => true),
   SUPPORTED_LANGUAGES: ['en', 'pl'],
 }));
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
 
 const { updateUser, getMe } = vi.hoisted(() => ({
   updateUser: vi.fn((..._args: unknown[]) => Promise.resolve(undefined)),

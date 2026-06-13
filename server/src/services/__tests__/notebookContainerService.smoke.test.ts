@@ -193,15 +193,14 @@ describe('Notebook containers — smoke round-trip', () => {
     expect(del.status).toBe(409);
   });
 
-  it('DELETE removes an empty notebook (200)', async () => {
+  it('DELETE removes an empty notebook (204)', async () => {
     const create = await request(createApp())
       .post('/api/my-work/notebooks')
       .send({ title: 'Empty' });
     const id = create.body.id;
 
     const del = await request(createApp()).delete(`/api/my-work/notebooks/${id}`);
-    expect(del.status).toBe(200);
-    expect(del.body.ok).toBe(true);
+    expect(del.status).toBe(204);
     expect(store.notebooks).toHaveLength(0);
   });
 });

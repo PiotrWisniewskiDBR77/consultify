@@ -279,10 +279,28 @@ describe('chatV9FeatureFlags registry', () => {
     const IMPORT_EXPORT_RE = /export\s+function\s+(is[A-Z][A-Za-z0-9]*Enabled)\s*\(/;
 
     // Utility files that happen to end in `Flag.ts` but are not
-    // per-flag resolvers. Keep this list explicit and tiny — the
+    // Chat V9 per-flag resolvers. Keep this list explicit — the
     // whole point of the test is to catch orphaned resolvers, so
-    // we must not silently accept arbitrary non-resolvers.
-    const NON_RESOLVER_FILES = new Set<string>(['matchChatV9Flag.ts']);
+    // we must not silently accept arbitrary non-resolvers. Each
+    // entry below has an explicit category justifying the exclusion.
+    const NON_RESOLVER_FILES = new Set<string>([
+      // Utility helper (matcher), not a resolver.
+      'matchChatV9Flag.ts',
+      // Non-Chat-V9 product feature flags that share the *Flag.ts
+      // naming convention but belong to other modules (billing,
+      // Tabele data-table system, MELS, templates, record layer).
+      // These must NOT be registered in chatV9FeatureFlags.ts.
+      'billingSelfServeFlag.ts',
+      'melsDeckBuilderFlag.ts',
+      'melsTabeleFlag.ts',
+      'recordProvenanceFlag.ts',
+      'tabeleAiEditorFlag.ts',
+      'tabeleConversionsFlag.ts',
+      'tabeleFormIntakeFlag.ts',
+      'tabeleQaFlag.ts',
+      'tabeleSourcePackFlag.ts',
+      'templateLifecycleFlag.ts',
+    ]);
 
     const orphans: string[] = [];
     let resolversChecked = 0;
