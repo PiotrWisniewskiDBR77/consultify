@@ -1645,22 +1645,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     }
   }, [activePage, editor, isExpandingToDocument, isPolish, navigate, title]);
 
-  const handleHandoffRadar = useCallback(async () => {
-    if (!activePage) return;
-    try {
-      await Api.post('/v8/notebook/handoff/radar', {
-        noteId: activePage.id,
-        title: activePage.title,
-      });
-      toast.success(isPolish ? 'Wysłano do Radar' : 'Sent to Radar');
-      trackFunnelEvent('notebook_handoff', { target: 'radar', noteId: activePage.id });
-    } catch (err: any) {
-      toast.error(
-        err?.message || (isPolish ? 'Nie udało się wysłać do Radar' : 'Failed to send to Radar')
-      );
-    }
-  }, [activePage, isPolish]);
-
   const handleHandoffInitiatives = useCallback(async () => {
     if (!activePage) return;
     try {
