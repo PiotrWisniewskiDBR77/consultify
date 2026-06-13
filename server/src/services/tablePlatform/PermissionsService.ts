@@ -246,6 +246,42 @@ const permissionsService = {
   },
 
   /**
+   * Express middleware: require access to a governed model.
+   * Resolves base_id from tp_governed_models, then checks canAccessBase.
+   * Returns 403 if denied, 404 if model not found.
+   */
+  requireGovernedModelAccess(req: Request, res: Response, next: NextFunction): void {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const orgId = authReq.organizationId;
+    if (!userId || !orgId) {
+      res.status(403).json({ error: 'Authentication and organization context required' });
+      return;
+    }
+    const modelId = authReq.params?.modelId;
+    if (!modelId) {
+      res.status(400).json({ error: 'modelId required' });
+      return;
+    }
+    const db = getDatabase();
+    db.query('SELECT base_id FROM tp_governed_models WHERE model_id = $1', [modelId])
+      .then(async (result) => {
+        const row = result.rows[0] as { base_id: string } | undefined;
+        if (!row) {
+          res.status(404).json({ error: 'Governed model not found' });
+          return;
+        }
+        const allowed = await permissionsService.canAccessBase(userId, orgId, row.base_id);
+        if (!allowed) {
+          res.status(403).json({ error: 'Access denied to this governed model' });
+          return;
+        }
+        next();
+      })
+      .catch(next);
+  },
+
+  /**
    * Express middleware: require table access. Extracts tableId from params.
    * Returns 403 if denied.
    */
