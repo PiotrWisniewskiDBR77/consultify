@@ -189,9 +189,10 @@ function buildVisibilityWhere(userId: string): { sql: string; params: unknown[] 
   return {
     sql: `(
       (lower(np.visibility) = 'private' AND np.owner_user_id = ?)
-      OR (lower(np.visibility) = 'project' AND np.project_id IS NOT NULL)
+      OR (lower(np.visibility) = 'project' AND np.project_id IS NOT NULL
+          AND EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = np.project_id AND pm.user_id = ?))
     )`,
-    params: [userId],
+    params: [userId, userId],
   };
 }
 
