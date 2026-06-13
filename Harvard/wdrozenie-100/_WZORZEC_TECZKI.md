@@ -152,3 +152,36 @@ Teczka jest „gotowa do egzekucji" dopiero przy 9/9.
 2. Wypełnij A–E (docelowy) → potem H/03 (luka = docelowy − obecny) policzy się sama.
 3. Przejdź bramkę 9/9 przed startem implementacji.
 4. Po wykonaniu: sesja żywa → nowe uwagi do H/01 → pętla (R6).
+
+---
+
+# PROCEDURA WYPEŁNIENIA — reuse-first (wniosek z M13, wzorzec referencyjny: `M13-inicjatywy.md`)
+
+**Zasada: teczka to indeks + reconciliation, NIE rewrite.** Karta audytu (`KARTA_AUDYTU.md`) + `docs/product/*` + `docs/standards/*` często pokrywają ~75% warstw. Pisz tylko brakujące ogniwa.
+
+### Krok 1 — Mapa pokrycia (tabela na górze teczki)
+Zmapuj 8 warstw A–H przeciw istniejącym artefaktom. Dla każdej: 🟢 pokryte (link do `KARTA §X` / `docs/...`) lub 🔴 luka. Co 🟢 — tylko LINKUJ, nie przepisuj.
+
+### Krok 2 — Co zwykle JUŻ jest (linkuj)
+- **C Dane+API+reguły** ← karta §1e (wiring FE↔BE↔DB) + §1f (flagi) + kod (enum/serwisy).
+- **E Integracje** ← karta §1g (tabela połączeń).
+- **G DoD/scenariusze** ← karta §0 (scenariusze S) + §2 (testy/CI) + §7 (DoD/plan).
+- **Bezpieczeństwo** ← karta §6.
+- **A/B/D docelowy** ← `docs/product/*` i `docs/standards/*` jeśli istnieją dla modułu (np. inicjatywy: STATUS_ROLE_CTA_MATRIX, FORMULA). **Uwaga:** nie każdy moduł ma korpus product-docs — wtedy A/B/D trzeba dopisać z karty + kodu (więcej autorstwa).
+
+### Krok 3 — Co ZAWSZE trzeba dołożyć (4 brakujące ogniwa)
+1. **H/01 Rejestr Wejść** — scala WSZYSTKIE źródła + **OBOWIĄZKOWO wplata uwagi żywe z `UWAGI_TESTY_2026-06-13.md`** dla tego modułu (to była dziura krytyczna: karty są starsze niż testy żywe).
+2. **H/04 Rejestr Decyzji** — każda luka „design-pending" → wpis z właścicielem + terminem.
+3. **G DoD skwantyfikowane** — zmierz realny dług grepem:
+   - i18n: `grep -rE "i18n\.language\s*[=!]==?\s*['\"]pl|isPolish" <katalog-modułu> | wc -l`
+   - §27: `grep -rE "<table" <katalog> | wc -l`
+   - tokeny: `grep -rE "#[0-9a-fA-F]{6}" <katalog> | wc -l`
+   Wstaw LICZBY do DoD (nie „pełne i18n").
+4. **Korekta zaniżeń/staleności karty (R3)** — każde twierdzenie „naprawione/bloker" zweryfikuj w kodzie zanim wpiszesz status (karty zawyżają ~1/7; M13: „7 dok." → realnie ~15).
+
+### Krok 4 — Bramka 9/9 + commit.
+
+### Triaż 26 pozostałych wg nakładu
+- **Niski (linkuj+dołóż 4 ogniwa):** moduły z bogatą kartą + product-docs (inicjatywy-pochodne, deliverables).
+- **Średni:** moduły z dobrą kartą, bez product-docs → dopisać A/B/D z karty+kodu.
+- **Wyższy:** moduły z żywymi blokerami P0/P1 (M20/M05/M07/M09/M18/M23/M06/M10-głos) → luki + weryfikacja staleności + decyzje.
