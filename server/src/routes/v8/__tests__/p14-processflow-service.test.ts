@@ -1256,13 +1256,13 @@ describe('P14-B Process Flow Service', () => {
         validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
         risk_flags: { destructive_count: 0, branch_changes: 0 },
       });
-      const fetched = getAIProposal(proposal.id);
+      const fetched = getAIProposal(proposal.id, ORG);
       expect(fetched).toBeTruthy();
       expect(fetched!.id).toBe(proposal.id);
     });
 
     it('returns null for unknown proposal', () => {
-      expect(getAIProposal('nonexistent')).toBeNull();
+      expect(getAIProposal('nonexistent', ORG)).toBeNull();
     });
 
     it('rejects proposal (no silent changes)', async () => {
@@ -1274,7 +1274,7 @@ describe('P14-B Process Flow Service', () => {
         validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
         risk_flags: { destructive_count: 1, branch_changes: 0 },
       });
-      const result = await resolveAIProposal(proposal.id, 'reject');
+      const result = await resolveAIProposal(proposal.id, 'reject', ORG);
       expect(result.success).toBe(true);
       expect(result.proposal!.status).toBe('rejected');
       expect(result.applied_count).toBe(0);
@@ -1289,7 +1289,7 @@ describe('P14-B Process Flow Service', () => {
         validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
         risk_flags: { destructive_count: 0, branch_changes: 0 },
       });
-      const result = await resolveAIProposal(proposal.id, 'accept');
+      const result = await resolveAIProposal(proposal.id, 'accept', ORG);
       expect(result.success).toBe(true);
       expect(result.proposal!.status).toBe('accepted');
       expect(result.applied_count).toBeGreaterThanOrEqual(1);
@@ -1304,14 +1304,14 @@ describe('P14-B Process Flow Service', () => {
         validation_report: { valid: true, layer: 'both', errors: [], warnings: [] },
         risk_flags: { destructive_count: 0, branch_changes: 0 },
       });
-      await resolveAIProposal(proposal.id, 'reject');
-      const result = await resolveAIProposal(proposal.id, 'accept');
+      await resolveAIProposal(proposal.id, 'reject', ORG);
+      const result = await resolveAIProposal(proposal.id, 'accept', ORG);
       expect(result.success).toBe(false);
       expect(result.error_code).toBe('INVALID_STATE');
     });
 
     it('returns PROPOSAL_NOT_FOUND for unknown ID', async () => {
-      const result = await resolveAIProposal('unknown', 'accept');
+      const result = await resolveAIProposal('unknown', 'accept', ORG);
       expect(result.success).toBe(false);
       expect(result.error_code).toBe('PROPOSAL_NOT_FOUND');
     });
