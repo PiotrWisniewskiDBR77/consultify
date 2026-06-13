@@ -114,9 +114,9 @@ Participants: ${context.participants.join(', ')}
 ${context.agenda ? `Agenda: ${context.agenda}` : ''}
 
 Transcript (first 5000 chars):
-"""
-${transcript.slice(0, 5000)}
-"""
+<transcript>
+${transcript.slice(0, 5000).replace(/<\/?transcript>/gi, '')}
+</transcript>
 
 Produce structured notes in ${language === 'pl' ? 'Polish' : 'English'} with:
 1. A concise summary (2-3 sentences)
