@@ -719,11 +719,20 @@ export function WorkCanvasDocumentPanel(props: WorkCanvasDocumentPanelProps) {
     return () => window.removeEventListener('deliverables:draft-ready', onDraftReady);
   }, []);
 
+  // Tryb B fix (UWAGA #1 / SPEC_ZADANIE_01): deterministyczny montaż.
+  // Gdy canvas jest podparty draftem (initialDraftId), montuj ten draft jako
+  // dokument zamiast szablonu „base" — niezależnie od kolejności reset(:704)
+  // vs event `deliverables:draft-ready`(:711). To usuwa wyścig, w którym
+  // reset mountOverride=null po zmianie propsa cofał panel do pustego szablonu
+  // „Company Work Note" mimo realnie utworzonego draftu. Ręczne przełączenie
+  // przez switcher (mountOverride) nadal wygrywa.
   const mounted: CanvasMountSelection =
     mountOverride ||
     (props.initialStarterId === 'presentation'
       ? { kind: 'deck', deckId: props.initialDeckId || null }
-      : { kind: 'base' });
+      : props.initialDraftId
+        ? { kind: 'doc', draftId: props.initialDraftId }
+        : { kind: 'base' });
 
   return (
     <div className="flex h-full min-h-0 flex-col">

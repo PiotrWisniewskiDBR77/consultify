@@ -2800,4 +2800,48 @@ describe('WorkCanvasDocumentPanel', () => {
       'Restored content'
     );
   });
+
+  // Regresja Tryb B (UWAGA #1 / SPEC_ZADANIE_01): gdy canvas jest podparty
+  // draftem (initialDraftId), panel MUSI zamontować ten draft jako dokument,
+  // a NIE wracać do pustego szablonu „Company Work Note". To gwarantuje, że
+  // „dodałem do Canvasa" od Teresy faktycznie widać po prawej — niezależnie od
+  // wyścigu reset(:704) vs event `deliverables:draft-ready`.
+  it('mounts the backing draft (not the base template) when initialDraftId is set', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (String(url).includes('/api/work-canvas/drafts/draft-tryb-b')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: {
+              draft: {
+                id: 'draft-tryb-b',
+                draftId: 'draft-tryb-b',
+                title: 'Plan dnia 7 lutego',
+                contentMd: '# Plan dnia 7 lutego\n\n- [ ] Przegląd inicjatyw',
+                saveState: 'saved',
+                lifecycleState: 'draft',
+                  markdownProjectionStatus: 'synced',
+              },
+            },
+          }),
+        } as unknown as Response;
+      }
+      // Versions / any auxiliary fetch — keep render stable.
+      return { ok: true, json: async () => ({ success: true, data: [] }) } as unknown as Response;
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<WorkCanvasDocumentPanel conversationId="conv-1" initialDraftId="draft-tryb-b" />);
+
+    // The mounted document is the backing draft, hydrated by id.
+    await waitFor(() =>
+      expect(screen.getByLabelText('Canvas document title')).toHaveValue('Plan dnia 7 lutego')
+    );
+    // And it is NOT the empty "Company Work Note" base template.
+    expect(screen.getByLabelText('Canvas document title')).not.toHaveValue('Company Work Note');
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/work-canvas/drafts/draft-tryb-b'),
+      expect.anything()
+    );
+  });
 });
