@@ -123,7 +123,7 @@ Każdy plik w `Harvard/wdrozenie-100/`. Format: stan obecny → luki FE/BE/integ
 | M09 | Ideas — Whiteboard | `M09-ideas-whiteboard.md` | ideas | L | **P0 struct** |
 | M10 | Wywiad | `M10-wywiad.md` | core | M-L | **P0 prod (VTS)** |
 | M12 | Audyty | `M12-audyty.md` | beta | M | — |
-| M13 | Inicjatywy | `M13-inicjatywy.md` | core | M | — |
+| M13 | Inicjatywy | `M13-inicjatywy.md` | core | M→L (i18n ~1820×) | — |
 | M14 | Wdrożenie | `M14-wdrozenie.md` | core | L | — |
 | M15 | Rezultaty | `M15-rezultaty.md` | beta | M | — |
 | M16 | Finanse | `M16-finanse.md` | beta | M | — |

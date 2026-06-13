@@ -65,9 +65,9 @@
 |---|-----------|---------------|
 | 1 | Front↔back | New/Charter/Wizard tworzą (lub usunięte); bulk żywe (lub ukryte); 0 martwych CTA; statusy/bramki sterowalne |
 | 2 | Bezpieczeństwo | gating pilota serwerowy (403, test); governance org-scope ✅ (`b9f2dee9d2` — **potwierdzić testem cross-org**) |
-| 3 | i18n | 0 `i18n.language==='pl'` inline w `InitiativesHub` [liczba: `grep -c` → do policzenia przed startem] |
-| 4 | Tokeny | 0 hardkodów vs Visual Standard [do policzenia] |
-| 5 | §27 | Portfolio + listy przez FilterableTable; RC-4 sticky thead naprawione |
+| 3 | i18n | 0 z **~1820** inline (`i18n.language==='pl'`/`isPolish`) w `src/components/Initiatives/` — najwięcej `InitiativeDocumentView.tsx` (423) + `sections/*` (~1000). **To materialnie podnosi rozmiar i18n M13 (samo i18n ≈ L).** |
+| 4 | Tokeny | 0 z **13** hardkodów hex — w tym 9 w `Analysis/DependencyGraphCanvas.tsx` (potwierdzić: paleta grafu vs dług), 3 `InitiativeDocumentView.tsx`, 1 `Wizard/InitiativeWizardModal.tsx` |
+| 5 | §27 | **18** surowych `<table>` w 13 plikach (`sections/ResourcesSection` 4, `Timeline`/`Dependencies` po 2…) → FilterableTable; Portfolio + RC-4 sticky thead |
 | 6 | E2E w PR-gate | S2 (deep-link create), S3 (edycja sekcji), S5 (Charter z insightu) zielone na `Londyn` |
 
 **Scenariusze S:** S2 create `?new=1`→trwałość · S3 edycja sekcji · S5 Charter z insightu M10 · S6 Kanban DnD. Dowody → `evidence/f4_*`.
@@ -106,7 +106,9 @@ Rdzeń realny: portfolio (4 widoki), dokument (~30 sekcji, `sections/registry.ts
 | L-08 | brak CTA „Otwórz" z board-preview | W-02 | `InitiativePreviewV3.tsx:399`; fix w `InitiativesHub` footer | P1-TOP | FE | — | **NAPRAWIONA `18ed3e44f7`** |
 | L-09 | cross-org governance IDOR | W-01 | — | P0 | security | — | naprawiona `b9f2dee9d2` (R3: potwierdzić testem) |
 | L-10 | 0 testów CRUD (stale import) | W-01 | `initiatives-crud.test.ts` | P0-test | testy | — | naprawiona `ea77dc678c` (5/5) |
-| L-11 | RC-4 / §27 / i18n inline / tokeny | W-01 | `renderInitiativePreview*` (`i18n.language==='pl'`) | P1/P2 | przekrojowe | 4 | otwarta |
+| L-11a | i18n inline ~1820× | W-01 | `src/components/Initiatives/` (`InitiativeDocumentView.tsx` 423 + `sections/*`) | P1 | przekrojowe | 4 | otwarta |
+| L-11b | 18 surowych `<table>` (§27) + RC-4 sticky thead | W-01 | 13 plików `sections/*`+`Analysis/*` | P2 | przekrojowe | 4 | otwarta |
+| L-11c | 13 hardkodów hex (9 = graf DependencyGraphCanvas) | W-01 | `Analysis/DependencyGraphCanvas.tsx`, `InitiativeDocumentView.tsx` | P2 | przekrojowe | 4 | otwarta |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
