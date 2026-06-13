@@ -106,7 +106,7 @@ import {
   hasInitiativeStatusReadDrift,
 } from '@/utils/initiativeWorkflowStatus';
 
-import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types';
+import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types/initiative';
 import {
   type Attachment,
   type Comment,

@@ -64,7 +64,7 @@ RUN if [ ! -f src/lib/utils.ts ]; then \
       mkdir -p src/lib && \
       printf "import { type ClassValue, clsx } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n" > src/lib/utils.ts; \
     fi
-RUN npm run build
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # ==========================================
 # STAGE 3: Backend Builder
