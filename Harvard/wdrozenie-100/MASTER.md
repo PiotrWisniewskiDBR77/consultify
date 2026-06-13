@@ -32,21 +32,32 @@ Bramka modułu = 6/6. Bramka programu = wszystkie 27 modułów na 6/6 + smoke pr
 
 ---
 
-## 2. ŻYWE BLOKERY (P0/P1 nienaprawione — odczyt z kart, NIE pamięć)
+## 2. ŻYWE BLOKERY — po weryfikacji R3 w kodzie (2026-06-13)
+
+> **Kluczowa korekta:** teczki zweryfikowały każdy „bloker" w kodzie (R3: dowód > dziedziczenie). **Większość była już naprawiona albo nieaktualna.** Realnie żywe = **3** (nie 9). Faza 1 znacząco mniejsza, niż sugerowały karty.
 
 **Naprawione P0 (pula core, w audycie):** M01, M03, M10, M13, M14, M15, M16, M24, M27.
 
+### 2a. REALNIE ŻYWE (do naprawy w Fazie 1)
 | Moduł | Bloker | Klasa | WP |
 |---|---|---|---|
-| M20 | cross-org IDOR na 4 ścieżkach (record-templates / form-submissions / row-policies / governed-models) — raw DB bez org-guard | **P0 security** | `M20-tabele-studio.md` |
-| M05 | conflict-handler silent overwrite (409→podbicie baseVersion bez merge) + brak migracji `my_idea_map_snapshots` (wieczne 503) | **P0 struct** | `M05-ideas-zarzadzanie.md` |
-| M07 | V8 mirror ID mismatch (serwer UUID ≠ klient) → DELETE/GET martwe | **P0 struct** | `M07-ideas-process-flow.md` |
-| M09 | per-user dokument → multiplayer strukturalnie niemożliwy (2. uczestnik 404) | **P0 struct** | `M09-ideas-whiteboard.md` |
-| M18 | wersje/komentarze/approvals = fasada in-memory (`Map`) → data-loss po restarcie | **P1 data-loss** | `M18-dokumenty.md` |
-| M23 | `/api/competency/*` bez auth; `/organization-data/export` bez role-gate; Goals/Strategy w localStorage | **3×P1** | `M23-organizacja.md` |
-| M06 | WS collab bez org-scope verify (Org B wchodzi do pokoju Org A po UUID) | **P1 security** | `M06-ideas-mind-map.md` |
-| M10 | **PROD P0**: nagranie głosowe transkrybuje na ekranie, nie zapisuje (VTS wave 2 żywy) | **P0 prod** | `M10-wywiad.md` |
-| M22 | `_actionDecisionRoutes` (1188 l. governance) importowane, nigdy nie mountowane | **P1 dead** | `M22-ai-os.md` |
+| M07 | V8 mirror ID mismatch (serwer UUID ≠ klient) → DELETE/GET martwe; decyzja: napraw kontrakt vs wytnij | **P0 struct** | `M07-ideas-process-flow.md` |
+| M09 | per-user dokument (`my_idea_maps` keyed user) → multiplayer niemożliwy (2. uczestnik 404); brak commitu | **P0 struct** | `M09-ideas-whiteboard.md` |
+| M10 | **PROD P0**: głos w wywiadzie nie zapisuje (VTS żywy); FE-fix niezacommitowany + server STT do weryfikacji | **P0 prod** | `M10-wywiad.md` |
+
+### 2b. DO WERYFIKACJI ŻYWEJ (kod naprawiony — potwierdzić apply/runtime)
+| Moduł | Stan | WP |
+|---|---|---|
+| M05 | conflict-handler naprawiony (`0b81310448`); migracja `my_idea_map_snapshots` — plik istnieje, **apply na prod (centerbeam ~2026-05-18) niepewny** → cold-start verify | `M05-ideas-zarzadzanie.md` |
+| M06 | WS org-scope naprawiony w gateway (`ideaCollabWs.gateway.ts:237`); potwierdzić translację placeholderów `?`→PG w runtime | `M06-ideas-mind-map.md` |
+| M20 | cross-org IDOR (4 ścieżki) **NAPRAWIONE `e9c6cb9c0a`** (ancestor HEAD) → zostaje tylko **test regresji** cross-org | `M20-tabele-studio.md` |
+
+### 2c. ZDJĘTE z blokerów (R3 — naprawione/STALE, dowód w teczkach)
+- **M18** „data-loss in-memory" → **STALE**: migracja `776` + write-through DAO (`document_version_snapshots`/`document_comments`) istnieją; `Map`=cache. Zostaje cold-start proof 6/8 warstw.
+- **M23** „3×P1" → **NAPRAWIONE**: competency `verifyToken+requireRole`, export `requireRole`, Goals backend per-org (`organization-context-store`).
+- **M22** „`_actionDecisionRoutes` martwy/niemountowany" → **USUNIĘTY** (0 wystąpień w `Gateway.ts`; karta podwójnie nieaktualna).
+- **M19** „override bez roli" → **STALE**: `presentations.routes.ts:1465` role-gated (`['ADMIN','OWNER','SUPERADMIN']`).
+- **M21** „dead-path `notebook_entries`" → nieścisłe: INSERT do `notebook_pages` (istnieje, mig. `20260306`); zostaje cold-start proof.
 
 ---
 

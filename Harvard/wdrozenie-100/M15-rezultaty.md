@@ -1,57 +1,108 @@
-# WP M15 — Rezultaty (Results / Benefits Realization) · dokończenie do 100%
+# TECZKA M15 — Rezultaty (Results / Benefits Realization)
 
-**Pula:** beta · **Karta:** `Harvard/modules/M15-rezultaty/KARTA_AUDYTU.md` (ocena 54/100) · **Rozmiar:** M (1–3 dni) · **Żywy bloker:** brak (oba P0 — cross-org time-series + x-kpi-role — NAPRAWIONE `91c8245559`)
-**Faza programu:** FAZA 2 (kliencki: VTS/Apator/Elkomtech) · **Master:** `Harvard/wdrozenie-100/MASTER.md`
+> Teczka = **cienki indeks + reconciliation**, NIE duplikat. Linkuje istniejące (karta audytu + kod) i dokłada brakujące ogniwa (Rejestr Wejść · Rejestr Decyzji · DoD z liczbami · weryfikacja staleności obu P0 `91c8245559`). Wzór: [`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md) · format: [`M13-inicjatywy.md`](M13-inicjatywy.md). **M15 → brak uwag żywych** (dziedziczy z karty).
 
-## 1. Stan obecny (jednym akapitem)
-Moduł funkcjonalnie solidny — KPI (4 tryby: overview/queue/catalog/scorecards + time-series + signal sheet) i ROI (portfolio summary, ROI Analysis) to **realne obliczenia z realnych tabel** (`v8_kpi_definitions`, `kpi_time_series`, `v8_roi_realization_entries`, `kpi_financial_mappings` — AVG/COUNT/NPV/payback, bez fasady `new Map()`), Reports 5 trybów z **approval-gatingiem egzekwowanym serwerowo** (`resultsEnterpriseService.ts:796`, pokryty testem `results-finalization-guard`), a showcase/demo-data to **wzorcowo bezpieczny mechanizm** (`shouldUseResultsShowcaseData()` = wyłącznie jawny toggle, „NEVER auto-activate”, podstawia tylko gdy realne PUSTE, chip „Showcase data — local”). **i18n najzdrowszy w audycie** (134× `t()`, 0× `isPolish`, 0 hex). **Oba P0 NAPRAWIONE** (`91c8245559`): cross-org KPI write (`UPDATE` z `AND organization_id`) i RBAC bypass `x-kpi-role` (header usunięty, rola z JWT). Sufit 54/100: Fazy 3+4 + 5 mocków-drift + degraded banner V8→legacy NIE renderowany (cicha pustka).
+## 00 · Nagłówek
+- **Moduł:** M15 Rezultaty (Results / Benefits Realization) · **Pula:** beta (kliencki: VTS/Apator/Elkomtech) · **Faza:** FAZA 2
+- **Ocena audytu:** 54/100 · **Tier:** Alpha · **Rozmiar:** M (1–3 dni)
+- **Żywy bloker:** brak — **oba P0 (cross-org time-series + RBAC bypass `x-kpi-role`) NAPRAWIONE** (`91c8245559`)
+- **Właściciel:** Piotr · **Daty:** karta 2026-06-XX · teczka 2026-06-13
+- **Karta:** `Harvard/modules/M15-rezultaty/KARTA_AUDYTU.md`
+- **Kod:** `src/components/Results/` (`ResultsHub`, `KpisTableV3`, `ResultsGridView`) · `server/src/services/resultsEnterpriseService.ts` · `kpiRuntime.ts` · tabele `v8_kpi_definitions`, `kpi_time_series`, `v8_roi_realization_entries`, `kpi_financial_mappings`
 
-## 2. Luki do DoD
+## MAPA POKRYCIA
+| Warstwa | Stan | Źródło (istnieje) | Co dokłada teczka |
+|---|---|---|---|
+| A Intencja | 🟢 | karta werdykt | job-to-be-done + zakres |
+| B UX docelowe | 🟢 | karta §5 (KPI 4 tryby) | degraded banner (wzorzec M16) |
+| C Dane+API+reguły | 🟢 | karta §1e/§1f + serwisy | skrót obliczeń + org-scope |
+| D AI/Teresa | 🟢 | karta §1 (obliczenia, nie generacja) | granica AI |
+| E Integracje | 🟢 | karta §1g | sync-to-results dead-end (M20) |
+| F Epiki | 🟢 | poprzedni WP §3 | przeformułowane |
+| G DoD/jakość | 🟢 | karta §0/§2 | **liczby grep (najzdrowszy i18n)** |
+| H Governance | 🟢 (dołożone) | karta §1/§6 | **Rejestr Wejść + Decyzji + R3 (`91c8245559`)** |
 
-### (a) FRONTEND / UX (FAZA 2)
-- **[P2] degraded banner V8→legacy NIE renderowany** — `kpiRuntime.ts:39-74` cicho schodzi na `/api/benefits/*` (`source:'legacy'`), ale `'legacy'` nigdzie nie pokazany (chip tylko `'showcase'`); jedyny ślad `console.warn`. Cicha pustka jak M13/M14. Fix: renderować baner `source:'legacy'` (wzorzec M16 `FinanceDegradedBanner`).
-- **[P3] `ResultsGridView` (`ResultsKPITable`) raw `<table>`** bez `TableWithPreviewLayout` — dopuszczalne (główny katalog to `KpisTableV3`), świadoma decyzja lub §27.
+---
 
-### (b) BACKEND / API (FAZA 2)
-- Oba P0 NAPRAWIONE (`91c8245559`): time-series UPDATE org-scoped; `x-kpi-role` usunięty, rola z JWT. **WZORZEC SYSTEMOWY:** autoryzacja sterowana nagłówkiem klienta — sprawdzić w innych v8-routerach.
-- **[P2] SEC-6 connector IRIS plaintext** — `mes_api_token`/Authorization plaintext JSON w `mcp_providers.config` (`mcp.routes.ts:91`); `GET /api/mcp/providers` (tylko `verifyToken`, nie admin) zwraca `config` non-adminom. Fix: szyfrowanie + ograniczyć endpoint do admina.
-- **[P2] SEC-8 beta-lock tylko nawigacyjny** — `/benefits` (`AppRoutes.tsx:2136`) tylko `ProductionModuleGate`, bez beta-guarda; direct URL omija. Fix: beta-guard na route.
-- **[P3] SEC-3** INSERT/UPSERT deviation/roi bez weryfikacji własności rodzica (data-pollution własnej org).
+## A · INTENCJA
+- **Job-to-be-done:** zmierzyć i rozliczyć WARTOŚĆ wdrożeń — KPI (definicje, time-series, scorecards) i ROI (realization, NPV/payback), z raportami i bramką zatwierdzania.
+- **Persony/role:** KPI owner (rola z JWT, nie nagłówek!), konsultant, klient (read scorecards), admin. Approval-gating egzekwowany serwerowo.
+- **Zakres v1:** KPI 4 tryby (overview/queue/catalog/scorecards) + time-series + signal sheet · ROI (portfolio summary, ROI Analysis) · Reports 5 trybów + cron + approval gating · showcase/demo-data (jawny toggle). **POZA v1:** automatyczne wnioskowanie benefitów z surowych danych operacyjnych.
+- **Metryka:** % inicjatyw z mierzalnym KPI→ROI; zgodność liczb po reload.
 
-### (c) INTEGRACJA / TESTY (FAZA 2 + 4)
-- **[INTEGRACJA] sync-to-results dead-end** — `publish-to-results` (`table-platform.routes.ts:3413`, z M20) pisze tylko do `tp_module_sync_results`; **żaden moduł Results tego nie czyta** (0 trafień). Decyzja: wpiąć odbiór lub oznaczyć „preview”. Koordynacja z WP M20.
-- **[MARTWY] `BenefitsRealizationView`/`BenefitsHub.tsx`** (8 zakładek) — lazy-import (`AppRoutes:115`), nigdy w JSX; `/benefits` renderuje `ResultsHub`. 0 ścieżek renderu. Wytnij.
-- **[P0 testowy] 5 FAIL (test-drift, nie bugi)** — 4× stale-mock `resolveReconciliation` (serwis dodał `notificationService.send :56`, test nie mockuje); 1× stale-assertion `getResultsKpiCatalog` (mapping +6 pól → `toMatchObject`). Naprawić.
-- **[P0 testowy] szczelność showcase demo=ON** — brak testu że przy demo=ON showcase NIE przecieka do realnych zapisów `/api/v8/results/*` (B3). Dodać.
-- **[P1 testowy]** fallback V8-OFF (S7) i cron (S3) nietestowane.
-- CI: `test-suite.yml` tylko `[main,develop]`; testy M15 (`src/components/Results/__tests__/`, `server/**/__tests__/`) poza shardami → PR-gate ≈ 0 (sweep FAZA 4).
+## B · UX DOCELOWE
+Stan obecny + §27: karta §5. KPI/ROI = **realne obliczenia z realnych tabel** (AVG/COUNT/NPV/payback, bez fasady `new Map()`). Showcase = **wzorcowo bezpieczny** (`shouldUseResultsShowcaseData()` = wyłącznie jawny toggle, „NEVER auto-activate", podstawia tylko gdy realne PUSTE, chip „Showcase data — local").
+- **Delta docelowa:** degraded banner V8→legacy **NIE renderowany** (`kpiRuntime.ts:39-74` cicho schodzi na `/api/benefits/*`, `source:'legacy'` nigdzie nie pokazany; chip tylko `'showcase'`; jedyny ślad `console.warn`) — cicha pustka jak M13/M14. Fix: renderować baner `source:'legacy'` (wzorzec M16 `FinanceDegradedBanner`) (L-01).
 
-## 3. Kroki realizacji
-1. **(FAZA 2)** Degraded banner V8→legacy — renderować `source:'legacy'` (wzorzec `FinanceDegradedBanner` M16) zamiast cichej pustki.
-2. **(FAZA 2)** Szyfrowanie connector IRIS secrets + ograniczyć `GET /api/mcp/providers` do admina (nie zwracać `config` non-adminom); beta-guard na `/benefits`.
-3. **(FAZA 2)** Decyzja sync-to-results (M20 dead-end) — wpiąć odbiór KPI z Tabel lub oznaczyć „preview” + jasny komunikat. Koordynacja z WP M20.
-4. **(FAZA 3 jakość)** Wytnij martwy `BenefitsHub`/`BenefitsRealizationView`; §27 `ResultsGridView` (lub świadomie zostaw); SEC-3 weryfikacja własności rodzica przy UPSERT deviation/roi.
-5. **(testy)** Naprawa 5 FAIL (mocki `notificationService`, `toMatchObject`); B3 szczelność showcase demo=ON; B4 fallback V8-OFF; B5 cron.
-6. **(FAZA 4)** Żywe 7 scenariuszy (S6 showcase chip „local”, S7 degradacja czy baner widoczny, P0 x-kpi-role spoof curl viewer→403, P0 time-series cross-org read-only proof). **(FAZA 3-Railway)** migracje `v8_kpi_*`/`roi_*` + smoke (OSTROŻNIE z zapisem KPI — dev `.env` może wskazywać PROD).
+## C · DANE + API + REGUŁY
+- **Wiring/flagi:** karta §1e/§1f. Tabele realne: `v8_kpi_definitions`, `kpi_time_series`, `v8_roi_realization_entries`, `kpi_financial_mappings`.
+- **Org-scope / P0 NAPRAWIONE (`91c8245559`):** time-series UPDATE org-scoped (`AND organization_id`); `x-kpi-role` nagłówek USUNIĘTY, rola z JWT. **WZORZEC SYSTEMOWY:** autoryzacja sterowana nagłówkiem klienta — audyt innych v8-routerów.
+- **Reguły:** approval-gating Reports egzekwowany serwerowo (`resultsEnterpriseService.ts:796`, pokryty `results-finalization-guard`).
 
-## 4. DoD (6 kryteriów — bramka 6/6)
-1. **Front↔back:** KPI/ROI/Reports na realnych danych trwałe po reload; degraded banner widoczny przy V8-OFF (nie cicha pustka); sync-to-results wpięty lub jasno oznaczony „preview”; zero martwego `BenefitsHub`.
-2. **Bezpieczeństwo:** oba P0 zamknięte (cross-org time-series + x-kpi-role, `91c8245559`) z testem; connector secrets szyfrowane + admin-only; beta-guard na route.
-3. **i18n:** już najzdrowszy (134× `t()`, 0× `isPolish`) — utrzymać.
-4. **Tokeny:** już 0 hex — utrzymać.
-5. **§27:** KPI Catalog (`KpisTableV3`) + Reports zgodne (już); `ResultsGridView` świadoma decyzja.
-6. **E2E w PR-gate:** IDOR + RBAC + szczelność showcale demo=ON + naprawa 5 FAIL zielone na `Londyn`.
+## D · AI / TERESA
+- **Granica:** M15 to **obliczenia**, nie generacja LLM — Teresa nie „wymyśla" KPI; karmienie KPI/ROI z M13/M16 przez kontrakt. (Brak dedykowanego AI-fill w tym module.)
 
-## 5. Weryfikacja
-- KPI/ROI: catalog → time-series → reload → trwałe.
-- V8-OFF (S7): degradacja pokazuje baner `source:'legacy'`, nie cisza.
-- Showcase (S6): chip „Showcase data — local” widoczny; przy demo=ON brak wycieku do realnych zapisów (test B3).
-- P0 x-kpi-role: `curl` z `x-kpi-role: kpi_owner` na koncie viewer → 403 na delete/create.
-- P0 time-series: cross-org KPI write → 403/404; KPI org B niezmienione (read-only proof).
-- Uwaga DB: dev `.env` może wskazywać Railway PROD — ostrożność z zapisem KPI.
+## E · INTEGRACJE
+Pełna tabela: karta §1g. **←** M13 Inicjatywy (tracked + KPI), M16 Finanse (ROI/economics). **sync-to-results dead-end:** `publish-to-results` (`table-platform.routes.ts:3413`, z M20) pisze tylko do `tp_module_sync_results`; **żaden moduł Results tego nie czyta** (0 trafień) — decyzja: wpiąć odbiór lub „preview" (L-05, wspólne z M20).
 
-## 6. Zależności
-- **sync-to-results dead-end** dotyka M20 (`publish-to-results` pisze log, Results nie czyta) — decyzja wspólna z WP M20 (preview vs realny odbiór).
-- WEJŚCIA ← M13 Inicjatywy (tracked + KPI), M16 Finanse (ROI/economics) — bez zmiany kontraktu.
-- **WZORZEC SYSTEMOWY** `x-kpi-role`: autoryzacja z nagłówka klienta — audyt innych v8-routerów (cross-module).
-- CI PR-gate dla `Londyn` + shardy obejmujące Results testy — systemowe (FAZA 4).
+## F · EPIKI *(z poprzedniego WP §3)*
+- **EPIK 1 — Widoczność degradacji:** renderować baner `source:'legacy'` zamiast cichej pustki (L-01).
+- **EPIK 2 — Bezpieczeństwo:** szyfrowanie connector IRIS secrets + admin-only `GET /api/mcp/providers` (L-02); beta-guard `/benefits` (L-03); SEC-3 weryfikacja własności rodzica przy UPSERT (L-04).
+- **EPIK 3 — Integracja M20:** decyzja sync-to-results (L-05).
+- **EPIK 4 — Szlif:** wytnij martwy `BenefitsHub`/`BenefitsRealizationView` (L-06); §27 `ResultsGridView` (świadoma decyzja) (L-07).
+- **EPIK 5 — Testy:** naprawa 5 FAIL drift (L-08); B3 szczelność showcase demo=ON (L-09); B4 fallback V8-OFF; B5 cron (L-10).
+
+## G · JAKOŚĆ / DoD *(skwantyfikowane — grep 2026-06-13)*
+| # | Kryterium | Miara M15 |
+|---|-----------|-----------|
+| 1 | Front↔back | KPI/ROI/Reports na realnych danych trwałe po reload; degraded banner widoczny przy V8-OFF; sync-to-results wpięty lub „preview"; 0 martwego `BenefitsHub` |
+| 2 | Bezpieczeństwo | oba P0 zamknięte (`91c8245559`, z testem); connector secrets szyfrowane + admin-only; beta-guard na route |
+| 3 | i18n | **0** `isPolish`/`i18n.language==='pl'` — **najzdrowszy w audycie** (134× `t()`); utrzymać |
+| 4 | Tokeny | **0** hex — utrzymać |
+| 5 | §27 | **7** surowych `<table>` — KPI Catalog (`KpisTableV3`)+Reports zgodne; `ResultsGridView`/`ResultsKPITable` raw (świadoma decyzja lub §27) |
+| 6 | E2E w PR-gate | IDOR + RBAC (`x-kpi-role` spoof→403) + szczelność showcase demo=ON + naprawa 5 FAIL zielone na `Londyn` |
+
+Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6.
+
+## H · GOVERNANCE *(dołożone ogniwa)*
+
+### 01 · Rejestr wejść (R1)
+| ID | Źródło | Data | Treść (1 zd.) | → Luka |
+|----|--------|------|----------------|--------|
+| W-01 | Karta audytu §1–§7 | karta | wiring/sec/plan | L-01..L-10 |
+| W-02 | **Uwagi żywe** | 2026-06-13 | **brak uwag żywych dla M15** (dziedziczy z karty) | — |
+| W-03 | Commit `91c8245559` (Sprint1 W1/W2/W3) | — | oba P0 (cross-org time-series + `x-kpi-role`) naprawione | L-11,L-12 (naprawione) |
+| W-04 | Feedback prod (VTS/Apator/Elkomtech kliencki) | — | KPI/ROI używane produkcyjnie | A (metryka) |
+
+### 02 · Stan obecny (prawda kodu) — karta §1. KPI/ROI realne obliczenia (bez fasady). Approval-gating serwerowy. Showcase wzorcowo bezpieczny. i18n najzdrowszy (0× `isPolish`). Oba P0 naprawione.
+
+### 03 · Rejestr luk (= docelowy − obecny)
+| ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
+|----|------|---------|--------------------|-------|------|--------|---------|
+| L-01 | degraded banner V8→legacy NIE renderowany (cicha pustka) | W-01 | `kpiRuntime.ts:39-74` | P2 | 2 | otwarta | — |
+| L-02 | connector IRIS plaintext + `GET /api/mcp/providers` non-admin zwraca `config` | W-01 | `mcp.routes.ts:91` | P2 | 2 | otwarta | — |
+| L-03 | beta-lock tylko nawigacyjny (`/benefits` direct URL omija) | W-01 | `AppRoutes.tsx:2136` | P2 | 2 | otwarta | — |
+| L-04 | SEC-3 INSERT/UPSERT deviation/roi bez weryfikacji własności rodzica | W-01 | UPSERT deviation/roi | P3 | 2 | otwarta | — |
+| L-05 | sync-to-results dead-end (M20 pisze log, Results nie czyta) | W-01 | `table-platform.routes.ts:3413` (0 odbiorców) | INTEGRACJA | 2 | **D-01** (wspólne M20) | — |
+| L-06 | martwy `BenefitsHub.tsx`/`BenefitsRealizationView` (0 ścieżek renderu) | W-01 | `AppRoutes:115` lazy, nigdy w JSX | MARTWY | 3 | otwarta | — |
+| L-07 | `ResultsGridView` raw `<table>` bez `TableWithPreviewLayout` | W-01 | grep 7× `<table>` | P3 | 3/4 | **D-02** | 2026-06-13 |
+| L-08 | 5 FAIL test-drift (mock `resolveReconciliation`+`toMatchObject`) | W-01 | testy Results | P0-test | — | otwarta | — |
+| L-09 | brak testu szczelności showcase demo=ON | W-01 | brak B3 | P0-test | — | otwarta | — |
+| L-10 | fallback V8-OFF (S7) + cron (S3) nietestowane | W-01 | brak B4/B5 | P1-test | — | otwarta | — |
+| L-11 | cross-org KPI time-series write | W-01,W-03 | UPDATE bez `organization_id` (przed fix) | P0 | — | **NAPRAWIONA `91c8245559` (R3: commit zweryfikowany w git; read-only proof cross-org)** | 2026-06-13 |
+| L-12 | RBAC bypass `x-kpi-role` (header spoof) | W-01,W-03 | nagłówek `x-kpi-role` (usunięty) | P0 | — | **NAPRAWIONA `91c8245559` (R3: commit zweryfikowany; rola z JWT; curl viewer→403)** | 2026-06-13 |
+
+### 04 · Rejestr decyzji (R5)
+| ID | Pytanie | Opcje | Właściciel | Termin | Status |
+|----|---------|-------|------------|--------|--------|
+| D-01 | sync-to-results (M20 dead-end): realny odbiór KPI z Tabel czy „preview"? | realny odbiór / preview+komunikat | Piotr | TBD (wspólne z M20) | otwarta |
+| D-02 | `ResultsGridView` raw `<table>`: zostawić świadomie czy §27? | zostaw / `TableWithPreviewLayout` | Piotr | TBD | otwarta |
+
+### 05 · Flagi/rollout — V8 Results (env, degraduje→legacy `/api/benefits/*`); showcase (jawny toggle); beta core. `/benefits` tylko `ProductionModuleGate` (beta-guard = L-03).
+### 06 · Ryzyka — **WZORZEC SYSTEMOWY** `x-kpi-role` (autoryzacja z nagłówka klienta) → audyt innych v8-routerów cross-module. Zapis KPI na PROD ostrożnie (dev `.env` może wskazywać PROD). sync-to-results wspólne z M20.
+### 07 · Log — 2026-06-13: teczka; **R3: `91c8245559` zweryfikowany w git log** (oba P0 naprawione — cross-org time-series + `x-kpi-role`). i18n najzdrowszy (grep 0× isPolish, 0 hex). Re-ocena po Fazie 2/4.
+
+---
+
+## Bramka teczki: 9/9 dokumentacyjnie ✅
+R1 wejścia pełne (karta+commit+feedback; brak uwag żywych = jawnie odnotowane) · R2 zero sierot · R3 statusy z dowodem (**L-11/L-12 `91c8245559` zweryfikowany w historii git**) · R4 DoD z liczbami (isPolish 0, hex 0, table 7) · R5 decyzje z właścicielem · A–E docelowy zlinkowany · F epiki↔luki · G DoD+S+sec · R6 sesja żywa = read-only proof cross-org + showcase szczelność (Faza 4). **Teczka kompletna do egzekucji.**
