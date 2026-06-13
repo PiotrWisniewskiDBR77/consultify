@@ -151,6 +151,7 @@
  */
 
 import { type Request, type Response, Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
@@ -4188,6 +4189,16 @@ router.post(
 
 export const documentShareLinkPublicRoutes = Router();
 
+const publicShareLinkLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests', code: 'RATE_LIMITED' },
+});
+
+documentShareLinkPublicRoutes.use(publicShareLinkLimiter);
+
 documentShareLinkPublicRoutes.post(
   '/share-links/resolve',
   asyncHandler(async (req: Request, res: Response) => {
@@ -4205,7 +4216,8 @@ documentShareLinkPublicRoutes.post(
       res.status(404).json({ error: 'share_link_invalid_or_expired' });
       return;
     }
-    res.json({ resolved: result });
+    const { organizationId: _orgId, ...publicResult } = result;
+    res.json({ resolved: publicResult });
   })
 );
 
