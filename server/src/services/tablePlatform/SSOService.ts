@@ -10,6 +10,7 @@ import crypto from 'crypto';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import { decryptSecret, encryptSecret } from '../../utils/secretEncryption.js';
 
 export interface SAMLConfig {
   entityId: string;
@@ -43,26 +44,28 @@ export interface SSOConfigRow {
 export class SSOService {
   async configureSAML(organizationId: string, config: SAMLConfig): Promise<SSOConfigRow> {
     const db = getDatabase();
+    const stored = { ...config, certificate: encryptSecret(config.certificate) };
     const result = await db.query(
       `INSERT INTO tp_sso_configs (organization_id, provider, config)
        VALUES ($1, 'saml', $2)
        ON CONFLICT (organization_id) DO UPDATE SET config = $2, provider = 'saml', updated_at = NOW()
        RETURNING *`,
-      [organizationId, JSON.stringify(config)]
+      [organizationId, JSON.stringify(stored)]
     );
-    return result.rows[0] as SSOConfigRow;
+    return this.decryptRow(result.rows[0] as SSOConfigRow);
   }
 
   async configureOIDC(organizationId: string, config: OIDCConfig): Promise<SSOConfigRow> {
     const db = getDatabase();
+    const stored = { ...config, clientSecret: encryptSecret(config.clientSecret) };
     const result = await db.query(
       `INSERT INTO tp_sso_configs (organization_id, provider, config)
        VALUES ($1, 'oidc', $2)
        ON CONFLICT (organization_id) DO UPDATE SET config = $2, provider = 'oidc', updated_at = NOW()
        RETURNING *`,
-      [organizationId, JSON.stringify(config)]
+      [organizationId, JSON.stringify(stored)]
     );
-    return result.rows[0] as SSOConfigRow;
+    return this.decryptRow(result.rows[0] as SSOConfigRow);
   }
 
   async getSSOConfig(organizationId: string): Promise<SSOConfigRow | null> {
@@ -70,7 +73,19 @@ export class SSOService {
     const result = await db.query('SELECT * FROM tp_sso_configs WHERE organization_id = $1', [
       organizationId,
     ]);
-    return (result.rows[0] as SSOConfigRow | undefined) || null;
+    const row = result.rows[0] as SSOConfigRow | undefined;
+    return row ? this.decryptRow(row) : null;
+  }
+
+  private decryptRow(row: SSOConfigRow): SSOConfigRow {
+    const config = row.config as any;
+    if (row.provider === 'saml' && config?.certificate) {
+      return { ...row, config: { ...config, certificate: decryptSecret(config.certificate) } };
+    }
+    if (row.provider === 'oidc' && config?.clientSecret) {
+      return { ...row, config: { ...config, clientSecret: decryptSecret(config.clientSecret) } };
+    }
+    return row;
   }
 
   async toggleSSO(organizationId: string, enabled: boolean): Promise<void> {

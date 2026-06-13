@@ -57,6 +57,11 @@ vi.mock('@/hooks/useOpenChatWithContext', () => ({
   useOpenChatWithContext: () => vi.fn(),
 }));
 
+vi.mock('../Wizard/InitiativeWizardModal', () => ({
+  InitiativeWizardModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? React.createElement('div', { 'data-testid': 'initiative-wizard-modal' }) : null,
+}));
+
 vi.mock('@/store/useConversationStore', () => ({
   useConversationStore: () => ({}),
 }));
@@ -115,14 +120,13 @@ describe('InitiativesHub smoke', () => {
     });
   });
 
-  it('exposes the "Generate with Teresa" CTA and calls the generator API on click', async () => {
-    const { Api } = await import('@/services/api');
+  it('exposes the "AI Initiative Wizard" CTA and opens the wizard modal on click', async () => {
     renderHub();
     await waitFor(() => expect(screen.getByTestId('initiatives-hub')).toBeInTheDocument());
-    const generateBtn = await screen.findByText('Generate with Teresa');
-    fireEvent.click(generateBtn);
+    const wizardBtn = await screen.findByText('AI Initiative Wizard');
+    fireEvent.click(wizardBtn);
     await waitFor(() => {
-      expect((Api as any).generateInitiatives).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('initiative-wizard-modal')).toBeInTheDocument();
     });
   });
 });
