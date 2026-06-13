@@ -122,7 +122,7 @@ Karta wewnętrznie sprzeczna (§1c „fasada in-memory" vs re-audit „write-thr
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | trwałość: 6/8 warstw (approvals/content-blocks/brand-voice/audience/source-packs/share-links) in-memory → utrata po deployu; 3/8 (wersje/komentarze/editor-state) OK, cold-start proof do live | W-01,W-03,W-04 | DAO 0× `INSERT INTO` (nagłówki „wave5 pending") vs `…SnapshotRegistryDao.ts:103`+mig.776 | P1 | 1 | **CZĘŚCIOWO STALE** (3/8 zweryf. persystują; 6/8 nadal in-memory) | 2026-06-13 |
+| L-01 | trwałość 6/8 warstw in-memory → utrata po deployu | W-01,W-03,W-04 | mig. `780`+`781`; 6 DAO przepisane na Postgres (0 `new Map`, INSERT+UPSERT) | P1 | 1 | **NAPRAWIONA w kodzie 2026-06-13** (`953955bc2b`+`8d2b5d8cf4`; tsc czysty, eksporty 1:1) — **cold-start proof na staging pozostaje (R6)** | 2026-06-13 |
 | L-02 | S4 test mockuje DAO (nie dotyka PG) | W-01 | `evidence/f2_tests_report.md` (S4 `vi.mock`) | P0-test | 1 | otwarta |  |
 | L-03 | S6 bramka testowana na serwisie, nie route 403 | W-01 | `document-studio.routes.ts:3386,3394`, grep `qa_blocking` w testach=0 | P0-test | 1 | otwarta |  |
 | L-04 | Mode3 wymusza `useLlm:false` → placeholder | W-01 | `documentStudioService` | P2 | 2 | otwarta (**D-02**) |  |
@@ -143,7 +143,7 @@ Karta wewnętrznie sprzeczna (§1c „fasada in-memory" vs re-audit „write-thr
 
 ### 05 · Flagi / rollout — beta-closed; mount BE bez `v8FeatureGate` (zawsze ON na BE — beta-lock tylko nawigacyjny). Override QA role-gated. Migracje 776/`20260603`/769 zastosować na staging; **migracja wave5 dla 6 warstw in-memory = warunek trwałości**.
 ### 06 · Ryzyka — cold-start proof to dowód live na trwałość 3/8 warstw (kod = poszlaka mocna); 6/8 warstw (approvals/content-blocks/brand-voice/audience/source-packs/share-links) realnie in-memory → utrata po deployu DO NAPRAWY (mig.wave5); duplikat mig.776 (D-03); 889 zielonych testów MASKUJE S4 (mockują DAO → nie wykryją 6/8 in-memory); dev `.env` → Railway PROD.
-### 07 · Log — 2026-06-11: re-audit A:18→21, B:8→12 (W5 potwierdziło write-through dla wersji/komentarzy + mig.776), 54/100. 2026-06-13 (teczka pogłębiona): R3 ZAOSTRZONA grepem `INSERT INTO` per-DAO → **3/8 persystują, 5/8 in-memory** (oba ujęcia karty były zgrubne); C rozbite na per-warstwowy model + enum 96 endpointów + bramka QA `:672`; L-12 duplikat mig. dodany; F na Gherkin. Re-ocena C po migracji wave5 + S4/S6 realnych.
+### 07 · Log — 2026-06-11: re-audit A:18→21, B:8→12 (W5 potwierdziło write-through dla wersji/komentarzy + mig.776), 54/100. 2026-06-13 (teczka pogłębiona): R3 ZAOSTRZONA grepem `INSERT INTO` per-DAO → **3/8 persystują, 6/8 in-memory**; C rozbite na per-warstwowy model + enum 96 endpointów + bramka QA `:672`; L-12 duplikat mig.; F na Gherkin. **2026-06-13 (egzekucja Fazy 1): L-01 NAPRAWIONA — 6/8 warstw przepisane Map→Postgres (mig.`780` approvals + `781` 5 warstw = 10 tabel; commity `953955bc2b`+`8d2b5d8cf4`; tsc documentStudio czysty).** Pozostaje cold-start proof na staging. Re-ocena C/D po cold-start + S4/S6 realnych.
 
 ---
 

@@ -53,7 +53,7 @@ Bramka modułu = 6/6. Bramka programu = wszystkie 27 modułów na 6/6 + smoke pr
 | M20 | cross-org IDOR (4 ścieżki) **NAPRAWIONE `e9c6cb9c0a`** (ancestor HEAD) → zostaje tylko **test regresji** cross-org | `M20-tabele-studio.md` |
 
 ### 2c. ZDJĘTE z blokerów (R3 — naprawione/STALE, dowód w teczkach)
-- **M18** „data-loss in-memory" → **CZĘŚCIOWO ŻYWE (korekta po pogłębieniu)**: 3/8 warstw persystują (wersje+komentarze mig.`776`, editor-state `20260603`, szablony `769`), ale **6/8 NADAL in-memory** (approvals/content-blocks/brand-voice/audience/source-packs/share-links — nagłówki DAO „in-memory until wave5") → realna utrata po deployu. **P1 data-loss POZOSTAJE na 6 warstwach** (Faza 1). Dowód w `M18-dokumenty.md`.
+- **M18** „data-loss in-memory" → **NAPRAWIONE w kodzie (2026-06-13, ten program)**: 6/8 warstw przepisanych z Map na Postgres write-through — migracje `780` (approvals) + `781` (content-blocks/brand-voice/audience/source-packs/share-links, 10 tabel). Wszystkie 6 DAO: 0 `new Map`, INSERT+UPSERT, org-scope, eksporty 1:1 (swap mechaniczny, serwisy bez zmian), tsc documentStudio czysty. **Pozostaje cold-start proof na staging** (R6/Faza 4). Commity `953955bc2b`+`8d2b5d8cf4`.
 - **M23** „3×P1" → **NAPRAWIONE**: competency `verifyToken+requireRole`, export `requireRole`, Goals backend per-org (`organization-context-store`).
 - **M22** „`_actionDecisionRoutes` martwy/niemountowany" → **USUNIĘTY** (0 wystąpień w `Gateway.ts`; karta podwójnie nieaktualna).
 - **M19** „override bez roli" → **STALE**: `presentations.routes.ts:1465` role-gated (`['ADMIN','OWNER','SUPERADMIN']`).
