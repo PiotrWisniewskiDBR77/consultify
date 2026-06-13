@@ -245,12 +245,17 @@ router.post(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    res.status(201).json(
-      await initiativeGovernanceService.createGovernanceGate(id.orgId, {
-        ...p.data,
-        initiativeId: req.params.initiativeId,
-      })
-    );
+    try {
+      res.status(201).json(
+        await initiativeGovernanceService.createGovernanceGate(id.orgId, {
+          ...p.data,
+          initiativeId: req.params.initiativeId,
+        })
+      );
+    } catch (err: any) {
+      const status = err?.status || 400;
+      res.status(status).json({ error: err?.message || 'Failed to create gate' });
+    }
   })
 );
 

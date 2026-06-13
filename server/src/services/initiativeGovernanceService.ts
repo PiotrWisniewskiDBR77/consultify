@@ -451,6 +451,12 @@ class InitiativeGovernanceService {
       requiredApprovers?: string[];
     }
   ) {
+    const owner = await queryHelpers.queryFirst<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = $1 AND organization_id = $2`,
+      [data.initiativeId, orgId]
+    );
+    if (!owner) throw Object.assign(new Error('initiative_not_found'), { status: 404 });
+
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO initiative_governance_gates (id, organization_id, initiative_id, gate_type, gate_name, required_decisions, required_raid_status, required_approvers)

@@ -60,7 +60,7 @@ async function tryGetColumns(table: string): Promise<Set<string>> {
 router.get(
   '/providers',
   verifyToken,
-  isAuthenticated,
+  verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const cols = await tryGetColumns('mcp_providers');

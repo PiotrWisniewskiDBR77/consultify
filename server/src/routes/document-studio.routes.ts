@@ -601,9 +601,13 @@ router.get(
 router.post(
   '/templates/:templateId/approve',
   asyncHandler(async (req: Request, res: Response) => {
-    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
     if (!userId || !organizationId) {
       res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (!['admin', 'owner', 'superadmin'].includes(userRole.toLowerCase())) {
+      res.status(403).json({ error: 'Admin or owner role required to approve templates' });
       return;
     }
     const templateId = String(req.params.templateId || '');
@@ -627,9 +631,13 @@ router.post(
 router.post(
   '/templates/:templateId/deprecate',
   asyncHandler(async (req: Request, res: Response) => {
-    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
     if (!userId || !organizationId) {
       res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (!['admin', 'owner', 'superadmin'].includes(userRole.toLowerCase())) {
+      res.status(403).json({ error: 'Admin or owner role required to deprecate templates' });
       return;
     }
     const templateId = String(req.params.templateId || '');
