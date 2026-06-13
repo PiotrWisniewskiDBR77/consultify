@@ -4197,10 +4197,9 @@ const publicShareLinkLimiter = rateLimit({
   message: { error: 'Too many requests', code: 'RATE_LIMITED' },
 });
 
-documentShareLinkPublicRoutes.use(publicShareLinkLimiter);
-
 documentShareLinkPublicRoutes.post(
   '/share-links/resolve',
+  publicShareLinkLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const token = typeof req.body?.token === 'string' ? req.body.token : '';
     const consumerFingerprint =
@@ -4223,6 +4222,7 @@ documentShareLinkPublicRoutes.post(
 
 documentShareLinkPublicRoutes.post(
   '/share-links/edit-session',
+  publicShareLinkLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const token = typeof req.body?.token === 'string' ? req.body.token : '';
     const consumerFingerprint =
@@ -4251,6 +4251,7 @@ documentShareLinkPublicRoutes.post(
 
 documentShareLinkPublicRoutes.post(
   '/share-links/comments',
+  publicShareLinkLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const token = typeof req.body?.token === 'string' ? req.body.token : '';
     const editSessionToken =
@@ -4305,6 +4306,7 @@ documentShareLinkPublicRoutes.post(
 
 documentShareLinkPublicRoutes.post(
   '/share-links/comments/:commentId/reply',
+  publicShareLinkLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const token = typeof req.body?.token === 'string' ? req.body.token : '';
     const editSessionToken =

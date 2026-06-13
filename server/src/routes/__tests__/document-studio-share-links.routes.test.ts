@@ -272,10 +272,10 @@ describe('POST /api/document-studio/share-links/resolve — public consume', () 
     expect(res.status).toBe(200);
     expect(res.body.resolved).toMatchObject({
       artifactId: ARTIFACT,
-      organizationId: ORG,
       accessScope: 'comment',
       consumeCount: 1,
     });
+    expect(res.body.resolved.organizationId).toBeUndefined();
   });
 
   it('returns 400 when token is missing', async () => {
