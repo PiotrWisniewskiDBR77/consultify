@@ -8980,6 +8980,13 @@ router.post(
     if (!identity) return;
 
     const ideaId = String(req.params.id);
+    const { get: dbGet } = await import('../utils/DbPromise.js');
+    const ideaRow = await dbGet<{ id: string }>(
+      'SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?',
+      [ideaId, identity.orgId]
+    );
+    if (!ideaRow) return res.status(404).json({ error: 'Idea not found' });
+
     const channelId = `idea-table-${ideaId}`;
     const { userId, userName, color, activeCell, timestamp } = req.body || {};
 
@@ -9012,6 +9019,13 @@ router.get(
     if (!identity) return;
 
     const ideaId = String(req.params.id);
+    const { get: dbGet } = await import('../utils/DbPromise.js');
+    const ideaRow = await dbGet<{ id: string }>(
+      'SELECT id FROM my_ideas WHERE id = ? AND organization_id = ?',
+      [ideaId, identity.orgId]
+    );
+    if (!ideaRow) return res.status(404).json({ users: [] });
+
     const channelId = `idea-table-${ideaId}`;
 
     try {
