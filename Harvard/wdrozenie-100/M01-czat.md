@@ -1,89 +1,132 @@
-# TECZKA M01 — Czat (Teresa) · pełna teczka reuse-first
+# TECZKA M01 — Czat (Teresa) · pełna teczka reuse-first (pogłębiona do M13-level)
 
-> Teczka = **cienki indeks + reconciliation**, NIE duplikat. Linkuje istniejące (karta audytu §1–§7 + evidence) i dokłada brakujące ogniwa (Rejestr Wejść z uwagami żywymi #2/#3/#4 · Rejestr Decyzji · DoD z liczbami). Wzór: [`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md) · referencja: [`M13-inicjatywy.md`](M13-inicjatywy.md).
+> Teczka = **cienki indeks + reconciliation**, NIE duplikat. Linkuje istniejące (karta audytu §1–§7 + evidence) i dokłada brakujące ogniwa (Rejestr Wejść z uwagami żywymi #1/#2/#3/#4 · Rejestr Decyzji · DoD z liczbami). Wzór głębi: [`M13-inicjatywy.md`](M13-inicjatywy.md) · struktura: [`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md) · decyzje przekrojowe: [`_DECYZJE.md`](_DECYZJE.md) (DP-2 trzeci panel, DP-12 reasoning).
 
 ## 00 · Nagłówek
 - **Moduł:** M01 Czat (Teresa) · **Pula:** core (kliencki) — najbardziej dojrzały moduł aplikacji
-- **Ocena audytu:** 61/100 · **Status:** FAZA 2 (zależny od kręgosłupa FAZA 0) · **Rozmiar:** M (rdzeń) + **L** (i18n ~305 inline)
-- **Żywy bloker:** brak otwartych P0 · **3 uwagi żywe:** #2 ramka-w-ramce (P3) · #3 show reasoning (P2) · #4 język PL→EN (P1, NAPRAWIONE 2026-06-13)
-- **Właściciel:** Piotr · **Daty:** karta 2026-06-11 · teczka 2026-06-13
+- **Ocena audytu:** 61/100 · **Status:** FAZA 2 (zależny od kręgosłupa FAZA 0) · **Rozmiar:** M (rdzeń) + **L** (i18n 305 inline)
+- **Żywy bloker:** brak otwartych P0 · **3 uwagi żywe modułowe:** #2 ramka-w-ramce (P3) · #3 show reasoning (P2) · #4 język PL→EN (P1, NAPRAWIONE 2026-06-13 — R3 do weryfikacji) · **+ kręgosłup #1** (P0-program, SPEC_01)
+- **Właściciel:** Piotr · **Daty:** karta 2026-06-11 (`2d5769ea20`) · teczka 2026-06-13
 - **Karta:** `Harvard/modules/M01-czat/KARTA_AUDYTU.md` · **Evidence:** `…/evidence/f1_code_truth.md`, `f2_tests_report.md`, `f56_kanon_sec.md`
-- **Kod:** `src/components/AIChat/` (UnifiedChatPanel, EnhancedChatInput, WorkCanvasDocumentPanel, MessageRenderer) · `server/src/routes/ai.routes.ts` · `server/src/routes/conversations.routes.ts` · `server/src/services/ai/AIPipeline.ts` · `src/utils/detectMessageLanguage.ts`
+- **Kod:** `src/components/AIChat/` (UnifiedChatPanel, EnhancedChatInput, MessageRenderer, ChatHistorySidebar, ConversationList, ReasoningTrace) · `server/src/routes/ai.routes.ts` · `server/src/routes/conversations.routes.ts` · `server/src/routes/share.routes.ts` · `server/src/services/ai/AIPipeline.ts` · `server/src/services/ai/persona.ts` · `src/utils/detectMessageLanguage.ts` · `src/store/slices/chatSlice.ts`
 
 ## MAPA POKRYCIA (co już jest vs co dokłada teczka)
 | Warstwa | Stan | Źródło (istnieje) | Co dokłada teczka |
 |---|---|---|---|
-| A Intencja | 🟢 | karta werdykt + §0 (7 scenariuszy) | job-to-be-done + zakres (niżej) |
-| B UX docelowe | 🟢 | karta §5 (kanony) + §1c stany | delta composer #2 + reasoning #3 + język #4 |
-| C Dane+API+reguły | 🟢 | karta §1e (wiring) + §1f (flagi) | link + reguła języka (niżej) |
-| D AI/Teresa | 🟢 | `persona.ts` SSOT + `AIPipeline.ts` + karta §1a | delta reasoning #3 + język #4 |
-| E Integracje | 🟢 | karta §1g (tabela połączeń) | — |
-| F Epiki | 🟢 | karta §7 (3 fale) | przeformułowane na epiki (niżej) |
-| G DoD/jakość | 🟢 | karta §0/§2/§7 | **liczby** (niżej) |
-| H Governance | 🟢 (dołożone) | karta §1/§6 | **Rejestr Wejść (3 uwagi żywe) + Decyzji** (niżej) |
+| A Intencja | 🟢 | karta werdykt + §0 (7 scenariuszy) | job-to-be-done + persony + zakres v1/poza (niżej) |
+| B UX docelowe | 🟢 | karta §5 (kanony) + §1c stany | **layout split/full + WSZYSTKIE stany + delty #2/#3/#4** (niżej) |
+| C Dane+API+reguły | 🟢 | karta §1e/§1f (wiring/flagi) | **enumeracja endpointów (~40 ai.routes + 21 conversations) + reguła języka/reasoning** (niżej) |
+| D AI/Teresa | 🟢 | `persona.ts` SSOT + `AIPipeline.ts` + karta §1a | delta reasoning #3 (DP-12) + język #4 + granica persony (niżej) |
+| E Integracje | 🟢 | karta §1g (tabela połączeń) | 7 handoffów + kręgosłup #1 |
+| F Epiki | 🟢 | karta §7 (3 fale) | **epiki→stories→Gherkin→L-xx** (niżej) |
+| G DoD/jakość | 🟢 | karta §0/§2/§7 | **liczby grep zweryfikowane 2026-06-13** (niżej) |
+| H Governance | 🟢 (dołożone) | karta §1/§6 | **Rejestr Wejść (4 uwagi żywe + SPEC_01) + Decyzji** (niżej) |
 
 ---
 
-## A · INTENCJA *(link + uzupełnienie)*
-- **Job-to-be-done:** prowadzić konsultanta/klienta przez pracę z Teresą — rozmowa, deep-research, oraz handoff intencji „zrób deck/doc/sheet/mindmap/flow/whiteboard/canvas" do właściwego modułu i panelu roboczego.
-- **Persony/role:** konsultant, klient (member), admin; superadmin (panele internal `/ai/*` ukryte celowo). Core, otwarty — brak beta-gatingu.
-- **Zakres v1:** CRUD rozmów org-scoped (21/21) · streaming SSE · share/branch/export/title · deep-research orchestrator · karty propozycji→`/chat/confirm` · 7 handoffów intencji · głos Teresy (Gemini Live). **POZA v1:** agentic „interpretacja poleceń wpisanych wewnątrz dokumentu" (decyzja produktowa); kliencka pamięć AI (do rozstrzygnięcia, D-01).
-- **Metryka:** % rozmów kończących się realnym artefaktem/akcją; 0 halucynowanych „dodałem do canvasa" bez tool-calla (uwaga #1, kręgosłup).
+## A · INTENCJA / PRODUKT
+- **Job-to-be-done:** prowadzić konsultanta/klienta przez pracę z Teresą — rozmowa, deep-research, oraz **handoff intencji** „zrób deck/doc/sheet/mindmap/flow/whiteboard/canvas" do właściwego modułu i panelu roboczego. Czat ma być **sterownikiem aplikacji** (teza produktu — patrz #1/SPEC_01), nie tylko czat-botem.
+- **Persony/role:**
+  - **Konsultant** (DBR77 / org-member) — twórca rozmów, używa deep-research, handoffów, kart propozycji; właściciel kontekstu org.
+  - **Klient (member)** — rozmowa + odbiór artefaktów; pamięć AI klienta = rozjazd (D-01, dziś za `internalToolsGuard`).
+  - **Admin** (org) — org-scope, share/revoke.
+  - **Superadmin (DBR77)** — panele internal (`/ai/*`, `AIOSHub`, `ActionCenter`, Wave5–9) **ukryte celowo** za `canUseInternalTools` — nie powierzchnia klienta.
+- **Zakres v1:** CRUD rozmów org-scoped (21/21 `conversations.routes.ts`) · streaming SSE · share/branch/export/title · deep-research orchestrator · karty propozycji→`POST /chat/confirm` · 7 handoffów intencji · głos Teresy (Gemini Live, opcjonalny) · pamięć projektu (org-scoped `b9f2dee9d2`).
+- **POZA v1:** agentic „interpretacja poleceń wpisanych wewnątrz dokumentu" (decyzja produktowa, NIE budujemy); kliencka pamięć AI jako panel (do rozstrzygnięcia, D-01); function-calling Teresy (Tryb A #1 — docelowy, Fala 2 SPEC_01).
+- **Metryka wartości:** % rozmów kończących się **realnym artefaktem/akcją** (nie halucynacją); **0 halucynowanych „dodałem do canvasa"** bez tool-calla (uwaga #1); język odpowiedzi = język usera (#4); trwałość po reload (S1).
 
-## B · UX DOCELOWE *(link + delty żywe)*
-Stany ekranu (pusty/ładowanie/błąd/pełny) + kanony: karta §5 (§27 **N/D** — sidebar historii ≠ tabela encji; korupcja „rose" **nie występuje**, trafienia = legalny ton Tailwind).
+## B · UI/UX — STAN DOCELOWY
+**Layout główny (`UnifiedChatPanel`, jeden SSOT split/full, `MainLayout.tsx:356`):**
+- **Tryb split-view** (na module, np. `/initiatives`): lewa kolumna = czat Teresy, prawa = `WorkCanvasDocumentPanel` (artefakt) lub kontekst encji. Kontekst encji (`workspaceContext`) zasila prompt → odpowiedź kontekstowa (S4).
+- **Tryb full** (`/chat`): `ChatHistorySidebar` (overlay nawigacyjny + drzewo folderów; §27 N/D — to nie tabela encji) + transkrypt + composer `EnhancedChatInput`.
+- **Composer (`EnhancedChatInput.tsx`):** textarea + action-bar (załączniki `AddFilesMenu`, model `NextModelChip`, reasoning-toggle, głos, char-counter `InputCharCounter`). Focus-border `border-c-focus-solid` na zewnętrznym kontenerze (`:1076-1084`).
+
+**Stany ekranu (docelowo każdy z komunikatem — koniec cichych pustek):**
+- **Pusty:** brak rozmów → CTA „Nowa rozmowa"; pusta rozmowa → prompt powitalny Teresy.
+- **Ładowanie:** streaming SSE → bąbel z „Thinking…" placeholderem; lista rozmów → skeleton.
+- **Błąd:** przerwany strumień → komunikat + retry (UI niezweryfikowany wizualnie, karta §5 P2 → Faza 4); załącznik za duży/zły typ → toast.
+- **Pełny:** transkrypt z `MessageRenderer` (markdown, code-block, cytaty `CitationList`, chip artefaktu `ArtifactChip`, karty propozycji).
+- **Brak-uprawnień:** rozmowa cudzej org → 404 (`findAccessibleConversation:92-130`); panele internal → ukryte (nie 403 w UI klienta).
+
+**Interakcje / mikro-flow:** branch rozmowy, export, share (token read-only + revoke), save-to-context (bookmark), slash/intercept intencji (`/research`, `/table`), karty propozycji → `POST /chat/confirm` (TeresaProposalCard/ChatTableProposalCard/ExecutionProposalMessage). Reasoning-toggle (`showReasoning`) → docelowo realny `<ReasoningTrace>`.
+
 **Delty do zbudowania (uwagi żywe):**
-- **#2 composer „ramka-w-ramce" (P3, LOKALNE):** zostać ma TYLKO zewnętrzny focus-border `border-c-focus-solid` (`EnhancedChatInput.tsx:1076-1084`); wewnętrzna ramka pochodzi z zagnieżdżonego wrappera (textarea `:1171-1175` / action-bar `:1186-1192` same bez bordera). Fix 2 min po DOM-inspect żywego composera.
-- **#3 „show reasoning" nie renderuje toku (P2, SYSTEMOWE):** docelowo realny tok myślenia widoczny gdy toggle ON, nie statyczny „Thinking…".
-- **#4 język odpowiedzi = język ostatniej wiadomości usera (P1, SYSTEMOWE):** PL pytanie → PL odpowiedź; po udanej detekcji język utrwalany per-rozmowa. **NAPRAWIONE 2026-06-13** (status do potwierdzenia — patrz R3 niżej).
+- **#2 composer „ramka-w-ramce" (P3, LOKALNE):** zostać ma TYLKO zewnętrzny focus-border (`EnhancedChatInput.tsx:1076-1084`); wewnętrzna ramka pochodzi z zagnieżdżonego wrappera (textarea `:1171-1175` / action-bar `:1186-1192` same bez bordera). Fix 2 min po DOM-inspect żywego composera (`preview_inspect`).
+- **#3 „show reasoning" nie renderuje toku (P2, SYSTEMOWE):** docelowo realny tok myślenia widoczny gdy toggle ON. Dziś tylko statyczny „Thinking…" placeholder streamu → `<ReasoningTrace>` (`MessageRenderer.tsx:513-520`) renderuje się TYLKO gdy `message.metadata.reasoning` istnieje, a nigdy nie powstaje (patrz D + DP-12).
+- **#4 język odpowiedzi = język ostatniej wiadomości usera (P1, SYSTEMOWE):** PL pytanie → PL odpowiedź; po udanej detekcji język utrwalany per-rozmowa (`setConversationChatLanguage`). **NAPRAWIONE 2026-06-13** (R3: brak commita w karcie → do weryfikacji).
 
-## C · DANE + API + REGUŁY *(link + reguła języka)*
-- **Wiring FE↔BE↔DB:** karta §1e (streaming SSE, CRUD rozmów org-scope 21/21 SSOT `findAccessibleConversation:92-130`, załączniki/ingest, share, branch/export/title, pamięć projektu). **Flagi:** karta §1f (`ENABLE_DELIVERABLES_LIGHT`/`V8`/`TERESA_RETRIEVAL` strict `=== 'true'`; rodzina `chatV9*` FE ON-by-default).
-- **Reguła języka (kanon docelowy, #4):** `effectiveChatLanguage = detectMessageLanguage(content) || chatLanguage` (`UnifiedChatPanel.tsx:2000-2001`); detektor `detectMessageLanguage.ts:152-186`; fallback `uiLang` defaultuje EN (`:844`); backend twardo EN przy niepewności (`ai.routes.ts:1256-1258`, `persona.ts:544`). Docelowo: silny sygnał diakrytyków PL → PL + `setConversationChatLanguage()` utrwala język rozmowy.
-- **Reguła kontraktu artefaktów (#1 kręgosłup):** generacja → `deliverables:draft-ready` → auto-mount świeżego draftu w `WorkCanvasDocumentPanel` (dziś listener wychodzi przy `readyDraftId === documentState.draftId`).
+**Zgodność z systemem:** Visual Standard · §27 **N/D** (sidebar historii ≠ tabela encji, §1.2); korupcja „rose" **nie występuje** (trafienia = legalny ton Tailwind). a11y/dark/responsywność → Faza 4.
 
-## D · AI / TERESA *(SSOT istnieje — linkuj)*
-- **Persona/sterowanie:** SSOT = `server/src/services/ai/persona.ts` (Teresa chat); granice persony „nie udawaj wykonania" (`persona.ts:303-319`) — łamane w trybie A uwagi #1.
-- **Reasoning (#3):** `showReasoning` (store `chatSlice.ts:101`) → `AIPipeline.ts:2052-2067` dokleja MIĘKKĄ instrukcję `<thinking>`, ale **NIE ustawia parametru modelu** (`extended_thinking`/`reasoning`) → model bez trybu thinking ignoruje → `ReasoningTrace` pusty. Delta: ustawić realny parametr reasoning + wymusić model wspierający.
-- **Język (#4):** persona buduje twardą instrukcję „respond in English" przy braku/niepewności → źródło EN-defaultu.
+## C · DANE + API + REGUŁY (kontrakt)
+- **Wiring FE↔BE↔DB:** karta §1e (streaming SSE, CRUD rozmów org-scope 21/21, załączniki/ingest, share, branch/export/title, pamięć projektu). **Flagi:** karta §1f.
+- **Model danych:** `conversations`, `messages`, `conversation_shares`, `attachments`, pamięć projektu (org-scoped). Pułapka: SQLite-izm `datetime('now')` w cleanup pamięci pada na PG (L-04).
+- **API — enumeracja (kanon docelowy, RBAC `verifyToken` + org-scope):**
+  - **`conversations.routes.ts` (21 endp., SSOT `findAccessibleConversation:92-130`):** `GET /` (list, L231), `POST /` (L402), `GET /:id` (L487), `PATCH /:id` (L569), `DELETE /:id` (L688), `POST /:id/messages` (L793), `POST /:id/save-to-context` (bookmark, L973), `POST /:id/title-generate` (L1186), `POST /:id/branch` (L2161/2219), `GET /:id/export` (L2037), share family.
+  - **`ai.routes.ts` (~40 endp.):** `POST /chat/stream` (SSE, L1423/5341), ingest załącznika (`:351`, `:540`), `POST /chat/confirm` (karty propozycji), title (`:1186`), deep-research orchestrator (`deepThinkingOrchestrator.ts`), `GET/DELETE /memory/project/:projectId` (org-scoped `b9f2dee9d2`, `:5743/:5834`), web-search, voice (Gemini Live). Internal `/ai/*` (Wave5–9/AIOSHub) za `canUseInternalTools`.
+  - **`share.routes.ts`:** `/conversations/:id/share` (PATCH hasło `scryptHash` po quick-fixie), `GET /share/:token` (read-only; **F-3 leak `metadata` verbatim `:541` → whitelist**), revoke→404/expiry→410.
+- **Reguły biznesowe:**
+  - **Reguła języka (#4):** `effectiveChatLanguage = detectMessageLanguage(content) || chatLanguage` (`UnifiedChatPanel.tsx:2000-2001`); detektor `detectMessageLanguage.ts:152-186` zwraca `null` przy niepewności (`topScore>=2` + ścisła przewaga); fallback `uiLang` defaultuje EN (`:844`); backend twardo EN przy niepewności (`ai.routes.ts:1256-1258`, `persona.ts:544`). **Docelowo:** silny sygnał diakrytyków PL (ąćęłńóśźż) → PL + `setConversationChatLanguage()` utrwala.
+  - **Reguła reasoning (#3):** `showReasoning` (store `chatSlice.ts:101`) → `aiModes.showReasoning` (`UnifiedChatPanel.tsx:3620`) → `ai.routes.ts:1204/1451` → `AIPipeline.ts:2052-2067` (miękka instrukcja `<thinking>`). **NIE ustawia parametru modelu** → bramka.
+  - **Reguła kontraktu artefaktów (#1 kręgosłup):** generacja → `deliverables:draft-ready` → auto-mount świeżego draftu w `WorkCanvasDocumentPanel` (dziś listener wychodzi przy `readyDraftId === documentState.draftId` → zerwana więź; SPEC_01 Tryb B).
 
-## E · INTEGRACJE
-Pełna tabela: karta §1g. Skrót: **→** M19/M02 (deck), M18/M02 (doc), M20/M02 (sheet+ChatToSchema), M06/M07/M09 (mindmap/flow/whiteboard), M02 (canvas-write), M03/M13/M04 (karty propozycji `/chat/confirm`), Context OS (bookmark). **←** M13/M10/wszystkie (split-view kontekst encji `workspaceContext`), M23 (OrgContext). **Kręgosłup:** wszystkie handoffy idą przez wspólną warstwę (`UnifiedChatPanel`+detektory+`WorkCanvasDocumentPanel`) — pęknięcie = uwaga #1 (SPEC_ZADANIE_01).
+## D · AI / TERESA
+- **Persona/sterowanie (SSOT):** `server/src/services/ai/persona.ts` (Teresa chat) + `AIPipeline.ts`. Granica „**PROPONUJ, nie udawaj wykonania**… Nigdy nie twierdź, że coś zrobiłeś, jeśli nie możesz potwierdzić" (`persona.ts:303-319`) — **łamana w trybie A uwagi #1** (Teresa fabrykuje „dodałem do Canvasa" gdy regex chybia, bo nie ma function-callingu).
+- **Co generuje:** odpowiedzi rozmowy, propozycje (karty → `/chat/confirm`), tytuły, deep-research. **Wejścia kontekstu:** `workspaceContext` (encja split-view), `pmoContext`, OrgContext (`MainLayout.tsx:356`, `useOpenChatWithContext.ts`), retrieval Teresy (za flagą `ENABLE_TERESA_RETRIEVAL`).
+- **Reasoning (#3, DP-12):** `showReasoning=true` dokleja MIĘKKĄ instrukcję, ale pipeline **NIE ustawia parametru modelu** (`extended_thinking`/`reasoning`) → model bez trybu thinking ignoruje → `metadata.reasoning` puste → `ReasoningTrace` pusty. **Delta (DP-12):** wymusić model thinking-capable per provider (param extended-thinking gdzie wspierany), fallback: ukryć przełącznik gdy provider bez reasoning.
+- **Język (#4):** persona buduje twardą „You MUST always respond in English" przy niepewności → źródło EN-defaultu. Delta: reguła „odpowiadaj w języku ostatniej wiadomości".
 
-## F · EPIKI *(z karty §7, forma epików)*
-- **EPIK 1 — Integralność rdzenia (P0):** ~~CanvasArtifactSwitcher guard~~ DONE (`e0b368b218`); ~~chat-projects team-scope filter~~ DONE (`ca0e632e4d`); ~~hasło share~~ DONE (quick-fix). [karta §7 Fala 1]
-- **EPIK 2 — Domknięcie wartości (P1):** decyzja kliencka pamięć AI (D-01); pokrycie testowe S3/S4/S6; smoke→PR-gate; F-3 metadata whitelist. [Fala 2]
-- **EPIK 3 — Język rozmowy (#4, P1):** detekcja PL + utrwalanie języka per-rozmowa. [uwaga żywa]
-- **EPIK 4 — Reasoning realny (#3, P2):** parametr modelu zamiast miękkiej instrukcji. [uwaga żywa, warstwa AI → staging]
-- **EPIK 5 — Szlif kanonu (P2/P3):** composer ramka-w-ramce (#2); SQLite-izm `datetime('now')`→PG; wycięcie `CodeInterpreter`/`OrganizationMemoryPanel`; i18n inline (305); cleanup test-sieroty. [Fala 3]
+## E · INTEGRACJE — mapa połączeń
+Pełna tabela: karta §1g. **WYJŚCIA →** (7 handoffów intencji, INV_A poz.53–57):
+- M19 Prezentacje / M02 Canvas (deck) · M18 Dokumenty / M02 Canvas (doc) · M20 Tabele / M02 Canvas (sheet + ChatToSchemaPanel) · M06/M07/M09 Ideas (mindmap/flow/whiteboard) · M02 Canvas (canvas-write streamem) · M03/M13/M04 (karty propozycji → `/chat/confirm` → task/decision/inicjatywa/notatka) · Context OS (bookmark `:973`).
+**WEJŚCIA ←** M13/M10/wszystkie (split-view kontekst encji `workspaceContext`), M23 (OrgContext).
+**Kręgosłup (wspólna warstwa):** wszystkie handoffy idą przez `UnifiedChatPanel` + detektory (`documentIntentDetector`/`canvasStreamIntentDetector`) + persona + pipeline `deliverables:draft-ready` → `WorkCanvasDocumentPanel`. Pęknięcie = uwaga #1 (SPEC_01), promieniuje na M02/M18/M19/M20 → re-ocena D w `_TRACKER.md`. **Zależność blokująca:** Fala 1 SPEC_01 (Tryb B) przed domknięciem D modułu.
 
-## G · JAKOŚĆ / DoD *(skwantyfikowane)*
-| # | Kryterium | Miara M01 |
+## F · EPIKI → STORIES → ZADANIA
+**EPIK 1 — Integralność rdzenia (P0, DONE):**
+- Story 1.1: jako klient chcę, by pamięć projektu była org-scoped. *Dane:* org A i B z projektami. *Gdy:* org A woła `GET/DELETE /memory/project/:idB`. *Wtedy:* 403. → ✅ `b9f2dee9d2`.
+- Story 1.2: jako użytkownik chcę stabilny panel czatu. *Dane:* mock `useArtifactsStore`. *Gdy:* render `UnifiedChatPanel`. *Wtedy:* 29/29 zielone. → ✅ `e0b368b218` (CanvasArtifactSwitcher guard), `ca0e632e4d` (chat-projects team-scope 31/31).
+
+**EPIK 2 — Język rozmowy (#4, P1) [L-08]:**
+- Story 2.1: jako Polak chcę odpowiedzi po polsku. *Dane:* rozmowa, UI-lang EN. *Gdy:* wpisuję „Z pierwszej informacji na temat DBR77." *Wtedy:* Teresa odpowiada PL i utrwala język rozmowy. → Z: obniżyć próg + diakrytyki PL (`detectMessageLanguage.ts:183-184`); wołać `setConversationChatLanguage()`.
+
+**EPIK 3 — Reasoning realny (#3, P2, warstwa AI→staging) [L-07]:**
+- Story 3.1: jako power-user chcę widzieć tok myślenia. *Dane:* toggle ON, provider thinking-capable. *Gdy:* wysyłam prompt. *Wtedy:* `<ReasoningTrace>` pokazuje realny `<thinking>`. → Z: ustawić param reasoning w `AIPipeline.ts:~2052` + wymusić model (DP-12); fallback ukryć toggle.
+
+**EPIK 4 — Kręgosłup czat→canvas (#1, P0-program) [L-09]:**
+- Story 4.1: jako user chcę, by „dodałem do Canvasa" było prawdą. *Dane:* fraza spoza regexu. *Gdy:* proszę o dokument. *Wtedy:* realny montaż LUB jawna propozycja, ZERO fałszywego „dodałem". → SPEC_01 Fala 1 (Tryb B) + Fala 2 (Tryb A).
+
+**EPIK 5 — Domknięcie wartości + szlif (P1/P2/P3):**
+- Story 5.1: decyzja kliencka pamięć AI (D-01) [L-01]. Story 5.2: pokrycie S3/S4/S6 + smoke→PR-gate [L-03]. Story 5.3: F-3 metadata whitelist [L-02]. Story 5.4: composer #2 [L-06]; SQLite-izm [L-04]; wycięcie `CodeInterpreter`/`OrganizationMemoryPanel` [L-05]; i18n 305 [L-10].
+
+## G · JAKOŚĆ / WERYFIKACJA
+| # | Kryterium | Miara M01 (zweryfikowana grep 2026-06-13) |
 |---|-----------|-----------|
-| 1 | Front↔back | 0 martwych CTA; pamięć AI udostępniona klientowi LUB usunięta (koniec rozjazdu „działa", D-01); composer #2 bez podwójnej ramki |
-| 2 | Bezpieczeństwo | cross-org pamięci projektu ✅ `b9f2dee9d2` (potwierdzić testem); public viewer bez leaku `metadata` (F-3 whitelist); 23/25 endp. scoped |
-| 3 | i18n | 0 z **305** inline (`i18n.language==='pl'`/`isPolish`) w `src/components/AIChat/` |
-| 4 | Tokeny | **52** hex w `src/components/AIChat/` (zweryfikować ile = legalne ikony/SVG vs hardkod); korupcja „rose" 0 |
-| 5 | §27 | **N/D** — sidebar historii ≠ tabela encji (§1.2); 13 surowych `<table>` = render markdown/artefaktów, nie listy encji org-scoped (potwierdzić przy szlifie) |
-| 6 | E2E w PR-gate | S1 (SSE→reload), S3 (ingest załącznika), S6 (handoff→Canvas chip) zielone na `Londyn` |
+| 1 | Front↔back | 0 martwych CTA; pamięć AI udostępniona klientowi LUB usunięta (D-01); composer #2 bez podwójnej ramki; kręgosłup #1 montuje deterministycznie |
+| 2 | Bezpieczeństwo | cross-org pamięci projektu ✅ `b9f2dee9d2` (potwierdzić testem); public viewer bez leaku `metadata` (F-3 whitelist `share.routes.ts:541`); 23/25 endp. scoped |
+| 3 | i18n | 0 z **305** inline (`i18n.language==='pl'`/`isPolish`) w `src/components/AIChat/` *(grep potwierdzony)* |
+| 4 | Tokeny | z **52** hex w `src/components/AIChat/` (zweryfikować ile = legalne ikony/SVG vs hardkod); korupcja „rose" 0 |
+| 5 | §27 | **N/D** — sidebar historii ≠ tabela encji; 13 surowych `<table>` = render markdown/artefaktów, nie listy encji (potwierdzić przy szlifie) |
+| 6 | E2E w PR-gate | S1 (SSE→reload), S3 (ingest), S6 (handoff→Canvas chip) zielone na `Londyn` |
 
-Scenariusze S1–S7 + pokrycie + pułapka CI (`e2e-nightly/weekly` = cron-only): karta §0/§2. Bezpieczeństwo: karta §6.
+**Scenariusze S1–S7** (karta §0): S1 nowa rozmowa→SSE→reload (mocny); S2 slash/intencje (E2E nie w PR); S3 ingest (suite RED→fix); S4 split-view kontekst (RED); S5 share/revoke; S6 handoff→Canvas (RED, rdzeń FE); S7 głos Teresy.
+**Pułapka CI:** `e2e-nightly.yml`/`weekly.yml` = cron-only, NIE na push/PR. Bezpieczeństwo/wydajność: karta §6 (SSE token-auth; prompt-injection P2; debug-log web-search P3).
 
-## H · GOVERNANCE *(dołożone ogniwa)*
+## H · GOVERNANCE / STEROWANIE
 
 ### 01 · Rejestr wejść (R1) — scala WSZYSTKIE źródła
 | ID | Źródło | Data | Treść (1 zd.) | → Luka |
 |----|--------|------|----------------|--------|
-| W-01 | Karta audytu §1–§7 | 2026-06-11 | 49/59 realne, 0 mock; cross-org pamięci + testy naprawione | L-01,02,03,04,05 |
+| W-01 | Karta audytu §1–§7 | 2026-06-11 | 49/59 realne, 0 mock; cross-org pamięci + testy naprawione | L-01..L-05,L-10 |
 | W-02 | **Uwaga żywa #2** | 2026-06-13 | composer „ramka w ramce" (P3 LOKALNE) | L-06 |
 | W-03 | **Uwaga żywa #3** | 2026-06-13 | „show reasoning" nie renderuje toku (P2 SYSTEMOWE) | L-07 |
 | W-04 | **Uwaga żywa #4** | 2026-06-13 | PL pytanie → EN odpowiedź (P1 SYSTEMOWE) | L-08 (NAPRAWIONE) |
-| W-05 | **Uwaga żywa #1** (kręgosłup) | 2026-06-13 | chat-as-controller — handoffy przez `UnifiedChatPanel`/`WorkCanvasDocumentPanel` | L-09 (SPEC_01, FAZA 0) |
-| W-06 | `SPEC_ZADANIE_01_chat_controller.md` | 2026-06-13 | pełny WP kręgosłupa (Tryb A/B/C) | L-09 |
-| W-07 | persona.ts + AIPipeline.ts (SSOT AI) | — | sterowanie Teresą, reguła reasoning/język | L-07,L-08 |
-| W-08 | Feedback prod (`finding_assistant_prompt_sot`) | — | dev backend bije w Railway PROD DB | ryzyko (niżej) |
+| W-05 | **Uwaga żywa #1** (kręgosłup) | 2026-06-13 | chat-as-controller — handoffy przez `UnifiedChatPanel`/`WorkCanvasDocumentPanel` | L-09 |
+| W-06 | **SPEC `SPEC_ZADANIE_01_chat_controller.md`** | 2026-06-13 | pełny WP kręgosłupa (Tryb A/B/C, fazy, DoD) | L-09 |
+| W-07 | `persona.ts` + `AIPipeline.ts` (SSOT AI) | — | sterowanie Teresą, reguła reasoning/język | L-07,L-08 |
+| W-08 | `_DECYZJE.md` DP-12 (reasoning) + DP-2 (trzeci panel) | 2026-06-13 | rozstrzygnięcia przekrojowe | L-07,L-09 |
+| W-09 | Feedback prod (`finding_assistant_prompt_sot`) | — | dev backend bije w Railway PROD DB | ryzyko |
 
-### 02 · Stan obecny (prawda kodu) — karta §1 (REALNE 49 · MOCK 0 · ROZJAZD 1 · MARTWE 6). Naprawione: `b9f2dee9d2` (cross-org pamięć projektu), `e0b368b218` (UnifiedChatPanel 29/29), `ca0e632e4d` (chat-projects 31/31), `dc1dd6154d` (4 orphans), quick-fix hasła share. **M01 dziś (2026-06-13) nie zmieniany poza kręgosłupem** (Tryb B + #4 język + #15 CTA = commity Londyn na innych modułach).
+### 02 · Stan obecny (prawda kodu) — karta §1 (REALNE 49 · MOCK 0 · ROZJAZD 1 · MARTWE 6). Naprawione: `b9f2dee9d2` (cross-org pamięć), `e0b368b218` (UnifiedChatPanel 29/29), `ca0e632e4d` (chat-projects 31/31), `dc1dd6154d` (4 orphans, 678 l.), quick-fix hasła share. **M01 dziś nie zmieniany poza kręgosłupem.**
 
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
@@ -92,25 +135,25 @@ Scenariusze S1–S7 + pokrycie + pułapka CI (`e2e-nightly/weekly` = cron-only):
 | L-02 | F-3 leak `metadata` public viewer | W-01 | `share.routes.ts:541` | P2 | 3 | otwarta |
 | L-03 | brak pokrycia S3/S4/S6 + smoke poza PR-gate | W-01 | `e2e-nightly.yml`/`weekly.yml` cron-only | P1-test | 2/4 | otwarta |
 | L-04 | SQLite-izm `datetime('now')` na PG (cleanup pamięci) | W-01 | cleanup pamięci | P3 | 3 | otwarta |
-| L-05 | martwy kod `CodeInterpreter`(+`OrganizationMemoryPanel` jeśli ukryć) | W-01 | 0 zewn. referencji | P2 | 3 | otwarta |
-| L-06 | composer ramka-w-ramce | W-02 | `EnhancedChatInput.tsx:1076-1084` + wrapper | P3 | 4 | otwarta (do DOM-inspect) |
-| L-07 | „show reasoning" bez parametru modelu | W-03,W-07 | `AIPipeline.ts:2052-2067` | P2 | 2 | otwarta (warstwa AI→staging) |
-| L-08 | PL pytanie → EN odpowiedź (próg detekcji + brak utrwalania języka) | W-04,W-07 | `detectMessageLanguage.ts:152-186,183-184` + `UnifiedChatPanel.tsx:2000-2001,844` | P1 | 2 | **NAPRAWIONE 2026-06-13 (R3: do weryfikacji — brak commita w karcie)** |
-| L-09 | chat-as-controller (handoff→panel zerwany) | W-05,W-06 | `WorkCanvasDocumentPanel.tsx:1039-1043` | P0-program | 0 | otwarta (SPEC_01, kręgosłup) |
-| L-10 | i18n inline | W-01 | `src/components/AIChat/` (305×) | P1 | 4 | otwarta |
+| L-05 | martwy `CodeInterpreter`(+`OrganizationMemoryPanel` jeśli ukryć) | W-01 | 0 zewn. referencji | P2 | 3 | otwarta |
+| L-06 | composer ramka-w-ramce | W-02 | `EnhancedChatInput.tsx:1076-1084` + wrapper | P3 | 4 | otwarta (DOM-inspect) |
+| L-07 | „show reasoning" bez parametru modelu | W-03,W-07,W-08 | `AIPipeline.ts:2052-2067` | P2 | 2 | otwarta (DP-12, warstwa AI→staging) |
+| L-08 | PL pytanie → EN odpowiedź | W-04,W-07 | `detectMessageLanguage.ts:152-186,183-184` + `UnifiedChatPanel.tsx:2000-2001,844` | P1 | 2 | **NAPRAWIONE 2026-06-13 (R3: brak commita w karcie → weryfikacja)** |
+| L-09 | chat-as-controller (handoff→panel zerwany) | W-05,W-06,W-08 | `WorkCanvasDocumentPanel.tsx:1035-1070,704-726` | P0-program | 0 | otwarta (SPEC_01, kręgosłup) |
+| L-10 | i18n inline 305× | W-01 | `src/components/AIChat/` | P1 | 4 | otwarta |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
 | D-01 | kliencka pamięć AI: udostępnić czy wyciąć? | zdjąć `internalToolsGuard`+wepnąć panel / ukryć+wyciąć orphan | Piotr | TBD | otwarta |
-| D-02 | reasoning #3: który tier/provider wymusić? | per-provider param / wymuszony model thinking | Piotr | TBD | otwarta (warstwa AI) |
+| D-02 | reasoning #3: który tier/provider wymusić? | per-provider param / wymuszony model thinking | Piotr | TBD | **rekom. DP-12 = wymusić model thinking-capable** |
 | D-03 | §27 dla 13 `<table>` — render markdown czy lista encji? | potwierdzić N/D / część do FilterableTable | Piotr | TBD | otwarta |
 
-### 05 · Flagi/rollout — core otwarty (brak beta-gatingu); handoffy/V8/retrieval strict `=== 'true'` (OFF w czystym deployu); `chatV9*` FE ON-by-default (kill-switch).
-### 06 · Ryzyka — uwaga #4 (L-08) oznaczona NAPRAWIONE bez commita w karcie → **R3: do weryfikacji w kodzie** przed zamknięciem. Reasoning (#3) i język (#4) to warstwa AI → testować na staging, prod za zgodą. Dev `.env` → Railway PROD DB (`finding_assistant_prompt_sot`) — przy żywym smoke wyłącznie dane jednorazowe.
-### 07 · Log — 2026-06-13: #4 język PL zaadresowany (status do weryfikacji). Audyt 2026-06-11: ocena 61/100; cross-org `b9f2dee9d2`, testy `e0b368b218`/`ca0e632e4d`. Re-ocena D/G po Fazie 3/4.
+### 05 · Flagi / rollout / beta — core otwarty (brak beta-gatingu); handoffy/V8/retrieval **strict `=== 'true'`** (OFF w czystym deployu); `chatV9*` FE ON-by-default (kill-switch).
+### 06 · Ryzyka i założenia — uwaga #4 (L-08) oznaczona NAPRAWIONE bez commita w karcie → **R3: do weryfikacji** przed zamknięciem. Reasoning (#3) i język (#4) = warstwa AI → testować na staging, prod za zgodą. Dev `.env` → Railway PROD DB (`finding_assistant_prompt_sot`).
+### 07 · Log wdrożenia + re-ocena — 2026-06-13: #4 język zaadresowany (status do weryfikacji); teczka pogłębiona do M13-level. Audyt 2026-06-11: 61/100. Re-ocena D/G po Fazie 3/4 + po naprawie kręgosłupa #1.
 
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + 3 uwagi żywe #2/#3/#4 + kręgosłup #1/SPEC_01 + SSOT persona/pipeline + feedback prod) · R2 zero sierot (wejście→luka→DoD) · R3 status #4 oznaczony „NAPRAWIONE — do weryfikacji" bo brak commita w karcie · R4 DoD z liczbami (305 i18n · 13 table · 52 hex) · R5 decyzje z właścicielem (terminy TBD z Piotrem) · A–E docelowy zlinkowany · F epiki↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 (zaplanowana). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + 4 uwagi żywe #1/#2/#3/#4 + SPEC_01 + SSOT persona/pipeline + DP-12/DP-2 + feedback prod) · R2 zero sierot (W→L→DoD) · R3 status #4 „NAPRAWIONE — do weryfikacji" (brak commita w karcie) · R4 DoD z liczbami grep (305 i18n · 13 table · 52 hex) · R5 decyzje z właścicielem (D-02 = DP-12) · A–E docelowy z layoutem+stanami+endpointami · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**

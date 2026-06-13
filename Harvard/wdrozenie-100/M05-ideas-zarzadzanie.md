@@ -30,16 +30,52 @@
 - **Zakres v1:** CRUD idei · foldery/ulubione/recents · 3 widoki listy (table/grid/garden, §27) · mapa robocza z optimistic-concurrency (baseVersion/409) · autosave (debounce+flush) · AI (LLM realny) · konwersja idea→6 outputów + krawędzie. **POZA v1:** współdzielony shared-board (to M09), eksport serwerowy do pliku (obecnie stub).
 - **Metryka:** % idei skonwertowanych do initiative z zachowaniem grafu; zero utraty zmian przy autosave/konflikcie.
 
-## B · UX DOCELOWE *(karta §5 + delty)*
-- **Layout:** lista idei (3 widoki) → otwarcie → `IdeaMapWorkspace` (kanwa + AI panel + context panel).
-- **Stany ekranu:** pusty/ładowanie/pełny — OK; **błąd 503 snapshot = cicha pustka** (delta: dodać komunikat); brak-uprawnień N.D. (per-user).
-- **§27:** lista idei przez ResizableTable/FilterableTable + Menu 1/2/3 — karta §5.
-- **Delty UX:** confirm przed nadpisaniem grafu szablonem (`IdeaTemplateGallery.tsx:1886`); trwałe notatki context-panel (dziś efemeryczne `useState`); sprzątnąć `canvasLocked=false` hardcode + 4× `console.log`.
+## B · UX DOCELOWE *(karta §5 + delty — konkretnie kanwa/lista/sync)*
+**Layout docelowy (3 strefy):**
+1. **Lista idei (hub)** — 3 widoki przełączane (`table` / `grid` / `garden`), folder-tree po lewej, paski Ulubione/Recents na górze, Menu 1 (toolbar: New idea, import) / Menu 2 (per-wiersz: Otwórz/Duplikuj/Przenieś/Archiwizuj/Usuń) / Menu 3 (bulk). Lista renderowana przez `ResizableTable`/`FilterableTable` (§27).
+2. **Workspace mapy** (`IdeaMapWorkspace.tsx`, 3268 l.) — kanwa grafu (węzły idea + krawędzie link-graph) z autosave; toolbar zoom/fit/layout; status-pill „zapisano/zapisywanie/konflikt".
+3. **Panele boczne** — AI-panel (expand/suggest/gap) + context-panel (notatki węzła).
 
-## C · DANE + API + REGUŁY *(link + kontrakt sync)*
-- **Wiring FE↔BE↔DB:** karta §1e. **Model:** `my_idea_maps` (blob graf, `extensions_json`), `my_idea_map_snapshots`+`my_idea_activity` (mig. `20260611_…sql`), `my_idea_edges` (RESERVED), split-brain z `my_idea_map_versions` (mig. 622).
-- **Map-sync (kanon):** `POST /api/.../map/sync` (`my-work.routes.ts:3874`) z `baseVersion` → 409 przy rozjeździe wersji; org+user-scope na każdym zapytaniu (bez IDOR — zweryfikowane w karcie). Autosave FE: debounce + flush na visibility/online/Cmd+S (`useIdeaMapSync.ts:338-373`).
-- **Reguły:** optimistic concurrency last-writer; konwersja idea→output = INSERT do tabeli docelowej + `link_graph_edges` (`my-work.routes.ts:5888`).
+**Stany ekranu (koniec cichych pustek):**
+| Stan | Docelowo | Dziś |
+|---|---|---|
+| pusty (0 idei) | empty-state + CTA „Stwórz pierwszą ideę" | OK |
+| ładowanie | skeleton listy/kanwy | OK |
+| **błąd snapshot 503** | toast „Nie udało się zapisać migawki — spróbuj ponownie" + retry | **cicha pustka (delta L-02)** |
+| **konflikt 409** | banner „Mapa zmieniona w innej karcie — odświeżono z serwera" + rehydracja | rehydracja działa (L-01), brak komunikatu UX |
+| brak-uprawnień | N.D. (per-user, brak shared w v1) | N.D. |
+
+**Mikro-flow sync (docelowy, kanwa):** edycja węzła → debounce 800ms → `POST /map/sync` z `baseVersion` → 200 (podbij wersję) / 409 (rehydruj + banner). Flush wymuszony na `visibilitychange`/`online`/`Cmd+S`; **brakuje flush na unmount → sendBeacon (delta L-04, <800ms utrata).**
+
+**Delty UX (do zbudowania):** confirm-dialog przed nadpisaniem grafu szablonem (`IdeaTemplateGallery.tsx:1886`); trwałe notatki context-panel (dziś efemeryczne `useState`, znikają po reload); sprzątnąć `canvasLocked=false` hardcode + 4× `console.log`.
+
+## C · DANE + API + REGUŁY *(link + kontrakt sync + pełna enumeracja)*
+- **Wiring FE↔BE↔DB:** karta §1e. **Model danych (`my_idea_*`):**
+  - `my_idea_maps` — blob grafu w `extensions_json` (mig. `20260312_my_idea_maps.sql` + `20260313_…graph_contract_v3.sql`), kolumna `version` (optimistic-lock), `organization_id`+`user_id` (scope).
+  - `my_idea_map_snapshots` + `my_idea_activity` — mig. `20260611_my_idea_map_snapshots_and_activity.sql` (oba z `organization_id TEXT NOT NULL` + idx idea/org/created). **WSPÓLNE z M06.** ⚠ duplikat pliku `…and_activity 2.sql` w repo — usunąć jeden.
+  - `my_idea_edges` — link-graph krawędzie (mig. `20260310_my_idea_edges.sql`).
+  - `my_idea_node_comments` — mig. `720_idea_node_comments.sql`.
+  - `my_idea_map_versions` — mig. `622` — **split-brain z `snapshots` (L-07, D-02).**
+  - foldery/ulubione/recents — mig. `20260602_my_ideas_folders_favorites_recents.sql`.
+- **Kontrakt API (`my-work.routes.ts`, 105 endpointów; `requireOrg…` + org+user-scope na każdym):**
+  | Metoda | Ścieżka | Rola |
+  |---|---|---|
+  | GET/POST | `/my-ideas`, `/my-ideas/suggest` | lista + create + AI-suggest |
+  | GET/PUT | `/my-ideas/:id` | szczegół + edycja |
+  | POST | `/my-ideas/:id/opened` | recents |
+  | GET/POST/PUT/DELETE | `/my-idea-folders[/:folderId]` | foldery |
+  | GET/POST/PUT/DELETE | `/my-ideas/:id/edges[/:edgeId]` | link-graph |
+  | GET/PUT | `/my-ideas/:id/map`, GET `/my-ideas/metrics/map` | graf + metryki |
+  | **POST** | **`/my-ideas/:id/map/sync`** (`:3949`) | **map-sync (baseVersion→409)** |
+  | POST | `/map/expand`, `/map/ai-suggestions`, `/map/gap-analysis` | AI (realny LLM) |
+  | GET/POST/DELETE | `/map/snapshots[/:snapshotId]` (`:4584+`) | migawki |
+  | GET/POST/DELETE | `/map/nodes/:nodeId/comments[/:commentId]` | komentarze węzła |
+  | GET/POST | `/my-ideas/:id/activity` (`:4875`) | activity feed |
+  | POST | `/my-ideas/:id/convert` (`:5963`), `/outcomes/:outcomeId/convert` | konwersja idea→output |
+  | POST | `/my-ideas/from-chat` (`:5429`), `/clusters/materialize`, `/clusters/:clusterId/outcome` | AI-incubator |
+  | POST | `/my-ideas/:id/develop` (`:6656`) | tabela/dev handler |
+  | GET/POST | `/my-ideas/:id/presence` (`:8977/:9016`) | presence (P2: channelId org-scope) |
+- **Reguły:** optimistic concurrency last-writer (`baseVersion` mismatch → 409); konwersja idea→output = INSERT do tabeli docelowej + `link_graph_edges` (`/link-graph/edges`, `:896`). Autosave FE: debounce + flush na visibility/online/Cmd+S (`useIdeaMapSync.ts:338-373`); **brak flush na unmount.**
 
 ## D · AI / TERESA *(link)*
 - **Co generuje:** expand/suggestions/gap dla mapy (realny LLM). Formuła: w zakresie idea (nie kart inicjatyw — to M13).
@@ -50,14 +86,30 @@
 - **Kręgosłup wspólny puli Ideas:** `useIdeaMapSync.ts` (map-sync/409/flush) współdzielony z M06/M07/M08/M09 — **zmiany runtime promieniują na całą pulę.**
 - **Zależności blokujące:** migracja `my_idea_map_snapshots`/`my_idea_activity` **WSPÓLNA z M06**; conflict-handler + flush wspólne z M06-M09.
 
-## F · EPIKI *(z karty §7, forma epików)*
-- **EPIK 1 — Conflict bez cichego nadpisania (P0):** 409 rehydruje graf z serwera (nie tylko podbija wersję) (L-01).
-- **EPIK 2 — Persystencja snapshots/activity (P0):** migracja + smoke 201; koniec cichych 503 (L-02).
-- **EPIK 3 — Jeden runtime dla 4 narzędzi (P1):** koniec samowywołanych 409 (L-03) + flush w cleanup (sendBeacon) (L-04).
-- **EPIK 4 — Eksport serwerowy:** worker pliku ALBO ukrycie przycisku (L-05).
-- **EPIK 5 — Szlif UX:** confirm szablonu, trwałe notatki, sprzątanie martwego kodu/logów/`canvasLocked` (L-06).
-- **EPIK 6 — Kanon wersjonowania:** rozstrzygnąć `versions` vs `snapshots` (L-07).
-- **EPIK 7 — Testy:** BE S2/S3/S5/S6 + E2E checklist do tier0 + CI `Londyn` (L-08).
+## F · EPIKI → STORIES → ZADANIA *(Gherkin, każde zadanie→luka)*
+
+**EPIK 1 — Conflict bez cichego nadpisania (P0)** *(domyka B/stan-409 + C/optimistic-lock)*
+- **Story 1.1:** jako konsultant edytujący mapę w 2 kartach chcę, by zmiana nie znikała po cichu, aby nie tracić pracy.
+  - *Gdy* `POST /map/sync` zwróci 409 *wtedy* graf jest rehydrowany z serwera **i** pokazany banner „Mapa zmieniona — odświeżono" *zamiast* cichego podbicia wersji.
+  - Zadania: Z-01 weryfikacja rehydracji `IdeaMapWorkspace.tsx:449-473` → **L-01 (naprawione, domknąć)**; Z-02 banner UX (delta B) → L-01.
+
+**EPIK 2 — Persystencja snapshots/activity (P0)** *(domyka C/model + B/błąd-503)*
+- **Story 2.1:** jako użytkownik tworzący migawkę chcę dostać potwierdzenie zapisu, aby ufać historii.
+  - *Dane* migracja `20260611_…sql` zaaplikowana *gdy* `POST /map/snapshots` *wtedy* 201 (nie 503).
+  - Zadania: Z-03 zweryfikuj migrację w DB staging/prod → L-02; Z-04 toast błędu zamiast cichej pustki → L-02; Z-05 usuń duplikat `…and_activity 2.sql` → L-02.
+
+**EPIK 3 — Jeden runtime dla 4 narzędzi (P1)** *(domyka E/kręgosłup `useIdeaMapSync`)*
+- **Story 3.1:** jako użytkownik mam mapę/mindmap/flow/tabelę zapisywane jednym runtime bez samowywołanych konfliktów.
+  - *Gdy* przełączam narzędzie *wtedy* nie wyzwala się fałszywe 409.
+  - Zadania: Z-06 jeden writer per resource → L-03; Z-07 flush na unmount przez `sendBeacon` (`useIdeaMapSync.ts:375-381`) → L-04.
+
+**EPIK 4 — Eksport serwerowy (D-01)** — worker generujący plik ALBO ukrycie przycisku (`IdeaExportMenu.tsx:498-509`). → L-05.
+
+**EPIK 5 — Szlif UX** — confirm-dialog szablonu (`IdeaTemplateGallery.tsx:1886`); trwałe notatki context-panel; usunąć `canvasLocked` hardcode + 4× `console.log`. → L-06.
+
+**EPIK 6 — Kanon wersjonowania (D-02)** — rozstrzygnąć `my_idea_map_versions` (mig.622) vs `snapshots` (mig.20260611); wytnij jeden. → L-07.
+
+**EPIK 7 — Testy** — BE S2 (round-trip sync), S3 (409→rehydracja), S5 (konwersja idea→initiative), S6 (snapshot 201) + E2E checklist → tier0 + CI `Londyn`. → L-08.
 
 ## G · JAKOŚĆ / DoD *(skwantyfikowane grepem 2026-06-13)*
 | # | Kryterium | Miara M05 |
@@ -101,10 +153,11 @@ Scenariusze S1-S6 + plan + bezpieczeństwo: karta §0/§2/§6.
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Eksport serwerowy idei | worker generujący plik / ukryć przycisk | Piotr | TBD | otwarta |
-| D-02 | Kanon wersjonowania | `snapshots` (wepnij, wytnij versions) / `versions` | Piotr | TBD | otwarta |
+| D-01 | Eksport serwerowy idei | worker generujący plik / ukryć przycisk | Piotr | TBD | otwarta (DP-5: ukryj za flagą + label „wkrótce") |
+| D-02 | Kanon wersjonowania | `snapshots` (wepnij, wytnij versions) / `versions` | Piotr | TBD | otwarta (M05-D02 modułowe, DECYZJE §C) |
+| D-03 | Kontrakt `my_idea_maps` per-resource (DP-3) | single-player (per-user) / przebudowa na shared+membership | Piotr | TBD | **DP-3 = per-resource multiplayer — M09 ZMIENIA kontrakt dla całej puli; M05 koordynuje migrację snapshots/activity** |
 
-### 05 · Flagi/rollout — beta Ideas (per-user); brak gating-rola dla zarządzania.
+### 05 · Flagi/rollout — beta Ideas (per-user); brak gating-rola dla zarządzania. **DP-3:** jeśli M09 przebuduje `my_idea_maps` na shared+membership, M05 musi dostosować scope (`user_id` → membership) — koordynacja wspólnej migracji snapshots/activity z M06.
 ### 06 · Ryzyka — migracja 20260611 może nie być na prod (centerbeam ~2026-05-18) → snapshoty 503 mimo poprawnego pliku; dev `.env` → Railway PROD (ostrożnie z zapisami). Split-brain wersjonowania może mylić użytkownika.
 ### 07 · Log — 2026-06-13: zweryfikowano L-01 (conflict refresh realny), L-02 (migracja plik-present). Audyt 2026-06-12: ocena 60/100. Re-ocena po FAZA 1 + sesji żywej (R6).
 

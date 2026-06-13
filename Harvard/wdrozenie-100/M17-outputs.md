@@ -1,25 +1,25 @@
 # TECZKA M17 — Outputs (Outputs Library)
 
-> Teczka = **cienki indeks + reconciliation**, NIE duplikat. Linkuje kartę audytu + INV_E + kod i dokłada brakujące ogniwa (Rejestr Wejść z uwagami żywymi · Rejestr Decyzji · DoD z liczbami · korekta staleności R3). Wzór: [`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md), referencja: [`M13-inicjatywy.md`](M13-inicjatywy.md).
+> Teczka = **cienki indeks + reconciliation**, NIE duplikat. Linkuje kartę audytu + INV_E + kod i dokłada brakujące ogniwa (Rejestr Wejść z uwagami żywymi · Rejestr Decyzji · DoD z liczbami · korekta staleności R3). Pogłębiona do poziomu PODŁOGI [`M13-inicjatywy.md`](M13-inicjatywy.md) (2026-06-13): C = model danych + bramki + enumeracja API; F = epiki→stories Gherkin→L-xx; G = liczby grep per-plik. Wzór: [`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md).
 
 ## 00 · Nagłówek
 - **Moduł:** M17 Outputs (Outputs Library — biblioteka artefaktów) · **Pula:** beta (closed; cały moduł za `ENABLE_V8_GLOBAL`)
 - **Ocena audytu:** 54/100 · **Tier:** Alpha · **Status:** FAZA 3 (szlif; **zależny od M18**) → FAZA 4 · **Rozmiar:** M (1–3 dni)
 - **Żywy bloker:** brak P0 (P1 over-disclosure public viewera — NAPRAWIONE `1b67579d7a`)
-- **Właściciel:** Piotr · **Daty:** karta 2026-06-11 · teczka 2026-06-13
+- **Właściciel:** Piotr · **Daty:** karta 2026-06-11 · teczka 2026-06-13 (pogłębiona)
 - **Karta:** `Harvard/modules/M17-outputs/KARTA_AUDYTU.md` · **Evidence:** `…/evidence/f1_code_truth.md`, `f2_tests_report.md`, `f56_kanon_sec.md` · **INV_E:** `…/INV_E_outputs_studia_meeting.md` (OUTPUTS poz.1-16)
-- **Kod:** `src/components/ReportsAndPresentations/` (`ReportsAndPresentationsHub`, `OutputsAggregateTabContent.tsx`, `useRapData.ts`) · `server/src/services/artifactRegistryService.ts` · `server/src/routes/artifacts.routes.ts` · `…/presentations.routes.ts` (public share) · `…/report-builder.routes.ts`
+- **Kod:** FE `src/components/ReportsAndPresentations/` (13 plików: `ReportsAndPresentationsHub.tsx`, `OutputsAggregateTabContent.tsx`, `ReportsTabContent/PresentationsTabContent/SheetsTabContent/TemplatesTabContent.tsx`, `TrustStatePreviewSection.tsx`, `useRapData.ts`, `useTrustState.ts`, `artifactNavigation.ts`, `outputsLibraryTabQuery.ts`, `duplicateArtifactToDraft.ts`) · BE `server/src/services/artifactRegistryService.ts` · `server/src/routes/artifacts.routes.ts` (29 endpointów) · `…/report-builder.routes.ts` (93 endpointy) · `…/presentations.routes.ts` (public share)
 
 ## MAPA POKRYCIA
 | Warstwa | Stan | Źródło (istnieje) | Co dokłada teczka |
 |---|---|---|---|
 | A Intencja | 🟢 | karta §0 + INV_E OUTPUTS | job-to-be-done + zakres |
-| B UX docelowe | 🟢 | karta §5 (§27 wysoka zgodność `FilterableTable`+`TableWithPreviewLayout`) | delta §27 (persistKey/chip) |
-| C Dane+API+reguły | 🟢 | karta §1e/§1f + `artifactRegistryService.ts` | model org-scope + bramki (niżej) |
-| D AI/Teresa | 🟢 | karta §0 (N/D — biblioteka nie produkuje kart) | deliverables za flagą |
-| E Integracje | 🟢 | karta §1g | zależność M18 (niżej) |
-| F Epiki | 🟢 | karta §7 (3 fale) | epiki (niżej) |
-| G DoD/jakość | 🟢 | karta §0/§2/§7 | **liczby grep 2026-06-13** (niżej) |
+| B UX docelowe | 🟢 | karta §5 (§27 wysoka zgodność `FilterableTable`+`TableWithPreviewLayout`) | stany ekranu + delta §27 (persistKey/chip) |
+| C Dane+API+reguły | 🟢 | karta §1e/§1f + `artifactRegistryService.ts` | **model org-scope + 7-stanowa taksonomia + bramki dwuwarstwowe + enum API** (niżej) |
+| D AI/Teresa | 🟢 | karta §0 (N/D — biblioteka nie produkuje kart) | deliverables za flagą + kręgosłup #1 |
+| E Integracje | 🟢 | karta §1g | **zależność M18 (publish→bramka aprobaty)** (niżej) |
+| F Epiki | 🟢 | karta §7 (3 fale) | **epiki→stories Gherkin→L-xx** (niżej) |
+| G DoD/jakość | 🟢 | karta §0/§2/§7 | **liczby grep 2026-06-13 per-plik** (niżej) |
 | H Governance | 🟢 (dołożone) | karta §1/§6 | **Rejestr Wejść + Decyzji** |
 
 ---
@@ -30,40 +30,62 @@
 - **Zakres v1:** lista z rejestru `artifact_registry` (za V8) · 7 zakładek taksonomii + filtry/liczniki · trust-state 5 filarów + lineage · review/publish flow · bramka eksportu (quality serwerowo) · akcje wierszowe (open/export/archive/template) · public share viewer · register-in-outputs z Canvas/Teresa. **POZA v1:** produkcja treści kart (to robią studia M18/M19/M20 i Report Builder — M17 tylko linkuje).
 - **Metryka:** lista trwała z rejestru; export tylko po aprobacie; 0 cross-org; public viewer bez over-disclosure.
 
-## B · UX DOCELOWE *(link + delta §27)*
+## B · UX DOCELOWE *(link + stany + delta §27)*
 - **§27 wysoka zgodność:** główna tabela artefaktów = kanoniczne `FilterableTable`+`TableWithPreviewLayout` (`OutputsAggregateTabContent.tsx:1020`). **Delta:** brak persistKey (reset szerokości po reload, L-06), brak `EntityStatusChip` (surowe kropki, L-07), bulk/select nieużyty, sort bez persistu.
 - **Wzorzec hubowy:** `ReportsAndPresentationsHub` zgodny (Menu 1/2/3, 7 zakładek, breadcrumbs, dynamic tabs).
-- **Stany:** v8 OFF → API 404 JSON, FE łapie i pokazuje panel błędu z retry (`useRapData.ts:807`→`OutputsAggregateTabContent.tsx:702`) — **NIE niema pustka** (czerwona flaga „cicha pustka" OBALONA). Delta: komunikat generyczny „failed to load" zamiast „moduł wyłączony" (L-08).
+- **Stany ekranu (docelowo, koniec cichych pustek):**
+  | Stan | Obecnie | Docelowo |
+  |---|---|---|
+  | pusty | lista pusta = brak komunikatu domenowego | empty-state „brak artefaktów / utwórz w studiu" |
+  | ładowanie | spinner (`useRapData.ts`) | OK |
+  | błąd | panel błędu z retry (`useRapData.ts:807`→`OutputsAggregateTabContent.tsx:702`) — **NIE niema pustka (flaga OBALONA)** | OK |
+  | v8 OFF | komunikat generyczny „failed to load" | dedykowany baner „moduł wyłączony" (L-08) |
+  | brak-uprawnień | API org-gated → 404/403 | komunikat „brak dostępu" |
 
-## C · DANE + API + REGUŁY *(link + org-scope/bramki)*
+## C · DANE + API + REGUŁY *(pogłębione — model + taksonomia + bramki + enum API)*
 - **Wiring FE↔BE↔DB:** karta §1e. **Flagi:** karta §1f (`ENABLE_V8_GLOBAL` OFF→404 pre+post-auth; `ENABLE_DELIVERABLES_LIGHT` dla Teresa→Outputs).
-- **Reguła org-scope (kanon, czysty):** `getArtifactForUser`/`getArtifactListItemRow` → `WHERE a.organization_id=? AND a.artifact_id=?` (`artifactRegistryService.ts:1891`), lista `:1944`; orgId zawsze z tokena → artefakt org B = 404. **Trzeci moduł z rzędu BEZ cross-org IDOR.**
-- **Reguły bramek:** review/publish role-gated ADMIN/OWNER serwerowo (`artifacts.routes.ts:1011`); bramka eksportu — **quality serwerowo** (`report-builder.routes.ts:180`, `presentations.routes.ts:1444`→409/422), ale **publish-approval (`publishState`/`validationState`) tylko UI** (`OutputsAggregateTabContent.tsx:1001-1004` disable przycisku) → obejście bezpośrednim API (L-01, zweryfikowane: brak serwerowego sprawdzenia approval). Public share — over-disclosure NAPRAWIONE (`1b67579d7a`).
+- **Model danych (rejestr):** `artifact_registry` (org-scoped) + `export_ledger` (eksporty) + origin-links (lineage); odczyt zawsze `WHERE a.organization_id=? AND a.artifact_id=?` (`artifactRegistryService.ts:1891`), lista `:1944`. Public share = `presentation_decks.share_token` (32-hex, 122-bit).
+- **Taksonomia 7 zakładek (FE stan):** Reports · Presentations · Sheets · Documents · Templates · (+2 agregatowe) — filtry+liczniki z raw (`useRapData.ts:755`). Każdy wiersz ma `governance.publishState` ∈ {`draft` · `in_review` · `reviewable_share` · `approved`/`published`} + `governance.validationState` ∈ {`pending` · …}.
+- **Reguła org-scope (kanon, czysty):** orgId zawsze z tokena → artefakt org B = 404. **Trzeci moduł z rzędu BEZ cross-org IDOR** (kohorta M02/M25).
+- **Bramki — DWIE warstwy (R3, kluczowe rozróżnienie):**
+  | Bramka | Warstwa | Egzekucja | Dowód | Status |
+  |---|---|---|---|---|
+  | **review/publish** (start-review, Approve&publish) | rola | **serwerowa** ADMIN/OWNER | `artifacts.routes.ts:1011` | ✅ czysta |
+  | **eksport — quality** (`REPORT_NOT_READY` 409 / `QUALITY_GATE_BLOCKED` 422) | jakość | **serwerowa** | `report-builder.routes.ts:180`, `presentations.routes.ts:1444` | ✅ czysta |
+  | **eksport — publish-approval** (`publishState`/`validationState`) | aprobata | **TYLKO UI** (disable przycisku) | `OutputsAggregateTabContent.tsx:1000-1004` (`validationState==='pending'` …) | ⚠️ **L-01** — obejście bezpośrednim API |
+- **Enumeracja API (`artifacts.routes.ts`, 29 endpointów; org z tokena):** lista/by-id (`GET /`, `GET /:id`, by-status, by-type) · trust-state/lineage (`:226-297`) · review/publish (`POST /:id/start-review`, `/approve`, `/publish` `:717,1002`) · eksport (delegacja do report-builder/presentations) · akcje wierszowe (`buildActionTargetPayload:73` → open/export/archive/template) · `GET /presentations/shared/:token` (public, sanitizowany). Report Builder = osobny router 93 endpointy (M17 linkuje, nie produkuje).
 
-## D · AI / TERESA *(link)*
+## D · AI / TERESA *(link + kręgosłup)*
 - **N/D produkcyjnie:** M17 to biblioteka, nie produkuje treści kart (CARD_CONTENT_FORMULA N/D). Teresa→Outputs = rejestracja deliverable za `ENABLE_DELIVERABLES_LIGHT`.
-- **Kręgosłup (Uwaga #1):** artefakty wpływają do rejestru z M02/M18/M19/M20 i z Teresy (`metadata.deliverable`+event). Pęknięcie więzi czat→panel (`SPEC_ZADANIE_01`) dotyka ŹRÓDEŁ artefaktów, nie samego rejestru — zależność pośrednia.
+- **Kręgosłup (Uwaga #1):** artefakty wpływają do rejestru z M02/M18/M19/M20 i z Teresy (`metadata.deliverable`+event). Pęknięcie więzi czat→panel (`SPEC_ZADANIE_01`: dwa rozłączne systemy artefaktów `useArtifactsStore` vs `WorkCanvasDocumentPanel`) dotyka ŹRÓDEŁ artefaktów wpływających do rejestru, nie samego rejestru — **zależność pośrednia** (L-10). Niezweryfikowane w specu: czy `docGenerationRuntime.ts` wpisuje artefakt do `useArtifactsStore` (do domknięcia przy fixie #1).
 
 ## E · INTEGRACJE
-Karta §1g. **WEJŚCIE ←** M02 Canvas (register-in-outputs, provenance — real, test `2bb18aae0c`), M01/Teresa (deliverables za flagą), M18/M19/M20 studia (artefakty do rejestru). **WYJŚCIE →** edytory natywne (`resolveArtifactOpenPath`), pliki (PDF/PPTX za quality-gate), public (`/presentations/shared/:token`). **ZALEŻNOŚĆ BLOKUJĄCA:** approval-gate Outputs czyta stan publish/wersji dokumentu z **M18** → krok „bramka aprobaty" WYMAGA trwałego stanu publish M18 (kolejność MASTER §5: szlif M17 PO domknięciu trwałości M18). Public-viewer fix współdzielony z M19 (`1b67579d7a`).
+Karta §1g. **WEJŚCIE ←** M02 Canvas (register-in-outputs, provenance — real, test `2bb18aae0c`), M01/Teresa (deliverables za flagą), M18/M19/M20 studia (artefakty do rejestru). **WYJŚCIE →** edytory natywne (`resolveArtifactOpenPath`), pliki (PDF/PPTX za quality-gate), public (`/presentations/shared/:token`). **ZALEŻNOŚĆ BLOKUJĄCA (kolejność MASTER §5):** approval-gate Outputs (L-01) czyta stan publish/wersji dokumentu z **M18** → krok „bramka aprobaty serwerowa" WYMAGA trwałego stanu publish M18 → szlif M17 PO domknięciu trwałości M18. Public-viewer fix współdzielony z M19 (`1b67579d7a`, wspólny endpoint).
 
-## F · EPIKI *(z karty §7, forma epików)*
-- **EPIK 1 — Bramka aprobaty serwerowo (P2, po M18):** handlery eksportu odrzucają artefakt nie-`approved`/`published` (nie tylko quality) + test T4 (L-01). **Zależne od trwałości publish M18.** [Fala 1]
-- **EPIK 2 — Bezpieczeństwo:** beta-guard route `/presentations` (L-02); rate-limit+revoke+410 na share decku (L-03). [Fala 2]
-- **EPIK 3 — Test prawdy:** fix mock i18n T1; decyzja 25 stale testów middleware T2 (D-01); test approval serwerowy T4; viewer RAP T6 (L-04/L-05). [Fala 1/4]
-- **EPIK 4 — Kanony:** §27 persistKey/`EntityStatusChip`/tokeny/bulk/sort-persist (L-06/L-07); i18n `t()` (L-09); dedykowany baner v8 OFF (L-08); CI `Londyn`. [Fala 3/4]
+## F · EPIKI → STORIES → ZADANIA *(pogłębione, Gherkin → L-xx)*
+- **EPIK 1 — Bramka aprobaty eksportu serwerowo (P2, po M18):**
+  - Story 1.1: jako system chcę odrzucić eksport artefaktu nie-`approved`/`published`, aby niezatwierdzona treść nie wyszła do klienta.
+    - Gherkin: *dany* artefakt `publishState=draft` · *gdy* klient woła handler eksportu bezpośrednim API · *wtedy* serwer zwraca 403 (nie tylko quality 409/422). [Z → **L-01**; zależne od trwałości publish M18]
+    - Zadania: test T4 serwerowy (export `draft` → 403) [Z → **L-04**].
+- **EPIK 2 — Bezpieczeństwo:**
+  - Story 2.1: jako security chcę beta-guard na route `/presentations`, aby direct URL nie omijał plate BETA. Gherkin: *gdy* direct URL bez beta-flagi · *wtedy* plate BETA_LOCKED. [Z → **L-02**]
+  - Story 2.2: jako security chcę rate-limit+revoke+410 na share decku. Gherkin: *gdy* >N/min na `/shared/:token` · *wtedy* 429; *gdy* revoke · *wtedy* 410 (nie 404). [Z → **L-03**]
+- **EPIK 3 — Test prawdy:**
+  - Story 3.1: fix mock i18n T1; decyzja 25 stale testów middleware T2 (D-01); viewer RAP T6. [Z → **L-04/L-05**]
+- **EPIK 4 — Kanony:**
+  - Story 4.1: §27 persistKey/`EntityStatusChip`/tokeny/bulk/sort-persist [Z → **L-06/L-07**]; i18n `t()` całość katalogu [Z → **L-09**]; dedykowany baner v8 OFF [Z → **L-08**]; CI `Londyn`.
 
 ## G · JAKOŚĆ / DoD *(skwantyfikowane — grep 2026-06-13)*
 | # | Kryterium | Miara M17 |
 |---|-----------|-----------|
-| 1 | Front↔back | bramka eksportu egzekwuje aprobatę serwerowo (nie tylko quality); lista trwała z rejestru; 0 martwych przycisków |
-| 2 | Bezpieczeństwo | export nie-approved → 403 (serwerowo); beta-guard route; share rate-limit+revoke+410; rejestr org-scoped (czysty); public viewer sanitizowany (zrobione `1b67579d7a`) |
-| 3 | i18n | **96 z 96** `isPolish` w `src/components/ReportsAndPresentations` (grep 2026-06-13 = **96**; karta podawała „18× isPolish" tylko w `OutputsAggregateTabContent`) → `t()` |
+| 1 | Front↔back | bramka eksportu egzekwuje aprobatę serwerowo (nie tylko quality `report-builder.routes.ts:180`); lista trwała z rejestru; 0 martwych przycisków (DEMO_* usunięty `167b2757bf`) |
+| 2 | Bezpieczeństwo | export nie-approved → 403 (serwerowo); beta-guard route; share rate-limit+revoke+410; rejestr org-scoped (czysty `:1891,1944`); public viewer sanitizowany (zrobione `1b67579d7a`) |
+| 3 | i18n | **96 z 96** `isPolish` w `src/components/ReportsAndPresentations` (grep 2026-06-13 = **96** — CAŁY katalog; karta podawała „18×" tylko w `OutputsAggregateTabContent`) → `t()` |
 | 4 | Tokeny | **0 hex `#RRGGBB`** w `ReportsAndPresentations` (grep = 0); dług = klasy Tailwind (`blue-400`/`emerald-400`/`amber-400` `:311-374`) + brak `EntityStatusChip` |
 | 5 | §27 | **0** surowych `<table>` (grep = 0; kanon `FilterableTable`); brak persistKey + bulk + sort-persist |
 | 6 | E2E w PR-gate | S3 (approval serwerowo) + S7 (public viewer RAP) zielone na `Londyn` |
 
-Scenariusze S1–S7: karta §0/§2 (330 PASS/30 FAIL = harness: i18n mock + 25 stale middleware + fixture gap). Bezpieczeństwo: karta §6. *(R4: 96× isPolish to CAŁY katalog M17, nie tylko `OutputsAggregateTabContent` 18× z karty — sweep i18n musi objąć cały `ReportsAndPresentations`.)*
+Scenariusze S1–S7: karta §0/§2 (330 PASS/30 FAIL = harness: i18n mock + 25 stale middleware + fixture gap). Bezpieczeństwo: karta §6. *(R4: 96× isPolish to CAŁY katalog M17 — sweep i18n musi objąć cały `ReportsAndPresentations`, nie tylko `OutputsAggregateTabContent`.)*
 
 ## H · GOVERNANCE *(dołożone ogniwa)*
 
@@ -71,18 +93,18 @@ Scenariusze S1–S7: karta §0/§2 (330 PASS/30 FAIL = harness: i18n mock + 25 s
 | ID | Źródło | Data | Treść (1 zd.) | → Luka |
 |----|--------|------|----------------|--------|
 | W-01 | Karta audytu §1–§7 | 2026-06-11 | 54/100; rejestr org-scoped czysty; bramka aprobaty tylko UI; share bez rate-limit; §27 odstępstwa | L-01..L-09 |
-| W-02 | **Uwaga żywa #1** (`SPEC_ZADANIE_01`) | 2026-06-13 | kręgosłup czat→panel pęka — dotyka ŹRÓDEŁ deliverables wpływających do rejestru | L-10 (zależność pośrednia) |
+| W-02 | **Uwaga żywa #1** (`SPEC_ZADANIE_01`) | 2026-06-13 | kręgosłup czat→panel pęka — dotyka ŹRÓDEŁ deliverables wpływających do rejestru (dwa systemy artefaktów) | L-10 (zależność pośrednia) |
 | W-03 | INV_E OUTPUTS poz.1-16 | 2026-06-11 | 2 pkt STALE: v8-404 nie jest niemą pustką; register-in-outputs test skommitowany | (skorygowane) |
 | W-04 | **MASTER §5** (kolejność M18→M17) | 2026-06-13 | bramka aprobaty M17 czyta publish M18 → po trwałości M18 | L-01 (zależność) |
 | W-05 | Feedback prod (kohorta beta) | — | brak własnej uwagi żywej M17 z 2026-06-13 | — (dziedziczy z karty) |
 
 ### 02 · Stan obecny (prawda kodu)
-Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY (`167b2757bf`); register-in-outputs realny+test (`2bb18aae0c`). **KOREKTA INV_E (R3, z karty):** v8-404 = panel błędu z retry, NIE niema pustka; register-in-outputs test skommitowany (teza „uncommitted" nieaktualna). **L-01 potwierdzone 2026-06-13:** publish-approval sprawdzany TYLKO w `OutputsAggregateTabContent.tsx:1001-1004` (disable przycisku FE); serwer pilnuje quality, NIE publish-approval → eksport `draft`/`in_review` bezpośrednim API obchodzi (org-scope+quality nadal chronią). P1 public viewer over-disclosure NAPRAWIONE (`1b67579d7a`).
+Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY (`167b2757bf`); register-in-outputs realny+test (`2bb18aae0c`). **KOREKTA INV_E (R3, z karty):** v8-404 = panel błędu z retry, NIE niema pustka; register-in-outputs test skommitowany (teza „uncommitted" nieaktualna). **L-01 potwierdzone w kodzie 2026-06-13:** publish-approval sprawdzany TYLKO w `OutputsAggregateTabContent.tsx:1000-1004` (`item.governance?.validationState === 'pending'` disable przycisku FE); serwer pilnuje quality, NIE publish-approval → eksport `draft`/`in_review` bezpośrednim API obchodzi (org-scope+quality nadal chronią). P1 public viewer over-disclosure NAPRAWIONE (`1b67579d7a`).
 
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | bramka aprobaty eksportu tylko UI (publish-approval) | W-01,W-04 | `OutputsAggregateTabContent.tsx:1001-1004` (FE-only) | P2 | 3 | otwarta (**zależna od M18**) | 2026-06-13 |
+| L-01 | bramka aprobaty eksportu tylko UI (publish-approval) | W-01,W-04 | `OutputsAggregateTabContent.tsx:1000-1004` (FE-only) | P2 | 3 | otwarta (**zależna od M18**) | 2026-06-13 |
 | L-02 | beta-lock tylko nawigacyjny | W-01 | `Sidebar.tsx:156` vs route bez beta-guarda | P2 | 3 | otwarta |  |
 | L-03 | share decku bez rate-limit/revoke; expired→404 nie 410 | W-01 | `/presentations/shared/:token` | P2 | 3 | otwarta |  |
 | L-04 | brak testu serwerowej bramki aprobaty (T4) | W-01 | `evidence/f2_tests_report.md` (S3 quality-only) | P0-test | 2 | otwarta |  |
@@ -102,9 +124,9 @@ Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY 
 
 ### 05 · Flagi / rollout — `ENABLE_V8_GLOBAL` OFF→404 (decyduje czy moduł żyje czy = panel błędu — udokumentować wartość na staging/prod); `ENABLE_DELIVERABLES_LIGHT`+`VITE_` dla Teresa→Outputs. Beta-guard route = nawigacyjny (direct URL omija plate; API org-gated).
 ### 06 · Ryzyka — krok 1 (bramka aprobaty) WYMAGA trwałego publish M18 → kolejność MASTER §5; 25 stale testów middleware = dług decyzyjny (D-01); `ENABLE_V8_GLOBAL` na prod nieznana (decyduje o życiu modułu); dev `.env` → Railway PROD.
-### 07 · Log — 2026-06-11: re-audit F:5→7 (`1b67579d7a` public viewer, `bc5579918d` beta-lock 3-warstwowy), 53→54. 2026-06-12: A:21→22 (`167b2757bf` DEMO_* usunięty). 2026-06-13 (teczka): L-01 potwierdzone (approval FE-only); INV_E 2 pkt STALE skorygowane. Re-ocena D/G po Fazach 3/4 (zależne od M18).
+### 07 · Log — 2026-06-11: re-audit F:5→7 (`1b67579d7a` public viewer, `bc5579918d` beta-lock 3-warstwowy), 53→54. 2026-06-12: A:21→22 (`167b2757bf` DEMO_* usunięty). 2026-06-13 (teczka pogłębiona): L-01 potwierdzone (approval FE-only `:1000-1004`); INV_E 2 pkt STALE skorygowane; C rozbite na 2-warstwowy model bramek + enum 29 endpointów; F na Gherkin. Re-ocena D/G po Fazach 3/4 (zależne od M18).
 
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia (karta+INV_E+uwaga #1 jako zależność+MASTER) · R2 zero sierot · R3 statusy z dowodem (L-11/L-12 z commitami; L-01 potwierdzone w kodzie 2026-06-13; INV_E 2 pkt STALE skorygowane) · R4 DoD z liczbami (grep i18n=96, hex=0, `<table>`=0) · R5 decyzja z właścicielem (D-01) · A–E docelowy zlinkowany · F epiki↔luki (zależność M18 jawna) · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
+R1 wejścia (karta+INV_E+uwaga #1 jako zależność+MASTER) · R2 zero sierot · R3 statusy z dowodem (L-11/L-12 z commitami; L-01 potwierdzone w kodzie 2026-06-13; INV_E 2 pkt STALE skorygowane) · R4 DoD z liczbami (grep i18n=96, hex=0, `<table>`=0) · R5 decyzja z właścicielem (D-01) · A–E docelowy zlinkowany (C 2-warstwowy model bramek + enum API) · F epiki→stories Gherkin↔luki (zależność M18 jawna) · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**

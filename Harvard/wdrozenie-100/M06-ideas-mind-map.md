@@ -30,15 +30,40 @@
 - **Zakres v1:** edytor węzłów (gramatyka klawiaturowa, undo/redo 50, drag-reparent, 4 layouty) · import FreeMind/XMind/OPML · eksport MD/JSON/CSV/SVG/PNG/Mermaid · collab WS (`graph_patch`) · realny LLM. **POZA v1:** align/distribute/snap-to-grid (Miro-standard, delta P2).
 - **Metryka:** zero cross-org wycieku przez WS; persystencja wersjonowana bez utraty (409 z rehydracją).
 
-## B · UX DOCELOWE *(karta §5 + delty)*
-- **Layout:** kanwa mind-map + toolbary + drawer szczegółów węzła.
-- **Stany:** pełny/edycja OK; **§27 N.D.** (canvas, nie lista) — kanon hubowy `MyWorkHub`.
-- **Delty:** konsolidacja dwóch drawerów (`NodeDetailDrawer.tsx` 1042l + `IdeaNodeDetailDrawer.tsx` 1374l ≈ 2400l duplikacji → wybrać canonical); align/distribute + snap-to-grid; React duplicate-key w ColorPickerPopover.
+## B · UX DOCELOWE *(karta §5 + delty — konkretnie kanwa + collab)*
+**Layout docelowy (kanwa mind-map, `IdeaRecommendationMap.tsx` 6337 l.):**
+- **Kanwa** — węzły (rekomendacje) + krawędzie hierarchiczne; 4 layouty (radial/tree-H/tree-V/free); pełna gramatyka klawiaturowa (Tab=child, Enter=sibling, Del, F2=rename, strzałki=nawigacja); undo/redo 50 kroków; drag-reparent.
+- **Toolbary** — góra: layout-switch, zoom/fit, import (FreeMind/XMind/OPML), eksport (MD/JSON/CSV/SVG/PNG/Mermaid); prawo: AI-panel (expand/suggest/gap).
+- **Drawer szczegółów węzła** — notatki, kolor, metadane. **Delta: DWA drawery współistnieją** (`NodeDetailDrawer.tsx` 1042l + `IdeaNodeDetailDrawer.tsx` 1374l ≈ 2400l duplikacji) → wybrać canonical (D-01).
+- **Presence collab** — awatary uczestników (ten sam org) z WS; live cursor.
 
-## C · DANE + API + REGUŁY *(link + kontrakt)*
-- **Persystencja:** łańcuch `useMindMapPersistence.ts:590-754` → `workspaceGraphRuntime.ts` → `useIdeaMapSync.ts:232-314` → `POST /map/sync` (`my-work.routes.ts:3874`) z baseVersion/409/empty-reset-guard + org-scope.
-- **WS collab:** `ideaCollabWs.gateway.ts` — JWT verify przy upgrade **+ org-scope DB-check** `SELECT id FROM my_ideas WHERE id=? AND organization_id=?` (`:237-238`) → cross-org idea = **403 + socket.destroy** (`:240-242`). Tabela snapshots/activity = WSPÓLNA z M05.
-- **Reguły:** room kluczowany `ideaId`, dołączenie tylko po przejściu org-check.
+**Stany ekranu:**
+| Stan | Docelowo | Dziś |
+|---|---|---|
+| pełny/edycja | OK | OK |
+| **collab cross-org** | join odrzucony → 403 + socket.destroy | **OK (L-01 naprawione, `:240-242`)** |
+| konflikt 409 | rehydracja + banner | rehydracja działa, banner = delta |
+| §27 | N.D. (canvas, nie lista) | N.D. |
+
+**Mikro-flow collab (docelowy):** WS upgrade `/ws/collab/:ideaId` → JWT verify → **org-scope DB-check** (`SELECT id FROM my_ideas WHERE id=? AND organization_id=?`) → join room (kluczowany `ideaId`) → patche `graph_patch` broadcast do roomu; presence/session-state broadcast; cleanup przy disconnect (room.size===0 → usuń room+state).
+
+**Delty UX:** konsolidacja drawerów → canonical (D-01); **align/distribute + snap-to-grid** (Miro-standard, dziś brak — P2); React duplicate-key warning w `ColorPickerPopover`; AI overlays (sentiment/clustering) dziś heurystyki klienta → oznaczyć jako heurystyki LUB dedykowany LLM endpoint (D-02).
+
+## C · DANE + API + REGUŁY *(link + kontrakt sync/WS — enumeracja)*
+- **Persystencja (łańcuch):** `useMindMapPersistence.ts:590-754` → `workspaceGraphRuntime.ts` → `useIdeaMapSync.ts:232-314` → `POST /my-ideas/:id/map/sync` (`my-work.routes.ts:3949`) z `baseVersion`/409/empty-reset-guard + org+user-scope. Współdzielone endpointy mapy = te same co M05 (sekcja C/M05): `/map`, `/map/sync`, `/map/snapshots`, `/map/nodes/:nodeId/comments`, `/activity`.
+- **Model danych:** `my_idea_maps` (graf blob) + `my_idea_map_snapshots` + `my_idea_activity` (mig. `20260611_…sql`, oba `organization_id TEXT NOT NULL` + idx) — **WSPÓLNE z M05** (jedna migracja, jeden fix). `collab_sessions` (idea_id, organization_id, user_id) — sesje WS.
+- **WS collab (`ideaCollabWs.gateway.ts`, endpoint `/ws/collab/:ideaId`):**
+  | Krok | Linia | Reguła |
+  |---|---|---|
+  | upgrade match path | `:201-207` | wyciągnij `ideaId`, brak → return |
+  | JWT verify | `:212-221` | brak/invalid token → `socket.destroy()` |
+  | **org-scope DB-check** | `:237-238` | `SELECT id FROM my_ideas WHERE id=? AND organization_id=?` |
+  | cross-org reject | `:240-242` | **403 + `socket.destroy()`** przed `room.set` |
+  | join room | `:292` | room kluczowany `ideaId`, presence/session broadcast |
+  | INSERT sesji | `:148-150` | `collab_sessions(idea_id, organization_id, user_id)` |
+  | cleanup | `:111-132` | room.size===0 → usuń room+state |
+  ⚠ **Ryzyko:** placeholdery `?` (nie `$1`) w `:237` — potwierdzić że PG-adapter tłumaczy w runtime (inaczej DB-check może nie zadziałać na PG). **WSPÓLNY z M07 i M09** — jeden fix/test zamyka 3 moduły.
+- **Reguły:** room kluczowany `ideaId`; dołączenie tylko po org-check; broadcast `graph_patch` do roomu (collab realtime).
 
 ## D · AI / TERESA *(link + delty)*
 - **Co generuje:** expand/suggestions/gap (realny LLM).
@@ -49,14 +74,29 @@
 - **Kręgosłup:** **WS gateway `ideaCollabWs.gateway.ts` WSPÓLNY z M07 i M09** — jeden fix org-scope zamyka 3 moduły (zweryfikowany jako naprawiony). `useIdeaMapSync` flush/cleanup wspólny z całą pulą.
 - **Zależności blokujące:** migracja snapshots/activity **WSPÓLNA z M05**.
 
-## F · EPIKI *(z karty §7)*
-- **EPIK 1 — WS org-scope (P1):** cross-org → 403, test gateway (L-01) — **kod naprawiony, brak testu.**
-- **EPIK 2 — Persystencja snapshots/activity (P0):** migracja (wspólna M05) + smoke 200 (L-02).
-- **EPIK 3 — Korupcja „rose" (P1):** grep=0 + UI bez „Cost roseuction" (L-03) — **zweryfikowane = 0.**
-- **EPIK 4 — Uczciwe afordancje:** etykieta ExportPPT, sidekick handler, AI overlays uczciwe, WebhookSettings usunięte (L-04).
-- **EPIK 5 — Flush keepalive/sendBeacon (P1, wspólny):** (L-05).
-- **EPIK 6 — Szlif:** konsolidacja drawerów, align/distribute/snap, martwy kod (L-06).
-- **EPIK 7 — Testy:** BE map/sync + WS gateway + snapshot + E2E checklist + CI `Londyn` (L-07).
+## F · EPIKI → STORIES → ZADANIA *(Gherkin)*
+
+**EPIK 1 — WS org-scope szczelny (P1)** *(domyka C/WS + bezpieczeństwo)*
+- **Story 1.1:** jako konsultant z Org A chcę mieć pewność, że użytkownik z Org B nie dołączy do mojej sesji collab.
+  - *Dane* idea należy do Org A *gdy* socket z tokenem Org B robi upgrade na `/ws/collab/:ideaId` *wtedy* 403 + `socket.destroy()` **przed** `room.set`.
+  - Zadania: Z-01 weryfikacja `:237-242` → **L-01 (naprawione, domknąć)**; Z-02 test gateway cross-org (Org B→403) → L-07; Z-03 potwierdź placeholder `?`→`$1` translację PG → L-01.
+
+**EPIK 2 — Persystencja snapshots/activity (P0, wspólna M05)** *(domyka C/model)*
+- **Story 2.1:** jako użytkownik mind-map chcę, by migawki/activity się zapisywały (200, nie 503).
+  - *Dane* migracja `20260611_…sql` zaaplikowana *gdy* `POST /map/snapshots` lub `/activity` *wtedy* 200/201.
+  - Zadania: Z-04 zweryfikuj migrację w DB → L-02.
+
+**EPIK 3 — Korupcja „rose" zamknięta (P1)** — grep `roseo|roseuction|Recoverose`=0 + UI bez „Cost roseuction". → **L-03 (naprawione, grep=0).**
+
+**EPIK 4 — Uczciwe afordancje** *(domyka D + E)*
+- **Story 4.1:** jako użytkownik nie chcę przycisków, które prowadzą donikąd.
+  - Zadania: Z-05 etykieta `ExportPowerPoint.tsx:91` = zawartość → L-04; Z-06 sidekick event (`:2534`) konsumowany przez `useOpenChatWithContext.ts` (dziś w próżnię) → L-04; Z-07 AI overlays sentiment/clustering oznaczone jako heurystyki LUB LLM endpoint (D-02) → L-04; Z-08 usuń `WebhookSettings` localStorage → L-04.
+
+**EPIK 5 — Flush keepalive/sendBeacon (P1, wspólny pula)** — `useIdeaMapSync.ts:350-354`. → L-05.
+
+**EPIK 6 — Szlif** — canonical drawer (D-01, wytnij drugi ~1200l); align/distribute + snap-to-grid; React dup-key. → L-06.
+
+**EPIK 7 — Testy** — BE map/sync + WS gateway cross-org + snapshot + E2E checklist + CI `Londyn`. → L-07.
 
 ## G · JAKOŚĆ / DoD *(skwantyfikowane grepem 2026-06-13)*
 | # | Kryterium | Miara M06 |
@@ -97,10 +137,11 @@
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Canonical drawer szczegółów węzła | `NodeDetailDrawer` / `IdeaNodeDetailDrawer` (wytnij drugi) | Piotr | TBD | otwarta |
+| D-01 | Canonical drawer szczegółów węzła | `NodeDetailDrawer` / `IdeaNodeDetailDrawer` (wytnij drugi) | Piotr | TBD | otwarta (M06-D01 modułowe) |
 | D-02 | AI overlays (sentiment/clustering) | dedykowany endpoint LLM / oznaczyć jako heurystyki | Piotr | TBD | otwarta |
+| D-03 | Kontrakt `my_idea_maps` per-resource (DP-3) | single-player / shared+membership | Piotr | TBD | **DP-3 = per-resource multiplayer — M09 zmienia kontrakt; WS gateway WSPÓLNY z M06/M07/M09, membership wpływa na org-check** |
 
-### 05 · Flagi/rollout — beta Ideas; collab WS aktywny dla org.
+### 05 · Flagi/rollout — beta Ideas; collab WS aktywny dla org. **DP-3:** przebudowa na shared+membership (M09) zmienia regułę join (org-check → membership-check) w `ideaCollabWs.gateway.ts` — wspólnym dla M06/M07/M09.
 ### 06 · Ryzyka — placeholder `?` w gateway: potwierdzić tłumaczenie przez PG-adapter (inaczej DB-check może nie działać na PG); migracja 20260611 może nie być na prod; korupcja „rose" dotykała też M04 (`notebook/AIChatInlinePanel.tsx`) — sweep szerszy do potwierdzenia.
 ### 07 · Log — 2026-06-13: zweryfikowano L-01 (WS org-scope realny), L-03 (rose=0). Audyt 2026-06-12: 60/100. Re-ocena po FAZA 1 + sesji żywej (R6).
 

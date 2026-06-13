@@ -1,6 +1,6 @@
-# TECZKA A1 — Ecosystem / Affiliate Dashboard (aneks, STUB/descoped)
+# TECZKA A1 — Ecosystem / Affiliate Dashboard (aneks, DESCOPED — DP-4)
 
-> Teczka krótka — moduł to **świadomy stub end-to-end**, nie naprawa lecz **decyzja właściciela (D-01: wyciąć / budować)**. Karta pusta funkcjonalnie (13/100, 0% realne). Linkuje `KARTA_AUDYTU.md` + kod, dokłada Rejestr Wejść + Decyzję. Wzór: [`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md) · referencja: [`M13-inicjatywy.md`](M13-inicjatywy.md).
+> **STATUS: DESCOPED.** Decyzja właściciela **DP-4 = WYCIĄĆ** (`_DECYZJE.md`, 2026-06-13, ROZSTRZYGNIĘTE): usunąć stub affiliate (brak roadmapy). Teczka NIE jest pogłębiana do „SUPER" — moduł nie wchodzi do wdrożenia-100; zachowana jako rekord decyzji + ścieżka egzekucji cięcia (Ścieżka A). Wzór: [`_WZORZEC_TECZKI.md`](_WZORZEC_TECZKI.md) · referencja: [`M13-inicjatywy.md`](M13-inicjatywy.md).
 
 ## 00 · Nagłówek
 - **Moduł:** A1 Ecosystem/Affiliate Dashboard (aneks) · **Pula:** aneks
@@ -65,7 +65,7 @@ Brak luk technicznych do „dokończenia" — moduł nie ma funkcjonalności. Je
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | A1 Ecosystem/Affiliate — co dalej? | **wyciąć** (rekomendacja audytu, jeśli brak roadmapy) / **budować od zera** (jeśli w planie, z org-scope od początku) | Piotr | TBD | **otwarta — warunek wejścia, blokuje WP** |
+| D-01 | A1 Ecosystem/Affiliate — co dalej? | **wyciąć** (rekomendacja audytu) / budować od zera | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE = DP-4 WYCIĄĆ** (Ścieżka A: usunąć view + route + `referrals.routes.ts` + atrapy `api.ts` + warunek sidebar `ECOSYSTEM_NODE`; weryfikacja `grep` = 0 referencji) |
 
 ### 05 · Flagi/rollout — brak; sidebar warunkowy `journeyState === 'ECOSYSTEM_NODE'`. Moduł poza fazami implementacyjnymi do czasu D-01.
 ### 06 · Ryzyka — Bez decyzji zakresu moduł trwa jako uczciwy, ale bezwartościowy stub zajmujący nawigację i kod; rekomendacja audytu: wyciąć, chyba że ekosystem/affiliate jest w roadmapie — wtedy budować od zera z org-scope/auth/role od początku.
