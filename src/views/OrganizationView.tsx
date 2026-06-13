@@ -182,9 +182,15 @@ export const OrganizationView: React.FC = () => {
     return { title: t(meta.titleKey, meta.title), subtitle: t(meta.subtitleKey, meta.subtitle) };
   }, [activeSection, t]);
 
+  const isOrgAdmin = ['admin', 'owner', 'superadmin'].includes(
+    (currentUser?.role || '').toLowerCase()
+  );
+
   const renderContent = useCallback(() => {
-    if (ADMIN_SECTIONS.includes(activeSection))
+    if (ADMIN_SECTIONS.includes(activeSection)) {
+      if (!isOrgAdmin) return null;
       return <OrganizationAdminPanel section={activeSection} />;
+    }
     switch (activeSection) {
       case 'goals':
         return <GoalsExpectationsModule />;
