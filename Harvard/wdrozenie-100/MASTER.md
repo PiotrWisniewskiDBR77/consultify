@@ -18,8 +18,24 @@ Moduł jest „w całości gotowy", gdy spełnia WSZYSTKIE 6 kryteriów (DoD glo
 4. **Tokeny kolorów** — koniec korupcji „rose" i hex; tokeny Visual Standard / `EntityStatusChip` / `c.*`.
 5. **§27 (kanon tabel)** — wszystkie listy przez FilterableTable + Menu 1/2/3 (`docs/ui-standards/03-modules/TABLE_AND_PREVIEW_CANON.md`).
 6. **E2E w PR-gate** — scenariusze S danego modułu zielone w CI na branchu `Londyn`.
+7. **Zgodność komponentów ze standardem UI/UX** — każdy komponent modułu audytowany vs SSOT i bez odstępstw P0/P1: `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` + `UI_UX_CANON_V3.md` · `00-foundation` (kolory/tokeny/dark-mode) · `01-shell-layout` (MELS/`ExecutiveModuleShell`) · `02-components` (prymitywy: `EntityStatusChip`, `FilterableTable`, chipy/menu) · `03-modules` (§27) · `docs/standards/VISUAL_STANDARD.md` + `CARD_CONTENT_FORMULA.md`.
 
-Bramka modułu = 6/6. Bramka programu = wszystkie 27 modułów na 6/6 + smoke prod.
+Bramka modułu = 7/7. Bramka programu = wszystkie 27 modułów na 7/7 + smoke prod.
+
+---
+
+## 0a. Procedura pracy per moduł (build → zgodność → test → odbiór) — pętla autonomiczna
+
+Każdy moduł przechodzi pełną pętlę; pętla chodzi samodzielnie, pauzuje tylko na twardy bloker lub nieodwracalną decyzję (drobne → wg `_DECYZJE.md`, logowane).
+
+1. **Buduj** (Londyn) — luki z teczki (rejestr luk + epiki F).
+2. **Analiza zgodności komponentów ze standardem** *(osobny krok PRZED testem — łapie inną klasę problemów niż test funkcjonalny)*: przejdź komponenty modułu, każdy oceń vs SSOT (kryt. 7) → **tabela per-komponent: zgodny / odstępstwo (`plik:linia` + który standard)** → napraw odstępstwa P0/P1. Obejmuje: tokeny vs hex/„rose", `EntityStatusChip` na statusy, `FilterableTable`+§27 na listy, MELS/`ExecutiveModuleShell` jako powłoka, `t()` i18n, dark-mode/a11y, `CARD_CONTENT_FORMULA` na kartach.
+3. **Test lokalny** (trolley, świeży kod): scenariusze S z teczki w przeglądarce — przód (DOM/konsola/network) + tył (logi). Dowód = screenshot.
+4. **Fix w pętli** aż zielone (funkcja + zgodność).
+5. **Raport odbioru**: co działa, screenshoty, **wynik zgodności komponentów**, decyzje (logowane), pozostałe luki.
+6. **Deploy na staging** → odbiór właściciela (async, gdy ma zasięg).
+
+> Auto/zasięg: gdy maszyna działa — lecę modułami i zostawiam raporty; gdy padnie (brak prądu/sieci) — pauza bez utraty stanu, wznowienie od ostatniego modułu.
 
 ---
 
