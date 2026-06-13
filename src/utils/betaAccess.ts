@@ -27,23 +27,23 @@ export const BETA_LOCKED_CODE = 'BETA_LOCKED';
  * can keep building) while regular users are blocked. When false, closed betas
  * are blocked for EVERYONE — including admins.
  *
- * Currently false: all closed betas are fully locked down.
+ * Currently true: admins exempt so the team can test all modules.
  */
-export const BETA_ADMINS_EXEMPT = false;
+export const BETA_ADMINS_EXEMPT = true;
 
 /**
  * SSOT: status of every beta module keyed by its sidebar menu id.
  * Keep this list in sync with the `badge: 'beta'` entries in menuConfig.ts.
  */
 export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
-  MODULE_BENEFITS: 'closed', // Results
-  MODULE_ECONOMICS: 'closed', // Finance
-  MODULE_AUDITS: 'closed', // Audits
-  MODULE_PRESENTATIONS: 'closed', // Documents (Outputs library)
-  MODULE_DOCUMENT_STUDIO: 'closed', // Document Studio
-  MODULE_PREZENTACJE_GEN: 'closed', // Presentation Studio
-  MODULE_TABELE: 'closed', // Table Studio
-  MODULE_MEETING: 'closed', // Meeting
+  MODULE_BENEFITS: 'open', // Results
+  MODULE_ECONOMICS: 'open', // Finance
+  MODULE_AUDITS: 'open', // Audits
+  MODULE_PRESENTATIONS: 'open', // Documents (Outputs library)
+  MODULE_DOCUMENT_STUDIO: 'open', // Document Studio
+  MODULE_PREZENTACJE_GEN: 'open', // Presentation Studio
+  MODULE_TABELE: 'open', // Table Studio
+  MODULE_MEETING: 'open', // Meeting
   // Internal Tools (AI OS) is a footer item rendered outside the gated main menu
   // (not run through lockClosedBetaModules), and is already restricted to DBR77
   // via canUseInternalTools(). Tracked here as 'open' = beta badge only, no lock.
@@ -55,7 +55,7 @@ export const BETA_MENU_STATUS: Record<string, BetaStatus> = {
  * inside a module (My Work → Ideas). Same open/closed semantics as modules.
  */
 export const BETA_SUBAREA_STATUS: Record<string, BetaStatus> = {
-  MYWORK_IDEAS: 'closed', // My Work → Ideas tab
+  MYWORK_IDEAS: 'open', // My Work → Ideas tab
 };
 
 export function getBetaStatus(id?: string | null): BetaStatus | undefined {
