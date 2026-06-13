@@ -54,6 +54,34 @@ const STOPWORDS: Record<'pl' | 'de' | 'es' | 'en', string[]> = {
     'zrób',
     'napisz',
     'pokaż',
+    // Rozszerzenie recall PL (UWAGA #4): wysokoczęstotliwościowe, jednoznacznie
+    // polskie słowa funkcyjne/komendy spoza list de/es/en — bez ryzyka kolizji.
+    'jako',
+    'lub',
+    'albo',
+    'przez',
+    'pod',
+    'nad',
+    'przy',
+    'wszystko',
+    'teraz',
+    'dzisiaj',
+    'jutro',
+    'daj',
+    'pomóż',
+    'stwórz',
+    'przygotuj',
+    'wygeneruj',
+    'opracuj',
+    'wyjaśnij',
+    'chcę',
+    'muszę',
+    'potrzebuję',
+    'mój',
+    'moja',
+    'moje',
+    'nasz',
+    'twoje',
   ],
   de: [
     'der',
@@ -181,6 +209,12 @@ export function detectMessageLanguage(raw: string): SupportedLanguage | null {
 
   // Need a clear winner. Two unambiguous hits, or one hit on a short message.
   if (topScore >= 2 && topScore > secondScore) return topLang;
+  // UWAGA #4: pojedyncze trafienie słowa unikalnego dla danego języka, przy
+  // ZERO trafień konkurentów, to pewny sygnał (listy są wzajemnie rozłączne —
+  // nieliczne współdzielone partykuły remisują i są odsiewane przez
+  // topScore > secondScore). Ratuje krótkie polskie otwarcia („zrób raport",
+  // „pokaż wynik") niezależnie od długości, które wcześniej spadały do UI (EN).
+  if (topScore >= 1 && secondScore === 0) return topLang;
   if (topScore >= 1 && topScore > secondScore && tokens.size <= 4) return topLang;
   return null;
 }
