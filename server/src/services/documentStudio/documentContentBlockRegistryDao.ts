@@ -1,59 +1,87 @@
 /**
  * Consultify Document Studio — Content Block Library Registry DAO
- * (Epic E10, Slice 10.2).
+ * (Epic E10, Slice 10.2 → wave5 layer-2 persistence).
  *
- * Mirrors the `documentBrandVoiceRegistryDao.ts` design contract:
+ * Postgres-backed persistence layer behind the in-process Map cache in
+ * `documentContentBlockService.ts`. Mirrors `documentApprovalRegistryDao.ts`:
  *
- *   - Acts as the persistence layer behind the in-process Map cache in
- *     `documentContentBlockService.ts`. The service public API stays
- *     synchronous; persistence is best-effort write-through.
- *   - Every operation is failure-tolerant: a missing migration, a DB
- *     outage, or any other error path resolves to `{ ok: false }` /
- *     `null` / `[]` and does NOT throw. The service falls back to the
- *     in-process Map when persistence is unavailable.
- *   - Reads (`loadContentBlocksForOrg`, `loadAuditForContentBlock`)
- *     hydrate the cache lazily once per organization on cold start.
+ *   - Best-effort write-through: every operation resolves to `{ ok: false }` /
+ *     `null` / `[]` on any error and does NOT throw — the service falls back
+ *     to its in-process Map cache when persistence is unavailable.
+ *   - Reads (`loadContentBlocksForOrg`, `loadContentBlockById`,
+ *     `loadAuditForContentBlock`) hydrate the cache lazily once per
+ *     organization on cold start.
+ *   - Tenant safety: every query carries `organization_id` in the WHERE
+ *     clause; cross-tenant reads are deny-by-default.
  *
- * Tenant safety: every query carries `organization_id` in the WHERE
- * clause; cross-tenant reads are deny-by-default.
- *
- * Storage backing (Slice 10.2): in-memory only; the wave5 persistence
- * migration ships in a follow-up. Public function signatures match the
- * Postgres-backed shape so the swap is mechanical.
+ * Storage backing: tables `document_content_blocks` +
+ * `document_content_block_audit` (migration 781). The canonical object
+ * (incl. nested tags[]/documentTypes[]/block) is stored in `payload_json`;
+ * scalar columns mirror the fields used for WHERE/ordering.
  */
 
+import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import type {
   DocumentContentBlockAuditEntry,
   DocumentContentBlockTemplate,
 } from './documentStudioTypes.js';
 
-const blockStore = new Map<string, DocumentContentBlockTemplate>();
-const auditStore = new Map<string, DocumentContentBlockAuditEntry[]>();
-
-function key(organizationId: string, contentBlockId: string): string {
-  return `${organizationId}::${contentBlockId}`;
+interface BlockRow {
+  content_block_id: string;
+  payload_json: unknown;
 }
 
-function cloneBlockTemplate(template: DocumentContentBlockTemplate): DocumentContentBlockTemplate {
-  return {
-    ...template,
-    tags: [...template.tags],
-    documentTypes: [...template.documentTypes],
-    block: JSON.parse(JSON.stringify(template.block)) as DocumentContentBlockTemplate['block'],
-  };
+interface AuditRow {
+  audit_id: string;
+  payload_json: unknown;
+}
+
+function parseJson<T>(raw: unknown, fallback: T): T {
+  if (raw == null) return fallback;
+  if (typeof raw === 'object') return raw as T;
+  try {
+    return JSON.parse(String(raw)) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function rowToBlock(row: BlockRow): DocumentContentBlockTemplate | null {
+  const block = parseJson<DocumentContentBlockTemplate | null>(row.payload_json, null);
+  if (!block || !block.contentBlockId) return null;
+  // Defensive: ensure array shapes survive a malformed payload.
+  block.tags = Array.isArray(block.tags) ? block.tags : [];
+  block.documentTypes = Array.isArray(block.documentTypes) ? block.documentTypes : [];
+  return block;
+}
+
+function rowToAudit(row: AuditRow): DocumentContentBlockAuditEntry | null {
+  const entry = parseJson<DocumentContentBlockAuditEntry | null>(row.payload_json, null);
+  if (!entry || !entry.auditId) return null;
+  return entry;
 }
 
 export async function loadContentBlocksForOrg(
   organizationId: string
 ): Promise<DocumentContentBlockTemplate[]> {
   if (!organizationId) return [];
-  const prefix = `${organizationId}::`;
-  const out: DocumentContentBlockTemplate[] = [];
-  for (const [k, template] of blockStore.entries()) {
-    if (!k.startsWith(prefix)) continue;
-    out.push(cloneBlockTemplate(template));
+  try {
+    const rows = await dbAll<BlockRow>(
+      `SELECT content_block_id, payload_json FROM document_content_blocks
+         WHERE organization_id = $1
+         ORDER BY created_at ASC`,
+      [organizationId]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    return rows.map(rowToBlock).filter((b): b is DocumentContentBlockTemplate => b !== null);
+  } catch (err) {
+    logger.warn('[DocumentStudio][ContentBlockDao] loadContentBlocksForOrg failed', {
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return [];
   }
-  return out;
 }
 
 export async function loadContentBlockById(
@@ -61,21 +89,64 @@ export async function loadContentBlockById(
   organizationId: string
 ): Promise<DocumentContentBlockTemplate | null> {
   if (!contentBlockId || !organizationId) return null;
-  const template = blockStore.get(key(organizationId, contentBlockId));
-  return template ? cloneBlockTemplate(template) : null;
+  try {
+    const rows = await dbAll<BlockRow>(
+      `SELECT content_block_id, payload_json FROM document_content_blocks
+         WHERE content_block_id = $1 AND organization_id = $2
+         LIMIT 1`,
+      [contentBlockId, organizationId]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rowToBlock(rows[0]);
+  } catch (err) {
+    logger.warn('[DocumentStudio][ContentBlockDao] loadContentBlockById failed', {
+      contentBlockId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }
 
+/**
+ * Upsert a content-block template. Best-effort; never throws. Templates mutate
+ * (status/version/block change) so this is ON CONFLICT DO UPDATE, not DO NOTHING.
+ */
 export async function persistContentBlock(
   template: DocumentContentBlockTemplate
 ): Promise<{ ok: boolean }> {
   if (!template || !template.contentBlockId || !template.organizationId) {
     return { ok: false };
   }
-  blockStore.set(
-    key(template.organizationId, template.contentBlockId),
-    cloneBlockTemplate(template)
-  );
-  return { ok: true };
+  try {
+    const result = await dbRun(
+      `INSERT INTO document_content_blocks (
+         content_block_id, organization_id, status, created_at, updated_at, payload_json
+       ) VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+       ON CONFLICT (content_block_id) DO UPDATE SET
+         organization_id = EXCLUDED.organization_id,
+         status = EXCLUDED.status,
+         created_at = EXCLUDED.created_at,
+         updated_at = EXCLUDED.updated_at,
+         payload_json = EXCLUDED.payload_json`,
+      [
+        template.contentBlockId,
+        template.organizationId,
+        template.status ?? null,
+        template.createdAt ?? null,
+        template.updatedAt ?? null,
+        JSON.stringify(template),
+      ]
+    );
+    return { ok: result.success === true };
+  } catch (err) {
+    logger.warn('[DocumentStudio][ContentBlockDao] persistContentBlock failed', {
+      contentBlockId: template.contentBlockId,
+      organizationId: template.organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false };
+  }
 }
 
 export async function loadAuditForContentBlock(
@@ -83,34 +154,75 @@ export async function loadAuditForContentBlock(
   organizationId: string
 ): Promise<DocumentContentBlockAuditEntry[]> {
   if (!contentBlockId || !organizationId) return [];
-  const entries = auditStore.get(key(organizationId, contentBlockId));
-  return entries
-    ? entries.map((entry) => ({
-        ...entry,
-        details: entry.details ? { ...entry.details } : undefined,
-      }))
-    : [];
+  try {
+    const rows = await dbAll<AuditRow>(
+      `SELECT audit_id, payload_json FROM document_content_block_audit
+         WHERE content_block_id = $1 AND organization_id = $2
+         ORDER BY occurred_at ASC`,
+      [contentBlockId, organizationId]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    return rows.map(rowToAudit).filter((e): e is DocumentContentBlockAuditEntry => e !== null);
+  } catch (err) {
+    logger.warn('[DocumentStudio][ContentBlockDao] loadAuditForContentBlock failed', {
+      contentBlockId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
 }
 
+/**
+ * Append/replace a single audit entry. Idempotent on duplicate `auditId`
+ * (ON CONFLICT DO UPDATE) so retries don't double-count.
+ */
 export async function persistContentBlockAuditEntry(
   entry: DocumentContentBlockAuditEntry
 ): Promise<{ ok: boolean }> {
   if (!entry || !entry.auditId || !entry.contentBlockId || !entry.organizationId) {
     return { ok: false };
   }
-  const k = key(entry.organizationId, entry.contentBlockId);
-  const current = auditStore.get(k) ?? [];
-  const filtered = current.filter((existing) => existing.auditId !== entry.auditId);
-  filtered.push({
-    ...entry,
-    details: entry.details ? { ...entry.details } : undefined,
-  });
-  auditStore.set(k, filtered);
-  return { ok: true };
+  try {
+    const result = await dbRun(
+      `INSERT INTO document_content_block_audit (
+         audit_id, content_block_id, organization_id, action, actor_id,
+         occurred_at, payload_json
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+       ON CONFLICT (audit_id) DO UPDATE SET
+         content_block_id = EXCLUDED.content_block_id,
+         organization_id = EXCLUDED.organization_id,
+         action = EXCLUDED.action,
+         actor_id = EXCLUDED.actor_id,
+         occurred_at = EXCLUDED.occurred_at,
+         payload_json = EXCLUDED.payload_json`,
+      [
+        entry.auditId,
+        entry.contentBlockId,
+        entry.organizationId,
+        entry.action ?? null,
+        entry.actorId ?? null,
+        entry.occurredAt ?? null,
+        JSON.stringify(entry),
+      ]
+    );
+    return { ok: result.success === true };
+  } catch (err) {
+    logger.warn('[DocumentStudio][ContentBlockDao] persistContentBlockAuditEntry failed', {
+      auditId: entry.auditId,
+      organizationId: entry.organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false };
+  }
 }
 
-/** @internal Test-only reset of both in-memory stores. */
+/** @internal Test-only reset — best-effort DELETE of both tables. */
 export async function __resetContentBlockRegistryDaoForTests(): Promise<void> {
-  blockStore.clear();
-  auditStore.clear();
+  try {
+    await dbRun('DELETE FROM document_content_block_audit', []);
+    await dbRun('DELETE FROM document_content_blocks', []);
+  } catch {
+    /* best-effort: table may not exist in a unit-test sandbox */
+  }
 }

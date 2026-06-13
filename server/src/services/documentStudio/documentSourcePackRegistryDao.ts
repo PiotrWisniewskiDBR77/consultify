@@ -1,121 +1,187 @@
 /**
- * Consultify Document Studio — Source Pack Registry DAO (Epic E4, Slice 4.1).
+ * Consultify Document Studio — Source Pack Registry DAO
+ * (Epic E4, Slice 4.1 → wave5 layer-2 persistence).
  *
- * Mirrors the `documentTemplateRegistryDao.ts` design contract:
+ * Postgres-backed persistence layer behind the in-process Map cache in
+ * `documentSourcePackService.ts`. Mirrors `documentApprovalRegistryDao.ts`:
  *
- *   - Acts as the persistence layer behind the in-process Map cache in
- *     `documentSourcePackService.ts`. The service public API stays
- *     synchronous; persistence is best-effort write-through.
- *   - Every operation is failure-tolerant: a missing migration, a DB
- *     outage, or any other error path resolves to `{ ok: false }` /
- *     `null` / `[]` and does NOT throw. The service falls back to the
- *     in-process Map when persistence is unavailable.
- *   - Reads (`loadSourcePacksForOrg`, `loadAuditForPack`) hydrate the
- *     cache lazily once per organization on cold start.
+ *   - Best-effort write-through: every operation resolves to `{ ok: false }` /
+ *     `null` / `[]` on any error and does NOT throw — the service falls back
+ *     to its in-process Map cache when persistence is unavailable.
+ *   - Reads (`loadSourcePacksForOrg`, `loadSourcePackById`, `loadAuditForPack`)
+ *     hydrate the cache lazily once per organization on cold start.
+ *   - Tenant safety: every query carries `organization_id` in the WHERE
+ *     clause; cross-tenant reads are deny-by-default.
  *
- * Tenant safety: every query carries `organization_id` in the WHERE
- * clause; cross-tenant reads are deny-by-default.
- *
- * Storage backing (Epic E4, Slice 4.1): in-memory until the wave5
- * persistence migration ships in a follow-up slice. The service treats
- * the DAO as authoritative and writes through every state mutation, so
- * the Postgres swap is a mechanical replacement of the maps below
- * without changes to the public function signatures.
+ * Storage backing: tables `document_source_packs` +
+ * `document_source_pack_audit` (migration 781). The canonical object — incl.
+ * the nested `items[]` (SourcePackItem) — is stored in `payload_json`; the
+ * pack is always read/written whole, so items need no standalone table.
+ * Scalar columns mirror the fields used for WHERE/ordering/status.
  */
 
+import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import type {
-  DocumentSourceRef,
   SourcePack,
   SourcePackAuditEntry,
-  SourcePackItem,
   SourcePackStatus,
 } from './documentStudioTypes.js';
 
-// In-memory persistence stores, keyed by `${organizationId}::${packId}`.
-// Both stores are intentionally module-scoped so the swap to the wave5
-// migration is local to this file. Tests reset them via
-// `__resetSourcePackRegistryDaoForTests`.
-const packStore = new Map<string, SourcePack>();
-const auditStore = new Map<string, SourcePackAuditEntry[]>();
-
-function key(organizationId: string, packId: string): string {
-  return `${organizationId}::${packId}`;
+interface PackRow {
+  pack_id: string;
+  payload_json: unknown;
 }
 
-function clonePack(pack: SourcePack): SourcePack {
-  return {
-    ...pack,
-    items: pack.items.map((item) => cloneItem(item)),
-  };
+interface AuditRow {
+  audit_id: string;
+  payload_json: unknown;
 }
 
-function cloneItem(item: SourcePackItem): SourcePackItem {
-  return {
-    ...item,
-    sourceRef: { ...(item.sourceRef as DocumentSourceRef) },
-  };
+function parseJson<T>(raw: unknown, fallback: T): T {
+  if (raw == null) return fallback;
+  if (typeof raw === 'object') return raw as T;
+  try {
+    return JSON.parse(String(raw)) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function rowToPack(row: PackRow): SourcePack | null {
+  const pack = parseJson<SourcePack | null>(row.payload_json, null);
+  if (!pack || !pack.packId) return null;
+  // Defensive: ensure the nested items array survives a malformed payload.
+  pack.items = Array.isArray(pack.items) ? pack.items : [];
+  return pack;
+}
+
+function rowToAudit(row: AuditRow): SourcePackAuditEntry | null {
+  const entry = parseJson<SourcePackAuditEntry | null>(row.payload_json, null);
+  if (!entry || !entry.auditId) return null;
+  return entry;
 }
 
 /**
- * Load every pack visible to a tenant. Cross-tenant rows are deny-by-default
- * (filtered by the key prefix). Resolves to `[]` on any failure path.
+ * Load every pack visible to a tenant. Resolves to `[]` on any failure
+ * so the service degrades to its in-process Map.
  */
 export async function loadSourcePacksForOrg(organizationId: string): Promise<SourcePack[]> {
   if (!organizationId) return [];
-  const prefix = `${organizationId}::`;
-  const out: SourcePack[] = [];
-  for (const [k, pack] of packStore.entries()) {
-    if (!k.startsWith(prefix)) continue;
-    out.push(clonePack(pack));
+  try {
+    const rows = await dbAll<PackRow>(
+      `SELECT pack_id, payload_json FROM document_source_packs
+         WHERE organization_id = $1
+         ORDER BY created_at ASC`,
+      [organizationId]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    return rows.map(rowToPack).filter((p): p is SourcePack => p !== null);
+  } catch (err) {
+    logger.warn('[DocumentStudio][SourcePackDao] loadSourcePacksForOrg failed', {
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return [];
   }
-  return out;
 }
 
 /**
  * Single-pack lookup. Cross-tenant reads return `null` even when the
- * pack id exists under a different tenant.
+ * pack id exists under a different tenant (organization_id in WHERE).
  */
 export async function loadSourcePackById(
   packId: string,
   organizationId: string
 ): Promise<SourcePack | null> {
   if (!packId || !organizationId) return null;
-  const pack = packStore.get(key(organizationId, packId));
-  return pack ? clonePack(pack) : null;
+  try {
+    const rows = await dbAll<PackRow>(
+      `SELECT pack_id, payload_json FROM document_source_packs
+         WHERE pack_id = $1 AND organization_id = $2
+         LIMIT 1`,
+      [packId, organizationId]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rowToPack(rows[0]);
+  } catch (err) {
+    logger.warn('[DocumentStudio][SourcePackDao] loadSourcePackById failed', {
+      packId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }
 
 /**
- * Upsert a pack. Best-effort; never throws. Returns `{ ok: false }` on
- * an empty input so the service can choose to degrade silently.
+ * Upsert a pack. Best-effort; never throws. Packs mutate (items append,
+ * status/totalContentLength change) so this is ON CONFLICT DO UPDATE.
  */
 export async function persistSourcePack(pack: SourcePack): Promise<{ ok: boolean }> {
   if (!pack || !pack.packId || !pack.organizationId) return { ok: false };
-  packStore.set(key(pack.organizationId, pack.packId), clonePack(pack));
-  return { ok: true };
+  try {
+    const result = await dbRun(
+      `INSERT INTO document_source_packs (
+         pack_id, organization_id, status, created_at, updated_at, payload_json
+       ) VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+       ON CONFLICT (pack_id) DO UPDATE SET
+         organization_id = EXCLUDED.organization_id,
+         status = EXCLUDED.status,
+         created_at = EXCLUDED.created_at,
+         updated_at = EXCLUDED.updated_at,
+         payload_json = EXCLUDED.payload_json`,
+      [
+        pack.packId,
+        pack.organizationId,
+        pack.status ?? null,
+        pack.createdAt ?? null,
+        pack.updatedAt ?? null,
+        JSON.stringify(pack),
+      ]
+    );
+    return { ok: result.success === true };
+  } catch (err) {
+    logger.warn('[DocumentStudio][SourcePackDao] persistSourcePack failed', {
+      packId: pack.packId,
+      organizationId: pack.organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false };
+  }
 }
 
 /**
- * Load the full audit trail for a pack. Returns `[]` on any failure or
- * cross-tenant attempt.
+ * Load the full audit trail for a pack, oldest-first. Returns `[]` on any
+ * failure or cross-tenant attempt.
  */
 export async function loadAuditForPack(
   packId: string,
   organizationId: string
 ): Promise<SourcePackAuditEntry[]> {
   if (!packId || !organizationId) return [];
-  const entries = auditStore.get(key(organizationId, packId));
-  return entries
-    ? entries.map((entry) => ({
-        ...entry,
-        details: entry.details ? { ...entry.details } : undefined,
-      }))
-    : [];
+  try {
+    const rows = await dbAll<AuditRow>(
+      `SELECT audit_id, payload_json FROM document_source_pack_audit
+         WHERE pack_id = $1 AND organization_id = $2
+         ORDER BY occurred_at ASC`,
+      [packId, organizationId]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    return rows.map(rowToAudit).filter((e): e is SourcePackAuditEntry => e !== null);
+  } catch (err) {
+    logger.warn('[DocumentStudio][SourcePackDao] loadAuditForPack failed', {
+      packId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
 }
 
 /**
- * Append a single audit entry. Idempotent on duplicate `auditId` — a
- * second persist with the same id replaces the previous row so retries
- * don't double-count.
+ * Append/replace a single audit entry. Idempotent on duplicate `auditId`
+ * (ON CONFLICT DO UPDATE) so retries don't double-count.
  */
 export async function persistSourcePackAuditEntry(
   entry: SourcePackAuditEntry
@@ -123,22 +189,45 @@ export async function persistSourcePackAuditEntry(
   if (!entry || !entry.auditId || !entry.packId || !entry.organizationId) {
     return { ok: false };
   }
-  const k = key(entry.organizationId, entry.packId);
-  const current = auditStore.get(k) ?? [];
-  const filtered = current.filter((existing) => existing.auditId !== entry.auditId);
-  filtered.push({
-    ...entry,
-    details: entry.details ? { ...entry.details } : undefined,
-  });
-  auditStore.set(k, filtered);
-  return { ok: true };
+  try {
+    const result = await dbRun(
+      `INSERT INTO document_source_pack_audit (
+         audit_id, pack_id, organization_id, action, actor_id,
+         occurred_at, payload_json
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+       ON CONFLICT (audit_id) DO UPDATE SET
+         pack_id = EXCLUDED.pack_id,
+         organization_id = EXCLUDED.organization_id,
+         action = EXCLUDED.action,
+         actor_id = EXCLUDED.actor_id,
+         occurred_at = EXCLUDED.occurred_at,
+         payload_json = EXCLUDED.payload_json`,
+      [
+        entry.auditId,
+        entry.packId,
+        entry.organizationId,
+        entry.action ?? null,
+        entry.actorId ?? null,
+        entry.occurredAt ?? null,
+        JSON.stringify(entry),
+      ]
+    );
+    return { ok: result.success === true };
+  } catch (err) {
+    logger.warn('[DocumentStudio][SourcePackDao] persistSourcePackAuditEntry failed', {
+      auditId: entry.auditId,
+      organizationId: entry.organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false };
+  }
 }
 
 /**
- * Soft-delete sentinel: marks every row for the given pack as archived
- * inside the in-memory store. The wave5 migration will switch this to
- * a status column update so reads can still see archived packs when
- * the caller opts in.
+ * Soft-delete sentinel: flips the pack's lifecycle status (e.g. to
+ * `archived`) in both the scalar `status` column and the `payload_json`
+ * copy so reads stay consistent. Best-effort; returns `{ ok: false }`
+ * when the pack does not exist for the tenant.
  */
 export async function markSourcePackArchivedInDao(
   packId: string,
@@ -146,14 +235,31 @@ export async function markSourcePackArchivedInDao(
   status: SourcePackStatus
 ): Promise<{ ok: boolean }> {
   if (!packId || !organizationId) return { ok: false };
-  const pack = packStore.get(key(organizationId, packId));
-  if (!pack) return { ok: false };
-  pack.status = status;
-  return { ok: true };
+  try {
+    const result = await dbRun(
+      `UPDATE document_source_packs
+         SET status = $3,
+             payload_json = jsonb_set(payload_json, '{status}', to_jsonb($3::text), true)
+         WHERE pack_id = $1 AND organization_id = $2`,
+      [packId, organizationId, status]
+    );
+    return { ok: result.success === true };
+  } catch (err) {
+    logger.warn('[DocumentStudio][SourcePackDao] markSourcePackArchivedInDao failed', {
+      packId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false };
+  }
 }
 
-/** @internal Test-only reset of both in-memory stores. */
+/** @internal Test-only reset — best-effort DELETE of both tables. */
 export async function __resetSourcePackRegistryDaoForTests(): Promise<void> {
-  packStore.clear();
-  auditStore.clear();
+  try {
+    await dbRun('DELETE FROM document_source_pack_audit', []);
+    await dbRun('DELETE FROM document_source_packs', []);
+  } catch {
+    /* best-effort: table may not exist in a unit-test sandbox */
+  }
 }
