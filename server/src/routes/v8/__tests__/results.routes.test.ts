@@ -590,7 +590,7 @@ describe('V8 results read-only routes', () => {
         direction: 'HIGHER_IS_BETTER',
       });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data?.id).toBeTruthy();
     expect(mockDbRun).toHaveBeenCalledTimes(1);
@@ -955,7 +955,7 @@ describe('V8 results read-only routes', () => {
         notes: 'March value',
       });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_WRITE_CONTRACT);
     expect(res.body.data).toEqual(
       expect.objectContaining({
