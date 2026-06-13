@@ -22,11 +22,11 @@
 /Logo consultinity/
 
 # Large knowledge/doc corpora — exclude entirely from uploads.
+# Use leading slash to anchor to repo root so src/views/knowledge/ is NOT excluded.
 # knowledge/ is gitignored so git-triggered builds also have no knowledge files.
 # The Dockerfile knowledge test is now non-fatal (logs a warning, does not exit 1).
-# Re-indexing knowledge packs is done manually via railway up or a separate job.
-knowledge/
-Harvard/
+/knowledge/
+/Harvard/
 /knowledge/Pigułki wiedzy /**/*.zip
 /docs/
 /wdrozenia/
