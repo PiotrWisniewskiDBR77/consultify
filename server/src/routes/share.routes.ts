@@ -51,21 +51,6 @@ function getDb() {
 
 const router = Router();
 
-// JSON columns are TEXT on SQLite but JSONB on Postgres — the PG driver returns
-// an object already, so a blind JSON.parse throws `"[object Object]" is not
-// valid JSON`. Handle string, object, and null/garbage uniformly.
-function parseMaybeJson(v: unknown): unknown {
-  if (v == null) return undefined;
-  if (typeof v === 'object') return v;
-  if (typeof v === 'string') {
-    try {
-      return JSON.parse(v);
-    } catch {
-      return undefined;
-    }
-  }
-  return undefined;
-}
 
 // is_active is INTEGER/bigint on Postgres — node-pg serializes bigint as a
 // STRING ("0"/"1"), so a raw `!share.is_active` is always falsy-wrong (a
@@ -530,8 +515,8 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
     }
 
     const messages = await db.all(
-      `SELECT id, role, content, message_type, metadata, created_at
-         FROM conversation_messages 
+      `SELECT id, role, content, message_type, created_at
+         FROM conversation_messages
          WHERE conversation_id = ?
          ORDER BY created_at ASC`,
       [share.conversation_id]
@@ -561,7 +546,6 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
         role: m.role,
         content: m.content,
         messageType: m.message_type,
-        metadata: parseMaybeJson(m.metadata),
         timestamp: settings.showTimestamps ? m.created_at : undefined,
       })),
       viewCount: share.view_count + 1,
