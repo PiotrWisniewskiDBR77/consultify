@@ -1955,7 +1955,7 @@ router.post(
  */
 router.post(
   '/market/openrouter/sync',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (_req, res) => {
     await ensureEnterpriseSchema();
     const result = await syncOpenRouterMarket();
@@ -1970,7 +1970,7 @@ router.post(
  */
 router.get(
   '/market/inbox',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const status = req.query.status ? String(req.query.status).trim() : null;
@@ -1997,7 +1997,7 @@ router.get(
  */
 router.put(
   '/market/inbox/:id',
-  verifyToken,
+  verifyAdmin,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const id = String(req.params.id || '').trim();
