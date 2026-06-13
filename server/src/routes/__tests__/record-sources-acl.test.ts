@@ -54,6 +54,7 @@ vi.mock('../../services/tablePlatform/PermissionsService.js', () => ({
       }
       return next();
     },
+    requireGovernedModelAccess: (_req: any, _res: any, next: any) => next(),
   },
 }));
 

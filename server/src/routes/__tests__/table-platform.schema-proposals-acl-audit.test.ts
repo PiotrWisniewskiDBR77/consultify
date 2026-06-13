@@ -103,6 +103,7 @@ vi.mock('../../services/tablePlatform/PermissionsService.js', () => ({
       'viewer',
       'form_submitter',
     ],
+    requireGovernedModelAccess: (_req: any, _res: any, next: any) => next(),
   },
 }));
 

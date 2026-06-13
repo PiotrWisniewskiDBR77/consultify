@@ -77,6 +77,7 @@ vi.mock('../../services/tablePlatform/PermissionsService.js', () => ({
     VIEW_ROLES: [],
     INTERFACE_ROLES: [],
     ALL_ROLES: [],
+    requireGovernedModelAccess: (_req: any, _res: any, next: any) => next(),
   },
 }));
 
