@@ -1454,6 +1454,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       <InitiativePreviewV3Footer
         initiative={mapToPreviewModel(item)}
         tasksCount={Array.isArray((item as any).tasks) ? (item as any).tasks.length : undefined}
+        // UWAGA #15 (TOP): ujawnij CTA „Otwórz" z board/preview — wcześniej
+        // onOpenFull nie był podawany, więc przycisku w ogóle nie było i pełny
+        // widok inicjatywy (InitiativeDocumentView) był nieosiągalny z board-preview.
+        // Wpinamy kanoniczną ścieżkę otwarcia dokumentu (ta sama, której używa
+        // deep-link ?open=<id>&mode=doc).
+        onOpenFull={() => handleOpenInitiativeDocument(item)}
         onOpenChat={(prompt) => openAiChat(item, prompt)}
         onCopyLink={() => copyInitiativeLink(item.id)}
         extraActionsAfterSlot={
