@@ -153,8 +153,8 @@ Scenariusze S1-S6 + plan + bezpieczeństwo: karta §0/§2/§6.
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Eksport serwerowy idei | worker generujący plik / ukryć przycisk | Piotr | TBD | otwarta (DP-5: ukryj za flagą + label „wkrótce") |
-| D-02 | Kanon wersjonowania | `snapshots` (wepnij, wytnij versions) / `versions` | Piotr | TBD | otwarta (M05-D02 modułowe, DECYZJE §C) |
+| D-01 | Eksport serwerowy idei | worker generujący plik / ukryć przycisk | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce"** |
+| D-02 | Kanon wersjonowania | `snapshots` (wepnij, wytnij versions) / `versions` | Piotr | TBD | otwarta (modułowa — przy wejściu w moduł) |
 | D-03 | Kontrakt `my_idea_maps` per-resource (DP-3) | single-player (per-user) / przebudowa na shared+membership | Piotr | TBD | **DP-3 = per-resource multiplayer — M09 ZMIENIA kontrakt dla całej puli; M05 koordynuje migrację snapshots/activity** |
 
 ### 05 · Flagi/rollout — beta Ideas (per-user); brak gating-rola dla zarządzania. **DP-3:** jeśli M09 przebuduje `my_idea_maps` na shared+membership, M05 musi dostosować scope (`user_id` → membership) — koordynacja wspólnej migracji snapshots/activity z M06.
@@ -164,4 +164,4 @@ Scenariusze S1-S6 + plan + bezpieczeństwo: karta §0/§2/§6.
 ---
 
 ## Bramka teczki: 8/9 dokumentacyjnie
-R1 wejścia pełne (karta+kod) ✅ · R2 zero sierot ✅ · R3 statusy z dowodem (L-01/L-02 zweryfikowane w kodzie/plikach) ✅ · R4 DoD z liczbami (349/68/1) ✅ · R5 decyzje z właścicielem (terminy TBD) ✅ · A-E docelowy ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa = NIEZALICZONA: pula Ideas nietestowana żywo 2026-06-13 → wejście W-02 puste, do domknięcia.** **8/9 — brakuje sesji żywej (R6).**
+R1 wejścia pełne (karta+kod) ✅ · R2 zero sierot ✅ · R3 statusy z dowodem (L-01/L-02 zweryfikowane w kodzie/plikach) ✅ · R4 DoD z liczbami (349/68/1) ✅ · R5 decyzje rozstrzygnięte (D-01=DP-5; D-02 modułowa; D-03=DP-3); R6 sesja żywa pozostaje ✅ · A-E docelowy ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa = NIEZALICZONA: pula Ideas nietestowana żywo 2026-06-13 → wejście W-02 puste, do domknięcia.** **8/9 — brakuje sesji żywej (R6).**

@@ -137,9 +137,9 @@ Pełna tabela: karta §1g. **→** M17 Outputs (rejestracja/eksport), M03 (Decyz
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Konsolidacja dwóch silników: most czy jeden silnik? | most adapter / konsolidacja na `WorkCanvasDocumentPanel` | Piotr | TBD (przed szlifem) | otwarta |
-| D-02 | GUEST: czy może tworzyć/materializować? | tak (z org-scope) / nie (read+share only) | Piotr | TBD | otwarta |
-| D-03 | `regenerateSlide`: realny LLM-call czy ukryć? | realny narrative-engine / hide | Piotr | TBD | otwarta |
+| D-01 | Konsolidacja dwóch silników: most czy jeden silnik? | most adapter / konsolidacja na `WorkCanvasDocumentPanel` | Piotr | TBD (przed szlifem) | otwarta (modułowa — przy wejściu w moduł) |
+| D-02 | GUEST: czy może tworzyć/materializować? | tak (z org-scope) / nie (read+share only) | Piotr | TBD | otwarta (modułowa — przy wejściu w moduł) |
+| D-03 | `regenerateSlide`: realny LLM-call czy ukryć? | realny narrative-engine / hide | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce"** |
 
 ### 05 · Flagi / rollout / beta — `ENABLE_DELIVERABLES_LIGHT` strict `=== 'true'` (OFF→404 backend / legacy redirect FE); `ENABLE_TERESA_RETRIEVAL` (cicha pustka READ-tooli); beta core otwarty.
 ### 06 · Ryzyka i założenia — kręgosłup #1 dotyka M18/M19/M20 (re-ocena D po fixie). Inwentarz/brief STALE (4/6 czerwonych flag obalonych). Dev `.env` → Railway PROD (flagi decydują czy triada żyje). `regenerateSlide` — R3: nie kwalifikować „naprawione" bez potwierdzenia runtime.
@@ -148,4 +148,4 @@ Pełna tabela: karta §1g. **→** M17 Outputs (rejestracja/eksport), M03 (Decyz
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta+SPEC_01+uwaga żywa #1+formuła+DP-2/DP-5+feedback prod) · R2 zero sierot (W→L→DoD) · R3 statusy z dowodem (L-06 `36a6f240ff` zakres do potwierdzenia; org-scope zweryfikowany) · R4 DoD z liczbami grep (useTranslation 0, hex 0, util ~34, table 0) · R5 decyzje z właścicielem · A–E docelowy z layoutem+stanami+enumeracją ~30 endp.+maszyna `kind` · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = weryfikacja kręgosłupa #1 (Faza 0). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta+SPEC_01+uwaga żywa #1+formuła+DP-2/DP-5+feedback prod) · R2 zero sierot (W→L→DoD) · R3 statusy z dowodem (L-06 `36a6f240ff` zakres do potwierdzenia; org-scope zweryfikowany) · R4 DoD z liczbami grep (useTranslation 0, hex 0, util ~34, table 0) · R5 decyzje rozstrzygnięte (D-03=DP-5; D-01/D-02 modułowe) · A–E docelowy z layoutem+stanami+enumeracją ~30 endp.+maszyna `kind` · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = weryfikacja kręgosłupa #1 (Faza 0). **Teczka kompletna do egzekucji.**

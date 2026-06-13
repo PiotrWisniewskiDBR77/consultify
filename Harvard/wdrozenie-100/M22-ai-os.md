@@ -133,9 +133,9 @@ REALNE 6 wave-service'ów (5–9 + research) + ActionCenter + AI Memory. STUB: A
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | governance `actionDecisions` — USUNIĘTY `f35aa8d7c8`; odbudować? | odbudować przy potrzebie / trwale descope | Piotr | 2026-06-13 | **kierunek = DP-7 (wytnij/descope dual-stack)** chyba że konkretnie w roadmapie |
-| D-02 | Wave 7 OAuth | realny provider flow / trwały label „Manual/Simulated" | Piotr | TBD | otwarta |
-| D-03 | i18n internal (DBR77-only) | przetłumaczyć / świadomy dług internal | Piotr | 2026-06-13 | **kierunek = DP-10 (świadomy dług, NIE tłumaczyć v1)** |
+| D-01 | governance `actionDecisions` — USUNIĘTY `f35aa8d7c8`; odbudować? | odbudować przy potrzebie / trwale descope | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-7: wytnij/descope dual-stack (actionDecisions)** chyba że konkretnie w roadmapie |
+| D-02 | Wave 7 OAuth | realny provider flow / trwały label „Manual/Simulated" | Piotr | TBD | otwarta (modułowa) |
+| D-03 | i18n internal (DBR77-only) | przetłumaczyć / świadomy dług internal | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-10: świadomy dług internal, NIE tłumaczyć v1** |
 
 ### 05 · Flagi/rollout — `INTERNAL_TOOLS_ENABLED` (default false; na Railway MUSI być `true`), `ENABLE_V8_GLOBAL` (Artifacts), whitelista domena/rola/orgId; `betaAccess.ts: INTERNAL_TOOLS='open'` (badge, gating realny przez `canUseInternalTools()`+middleware). DEV bypass `NODE_ENV` (`internalTools.middleware.ts:39`) — sprawdzić staging.
 ### 06 · Ryzyka — Karta ma podwójny rozjazd co do `_actionDecisionRoutes` (1d „martwy" vs nagłówek „zamontowany `f35aa8d7c8`") — **rozstrzygnięte R3: kod USUNIĘTY** (DP-7 descope). „7 guardów bez routerów" w karcie = **STALE** (routery zamontowane) — nie planować cięcia. DEV bypass `NODE_ENV` — sprawdzić staging. Dev `.env` → Railway PROD.
@@ -144,6 +144,6 @@ REALNE 6 wave-service'ów (5–9 + research) + ActionCenter + AI Memory. STUB: A
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + re-audit + kod-R3 + DP-7/10; uwagi żywe = brak, jawnie dziedziczone z karty) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-02 USUNIĘTY, L-03 „7 guardów" STALE-nie-dotyczy — routery zamontowane, L-09 BRAK-IDOR** zweryfikowane w kodzie) · R4 DoD z liczbami (i18n 5/9, hex 0, table 1) · R5 decyzje z właścicielem (D-01=DP-7, D-03=DP-10) · A–E docelowy zlinkowany (C = panele Wave 5-9 + maszyna flag + Gateway mounts) · F epiki→stories Gherkin→L-xx · G DoD+SC+sec · R6 sesja żywa = Fazy 3+4 (wymagają staging + INTERNAL_TOOLS=true). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + re-audit + kod-R3 + DP-7/10; uwagi żywe = brak, jawnie dziedziczone z karty) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-02 USUNIĘTY, L-03 „7 guardów" STALE-nie-dotyczy — routery zamontowane, L-09 BRAK-IDOR** zweryfikowane w kodzie) · R4 DoD z liczbami (i18n 5/9, hex 0, table 1) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-7, D-03=DP-10; D-02 modułowa otwarta); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany (C = panele Wave 5-9 + maszyna flag + Gateway mounts) · F epiki→stories Gherkin→L-xx · G DoD+SC+sec · R6 sesja żywa = Fazy 3+4 (wymagają staging + INTERNAL_TOOLS=true). **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Karta podwójnie myli się co do `_actionDecisionRoutes` (USUNIĘTY, nie martwy/zamontowany — DP-7 descope) ORAZ co do „7 guardów bez routerów" (routery JUŻ zamontowane `:486-512`) — planowanie wokół obu byłoby pracą nad nieaktualnym stanem kodu.

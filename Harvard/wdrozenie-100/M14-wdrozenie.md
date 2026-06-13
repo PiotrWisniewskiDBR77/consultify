@@ -134,9 +134,9 @@ Scenariusze S1–S7 + pokrycie + pułapka CI: karta §0/§2 (633 PASS/23 FAIL lo
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | feed-forward M14→M15: kiedy realny odbiór? (M15 beta-closed) | po otwarciu bety M15 / za flagą teraz | Piotr | TBD (per MASTER §5) | **DP-6 = preview teraz**, realny odbiór otwarty |
-| D-02 | 4 kandydaci martwego kodu (PeopleChange/RiskSignals/DelayDetection/ReportCompact): wyciąć czy zostawić? | wytnij / zostaw (live) | Piotr | TBD | otwarta |
-| D-03 | Manager lanes: wymagać V8 czy dopisać legacy `/manager/lanes/*`? | tylko V8+baner / legacy fallback | Piotr | TBD | otwarta |
+| D-01 | feed-forward M14→M15: kiedy realny odbiór? (M15 beta-closed) | po otwarciu bety M15 / za flagą teraz | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-6: „preview" + komunikat teraz** (sync ukryty); realny odbiór osobną falą po otwarciu bety M15 |
+| D-02 | 4 kandydaci martwego kodu (PeopleChange/RiskSignals/DelayDetection/ReportCompact): wyciąć czy zostawić? | wytnij / zostaw (live) | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-7: wytnij martwy kod** (zweryf. live kandydatów); jeśli stub v1 → DP-5 ukryj za flagą |
+| D-03 | Manager lanes: wymagać V8 czy dopisać legacy `/manager/lanes/*`? | tylko V8+baner / legacy fallback | Piotr | TBD | otwarta (modułowa) |
 
 ### 05 · Flagi/rollout — `ENABLE_V8_GLOBAL` (OFF default; Manager lanes + osiągalność v8 ścieżek; degraduje banerem); pilot (rola, gating→serwer L-01); beta core otwarty; migracja `20260608_rollout_tables.sql` zastosowana (potwierdzić na środowiskach — Faza 3).
 ### 06 · Ryzyka — feed-forward (L-05) celuje w beta-closed M15 → DP-6 preview, domknąć realny odbiór po otwarciu bety. `ENABLE_V8_GLOBAL` na staging/prod decyduje o Manager lanes — zweryfikować w Fazie 3. Dev `.env` → Railway PROD — ostrożność z zapisami przy smoke. Brak uwag żywych → re-ocena D wymaga Fazy 4 (nie ma sygnału obniżającego z testów żywych, ale też nie ma dowodu D).
@@ -145,4 +145,4 @@ Scenariusze S1–S7 + pokrycie + pułapka CI: karta §0/§2 (633 PASS/23 FAIL lo
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + jawne „brak uwag żywych M14" + INTEGRACJE + decyzje Sprint 4 + DP-6/8/9 + feedback prod) · R2 zero sierot (wejście→luka→story Gherkin→DoD→dowód) · R3 statusy „naprawione" z commitami zweryfikowanymi w git; read-only proof cross-org = Faza 4 · R4 DoD z liczbami (5 inline + ~141 kluczy PL · 2 table · 7 hex; rollout 17 verbs) · R5 decyzje z właścicielem (DP-6 rozstrzyga timing L-05; terminy TBD) · A–E docelowy zlinkowany · F epiki→stories Gherkin→zadania↔luki · G DoD+S+sec+wydajność+telemetria · R6 sesja żywa = Faza 4 (zaplanowana — brak uwag dziś nie zwalnia z żywego dowodu D). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + jawne „brak uwag żywych M14" + INTEGRACJE + decyzje Sprint 4 + DP-6/8/9 + feedback prod) · R2 zero sierot (wejście→luka→story Gherkin→DoD→dowód) · R3 statusy „naprawione" z commitami zweryfikowanymi w git; read-only proof cross-org = Faza 4 · R4 DoD z liczbami (5 inline + ~141 kluczy PL · 2 table · 7 hex; rollout 17 verbs) · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTE → DP-6; D-02 → DP-7/DP-5**; D-03 modułowa TBD) · A–E docelowy zlinkowany · F epiki→stories Gherkin→zadania↔luki · G DoD+S+sec+wydajność+telemetria · R6 sesja żywa = Faza 4 (zaplanowana — brak uwag dziś nie zwalnia z żywego dowodu D). **Teczka kompletna do egzekucji.**

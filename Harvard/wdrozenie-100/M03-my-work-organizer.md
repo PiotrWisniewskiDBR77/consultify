@@ -145,10 +145,10 @@ Pełna tabela: karta §1g. **←** cała apka (Inbox agreguje notifications `inb
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | session-context (L-02): wpiąć czy usunąć? | wpiąć do promptu / usunąć martwy GET | Piotr | TBD | otwarta |
-| D-02 | #10 które z 10 typów otwierać in-context? | initiative+wybrane in-context / report/presentation→Canvas / budget/valuation→pełny moduł | Piotr | TBD | **rekom. DP-2 = IDE-tabs (init/notatka/zadanie in-context)** |
-| D-03 | #11 Month domyślny lekki + osobny Timeline/Roadmap? | listwa nad gridem / cienki brzeg w komórce | Piotr | TBD | otwarta |
-| D-04 | task-advisor + Decyzje Archive/Delay: dopiąć czy ukryć? | dopiąć BE / ukryć (DP-5) | Piotr | TBD | otwarta |
+| D-01 | session-context (L-02): wpiąć czy usunąć? | wpiąć do promptu / usunąć martwy GET | Piotr | TBD | otwarta (modułowa — przy wejściu w moduł) |
+| D-02 | #10 które z 10 typów otwierać in-context? | initiative+wybrane in-context / report/presentation→Canvas / budget/valuation→pełny moduł | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-2: globalny dok IDE-tabs (init/notatka/zadanie in-context; deck/doc→Canvas; ciężkie→pełny moduł)** |
+| D-03 | #11 Month domyślny lekki + osobny Timeline/Roadmap? | listwa nad gridem / cienki brzeg w komórce | Piotr | TBD | otwarta (modułowa — przy wejściu w moduł) |
+| D-04 | task-advisor + Decyzje Archive/Delay: dopiąć czy ukryć? | dopiąć BE / ukryć (DP-5) | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce"** |
 
 ### 05 · Flagi / rollout / beta — `RADAR_ENABLED=false` (Home/Radar ukryte); `ENABLE_V8_GLOBAL` (inbox kanoniczny 404→legacy graceful); `MYWORK_IDEAS` beta closed (też admin — komentarz `MyWorkHub.tsx:604` mylący `BETA_ADMINS_EXEMPT=false`). Organizer core otwarty.
 ### 06 · Ryzyka i założenia — L-06 crash bez stack-trace → najpierw repro/telemetria (R3: nie kwalifikować przyczyny bez dowodu). L-01 leak: karta `d05382fb44` → zweryfikować że `requireRole` wpięte (member→403 test). #9 OAuth wymaga env `GOOGLE_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET` na Railway. Dev `.env` → Railway PROD DB.
@@ -157,4 +157,4 @@ Pełna tabela: karta §1g. **←** cała apka (Inbox agreguje notifications `inb
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + 4 uwagi żywe #5/#9/#10/#11 + §27 + DP-2/DP-5/DP-9 + feedback prod) · R2 zero sierot (W→L→DoD) · R3 L-06 „przyczyna NIEustalona" + L-01 „zweryfikować fix" (nie dziedziczone) · R4 DoD z liczbami grep (2888 i18n · 24 table · 823 hex) · R5 decyzje z właścicielem (D-02=DP-2) · A–E docelowy z 5 powierzchniami+stanami+enumeracją endpointów+maszyny stanów · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + 4 uwagi żywe #5/#9/#10/#11 + §27 + DP-2/DP-5/DP-9 + feedback prod) · R2 zero sierot (W→L→DoD) · R3 L-06 „przyczyna NIEustalona" + L-01 „zweryfikować fix" (nie dziedziczone) · R4 DoD z liczbami grep (2888 i18n · 24 table · 823 hex) · R5 decyzje rozstrzygnięte (D-02=DP-2, D-04=DP-5; D-01/D-03 modułowe) · A–E docelowy z 5 powierzchniami+stanami+enumeracją endpointów+maszyny stanów · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**

@@ -124,8 +124,8 @@ Scenariusze S1–S8: karta §0 (510 PASS/14 FAIL drift). Bezpieczeństwo: karta 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | sync-from-M20 (STUB): realny odbiór czy „preview"? | realny odbiór / preview+komunikat | Piotr | TBD (wspólne z M20/M15) | **DP-6 = preview teraz**, realny odbiór otwarty |
-| D-02 | 51 hex w chartach: tokenizować palety wykresów czy zostawić jako legalne (jak M13 graf)? | tokenizuj / zostaw | Piotr | TBD | **DP-8 = zostaw (palety legalne)**, reszta UI-chrome w sweepie |
+| D-01 | sync-from-M20 (STUB): realny odbiór czy „preview"? | realny odbiór / preview+komunikat | Piotr | TBD (wspólne z M20/M15) | **ROZSTRZYGNIĘTE → DP-6: preview teraz** (realny odbiór = osobna fala po Fazie 2) |
+| D-02 | 51 hex w chartach: tokenizować palety wykresów czy zostawić jako legalne (jak M13 graf)? | tokenizuj / zostaw | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-8: palety chartów zostają** (reszta UI-chrome w sweepie Faza 4) |
 
 ### 05 · Flagi/rollout — V8 Finance (env, degraduje→legacy z WIDOCZNYM banerem); billing kill-switch OFF („handled manually"); beta CLOSED w sidebarze (route bez guarda = L-01). `isFeatureBlocked('finance')` (`:2114`) = polityka org, nie beta.
 ### 06 · Ryzyka — **WZORZEC SYSTEMOWY** legacy raw-DB IDOR (V8 czyste, legacy dziurawe) → audyt innych legacy routerów (jak M15/M20). Modele finansowe na PROD — szczególna ostrożność (dev `.env` może wskazywać PROD). sync-from-M20 wspólne z M20/M15 (DP-6). **Liczby są produktem** — fałszywa zieleń (L-02) = ryzyko regresji wartości; priorytet testowy. Brak uwag żywych → re-ocena D wymaga Fazy 4.
@@ -134,4 +134,4 @@ Scenariusze S1–S8: karta §0 (510 PASS/14 FAIL drift). Bezpieczeństwo: karta 
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta+commit+DP-6/8+feedback; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→story Gherkin→DoD→dowód) · R3 statusy z dowodem (**L-07 `e3945bc7fc` zweryfikowany w git; korekta i18n 19→0 grepem; fałszywa zieleń L-02 zweryfikowana w teście**) · R4 DoD z liczbami (isPolish 0, hex 51 chart-skoncentrowane DP-8, table 5) · R5 decyzje z właścicielem (DP-6 timing L-06, DP-8 hex L-05) · A–E docelowy zlinkowany (DCF/WACC anchory) · F epiki→stories Gherkin→zadania↔luki · G DoD+S+sec+wydajność+telemetria · R6 sesja żywa = DCF/WACC spot-check + IDOR proof (Faza 4). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta+commit+DP-6/8+feedback; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→story Gherkin→DoD→dowód) · R3 statusy z dowodem (**L-07 `e3945bc7fc` zweryfikowany w git; korekta i18n 19→0 grepem; fałszywa zieleń L-02 zweryfikowana w teście**) · R4 DoD z liczbami (isPolish 0, hex 51 chart-skoncentrowane DP-8, table 5) · R5 **obie decyzje rozstrzygnięte (D-01→DP-6, D-02→DP-8)** · A–E docelowy zlinkowany (DCF/WACC anchory) · F epiki→stories Gherkin→zadania↔luki · G DoD+S+sec+wydajność+telemetria · R6 sesja żywa = DCF/WACC spot-check + IDOR proof (pozostaje, Faza 4). **9/9; teczka kompletna do egzekucji.**

@@ -115,8 +115,8 @@ REALNE 5 paneli (Team&Access, Billing 7 endp., AI Controls 9/9, Security 6/6, Au
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | karta-checkout | Stripe Elements (live) / **trwały label „managed by DBR77"** | Piotr | TBD | **rekom DP-11 = label managed, bez live-checkout** |
-| D-02 | resztki `components/Admin/` (część żyje w superadminie) | per plik: wytnij / przenieś / zostaw | Piotr | TBD | otwarta |
+| D-01 | karta-checkout | Stripe Elements (live) / **trwały label „managed by DBR77"** | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-11: label managed, bez live-checkout** |
+| D-02 | resztki `components/Admin/` (część żyje w superadminie) | per plik: wytnij / przenieś / zostaw | Piotr | TBD | otwarta (modułowa) |
 
 ### 05 · Flagi/rollout — `VITE_STRIPE_ENABLED` (OFF → karta-checkout fasada honest, DP-11 label managed); gating ADMIN (`ProtectedRoute`) + `DesktopOnlyGuard`; beta-lock 3-warstwowy (W7).
 ### 06 · Ryzyka — Oba P0 cross-org NAPRAWIONE, ale bez testów regresji (B1/B2 = L-03) naprawa niezabezpieczona. Metodologia: SEC orzekł błędnie „wzorcowy" patrząc tylko na adminP32 — KAŻDY boczny router wymaga testu IDOR (side-router-weak-gate, wzorzec systemowy M20/M24/M27). Dev `.env` → Railway PROD (testy cross-org read-only).
@@ -125,6 +125,6 @@ REALNE 5 paneli (Team&Access, Billing 7 endp., AI Controls 9/9, Security 6/6, Au
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + re-audit + kod-R3 + DP-11; uwagi żywe = brak) · R2 zero sierot (wejście→luka→story→DoD) · R3 statusy z dowodem (L-01/02 NAPRAWIONE — zweryfikowane w kodzie 2026-06-13; count 52→31 skorygowany) · R4 DoD z liczbami (i18n 0/31, hex 0, table 10) · R5 decyzje z właścicielem (D-01=DP-11; terminy TBD) · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4. **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + re-audit + kod-R3 + DP-11; uwagi żywe = brak) · R2 zero sierot (wejście→luka→story→DoD) · R3 statusy z dowodem (L-01/02 NAPRAWIONE — zweryfikowane w kodzie 2026-06-13; count 52→31 skorygowany) · R4 DoD z liczbami (i18n 0/31, hex 0, table 10) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-11; D-02 modułowa otwarta); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4. **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Oba P0 cross-org (admin-data `1f9ed50f05` + ai-settings `fd8707c5b2`) są naprawione, ale dopóki brak testów regresji IDOR/escalation (L-03), naprawa jest niezabezpieczona — a lekcja metodologiczna (SEC zaufał tylko głównemu routerowi adminP32, przeoczył boczne) nakazuje pokryć testem KAŻDY boczny router.

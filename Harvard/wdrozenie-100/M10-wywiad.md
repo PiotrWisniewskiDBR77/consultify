@@ -148,9 +148,9 @@ Scenariusze S1–S6 + pułapka CI (test-suite tylko main/develop): karta §0/§2
 |----|---------|-------|------------|--------|--------|
 | D-01 | #13 próg twardego blocku respondenta | obiektywna niedostateczność+wymagane / min. score | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTA = obiektywna niedostateczność** (SPEC_13 §5.1) |
 | D-02 | #13 kto zatwierdza + „nie wypuszcza" | przydzielający / manager-permission · block submit / wyjścia | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTA = nadawca + `INTERVIEW_ASSIGN_MANAGE`; block SUBMIT** (SPEC_13 §5.2,§5.3) |
-| D-03 | stepper 4-krok: zbudować wg 2026-06-06 czy backlog? | zbudować / odłożyć | Piotr | TBD | otwarta |
-| D-04 | tab `pending_review`: feature-gate czy usunąć? | udokumentować gate / usunąć | Piotr | TBD | otwarta |
-| D-05 | server STT na prod: który provider klucz? | OPENAI / GROQ / oba | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTA = DP-1 OPENAI** (egzekucja env wymaga zgody/dostępu prod) |
+| D-03 | stepper 4-krok: zbudować wg 2026-06-06 czy backlog? | zbudować / odłożyć | Piotr | TBD | otwarta (modułowa) |
+| D-04 | tab `pending_review`: feature-gate czy usunąć? | udokumentować gate / usunąć | Piotr | TBD | otwarta (modułowa) |
+| D-05 | server STT na prod: który provider klucz? | OPENAI / GROQ / oba | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-1: OPENAI/Whisper** (egzekucja env wymaga zgody/dostępu prod) |
 
 ### 05 · Flagi / rollout / beta-gating
 Brak dedykowanych flag blokujących core (moduł otwarty). **VTS wave 2 żywy na prod (centerbeam).** Web Speech NIE działa w Firefox/części mobile → server STT (OPENAI per DP-1) MUSI działać dla wszystkich.
@@ -167,4 +167,4 @@ Brak dedykowanych flag blokujących core (moduł otwarty). **VTS wave 2 żywy na
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + 2 uwagi żywe #12/#13 + SPEC_13 + DP-1 + formuła + feedback prod VTS) · R2 zero sierot (wejście→luka→DoD) · R3 L-01 „FE-fix wdrożony niezacommitowany niezweryf. live + DP-1 env do potwierdzenia" (nie dziedziczone, status `M` zweryfikowany) · R4 DoD z liczbami (2090 i18n · 7 table · 15 hex · 21× rose) · R5 decyzje z właścicielem (**D-01/D-02/D-05 ROZSTRZYGNIĘTE**; D-03/D-04 TBD) · A–E docelowy zlinkowany (+ endpointy/maszyna stanów/głos/bramka) · F epiki↔stories Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 + żywy smoke głosu VTS (zaplanowane). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + 2 uwagi żywe #12/#13 + SPEC_13 + DP-1 + formuła + feedback prod VTS) · R2 zero sierot (wejście→luka→DoD) · R3 L-01 „FE-fix wdrożony niezacommitowany niezweryf. live + DP-1 env do potwierdzenia" (nie dziedziczone, status `M` zweryfikowany) · R4 DoD z liczbami (2090 i18n · 7 table · 15 hex · 21× rose) · R5 decyzje z właścicielem (**D-01/D-02 ROZSTRZYGNIĘTE #13; D-05 → DP-1 OPENAI**; D-03/D-04 modułowe TBD) · A–E docelowy zlinkowany (+ endpointy/maszyna stanów/głos/bramka) · F epiki↔stories Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 + żywy smoke głosu VTS (zaplanowane). **Teczka kompletna do egzekucji.**

@@ -124,9 +124,9 @@
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Ścieżka platformy (B, flaga `ENABLE_TABLE_PLATFORM_METADATA_FIRST`) | dokończyć metadata-first / **wyciąć most path-B w narzędziu (~40% kodu)** | Piotr | TBD | **DP-7 = WYTNIJ most** (rekom.) — **ALE backend M20 `table-platform.*` (9 route-plików + testy) ZOSTAJE; cut dotyczy tylko bridge'a w IdeaTableTool, koordynować z M20** |
-| D-02 | 4 przyciski | naprawić mount/auth / ukryć za `usePlatform` | Piotr | TBD | otwarta (DP-5: ukryj za flagą jeśli nie v1-critical) |
-| D-03 | Kontrakt `my_idea_maps` per-resource (DP-3) | single-player / shared+membership | Piotr | TBD | **DP-3 — M09 zmienia dla puli; M08 trzyma blob w `extensions_json`, scope `user_id`→membership** |
+| D-01 | Ścieżka platformy (B, flaga `ENABLE_TABLE_PLATFORM_METADATA_FIRST`) | dokończyć metadata-first / **wyciąć most path-B w narzędziu (~40% kodu)** | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-7: wytnij most path-B w narzędziu (NIE backend M20)** — backend M20 `table-platform.*` (9 route-plików + testy) ZOSTAJE; cut dotyczy tylko bridge'a w IdeaTableTool, koordynować z M20 |
+| D-02 | 4 przyciski | naprawić mount/auth / ukryć za `usePlatform` | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-5: ukryj stuby za flagą + label** (jeśli nie v1-critical) |
+| D-03 | Kontrakt `my_idea_maps` per-resource (DP-3) | single-player / shared+membership | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-3: per-resource multiplayer** — M09 zmienia dla puli; M08 trzyma blob w `extensions_json`, scope `user_id`→membership |
 
 ### 05 · Flagi/rollout — beta Ideas; `ENABLE_TABLE_PLATFORM_METADATA_FIRST: false` (~40% kodu mostu za flagą). **DP-7:** wycięcie dotyczy mostu w narzędziu, nie backendu M20.
 ### 06 · Ryzyka — dual-stack (ścieżka B) = podwójne utrzymanie co tydzień; naprawa Import dotyka mountów M20; dev backend uderza w PROD DB. i18n 1695× = największy dług całej puli (FAZA 4 sweep).
@@ -135,4 +135,4 @@
 ---
 
 ## Bramka teczki: 8/9 dokumentacyjnie
-R1 ✅ · R2 ✅ · R3 (statusy z dowodem; claim 4-przyciski oznaczone „do weryfikacji" zgodnie z R3) ✅ · R4 DoD z liczbami (1695/355/5/137) ✅ · R5 decyzje z właścicielem ✅ · A-E ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula nietestowana żywo) — W-02 puste.** **8/9.**
+R1 ✅ · R2 ✅ · R3 (statusy z dowodem; claim 4-przyciski oznaczone „do weryfikacji" zgodnie z R3) ✅ · R4 DoD z liczbami (1695/355/5/137) ✅ · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTE → DP-7; D-02 → DP-5; D-03 → DP-3**) ✅ · A-E ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula nietestowana żywo) — W-02 puste.** **8/9 (decyzje rozstrzygnięte; R6 pozostaje).**

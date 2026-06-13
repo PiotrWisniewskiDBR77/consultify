@@ -99,7 +99,7 @@ Scenariusze S1–S8: karta §0/§2 (293 PASS/0 FAIL, ale **15/21 integracyjnych 
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | collaborate „Invite by email" = no-op UI | W-01 | `Presentations/DeckBuilder/ShareModal.tsx:134-171` | P3 | 3 | otwarta (**D-01**) |  |
+| L-01 | collaborate „Invite by email" = no-op UI | W-01 | `Presentations/DeckBuilder/ShareModal.tsx:134-171` | P3 | 3 | otwarta (**D-01 = DP-5: ukryj za flagą**) |  |
 | L-02 | override quality-gate „bez roli" | W-01,W-04 | `presentations.routes.ts:1465,1607,1925,5779` + `:366` | P2 (był) | 1 | **STALE-zweryfikowane** (już role-gated; tylko test regresji) | 2026-06-13 |
 | L-03 | beta-lock nawigacyjny + share bez rate-limit/revoke | W-01 | `/shared/:token` | P2 | 3 | otwarta |  |
 | L-04 | analytics-beacon cross-org (`WHERE id=?` bez org) | W-01 | `presentations.routes.ts:5923` | P3 | 3 | otwarta |  |
@@ -112,7 +112,7 @@ Scenariusze S1–S8: karta §0/§2 (293 PASS/0 FAIL, ale **15/21 integracyjnych 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | collaborate „Invite by email" | wpiąć handlery+permisje / ukryć zakładkę w v1 | Piotr | TBD | otwarta |
+| D-01 | collaborate „Invite by email" | wpiąć handlery+permisje / ukryć zakładkę w v1 | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj Invite-by-email** (stub za flagą + label, nie półbuduj) |
 
 ### 05 · Flagi / rollout — beta-closed; `ENABLE_V8_GLOBAL` OFF→404 tylko pipeline generacji (reszta nie-za-flagą); `melsDeckBuilder` default ON. Beta-guard route = nawigacyjny (direct URL omija plate; API org-gated).
 ### 06 · Ryzyka — 15 vacuous testów dają fałszywą pewność (0,68s bez serwera); S4/S5 trwałość/422 niezweryfikowane testem mimo realnego kodu; override role-gate bez testu regresji → możliwy nawrót przy refaktorze; dev `.env` → Railway PROD.
@@ -121,4 +121,4 @@ Scenariusze S1–S8: karta §0/§2 (293 PASS/0 FAIL, ale **15/21 integracyjnych 
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia (karta+INV_E+uwaga #1+weryfikacja override) · R2 zero sierot · R3 statusy z dowodem (**L-02 STALE-zweryfikowane: override `allowOverride:[ADMIN/OWNER/SUPERADMIN]` `:1465`+`:366` w kodzie — korekta karty**; L-09 z commitem) · R4 DoD z liczbami (grep i18n=30, hex=127, `<table>`=1) · R5 decyzje z właścicielem (D-01) · A–E docelowy zlinkowany (Hub §27 wzorcowy + C model wersji + enum API) · F epiki→stories Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
+R1 wejścia (karta+INV_E+uwaga #1+weryfikacja override) · R2 zero sierot · R3 statusy z dowodem (**L-02 STALE-zweryfikowane: override `allowOverride:[ADMIN/OWNER/SUPERADMIN]` `:1465`+`:366` w kodzie — korekta karty**; L-09 z commitem) · R4 DoD z liczbami (grep i18n=30, hex=127, `<table>`=1) · R5 **decyzja rozstrzygnięta (D-01→DP-5: ukryj Invite-by-email)** · A–E docelowy zlinkowany (Hub §27 wzorcowy + C model wersji + enum API) · F epiki→stories Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 (pozostaje). **9/9; teczka kompletna do egzekucji.**

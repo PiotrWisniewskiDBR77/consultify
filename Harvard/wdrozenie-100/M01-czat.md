@@ -145,8 +145,8 @@ Pełna tabela: karta §1g. **WYJŚCIA →** (7 handoffów intencji, INV_A poz.53
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | kliencka pamięć AI: udostępnić czy wyciąć? | zdjąć `internalToolsGuard`+wepnąć panel / ukryć+wyciąć orphan | Piotr | TBD | otwarta |
-| D-02 | reasoning #3: który tier/provider wymusić? | per-provider param / wymuszony model thinking | Piotr | TBD | **rekom. DP-12 = wymusić model thinking-capable** |
+| D-01 | kliencka pamięć AI: udostępnić czy wyciąć? | zdjąć `internalToolsGuard`+wepnąć panel / ukryć+wyciąć orphan | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce"** |
+| D-02 | reasoning #3: który tier/provider wymusić? | per-provider param / wymuszony model thinking | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-12: wymuś model thinking-capable per provider (fallback: ukryj przełącznik)** |
 | D-03 | §27 dla 13 `<table>` — render markdown czy lista encji? | potwierdzić N/D / część do FilterableTable | Piotr | TBD | otwarta |
 
 ### 05 · Flagi / rollout / beta — core otwarty (brak beta-gatingu); handoffy/V8/retrieval **strict `=== 'true'`** (OFF w czystym deployu); `chatV9*` FE ON-by-default (kill-switch).
@@ -156,4 +156,4 @@ Pełna tabela: karta §1g. **WYJŚCIA →** (7 handoffów intencji, INV_A poz.53
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + 4 uwagi żywe #1/#2/#3/#4 + SPEC_01 + SSOT persona/pipeline + DP-12/DP-2 + feedback prod) · R2 zero sierot (W→L→DoD) · R3 status #4 „NAPRAWIONE — do weryfikacji" (brak commita w karcie) · R4 DoD z liczbami grep (305 i18n · 13 table · 52 hex) · R5 decyzje z właścicielem (D-02 = DP-12) · A–E docelowy z layoutem+stanami+endpointami · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + 4 uwagi żywe #1/#2/#3/#4 + SPEC_01 + SSOT persona/pipeline + DP-12/DP-2 + feedback prod) · R2 zero sierot (W→L→DoD) · R3 status #4 „NAPRAWIONE — do weryfikacji" (brak commita w karcie) · R4 DoD z liczbami grep (305 i18n · 13 table · 52 hex) · R5 decyzje rozstrzygnięte (D-01=DP-5, D-02=DP-12; D-03 §27 modułowa); R6 sesja żywa pozostaje · A–E docelowy z layoutem+stanami+endpointami · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**

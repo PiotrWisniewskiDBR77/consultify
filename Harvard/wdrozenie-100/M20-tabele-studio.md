@@ -153,8 +153,8 @@ Otwarte: SSO plaintext (L-02), share_password (L-03), test regresji IDOR, test r
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | governed sync-to-results/finance/execution | realny zapis / „preview" + ukryć przyciski | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE = DP-6 „preview"** (realny odbiór = osobna fala po Fazie 2) |
-| D-04 | grid-canon dla data-grida | spisać osobny standard / zostawić ad-hoc | Piotr | 2026-06-13 | **kierunek = DP-9 (grid dostaje osobny grid-canon)**; spisanie do zaplanowania |
+| D-01 | governed sync-to-results/finance/execution | realny zapis / „preview" + ukryć przyciski | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-6: governed sync preview** (realny odbiór = osobna fala po Fazie 2) |
+| D-04 | grid-canon dla data-grida | spisać osobny standard / zostawić ad-hoc | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-9: grid-canon w sweepie** (grid dostaje osobny standard; spisanie do zaplanowania) |
 
 ### 05 · Flagi / rollout — beta-closed (`MODULE_*` gating); `ENABLE_TABLE_PLATFORM_RECORDS_API` default ON; `ENABLE_TABLE_AI_EDITOR`/QA/SOURCE_PACK/CONVERSION default ON (SSOT `FeatureFlags.ts` komentarz=runtime — R3 spójne); `ENABLE_V8_GLOBAL` OFF (generacja z czatu martwa bez flagi). Beta-guard route = nawigacyjny (direct URL omija plate; API org-gated).
 ### 06 · Ryzyka — fix IDOR `e9c6cb9c0a` na `Londyn` ale **bez testu regresji** → możliwy nawrót; cold-start IDOR proof na staging OSTROŻNIE (dev `.env` może wskazywać Railway PROD — `[[finding_railway_db_topology]]`). Governed sync „DZIAŁA" w INV_E mylące (DP-6 preview). 322 hex zmierzone w szerszym footprincie niż zlinkowany podkatalog — sweep musi objąć cały data-grid.
@@ -163,4 +163,4 @@ Otwarte: SSO plaintext (L-02), share_password (L-03), test regresji IDOR, test r
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia (karta+INV_E+uwaga #1 jako zależność + DP-6/8/9) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-01 NAPRAWIONA `e9c6cb9c0a` zweryfikowana w kodzie msg+guards; L-06 rozjazd flag częściowo ZAMKNIĘTY — korekta vs karta**; L-11 z commitem) · R4 DoD z liczbami (193 EP enum, grep i18n/hex/<table> 2026-06-13) · R5 decyzje z właścicielem (D-01=DP-6 rozstrzygnięte, D-04→DP-9) · A–E docelowy zlinkowany (C = pełna enumeracja + org-scope + grid-canon) · F epiki→stories Gherkin→L-xx · G DoD+S+sec · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
+R1 wejścia (karta+INV_E+uwaga #1 jako zależność + DP-6/8/9) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-01 NAPRAWIONA `e9c6cb9c0a` zweryfikowana w kodzie msg+guards; L-06 rozjazd flag częściowo ZAMKNIĘTY — korekta vs karta**; L-11 z commitem) · R4 DoD z liczbami (193 EP enum, grep i18n/hex/<table> 2026-06-13) · R5 **obie decyzje rozstrzygnięte (D-01→DP-6, D-04→DP-9)** · A–E docelowy zlinkowany (C = pełna enumeracja + org-scope + grid-canon) · F epiki→stories Gherkin→L-xx · G DoD+S+sec · R6 sesja żywa = Faza 4 (pozostaje). **9/9; teczka kompletna do egzekucji.**

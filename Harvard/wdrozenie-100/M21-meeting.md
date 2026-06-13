@@ -137,8 +137,8 @@ Otwarte: beta/role-gate (L-03/04), testy S6/S7+PG (L-05), i18n 79× (L-06).
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | „otwórz jako dokument" + `persistNote` → M04 | realny handoff do Canvas/Doc Studio / świadomy lokalny split-view | Piotr (wspólnie z WP M04) | 2026-06-13 | **kierunek = DP-2 globalny dok IDE-tabs** (in-context: notatka/dokument); egzekucja wspólna z M04 |
-| D-02 | archive spotkań | wpiąć backend archive / zostawić świadomie zaślepione | Piotr | TBD | otwarta |
+| D-01 | „otwórz jako dokument" + `persistNote` → M04 | realny handoff do Canvas/Doc Studio / świadomy lokalny split-view | Piotr (wspólnie z WP M04) | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-2: globalny dok** (IDE-tabs, in-context notatka/dokument; egzekucja wspólna z M04) |
+| D-02 | archive spotkań | wpiąć backend archive / zostawić świadomie zaślepione | Piotr | TBD | otwarta (modułowa) |
 
 ### 05 · Flagi / rollout — `ProductionModuleGate` (ukrycie na public-prod); poza public-prod w pełni dostępny; **brak beta/role-gate na `/api/meeting`** (L-03). Migracje `meetings`/`meeting_follow_ups`/`notebook_pages` — testowane TYLKO sqlite, sprawdzić schemat PG (ryzyko drift).
 ### 06 · Ryzyka — persystencja testowana tylko sqlite → schema-drift PG niewykryty (L-05); `persistNote` cichy catch maskuje ew. rozjazd schematu `notebook_pages` na PG; transkrypt injection subtelna persystuje realne rekordy (L-02, częściowo mitygowane); handoff M04 = DP-2 (egzekucja wspólna); dev `.env` → Railway PROD.
@@ -147,4 +147,4 @@ Otwarte: beta/role-gate (L-03/04), testy S6/S7+PG (L-05), i18n 79× (L-06).
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia (karta+INV_E+MASTER handoff+DP-2; brak uwagi żywej M21 — odnotowane) · R2 zero sierot · R3 statusy z dowodem (**L-01 [do cold-start proof]: `notebook_pages` istnieje, karta mylnie podawała `notebook_entries`; L-02 transkrypt guard częściowo ZAMKNIĘTY — korekta vs karta**; L-08/L-09 z commitami) · R4 DoD z liczbami (grep i18n=79, hex=0, `<table>`=0, 9 EP) · R5 decyzje z właścicielem (D-01=DP-2 wspólnie z M04) · A–E docelowy zlinkowany (D = pipeline AI notes + transkrypt guard + persistNote) · F epiki→stories Gherkin→L-xx · G DoD+S+sec · R6 sesja żywa = Faza 4 (handoff wspólny z M04). **Teczka kompletna do egzekucji.**
+R1 wejścia (karta+INV_E+MASTER handoff+DP-2; brak uwagi żywej M21 — odnotowane) · R2 zero sierot · R3 statusy z dowodem (**L-01 [do cold-start proof]: `notebook_pages` istnieje, karta mylnie podawała `notebook_entries`; L-02 transkrypt guard częściowo ZAMKNIĘTY — korekta vs karta**; L-08/L-09 z commitami) · R4 DoD z liczbami (grep i18n=79, hex=0, `<table>`=0, 9 EP) · R5 **D-01 rozstrzygnięte (→DP-2, wspólnie z M04); D-02 modułowa** · A–E docelowy zlinkowany (D = pipeline AI notes + transkrypt guard + persistNote) · F epiki→stories Gherkin→L-xx · G DoD+S+sec · R6 sesja żywa = Faza 4 (handoff wspólny z M04, pozostaje). **9/9; teczka kompletna do egzekucji.**

@@ -137,8 +137,8 @@
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | V8 mirror | naprawić kontrakt ID (UUID→localId + GET /objects) / **wyciąć mirror** | Piotr | TBD | **DP-7 = WYTNIJ** (rekom.; M07 mirror = silny kandydat). Weryf.: 0 konsumentów M20/M22, 1 call-site `develop` do przekierowania na blob |
-| D-02 | AI Proposal Panel (P14) | route z LLM generującym operations[] / ukryć | Piotr | TBD | otwarta (DP-5: ukryj za flagą jeśli nie v1-critical) |
+| D-01 | V8 mirror | naprawić kontrakt ID (UUID→localId + GET /objects) / **wyciąć mirror** | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-7: wytnij V8 mirror (po przekierowaniu 1 call-site `develop` readback na blob; 0 konsumentów M20/M22)** |
+| D-02 | AI Proposal Panel (P14) | route z LLM generującym operations[] / ukryć | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce"** |
 | D-03 | Kontrakt `my_idea_maps` per-resource (DP-3) | single-player / shared+membership | Piotr | TBD | **DP-3 — M09 zmienia; WS gateway wspólny** |
 
 ### 05 · Flagi/rollout — beta Ideas; `ENABLE_V8_GLOBAL` (przy CUT/DP-7 — flaga i cała ścieżka V8 process-flow usunięte).
@@ -148,4 +148,4 @@
 ---
 
 ## Bramka teczki: 8/9 dokumentacyjnie
-R1 ✅ · R2 ✅ · R3 statusy z dowodem (L-02 zweryfikowane; L-01 żywy z dowodem `plik:linia`) ✅ · R4 DoD z liczbami (252/45/0) ✅ · R5 decyzje z właścicielem ✅ · A-E ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula nietestowana żywo) — W-02 puste.** **8/9.**
+R1 ✅ · R2 ✅ · R3 statusy z dowodem (L-02 zweryfikowane; L-01 żywy z dowodem `plik:linia`) ✅ · R4 DoD z liczbami (252/45/0) ✅ · R5 decyzje rozstrzygnięte (D-01=DP-7, D-02=DP-5; D-03=DP-3); R6 sesja żywa pozostaje ✅ · A-E ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula nietestowana żywo) — W-02 puste.** **8/9.**

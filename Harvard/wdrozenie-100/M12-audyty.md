@@ -128,8 +128,8 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Edycja programu: wpiąć FE czy usunąć martwą trasę? | wpiąć FE / usuń trasę | Piotr | TBD | otwarta (klaster DP-5 stuby/martwe) |
-| D-02 | §27/`ModuleHub` dla listy: teraz czy sweep FAZA 4? | teraz / FAZA 4 | Piotr | TBD | otwarta (rekom. DP-9 = sweep FAZA 4) |
+| D-01 | Edycja programu: wpiąć FE czy usunąć martwą trasę? | wpiąć FE / usuń trasę | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-5: ukryj stub za flagą + label** (martwy FE edycji — nie półbuduj) |
+| D-02 | §27/`ModuleHub` dla listy: teraz czy sweep FAZA 4? | teraz / FAZA 4 | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-9: §27 do sweepu Faza 4** (nie per-moduł) |
 
 ### 05 · Flagi / rollout / beta-gating
 `MODULE_AUDITS:'closed'` w sidebarze (beta-lock nawigacyjny; route bez guarda = L-04). API org-scoped (direct URL = tylko UX, dane chronione).
@@ -146,4 +146,4 @@ Scenariusze S1–S7: karta §0. Bezpieczeństwo: karta §6. **17 BE testów PASS
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + 17 testów + commit + kod; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-10 `7df4b22d6d` zweryfikowany w git; L-03 baner do re-weryfikacji runtime**) · R4 DoD z liczbami (**isPolish ~96 — korekta zaniżenia karty**; hex 1; table 0) · R5 decyzje z właścicielem · A–E docelowy zlinkowany (+ endpointy/fan-out/org-walidacja) · F epiki↔stories Gherkin↔luki · G DoD+S+sec+17 testów · R6 sesja żywa = E2E S2→S5→S6 + smoke żywy (Faza 4). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + 17 testów + commit + kod; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (**L-10 `7df4b22d6d` zweryfikowany w git; L-03 baner do re-weryfikacji runtime**) · R4 DoD z liczbami (**isPolish ~96 — korekta zaniżenia karty**; hex 1; table 0) · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTE → DP-5; D-02 → DP-9**) · A–E docelowy zlinkowany (+ endpointy/fan-out/org-walidacja) · F epiki↔stories Gherkin↔luki · G DoD+S+sec+17 testów · R6 sesja żywa = E2E S2→S5→S6 + smoke żywy (Faza 4). **Teczka kompletna do egzekucji.**

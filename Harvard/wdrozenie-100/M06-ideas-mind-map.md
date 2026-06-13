@@ -137,8 +137,8 @@
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Canonical drawer szczegółów węzła | `NodeDetailDrawer` / `IdeaNodeDetailDrawer` (wytnij drugi) | Piotr | TBD | otwarta (M06-D01 modułowe) |
-| D-02 | AI overlays (sentiment/clustering) | dedykowany endpoint LLM / oznaczyć jako heurystyki | Piotr | TBD | otwarta |
+| D-01 | Canonical drawer szczegółów węzła | `NodeDetailDrawer` / `IdeaNodeDetailDrawer` (wytnij drugi) | Piotr | TBD | otwarta (modułowa — przy wejściu w moduł) |
+| D-02 | AI overlays (sentiment/clustering) | dedykowany endpoint LLM / oznaczyć jako heurystyki | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce" (nie półbuduj)** |
 | D-03 | Kontrakt `my_idea_maps` per-resource (DP-3) | single-player / shared+membership | Piotr | TBD | **DP-3 = per-resource multiplayer — M09 zmienia kontrakt; WS gateway WSPÓLNY z M06/M07/M09, membership wpływa na org-check** |
 
 ### 05 · Flagi/rollout — beta Ideas; collab WS aktywny dla org. **DP-3:** przebudowa na shared+membership (M09) zmienia regułę join (org-check → membership-check) w `ideaCollabWs.gateway.ts` — wspólnym dla M06/M07/M09.
@@ -148,4 +148,4 @@
 ---
 
 ## Bramka teczki: 8/9 dokumentacyjnie
-R1 ✅ · R2 ✅ · R3 statusy z dowodem (L-01/L-03 zweryfikowane w kodzie — silne) ✅ · R4 DoD z liczbami (872/289/1, rose=0) ✅ · R5 decyzje z właścicielem ✅ · A-E ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula nietestowana żywo) — W-02 puste.** **8/9.**
+R1 ✅ · R2 ✅ · R3 statusy z dowodem (L-01/L-03 zweryfikowane w kodzie — silne) ✅ · R4 DoD z liczbami (872/289/1, rose=0) ✅ · R5 decyzje rozstrzygnięte (D-02=DP-5; D-01 modułowa; D-03=DP-3); R6 sesja żywa pozostaje ✅ · A-E ✅ · F epiki↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula nietestowana żywo) — W-02 puste.** **8/9.**

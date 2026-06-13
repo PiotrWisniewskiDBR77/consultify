@@ -107,9 +107,9 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | #10 in-context open w MyWork: jak? | drawer / karta w widoku / dynamiczna zakładka | Piotr | TBD | otwarta |
-| D-02 | #14 zakres systemu statusów v1 | pełny pipeline+egzekucja / minimalny preview | Piotr | TBD | otwarta |
-| D-03 | bulk Tag/Due/Delete | dopiąć BE / ukryć | Piotr | TBD | otwarta |
+| D-01 | #10 in-context open w MyWork: jak? | drawer / karta w widoku / dynamiczna zakładka | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-2: globalny dok IDE-tabs** (inicjatywa in-context; deck/doc→Canvas; ciężkie→pełny moduł) |
+| D-02 | #14 zakres systemu statusów v1 | pełny pipeline+egzekucja / minimalny preview | Piotr | TBD | otwarta (modułowa #14) |
+| D-03 | bulk Tag/Due/Delete | dopiąć BE / ukryć | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-5: ukryj stub za flagą + label** (bulk bez BE — nie półbuduj) |
 
 ### 05 · Flagi/rollout — V8 Planning (env, degraduje); pilot VTS (rola, gating→serwer); beta core (otwarty); demo Atelier Toys (jawny toggle).
 ### 06 · Ryzyka — SSOT statusów (~15 dok.) może być rozjechany z `stageGateService.ts` → #14 najpierw pogodzić docs↔kod. Governance IDOR (`b9f2dee9d2`) wymaga testu cross-org. Dev `.env` → Railway PROD.
@@ -118,4 +118,4 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta+15 dok.+4 uwagi żywe) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (L-08/09/10 z commitami) · R4 DoD z liczbami · R5 decyzje z właścicielem (terminy = do ustalenia z Piotrem) · A–E docelowy zlinkowany · F epiki↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 (zaplanowana). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta+15 dok.+4 uwagi żywe) · R2 zero sierot (wejście→luka→DoD) · R3 statusy z dowodem (L-08/09/10 z commitami) · R4 DoD z liczbami · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTE → DP-2; D-03 → DP-5**; D-02 modułowa #14 TBD) · A–E docelowy zlinkowany · F epiki↔luki · G DoD+S+sec · R6 sesja żywa = Faza 4 (zaplanowana). **Teczka kompletna do egzekucji.**

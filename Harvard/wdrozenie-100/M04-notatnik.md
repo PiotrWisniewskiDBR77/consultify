@@ -134,9 +134,9 @@ Pełna tabela: karta §1g. **→** M03 (task/decision, checklist→zadania), M13
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | „Trzeci panel" = globalny dok (IDE-tabs) czy per-moduł? | globalny dok / per-moduł | Piotr | TBD | **ROZSTRZYGNIĘTE: DP-2 = globalny dok IDE-tabs** |
-| D-02 | Zakres lekkiego workspace #7: 3. przycisk-dymek; chip vs ikony | wg SPEC_07 §6 | Piotr | TBD | otwarta |
-| D-03 | Handoff: realny INSERT czy usunąć toast (wspólnie z M21)? | INSERT / usuń toast | Piotr | TBD | otwarta |
+| D-01 | „Trzeci panel" = globalny dok (IDE-tabs) czy per-moduł? | globalny dok / per-moduł | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-2: globalny dok IDE-tabs (jeden workspace-rail; notatka in-context)** |
+| D-02 | Zakres lekkiego workspace #7: 3. przycisk-dymek; chip vs ikony | wg SPEC_07 §6 | Piotr | TBD | otwarta (modułowa — przy wejściu w moduł) |
+| D-03 | Handoff: realny INSERT czy usunąć toast (wspólnie z M21)? | INSERT / usuń toast | Piotr | TBD | otwarta (modułowa — handoff, wspólnie z M21) |
 
 ### 05 · Flagi / rollout / beta — beta core (otwarty); Capture `visibility='private'`; contextSharing personal/team per-notatnik. Archive bez backendu („Wkrótce").
 ### 06 · Ryzyka i założenia — #6/#7 to mini-redesign POWŁOKI (dotyka wszystkich modułów) → projektować łącznie z kręgosłupem #1 Tryb C i klastrem #10 (DP-2). Handoff wspólny z M21 — nie rozjechać dwóch napraw. Duża powierzchnia FE (`NotebookContent.tsx` ~2900 l.) — robić falami z testem nieregresji mostów. Dev `.env` → Railway PROD.
@@ -145,4 +145,4 @@ Pełna tabela: karta §1g. **→** M03 (task/decision, checklist→zadania), M13
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta+SSOT+uwagi żywe #6/#7/#8+SPEC_07+DP-2+feedback) · R2 zero sierot (W→L→DoD) · R3 statusy z dowodem (**korekta staleności: `sharose`/hex=0; i18n 1→~186 recount; L-10 naprawiona — test**) · R4 DoD z liczbami (isPolish ~186, hex 0, table 0) · R5 decyzje z właścicielem (D-01=DP-2) · A–E docelowy z L0-L3 layout+stanami+enumeracją live(21)+v8(10) endpointów+maszyny stanów · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = test handoff/autosave (Faza 4). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta+SSOT+uwagi żywe #6/#7/#8+SPEC_07+DP-2+feedback) · R2 zero sierot (W→L→DoD) · R3 statusy z dowodem (**korekta staleności: `sharose`/hex=0; i18n 1→~186 recount; L-10 naprawiona — test**) · R4 DoD z liczbami (isPolish ~186, hex 0, table 0) · R5 decyzje rozstrzygnięte (D-01=DP-2; D-02/D-03 modułowe/handoff) · A–E docelowy z L0-L3 layout+stanami+enumeracją live(21)+v8(10) endpointów+maszyny stanów · F epiki↔stories↔Gherkin↔luki · G DoD+S+sec · R6 sesja żywa = test handoff/autosave (Faza 4). **Teczka kompletna do egzekucji.**

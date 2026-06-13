@@ -122,8 +122,8 @@ REALNE ~95% z 60+ zakładek (Tenant Ops, AI Operations 27 pod-zakł., System, Go
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | i18n control-plane (DBR77-only) | przetłumaczyć 114 plików / **świadomy dług internal udokumentowany** | Piotr | TBD | **rekom DP-10 = świadomy dług internal, NIE tłumaczyć v1** |
-| D-02 | live-verify P0/P1 (wymaga konta superadmin + control-plane) | kiedy/kto wykonuje 🟦 Fazę 3/4 | Piotr | TBD | otwarta |
+| D-01 | i18n control-plane (DBR77-only) | przetłumaczyć 114 plików / **świadomy dług internal udokumentowany** | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-10: świadomy dług internal control-plane, NIE tłumaczyć v1** |
+| D-02 | live-verify P0/P1 (wymaga konta superadmin + control-plane) | kiedy/kto wykonuje 🟦 Fazę 3/4 | Piotr | TBD | otwarta — wymaga konta superadmin |
 
 ### 05 · Flagi/rollout — feature flags platformy (per-flag, zarządzane stąd); gating SUPERADMIN (DB-verified fail-closed). 🟦 pełna weryfikacja wymaga konta superadmin. DP-10: i18n internal = dług świadomy.
 ### 06 · Ryzyka — Pełna weryfikacja Fazy 3/4 (live P0/P1 proof na control-plane) **WYMAGA konta superadmin (🟦)** — bez niego DoD #2/#6 nie domknie się, deferred pozostaje. Dev `.env` → Railway PROD czyni testy zapisu na control-plane szczególnie ryzykownymi (NAJWYŻSZA ostrożność, read-only). Side-router-weak-gate to wzorzec systemowy (skan wszystkich mountów).
@@ -132,6 +132,6 @@ REALNE ~95% z 60+ zakładek (Tenant Ops, AI Operations 27 pod-zakł., System, Go
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + re-audit + kod-R3 + feedback-finding + DP-10/DP-8; uwagi żywe = brak, 🟦 wymaga konta superadmin) · R2 zero sierot (wejście→luka→story→DoD) · R3 statusy z dowodem (L-01/02 NAPRAWIONE — gate zweryfikowany w kodzie 2026-06-13; L-09/10 z commitami, live-verify pending) · R4 DoD z liczbami (i18n ~150/165, hex 70, table 73) · R5 decyzje z właścicielem (D-01=DP-10; terminy TBD) · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4 (🟦 konto superadmin). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + re-audit + kod-R3 + feedback-finding + DP-10/DP-8; uwagi żywe = brak, 🟦 wymaga konta superadmin) · R2 zero sierot (wejście→luka→story→DoD) · R3 statusy z dowodem (L-01/02 NAPRAWIONE — gate zweryfikowany w kodzie 2026-06-13; L-09/10 z commitami, live-verify pending) · R4 DoD z liczbami (i18n ~150/165, hex 70, table 73) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-10; D-02 otwarta — wymaga konta superadmin); pozostaje R6/żywa weryfikacja (M27 wymaga konta superadmin) · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4 (🟦 konto superadmin). **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Domknięcie DoD #2/#6 (live proof P0/P1 na control-plane) WYMAGA konta superadmin, a ponieważ dev `.env` może wskazywać Railway PROD, testy zapisu na control-plane są szczególnie ryzykowne — stąd 🟦 deferred-status pozostaje do świadomej, read-only sesji właściciela.

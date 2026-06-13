@@ -138,8 +138,8 @@ Karta wewnętrznie sprzeczna (§1c „fasada in-memory" vs re-audit „write-thr
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-02 | Mode3 generate z szablonu | pozwolić `useLlm:true` (proza) / jawnie oznaczyć szkielet w UI | Piotr | TBD | otwarta |
-| D-03 | duplikat migracji `776 … 2.sql` | usunąć duplikat (byte-identyczny, bezpieczne) / zostawić | Piotr | TBD | otwarta |
+| D-02 | Mode3 generate z szablonu | pozwolić `useLlm:true` (proza) / jawnie oznaczyć szkielet w UI | Piotr | TBD | otwarta (modułowa) |
+| D-03 | duplikat migracji `776 … 2.sql` | usunąć duplikat (byte-identyczny, bezpieczne) / zostawić | Piotr | TBD | otwarta (modułowa) |
 
 ### 05 · Flagi / rollout — beta-closed; mount BE bez `v8FeatureGate` (zawsze ON na BE — beta-lock tylko nawigacyjny). Override QA role-gated. Migracje 776/`20260603`/769 zastosować na staging; **migracja wave5 dla 6 warstw in-memory = warunek trwałości**.
 ### 06 · Ryzyka — cold-start proof to dowód live na trwałość 3/8 warstw (kod = poszlaka mocna); 6/8 warstw (approvals/content-blocks/brand-voice/audience/source-packs/share-links) realnie in-memory → utrata po deployu DO NAPRAWY (mig.wave5); duplikat mig.776 (D-03); 889 zielonych testów MASKUJE S4 (mockują DAO → nie wykryją 6/8 in-memory); dev `.env` → Railway PROD.

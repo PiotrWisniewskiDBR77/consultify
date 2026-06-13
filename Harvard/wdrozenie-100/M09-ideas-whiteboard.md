@@ -159,8 +159,8 @@ Scenariusze S1–S5 + testy: karta §0/§2. Bezpieczeństwo: karta §6.
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Shared board model (kontrakt `my_idea_maps` całej puli) | per-resource + membership/share / single-player solo | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTA = DP-3 per-resource + membership/share** (koord. M05) |
-| D-02 | Obrazy base64 (limit body 10MB) | object storage / cap rozmiaru | Piotr | TBD | otwarta |
+| D-01 | Shared board model (kontrakt `my_idea_maps` całej puli) | per-resource + membership/share / single-player solo | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-3: per-resource multiplayer + membership/share** (koord. M05) |
+| D-02 | Obrazy base64 (limit body 10MB) | object storage / cap rozmiaru | Piotr | TBD | otwarta (modułowa) |
 
 ### 05 · Flagi / rollout / beta-gating
 `MYWORK_IDEAS: 'closed'` (`BETA_ADMINS_EXEMPT: false`) — wszyscy non-admin za zamkniętą betą. Facilitation aktywne w UI, ale multiplayer zablokowany P0-struct do czasu DP-3.
@@ -177,4 +177,4 @@ Scenariusze S1–S5 + testy: karta §0/§2. Bezpieczeństwo: karta §6.
 ---
 
 ## Bramka teczki: 8/9 dokumentacyjnie
-R1 wejścia pełne (karta + `MODULE_02E` + DP-3 + kod) ✅ · R2 zero sierot (wejście→luka→DoD) ✅ · R3 statusy z dowodem (L-03 WS+PG zweryfikowane; L-01 żywy bez commitu, DP-3 zatwierdza kierunek — jawnie) ✅ · R4 DoD z liczbami (i18n ~30 · hex 33 · table 0) ✅ · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTA = DP-3**; D-02 TBD) ✅ · A–E docelowy zlinkowany (+ docelowy model multiplayer) ✅ · F epiki↔stories Gherkin↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula Ideas nietestowana żywo) — W-02 puste.** **8/9 (R6 = warunek domknięcia).**
+R1 wejścia pełne (karta + `MODULE_02E` + DP-3 + kod) ✅ · R2 zero sierot (wejście→luka→DoD) ✅ · R3 statusy z dowodem (L-03 WS+PG zweryfikowane; L-01 żywy bez commitu, DP-3 zatwierdza kierunek — jawnie) ✅ · R4 DoD z liczbami (i18n ~30 · hex 33 · table 0) ✅ · R5 decyzje z właścicielem (**D-01 ROZSTRZYGNIĘTE → DP-3**; D-02 modułowa TBD) ✅ · A–E docelowy zlinkowany (+ docelowy model multiplayer) ✅ · F epiki↔stories Gherkin↔luki ✅ · G DoD+S+sec ✅ · **R6 sesja żywa NIEZALICZONA (pula Ideas nietestowana żywo) — W-02 puste.** **8/9 (R6 = warunek domknięcia).**

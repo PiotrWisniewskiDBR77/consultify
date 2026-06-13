@@ -119,9 +119,9 @@ Scenariusze S1–S7 + pokrycie: karta §0/§2. Bezpieczeństwo: karta §6.
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | billing: wpiąć pod `/settings/billing` czy usunąć route/enum? | wpiąć `BillingSettings.tsx` / **usunąć (billing w Admin)** | Piotr | TBD | **rekom DP-11 = usunąć route/enum, billing jedno miejsce Admin** |
-| D-02 | Keyboard Shortcuts: globalny dispatcher czy ukryć rebind? | dispatcher / ukryć UI | Piotr | TBD | otwarta |
-| D-03 | Feature flags: edytowalne czy jawnie read-only? | edytowalne / **„read-only (superadmin)"** | Piotr | TBD | **rekom DP-10 = jawnie read-only, flagi zarządzane z M27** |
+| D-01 | billing: wpiąć pod `/settings/billing` czy usunąć route/enum? | wpiąć `BillingSettings.tsx` / **usunąć (billing w Admin)** | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-11: usunąć route/enum, billing jedno miejsce Admin** |
+| D-02 | Keyboard Shortcuts: globalny dispatcher czy ukryć rebind? | dispatcher / ukryć UI | Piotr | TBD | otwarta (modułowa) |
+| D-03 | Feature flags: edytowalne czy jawnie read-only? | edytowalne / **„read-only (superadmin)"** | Piotr | TBD | otwarta (modułowa) |
 
 ### 05 · Flagi/rollout — pilot (FE-only redirect, gating→serwer L-03); developerMode persystuje (flagi nie); core otwarty. `VoiceSettingsPanel.tsx` cleanup koordynować z M22. DP-11: billing route → usunąć.
 ### 06 · Ryzyka — **L-01 i L-07 oznaczone NAPRAWIONE → R3: L-01 ZWERYFIKOWANE w kodzie (guard `req.user.id`), L-07 potwierdzić pokrycie AES wszystkich sekretów CalDAV+OAuth** przed zamknięciem. GDPR/delete na prod = szczególna ostrożność, NIE wykonywać realnego usunięcia konta (`feedback_prod_caution`). Dev `.env` → Railway PROD. Brak uwag żywych → re-ocena D wymaga Fazy 4.
@@ -130,6 +130,6 @@ Scenariusze S1–S7 + pokrycie: karta §0/§2. Bezpieczeństwo: karta §6.
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + jawne „brak uwag żywych M25" + voice finding + DP-11/DP-10 + feedback prod) · R2 zero sierot (wejście→luka→story→DoD) · R3 L-01 „NAPRAWIONE — ZWERYFIKOWANE w kodzie" + L-07 „potwierdzić pokrycie" (nie dziedziczone) · R4 DoD z liczbami (53 inline + ~1650 palety · 7 table · 119+9 hex · 123 endp.) · R5 decyzje z właścicielem (D-01=DP-11, D-03=DP-10; terminy TBD) · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + jawne „brak uwag żywych M25" + voice finding + DP-11/DP-10 + feedback prod) · R2 zero sierot (wejście→luka→story→DoD) · R3 L-01 „NAPRAWIONE — ZWERYFIKOWANE w kodzie" + L-07 „potwierdzić pokrycie" (nie dziedziczone) · R4 DoD z liczbami (53 inline + ~1650 palety · 7 table · 119+9 hex · 123 endp.) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-11; D-02/D-03 modułowe otwarte); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Faza 4. **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Read-IDOR `/notifications` (L-01) jest jedynym byłym blokerem bezpieczeństwa i R3 potwierdził naprawę w kodzie (guard `req.user.id`), więc po dopięciu testów S3/S5 + sweepie palety (DP-8) moduł realnie kandyduje do Beta jako najzdrowszy w puli core.

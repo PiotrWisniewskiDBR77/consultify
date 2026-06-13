@@ -128,8 +128,8 @@ Scenariusze S1–S7: karta §0 (239 PASS/5 FAIL drift). Bezpieczeństwo: karta �
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | sync-from-M20 (dead-end): realny odbiór KPI z Tabel czy „preview"? | realny odbiór / preview+komunikat | Piotr | TBD (wspólne z M20/M16) | **DP-6 = preview teraz**, realny odbiór otwarty |
-| D-02 | `ResultsGridView` raw `<table>`: zostawić świadomie czy §27? | zostaw / `TableWithPreviewLayout` | Piotr | TBD | otwarta (DP-9: sweep Faza 4) |
+| D-01 | sync-from-M20 (dead-end): realny odbiór KPI z Tabel czy „preview"? | realny odbiór / preview+komunikat | Piotr | TBD (wspólne z M20/M16) | **ROZSTRZYGNIĘTE → DP-6: preview teraz** (realny odbiór = osobna fala po Fazie 2) |
+| D-02 | `ResultsGridView` raw `<table>`: zostawić świadomie czy §27? | zostaw / `TableWithPreviewLayout` | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-9: §27 sweep Faza 4** |
 
 ### 05 · Flagi/rollout — V8 Results (env, degraduje→legacy `/api/benefits/*`); showcase (jawny toggle); beta CLOSED. `/benefits` tylko `ProductionModuleGate` (beta-guard = L-03).
 ### 06 · Ryzyka — **WZORZEC SYSTEMOWY** `x-kpi-role` (autoryzacja z nagłówka klienta) → audyt innych v8-routerów cross-module. Zapis KPI na PROD ostrożnie (dev `.env` może wskazywać PROD). sync-from-M20 wspólne z M20/M16 (DP-6). Brak uwag żywych → re-ocena D wymaga Fazy 4.
@@ -138,4 +138,4 @@ Scenariusze S1–S7: karta §0 (239 PASS/5 FAIL drift). Bezpieczeństwo: karta �
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta+commit+DP-6/9+feedback; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→story Gherkin→DoD→dowód) · R3 statusy z dowodem (**L-11/L-12 `91c8245559` zweryfikowany w historii git**; read-only proof = Faza 4) · R4 DoD z liczbami (isPolish 0, hex 0, table 7; 35+37 verbs) · R5 decyzje z właścicielem (DP-6 rozstrzyga timing L-05) · A–E docelowy zlinkowany · F epiki→stories Gherkin→zadania↔luki · G DoD+S+sec+wydajność+telemetria · R6 sesja żywa = read-only proof cross-org + showcase szczelność (Faza 4). **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta+commit+DP-6/9+feedback; brak uwag żywych = jawnie odnotowane) · R2 zero sierot (wejście→luka→story Gherkin→DoD→dowód) · R3 statusy z dowodem (**L-11/L-12 `91c8245559` zweryfikowany w historii git**; read-only proof = Faza 4) · R4 DoD z liczbami (isPolish 0, hex 0, table 7; 35+37 verbs) · R5 **obie decyzje rozstrzygnięte (D-01→DP-6, D-02→DP-9)** · A–E docelowy zlinkowany · F epiki→stories Gherkin→zadania↔luki · G DoD+S+sec+wydajność+telemetria · R6 sesja żywa = read-only proof cross-org + showcase szczelność (pozostaje, Faza 4). **9/9; teczka kompletna do egzekucji.**

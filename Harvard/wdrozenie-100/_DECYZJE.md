@@ -7,7 +7,15 @@
 - **DP-2 = Globalny dok IDE-tabs** — jeden workspace-rail; inicjatywa/notatka/zadanie in-context, deck/doc→Canvas, ciężkie→pełny moduł. Zamyka M03-D02/D03, M04-D01/D02, M13-D01, M09 nawigacja.
 - **DP-3 = Per-resource multiplayer** (M09) — przebudowa `my_idea_maps` na model współdzielony + membership/share; koordynacja z M05.
 - **DP-4 = Wyciąć A1** — usunąć stub affiliate (brak roadmapy).
-- **DP-5..DP-12:** _do hurtowego zatwierdzenia (rekomendacje niżej)._
+- **DP-5..DP-12 = WSZYSTKIE wg rekomendacji** (Piotr, 2026-06-13):
+  - **DP-5 = ukryj stuby za flagą + label** (nie półbuduj; v1-critical wyjątkiem) → M01-D01, M02-D03, M03-D04, M05-D01, M06-D02, M07-D02, M08-D02, M12-D01, M19-D01, M22-D02, M23-D01/D03, M24-D01, M26-D01.
+  - **DP-6 = „preview" + komunikat** (sync M20→cele; realny odbiór osobną falą) → M15-D01, M16-D01, M20-D01.
+  - **DP-7 = wytnij dual-stack** → M07-D01 (V8 mirror; po przekierowaniu 1 call-site `my-work.routes.ts`), M08-D01 (most path-B, NIE backend M20), M22-D01 (actionDecisions descope).
+  - **DP-8 = palety wykresów/grafów zostają**; reszta hex→tokeny w Fazie 4 → M16-D02, M13 graf.
+  - **DP-9 = §27 do sweepu Faza 4** → M12-D02, M15-D02, M20-D04 (grid-canon).
+  - **DP-10 = i18n internal = świadomy dług** (nie tłumacz v1) → M22-D03, M27-D01.
+  - **DP-11 = billing jedno miejsce (Admin), label „managed", bez live-checkout v1** → M23, M24, M25-D01.
+  - **DP-12 = wymuś model thinking-capable per provider** (fallback: ukryj przełącznik) → M01-D02.
 
 ---
 

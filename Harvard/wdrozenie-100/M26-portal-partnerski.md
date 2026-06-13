@@ -114,9 +114,9 @@ REALNE: connection/connect, referrals (tools/analytics/campaign-links), earnings
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | 5+ stubów Client Management | budować / **trzymać jako jawny `FEATURE_NOT_AVAILABLE` stub** | Piotr | TBD | **rekom DP-5 = ukryj za flagą + label „wkrótce"** |
-| D-02 | `PARTNER_SELF_CONNECT_ENABLED` na prod | włączyć (self-connect) / inny proces onboardingu | Piotr | TBD | otwarta |
-| D-03 | resource shared-catalog | zostaw shared + audit log / ogranicz per partner-tier | Piotr | TBD | otwarta |
+| D-01 | 5+ stubów Client Management | budować / **trzymać jako jawny `FEATURE_NOT_AVAILABLE` stub** | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce" (stuby Client Management)** |
+| D-02 | `PARTNER_SELF_CONNECT_ENABLED` na prod | włączyć (self-connect) / inny proces onboardingu | Piotr | TBD | otwarta (modułowa) |
+| D-03 | resource shared-catalog | zostaw shared + audit log / ogranicz per partner-tier | Piotr | TBD | otwarta (modułowa) |
 
 ### 05 · Flagi/rollout — `PARTNER_SELF_CONNECT_ENABLED` (false), `PARTNER_DEMO_SEED_ENABLED` (false, no-op prod), `DEMO_WRITES_ENABLED` (false), `APP_BASE_URL`. Moduł poza `betaAccess.ts` (route `requireAuth`, ochrona serwer-first celowa).
 ### 06 · Ryzyka — Prawdopodobna **schema drift na prod** (prod 2026-05-18 poprzedza 5 migracji partner) — otwarcie portalu bez `migrate`+verify grozi błędami runtime na produkcji klienckiej (L-08). v8 partner bypass `v8OrgGate` celowy (udokumentowany). Dev `.env` → Railway PROD.
@@ -125,6 +125,6 @@ REALNE: connection/connect, referrals (tools/analytics/campaign-links), earnings
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + Fala 2 + kod-R3 + DP-5; uwagi żywe = brak) · R2 zero sierot (wejście→luka→story→DoD) · R3 status z dowodem (L-01 NAPRAWIONY — `:967` zweryfikowany w kodzie 2026-06-13) · R4 DoD z liczbami (i18n 0/15, hex 2, table 4, 43+25 endp.) · R5 decyzje z właścicielem (D-01=DP-5; terminy TBD) · A–E docelowy zlinkowany (D N/D) · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4 + schema verify prod. **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + Fala 2 + kod-R3 + DP-5; uwagi żywe = brak) · R2 zero sierot (wejście→luka→story→DoD) · R3 status z dowodem (L-01 NAPRAWIONY — `:967` zweryfikowany w kodzie 2026-06-13) · R4 DoD z liczbami (i18n 0/15, hex 2, table 4, 43+25 endp.) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-5; D-02/D-03 modułowe otwarte); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany (D N/D) · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4 + schema verify prod. **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Prawdopodobna schema drift na prod (prod = 2026-05-18 poprzedza 5 migracji partner_users/payout/certification) oznacza, że otwarcie portalu dla partnerów na produkcji bez wcześniejszego `migrate`+verify (L-08) grozi błędami runtime u klienta.

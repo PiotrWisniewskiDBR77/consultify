@@ -116,9 +116,9 @@ REALNE: profil firmy (org+role scoped), KG, Members, Domains, Branding, org-swit
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | Billing/Limits CTA | realny checkout / **jawne „zarządzane przez DBR77"** | Piotr | TBD | **rekom DP-11 = label managed, bez live-checkout** |
-| D-02 | drift admin (lokalny panel vs redirect M24) | redirect przy URL / `requiredRole` na pod-ścieżkach | Piotr | TBD | otwarta (koordynacja M24) |
-| D-03 | Goals AI (obecnie `onRefine` no-op) | realny LLM / usunąć przycisk | Piotr | TBD | otwarta |
+| D-01 | Billing/Limits CTA | realny checkout / **jawne „zarządzane przez DBR77"** | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-11: label managed, bez live-checkout** |
+| D-02 | drift admin (lokalny panel vs redirect M24) | redirect przy URL / `requiredRole` na pod-ścieżkach | Piotr | TBD | otwarta (modułowa) (koordynacja M24) |
+| D-03 | Goals AI (obecnie `onRefine` no-op) | realny LLM / usunąć przycisk | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: stub no-op ukryj za flagą + label „wkrótce" (nie półbuduj)** |
 
 ### 05 · Flagi/rollout — route `/organization/*` = `requireAuth` bez roli (gating po API, miejscami słaby — L-04). Brak beta-locka modułu (org core). DP-11: billing label „managed by DBR77".
 ### 06 · Ryzyka — Karta opisuje 3×P1 jako żywe, ale **weryfikacja kodu 2026-06-13 potwierdza wszystkie 3 NAPRAWIONE** (competency `verifyToken+requireRole`, export `requireRole`, Goals backend per-org). Karta §1b/1e/§6 wciąż opisuje stare stany = rozjazd. NIE budować od zera — domknąć testami regresji. Dev `.env` → Railway PROD (testy sec read-only). 45 SKIP = multi-tenant isolation nietestowana bez PG.
@@ -127,6 +127,6 @@ REALNE: profil firmy (org+role scoped), KG, Members, Domains, Branding, org-swit
 ---
 
 ## Bramka teczki: 9/9 dokumentacyjnie ✅
-R1 wejścia pełne (karta + re-audit + kod-R3 + DP-11; uwagi żywe = brak, jawnie dziedziczone) · R2 zero sierot (wejście→luka→story→DoD) · R3 statusy z dowodem (L-01/02/03 NAPRAWIONE — zweryfikowane w kodzie 2026-06-13, korekta rozjazdu karty) · R4 DoD z liczbami (i18n 1/5, hex 15, table 2, 45 SKIP) · R5 decyzje z właścicielem (D-01=DP-11; terminy TBD) · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4. **Teczka kompletna do egzekucji.**
+R1 wejścia pełne (karta + re-audit + kod-R3 + DP-11; uwagi żywe = brak, jawnie dziedziczone) · R2 zero sierot (wejście→luka→story→DoD) · R3 statusy z dowodem (L-01/02/03 NAPRAWIONE — zweryfikowane w kodzie 2026-06-13, korekta rozjazdu karty) · R4 DoD z liczbami (i18n 1/5, hex 15, table 2, 45 SKIP) · R5 decyzje przekrojowe ROZSTRZYGNIĘTE (D-01=DP-11, D-03=DP-5; D-02 modułowa otwarta); pozostaje R6/żywa weryfikacja · A–E docelowy zlinkowany · F epiki→stories Gherkin↔luki · G DoD+S+sec+wydajność · R6 sesja żywa = Fazy 3+4. **Teczka kompletna do egzekucji.**
 
 **Ryzyko (1 zdanie):** Karta nadal opisuje 3×P1 (competency no-auth, export no-role, Goals localStorage) jako żywe blokery, ale weryfikacja kodu potwierdza że WSZYSTKIE są naprawione — bez tej korekty zespół ponownie budowałby już istniejące fixy zamiast dopiąć brakujące testy regresji (L-07).
