@@ -55,7 +55,9 @@ RUN mkdir -p /tmp/knowledge-runtime/product-pills /tmp/knowledge-runtime/tool-kb
     echo "Knowledge runtime bundle stats:" && \
     echo " - product-pills md:" && find /tmp/knowledge-runtime/product-pills -type f -name "*.md" | wc -l && \
     echo " - tool-kb md:" && find /tmp/knowledge-runtime/tool-kb -type f -name "*.md" | wc -l && \
-    test "$(find /tmp/knowledge-runtime -type f -name '*.md' | wc -l)" -gt 0
+    COUNT="$(find /tmp/knowledge-runtime -type f -name '*.md' | wc -l)" && \
+    echo "Total knowledge md files: $COUNT" && \
+    if [ "$COUNT" -eq 0 ]; then echo "WARNING: knowledge bundle is empty (git-triggered build without local knowledge files — expected, non-fatal)"; fi
 # Railway snapshots can (rarely) omit some tracked folders; ensure critical frontend util exists.
 RUN if [ ! -f src/lib/utils.ts ]; then \
       echo "Recreating missing src/lib/utils.ts" && \
