@@ -741,7 +741,7 @@ const INTERVIEW_DUE_CHIP_BASE_CLASS =
   'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium';
 const INTERVIEW_PROGRESS_TRACK_CLASS =
   'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-700';
-const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-c-success transition-all';
+const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-c-success transition';
 
 // V-A S5 — canonical template-status chip. The real status enum is
 // draft / in_review / approved / archived; the table cell previously showed a
@@ -5092,7 +5092,7 @@ export const InterviewHub: React.FC = () => {
                     toggleAllVisibleSessions();
                   }}
                   className={[
-                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
                     allVisibleSelected || someVisibleSelected
@@ -5409,7 +5409,7 @@ export const InterviewHub: React.FC = () => {
                         toggleSessionSelection(session.id);
                       }}
                       className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                         'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
                         'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
                         'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
@@ -5958,7 +5958,7 @@ export const InterviewHub: React.FC = () => {
           <div
             key={session.id}
             onClick={() => (onCardClick ? onCardClick(session.id) : handleViewSession(session))}
-            className="group relative bg-white dark:bg-navy-900 rounded-xl border border-slate-200/60 dark:border-white/[0.08] overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30 transition-all duration-200"
+            className="group relative bg-white dark:bg-navy-900 rounded-xl border border-slate-200/60 dark:border-white/[0.08] overflow-hidden cursor-pointer hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30 transition duration-200"
           >
             {/* Header */}
             <div className="p-4 pb-2">
@@ -6014,7 +6014,7 @@ export const InterviewHub: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${
+                    className={`h-full rounded-full transition ${
                       progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'
                     }`}
                     style={{ width: `${progress}%` }}
@@ -6498,7 +6498,7 @@ export const InterviewHub: React.FC = () => {
                     toggleAllVisibleInsights();
                   }}
                   className={[
-                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
                     allVisibleSelected || someVisibleSelected
@@ -6905,7 +6905,7 @@ export const InterviewHub: React.FC = () => {
                         toggleInsightSelection(insight.id);
                       }}
                       className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                         'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
                         'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
                         'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
@@ -7573,7 +7573,7 @@ export const InterviewHub: React.FC = () => {
                     toggleAllVisibleTemplates();
                   }}
                   className={[
-                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
                     allVisibleSelected || someVisibleSelected
@@ -7978,7 +7978,7 @@ export const InterviewHub: React.FC = () => {
                         toggleTemplateSelection(template.id);
                       }}
                       className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                         'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
                         isTemplateSelected
@@ -8240,7 +8240,7 @@ export const InterviewHub: React.FC = () => {
                   opts?.onOpenFull?.(template.id);
                 }
               }}
-              className={`group relative flex flex-col text-left rounded-2xl border transition-all hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
+              className={`group relative flex flex-col text-left rounded-2xl border transition hover:shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 ${
                 selectedTemplateId === template.id
                   ? 'border-primary-500/40 bg-primary-500/5 dark:bg-primary-500/10 shadow-md'
                   : 'border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600'
@@ -9587,7 +9587,7 @@ Return ONLY the answer text (no markdown fences).`;
                     toggleAllVisibleAssignments();
                   }}
                   className={[
-                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
                     allVisibleSelected || someVisibleSelected
@@ -9983,7 +9983,7 @@ Return ONLY the answer text (no markdown fences).`;
                         toggleAssignmentSelection(assignment.id);
                       }}
                       className={[
-                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                         'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
                         'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
                         'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
@@ -10256,7 +10256,7 @@ Return ONLY the answer text (no markdown fences).`;
               }
             }}
             className={[
-              'group relative bg-white dark:bg-navy-900 rounded-xl border overflow-hidden cursor-pointer transition-all duration-200',
+              'group relative bg-white dark:bg-navy-900 rounded-xl border overflow-hidden cursor-pointer transition duration-200',
               'hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30',
               previewAssignmentId === assignment.id
                 ? 'border-primary-500/40'
@@ -10293,7 +10293,7 @@ Return ONLY the answer text (no markdown fences).`;
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${
+                    className={`h-full rounded-full transition ${
                       progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'
                     }`}
                     style={{ width: `${progress}%` }}
@@ -11189,7 +11189,7 @@ Return ONLY the answer text (no markdown fences).`;
                           <div
                             key={initiative.id}
                             className={[
-                              'group relative flex flex-col gap-2.5 rounded-xl border p-4 cursor-pointer transition-all duration-150',
+                              'group relative flex flex-col gap-2.5 rounded-xl border p-4 cursor-pointer transition duration-150',
                               isSelected
                                 ? 'border-primary-400/60 bg-primary-500/5 dark:bg-primary-500/10 shadow-sm'
                                 : 'border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 hover:shadow-md hover:-translate-y-px',
@@ -11395,7 +11395,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 toggleAllVisibleInitiatives();
                               }}
                               className={[
-                                'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                                'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                                 'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
                                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
                                 allVisibleSelected || someVisibleSelected
@@ -11733,7 +11733,7 @@ Return ONLY the answer text (no markdown fences).`;
                                     toggleInitiativeSelection(initiative.id);
                                   }}
                                   className={[
-                                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition duration-150',
                                     'border-slate-300 bg-white/80 text-white hover:border-primary-400 group-hover:opacity-100 group-hover:bg-white/90',
                                     'dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]',
                                     'focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
@@ -13298,7 +13298,7 @@ Return ONLY the answer text (no markdown fences).`;
                 placeholder={
                   isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs to be improved...'
                 }
-                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
+                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition resize-none"
               />
               <div className="flex gap-3 mt-4">
                 <button

@@ -475,7 +475,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
           <button
             onClick={savePreferences}
             disabled={saving || saved || loadingModels}
-            className={`px-6 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all ${
+            className={`px-6 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition ${
               saved
                 ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                 : 'bg-slate-100 dark:bg-white/90 text-slate-700 dark:text-slate-900 hover:bg-slate-200 dark:hover:bg-white border border-slate-200 dark:border-white/20 shadow-sm'
@@ -601,7 +601,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     });
                     toast.success(`Default tier set to ${tier.label}`);
                   }}
-                  className={`p-6 rounded-xl border text-left transition-all relative group overflow-hidden ${
+                  className={`p-6 rounded-xl border text-left transition relative group overflow-hidden ${
                     (currentUser.aiConfig as any)?.selectedTier === tier.id
                       ? `bg-${tier.color}-500/10 border-${tier.color}-500`
                       : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-slate-100 dark:hover:bg-navy-800/40'
@@ -804,7 +804,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         onChange={(e) =>
                           setNewProvider({ ...newProvider, provider: e.target.value as any })
                         }
-                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white appearance-none focus:border-blue-500/50 outline-none transition-all"
+                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white appearance-none focus:border-blue-500/50 outline-none transition"
                       >
                         <option value="openai">OpenAI</option>
                         <option value="anthropic">Anthropic</option>
@@ -825,7 +825,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       placeholder="e.g. My Personal GPT-4 Key"
                       value={newProvider.name}
                       onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
-                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500/50 outline-none transition-all"
+                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500/50 outline-none transition"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -842,7 +842,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         placeholder="sk-..."
                         value={newProvider.apiKey}
                         onChange={(e) => setNewProvider({ ...newProvider, apiKey: e.target.value })}
-                        className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-blue-500/50 outline-none font-mono transition-all"
+                        className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-blue-500/50 outline-none font-mono transition"
                       />
                     </div>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1">
@@ -860,7 +860,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   </button>
                   <button
                     onClick={handleAddProvider}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-blue-900/20 transition-all flex items-center gap-2"
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-blue-900/20 transition flex items-center gap-2"
                   >
                     <Save size={16} /> Save Key
                   </button>
@@ -957,7 +957,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     value={localOllamaModelId}
                     onChange={(e) => setLocalOllamaModelId(e.target.value)}
                     placeholder="e.g. gemma3:27b"
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none transition-all font-mono"
+                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none transition font-mono"
                   />
                   <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
                     Used when Chat is routed to Ollama.
@@ -997,7 +997,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       placeholder="e.g. My MacBook Ollama"
                       value={newProvider.name}
                       onChange={(e) => setNewProvider({ ...newProvider, name: e.target.value })}
-                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none transition-all"
+                      className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none transition"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -1015,7 +1015,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         onChange={(e) =>
                           setNewProvider({ ...newProvider, endpoint: e.target.value })
                         }
-                        className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none font-mono transition-all"
+                        className="w-full bg-black/50 border border-white/10 rounded-lg pl-12 pr-4 py-3 text-white placeholder-slate-600 focus:border-emerald-500/50 outline-none font-mono transition"
                       />
                     </div>
                   </div>
@@ -1029,7 +1029,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   </button>
                   <button
                     onClick={handleAddProvider}
-                    className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex items-center gap-2"
+                    className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-emerald-900/20 transition flex items-center gap-2"
                   >
                     <Zap size={16} /> Connect
                   </button>
@@ -1191,7 +1191,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   onChange={(e) =>
                     setPreferences({ ...preferences, maxTokens: parseInt(e.target.value) })
                   }
-                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary-500/50 outline-none transition-all font-mono"
+                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-primary-500/50 outline-none transition font-mono"
                 />
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
                   Maximum length of generated response.
@@ -1233,7 +1233,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                   onChange={(e) =>
                     setPreferences({ ...preferences, contextWindowStrategy: e.target.value as any })
                   }
-                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-emerald-500/50 outline-none transition-all"
+                  className="w-full bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white focus:border-emerald-500/50 outline-none transition"
                 >
                   <option value="auto">Auto (Recommended)</option>
                   <option value="limit_8k">Limit to 8k (Cost Saving)</option>
@@ -1291,7 +1291,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                         }) as any
                     )
                   }
-                  className={`p-5 rounded-xl border transition-all text-center ${
+                  className={`p-5 rounded-xl border transition text-center ${
                     preferences.contextualBehavior?.chatMode === mode.id
                       ? `bg-${mode.color}-500/10 border-${mode.color}-500/50`
                       : 'bg-white/5 border-white/10 hover:border-white/30'
@@ -1480,7 +1480,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       }) as any
                   )
                 }
-                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                className={`p-3 rounded-lg border text-center text-xs transition ${
                   preferences.formatting?.preferBulletPoints
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                     : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
@@ -1501,7 +1501,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       }) as any
                   )
                 }
-                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                className={`p-3 rounded-lg border text-center text-xs transition ${
                   preferences.formatting?.preferTables
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                     : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
@@ -1522,7 +1522,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       }) as any
                   )
                 }
-                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                className={`p-3 rounded-lg border text-center text-xs transition ${
                   preferences.formatting?.includeActionItems
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                     : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
@@ -1543,7 +1543,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                       }) as any
                   )
                 }
-                className={`p-3 rounded-lg border text-center text-xs transition-all ${
+                className={`p-3 rounded-lg border text-center text-xs transition ${
                   preferences.formatting?.includeSources
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                     : 'bg-white/5 border-white/10 text-slate-600 dark:text-slate-500 hover:border-white/30'
@@ -1575,7 +1575,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                 <button
                   key={role.id}
                   onClick={() => setPreferences((p: any) => ({ ...p, userRole: role.id }))}
-                  className={`text-left p-4 rounded-lg border transition-all ${
+                  className={`text-left p-4 rounded-lg border transition ${
                     preferences.userRole === role.id
                       ? 'bg-blue-500/10 border-blue-500/50'
                       : 'bg-white/5 border-white/5 hover:border-white/20'
@@ -1614,7 +1614,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
             {/* Proactivity Explanation */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <div
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-4 rounded-xl border transition ${
                   proactivityMode === 'REACTIVE'
                     ? 'bg-slate-600/20 border-slate-500/50'
                     : 'bg-white/5 border-white/5'
@@ -1642,7 +1642,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               </div>
 
               <div
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-4 rounded-xl border transition ${
                   proactivityMode === 'BALANCED'
                     ? 'bg-primary-600/20 border-primary-500/50'
                     : 'bg-white/5 border-white/5'
@@ -1670,7 +1670,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               </div>
 
               <div
-                className={`p-4 rounded-xl border transition-all ${
+                className={`p-4 rounded-xl border transition ${
                   proactivityMode === 'PROACTIVE'
                     ? 'bg-emerald-600/20 border-emerald-500/50'
                     : 'bg-white/5 border-white/5'
@@ -1815,7 +1815,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
                     onClick={() =>
                       setPreferences((p: any) => ({ ...p, dataRetentionPolicy: policy.id as any }))
                     }
-                    className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all gap-3 ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-lg border transition gap-3 ${
                       preferences.dataRetentionPolicy === policy.id
                         ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
                         : 'bg-black/20 border-white/5 text-slate-600 dark:text-slate-500 hover:border-white/20'
@@ -1852,7 +1852,7 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
 const NavTab = ({ id, label, icon, active, onClick }: any) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all font-medium text-xs whitespace-nowrap ${
+    className={`flex items-center gap-2 px-4 py-2 rounded-full border transition font-medium text-xs whitespace-nowrap ${
       active
         ? 'bg-primary-600 dark:bg-white text-white dark:text-slate-900 border-primary-600 dark:border-white shadow-lg'
         : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/20'

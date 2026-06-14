@@ -139,7 +139,7 @@ const StyledCheck: React.FC<{
 }> = ({ checked, disabled, className = '' }) => (
   <span
     aria-hidden="true"
-    className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border transition-all ${
+    className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border transition ${
       checked
         ? 'border-primary-500 bg-primary-600 text-white shadow-sm shadow-primary-500/30'
         : 'border-slate-300 bg-white text-transparent dark:border-white/[0.18] dark:bg-navy-900'
@@ -1765,7 +1765,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     return (
       <label
         key={type.id}
-        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-all ${
+        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
           isSelected
             ? 'border-primary-500/60 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/15'
             : 'border-slate-200 bg-white hover:border-slate-300 dark:border-navy-700/60 dark:bg-navy-800/40 dark:hover:border-white/[0.16]'
@@ -1819,7 +1819,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 ? 'np. Analiza transformacji cyfrowej Q1 2024'
                 : 'e.g. Digital Transformation Analysis Q1 2024'
             }
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
           {renderSimilarWarning()}
           {title.trim().length >= 4 &&
@@ -1910,7 +1910,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <button
               type="button"
               onClick={selectAllRespondents}
-              className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-all ${
+              className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition ${
                 selectedRespondents.length === 0
                   ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                   : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -1930,7 +1930,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 return (
                   <label
                     key={respondent.id}
-                    className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
+                    className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition ${
                       isSelected
                         ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                         : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -2260,7 +2260,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             return (
               <label
                 key={session.id}
-                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition ${
                   isSelected
                     ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                     : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -2348,7 +2348,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             return (
               <label
                 key={mode.id}
-                className={`flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 transition-all ${
+                className={`flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 transition ${
                   isSelected
                     ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                     : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -2408,7 +2408,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 key={topic.id}
                 type="button"
                 onClick={() => toggleTopicFocus(topic.id)}
-                className={`truncate rounded-lg border px-2.5 py-1.5 text-left text-xs transition-all ${
+                className={`truncate rounded-lg border px-2.5 py-1.5 text-left text-xs transition ${
                   selected
                     ? 'border-primary-500/50 bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-200'
                     : 'border-slate-200 bg-white text-slate-700 hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-200'
@@ -2464,7 +2464,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 key={option.value}
                 type="button"
                 onClick={() => setContextMode(option.value)}
-                className={`rounded-lg border px-2.5 py-2 text-left transition-all ${
+                className={`rounded-lg border px-2.5 py-2 text-left transition ${
                   selected
                     ? 'border-primary-500/50 bg-primary-50 ring-1 ring-primary-500/20 dark:bg-primary-500/15'
                     : 'border-slate-200 bg-white hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70'
@@ -2499,7 +2499,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Skup się na różnicach między działem IT a biznesem. Użyj języka polskiego.'
               : 'e.g. Focus on differences between IT and business departments. Use formal language.'
           }
-          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
 
@@ -2525,7 +2525,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             setIsContextDragActive(false);
           }}
           onDrop={(event) => void handleContextDrop(event)}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-all ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-5 text-center transition ${
             isContextDragActive
               ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-500/20 dark:bg-primary-500/10'
               : 'border-slate-300 bg-white hover:border-primary-500/60 hover:bg-primary-50/40 dark:border-white/[0.15] dark:bg-navy-900/60 dark:hover:border-primary-500/40'
@@ -2586,7 +2586,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               return (
                 <label
                   key={doc.id}
-                  className={`flex items-center gap-2 rounded-md border px-2.5 py-2 transition-all ${
+                  className={`flex items-center gap-2 rounded-md border px-2.5 py-2 transition ${
                     selected
                       ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                       : 'border-slate-200 bg-white dark:border-white/[0.08] dark:bg-navy-900/70'
@@ -2650,7 +2650,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'Wklej po jednym linku lub identyfikatorze artefaktu w linii.'
               : 'Paste one link or artifact identifier per line.'
           }
-          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
         />
       </div>
     </div>
@@ -2687,7 +2687,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
               : 'e.g. Where do ownership handoffs most often break?'
           }
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-100 dark:placeholder-slate-500"
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/50 dark:border-navy-600 dark:bg-navy-900 dark:text-slate-100 dark:placeholder-slate-500"
         />
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           {isPolish

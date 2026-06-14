@@ -138,7 +138,7 @@ export const CompanyProfileModule: React.FC = () => {
         {options.map((opt) => (
           <label
             key={opt}
-            className="relative flex items-center p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all group"
+            className="relative flex items-center p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition group"
           >
             <input
               type="radio"
@@ -153,7 +153,7 @@ export const CompanyProfileModule: React.FC = () => {
             <span className="text-sm text-slate-700 dark:text-slate-200 font-medium group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
               {opt}
             </span>
-            <div className="absolute inset-0 rounded-xl ring-2 ring-transparent peer-checked:ring-primary-500/50 pointer-events-none transition-all" />
+            <div className="absolute inset-0 rounded-xl ring-2 ring-transparent peer-checked:ring-primary-500/50 pointer-events-none transition" />
           </label>
         ))}
       </div>
@@ -222,7 +222,7 @@ export const CompanyProfileModule: React.FC = () => {
               setActiveTab(tab.id as 'snapshot' | 'operating' | 'org' | 'history' | 'constraints')
             }
             className={`
-                            flex items-center gap-2 pb-3 text-sm font-medium transition-all border-b-2 whitespace-nowrap px-1
+                            flex items-center gap-2 pb-3 text-sm font-medium transition border-b-2 whitespace-nowrap px-1
                             ${
                               activeTab === tab.id
                                 ? 'border-primary-600 text-primary-600 dark:text-primary-400'
@@ -269,7 +269,7 @@ export const CompanyProfileModule: React.FC = () => {
                 setCompanyProfile({ industry: 'Manufacturing', subIndustry: 'Automotive Parts' });
                 setShowContextBanner(false);
               }}
-              className="px-4 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 shadow-sm transition-all shadow-primary-200 dark:shadow-none whitespace-nowrap"
+              className="px-4 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg hover:bg-primary-700 shadow-sm transition shadow-primary-200 dark:shadow-none whitespace-nowrap"
             >
               Accept
             </button>
@@ -362,7 +362,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.targetMarkets.includes(m)}
                           onChange={() => setCompanyProfile({ targetMarkets: [m] })} // Doing simple radio for now
                         />
-                        <div className="text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 transition-all shadow-sm hover:shadow">
+                        <div className="text-center py-2.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-sm font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-primary-600 peer-checked:text-white peer-checked:border-primary-600 transition shadow-sm hover:shadow">
                           {m}
                         </div>
                       </label>
@@ -391,7 +391,7 @@ export const CompanyProfileModule: React.FC = () => {
                             setCompanyProfile({ certifications: newCerts });
                           }}
                         />
-                        <div className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-primary-100 peer-checked:text-primary-700 peer-checked:border-primary-200 dark:peer-checked:bg-primary-900/30 dark:peer-checked:text-primary-300 dark:peer-checked:border-primary-500/50 transition-all select-none">
+                        <div className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-primary-100 peer-checked:text-primary-700 peer-checked:border-primary-200 dark:peer-checked:bg-primary-900/30 dark:peer-checked:text-primary-300 dark:peer-checked:border-primary-500/50 transition select-none">
                           {cert}
                         </div>
                       </label>
@@ -441,7 +441,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.operationalFootprint === opt}
                           onChange={() => setCompanyProfile({ operationalFootprint: opt })}
                         />
-                        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-primary-500 transition-all text-center">
+                        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-900 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-primary-500 transition text-center">
                           <div className="font-bold text-navy-900 dark:text-white mb-1">{opt}</div>
                           <div className="text-[10px] text-slate-500 dark:text-slate-400">
                             {opt === 'Single Site' ? 'Centralized ops' : 'Distributed ops'}
@@ -517,8 +517,8 @@ export const CompanyProfileModule: React.FC = () => {
                       checked={companyProfile.productionSystem === model.id}
                       onChange={() => setCompanyProfile({ productionSystem: model.id })}
                     />
-                    <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-navy-950/50 hover:bg-white dark:hover:bg-navy-800 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:bg-white dark:peer-checked:bg-navy-800 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent shadow-sm">
-                      <div className="text-2xl mb-2 grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition-all">
+                    <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-navy-950/50 hover:bg-white dark:hover:bg-navy-800 hover:border-primary-300 transition flex flex-col items-center text-center peer-checked:bg-white dark:peer-checked:bg-navy-800 peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent shadow-sm">
+                      <div className="text-2xl mb-2 grayscale group-hover:grayscale-0 peer-checked:grayscale-0 transition">
                         {model.icon}
                       </div>
                       <div className="font-bold text-sm text-navy-900 dark:text-white mb-1">
@@ -552,7 +552,7 @@ export const CompanyProfileModule: React.FC = () => {
                             checked={companyProfile.shiftPattern === shift}
                             onChange={() => setCompanyProfile({ shiftPattern: shift })}
                           />
-                          <div className="py-2 px-1 text-center text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-300 peer-checked:bg-primary-100 dark:peer-checked:bg-primary-900/40 peer-checked:text-primary-700 dark:peer-checked:text-primary-300 peer-checked:border-primary-300 transition-all hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                          <div className="py-2 px-1 text-center text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-navy-950 text-slate-600 dark:text-slate-300 peer-checked:bg-primary-100 dark:peer-checked:bg-primary-900/40 peer-checked:text-primary-700 dark:peer-checked:text-primary-300 peer-checked:border-primary-300 transition hover:bg-slate-50 dark:hover:bg-navy-800/20">
                             {shift}
                           </div>
                         </label>
@@ -680,7 +680,7 @@ export const CompanyProfileModule: React.FC = () => {
                           checked={companyProfile.decisionMaking === opt.id}
                           onChange={() => setCompanyProfile({ decisionMaking: opt.id })}
                         />
-                        <div className="p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 transition-all flex flex-col h-full">
+                        <div className="p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 hover:bg-slate-50 dark:hover:bg-navy-800/20 dark:hover:bg-white/5 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/20 peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 transition flex flex-col h-full">
                           <div className="flex items-center gap-2 mb-1.5 text-slate-500 dark:text-slate-400 peer-checked:text-primary-600 transition-colors">
                             {opt.icon}
                           </div>
@@ -955,7 +955,7 @@ export const CompanyProfileModule: React.FC = () => {
                     }}
                   />
 
-                  <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300 dark:hover:border-primary-500/50 transition-all peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 peer-checked:bg-primary-50/30 dark:peer-checked:bg-primary-900/10 shadow-sm">
+                  <div className="h-full p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300 dark:hover:border-primary-500/50 transition peer-checked:border-primary-500 peer-checked:ring-1 peer-checked:ring-primary-500/50 peer-checked:bg-primary-50/30 dark:peer-checked:bg-primary-900/10 shadow-sm">
                     <div className="flex items-start gap-4">
                       <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 peer-checked:bg-primary-100 peer-checked:text-primary-600 dark:peer-checked:bg-primary-500/20 dark:peer-checked:text-primary-300 transition-colors">
                         {constraint.icon}
@@ -965,7 +965,7 @@ export const CompanyProfileModule: React.FC = () => {
                           <h4 className="font-bold text-navy-900 dark:text-white leading-tight">
                             {constraint.label}
                           </h4>
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center peer-checked:border-primary-600 peer-checked:bg-primary-600 transition-all">
+                          <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-500 flex items-center justify-center peer-checked:border-primary-600 peer-checked:bg-primary-600 transition">
                             <Check
                               size={12}
                               className="text-white opacity-0 peer-checked:opacity-100"
@@ -981,7 +981,7 @@ export const CompanyProfileModule: React.FC = () => {
 
                     {/* Expandable Description Area */}
                     <div
-                      className={`grid transition-all duration-300 ease-in-out ${companyProfile.activeConstraints.includes(constraint.id) ? 'grid-rows-[1fr] pt-4 mt-2 border-t border-slate-200 dark:border-navy-700' : 'grid-rows-[0fr]'}`}
+                      className={`grid transition duration-300 ease-in-out ${companyProfile.activeConstraints.includes(constraint.id) ? 'grid-rows-[1fr] pt-4 mt-2 border-t border-slate-200 dark:border-navy-700' : 'grid-rows-[0fr]'}`}
                     >
                       <div className="overflow-hidden">
                         <AITextArea

@@ -331,7 +331,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
             {/* Search Toggle Button */}
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className={`flex items-center justify-center h-9 w-9 rounded-lg border transition-all duration-200 ${
+              className={`flex items-center justify-center h-9 w-9 rounded-lg border transition duration-200 ${
                 showSearch
                   ? 'bg-primary-500/15 border-primary-500 text-primary-400'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
@@ -344,7 +344,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
             {/* Tab Buttons - Unified height */}
             <button
               onClick={() => setFilter('all')}
-              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
+              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition duration-200 ${
                 filter === 'all'
                   ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
@@ -365,7 +365,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
 
             <button
               onClick={() => setFilter('app')}
-              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
+              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition duration-200 ${
                 filter === 'app'
                   ? 'bg-blue-500/15 border-blue-500 text-blue-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
@@ -386,7 +386,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
 
             <button
               onClick={() => setFilter('org')}
-              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition-all duration-200 ${
+              className={`flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg border transition duration-200 ${
                 filter === 'org'
                   ? 'bg-primary-500/15 border-primary-500 text-primary-300'
                   : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-500'
@@ -413,7 +413,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as typeof categoryFilter)}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-primary-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all duration-200 cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-primary-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition duration-200 cursor-pointer"
               >
                 <option value="all">All Categories</option>
                 <option value="content">Content ({categoryCounts.content})</option>
@@ -431,7 +431,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               <select
                 value={renderFilter}
                 onChange={(e) => setRenderFilter(e.target.value as typeof renderFilter)}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-primary-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all duration-200 cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg text-sm font-medium bg-white dark:bg-navy-700 border border-slate-200 dark:border-navy-500 text-slate-700 dark:text-slate-200 hover:border-primary-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition duration-200 cursor-pointer"
               >
                 <option value="all">All Renders</option>
                 <option value="markdown">Markdown</option>
@@ -453,7 +453,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
             {/* Primary Action Button */}
             <button
               onClick={openCreate}
-              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition-all duration-200"
+              className="flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white border border-white/20 hover:brightness-110 shadow-lg shadow-primary-500/25 transition duration-200"
             >
               <Plus size={14} />
               <span>New Block</span>
@@ -475,7 +475,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search blocks..."
                 autoFocus
-                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition"
               />
               {searchQuery && (
                 <button
@@ -605,7 +605,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                               e.stopPropagation();
                               toggleSelect(block.id);
                             }}
-                            className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                            className={`w-5 h-5 rounded border flex items-center justify-center transition ${
                               selectedIds.has(block.id)
                                 ? 'bg-primary-500 border-primary-500 text-white'
                                 : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
@@ -771,7 +771,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition"
                   />
                 </div>
                 <div>
@@ -781,7 +781,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                   <select
                     value={renderKind}
                     onChange={(e) => setRenderKind(e.target.value as BlockRenderKind)}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition"
                   >
                     <option value="markdown">markdown</option>
                     <option value="callout">callout</option>
@@ -800,7 +800,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition"
                 />
               </div>
 
@@ -813,7 +813,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                     value={sourceTypesText}
                     onChange={(e) => setSourceTypesText(e.target.value)}
                     placeholder="ASSESSMENT, TOOL"
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -824,7 +824,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                     <select
                       value={defaultLength}
                       onChange={(e) => setDefaultLength(e.target.value as SectionLength)}
-                      className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all"
+                      className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition"
                     >
                       <option value="short">Short</option>
                       <option value="medium">Medium</option>
@@ -838,7 +838,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                     <select
                       value={defaultLanguage}
                       onChange={(e) => setDefaultLanguage(e.target.value as SectionLanguage)}
-                      className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all"
+                      className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition"
                     >
                       <option value="business">Business</option>
                       <option value="technical">Technical</option>
@@ -857,7 +857,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
                   onChange={(e) => setPromptTemplate(e.target.value)}
                   rows={6}
                   placeholder='E.g. "Write a section about ... using data: {{facts}}"'
-                  className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white font-mono text-xs focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg bg-white dark:bg-navy-800 text-slate-900 dark:text-white font-mono text-xs focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition"
                 />
               </div>
             </div>
@@ -872,7 +872,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = ({ embedded =
               <button
                 onClick={save}
                 disabled={!name.trim()}
-                className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:brightness-110 shadow-lg shadow-primary-500/25 disabled:opacity-50 transition-all"
+                className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:brightness-110 shadow-lg shadow-primary-500/25 disabled:opacity-50 transition"
               >
                 {editing ? 'Save Changes' : 'Create Block'}
               </button>
