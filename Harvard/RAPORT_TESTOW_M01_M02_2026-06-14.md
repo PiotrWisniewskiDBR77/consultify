@@ -223,7 +223,16 @@ Naprawione lokalnie (branch Londyn, NIE deployowane) + zweryfikowane na żywo fr
 **Status napraw (commity lokalne na Londyn, BEZ push/deploy):**
 - `be7d349db3` — N-8 + N-9 + N-10 (zweryfikowane live: 5 tabel w UI, nagłówki PL, Condense→Accept bez podwojenia).
 - `0043de47f1` — N-11 (fallback-GET przed timeoutem pollingu) + N-13 (re-poll draftu po reload gdy projekcja nie-`synced`, z antyklobberem). tsc czysty, 62/62 testy komponentowe; smoke regresji OK (synced draft z 5 tabelami ładuje się kompletnie, bez pętli/błędów konsoli). Weryfikacja czysto-czasowych ścieżek N-11/N-13 ograniczona (nie reprodukowalne klikiem bez sztucznego spowolnienia DB) — pokrycie testami komponentowymi.
-- **N-12 (routing) — ŚWIADOMIE NIE TKNIĘTE:** dotyka współdzielonych `tableIntentDetector`/`documentIntentDetector` (ryzyko regresji w innych modułach) i bywa poprawne (samo „zrób tabelę" → Table Studio). Do decyzji Piotra.
+- ✅ **N-12 (routing)** — FIXED+VERIFIED live. Helper `hasStrongDocumentNoun` (czasownik tworzenia + rzeczownik dokumentowy) + reguła pierwszeństwa na 3 bramkach w `UnifiedChatPanel`. Bug-fraza „Zrób raport: tabela porównująca…" → Document (5 sekcji PL + tabele), NIE Excel proposal. 18/18 testów. Commit `fa88f116f5`.
+
+**Status FALI 1 (kręgosłup) — ✅ KOMPLETNA (N-1/N-4/N-5/N-8/N-9/N-10/N-11/N-12/N-13):**
+- ✅ **N-1 (P0 edit clobber)** — kod (persistDraft najświeższa treść + onComplete czyści autosave + 409-retry niesie fresh) + **DB-verified**: po edycji Condense→Accept draft `bb97eb18` = `saved`/`synced`, zawiera wersję skondensowaną, oryginał usunięty, tabele nienaruszone (brak cofnięcia stale-snapshotem).
+- ✅ **N-4** (raport→Document, nie inicjatywa) — verified live.
+- ✅ **N-5** (drugi raport→nowa zakładka, pierwszy zachowany) — verified live (multi-tab).
+- ✅ **N-8/N-9/N-10** + ✅ **N-11/N-13** (wyżej).
+- ✅ **N-12** — FIXED+VERIFIED live (routing raport+tabela → Document).
+
+> **FALA 1 ZAMKNIĘTA.** Następny krok: pełne testy wg `TESTY_M01_CZAT.md` + `TESTY_M02_CANVAS.md` (z §7A tabele+język).
 
 ## Nie pokryte headless (→ wspólne przejście w Chromie)
 Response style modal (pełny), AI floating Tone/Explain/Actions/Ask-AI realne wyniki, eksporty (download), promote→encja (zapis), share→incognito. Reasoning trace wymaga zarejestrowania modelu reasoning (o-model, config DB) — kod gotowy. Persist-po-reload dla N-8 (czy zaakceptowana wersja trwała) nie re-zweryfikowany przez wolne DB — fix celuje dokładnie w tę ścieżkę.
