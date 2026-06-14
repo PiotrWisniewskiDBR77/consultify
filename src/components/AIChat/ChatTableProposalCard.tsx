@@ -181,7 +181,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
           <button
             onClick={handleAccept}
             disabled={loading}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-50"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
             {isPl ? 'Akceptuj' : 'Accept'}

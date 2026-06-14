@@ -77,9 +77,9 @@ const ACTION_ICONS: Record<string, React.ElementType> = {
 const getColorClasses = (color: string) => {
   const colors: Record<string, { bg: string; text: string; border: string }> = {
     green: {
-      bg: 'bg-green-50 dark:bg-green-900/20',
-      text: 'text-green-600 dark:text-green-400',
-      border: 'border-green-200 dark:border-green-800',
+      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      text: 'text-emerald-600 dark:text-emerald-400',
+      border: 'border-emerald-200 dark:border-emerald-800',
     },
     blue: {
       bg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -205,7 +205,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
             <button
               onClick={() => onApprove(action.id)}
               disabled={disabled}
-              className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400"
+              className="p-1 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
               title={t('aiActions.approve', 'Zatwierdź')}
             >
               <Check size={12} />
@@ -338,7 +338,7 @@ export const AIActionCard: React.FC<AIActionCardProps> = ({
               disabled={disabled}
               className={`
                 flex-1 flex items-center justify-center gap-1.5 px-3 py-2
-                bg-green-500 hover:bg-green-600 text-white
+                bg-emerald-600 hover:bg-emerald-700 text-white
                 rounded-lg text-xs font-medium transition-colors
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
