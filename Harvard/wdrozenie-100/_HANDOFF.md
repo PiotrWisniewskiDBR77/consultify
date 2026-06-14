@@ -1,29 +1,30 @@
-# HANDOFF — start tu (nowy czat czyta TYLKO ten plik)
+# ZLECENIE — czytaj TYLKO ten plik, potem od razu buduj
 
-**Problem 8 miesięcy:** optymalizowaliśmy artefakty (audyty/oceny/teczki/dokumentację) zamiast dowozić działające przepływy. Koniec z tym.
+## STOP — czego NIE robić (to zabija turę)
+- **NIE rób archeologii gita** (`git log/blame/diff/show` „żeby zrozumieć historię"). Wszystkie dzisiejsze commity są NASZE (sesja planistyczna). **Nie ma drugiego programisty. Nikt nie pracuje równolegle.** Repo jest spójne — bierz working tree jak jest.
+- **NIE pisz nowych dokumentów, audytów, teczek, raportów.** Wiedzy jest nadmiar. Jak łapiesz się na pisaniu `.md` zamiast kodu — przestań.
+- **NIE czytaj 27 teczek.** Jeśli czegoś potrzebujesz o module — zajrzyj do JEDNEJ teczki tego modułu, nic więcej.
+- **NIE planuj fazami, nie rób list, nie pytaj „od czego zacząć".** Zadanie jest niżej. Rób je.
 
-## Metoda (umowa, nienegocjowalna)
-1. Jednostka pracy = **1 moduł, 1 realny przepływ, wdrożony na staging i sprawdzony NA ŻYWO**. Done = klik na demo działa (nie „udokumentowany").
-2. **ZAKAZ nowych audytów i dokumentów.** Wiedzy jest nadmiar. Pisanie dokumentacji zamiast kodu = błąd, przerwać.
-3. Mały, częsty dowód: buduj → testuj na żywo → **screenshot że działa** → odbiór.
-4. Jeden moduł na raz, do końca (głębia > szerokość).
-5. „Działające-surowe" > „idealne-niewdrożone". Drobne decyzje: wg `_DECYZJE.md`, logować, nie blokować.
+## Twoje zadanie (jeden przepływ, do końca)
+> Domyślne zadanie poniżej. **Jeśli Piotr w pierwszej wiadomości poda inny moduł/przepływ — rób TAMTEN.** Inaczej rób to. Nigdy nie czekaj bezczynnie.
 
-## Środowisko testowe (GOTOWE — autonomiczny loop)
-- **Lokalnie (świeży kod):** `npm run dev` (= dev:staging; `DOTENV_IGNORE_LOCAL=1`, pomija prod). Frontend `localhost:3000` → backend `:3001` → **trolley** (żywa NIE-PROD baza; caboose martwy, centerbeam=PROD-NIE-DOTYKAĆ).
-- **Auth lokalnie:** mint JWT dev-secretem (`JWT_SECRET` z `.env`), payload `{id,email,role,organizationId,jti}`, wstrzyknąć `localStorage.token` na localhost:3000. User: `piotr.wisniewski@dbr77.com` / OWNER / org `a3e05d4a-5397-419d-b486-8e44366c0063`. (middleware sprawdza jti tylko vs `revoked_tokens` — świeży token przechodzi).
-- **Sterowanie:** Claude_in_Chrome (Browser 1) — navigate/click/type/screenshot + konsola + network. Backend: logi lokalne / `railway logs` staging.
-- **Odbiór:** deploy domknięty moduł na **demo.consultify.ai** (już zalogowany OWNER), Piotr odbiera async.
+**Moduł:** M13 Inicjatywy · **Przepływ:** *„Tworzenie inicjatywy z huba"*.
+**Problem (realny):** w `src/components/Initiatives/InitiativesHub.tsx` trzy przyciski tworzenia („Nowa inicjatywa", „AI Wizard", „Charter") są **na sztywno disabled** — komponenty/modale istnieją i działają (deep-link `/initiatives?new=1` otwiera działający modal jako wzorzec). Trzeba wpiąć te 3 CTA w istniejące handlery/modale (czysty front, bez backendu).
+**Done (testowalne):** klikam „Nowa inicjatywa" w hubie → otwiera się modal → wypełniam → zapis → **inicjatywa pojawia się w portfolio** (po reloadzie trwała). To samo dla AI Wizard i Charter (albo, jeśli któryś bez sensu w v1 — świadomie ukryj, zero „martwego" przycisku).
+**Zakres:** tylko ten przepływ. Nie ruszaj statusów/bramek (#14), AI-fill (#16), i18n — to osobne przepływy na później.
 
-## Stan kodu (Londyn — realnie zrobione)
-- Canvas Tryb B mount `8a0e64b866` · detekcja PL `53e3f86e09` · „Otwórz" inicjatywy `18ed3e44f7` · **M18 data-loss: 6 warstw Map→Postgres `953955bc2b`+`8d2b5d8cf4`** (mig.780/781; cold-start proof na staging pozostaje).
-- M20 IDOR już naprawione `e9c6cb9c0a`. M22/M19/M21/M23 = STALE/naprawione (R3, dowód w teczkach).
+## Jak przetestować NA ŻYWO (obowiązkowe przed „done")
+Środowisko jest gotowe — testujesz świeży kod lokalnie na bazie nie-prod (trolley), NIE na prod:
+1. **Start:** `npm run dev` (to `dev:staging`: frontend `localhost:3000` + backend `:3001` → trolley; centerbeam/prod jest pomijany). Sprawdź `curl localhost:3001/api/health` → `database: connected`.
+2. **Login (bez hasła):** mint JWT dev-secretem (`JWT_SECRET` z `.env`), payload `{id,email,role,organizationId,jti}` (jsonwebtoken jest w `server/node_modules`). User: `piotr.wisniewski@dbr77.com`, id `d2b6a316-08c5-47cf-9bf7-4ba50311d5a2`, role `OWNER`, org `a3e05d4a-5397-419d-b486-8e44366c0063`. Wstrzyknij do `localStorage.token` na `localhost:3000` (Claude_in_Chrome `javascript_tool`). Reload → jesteś zalogowany.
+3. **Klikaj scenariusz** (Claude_in_Chrome: navigate/click/type/screenshot) + czytaj konsolę/network. **Zrób screenshot działającego przepływu** = dowód.
+4. Jak coś zepsute → czytaj kod → popraw → powtórz, aż działa.
 
-## Dokumentacja (komplet — NIE rozszerzać, tylko czytać przy module)
-`Harvard/wdrozenie-100/`: `MASTER.md` (fazy + DoD 7/7 + procedura §0a) · `_WZORZEC_TECZKI.md` · 27 teczek `MXX-*.md` (stan docelowy + luki + DoD) · `_DECYZJE.md` (12 polityk rozstrzygniętych).
+## Po „done"
+- Commit na `Londyn` (jesteśmy na tym branchu). Zwięzły message.
+- Krótki wynik dla Piotra: 1–2 zdania + screenshot. Bez raportów-elaboratów.
+- Pytaj o następny przepływ. Jeden na raz.
 
-## DoD modułu = 7/7 (MASTER §0)
-front↔back spięte · 0 P0/P1 · i18n `t()` · tokeny · §27 · E2E w PR-gate · **zgodność komponentów ze standardem UI/UX** (`docs/ui-standards/` GOLDEN_STANDARD/CANON_V3 + VISUAL_STANDARD; `EntityStatusChip`/`FilterableTable`). Krok „analiza zgodności komponentów" PRZED testem funkcjonalnym.
-
-## Następny moduł
-**CZEKA NA DECYZJĘ PIOTRA:** który moduł pierwszy + JEDNO zdanie „done" (jaki przepływ ma działać). Kandydat z dowodem buga: kręgosłup czat→canvas (prośba „pokaż w Canvasie" → wystawia „Initiatives·create" zamiast dokumentu).
+## Zasady (umowa)
+Jeden moduł/przepływ → zbuduj → test na żywo → screenshot → odbiór. „Działające-surowe" > „idealne-niewdrożone". Drobne decyzje: weź rozsądny default i jedź, zaloguj wybór, nie blokuj.
