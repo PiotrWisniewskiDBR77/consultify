@@ -23,8 +23,8 @@ Przeglądy UI/UX, refaktory, gate’y.
 
 ## Related Sources
 
-- `DRD/consultify/docs/ui-standards/UI_UX_REFERENCE_SCREENS.md`
-- `DRD/consultify/docs/ui-standards/evidence/README.md`
+- `DRD/consultify/docs/ui-standards/_archive/UI_UX_REFERENCE_SCREENS.md`
+- `DRD/consultify/docs/ui-standards/_archive/evidence/README.md`
 - `DRD/testy_antygravity/REPORT_INDEX.md`
 - `DRD/testy_antygravity/CONTROL_BOARD.md`
 

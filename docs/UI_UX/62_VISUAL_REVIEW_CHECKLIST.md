@@ -31,6 +31,6 @@ Nowe ekrany, refaktory UI, naprawy P0/P1.
 ## Related Sources
 
 - `DRD/consultify/docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`
-- `DRD/consultify/docs/ui-standards/UI_UX_REFERENCE_SCREENS.md`
-- `DRD/consultify/docs/ui-standards/evidence/README.md`
+- `DRD/consultify/docs/ui-standards/_archive/UI_UX_REFERENCE_SCREENS.md`
+- `DRD/consultify/docs/ui-standards/_archive/evidence/README.md`
 

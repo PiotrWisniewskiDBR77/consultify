@@ -664,8 +664,8 @@ Zanim zaczniemy masową przebudowę ekranów, wymagane są:
 
 1. Ten dokument zatwierdzony przez Ownera/CTO. Status: `approved migration baseline`.
 2. Reguła Cursor aktywna w `.cursor/rules/consultify-ui-ux-canon.mdc` oraz wskazana w `.cursorrules`.
-3. Lista ekranów do audytu w `docs/ui-standards/UI_UX_MIGRATION_AUDIT.md`.
-4. Plan migracji w `docs/ui-standards/UI_UX_MIGRATION_PLAN.md`.
+3. Lista ekranów do audytu w `docs/ui-standards/_archive/UI_UX_MIGRATION_AUDIT.md`.
+4. Plan migracji w `docs/ui-standards/_archive/UI_UX_MIGRATION_PLAN.md`.
 5. Wybór ekranów referencyjnych w dokumencie audytu.
 6. Decyzja, które ekrany są `Do not touch`.
 

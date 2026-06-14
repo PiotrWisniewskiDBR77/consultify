@@ -64,7 +64,7 @@ Prace dokumentacyjne i migracje UI/UX.
   - **Source**: `docs/ui-standards/shared-nmode-sections-standard.md`
   - **Mapped to**: `23_N_MODE_AND_CANVAS_LAYOUTS.md`, `30_COMPONENT_SYSTEM.md`
 - **Reference screens**
-  - **Source**: `docs/ui-standards/UI_UX_REFERENCE_SCREENS.md`, `docs/ui-standards/evidence/*`
+  - **Source**: `docs/ui-standards/_archive/UI_UX_REFERENCE_SCREENS.md`, `docs/ui-standards/_archive/evidence/*`
   - **Mapped to**: `90_REFERENCE_SCREENS.md`, `62_VISUAL_REVIEW_CHECKLIST.md`
 
 ### Executive modules layout (Wordy/Tabele/Prezentacje)

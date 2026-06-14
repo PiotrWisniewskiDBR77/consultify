@@ -89,15 +89,15 @@ The following open areas are already acknowledged in canonical docs and must be 
 
 Create and approve these artifacts before step-by-step control begins:
 
-1. `docs/ui-standards/automation/UI_UX_STEP_REGISTRY_2026-05-15.md`
+1. `docs/ui-standards/_archive/automation/UI_UX_STEP_REGISTRY_2026-05-15.md`
    - exact list of all module steps (9 blocks, 44 steps).
-2. `docs/ui-standards/automation/UI_UX_STEP_PASS_FORMULA_2026-05-15.md`
+2. `docs/ui-standards/_archive/automation/UI_UX_STEP_PASS_FORMULA_2026-05-15.md`
    - score, severity, blocker logic, acceptance thresholds.
-3. `docs/ui-standards/automation/UI_UX_STATE_LIBRARY_2026-05-15.md`
+3. `docs/ui-standards/_archive/automation/UI_UX_STATE_LIBRARY_2026-05-15.md`
    - loading/success/error/empty/degraded patterns and examples.
-4. `docs/ui-standards/automation/UI_UX_A11Y_PERF_I18N_BASELINE_2026-05-15.md`
+4. `docs/ui-standards/_archive/automation/UI_UX_A11Y_PERF_I18N_BASELINE_2026-05-15.md`
    - accessibility, performance, responsive, and language constraints.
-5. `docs/ui-standards/automation/UI_UX_WAIVER_POLICY_2026-05-15.md`
+5. `docs/ui-standards/_archive/automation/UI_UX_WAIVER_POLICY_2026-05-15.md`
    - controlled exceptions with expiry and owner approval.
 6. `docs/testing/reports/templates/UI_UX_STEP_EVIDENCE_TEMPLATE.md`
    - mandatory evidence checklist for every audited step.
@@ -107,7 +107,7 @@ If any artifact above is missing, gate state remains `INCONCLUSIVE` for full mod
 Current closure status:
 
 - `G-01` (`authoritative step registry`) -> `CLOSED`
-  - evidence: `docs/ui-standards/automation/UI_UX_STEP_REGISTRY_2026-05-15.md`
+  - evidence: `docs/ui-standards/_archive/automation/UI_UX_STEP_REGISTRY_2026-05-15.md`
 
 ## Step Compliance Checklist (Use In Every Step)
 
@@ -269,7 +269,7 @@ Objective: lock target rules and current baseline before large sweep.
 Actions:
 
 - Define machine-readable rule registry:
-  - `docs/ui-standards/automation/UI_UX_CONTRACT_RULES.json`
+  - `docs/ui-standards/_archive/automation/UI_UX_CONTRACT_RULES.json`
 - Freeze module card inventory and ownership:
   - align with `UI_UX_AUDIT_EXECUTION_BOARD.md`
 - Create first baseline report from current repo state.

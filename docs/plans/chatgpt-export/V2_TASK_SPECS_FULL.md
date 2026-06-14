@@ -9195,7 +9195,7 @@ W V2 sidebar jest:
 
 **Kanon / SSOT (już w repo):**
 - “Tech Sexy” visual language: `docs/ui-standards/00-foundation/visual-language.md`
-- Sidebar faza w planie migracji: `docs/ui-standards/TECH_SEXY_MIGRATION_PLAN.md` → **Faza 4 (Sidebar)**
+- Sidebar faza w planie migracji: `docs/ui-standards/_archive/TECH_SEXY_MIGRATION_PLAN.md` → **Faza 4 (Sidebar)**
 - Ikony (T101): outline, mono-weight, kolor = kolor tekstu (bez kolorowych ikon w nawigacji poza active)
 
 **Scope (V2)**
@@ -9296,7 +9296,7 @@ W V2 typografia ma być **enterprise‑grade readability** w light i dark:
 
 **Kanon / SSOT (już istnieje):**
 - `docs/ui-standards/00-foundation/visual-language.md` → “Typography as architecture” + zasada **no `font-bold` na nagłówkach**
-- `docs/ui-standards/TECH_SEXY_MIGRATION_PLAN.md` → Faza 6 (Typography audit: `font-bold` → `font-semibold`, `text-white` → `text-slate-100`)
+- `docs/ui-standards/_archive/TECH_SEXY_MIGRATION_PLAN.md` → Faza 6 (Typography audit: `font-bold` → `font-semibold`, `text-white` → `text-slate-100`)
 
 **Scope (V2)**
 - IN:

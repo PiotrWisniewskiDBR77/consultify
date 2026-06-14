@@ -19,7 +19,7 @@ Interpretation:
 ## Evidence Basis
 
 - Source module: `src/components/Interview/InterviewHub.tsx`
-- Step registry: `docs/ui-standards/automation/UI_UX_STEP_REGISTRY_2026-05-15.md`
+- Step registry: `docs/ui-standards/_archive/automation/UI_UX_STEP_REGISTRY_2026-05-15.md`
 - Parent gate: `docs/testing/reports/FINAL_GLOBAL_UI_GATE_2026-05-15.md`
 
 ## Automatic/Static Conformance Findings
