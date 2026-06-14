@@ -34,6 +34,16 @@ ARG GEMINI_API_KEY
 ENV NEXT_PUBLIC_GEMINI_API_KEY=${NEXT_PUBLIC_GEMINI_API_KEY}
 ENV GEMINI_API_KEY=${GEMINI_API_KEY}
 
+# VITE_* flags are baked at build time by `vite build`. Railway passes service
+# variables as build args, but Docker only exposes them to RUN if declared as ARG
+# here. Without this, VITE_ENABLE_DELIVERABLES_LIGHT stays unset on the deployed
+# bundle → the chat→canvas deliverables panel silently falls back to the legacy
+# redirect (root cause of "panel never worked on staging/demo", 2026-06-14).
+# Set VITE_ENABLE_DELIVERABLES_LIGHT=true as a Railway service variable AND keep
+# the backend ENABLE_DELIVERABLES_LIGHT=true (runtime) in sync.
+ARG VITE_ENABLE_DELIVERABLES_LIGHT
+ENV VITE_ENABLE_DELIVERABLES_LIGHT=${VITE_ENABLE_DELIVERABLES_LIGHT}
+
 # Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
