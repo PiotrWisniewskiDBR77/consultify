@@ -276,8 +276,35 @@ export async function pollDeckGenerationUntilDone(params: {
     }
     if (status.state === 'draft' || status.state === 'error') return status;
     if (Date.now() - startedAt > timeoutMs) {
+      // N-11 (P2): backend bywa gotowy (state:'draft') zanim klient zdąży go
+      // odpytać — zwł. przy wolnym DB. Zamiast od razu osierocić artefakt,
+      // zrób kilka dodatkowych prób (fallback) przed ostatecznym timeoutem.
+      // Jeśli którakolwiek zwróci stan gotowości — to sukces, nie error.
+      const fallbackAttempts = 2;
+      const fallbackDelayMs = 2000;
+      let lastFallback: DeliverableGenerationStatus = status;
+      for (let attempt = 0; attempt < fallbackAttempts; attempt += 1) {
+        if (params.signal?.aborted) {
+          throw new DOMException('Generation poll aborted', 'AbortError');
+        }
+        try {
+          lastFallback = await getDeckGenerationStatus(params.generationId);
+        } catch {
+          // sieć/serwer chwilowo niedostępny — spróbuj jeszcze raz w pętli
+        }
+        if (lastFallback.state === 'draft' || lastFallback.state === 'error') {
+          if (lastFallback.state !== lastState) {
+            lastState = lastFallback.state;
+            params.onUpdate(lastFallback);
+          }
+          return lastFallback;
+        }
+        if (attempt < fallbackAttempts - 1) {
+          await new Promise((resolve) => setTimeout(resolve, fallbackDelayMs));
+        }
+      }
       const timedOut: DeliverableGenerationStatus = {
-        ...status,
+        ...lastFallback,
         state: 'error',
         error: 'Generation timed out',
       };

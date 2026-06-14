@@ -1090,6 +1090,88 @@ function WorkCanvasMarkdownDocumentPanel({
     return () => window.removeEventListener('deliverables:draft-ready', onDraftReady);
   }, [documentState.draftId, documentState.contentMd]);
 
+  // N-13 (P1): reload w trakcie streamingu hydratuje draft, którego projekcja
+  // markdown nie jest jeszcze 'synced' (generacja/projekcja trwa) — wtedy panel
+  // zamrażał wersję CZĘŚCIOWĄ mimo że draft w DB doreżyserowuje się do pełnego.
+  // Fix: dla świeżo zhydratowanego draftu w stanie nie-'synced' uruchom krótki
+  // re-poll GET /drafts/:id z backoffem; po osiągnięciu 'synced' zhydratuj pełną
+  // treść. Guard antyklobber: hydratujemy TYLKO gdy live editor nadal pokazuje
+  // tę samą treść co w chwili startu re-pollu (użytkownik nie zaczął pisać) i
+  // gdy nie ma niezapisanych zmian (saveState !== 'unsaved').
+  const reHydrateProjectionRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isHydrating) return;
+    const draftId = String(documentState.draftId || '').trim();
+    if (!draftId) return;
+    if (documentState.markdownProjectionStatus === 'synced') return;
+    // Re-poll tylko RAZ na świeżo zamontowany draft w stanie nie-'synced'.
+    if (reHydrateProjectionRef.current === draftId) return;
+    reHydrateProjectionRef.current = draftId;
+
+    let cancelled = false;
+    let timer: number | null = null;
+    // Snapshot treści w chwili startu — jeśli zmieni się (user pisze), przerwij.
+    const baselineContent = latestContentRef.current;
+    const backoffMs = [1000, 2000, 3000, 5000, 5000, 5000];
+
+    const userHasEdited = () =>
+      latestContentRef.current !== baselineContent ||
+      (markdownEditorRef.current != null &&
+        markdownEditorRef.current.value !== baselineContent);
+
+    const attempt = async (index: number) => {
+      if (cancelled || index >= backoffMs.length) return;
+      // Nie klobruj — jeśli user zaczął edytować, porzuć re-poll.
+      if (userHasEdited()) return;
+      try {
+        const token = window.localStorage.getItem('token') || '';
+        const response = await fetch(
+          `/api/work-canvas/drafts/${encodeURIComponent(draftId)}`,
+          { headers: token ? { Authorization: `Bearer ${token}` } : undefined }
+        );
+        const json = await response.json().catch(() => ({}));
+        const draft = json?.data?.draft || json?.data;
+        if (cancelled) return;
+        if (response.ok && draft) {
+          const projection = String(draft.markdownProjectionStatus || '');
+          if (projection === 'synced') {
+            // Ostatni guard przed nadpisaniem: user nie pisał i nie ma pending.
+            if (userHasEdited()) return;
+            setDocumentState((current) => {
+              if (current.saveState === 'unsaved') return current;
+              return mapDraftResponseToCanvasDocumentState(draft, current);
+            });
+            lastSavedContentRef.current =
+              typeof draft.contentMd === 'string'
+                ? draft.contentMd
+                : typeof draft.content === 'string'
+                  ? draft.content
+                  : lastSavedContentRef.current;
+            lastSavedTitleRef.current =
+              typeof draft.title === 'string' ? draft.title : lastSavedTitleRef.current;
+            return;
+          }
+        }
+      } catch {
+        /* przejściowy błąd sieci — kolejna próba w backoffie */
+      }
+      if (cancelled) return;
+      timer = window.setTimeout(() => {
+        void attempt(index + 1);
+      }, backoffMs[index]);
+    };
+
+    timer = window.setTimeout(() => {
+      void attempt(0);
+    }, backoffMs[0]);
+
+    return () => {
+      cancelled = true;
+      if (timer != null) window.clearTimeout(timer);
+    };
+  }, [isHydrating, documentState.draftId, documentState.markdownProjectionStatus]);
+
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const draftId = String(documentState.draftId || '').trim();
