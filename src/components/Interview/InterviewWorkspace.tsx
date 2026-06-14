@@ -2029,7 +2029,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           </Callout>
         )}
         {showSendBackForm && isReviewerMode && (
-          <div className="rounded-xl border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-4 space-y-3 mt-2">
+          <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/10 p-4 space-y-3 mt-2">
             <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
               {isPolish ? 'Powód odesłania:' : 'Reason for sending back:'}
             </p>

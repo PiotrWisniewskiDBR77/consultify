@@ -706,7 +706,7 @@ export const RoadmapGantt: React.FC<RoadmapGanttProps> = ({
 
       {/* D4.1: Warning banner */}
       {showWarnings && dependencyWarnings.length > 0 && (
-        <div className="shrink-0 px-4 py-2 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-200 dark:border-amber-800/30">
+        <div className="shrink-0 px-4 py-2 border-l-4 border-l-amber-500 bg-amber-100 dark:bg-amber-900/10 border-b border-amber-300/50 dark:border-amber-800/30">
           <div className="flex items-start gap-2">
             <AlertTriangle size={14} className="text-amber-500 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">

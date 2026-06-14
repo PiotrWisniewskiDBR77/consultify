@@ -10338,7 +10338,7 @@ Return ONLY the answer text (no markdown fences).`;
     if (loadError) {
       return (
         <div className="flex items-center justify-center h-full p-6">
-          <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
+          <div className="w-full max-w-3xl rounded-2xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-400/20 bg-amber-100 dark:bg-amber-500/10 p-6">
             <div className="text-lg font-semibold text-slate-900 dark:text-white">
               {isPolish ? 'Nie udało się załadować wywiadów' : 'Could not load your interviews'}
             </div>
@@ -10350,7 +10350,7 @@ Return ONLY the answer text (no markdown fences).`;
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-crimson-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-crimson-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600/30"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <RefreshCw size={14} />
               {isPolish ? 'Odśwież' : 'Refresh'}
@@ -10377,7 +10377,7 @@ Return ONLY the answer text (no markdown fences).`;
       tabDegradedMessage ? (
         <div
           role="alert"
-          className="mx-4 mt-3 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/25 dark:bg-amber-500/10 dark:text-amber-100"
+          className="mx-4 mt-3 rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 bg-amber-100 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/25 dark:bg-amber-500/10 dark:text-amber-100"
         >
           <span className="font-semibold">{isPolish ? 'Tryb ograniczony' : 'Degraded mode'}:</span>{' '}
           {tabDegradedMessage}
@@ -10862,7 +10862,7 @@ Return ONLY the answer text (no markdown fences).`;
               )}
             </div>
             {!promoted ? (
-              <div className="rounded-lg border border-amber-300/40 bg-amber-50/70 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
+              <div className="rounded-lg border-l-4 border-l-amber-500 border border-amber-300/50 bg-amber-100 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
                 {isPolish
                   ? 'Wersja robocza — pozostaje w Wywiadzie do czasu przekazania dalej.'
                   : 'Draft — stays in Interview until it is moved forward.'}

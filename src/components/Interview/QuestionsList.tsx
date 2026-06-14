@@ -706,7 +706,7 @@ Rules:
                   {(item.description || item.evidencePrompt) && (
                     <div className="space-y-2">
                       {item.description && (
-                        <div className="rounded-lg bg-amber-50/70 dark:bg-amber-500/[0.06] border border-amber-200/50 dark:border-amber-500/10 px-3 py-2">
+                        <div className="rounded-lg border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/10 bg-amber-100 dark:bg-amber-500/[0.06] px-3 py-2">
                           <div className="flex items-start gap-2">
                             <HelpCircle
                               size={13}

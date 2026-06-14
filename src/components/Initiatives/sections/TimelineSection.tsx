@@ -266,7 +266,7 @@ const Callout: React.FC<{ variant: 'info' | 'warning' | 'success'; children: Rea
   const styles = {
     info: 'bg-blue-50/60 dark:bg-blue-500/5 border-blue-200/60 dark:border-blue-500/20 text-blue-700 dark:text-blue-300',
     warning:
-      'bg-amber-50/60 dark:bg-amber-500/5 border-amber-200/60 dark:border-amber-500/20 text-amber-700 dark:text-amber-300',
+      'bg-amber-100 dark:bg-amber-500/5 border-l-4 border-l-amber-500 border-amber-300/50 dark:border-amber-500/20 text-amber-800 dark:text-amber-300',
     success:
       'bg-emerald-50/60 dark:bg-emerald-500/5 border-emerald-200/60 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300',
   };
@@ -1676,8 +1676,8 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
 
                       if (warnings.length === 0) return null;
                       return (
-                        <div className="rounded-2xl border border-amber-200/60 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/5 p-4">
-                          <div className="text-[11px] uppercase tracking-wide font-semibold text-amber-700 dark:text-amber-300 mb-2">
+                        <div className="rounded-2xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/30 bg-amber-100 dark:bg-amber-500/5 p-4">
+                          <div className="text-[11px] uppercase tracking-wide font-semibold text-amber-800 dark:text-amber-300 mb-2">
                             {isPolish ? 'Ostrzeżenia' : 'Warnings'}
                           </div>
                           <ul className="text-xs text-amber-700 dark:text-amber-200 space-y-1 list-disc pl-5">

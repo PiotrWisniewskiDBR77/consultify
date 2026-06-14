@@ -523,16 +523,18 @@ const TOPBAR_PILL_BASE =
 const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
 const CTA_BASE =
-  'inline-flex items-center justify-center h-9 rounded-full border px-4 text-sm font-semibold text-white transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo', string> = {
+  'inline-flex items-center justify-center h-9 rounded-lg border px-4 text-sm font-semibold transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo' | 'neutral', string> = {
+  neutral:
+    'border-navy-700/20 bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
   violet:
-    'border-primary-500/30 bg-primary-600 hover:bg-primary-700 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500',
+    'border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500',
   emerald:
-    'border-emerald-500/30 bg-emerald-600 hover:bg-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/80 dark:hover:bg-emerald-500',
+    'border-emerald-500/30 bg-emerald-600 text-white hover:bg-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/80 dark:hover:bg-emerald-500',
   amber:
-    'border-amber-500/30 bg-amber-600 hover:bg-amber-700 dark:border-amber-400/20 dark:bg-amber-500/85 dark:hover:bg-amber-500',
+    'border-amber-500/30 bg-amber-600 text-white hover:bg-amber-700 dark:border-amber-400/20 dark:bg-amber-500/85 dark:hover:bg-amber-500',
   indigo:
-    'border-indigo-500/30 bg-indigo-600 hover:bg-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-500/80 dark:hover:bg-indigo-500',
+    'border-indigo-500/30 bg-indigo-600 text-white hover:bg-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-500/80 dark:hover:bg-indigo-500',
 };
 
 // Tab styles for dynamic tabs
@@ -2182,28 +2184,28 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return {
           label: isPolish ? 'Dodaj wydarzenie' : 'Add event',
           onClick: () => setCalendarCreateReqId((v) => v + 1),
-          tone: 'violet' as const,
+          tone: 'neutral' as const,
           variant: 'primary' as const,
         };
       case 'tasks':
         return {
           label: isPolish ? 'Nowe zadanie' : 'New Task',
           onClick: handleCreateTask,
-          tone: 'emerald' as const,
+          tone: 'neutral' as const,
           variant: 'primary' as const,
         };
       case 'ideas':
         return {
           label: isPolish ? 'Nowy pomysł' : 'New Idea',
           onClick: handleCreateIdea,
-          tone: 'violet' as const,
+          tone: 'neutral' as const,
           variant: 'primary' as const,
         };
       case 'decisions':
         return {
           label: isPolish ? 'Nowa decyzja' : 'New Decision',
           onClick: handleCreateDecision,
-          tone: 'amber' as const,
+          tone: 'neutral' as const,
           variant: 'primary' as const,
         };
       case 'notebook':
@@ -2212,13 +2214,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           ? {
               label: isPolish ? 'Nowa notatka' : 'New note',
               onClick: () => setNotebookCreateReqId((v) => v + 1),
-              tone: 'indigo' as const,
+              tone: 'neutral' as const,
               variant: 'primary' as const,
             }
           : {
               label: isPolish ? 'Nowy notatnik' : 'New notebook',
               onClick: () => setNotebookCreateNotebookReqId((v) => v + 1),
-              tone: 'indigo' as const,
+              tone: 'neutral' as const,
               variant: 'primary' as const,
             };
       default:

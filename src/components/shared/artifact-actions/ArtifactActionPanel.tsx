@@ -99,7 +99,7 @@ const TARGET_META: Record<
     descriptionPl: 'Zapisz kierunek dalszej pracy w My Work.',
     descriptionEn: 'Capture a direction in My Work.',
     icon: Lightbulb,
-    tone: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20',
+    tone: 'text-amber-800 bg-amber-100 border-amber-300 dark:text-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20',
   },
   note: {
     labelPl: 'Utwórz notatkę',
@@ -708,7 +708,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
+              <div className="inline-flex items-center gap-2 rounded-full bg-c-info/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-info dark:text-c-info">
                 <BookOpen size={12} />
                 {isPolish ? 'Co dalej z tym insightem?' : 'What next with this insight?'}
               </div>
@@ -720,7 +720,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 </p>
               )}
               {!isCompact && readinessWarnings.length > 0 && (
-                <div className="mt-3 rounded-2xl border border-amber-300/40 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
+                <div className="mt-3 rounded-2xl border-l-4 border-l-amber-500 border border-amber-300/50 bg-amber-100 p-3 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100">
                   <div className="font-semibold">
                     {isPolish ? 'Warunki downstream' : 'Downstream conditions'}
                   </div>
@@ -910,7 +910,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                     contextMode: 'insight_with_source_pack',
                   });
                 }}
-                className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-400 disabled:opacity-50"
+                className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
               >
                 {isPolish ? 'Uruchom generator' : 'Run generator'}
               </button>
@@ -1023,7 +1023,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                   setProposalConfirmed(false);
                   createTarget(target, undefined, proposal);
                 }}
-                className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-400 disabled:opacity-50"
+                className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
               >
                 {isPolish ? 'Potwierdź i utwórz' : 'Confirm and create'}
               </button>

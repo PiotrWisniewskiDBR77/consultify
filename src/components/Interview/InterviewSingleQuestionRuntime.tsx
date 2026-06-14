@@ -261,6 +261,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   const chunksRef = useRef<Blob[]>([]);
   const speechRecognitionRef = useRef<any>(null);
   const liveTranscriptRef = useRef('');
+  // Holds the latest INTERIM (not-yet-final) Web Speech result. The visible live
+  // text is interim; SpeechRecognition often keeps the tail interim until it
+  // finalizes, which can land AFTER MediaRecorder.onstop reads the buffer. We
+  // capture interim here so Stop never loses the text the user already saw.
+  const liveInterimRef = useRef('');
   const mainContentRef = useRef<HTMLDivElement | null>(null);
 
   const currentQuestion = useMemo(
@@ -824,6 +829,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       mediaStreamRef.current = stream;
       chunksRef.current = [];
       liveTranscriptRef.current = '';
+      liveInterimRef.current = '';
 
       const SpeechRecognitionAPI =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -841,6 +847,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               interim += e.results[i][0].transcript;
             }
           }
+          // Keep interim mirrored in a ref so Stop can flush it (see liveInterimRef).
+          liveInterimRef.current = interim;
           setLiveInterim(interim);
         };
         recognition.onerror = () => {};
@@ -900,7 +908,12 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           const audioFile = new File([audioBlob], `interview-answer-${currentQuestion.id}.${ext}`, {
             type: mimeType,
           });
-          const browserTranscript = liveTranscriptRef.current.trim();
+          // Merge any not-yet-final interim tail — otherwise the text the user
+          // saw on screen is silently dropped when STT also fails (the "ładnie
+          // się napisało, a nie wkleiło" prod bug).
+          const browserTranscript = `${liveTranscriptRef.current} ${liveInterimRef.current || ''}`
+            .replace(/\s+/g, ' ')
+            .trim();
 
           setIsTranscribing(true);
           try {
@@ -2100,7 +2113,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                       isFreeText && trimmed.length > 0 && trimmed.length < 20 && !aiImproveResult;
                     if (!tooShort) return null;
                     return (
-                      <div className="flex items-start gap-2 rounded-lg border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/60 dark:bg-amber-500/[0.07] px-3 py-2">
+                      <div className="flex items-start gap-2 rounded-lg border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/[0.07] px-3 py-2">
                         <Sparkles
                           size={13}
                           className="mt-0.5 shrink-0 text-amber-500 dark:text-amber-400"
@@ -2422,7 +2435,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   )}
 
                   {voiceNeedsApproval && (
-                    <div className="rounded-xl border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 px-4 py-3 space-y-2">
+                    <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/20 bg-amber-100 dark:bg-amber-500/10 px-4 py-3 space-y-2">
                       <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
                         {isPolish
                           ? 'Sprawdź transkrypcję i zatwierdź przed kontynuacją:'

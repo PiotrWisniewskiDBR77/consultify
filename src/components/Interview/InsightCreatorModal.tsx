@@ -1711,7 +1711,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     if (similarDismissed || similarHits.length === 0) return null;
     const top = similarHits[0];
     return (
-      <div className="rounded-xl border border-amber-300/70 bg-amber-50 px-3 py-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+      <div className="rounded-xl border-l-4 border-l-amber-500 border border-amber-300/50 bg-amber-100 px-3 py-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
         <div className="flex items-start gap-2">
           <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
           <div className="min-w-0 flex-1">
