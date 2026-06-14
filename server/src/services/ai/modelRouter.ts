@@ -1391,8 +1391,17 @@ export class ModelRouter {
     const CACHE_KEY = `router:provider_cfg:${providerName}:${requestedModelId}`;
     let provider: ProviderRow | null | undefined;
     try {
+      // NOTE: appCache.get() returns `null` on a cache MISS (Redis CacheService:
+      // `if (!data) return null`), never `undefined`. The old check
+      // `if (cached !== undefined)` therefore treated every miss as a cached
+      // `null`, leaving `provider = null` so the DB query below (gated on
+      // `provider === undefined`) NEVER ran. Providers whose API key lives only
+      // in the DB (e.g. deepseek/deepseek-reasoner — key not in process.env)
+      // then fell through to the env fallback, found no key, and were skipped as
+      // "unconfigured". Only treat a TRUTHY cached row as a hit; a null/miss must
+      // re-query the DB.
       const cached = await appCache.get<ProviderRow | null>(CACHE_KEY);
-      if (cached !== undefined) provider = cached;
+      if (cached) provider = cached;
     } catch { /* ignore */ }
 
     if (provider === undefined) {
