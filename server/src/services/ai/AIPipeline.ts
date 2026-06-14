@@ -337,6 +337,22 @@ export class AIPipeline {
         let streamResponse: Record<string, unknown> | null = null;
         let lastError: Error | null = null;
 
+        // "Show reasoning" wiring. When on, we ask llmService to surface the
+        // model's native reasoning deltas via onReasoning(); we collect them in
+        // an ordered buffer and merge them into the outgoing wrapped stream as
+        // tagged { reasoning } chunks (interleaved with plain text chunks). The
+        // route distinguishes them and emits a separate SSE 'reasoning' event.
+        // When off, reasoningBuffer stays empty and the stream is plain strings —
+        // normal chat is byte-for-byte unaffected.
+        const streamAiModes = (request.options as any)?.aiModes || (request.context as any)?.aiModes;
+        const showReasoning = streamAiModes?.showReasoning === true;
+        const reasoningBuffer: string[] = [];
+        const onReasoningDelta = showReasoning
+          ? (delta: string) => {
+              if (typeof delta === 'string' && delta.length > 0) reasoningBuffer.push(delta);
+            }
+          : undefined;
+
         for (const candidateModelId of candidateModelIds) {
           try {
             const cfg = await modelRouter.getProviderConfig(candidateModelId, tierForFallback);
@@ -370,6 +386,11 @@ export class AIPipeline {
               maxTokens: modelConfig.maxTokens,
               temperature: request.options?.temperature ?? 0.7,
               stream: true,
+              // Reasoning: request medium-effort native thinking and a sink to
+              // capture the deltas. No-ops on providers without reasoning support.
+              ...(showReasoning
+                ? { reasoning: { effort: 'medium' as const }, onReasoning: onReasoningDelta }
+                : {}),
             });
 
             usedProvider = providerId;
@@ -445,13 +466,28 @@ export class AIPipeline {
 
         const innerStream = (streamResponse as { stream?: AsyncIterable<string> }).stream;
         if (innerStream) {
+          // Drain any reasoning deltas captured so far as tagged chunks. Reasoning
+          // is side-channeled by llmService.callStream's onReasoning during each
+          // text-chunk pull, so flushing before/after each text chunk interleaves
+          // it in arrival order. When showReasoning is off the buffer is always
+          // empty and only plain strings flow (unchanged contract).
+          const flushReasoning = function* () {
+            while (reasoningBuffer.length > 0) {
+              const delta = reasoningBuffer.shift() as string;
+              yield { reasoning: delta } as { reasoning: string };
+            }
+          };
           const wrapped = (async function* () {
             let streamedText = '';
             try {
+              yield* flushReasoning();
               for await (const chunk of innerStream) {
                 if (typeof chunk === 'string') streamedText += chunk;
                 yield chunk;
+                yield* flushReasoning();
               }
+              // Final drain — reasoning emitted after the last text chunk.
+              yield* flushReasoning();
             } finally {
               // Fires on normal completion AND consumer break/abort.
               // Fire-and-forget: never block or fail the stream teardown.
@@ -1278,17 +1314,17 @@ export class AIPipeline {
             (request as any)._promptVersion = assembled?.metadata?.promptVersion ?? null;
             (request as any)._promptMeta = assembled?.metadata || null;
           } else {
-            parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+            parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request));
           }
         } else {
-          parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+          parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request));
         }
       } else {
-        parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+        parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request));
       }
     } catch (err: any) {
       logger.debug(`[AIPipeline] Prompt SSOT unavailable, using persona prompt: ${err?.message}`);
-      parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang));
+      parts.push(this.buildRoleSection(capability, ctx?.currentScreen, conversationLang, request));
     }
 
     // 2. Organization context
@@ -1496,10 +1532,16 @@ export class AIPipeline {
   private buildRoleSection(
     capability: AICapability,
     currentScreen?: string | null,
-    language?: string | null
+    language?: string | null,
+    request?: AIPipelineRequest
   ): string {
-    // Use unified persona with screen-aware emphasis and language
-    return buildPersonaPrompt(currentScreen, language);
+    // Use unified persona with screen-aware emphasis, language + user steering
+    // (responseStyle + free-text customInstructions — "how Teresa should answer").
+    const opts = (request?.options as any) || {};
+    const rctx = (request?.context as any) || {};
+    const responseStyle = opts.responseStyle ?? rctx.responseStyle;
+    const customInstructions = opts.customInstructions ?? rctx.customInstructions;
+    return buildPersonaPrompt(currentScreen, language, { responseStyle, customInstructions });
   }
 
   private buildOrganizationSection(org: any): string {
@@ -2049,6 +2091,16 @@ export class AIPipeline {
       }
     }
 
+    // "Show reasoning" — native reasoning is now wired through the model client.
+    //
+    // The streaming path in process() requests model-level reasoning via
+    // llmService.callStream({ reasoning, onReasoning }) (CallParams.reasoning →
+    // per-provider providerOptions: OpenAI reasoningEffort, Anthropic thinking
+    // budget, Google thinkingConfig). Reasoning deltas are streamed to the client
+    // as separate SSE `{type:'reasoning'}` events. The soft <thinking> instruction
+    // below is RETAINED as a fallback: it covers the non-streaming path
+    // (extractThinkingSteps parses <thinking> tags) and providers/models with no
+    // native reasoning support, where the native channel emits nothing.
     if (aiModes?.showReasoning) {
       if (aiModes?.deepResearch) {
         instructions.push(

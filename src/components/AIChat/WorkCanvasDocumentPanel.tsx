@@ -726,8 +726,20 @@ export function WorkCanvasDocumentPanel(props: WorkCanvasDocumentPanelProps) {
   // reset mountOverride=null po zmianie propsa cofał panel do pustego szablonu
   // „Company Work Note" mimo realnie utworzonego draftu. Ręczne przełączenie
   // przez switcher (mountOverride) nadal wygrywa.
+  // BUG N-5: a NEW draft requested from chat (distinct props.initialDraftId)
+  // must mount as a fresh artifact (new keyed tab), never overwrite the
+  // currently-open draft. A `mountOverride` left over from a prior
+  // `deliverables:draft-ready` event (or in-flight switch) can still point at
+  // the OLD draft when a different draftId arrives via props; in that case the
+  // override is stale and the prop wins. Manual switcher selections to a
+  // matching/absent draft, decks, or base still win as before.
+  const overrideIsStaleForNewDraft =
+    Boolean(props.initialDraftId) &&
+    (mountOverride?.kind === 'doc' || mountOverride?.kind === 'sheet') &&
+    mountOverride.draftId !== props.initialDraftId;
+  const effectiveOverride = overrideIsStaleForNewDraft ? null : mountOverride;
   const mounted: CanvasMountSelection =
-    mountOverride ||
+    effectiveOverride ||
     (props.initialStarterId === 'presentation'
       ? { kind: 'deck', deckId: props.initialDeckId || null }
       : props.initialDraftId
@@ -1180,11 +1192,34 @@ function WorkCanvasMarkdownDocumentPanel({
         title: titleInputRef.current?.value ?? latestTitleRef.current,
         contentMd: markdownEditorRef.current?.value ?? latestContentRef.current,
       };
+      // BUG N-1: persist the FRESHEST local content, not the stale closure
+      // snapshot. The debounced autosave captures `documentState` at schedule
+      // time; a chat-driven append (onComplete → updateMarkdown) lands its
+      // result in `latestContentRef`/the live editor moments later, and on a
+      // 409 the retry would otherwise re-send the pre-append snapshot and
+      // clobber the appended section. So for the CURRENTLY MOUNTED draft we
+      // resolve title/content from the live editor → refs at persist time —
+      // both the initial PUT and the 409 retry then carry the appended content.
+      //
+      // We only override when the draft being persisted IS the mounted doc
+      // (matching draftId, or the no-arg autosave path). For `selectTemplate`
+      // / starter-persist the explicit draft is a NEW document whose draftId
+      // differs from the still-mounted one (and whose refs have not synced yet),
+      // so we keep its content verbatim — preventing a stale-ref regression.
+      const persistingMountedDraft =
+        !draft ||
+        (Boolean(draftToPersist.draftId) && draftToPersist.draftId === documentState.draftId);
+      const effectiveTitle = persistingMountedDraft
+        ? (titleInputRef.current?.value ?? latestTitleRef.current ?? draftToPersist.title)
+        : draftToPersist.title;
+      const effectiveContentMd = persistingMountedDraft
+        ? (markdownEditorRef.current?.value ?? latestContentRef.current ?? draftToPersist.contentMd)
+        : draftToPersist.contentMd;
       // Guard (wzorzec W2-T2): szkielet generacji deliverables NIGDY nie jest
       // wart zapisu — serwer ma go od kroku PLAN, a zapis może NADPISAĆ finalną
       // treść dopisaną w tle przez generator (udokumentowany incydent: stale
       // panel autosave'ował szkielet po ukończonej generacji).
-      if (String(draftToPersist.contentMd || '').includes('po zakończeniu generacji')) {
+      if (String(effectiveContentMd || '').includes('po zakończeniu generacji')) {
         setDocumentState((current) => ({ ...current, saveState: 'saved' }));
         return null;
       }
@@ -1208,10 +1243,10 @@ function WorkCanvasMarkdownDocumentPanel({
                 conversationId: effectiveConversationId,
                 baseUpdatedAt: baseUpdatedAt || null,
                 kind: draftToPersist.kind,
-                title: draftToPersist.title,
-                content: draftToPersist.contentMd,
+                title: effectiveTitle,
+                content: effectiveContentMd,
                 canonicalFormat: draftToPersist.canonicalFormat,
-                contentMd: draftToPersist.contentMd,
+                contentMd: effectiveContentMd,
                 blocks: draftToPersist.blocks || [],
                 saveState: 'saved',
                 lifecycleState: draftToPersist.lifecycleState,
@@ -1266,6 +1301,11 @@ function WorkCanvasMarkdownDocumentPanel({
         }
         const nextState = mapDraftResponseToCanvasDocumentState(savedDraft, {
           ...draftToPersist,
+          // BUG N-1: the fallback base must reflect what we actually sent
+          // (effective* values), not the stale snapshot, so a returned draft
+          // missing contentMd/title still resolves to the appended content.
+          title: effectiveTitle,
+          contentMd: effectiveContentMd,
           draftId: draftToPersist.draftId,
           saveState: 'saved',
           projectionError: null,
@@ -1277,7 +1317,11 @@ function WorkCanvasMarkdownDocumentPanel({
           window.localStorage.setItem(LAST_DRAFT_ID_STORAGE_KEY, savedDraftId);
         }
         setDocumentState((current) => {
-          if (current.contentMd !== draftToPersist.contentMd) {
+          // BUG N-1: compare against the content we actually sent
+          // (effectiveContentMd). If the live state moved on since persist
+          // started (further edits/appends), keep `unsaved` so the next
+          // autosave flushes the newer content.
+          if (current.contentMd !== effectiveContentMd) {
             return {
               ...current,
               draftId: savedDraftId || current.draftId || draftToPersist.draftId,
@@ -1291,7 +1335,7 @@ function WorkCanvasMarkdownDocumentPanel({
             projectionError: null,
           });
         });
-        if (latestContentRef.current === draftToPersist.contentMd) {
+        if (latestContentRef.current === effectiveContentMd) {
           lastSavedContentRef.current = nextState.contentMd;
           lastSavedTitleRef.current = nextState.title;
         }
@@ -1655,7 +1699,24 @@ function WorkCanvasMarkdownDocumentPanel({
   // without threading the editor instance back through the chat tree.
   const { isStreaming, streamToCanvas, stopStream } = useCanvasAIStream({
     editor: richEditor,
-    onComplete: (finalMd) => updateMarkdown(finalMd),
+    onComplete: (finalMd) => {
+      // BUG N-1: a chat-driven append/replace MUST be flushed with the FRESH
+      // content, not left to the debounced autosave which would capture a
+      // pre-append snapshot (and re-send it on a 409, clobbering the new
+      // section). updateMarkdown writes latestContentRef + state; then we
+      // persist directly with the final markdown. We cancel the pending
+      // debounce first so the same draft isn't double-saved with stale data.
+      updateMarkdown(finalMd);
+      if (autosaveTimerRef.current) {
+        window.clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+      void persistDraft({
+        ...documentState,
+        title: latestTitleRef.current,
+        contentMd: finalMd,
+      });
+    },
   });
 
   React.useEffect(() => {

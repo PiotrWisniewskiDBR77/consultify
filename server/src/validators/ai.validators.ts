@@ -62,6 +62,9 @@ export const ChatConfirmRequestSchema = z.object({
       organizationData: z.boolean().optional(),
     })
     .optional(),
+  // Free-text user steering ("how Teresa should answer"). Whitelisted so validateBody
+  // does not strip it — required for the steering feature to reach the system prompt.
+  customInstructions: z.string().max(4000).optional(),
   responseStyle: z
     .enum([
       'normal',
@@ -140,6 +143,9 @@ export const ChatStreamRequestSchema = z.object({
       organizationData: z.boolean().optional(),
     })
     .optional(),
+  // Free-text user steering ("how Teresa should answer"). Whitelisted so validateBody
+  // does not strip it — required for the steering feature to reach the system prompt.
+  customInstructions: z.string().max(4000).optional(),
   responseStyle: z
     .enum([
       'normal',

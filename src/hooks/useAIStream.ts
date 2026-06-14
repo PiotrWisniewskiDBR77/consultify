@@ -606,6 +606,11 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       let step = 0;
       let hasReceivedContent = false;
       let hasReceivedBackendThought = false; // switches to real steps once backend sends thoughts
+      // Native reasoning channel: when the backend streams real model reasoning
+      // tokens via `{type:'reasoning',delta}` events we accumulate them here and
+      // prefer them over the `<thinking>` prose fallback (splitThinking).
+      let nativeReasoning = '';
+      let hasNativeReasoning = false;
       const streamStartTime = Date.now();
 
       // Deep Thinking gets visible process steps. Regular chat stays clean until
@@ -708,7 +713,10 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         // render it and it can be persisted; the toggle only affects auto-expand.
         rawBuffer += chunk;
         const { visible, reasoning: extractedReasoning } = splitThinking(rawBuffer);
-        if (extractedReasoning !== reasoningRef.current) {
+        // Prefer the native reasoning channel when present; only fall back to the
+        // <thinking> prose extraction when the backend hasn't streamed any native
+        // reasoning tokens. This keeps both paths populating metadata.reasoning.
+        if (!hasNativeReasoning && extractedReasoning !== reasoningRef.current) {
           reasoningRef.current = extractedReasoning;
           setReasoning(extractedReasoning);
           options.onReasoningUpdate?.(extractedReasoning);
@@ -816,6 +824,22 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       const handleEvent = (evt: any) => {
         if (abortRef.current.aborted) return;
         if (!evt || typeof evt !== 'object') return;
+
+        // Native model reasoning channel — real chain-of-thought tokens streamed
+        // as `{type:'reasoning',delta}` events, interleaved with content. We
+        // accumulate the deltas and surface them LIVE in the per-message "Tok
+        // rozumowania" trace (preferred over the <thinking> prose fallback).
+        if (evt.type === 'reasoning') {
+          const delta = typeof (evt as any).delta === 'string' ? (evt as any).delta : '';
+          if (delta) {
+            hasNativeReasoning = true;
+            nativeReasoning += delta;
+            reasoningRef.current = nativeReasoning;
+            setReasoning(nativeReasoning);
+            options.onReasoningUpdate?.(nativeReasoning);
+          }
+          return;
+        }
 
         // Policy gateway: decision + notices (refusal/uncertainty)
         if (evt.type === 'policy_decision') {
@@ -1222,6 +1246,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
               rawBuffer = '';
               reasoningRef.current = '';
               setReasoning('');
+              nativeReasoning = '';
+              hasNativeReasoning = false;
               hasReceivedContent = false;
               setStreamedContent('');
               setCurrentStreamContent('');

@@ -48,6 +48,15 @@ Wspólna warstwa sterująca (kręgosłup): `UnifiedChatPanel` + `useArtifactsSto
 
 ---
 
+## UWAGA #1b — Edit-z-czatu gubi zmiany (concurrency clobber) · M02 Canvas · **ZNANA LUKA / ODŁOŻONE (decyzja Piotra 2026-06-14)**
+
+**Objaw (zweryfikowany na żywo + przez API draftu):** create/present w panelu działa (doc+deck, trwałe), ALE „dopisz/zmień otwarty dokument z czatu" — append poprawnie się dispatchuje, `/api/ai/chat/stream` 200 + `PUT draft` 200, **ale dopisek NIE ląduje w zapisanym `contentMd`** (GET draftu: bez nowej sekcji). Sieć: `PUT draft → 409 Conflict` + przeplot z pollingiem generacji.
+**Przyczyna (klasa):** wyścig zapisu — lokalny append vs tłowa generacja/re-hydracja draftu. **Udokumentowany precedens tej samej klasy w kodzie:** guard w `WorkCanvasDocumentPanel.tsx:1183-1190` („stale panel autosave'ował szkielet po ukończonej generacji") — ale łapie tylko marker `po zakończeniu generacji`, nie chroni appendu na już-wygenerowanej treści.
+**Kierunek fixu (gdy wrócimy):** instrumentowany repro przez API draftu → serializacja append względem aktywnej generacji + rozszerzenie guarda + pewny re-base na 409 z zachowaniem lokalnego appendu. NIE fiksować na ślepo (wyścig).
+**Status:** ODŁOŻONE świadomie — priorytet: create/present na demo (flaga Railway). Create/present = działa.
+
+---
+
 ## UWAGA #2 — „Ramka w ramce" w polu czatu (composer) · M01 Czat / UI · **LOKALNE / P3**
 
 **Objaw (żywy, screenshot):** Pole „Ask Teresa about your work…" pokazuje podwójną ramkę — zewnętrzny (czerwony, focus) prostokąt obejmuje textarea + pasek ikon, a w środku jest druga, jaśniejsza ramka wokół samego textarea. Ma zostać tylko zewnętrzna.

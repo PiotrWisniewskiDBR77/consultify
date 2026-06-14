@@ -5,7 +5,11 @@
 
 const DOCUMENT_INTENT_PATTERNS = [
   // EN — report/brief/article/document generation
-  /\b(create|write|generate|prepare|draft)\s+(a\s+)?(report|brief|article|document|paper|analysis|memo|whitepaper)\b/i,
+  // Uwaga: dopuszczamy 0-2 przymiotniki/kwalifikatory między czasownikiem a
+  // rzeczownikiem (np. "write a detailed report") — wcześniej "detailed"
+  // rozrywało dopasowanie i request szczegółowego raportu trafiał do backendu,
+  // gdzie był błędnie klasyfikowany jako propozycja Initiatives·create.
+  /\b(create|write|generate|prepare|draft)\s+(a\s+|an\s+|the\s+)?(\w+\s+){0,2}(report|brief|article|document|paper|analysis|memo|whitepaper)\b/i,
   /\b(weekly|monthly|quarterly|annual)\s+(report|update|summary)\b/i,
   /\bdue\s+diligence\b/i,
   /\bmarket\s+(analysis|research|report)\b/i,
@@ -17,7 +21,9 @@ const DOCUMENT_INTENT_PATTERNS = [
   // PL — raport/brief/artykuł/dokument
   // Uwaga: JS \b nie działa po polskich znakach (ę/ł nie są word-charami),
   // więc po odmienionych formach NIE dajemy \b — dopasowujemy rdzeń.
-  /\b(napisz|stwórz|przygotuj|wygeneruj|opracuj)\s+(mi\s+)?(raport|brief|artykuł|dokument|analiz|memo|notatk)/i,
+  // Dopuszczamy 0-2 przymiotniki (np. "napisz szczegółowy raport",
+  // "przygotuj obszerny raport kwartalny") między czasownikiem a rdzeniem.
+  /\b(napisz|stwórz|sporządź|przygotuj|wygeneruj|opracuj)\s+(mi\s+)?([\wąćęłńóśźż]+\s+){0,2}(raport|brief|artykuł|dokument|analiz|memo|notatk)/i,
   /\b(tygodniowy|miesięczny|kwartalny|roczny)\s+(raport|przegląd|podsumowanie)\b/i,
   /\braport\s+(z\s+)?(due\s+diligence|oceny\s+ryzyk|analizy\s+rynku)\b/i,
   /\bdokument\s+(startu|kickoff)\s+(projektu)?\b/i,

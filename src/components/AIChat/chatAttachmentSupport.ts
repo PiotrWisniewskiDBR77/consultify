@@ -1,10 +1,17 @@
-export const SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS = ['pdf', 'txt', 'md', 'json', 'csv'] as const;
+export const SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS = [
+  'pdf',
+  'txt',
+  'md',
+  'json',
+  'csv',
+  'docx',
+] as const;
 
 export const SUPPORTED_CHAT_ATTACHMENT_ACCEPT = SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS.map(
   (ext) => `.${ext}`
 ).join(',');
 
-export const SUPPORTED_CHAT_ATTACHMENT_LABEL = 'PDF, TXT, MD, CSV, JSON';
+export const SUPPORTED_CHAT_ATTACHMENT_LABEL = 'PDF, DOCX, TXT, MD, CSV, JSON';
 
 type AttachmentLike = {
   name?: string | null;
@@ -28,6 +35,8 @@ export function isSupportedChatAttachment(file: AttachmentLike): boolean {
   if (mimeType === 'application/pdf') return true;
   if (mimeType === 'application/json') return true;
   if (mimeType === 'text/csv') return true;
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    return true;
   if (mimeType.startsWith('text/')) return true;
 
   return SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS.includes(

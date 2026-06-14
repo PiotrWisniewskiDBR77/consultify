@@ -81,7 +81,7 @@ export const ReasoningTrace: React.FC<ReasoningTraceProps> = ({
       </button>
       {expanded && (
         <div className="px-3 pb-2 pt-0.5 border-t border-slate-200/70 dark:border-navy-700/70">
-          <div className="whitespace-pre-wrap leading-relaxed text-slate-600 dark:text-slate-400 italic">
+          <div className="max-h-72 overflow-y-auto whitespace-pre-wrap font-mono leading-relaxed tracking-tight text-slate-500 dark:text-slate-400">
             {text}
             {isStreaming && (
               <span className="inline-block w-1 h-3 ml-0.5 align-baseline bg-slate-400 dark:bg-slate-500 animate-pulse" />

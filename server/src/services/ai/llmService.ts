@@ -157,6 +157,20 @@ type CallParams = {
   cacheTtl?: number; // TTL in seconds
   semantic?: boolean; // Use semantic search for caching
   /**
+   * Request model-level reasoning / extended-thinking.
+   * `true` is treated as { effort: 'medium' }. Mapped per-provider to the
+   * correct Vercel AI SDK providerOptions (OpenAI reasoningEffort, Anthropic
+   * thinking budget, Google thinkingConfig). No-ops gracefully on providers
+   * that do not support reasoning — never errors.
+   */
+  reasoning?: boolean | { effort?: 'low' | 'medium' | 'high' };
+  /**
+   * Escape hatch: provider-specific options forwarded verbatim to streamText()/
+   * generateText() as `providerOptions`. Merged AFTER reasoning mapping, so an
+   * explicit providerOptions can override the reasoning-derived defaults.
+   */
+  providerOptions?: Record<string, unknown>;
+  /**
    * Optional total timeout hint for a single provider call.
    * Note: circuit-breaker retries can extend total wall time unless retryAttempts is reduced.
    */
@@ -369,6 +383,61 @@ function getModel(modelConfig: ModelConfig) {
 
 function getProvider(modelConfig: ModelConfig) {
   return getProviderSync(modelConfig);
+}
+
+/**
+ * Map a `reasoning` request + caller-supplied providerOptions onto the Vercel AI
+ * SDK `providerOptions` shape for the active provider. Returns `undefined` when
+ * nothing reasoning-related applies, so the request path is byte-for-byte
+ * unchanged for normal (reasoning-off) chat.
+ *
+ * Per-provider wiring:
+ *   - openai / openrouter / deepseek (OpenAI-compatible): { openai: { reasoningEffort } }
+ *   - anthropic: { anthropic: { thinking: { type: 'enabled', budgetTokens } } }
+ *   - google / gemini: { google: { thinkingConfig: { includeThoughts, thinkingBudget } } }
+ * Providers without reasoning support get no reasoning options (graceful no-op).
+ * Explicit `providerOptions` is merged last and wins on key conflicts.
+ */
+function buildProviderOptions(
+  providerName: string,
+  reasoning: CallParams['reasoning'],
+  explicit?: Record<string, unknown>
+): Record<string, unknown> | undefined {
+  const provider = providerName.toLowerCase();
+  const reasoningOpts: Record<string, Record<string, unknown>> = {};
+
+  if (reasoning) {
+    const effort: 'low' | 'medium' | 'high' =
+      typeof reasoning === 'object' && reasoning.effort ? reasoning.effort : 'medium';
+
+    if (provider === 'openai' || provider === 'openrouter' || provider === 'deepseek') {
+      reasoningOpts.openai = { reasoningEffort: effort };
+    } else if (provider === 'anthropic') {
+      const budgetByEffort: Record<string, number> = { low: 4096, medium: 8192, high: 16384 };
+      reasoningOpts.anthropic = {
+        thinking: { type: 'enabled', budgetTokens: budgetByEffort[effort] },
+      };
+    } else if (provider === 'google' || provider === 'gemini') {
+      const budgetByEffort: Record<string, number> = { low: 2048, medium: 8192, high: 16384 };
+      reasoningOpts.google = {
+        thinkingConfig: { includeThoughts: true, thinkingBudget: budgetByEffort[effort] },
+      };
+    }
+    // Other providers: no reasoning options — no-op, never throws.
+  }
+
+  const merged: Record<string, unknown> = { ...reasoningOpts };
+  if (explicit && typeof explicit === 'object') {
+    for (const [k, v] of Object.entries(explicit)) {
+      const base = merged[k];
+      merged[k] =
+        base && typeof base === 'object' && v && typeof v === 'object'
+          ? { ...(base as object), ...(v as object) }
+          : v;
+    }
+  }
+
+  return Object.keys(merged).length > 0 ? merged : undefined;
 }
 
 export { normalizeTokenUsage } from './tokenUsage.js';
@@ -846,6 +915,12 @@ export class LLMService {
       ...messages.filter((m) => m.role !== 'system'),
     ];
 
+    const providerOptions = buildProviderOptions(
+      providerId,
+      params.reasoning,
+      params.providerOptions
+    );
+
     const result = await withGuards(
       providerId,
       async () =>
@@ -853,6 +928,9 @@ export class LLMService {
           model,
           messages: formattedMessages as any,
           abortSignal: AbortSignal.timeout(timeoutMs),
+          ...(typeof params.temperature === 'number' ? { temperature: params.temperature } : {}),
+          ...(typeof params.maxTokens === 'number' ? { maxOutputTokens: params.maxTokens } : {}),
+          ...(providerOptions ? { providerOptions: providerOptions as any } : {}),
         }),
       {
         timeout: timeoutMs,
@@ -873,9 +951,21 @@ export class LLMService {
   }
 
   async callStream(
-    params: CallParams & { modelConfig: ModelConfig }
+    params: CallParams & {
+      modelConfig: ModelConfig;
+      /**
+       * Optional sink for the model's native reasoning / thinking deltas.
+       * When provided AND the provider/model supports reasoning, callStream
+       * consumes the SDK fullStream and forwards reasoning text here as it
+       * arrives, while the returned `stream` continues to yield ONLY the
+       * visible answer text (string contract unchanged for existing consumers).
+       * When omitted, the legacy textStream path runs verbatim — normal chat
+       * is byte-for-byte unaffected.
+       */
+      onReasoning?: (delta: string) => void;
+    }
   ): Promise<Record<string, unknown>> {
-    const { modelConfig, systemPrompt, messages } = params;
+    const { modelConfig, systemPrompt, messages, onReasoning } = params;
 
     const model = getModel(modelConfig);
     const providerId = String(modelConfig.provider || 'openai');
@@ -884,6 +974,16 @@ export class LLMService {
       { role: 'system', content: systemPrompt || '' },
       ...messages.filter((m) => m.role !== 'system'),
     ];
+
+    // Reasoning is only wired when a sink is supplied AND a reasoning request
+    // was made. providerOptions maps reasoning → the right per-provider knob;
+    // when there's no reasoning to surface we leave the legacy path untouched.
+    const providerOptions = buildProviderOptions(
+      providerId,
+      params.reasoning,
+      params.providerOptions
+    );
+    const wantsReasoning = !!onReasoning && !!params.reasoning;
 
     const circuitCheck = await circuitBreaker.canExecute(providerId);
     if (!circuitCheck.allowed) {
@@ -906,6 +1006,9 @@ export class LLMService {
             model,
             messages: formattedMessages as any,
             abortSignal: AbortSignal.timeout(60000),
+            ...(typeof params.temperature === 'number' ? { temperature: params.temperature } : {}),
+            ...(typeof params.maxTokens === 'number' ? { maxOutputTokens: params.maxTokens } : {}),
+            ...(providerOptions ? { providerOptions: providerOptions as any } : {}),
           });
 
           // Force-consume the first chunk BEFORE returning. This detects 429 /
@@ -914,7 +1017,41 @@ export class LLMService {
           // If we don't do this, the error surfaces only inside the route's
           // for-await loop, AFTER process() has already returned, making the
           // provider-fallback mechanism in AIPipeline.process() useless.
-          const rawIterator = result.textStream[Symbol.asyncIterator]();
+          //
+          // Reasoning ON: iterate fullStream, route 'reasoning-delta' parts to
+          // onReasoning() and yield 'text-delta' parts as the visible string
+          // stream. Reasoning OFF: legacy textStream — string-for-string identical.
+          const rawIterator: AsyncIterator<string> = wantsReasoning
+            ? (function () {
+                const fs = result.fullStream[Symbol.asyncIterator]();
+                return {
+                  async next(): Promise<IteratorResult<string>> {
+                    // Skip non-text parts (reasoning is side-channeled) until we
+                    // hit a visible text-delta or the stream ends.
+                    while (true) {
+                      const part = await fs.next();
+                      if (part.done) return { done: true, value: undefined };
+                      const p = part.value as { type?: string; text?: string };
+                      if (p?.type === 'reasoning-delta') {
+                        if (typeof p.text === 'string' && p.text.length > 0) {
+                          try {
+                            onReasoning!(p.text);
+                          } catch {
+                            /* never let a reasoning sink error break the answer stream */
+                          }
+                        }
+                        continue;
+                      }
+                      if (p?.type === 'text-delta' && typeof p.text === 'string') {
+                        return { done: false, value: p.text };
+                      }
+                      // error parts surface as thrown by the SDK on the next pull;
+                      // all other part types (tool-*, start/end, source, raw) are ignored.
+                    }
+                  },
+                };
+              })()
+            : result.textStream[Symbol.asyncIterator]();
           let firstChunk: IteratorResult<string>;
           try {
             firstChunk = await rawIterator.next();

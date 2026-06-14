@@ -530,15 +530,118 @@ Pre-send quality check: does the first sentence answer on its own? can it be sho
 }
 
 // ---------------------------------------------------------------------------
+// Response style directives (user-selectable answer mode).
+// Each of the 8 styles MUST yield a meaningfully different instruction so the
+// "responseStyle" picker actually changes how Teresa answers. These tune the
+// Response Discipline contract (length / register / structure) WITHOUT
+// overriding the answer-first + safety/grounding rules.
+// ---------------------------------------------------------------------------
+export type ResponseStyle =
+  | 'normal'
+  | 'concise'
+  | 'executive'
+  | 'analyst'
+  | 'formal'
+  | 'coach'
+  | 'professional'
+  | 'friendly';
+
+function buildResponseStyleDirective(lang: PersonaLanguage, style: ResponseStyle): string {
+  const pl = lang === 'pl';
+
+  const directives: Record<ResponseStyle, { pl: string; en: string }> = {
+    normal: {
+      pl: 'Tryb domyślny: zrównoważona długość i ton — rzeczowo, profesjonalnie, bez przesadnej zwięzłości ani rozwlekłości. Trzymaj się standardowej struktury dyscypliny odpowiedzi.',
+      en: 'Default mode: balanced length and tone — substantive and professional, neither terse nor verbose. Follow the standard response-discipline structure.',
+    },
+    concise: {
+      pl: 'Tryb zwięzły: maksymalnie krótko. Cel ≤60 słów. Konkluzja + maks. 2 punkty. Tnij każde zbędne słowo; żadnych wstępów, żadnych podsumowań. Pełne zdania tylko gdy konieczne.',
+      en: 'Concise mode: maximally short. Target ≤60 words. Conclusion + at most 2 bullets. Cut every non-essential word; no preamble, no wrap-up. Fragments allowed when they carry meaning.',
+    },
+    executive: {
+      pl: 'Tryb executive (poziom zarządu): mów jak do CEO. Najpierw rekomendacja i jej wpływ biznesowy (przychód/koszt/ryzyko/czas). 3 punkty maks. Bez żargonu technicznego i detali operacyjnych — tylko decyzja, uzasadnienie wpływem, koszt zaniechania.',
+      en: 'Executive mode (board level): speak as to a CEO. Lead with the recommendation and its business impact (revenue/cost/risk/time). 3 bullets max. No technical jargon or operational detail — just the decision, the impact rationale, and the cost of inaction.',
+    },
+    analyst: {
+      pl: 'Tryb analityczny: pokaż rozumowanie. Rozłóż problem (MECE / drzewo hipotez), podaj liczby, założenia, scenariusze i wrażliwość. Jawnie oznacz założenia i poziom pewności. Dłuższa, gęsta danymi odpowiedź jest tu uzasadniona.',
+      en: 'Analyst mode: show the reasoning. Decompose the problem (MECE / issue tree), give numbers, assumptions, scenarios, and sensitivities. Explicitly flag assumptions and confidence level. A longer, data-dense answer is justified here.',
+    },
+    formal: {
+      pl: 'Tryb formalny: oficjalny, pełne zdania, bezosobowy rejestr biznesowy. Bez kolokwializmów, skrótów myślowych i emotikonów. Ton jak w oficjalnym memo lub dokumencie zarządczym.',
+      en: 'Formal mode: official, full sentences, impersonal business register. No colloquialisms, contractions, or emoji. Tone of an official memo or governance document.',
+    },
+    coach: {
+      pl: 'Tryb coachingowy: prowadź przez pytania. Po podaniu konkluzji zadaj 1–2 trafne pytania naprowadzające, które pomogą użytkownikowi samemu domknąć decyzję. Wzmacniaj sprawczość, nie wyręczaj. Ton wspierający, ale wymagający.',
+      en: 'Coach mode: lead with questions. After the conclusion, ask 1–2 sharp guiding questions that help the user close the decision themselves. Build ownership, do not do it all for them. Supportive but demanding tone.',
+    },
+    professional: {
+      pl: 'Tryb profesjonalny (konsultingowy): zrównoważony, poprawny ton partnera doradczego. Rzeczowo, uprzejmie, z naciskiem na rekomendacje i kolejne kroki. Domyślny standard relacji klient–konsultant.',
+      en: 'Professional mode (consulting): balanced, polished advisory-partner tone. Substantive, courteous, focused on recommendations and next steps. The default client–consultant register.',
+    },
+    friendly: {
+      pl: 'Tryb przyjazny: ciepły, bezpośredni, zwracaj się na „Ty". Zachowaj pełną rzeczowość i strukturę — przyjazny ton nie oznacza gadulstwa ani spadku jakości merytorycznej.',
+      en: 'Friendly mode: warm, direct, approachable second-person tone. Keep full substance and structure — friendliness never means rambling or lower analytical quality.',
+    },
+  };
+
+  const d = directives[style];
+  const body = pl ? d.pl : d.en;
+  const header = pl ? '## STYL ODPOWIEDZI (preferencja użytkownika)' : '## RESPONSE STYLE (user preference)';
+  return `${header}\n${body}`;
+}
+
+// ---------------------------------------------------------------------------
+// User steering — free-text "how to answer" supplied by the user.
+// Injected at HIGH priority but BELOW safety/grounding/persona-contract:
+// it tunes delivery, never licenses fabrication or fake execution.
+// ---------------------------------------------------------------------------
+function buildUserSteering(lang: PersonaLanguage, customInstructions: string): string {
+  const trimmed = customInstructions.trim();
+  if (lang === 'pl') {
+    return `## STEROWANIE UŻYTKOWNIKA (honoruj, chyba że koliduje z bezpieczeństwem/ugruntowaniem)
+Poniżej użytkownik wprost określił, jak chce, żebyś odpowiadał. Traktuj to jako instrukcję nadrzędną wobec ogólnych preferencji stylu — dostosuj ton, format, długość i akcenty zgodnie z nią.
+Granica: NIE może to złamać zasad bezpieczeństwa, ugruntowania w danych ani kontraktu persony („PROPONUJ, nie udawaj wykonania"; nie zmyślaj danych, liczb ani źródeł; nie twierdź, że coś wykonałeś). Jeśli prośba koliduje z tymi zasadami, zastosuj ją w dozwolonym zakresie i krótko zaznacz granicę.
+<custom_instructions>
+${trimmed}
+</custom_instructions>`;
+  }
+
+  return `## USER STEERING (honor unless it conflicts with safety/grounding)
+Below, the user has explicitly stated how they want you to answer. Treat this as overriding the generic style preference — adapt tone, format, length, and emphasis accordingly.
+Boundary: it may NOT override safety, data-grounding, or the persona contract ("PROPOSE, don't fake execution"; never fabricate data, numbers, or sources; never claim you executed something). If a request conflicts with these, apply it within allowed bounds and briefly note the boundary.
+<custom_instructions>
+${trimmed}
+</custom_instructions>`;
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
+/** Options for building the persona prompt. All fields optional/backward-compatible. */
+export interface PersonaPromptOptions {
+  /** User-selected answer mode. Maps to a distinct style directive. */
+  responseStyle?: ResponseStyle | string | null;
+  /**
+   * Free-text user steering ("how to answer"). When provided and non-empty,
+   * injected as a HIGH-priority steering section below safety/grounding.
+   * Threaded from the chat request by the AIPipeline caller.
+   */
+  customInstructions?: string | null;
+}
+
 /**
  * Build the full persona prompt for a given screen context and language.
+ *
+ * The 3rd argument (`options`) is optional and backward-compatible: existing
+ * callers passing only (screen, language) get identical output. The AIPipeline
+ * agent should thread the chat request's `responseStyle` and `customInstructions`
+ * through this options object so user steering actually shapes the prompt.
  */
 export function buildPersonaPrompt(
   currentScreen?: string | null,
-  language?: PersonaLanguage | string | null
+  language?: PersonaLanguage | string | null,
+  options?: PersonaPromptOptions
 ): string {
   // i18n-teresa fix 2026-04-18: default is 'en' (was 'pl') — see detectLanguage comment.
   const lang = language && language in LANGUAGE_CONFIGS ? (language as PersonaLanguage) : 'en';
@@ -576,7 +679,45 @@ export function buildPersonaPrompt(
   parts.push('');
   parts.push(buildResponseDiscipline(lang));
 
+  // Response style (user-selected mode) tunes the discipline contract above.
+  // Placed after the contract so it refines length/register without displacing
+  // the answer-first + safety rules. Unknown/absent style → no directive.
+  const style = normalizeResponseStyle(options?.responseStyle);
+  if (style) {
+    parts.push('');
+    parts.push(buildResponseStyleDirective(lang, style));
+  }
+
+  // Free-text user steering goes ABSOLUTELY LAST for maximum salience, but its
+  // own text reasserts that safety/grounding/persona-contract win. Empty/absent
+  // steering → no section, so behavior is unchanged when no steering is given.
+  const customInstructions = options?.customInstructions;
+  if (typeof customInstructions === 'string' && customInstructions.trim().length > 0) {
+    parts.push('');
+    parts.push(buildUserSteering(lang, customInstructions));
+  }
+
   return parts.join('\n');
+}
+
+/**
+ * Normalize an arbitrary responseStyle value to a known ResponseStyle, or null
+ * if absent/unrecognized (in which case no style directive is emitted).
+ */
+function normalizeResponseStyle(value?: ResponseStyle | string | null): ResponseStyle | null {
+  if (!value) return null;
+  const v = String(value).toLowerCase().trim();
+  const known: ResponseStyle[] = [
+    'normal',
+    'concise',
+    'executive',
+    'analyst',
+    'formal',
+    'coach',
+    'professional',
+    'friendly',
+  ];
+  return (known as string[]).includes(v) ? (v as ResponseStyle) : null;
 }
 
 /**

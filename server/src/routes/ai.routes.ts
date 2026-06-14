@@ -1829,6 +1829,64 @@ router.post(
       }
     }
 
+    // User steering: responseStyle + free-text customInstructions ("how Teresa should answer").
+    // The streaming chat supplies its own systemInstruction, and AIPipeline bypasses the persona
+    // builder when one is provided (AIPipeline.ts:1094) — so steering MUST be injected HERE to
+    // actually shape the streamed output. Appended last (highest recency); empty when unset.
+    try {
+      const steerLang = (language || 'en').split('-')[0];
+      const ci = String((body as any).customInstructions || '').trim();
+      const rs = String(responseStyle || '').trim().toLowerCase();
+      const styleMap: Record<string, { pl: string; en: string }> = {
+        concise: {
+          pl: 'Odpowiadaj maksymalnie zwięźle (1–3 zdania lub do 3 punktów).',
+          en: 'Answer maximally concisely (1–3 sentences or up to 3 bullets).',
+        },
+        executive: {
+          pl: 'Pisz na poziomie zarządu: najpierw wniosek/rekomendacja, zwięźle, bez żargonu.',
+          en: 'Write executive-level: lead with the conclusion/recommendation, concise, no jargon.',
+        },
+        analyst: {
+          pl: 'Pisz analitycznie: założenia, liczby, scenariusze, struktura MECE.',
+          en: 'Write analytically: assumptions, numbers, scenarios, MECE structure.',
+        },
+        formal: {
+          pl: 'Ton formalny, bezosobowy (rejestr notatki służbowej).',
+          en: 'Formal, impersonal tone (business-memo register).',
+        },
+        coach: {
+          pl: 'Zacznij od 1–2 pytań naprowadzających, potem zwięzła rada.',
+          en: 'Start with 1–2 guiding questions, then give concise advice.',
+        },
+        professional: {
+          pl: 'Ton doradcy-partnera: rzeczowo i konkretnie.',
+          en: 'Advisory-partner tone: substantive and concrete.',
+        },
+        friendly: {
+          pl: 'Ton ciepły, bezpośredni (per Ty), bez utraty merytoryki.',
+          en: 'Warm, direct tone (second person) without losing substance.',
+        },
+      };
+      const steerParts: string[] = [];
+      if (rs && styleMap[rs]) {
+        steerParts.push(
+          `[RESPONSE STYLE: ${steerLang === 'pl' ? styleMap[rs].pl : styleMap[rs].en}]`
+        );
+      }
+      if (ci) {
+        steerParts.push(
+          steerLang === 'pl'
+            ? `[INSTRUKCJE UŻYTKOWNIKA — uszanuj je, o ile nie łamią bezpieczeństwa, groundingu ani zasady „proponuj, nie udawaj wykonania": ${ci}]`
+            : `[USER INSTRUCTIONS — honor them unless they conflict with safety, data-grounding, or the "propose, don't fake execution" rule: ${ci}]`
+        );
+      }
+      if (steerParts.length) {
+        enhancedSystemInstruction = enhancedSystemInstruction + '\n\n' + steerParts.join('\n');
+      }
+    } catch (steerErr: any) {
+      logger.warn('[AI Routes] Steering injection failed:', steerErr?.message);
+    }
+
     // Prevent Node.js / proxy / ALB socket timeouts for long-running SSE streams
     // (Deep Thinking can run 30–90 seconds; default 2min timeout gives safety margin)
     if (req.socket) {
@@ -2330,6 +2388,8 @@ router.post(
           aiModes,
           knowledgeSources,
           responseStyle,
+          // User steering free-text ("how Teresa should answer") → persona prompt.
+          customInstructions: (body as any).customInstructions,
           selectedTier,
           selectedModelId: effectiveSelectedModelId,
           provider: bodyProvider,
@@ -2347,6 +2407,8 @@ router.post(
           aiModes,
           knowledgeSources,
           responseStyle,
+          // User steering free-text ("how Teresa should answer") → persona prompt.
+          customInstructions: (body as any).customInstructions,
           selectedTier,
           selectedModelId: effectiveSelectedModelId,
           provider: bodyProvider,
@@ -4249,10 +4311,21 @@ router.post(
       if ((response as { stream?: AsyncIterable<string> }).stream) {
         let streamIterationError: Error | null = null;
         try {
-          for await (const chunk of (response as { stream: AsyncIterable<string> }).stream) {
+          for await (const chunk of (
+            response as { stream: AsyncIterable<string | { reasoning: string }> }
+          ).stream) {
             if (!isClientConnected || res.destroyed || streamAborted) {
               logger.info(`[Stream] Aborting stream - client disconnected: ${streamSessionId}`);
               break;
+            }
+
+            // "Show reasoning" — the pipeline interleaves the model's native
+            // reasoning deltas as tagged { reasoning } chunks. Emit them as a
+            // SEPARATE SSE event so the frontend accumulates them into the
+            // message's reasoning trace; visible answer text is untouched.
+            if (chunk && typeof chunk === 'object' && typeof chunk.reasoning === 'string') {
+              res.write(`data: ${JSON.stringify({ type: 'reasoning', delta: chunk.reasoning })}\n\n`);
+              continue;
             }
 
             if (chunk) {

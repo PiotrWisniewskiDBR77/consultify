@@ -534,10 +534,13 @@ const parseChatCanvasIntent = (rawContent: string): ChatCanvasIntent | null => {
     return { starterId: canvasStarterFromText(prompt), cleanPrompt: prompt };
   }
 
-  const mentionsCanvas = /\bcanvas\b|\bkanw[ayęe]?\b|obszar roboczy|work area/i.test(lower);
+  // Match "canvas" / Polish locative "canvasie" / "kanwa"/"kanwie" etc. — the
+  // \bcanvas\b boundary used to miss "w Canvasie", so the request fell through
+  // to the backend copilot and misrouted to an Initiatives·create proposal.
+  const mentionsCanvas = /\bcanvas\w*|\bkanw\w*|obszar roboczy|work area/i.test(lower);
   if (!mentionsCanvas) return null;
   const asksToRoute =
-    /wrzu[cć]|przenie[sś]|otw[oó]rz|zrob|zrób|stw[oó]rz|utw[oó]rz|review|open|create|start/i.test(
+    /wrzu[cć]|przenie[sś]|otw[oó]rz|zrob|zrób|stw[oó]rz|utw[oó]rz|poka[zż]|wy[sś]wietl|przedstaw|wstaw|umie[sś][cć]|review|open|create|start|show|display|put/i.test(
       lower
     );
   if (!asksToRoute) return null;
@@ -3618,14 +3621,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               deepResearch: aiConfig?.deepResearch,
               webSearch: aiConfig?.webSearch,
               showReasoning: aiConfig?.showReasoning,
+              multiAgent: (aiConfig as any)?.multiAgent,
               marketResearch: (aiConfig as any)?.marketResearch,
               coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
               privateMode: (aiConfig as any)?.privateMode ?? false,
               knowledgeSources: aiConfig?.knowledgeSources,
               responseStyle: aiConfig?.responseStyle,
+              customInstructions: (aiConfig as any)?.customInstructions ?? undefined,
               selectedTier: (aiConfig as any)?.selectedTier || undefined,
               selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
-            }
+            } as any
           );
 
           const c = (confirmRes as any)?.confirm || {};
@@ -4001,14 +4006,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           deepResearch: aiConfig?.deepResearch,
           webSearch: aiConfig?.webSearch,
           showReasoning: aiConfig?.showReasoning,
+          multiAgent: (aiConfig as any)?.multiAgent,
           marketResearch: (aiConfig as any)?.marketResearch,
           coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
           privateMode: (aiConfig as any)?.privateMode ?? false,
           knowledgeSources: aiConfig?.knowledgeSources,
           responseStyle: aiConfig?.responseStyle,
+          customInstructions: (aiConfig as any)?.customInstructions ?? undefined,
           selectedTier: (aiConfig as any)?.selectedTier || undefined,
           selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
-        }
+        } as any
       );
 
       const c = (confirmRes as any)?.confirm || {};
@@ -4617,14 +4624,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               deepResearch: aiConfig?.deepResearch,
               webSearch: aiConfig?.webSearch,
               showReasoning: aiConfig?.showReasoning,
+              multiAgent: (aiConfig as any)?.multiAgent,
               marketResearch: (aiConfig as any)?.marketResearch,
               coThinkerMode: (aiConfig as any)?.coThinkerMode ?? null,
               privateMode: (aiConfig as any)?.privateMode ?? false,
               knowledgeSources: aiConfig?.knowledgeSources,
               responseStyle: aiConfig?.responseStyle,
+              customInstructions: (aiConfig as any)?.customInstructions ?? undefined,
               selectedTier: (aiConfig as any)?.selectedTier || undefined,
               selectedModelId: (aiConfig as any)?.selectedModelId ?? null,
-            }
+            } as any
           );
 
           const c = (confirmRes as any)?.confirm || {};

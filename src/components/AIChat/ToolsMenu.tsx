@@ -151,7 +151,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         .then((r) => r.json())
         .then((data) => {
           const ci = data.memories?.find((m: any) => m.key === 'custom_instructions');
-          if (ci?.value) setCustomInstructions(ci.value);
+          if (ci?.value) {
+            setCustomInstructions(ci.value);
+            // Mirror into global aiConfig so the chat payload can send it (contract: customInstructions)
+            setAIConfig({ customInstructions: ci.value } as any);
+          }
           setCustomInstructionsLoaded(true);
         })
         .catch(() => setCustomInstructionsLoaded(true));
@@ -173,6 +177,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           context: 'Custom instructions set by user via AI preferences',
         }),
       });
+      // Mirror into global aiConfig so it flows into the chat payload immediately
+      setAIConfig({ customInstructions: customInstructions.trim() } as any);
       toast.success(t('aiChat.menu.instructionsSaved', 'Instrukcje zapisane'));
     } catch {
       toast.error(t('aiChat.menu.instructionsSaveError', 'Nie udalo sie zapisac'));
@@ -329,6 +335,14 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
               <button
                 key={mode.id}
                 onClick={() => toggleMode(mode.id)}
+                title={
+                  mode.id === 'showReasoning'
+                    ? t(
+                        'aiChat.menu.modes.showReasoning.tooltip',
+                        'Pokazuje tok myślenia modelu (wolniejsze, droższe)'
+                      )
+                    : undefined
+                }
                 className={`
                   w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors
                   ${isEnabled ? 'bg-primary-50/60 dark:bg-primary-900/10' : 'hover:bg-slate-50/80 dark:hover:bg-white/[0.04]'}
@@ -351,6 +365,13 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           {/* Divider */}
           <div className="mx-3 my-1 border-t border-slate-200 dark:border-white/[0.06]" />
 
+          {/* Steering section header — first-class "how Teresa should answer" surface */}
+          <div className="px-3.5 pt-1.5 pb-1">
+            <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-500 uppercase tracking-wider">
+              {t('aiChat.menu.steeringHeading', 'Jak Teresa ma odpowiadać')}
+            </span>
+          </div>
+
           {/* Response style — opens Grok-style modal */}
           <button
             onClick={() => {
@@ -362,6 +383,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             <Pen size={16} className="shrink-0 text-slate-600 dark:text-slate-500" />
             <span className="flex-1 text-[13px] text-slate-700 dark:text-slate-200">
               {t('aiChat.menu.responseStyle', 'Response style')}
+              {customInstructions.trim() && (
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-medium align-middle">
+                  {t('aiChat.menu.customSet', 'instrukcje')}
+                </span>
+              )}
             </span>
             <span className="text-[11px] text-slate-600 dark:text-slate-500 mr-1">
               {t(`aiChat.menu.styles.${responseStyle || 'normal'}`, 'Normal')}
@@ -447,9 +473,20 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 
             <div className="p-6">
               {/* Title */}
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-5">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
                 {t('aiChat.menu.personalizeTitle', 'Personalize AI responses')}
               </h2>
+              <p className="text-[12px] text-slate-600 dark:text-slate-500 mb-5">
+                {t(
+                  'aiChat.menu.steeringSubtitle',
+                  'Ustaw, jak Teresa ma odpowiadać — styl i własne instrukcje obowiązują w każdej rozmowie.'
+                )}
+              </p>
+
+              {/* Section: Response style */}
+              <h3 className="text-[13px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5">
+                {t('aiChat.menu.responseStyle', 'Response style')}
+              </h3>
 
               {/* Style cards — 2-column grid (last card spans full width if odd count) */}
               <div className="grid grid-cols-2 gap-2.5 mb-6">
@@ -537,7 +574,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                   size="sm"
                   onClick={() => {
                     setCustomInstructions('');
-                    setAIConfig({ responseStyle: 'normal' });
+                    setAIConfig({ responseStyle: 'normal', customInstructions: '' } as any);
                   }}
                   disabled={isSavingInstructions}
                 >

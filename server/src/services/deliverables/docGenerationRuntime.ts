@@ -47,6 +47,18 @@ const LOG_PREFIX = '[DeliverablesGen:doc]';
 /** Marker szkieletu — obecny w treści draftu dopóki generacja nie skończy. */
 const GENERATION_PENDING_MARKER = 'po zakończeniu generacji';
 
+/**
+ * N-6: twarda dyrektywa języka treści. Sam dobór polskiego/angielskiego
+ * systemowego promptu NIE wymusza języka u modelu — przy mieszanym kontekście
+ * (angielskie cytaty w faktach, angielskie tytuły sekcji) model dryfuje na EN
+ * mimo prośby po polsku. Dopinamy jawne, dosadne zdanie w docelowym języku.
+ */
+function languageDirective(language: 'pl' | 'en'): string {
+  return language === 'en'
+    ? 'CRITICAL: Write ALL content in English, regardless of the language of any context, facts, or section titles provided. Every sentence must be in English.'
+    : 'BEZWZGLĘDNIE WAŻNE: Całą treść pisz po POLSKU, niezależnie od języka kontekstu, faktów czy tytułów sekcji. Każde zdanie musi być po polsku.';
+}
+
 interface DocRuntimeEntry {
   state: 'plan_ready' | 'generating' | 'validating' | 'draft' | 'error';
   error?: string;
@@ -463,9 +475,11 @@ export async function startSheet(params: {
   void (async () => {
     try {
       const pl = stored.language !== 'en';
-      const systemPrompt = pl
+      const sheetLang = pl ? ('pl' as const) : ('en' as const);
+      const sheetSystemBase = pl
         ? 'Jesteś analitykiem danych w Consultify. Tworzysz arkusz roboczy jako tabelę Markdown (GFM). Zwracasz WYŁĄCZNIE: linię tytułu "# <tytuł>" i jedną tabelę GFM (wiersz nagłówków, separator, wiersze danych). Maksymalnie 10 kolumn i 15 wierszy. Kolumny dobierz pod intencję użytkownika. Jeśli kontekst zawiera konkretne dane — użyj ich; w przeciwnym razie wypełnij realistycznymi wierszami startowymi (bez lorem ipsum). Bez komentarzy, bez bloków kodu.'
         : 'You are a data analyst at Consultify. You create a working sheet as a Markdown (GFM) table. Return ONLY: a title line "# <title>" and one GFM table (header row, separator, data rows). At most 10 columns and 15 rows. Choose columns to fit the user intent. If the context contains concrete data, use it; otherwise fill with realistic seed rows (no lorem ipsum). No commentary, no code fences.';
+      const systemPrompt = `${languageDirective(sheetLang)}\n\n${sheetSystemBase}`;
       const explicitSheetFacts = await buildGroundingFacts(
         params.organizationId,
         stored.sourceRefs,
@@ -745,9 +759,11 @@ async function runStreamingDocGeneration(params: {
   const sections = params.outline.sections;
   const total = sections.length;
 
-  const systemPrompt = pl
+  const docLang = pl ? ('pl' as const) : ('en' as const);
+  const systemPromptBase = pl
     ? 'Jesteś starszym konsultantem w Consultify. Piszesz JEDNĄ sekcję dokumentu biznesowego — zwracasz wyłącznie prozę tej sekcji (bez nagłówka, bez markdownu nagłówków). 2–4 akapity, konkretnie, językiem konsultingowym. Jeśli twierdzenie wykracza poza dostarczone fakty, oznacz je w nawiasie „(założenie)". Bez bloków kodu, bez meta-komentarzy.'
     : 'You are a senior consultant at Consultify. You write ONE section of a business document — return only that section prose (no heading, no markdown headings). 2–4 paragraphs, concrete, consulting register. If a claim goes beyond the provided facts, flag it inline as "(assumption)". No code fences, no meta-commentary.';
+  const systemPrompt = `${languageDirective(docLang)}\n\n${systemPromptBase}`;
 
   const lines = [`# ${params.title}`, ''];
   let anySucceeded = false;
@@ -857,10 +873,18 @@ export async function startDoc(params: {
         stored.intake.language === 'en' ? 'en' : 'pl'
       );
       const groundingFacts = explicitFacts || stored.autoGrounding?.facts || null;
-      const intake = groundingFacts
-        ? { ...stored.intake, description: `${stored.intake.description}\n\n${groundingFacts}` }
-        : stored.intake;
       const docLangEarly = stored.intake.language === 'en' ? ('en' as const) : ('pl' as const);
+      // N-6: ścieżka one-shot (materializeDocumentArtifact) wymusza język tylko
+      // przez intake.language — przy mieszanym kontekście to za słabe. Dopinamy
+      // twardą dyrektywę do description (jedyny lever na ten generator stąd).
+      const intakeDescription = [
+        stored.intake.description,
+        groundingFacts || '',
+        languageDirective(docLangEarly),
+      ]
+        .filter(Boolean)
+        .join('\n\n');
+      const intake = { ...stored.intake, description: intakeDescription };
       const usedRefsEarly = stored.intake.sourceHints?.length
         ? stored.intake.sourceHints
         : stored.autoGrounding?.refs;
