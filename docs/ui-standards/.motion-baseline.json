@@ -1,7 +1,7 @@
 {
   "_comment": "Baseline dlugu motion (visual-language.md §9). Ratchet: liczby moga tylko malec. Aktualizuj W DOL po kazdej naprawie. NIGDY w gore.",
-  "_generated": "2026-06-14 (po naprawie AuthView, korekta >320ms wg §9.1)",
-  "transitionAll": 2040,
-  "slowDuration": 196,
-  "bounce": 49
+  "_generated": "2026-06-14 (AuthView + PublicLandingPage + TaskDetailView paydown)",
+  "transitionAll": 2008,
+  "slowDuration": 183,
+  "bounce": 48
 }

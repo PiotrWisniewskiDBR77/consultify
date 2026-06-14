@@ -2462,7 +2462,7 @@ Return ONLY the final comment text.`;
                     return (
                       <div
                         key={item.id}
-                        className={`group flex items-start gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                        className={`group flex items-start gap-3 px-3 py-2.5 rounded-lg transition duration-200 ${
                           done
                             ? 'opacity-50 hover:opacity-70'
                             : 'hover:bg-slate-50/60 dark:hover:bg-navy-800/40'
@@ -2471,7 +2471,7 @@ Return ONLY the final comment text.`;
                         {/* Checkbox */}
                         <button
                           onClick={() => updateChecklistItem(item.id, { completed: !done })}
-                          className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
+                          className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition duration-200 ${
                             done
                               ? 'bg-emerald-500 border-emerald-500 text-white'
                               : 'border-slate-300 dark:border-navy-600 hover:border-emerald-400 dark:hover:border-emerald-500'
@@ -2515,7 +2515,7 @@ Return ONLY the final comment text.`;
                         {/* Delete */}
                         <button
                           onClick={() => removeChecklistItem(item.id)}
-                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-all"
+                          className="mt-0.5 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -2625,7 +2625,7 @@ Return ONLY the final comment text.`;
                       return (
                         <div
                           key={idea.id}
-                          className={`rounded-xl border transition-all ${
+                          className={`rounded-xl border transition ${
                             idea.status === 'selected'
                               ? 'border-emerald-300/60 dark:border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-500/5'
                               : 'border-slate-200 dark:border-navy-700/50 hover:border-slate-300 dark:hover:border-navy-600'
@@ -4847,7 +4847,7 @@ Return ONLY the final comment text.`;
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="p-2 -ml-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition-all"
+                className="p-2 -ml-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-navy-800/80 transition"
               >
                 <ChevronLeft size={20} />
               </motion.button>
@@ -4882,7 +4882,7 @@ Return ONLY the final comment text.`;
                   whileTap={{ scale: 0.98 }}
                   onClick={() => void handleSave()}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-blue-500/40 dark:border-blue-400/30 text-blue-700 dark:text-blue-300 hover:bg-blue-500/10 dark:hover:bg-blue-500/10 text-sm font-semibold transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   title={isPolish ? 'Zapisz' : 'Save'}
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -4893,7 +4893,7 @@ Return ONLY the final comment text.`;
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleOpenChat}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-primary-500/40 dark:border-primary-400/30 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 dark:hover:bg-primary-500/10 text-sm font-semibold transition-all shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/70 dark:bg-navy-900/50 border border-primary-500/40 dark:border-primary-400/30 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 dark:hover:bg-primary-500/10 text-sm font-semibold transition shadow-sm"
                   title={isPolish ? 'Otwórz czat do tego zadania' : 'Open task chat'}
                 >
                   <MessageSquare size={16} />
@@ -4942,7 +4942,7 @@ Return ONLY the final comment text.`;
                           generateAIDescription();
                         }}
                         disabled={isGeneratingDescription}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
                         title={isPolish ? 'Wygeneruj opis AI' : 'Generate AI description'}
                       >
                         {isGeneratingDescription ? (
@@ -4976,7 +4976,7 @@ Return ONLY the final comment text.`;
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={4}
-                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition-all"
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 resize-none transition"
                         placeholder={
                           isPolish ? 'Opisz szczegóły zadania...' : 'Describe task details...'
                         }
@@ -5026,7 +5026,7 @@ Return ONLY the final comment text.`;
                           generateAIOutcome();
                         }}
                         disabled={isGeneratingOutcome}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
                         title={isPolish ? 'Wygeneruj rezultat AI' : 'Generate AI outcome'}
                       >
                         {isGeneratingOutcome ? (
@@ -5060,7 +5060,7 @@ Return ONLY the final comment text.`;
                         value={expectedOutcome}
                         onChange={(e) => setExpectedOutcome(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition-all"
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50/80 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-600/80 text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 resize-none transition"
                         placeholder={
                           isPolish
                             ? 'Co ma być efektem tego zadania?'
@@ -5213,7 +5213,7 @@ Return ONLY the final comment text.`;
                             return (
                               <div
                                 key={rel.id}
-                                className={`p-3 rounded-xl border transition-all ${
+                                className={`p-3 rounded-xl border transition ${
                                   isBlocking
                                     ? 'bg-amber-50/50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30'
                                     : 'bg-slate-50/50 dark:bg-navy-800/50 border-slate-200 dark:border-navy-600'
@@ -5257,7 +5257,7 @@ Return ONLY the final comment text.`;
                                     {onOpenDecision && (
                                       <button
                                         onClick={() => onOpenDecision(rel.decisionId)}
-                                        className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-blue-500 transition-all"
+                                        className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-navy-600 text-slate-500 dark:text-slate-400 hover:text-blue-500 transition"
                                         title={isPolish ? 'Otwórz decyzję' : 'Open decision'}
                                       >
                                         <ExternalLink size={14} />
@@ -5269,7 +5269,7 @@ Return ONLY the final comment text.`;
                                           relatedDecisions.filter((d) => d.id !== rel.id)
                                         )
                                       }
-                                      className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-all"
+                                      className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition"
                                     >
                                       <X size={14} />
                                     </button>
@@ -5377,7 +5377,7 @@ Return ONLY the final comment text.`;
                                 <button
                                   key={type.key}
                                   onClick={() => setNewDecisionRelationType(type.key as any)}
-                                  className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                                  className={`px-3 py-1.5 text-xs rounded-lg border transition ${
                                     newDecisionRelationType === type.key
                                       ? 'bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-500/50 text-amber-700 dark:text-amber-300'
                                       : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 hover:border-amber-300'
@@ -5431,7 +5431,7 @@ Return ONLY the final comment text.`;
                                     : 'Decision created and linked'
                                 );
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-medium hover:bg-amber-600 transition-all"
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-medium hover:bg-amber-600 transition"
                             >
                               <Plus size={16} />
                               <span className="text-sm">
@@ -5444,7 +5444,7 @@ Return ONLY the final comment text.`;
                                 setNewDecisionTitle('');
                                 setNewDecisionDescription('');
                               }}
-                              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 transition-all"
+                              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-700 transition"
                             >
                               <span className="text-sm">{isPolish ? 'Anuluj' : 'Cancel'}</span>
                             </button>
@@ -5560,7 +5560,7 @@ Return ONLY the final comment text.`;
                         <div className="flex gap-2">
                           <button
                             onClick={() => setShowCreateDecision(true)}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-all"
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition"
                           >
                             <Plus size={16} />
                             <span className="text-sm font-medium">
@@ -5569,7 +5569,7 @@ Return ONLY the final comment text.`;
                           </button>
                           <button
                             onClick={() => setShowDecisionSearch(true)}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 transition-all"
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 transition"
                           >
                             <Link2 size={16} />
                             <span className="text-sm font-medium">
@@ -5641,7 +5641,7 @@ Return ONLY the final comment text.`;
                     <>
                       <div className="w-20 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                         <div
-                          className="h-full bg-emerald-500 transition-all"
+                          className="h-full bg-emerald-500 transition"
                           style={{ width: `${checklistProgress}%` }}
                         />
                       </div>
@@ -5664,7 +5664,7 @@ Return ONLY the final comment text.`;
                           generateAIChecklist();
                         }}
                         disabled={isGeneratingChecklist}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 dark:hover:bg-primary-500/30 text-xs font-medium transition disabled:opacity-50"
                         title={isPolish ? 'Wygeneruj checklistę AI' : 'Generate AI checklist'}
                       >
                         {isGeneratingChecklist ? (
@@ -5738,7 +5738,7 @@ Return ONLY the final comment text.`;
                               />
                               <button
                                 onClick={() => removeChecklistItem(item.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-all"
+                                className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition"
                               >
                                 <Trash2 size={14} />
                               </button>

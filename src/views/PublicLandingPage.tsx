@@ -93,7 +93,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 1: Explore Demo */}
             <div
               onClick={handleDemoClick}
-              className="glass-card p-8 rounded-xl group hover:bg-brand-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:bg-brand-600/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.demo.meta', 'Instant Access')}
@@ -114,7 +114,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 2: Start Free Trial - PRIMARY PATH (Highlighted) */}
             <div
               onClick={() => navigate('/trial')}
-              className="glass-card p-8 rounded-xl group hover:bg-brand-600/10 transition-all duration-500 border-2 border-brand-500/30 cursor-pointer relative overflow-hidden row-span-2"
+              className="glass-card p-8 rounded-xl group hover:bg-brand-600/10 transition duration-300 border-2 border-brand-500/30 cursor-pointer relative overflow-hidden row-span-2"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-brand-400 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.trial.meta', 'Primary Path')}
@@ -130,7 +130,7 @@ export const PublicLandingPage: React.FC = () => {
                   )}
                 </p>
                 <ArrowRight
-                  className="text-brand-400 group-hover:translate-x-2 transition-transform duration-500"
+                  className="text-brand-400 group-hover:translate-x-2 transition-transform duration-300"
                   size={32}
                 />
               </div>
@@ -139,7 +139,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 3: How It Works - Video Tour */}
             <div
               onClick={() => navigate('/demo')}
-              className="glass-card p-6 rounded-xl group hover:bg-blue-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-6 rounded-xl group hover:bg-blue-600/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.tour.meta', 'Product Tour')}
@@ -162,14 +162,14 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 4: Learn Our Tools - Education Hub */}
             <div
               onClick={() => navigate('/tools')}
-              className="glass-card p-8 rounded-xl group hover:shadow-2xl shadow-blue-500/20 hover:shadow-xl transition-all duration-500 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:shadow-2xl shadow-blue-500/20 hover:shadow-xl transition duration-300 cursor-pointer relative overflow-hidden"
             >
               {/* Background Image */}
-              <div className="absolute inset-0 ring-2 ring-blue-500/40 group-hover:ring-blue-400/60 ring-inset transition-all duration-500 pointer-events-none">
+              <div className="absolute inset-0 ring-2 ring-blue-500/40 group-hover:ring-blue-400/60 ring-inset transition duration-300 pointer-events-none">
                 <img
                   src="/assets/landing/cinematic/tools_education.png"
                   alt="Education Hub"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03] opacity-60"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03] opacity-60"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent group-hover:from-black/95 transition-colors" />
               </div>
@@ -197,7 +197,7 @@ export const PublicLandingPage: React.FC = () => {
             {/* Card 5: Become Partner - Replacing Log In */}
             <div
               onClick={handlePartnerClick}
-              className="glass-card p-8 rounded-xl group hover:bg-primary-600/5 transition-all duration-500 border-white/5 cursor-pointer relative overflow-hidden"
+              className="glass-card p-8 rounded-xl group hover:bg-primary-600/5 transition duration-300 border-white/5 cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-4 left-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">
                 {t('pages.public.cards.partner.meta', 'Returning Users')}
@@ -218,7 +218,7 @@ export const PublicLandingPage: React.FC = () => {
             </div>
 
             {/* Card 7: AI Consulting Pitch */}
-            <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-primary-600/10 transition-all duration-500 border-white/5 relative overflow-hidden">
+            <div className="glass-card p-8 rounded-xl group hover:bg-gradient-to-br hover:from-brand-600/10 hover:to-primary-600/10 transition duration-300 border-white/5 relative overflow-hidden">
               <div className="flex flex-col h-full justify-center items-center text-center">
                 <h3 className="text-3xl font-bold mb-2">
                   {t('pages.public.tagline.line1', 'AI consulting.')}
@@ -272,13 +272,13 @@ export const PublicLandingPage: React.FC = () => {
                             shadow-[0_0_50px_-12px_rgba(165,28,48,0.5)]
                             hover:shadow-[0_0_60px_-12px_rgba(165,28,48,0.7)]
                             active:scale-[0.98]
-                            transition-all duration-500 overflow-hidden
+                            transition duration-300 overflow-hidden
                         "
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-300" />
             <span>{t('pages.public.cta.button', 'Discover the Consultify Method')}</span>
             <ArrowRight
-              className="group-hover:translate-x-2 transition-transform duration-500"
+              className="group-hover:translate-x-2 transition-transform duration-300"
               size={24}
             />
           </button>
@@ -292,7 +292,7 @@ export const PublicLandingPage: React.FC = () => {
       {/* FOOTER */}
       <footer className="relative z-10 py-12 px-6 border-t border-white/5 bg-navy-950/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-3 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+          <div className="flex items-center gap-3 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition duration-300">
             <div className="h-6 px-2 rounded bg-brand-600 flex items-center justify-center">
               <span className="text-white font-bold text-[10px] tracking-tight">C</span>
             </div>
@@ -319,7 +319,7 @@ export const PublicLandingPage: React.FC = () => {
             {t('pages.public.footer.secured', 'Secured by DBR77 Governance')}
             {/* Hidden System Health Icon - Triple-click to access */}
             <div
-              className="absolute -right-8 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-green-500/20 hover:bg-green-500/40 cursor-pointer transition-all group"
+              className="absolute -right-8 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-green-500/20 hover:bg-green-500/40 cursor-pointer transition group"
               onClick={(e) => {
                 if (e.detail === 3) {
                   // Triple-click detected
@@ -328,7 +328,7 @@ export const PublicLandingPage: React.FC = () => {
               }}
               title="Triple-click for system diagnostics"
             >
-              <div className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-20 group-hover:opacity-40" />
+              <div className="absolute inset-0 rounded-full bg-green-500 animate-pulse opacity-20 group-hover:opacity-40" />
             </div>
           </div>
         </div>
