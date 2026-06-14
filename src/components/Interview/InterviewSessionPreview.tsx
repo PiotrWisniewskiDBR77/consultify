@@ -59,7 +59,7 @@ export const InterviewSessionPreviewBody: React.FC<InterviewSessionPreviewBodyPr
     {
       label: isPolish ? 'Sesja' : 'Session',
       className:
-        'bg-primary-500/10 text-primary-700 dark:text-primary-200 border-primary-300/30 dark:border-primary-500/20',
+        'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 border-blue-200/40 dark:border-blue-400/20',
     },
     {
       label: `${isPolish ? 'Postęp' : 'Progress'}: ${progress}%`,

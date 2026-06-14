@@ -261,6 +261,35 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 
 Grupowanie w pasku: **Dokumenty** = Raport·Deck·Tabela; **W aplikacji** = Idea·Notatka·Inicjatywa.
 
+### 7.3b Preview action buttons — implementacja (SSOT: `previewStyles.ts`)
+
+Każdy przycisk w stopce preview MUSI używać `PreviewActionBar` + `actionPillClass()` z `src/components/shared/PreviewPane/previewStyles.ts`.
+
+```ts
+import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
+
+const rows = [{
+  actions: [
+    { label: 'Otwórz', icon: ExternalLink, colorScheme: 'primary' },
+    { label: 'Usuń',   icon: Trash2,      colorScheme: 'red' },
+  ]
+}];
+<PreviewActionBar rows={rows} />
+```
+
+**Dozwolone `colorScheme`:** `'primary' | 'neutral' | 'emerald' | 'amber' | 'blue' | 'red'`
+
+| colorScheme | Kiedy używać |
+|---|---|
+| `primary` | Główna akcja CTA (Open, Submit, Assign) |
+| `neutral` | Drugorzędna (Edit, Duplicate, Export) |
+| `emerald` | Akcja potwierdzenia / Dzisiaj |
+| `amber` | Akcja odroczona / Snooze |
+| `blue` | Akcja informacyjna |
+| `red` | Destrukcyjna (Delete, Remove) |
+
+**Niedozwolone:** własne `bg-*` / `text-*` klasy inline na przyciskach preview. Zero `bg-primary-500`, `bg-crimson-*`, `bg-green-500`, `bg-brand/*` na buttonach stopki.
+
 ---
 
 ## 8) Widoki alternatywne — GridView (karty) i Kanban
