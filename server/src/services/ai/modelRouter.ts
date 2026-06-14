@@ -68,6 +68,13 @@ export const MODEL_PROVIDER_MAP: Record<string, string> = {
   'claude-3-5-sonnet-20241022': 'openrouter',
   'claude-3-haiku': 'openrouter',
   'gemini-2.0-flash': 'openrouter',
+  // DeepSeek direct API (NOT via OpenRouter) — used for the "Show reasoning"
+  // chat path: deepseek-reasoner (DeepSeek-R1) emits a real reasoning trace via
+  // delta.reasoning_content, which callStream surfaces as a native reasoning
+  // channel. Routed to the deepseek provider so the direct https://api.deepseek.com
+  // endpoint is used.
+  'deepseek-reasoner': 'deepseek',
+  'deepseek-chat': 'deepseek',
 };
 
 export const TIER_DEFAULTS: Record<string, string> = {
@@ -1506,6 +1513,12 @@ export class ModelRouter {
     if (mapped) return mapped;
 
     const modelLower = modelId.toLowerCase();
+    // DeepSeek direct-API models (deepseek-reasoner / deepseek-chat) — route to
+    // the deepseek provider (direct endpoint), never to OpenRouter, so the
+    // reasoning_content channel from DeepSeek-R1 is preserved.
+    if (modelLower.startsWith('deepseek')) {
+      return 'deepseek';
+    }
     if (
       modelLower.startsWith('gpt') ||
       modelLower.startsWith('o1') ||

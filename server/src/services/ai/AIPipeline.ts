@@ -320,23 +320,6 @@ export class AIPipeline {
             content: m.content,
           }));
 
-        // Try primary model, with automatic cross-provider fallback on failure.
-        // Important: having multiple API keys (e.g. OpenAI + Gemini) must actually enable failover.
-        const tierForFallback = ((request.options as any)?.selectedTier || 'STANDARD') as any;
-        const fallbackChain: string[] =
-          typeof (modelRouter as any).getFallbackChain === 'function'
-            ? ((modelRouter as any).getFallbackChain(tierForFallback) as string[])
-            : [];
-
-        const candidateModelIds = Array.from(
-          new Set([modelConfig.model, ...fallbackChain].filter(Boolean))
-        ) as string[];
-
-        let usedProvider = modelConfig.provider;
-        let usedModel = modelConfig.model;
-        let streamResponse: Record<string, unknown> | null = null;
-        let lastError: Error | null = null;
-
         // "Show reasoning" wiring. When on, we ask llmService to surface the
         // model's native reasoning deltas via onReasoning(); we collect them in
         // an ordered buffer and merge them into the outgoing wrapped stream as
@@ -346,6 +329,40 @@ export class AIPipeline {
         // normal chat is byte-for-byte unaffected.
         const streamAiModes = (request.options as any)?.aiModes || (request.context as any)?.aiModes;
         const showReasoning = streamAiModes?.showReasoning === true;
+
+        // Try primary model, with automatic cross-provider fallback on failure.
+        // Important: having multiple API keys (e.g. OpenAI + Gemini) must actually enable failover.
+        const tierForFallback = ((request.options as any)?.selectedTier || 'STANDARD') as any;
+        const fallbackChain: string[] =
+          typeof (modelRouter as any).getFallbackChain === 'function'
+            ? ((modelRouter as any).getFallbackChain(tierForFallback) as string[])
+            : [];
+
+        // "Show reasoning" → reasoning model. gpt-4o (our STANDARD default) does
+        // NOT emit a reasoning trace, so the toggle was a no-op. When showReasoning
+        // is on we PREPEND deepseek-reasoner (DeepSeek-R1) as the preferred
+        // candidate: it always emits delta.reasoning_content, which callStream
+        // surfaces as a native reasoning channel. This only re-orders the candidate
+        // list for the reasoning-on streaming chat path; if deepseek is not
+        // configured (no API key) the per-candidate `isConfigured` guard below
+        // skips it and we fall through to the normal model + the soft <thinking>
+        // fallback. Normal chat (showReasoning off) is untouched.
+        const reasoningPreferredModelId = 'deepseek-reasoner';
+        const candidateModelIds = Array.from(
+          new Set(
+            [
+              ...(showReasoning ? [reasoningPreferredModelId] : []),
+              modelConfig.model,
+              ...fallbackChain,
+            ].filter(Boolean)
+          )
+        ) as string[];
+
+        let usedProvider = modelConfig.provider;
+        let usedModel = modelConfig.model;
+        let streamResponse: Record<string, unknown> | null = null;
+        let lastError: Error | null = null;
+
         const reasoningBuffer: string[] = [];
         const onReasoningDelta = showReasoning
           ? (delta: string) => {
@@ -2108,9 +2125,13 @@ export class AIPipeline {
         );
       } else {
         instructions.push(
-          '10. MODE: Reasoning ON — BEFORE the answer, add a reasoning section inside <thinking>...</thinking> tags. ' +
-            'Describe in 3-8 bullet points: what assumptions you made, what alternatives you considered, ' +
-            'why you chose this path, and what could change your recommendation. ' +
+          '10. MODE: Reasoning ON — You MUST begin your reply with a reasoning section, ' +
+            'and it MUST be the very first thing you output. Format it EXACTLY as: ' +
+            '<thinking>\n- ...\n- ...\n</thinking> followed by the normal answer. ' +
+            'This is mandatory on EVERY reply in this mode, even for short or simple questions — ' +
+            'never skip the <thinking> block and never omit the closing </thinking> tag. ' +
+            'Inside it, give 3-8 concise bullet points: what assumptions you made, what alternatives ' +
+            'you considered, why you chose this path, and what could change your recommendation. ' +
             'Be specific and substantive. Do not reveal sensitive data.'
         );
       }

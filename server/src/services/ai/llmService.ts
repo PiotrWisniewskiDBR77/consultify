@@ -410,8 +410,14 @@ function buildProviderOptions(
     const effort: 'low' | 'medium' | 'high' =
       typeof reasoning === 'object' && reasoning.effort ? reasoning.effort : 'medium';
 
-    if (provider === 'openai' || provider === 'openrouter' || provider === 'deepseek') {
+    if (provider === 'openai' || provider === 'openrouter') {
       reasoningOpts.openai = { reasoningEffort: effort };
+    } else if (provider === 'deepseek') {
+      // DeepSeek-R1 (deepseek-reasoner) reasons UNCONDITIONALLY and exposes the
+      // trace via delta.reasoning_content — it does not accept the OpenAI
+      // `reasoning_effort` parameter (sending it can 400). So we deliberately
+      // emit NO providerOptions for deepseek; callStream reads reasoning_content
+      // from the raw stream chunks instead.
     } else if (provider === 'anthropic') {
       const budgetByEffort: Record<string, number> = { low: 4096, medium: 8192, high: 16384 };
       reasoningOpts.anthropic = {
@@ -438,6 +444,55 @@ function buildProviderOptions(
   }
 
   return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
+/**
+ * Pull the reasoning / chain-of-thought delta out of a raw OpenAI-compatible
+ * Chat Completions stream chunk. The @ai-sdk/openai chat parser only surfaces
+ * `delta.content`, so reasoning fields used by non-OpenAI providers are dropped
+ * from the normal stream — we recover them from the raw chunk (exposed via
+ * streamText `includeRawChunks: true` as `{ type: 'raw', rawValue }`).
+ *
+ * Field map:
+ *   - DeepSeek-R1 (deepseek-reasoner):   choices[].delta.reasoning_content
+ *   - OpenRouter reasoning models:        choices[].delta.reasoning
+ *     (OpenRouter may also nest as delta.reasoning.text / .content)
+ *
+ * Returns the reasoning text for this chunk, or '' when there is none. Never
+ * throws — a malformed chunk simply yields ''.
+ */
+function extractReasoningFromRawChunk(rawValue: unknown): string {
+  try {
+    const chunk = rawValue as
+      | {
+          choices?: Array<{
+            delta?: {
+              reasoning_content?: unknown;
+              reasoning?: unknown;
+            };
+          }>;
+        }
+      | undefined;
+    const delta = chunk?.choices?.[0]?.delta;
+    if (!delta) return '';
+
+    // DeepSeek: reasoning_content is a plain string delta.
+    if (typeof delta.reasoning_content === 'string' && delta.reasoning_content.length > 0) {
+      return delta.reasoning_content;
+    }
+
+    // OpenRouter: reasoning can be a string, or an object { text|content }.
+    const r = delta.reasoning;
+    if (typeof r === 'string' && r.length > 0) return r;
+    if (r && typeof r === 'object') {
+      const obj = r as { text?: unknown; content?: unknown };
+      if (typeof obj.text === 'string' && obj.text.length > 0) return obj.text;
+      if (typeof obj.content === 'string' && obj.content.length > 0) return obj.content;
+    }
+    return '';
+  } catch {
+    return '';
+  }
 }
 
 export { normalizeTokenUsage } from './tokenUsage.js';
@@ -1009,6 +1064,15 @@ export class LLMService {
             ...(typeof params.temperature === 'number' ? { temperature: params.temperature } : {}),
             ...(typeof params.maxTokens === 'number' ? { maxOutputTokens: params.maxTokens } : {}),
             ...(providerOptions ? { providerOptions: providerOptions as any } : {}),
+            // Reasoning ON: include raw provider chunks so we can read OpenAI-
+            // compatible reasoning fields the SDK chat parser drops. DeepSeek-R1
+            // (deepseek-reasoner) streams its trace in delta.reasoning_content,
+            // and OpenRouter reasoning models use delta.reasoning — neither is
+            // mapped to a `reasoning-delta` part by @ai-sdk/openai's chat path,
+            // so we extract them from { type: 'raw' } parts below. Native
+            // reasoning-delta parts (Anthropic thinking, OpenAI Responses API)
+            // are still handled too. OFF: never set — legacy path unchanged.
+            ...(wantsReasoning ? { includeRawChunks: true } : {}),
           });
 
           // Force-consume the first chunk BEFORE returning. This detects 429 /
@@ -1031,11 +1095,37 @@ export class LLMService {
                     while (true) {
                       const part = await fs.next();
                       if (part.done) return { done: true, value: undefined };
-                      const p = part.value as { type?: string; text?: string };
+                      const p = part.value as {
+                        type?: string;
+                        text?: string;
+                        rawValue?: unknown;
+                      };
                       if (p?.type === 'reasoning-delta') {
+                        // Native reasoning channel: Anthropic extended thinking,
+                        // OpenAI Responses API reasoning summaries, etc.
                         if (typeof p.text === 'string' && p.text.length > 0) {
                           try {
                             onReasoning!(p.text);
+                          } catch {
+                            /* never let a reasoning sink error break the answer stream */
+                          }
+                        }
+                        continue;
+                      }
+                      if (p?.type === 'raw') {
+                        // OpenAI-compatible chat providers (DeepSeek-R1 via the
+                        // direct API, OpenRouter reasoning models) stream their
+                        // chain-of-thought in fields the SDK's chat parser drops:
+                        //   - DeepSeek:    choices[].delta.reasoning_content
+                        //   - OpenRouter:  choices[].delta.reasoning
+                        // We recover them from the raw chunk and forward to the
+                        // reasoning sink. text-delta still carries the visible
+                        // answer, so we only side-channel here (no continue-vs-
+                        // return change for text).
+                        const reasoningChunk = extractReasoningFromRawChunk(p.rawValue);
+                        if (reasoningChunk) {
+                          try {
+                            onReasoning!(reasoningChunk);
                           } catch {
                             /* never let a reasoning sink error break the answer stream */
                           }
@@ -1046,7 +1136,7 @@ export class LLMService {
                         return { done: false, value: p.text };
                       }
                       // error parts surface as thrown by the SDK on the next pull;
-                      // all other part types (tool-*, start/end, source, raw) are ignored.
+                      // all other part types (tool-*, start/end, source) are ignored.
                     }
                   },
                 };
