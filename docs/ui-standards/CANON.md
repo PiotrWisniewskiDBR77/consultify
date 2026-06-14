@@ -108,6 +108,7 @@ Każda egzekwowalna reguła wskazuje swój **jedyny** plik implementacji:
 | Field-level AI | `src/components/shared/NModeLayout/FieldAIButton.tsx` | `03-modules/BLOCK_TYPES_CANON.md` §B4 |
 | Toolbar artefaktu (shell) | `NMODE_TOOLBAR_SHELL_CLASS` + `NModeToolbar.tsx` | `01-shell-layout/n-mode-card-standard.md` |
 | N-mode layout (cały kit) | `src/components/shared/NModeLayout/` | `01-shell-layout/presentation-modes.md` |
+| Motion (≤220ms, scoped, zero bounce) | `npm run lint:motion` / `:ci` (`server/scripts/check-motion-compliance.ts` + `.motion-baseline.json`) | `00-foundation/visual-language.md` §9 |
 
 **Reguła:** nowa egzekwowalna reguła w kanonie = musi wskazać (lub utworzyć) swój kod SSOT. Reguła bez bindingu jest tylko intencją.
 

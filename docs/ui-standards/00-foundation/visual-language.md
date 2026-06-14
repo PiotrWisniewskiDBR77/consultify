@@ -358,6 +358,8 @@ Cel: jeden spójny system przycisków, który skaluje się od “top chrome” d
 - Animacje są krótkie (typowo 150–220ms) i wspierają orientację.
 - Zakaz "ciężkich" animacji jako dekoracji w ekranach enterprise.
 
+> **Egzekwowanie (MUST):** `npm run lint:motion` raportuje dług; `npm run lint:motion:ci` to bramka ratchet względem `.motion-baseline.json` — liczby naruszeń mogą **tylko maleć**. Trzy twarde naruszenia: `transition-all` (nie scoped → jank na layout-triggerach), `duration-500/700/1000` (>320ms), `animate-bounce/ping`. Po każdej naprawie aktualizuj baseline W DÓŁ. Metoda bezpiecznej naprawy: jeśli element ma `hover:scale`/`translate` lub animuje layout (max-height itp.) → użyj `transition-transform`/`transition-[…]`, NIE `transition-colors`; pure kolor/border/tło → `transition-colors`. Wzorzec referencyjny: `src/views/AuthView.tsx` (czysty, 0 naruszeń).
+
 ### 9.1 Motion tokens (KANON)
 
 **MUST:**
