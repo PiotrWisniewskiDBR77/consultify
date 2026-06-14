@@ -12,7 +12,7 @@
 ### UI/UX kanon (obowiązujący)
 
 - Presentation modes D/N/C: `docs/ui-standards/01-shell-layout/presentation-modes.md`
-- Artifact shell (N/C): `docs/ui-standards/artifact-shell-future-standard.md`
+- Artifact shell (N/C): `docs/ui-standards/01-shell-layout/artifact-shell-future-standard.md`
 - Shared N‑mode sections: `docs/ui-standards/02-components/shared-sections.md`
 - Initiative sections canon: `docs/ui-standards/02-components/initiative-sections.md`
 - Building blocks: `docs/ui-standards/02-components/building-blocks.md`
@@ -47,7 +47,7 @@ N‑mode to kanoniczny detail view dla artefaktów pracy (Initiative/Task/Decisi
 
 ## 2) Anatomia N‑mode (kanon shell)
 
-Źródło: `docs/ui-standards/artifact-shell-future-standard.md`
+Źródło: `docs/ui-standards/01-shell-layout/artifact-shell-future-standard.md`
 
 W skrócie (MUST):
 

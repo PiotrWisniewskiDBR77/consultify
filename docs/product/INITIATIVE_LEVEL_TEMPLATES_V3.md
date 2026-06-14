@@ -14,7 +14,7 @@
 - Traceability sources: `docs/product/SOURCE_TRACEABILITY_SPEC.md`
 - UI canon:
   - Presentation modes: `docs/ui-standards/01-shell-layout/presentation-modes.md`
-  - Artifact shell: `docs/ui-standards/artifact-shell-future-standard.md`
+  - Artifact shell: `docs/ui-standards/01-shell-layout/artifact-shell-future-standard.md`
   - Initiative sections canon: `docs/ui-standards/02-components/initiative-sections.md`
 - Implementation (as‑is): Initiative templates system doc: `wdrozenia/modules/initiatives/initiative-templates-system.md`
 

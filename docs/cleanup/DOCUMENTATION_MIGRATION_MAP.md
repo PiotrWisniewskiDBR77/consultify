@@ -187,9 +187,9 @@ Wszystkie dokumenty UI/UX skonsolidowane w `docs/ui-standards/`:
 | ------------------------------------------------------ | --------------------------------------------------------- |
 | `docs/00_foundation/COLOR_SYSTEM_STANDARD.md`          | `docs/ui-standards/00-foundation/color-system.md`         |
 | `docs/00_foundation/DBR77_VISUAL_LANGUAGE_STANDARD.md` | `docs/ui-standards/00-foundation/visual-language.md`      |
-| `docs/ui-standards/artifact-shell-future-standard.md`  | `docs/ui-standards/01-shell-layout/artifact-shell.md`     |
+| `docs/ui-standards/01-shell-layout/artifact-shell-future-standard.md`  | `docs/ui-standards/01-shell-layout/artifact-shell.md`     |
 | `docs/ui-standards/detail-view-presentation-modes.md`  | `docs/ui-standards/01-shell-layout/presentation-modes.md` |
-| `docs/ui-standards/shared-nmode-sections-standard.md`  | `docs/ui-standards/02-components/shared-sections.md`      |
+| `docs/ui-standards/01-shell-layout/shared-nmode-sections-standard.md`  | `docs/ui-standards/02-components/shared-sections.md`      |
 | `docs/TASK_PANEL_SPECIFICATION.md`                     | `docs/ui-standards/02-components/task-panel.md`           |
 | `docs/DECISION_PANEL_SPECIFICATION.md`                 | `docs/ui-standards/02-components/decision-panel.md`       |
 | `docs/ui-standards/notification-detail-view.md`        | `docs/ui-standards/02-components/notification-panel.md`   |

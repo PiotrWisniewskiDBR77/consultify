@@ -3029,4 +3029,4 @@ muszą być kontrolowane przez backend (RBAC) i zapisywać audyt w Activity.
 - 2026-02-11: dopisano pełny copy deck i18n, spec properties per encja, presety embedded views oraz reguły walidacji — implementation-ready pod kodowanie.
 - 2026-02-11: dopisano kontrakty backend/API, model danych i wymagania enterprise (RBAC/audit/performance) dla C mode (Right Rail, Relationships, Watchers, Activity).
 - 2026-02-11: dopisano kanoniczny standard minimalistycznego C mode dla 4 narzędzi (layout + minimalizm + happy paths) oraz adapter/normalization layer (legacy→kanon) dla statusów/priorities/severity.
-- 2026-02-12: dodano §2.5.5.1 — standard współdzielonych sekcji N-mode (CommentsCanvas, ActivityLogCanvas, AttachmentsLinksCanvas, RiskCanvas). Pełna specyfikacja w `docs/ui-standards/shared-nmode-sections-standard.md`.
+- 2026-02-12: dodano §2.5.5.1 — standard współdzielonych sekcji N-mode (CommentsCanvas, ActivityLogCanvas, AttachmentsLinksCanvas, RiskCanvas). Pełna specyfikacja w `docs/ui-standards/01-shell-layout/shared-nmode-sections-standard.md`.

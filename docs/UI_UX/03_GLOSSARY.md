@@ -41,6 +41,6 @@ Cała aplikacja + dokumentacja SSOT.
 - `DRD/UI_UX_SOURCE_OF_TRUTH.md`
 - `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
 - `DRD/consultify/docs/ui-standards/01-shell-layout/app-topbar-standard-v3.md`
-- `DRD/consultify/docs/ui-standards/shared-nmode-sections-standard.md`
+- `DRD/consultify/docs/ui-standards/01-shell-layout/shared-nmode-sections-standard.md`
 - `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md`
 

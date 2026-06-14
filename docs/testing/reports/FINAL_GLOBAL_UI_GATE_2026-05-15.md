@@ -37,7 +37,7 @@ All checks in this gate are derived from:
 - `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
 - `DRD/consultify/docs/ui-standards/00-foundation/visual-language.md`
 - `DRD/consultify/docs/ui-standards/03-modules/app-table-standard.md`
-- `DRD/consultify/docs/ui-standards/shared-nmode-sections-standard.md`
+- `DRD/consultify/docs/ui-standards/01-shell-layout/shared-nmode-sections-standard.md`
 
 ## Pre-Audit Gap Analysis (What Is Missing Before Full Control)
 

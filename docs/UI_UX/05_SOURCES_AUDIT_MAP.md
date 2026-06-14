@@ -61,7 +61,7 @@ Prace dokumentacyjne i migracje UI/UX.
   - **Source**: `docs/ui-standards/00-foundation/canvas-mode.md`
   - **Mapped to**: `23_N_MODE_AND_CANVAS_LAYOUTS.md`
 - **N-mode shared sections**
-  - **Source**: `docs/ui-standards/shared-nmode-sections-standard.md`
+  - **Source**: `docs/ui-standards/01-shell-layout/shared-nmode-sections-standard.md`
   - **Mapped to**: `23_N_MODE_AND_CANVAS_LAYOUTS.md`, `30_COMPONENT_SYSTEM.md`
 - **Reference screens**
   - **Source**: `docs/ui-standards/_archive/UI_UX_REFERENCE_SCREENS.md`, `docs/ui-standards/_archive/evidence/*`

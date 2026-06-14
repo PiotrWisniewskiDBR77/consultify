@@ -128,7 +128,7 @@ docs/ui-standards/
 
 ### Warstwy szczegółu
 - **`00-foundation/`** — `color-system.md` · `visual-language.md` · `light-mode-readability.md` · `canvas-mode.md` · `artifact-identity-map.md`
-- **`01-shell-layout/`** — `presentation-modes.md` (tryby D/N/C) · `n-mode-card-standard.md` · `artifact-shell.md` · `app-topbar-standard-v3.md`
+- **`01-shell-layout/`** — `presentation-modes.md` (tryby D/N/C) · `n-mode-card-standard.md` · `shared-nmode-sections-standard.md` · `artifact-shell.md` · `artifact-shell-future-standard.md` · `app-topbar-standard-v3.md`
 - **`02-components/`** — `shared-sections.md` · `decision-panel.md` · `task-panel.md` · `notification-panel.md` · `building-blocks.md` · `help-*` · `workspace-3-tools-strip.md` …
 - **`03-modules/`** — `TABLE_AND_PREVIEW_CANON.md` · `BLOCK_TYPES_CANON.md` · `INSIGHT_CANON.md` · `INITIATIVE_CANON.md` · `TIMELINE_CALENDAR_CANON.md` · `module-hub-standard.md` · `interactive-board-standard.md` · `tools-library-detail-standard.md`
 
@@ -151,11 +151,14 @@ Każdy agent (Claude, Cursor) **musi przeczytać ten kanon przed pracą nad UI**
 |---|---|---|
 | 2026-06-14 | v3.0 | **Faza 1** — Konsolidacja autorytetu: `CANON.md` jako jedyny front; scalone README (indeks) + Golden (treść→warstwy) + Operating (governance §3–5,8) + Canon V3 (legacy). Dodany doc↔kod binding (§6). Hierarchia prawdy rozstrzygnięta (§2). |
 | 2026-06-14 | v3.0 | **Faza 2** — Rozdział prawo/historia: 9 plików procesu + `evidence/`/`automation/`/`migration-backlog/` → `_archive/` (git mv). `.cursorrules` punkt wejścia → CANON. Repoint referencji, zero-dangling zweryfikowane w całym `docs/`. |
+| 2026-06-14 | v3.0 | **Faza 3** — (a) `light-mode-readability.md` promowany do v3.2 (490 lin.), usunięty gorszy duplikat ` 2.md`. (b) `shared-nmode-sections-standard.md` + `artifact-shell-future-standard.md` przeniesione root → `01-shell-layout/` (repoint, zero-dangling). (c) 5 przywróconych docs potwierdzone jako warstwa `03-modules` (NIE archiwizować). Root = czysta powierzchnia autorytetu. |
 
-### Stan konsolidacji (otwarte — wymagają świadomej decyzji, NIE robić mechanicznie)
+### Stan konsolidacji (otwarte)
 
-- **Decyzja contentowa:** `00-foundation/light-mode-readability.md` (178 lin., bez wersji) vs `light-mode-readability 2.md` (490 lin., v3.2 2026-04-20, pełniejszy). `2.md` jest nowszy/obszerniejszy — która wersja jest kanoniczna? Po decyzji: promować do nazwy kanonicznej, usunąć drugi. **Oba nietknięte do czasu decyzji.**
-- **Re-warstwowanie (F3):** `artifact-shell-future-standard.md` i `shared-nmode-sections-standard.md` leżą w root — kandydaci do `01-shell-layout/` / `02-components/` (wymaga repoint referencji).
-- **Migracja treści (F3):** przywrócone `app-table-standard` / `view-modes-standard` / `module-hub-standard` / `golden-standard-table-cards-preview-v3` / `table-preview-pane-standard` — sprawdzić per-plik co już jest w `TABLE_AND_PREVIEW_CANON`, domigrować unikalne fragmenty PRZED ewentualną archiwizacją.
-- **Dystrybucja Golden/Operating → warstwy (F3):** treść produktowo-wizualna z banner'd Golden Standard do rozłożenia na `00–03`; po zakończeniu Golden/Operating/CanonV3 → `_archive/`.
+- **Dystrybucja Golden/Operating → warstwy:** treść produktowo-wizualna z banner'd Golden Standard do rozłożenia na `00–03`; po zakończeniu Golden/Operating/CanonV3 → `_archive/`. (Duże zadanie contentowe — osobna sesja.)
 - **F4 (opcjonalne):** bramka CI — grep banned patterns (np. `text-blue-900` w statusach) + orphan-doc check.
+
+**Rozstrzygnięte w Fazie 3:**
+- `light-mode-readability.md` — promowano treść v3.2 (490 lin., token-first, focus matrix, preview pane, a11y mierzalny) do nazwy kanonicznej; usunięto nietrackowany duplikat ` 2.md` (był gorszą 178-lin wersją w repo).
+- Re-warstwowanie root standards → patrz changelog F3.
+- 5 przywróconych docs (`app-table`/`view-modes`/`module-hub`/`golden-v3`/`table-preview-pane`) — **decyzja: zostają jako warstwa `03-modules`** (są poprawnymi szczegółowymi standardami cytowanymi przez FROZEN_LAYOUTS; NIE archiwizować — wcześniejsza etykieta „deprecated" była błędna).

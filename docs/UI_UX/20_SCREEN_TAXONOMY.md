@@ -39,7 +39,7 @@ Cała aplikacja.
 ## Related Sources
 
 - `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
-- `DRD/consultify/docs/ui-standards/shared-nmode-sections-standard.md`
+- `DRD/consultify/docs/ui-standards/01-shell-layout/shared-nmode-sections-standard.md`
 - `DRD/consultify/docs/product/MODULE_EXECUTIVE_LAYOUT_STANDARD.md`
 - `DRD/consultify/docs/ui-standards/00-foundation/canvas-mode.md`
 

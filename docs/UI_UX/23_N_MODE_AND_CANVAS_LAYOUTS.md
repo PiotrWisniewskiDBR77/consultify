@@ -31,7 +31,7 @@ Detail views artefaktów (task/decision/initiative/notification/…), N-mode sek
 ## Related Sources
 
 - `DRD/UI_UX_SOURCE_OF_TRUTH.md` (N-type left navigation width)
-- `DRD/consultify/docs/ui-standards/shared-nmode-sections-standard.md`
+- `DRD/consultify/docs/ui-standards/01-shell-layout/shared-nmode-sections-standard.md`
 - `DRD/consultify/docs/ui-standards/00-foundation/canvas-mode.md`
-- `DRD/consultify/docs/ui-standards/artifact-shell-future-standard.md`
+- `DRD/consultify/docs/ui-standards/01-shell-layout/artifact-shell-future-standard.md`
 

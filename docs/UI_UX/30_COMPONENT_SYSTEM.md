@@ -34,5 +34,5 @@ Wszystkie ekrany i moduły.
 ## Related Sources
 
 - `DRD/consultify/docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` (Component Law)
-- `DRD/consultify/docs/ui-standards/shared-nmode-sections-standard.md`
+- `DRD/consultify/docs/ui-standards/01-shell-layout/shared-nmode-sections-standard.md`
 
