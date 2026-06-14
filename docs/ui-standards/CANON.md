@@ -149,4 +149,13 @@ Każdy agent (Claude, Cursor) **musi przeczytać ten kanon przed pracą nad UI**
 
 | Data | Wersja | Zmiana |
 |---|---|---|
-| 2026-06-14 | v3.0 | Konsolidacja autorytetu: `CANON.md` jako jedyny front; scalone README (indeks) + Golden (treść→warstwy) + Operating (governance §3–5,8) + Canon V3 (legacy). Dodany doc↔kod binding (§6). Hierarchia prawdy rozstrzygnięta (§2). |
+| 2026-06-14 | v3.0 | **Faza 1** — Konsolidacja autorytetu: `CANON.md` jako jedyny front; scalone README (indeks) + Golden (treść→warstwy) + Operating (governance §3–5,8) + Canon V3 (legacy). Dodany doc↔kod binding (§6). Hierarchia prawdy rozstrzygnięta (§2). |
+| 2026-06-14 | v3.0 | **Faza 2** — Rozdział prawo/historia: 9 plików procesu + `evidence/`/`automation/`/`migration-backlog/` → `_archive/` (git mv). `.cursorrules` punkt wejścia → CANON. Repoint referencji, zero-dangling zweryfikowane w całym `docs/`. |
+
+### Stan konsolidacji (otwarte — wymagają świadomej decyzji, NIE robić mechanicznie)
+
+- **Decyzja contentowa:** `00-foundation/light-mode-readability.md` (178 lin., bez wersji) vs `light-mode-readability 2.md` (490 lin., v3.2 2026-04-20, pełniejszy). `2.md` jest nowszy/obszerniejszy — która wersja jest kanoniczna? Po decyzji: promować do nazwy kanonicznej, usunąć drugi. **Oba nietknięte do czasu decyzji.**
+- **Re-warstwowanie (F3):** `artifact-shell-future-standard.md` i `shared-nmode-sections-standard.md` leżą w root — kandydaci do `01-shell-layout/` / `02-components/` (wymaga repoint referencji).
+- **Migracja treści (F3):** przywrócone `app-table-standard` / `view-modes-standard` / `module-hub-standard` / `golden-standard-table-cards-preview-v3` / `table-preview-pane-standard` — sprawdzić per-plik co już jest w `TABLE_AND_PREVIEW_CANON`, domigrować unikalne fragmenty PRZED ewentualną archiwizacją.
+- **Dystrybucja Golden/Operating → warstwy (F3):** treść produktowo-wizualna z banner'd Golden Standard do rozłożenia na `00–03`; po zakończeniu Golden/Operating/CanonV3 → `_archive/`.
+- **F4 (opcjonalne):** bramka CI — grep banned patterns (np. `text-blue-900` w statusach) + orphan-doc check.
