@@ -232,7 +232,8 @@
     "deploy:gate": "bash scripts/deploy-gate.sh",
     "parity:check": "tsx server/scripts/check-export-parity.ts",
     "docs:check": "tsx server/scripts/check-doc-change-control.ts",
-    "docs:parity": "tsx server/scripts/check-doc-changelog-parity.ts"
+    "docs:parity": "tsx server/scripts/check-doc-changelog-parity.ts",
+    "docs:links": "tsx server/scripts/check-ui-standards-links.ts"
   },
   "overrides": {
     "react-is": "^19.0.0"

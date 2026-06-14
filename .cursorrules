@@ -55,9 +55,9 @@ Przed każdą zmianą UI w tych obszarach — przeczytaj `FROZEN_LAYOUTS.md`.
 
 ## UI/UX Standards & Documentation
 
-**NAJWYŻSZE ŹRÓDŁO UI/UX:** `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`
+**JEDYNY AUTORYTET UI/UX:** `docs/ui-standards/CANON.md` (start tutaj — hierarchia prawdy, governance, doc↔kod binding; wskazuje warstwy szczegółu `00–03`).
 
-**OPERACYJNE ŹRÓDŁO DLA CURSOR:** `docs/ui-standards/CONSULTIFY_UI_UX_OPERATING_STANDARD.md`
+**Szczegół podległy (treść dystrybuowana do warstw):** `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`, `CONSULTIFY_UI_UX_OPERATING_STANDARD.md` — referencja, nie autorytet.
 
 **KANONICZNE ŹRÓDŁO:** `docs/ui-standards/README.md`
 

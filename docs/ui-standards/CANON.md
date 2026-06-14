@@ -61,7 +61,7 @@ Gdy zatwierdzone komponenty nie pasują:
 ### 3.2 Protokół zmiany (MUST)
 - Zmiana standardu = edycja właściwej warstwy **+ wpis w changelogu** (§9). Bez tworzenia „vN".
 - **Luka** w standardzie = oznaczona jawnie w dokumencie (`świadoma luka`), nie wypełniana nowym samowolnym plikiem.
-- **Integralność referencji:** przed usunięciem/przeniesieniem JAKIEGOKOLWIEK pliku — `grep -rl` grafu referencji (FROZEN_LAYOUTS, READMEs, kanony). Zero martwych linków.
+- **Integralność referencji:** przed usunięciem/przeniesieniem JAKIEGOKOLWIEK pliku — `grep -rl` grafu referencji (FROZEN_LAYOUTS, READMEs, kanony). Zero martwych linków. **Egzekwowane automatycznie:** `npm run docs:links` (skanuje wszystkie względne linki `.md` w tym katalogu, exit 1 przy martwym). Uruchom przed każdym PR ruszającym dokumenty standardów.
 
 ### 3.3 Proces review / approval
 Każda migracja ekranu/komponentu: (1) opisz obecny stan, (2) porównaj z kanonem, (3) decyzja: approved / approved-with-correction / rejected / needs-new-standard, (4) zaktualizuj docs jeśli decyzja tworzy nową regułę, (5) wdroż tylko zatwierdzony zakres, (6) zamroź wzorzec jako referencję.
@@ -152,6 +152,7 @@ Każdy agent (Claude, Cursor) **musi przeczytać ten kanon przed pracą nad UI**
 | 2026-06-14 | v3.0 | **Faza 1** — Konsolidacja autorytetu: `CANON.md` jako jedyny front; scalone README (indeks) + Golden (treść→warstwy) + Operating (governance §3–5,8) + Canon V3 (legacy). Dodany doc↔kod binding (§6). Hierarchia prawdy rozstrzygnięta (§2). |
 | 2026-06-14 | v3.0 | **Faza 2** — Rozdział prawo/historia: 9 plików procesu + `evidence/`/`automation/`/`migration-backlog/` → `_archive/` (git mv). `.cursorrules` punkt wejścia → CANON. Repoint referencji, zero-dangling zweryfikowane w całym `docs/`. |
 | 2026-06-14 | v3.0 | **Faza 3** — (a) `light-mode-readability.md` promowany do v3.2 (490 lin.), usunięty gorszy duplikat ` 2.md`. (b) `shared-nmode-sections-standard.md` + `artifact-shell-future-standard.md` przeniesione root → `01-shell-layout/` (repoint, zero-dangling). (c) 5 przywróconych docs potwierdzone jako warstwa `03-modules` (NIE archiwizować). Root = czysta powierzchnia autorytetu. |
+| 2026-06-14 | v3.0 | **Faza 4** — Egzekwowanie: `.cursorrules` punkt wejścia poprawiony (Golden→CANON, koniec sprzeczności „najwyższe źródło"). Nowy checker `npm run docs:links` (`server/scripts/check-ui-standards-links.ts`) — integralność referencji z §3.2 jako bramka CI; zweryfikowany pozytywnie (0/78) i negatywnie (łapie martwy link, exit 1). |
 
 ### Stan konsolidacji (otwarte)
 
