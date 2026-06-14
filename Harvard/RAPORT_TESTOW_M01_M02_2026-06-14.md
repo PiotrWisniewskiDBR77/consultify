@@ -174,3 +174,51 @@ Natywny dialog uploadu, realne pobranie pliku (pdf/docx/pptx/xlsx), share→inco
 **FALA 5 — UX/CX/grafika (równolegle).** 10 pomysłów z sekcji wyżej: animowany montaż, „Teresa pracuje w panelu", zakładki multi-artefakt, diff z licznikiem zmian, spójny stan zapisu, zgrupowane eksporty, onboarding-hint composera, paleta statusów + przejścia.
 
 **DoD programu:** każda fala — wszystkie pozycje PASS, E2E flag potwierdzone, zero błędów konsoli, PL+EN, light+dark, oba modele Canvasa; demo zielone przed promocją na prod.
+
+---
+
+# PRZEJŚCIE SCREENSHOTOWE (live, headless Chromium, local :3000 → staging DB) — 2026-06-14
+
+Wykonane przeze mnie po stronie front (symulacja kliknięć) + back (network/draft API). Środowisko: konto OWNER DBR77, flagi deliverables-light ON lokalnie.
+
+## M01 Czat — PASS
+- **Composer**: `+` (Add files), `✎` (AI tools), `👥` (Co-Thinker), mic/dyktowanie, Send, output-mode (Auto/Documents/Tables/Presentations). Uwaga operacyjna: realny Send to osobny `title="Send"`; mic uruchamia dyktowanie (pojawia się „Stop dictation").
+- **ToolsMenu (✎)**: 5 trybów — Deep analysis, Show reasoning, Multi-agent analysis, Private mode, Read responses + sekcja **„JAK TERESA MA ODPOWIADAĆ"** (Response style: Standard, Add to project). Panel sterowania (A3) widoczny.
+- **CoThinkerMenu (👥)**: 6 person — Consultant, Idea Creator, Analyst, Auditor, Editor, Market Researcher.
+
+## M02 Canvas — PASS (z bugami treści/diff)
+- **Auto-mount (Tryb B)**: „raport" w Auto → Document w panelu (nie inicjatywa). Potwierdza N-4.
+- **Top bar**: tytuł, `+`, ikony deck/table/doc, **PROMOTE** + cele (idea/note/initiative/decision/task), copy/share/save/close/history/„…".
+- **Toolbar (16)**: undo/redo, B/I/U/S, code, highlight, H1-H3, listy/numerowana/checklista, cytat, tabela, link.
+- **Pipeline deliverables-light**: Document plan → Writing content → Validating content → Artifact ready → karta „✅ Done … on the right" + chip artefaktu „… · Document · Open ↗".
+- **Multi-tab**: drugi raport (nowa rozmowa) = druga zakładka („Working document" + „Prosty raport…"), pierwszy zachowany — pozytyw względem obaw N-5.
+- **Adaptacyjny planer**: raport prosty = generyczny scaffold 5-sekcyjny; raport złożony = bogatszy plan dopasowany do intencji (Strategic Context/Target State/Roadmap Waves/Initiatives by Wave/Capabilities/Risks and Dependencies/Governance/Appendix).
+- **N-6 język**: treść obu raportów PO POLSKU, merytorycznie; Teresa oznacza „(założenie)". ✅ potwierdzone live.
+- **AI floating menu (§4)**: bubble menu na zaznaczeniu — Ask AI / Condense / Expand / Tone▾ / Explain / Actions▾. Diff: pasek „Teresa suggestion · ✓ Accept · ✗ Reject".
+
+## NOWE BUGI (z tego przejścia)
+| ID | Sev | Opis | Gdzie | Naprawa |
+|----|-----|------|-------|---------|
+| **N-8** | **P1** | **AI inline edit DOKLEJA zamiast ZASTĘPOWAĆ zaznaczenie.** Condense wstawił skróconą wersję zaraz po oryginale (tekst PODWOJONY, brak spacji „(założenie).Podsumowanie…"). Accept utrwala podwojenie. Rodzina N-1 (zakres/diff). | `CanvasEditor/canvasDiffOps.ts`, `canvasAIDiffExtensions.ts`, `useCanvasAIStream.ts` | edycja = replaceRange zaznaczenia; diff = delete(old)+insert(new), nie append |
+| **N-9** | **P1** | **Runtime dokumentu ignoruje prośbę o tabele** — mimo „użyj tabel" + sekcji tabelarycznych (3 scenariusze z kosztami/ROI, mapa ryzyk, roadmapa kwartalna) wygenerował WYŁĄCZNIE prozę. Dla raportów zarządczych = realna luka jakości. | `services/deliverables/docGenerationRuntime.ts` | dopuścić/wymusić markdown-tabele w sekcjach tabelarycznych; hint z intencji |
+| **N-10** | **P2** | **Nagłówki sekcji po angielsku przy polskiej treści** (Executive Summary, Strategic Context, Governance, Appendix…). Niespójność szablonu vs N-6. | `docGenerationRuntime.ts` plan/scaffold | lokalizować tytuły sekcji do języka usera |
+
+> N-8 i N-9 → **FALA 1** (kręgosłup) obok N-1; N-10 → FALA 2 (język).
+
+## ✅ WERYFIKACJA NAPRAW (live, 2026-06-14, po dwóch agentach)
+Naprawione lokalnie (branch Londyn, NIE deployowane) + zweryfikowane na żywo front+back:
+- **N-9 (tabele) — FIXED+VERIFIED.** `docGenerationRuntime.ts` + `documentBlockProseGenerator.ts`: dyrektywa wymuszająca tabele GFM w sekcjach tabelarycznych + `ensureTableSpacing` (pusta linia nad tabelą, bo front `marked breaks:false`) + nie doklejać `[Assumption]` do wiersza tabeli. Dowód: raport „3 scenariusze + ROI + macierz ryzyk + roadmapa" → draft `contentMd` = **4 tabele GFM**, renderowane w edytorze jako prawdziwe `<table>` (siatka). Test: 31/31 unit.
+- **N-10 (nagłówki PL) — FIXED+VERIFIED.** Lokalizacja tytułów sekcji na granicy deliverables-light (mapa 105 EN→PL + `localizeMarkdownHeadings`/`localizeSectionTitle`). Dowód: nagłówki „Streszczenie wykonawcze / Kontekst strategiczny / Fale roadmapy / Inicjatywy wg fal / Zdolności / Ryzyka i zależności / Ład (Governance) / Załącznik".
+- **N-8 (edycja dokleja) — FIXED+VERIFIED.** Root-cause = wyścig autosave (rodzina N-1), nie geometria. Fix w `CanvasRichEditor.tsx`: strażnik autosave sprawdza żywy stan dokumentu (`hasPendingAiDiff`) + kasuje zakolejkowany zapis przed `applyAiDiff`. Dowód live: Condense na akapicie 371 zn → diff z kolorowaniem (oryginał przekreślony/czerwony, nowy zielony) → Accept → akapit = TYLKO skrócona wersja (~258 zn), oryginał usunięty, ZERO podwojenia. (Kolorowanie diff działa — wcześniejsza uwaga „brak kolorów" nieaktualna.)
+
+## NOWY BUG (z weryfikacji)
+| ID | Sev | Opis | Naprawa |
+|----|-----|------|---------|
+| **N-11** | **P2** | **Polling generacji timeout-uje po stronie klienta przy wolnym DB** — backend kończy generację (`draft ready streamed sections=9`), ale klient pokazuje „❌ Generation failed: Request timed out" i NIE pokazuje chipa „Open"; artefakt OSIEROCONY w czacie (odzyskiwalny przez reload + „Open work panel"). Przy wolnym DB (10–44 s/zapytanie) reprodukuje się łatwo. | wydłużyć/uadaptacyjnić timeout pollingu; po timeoucie re-fetch statusu generacji i jeśli `ready` — pokazać artefakt zamiast „failed"; chip „Open" wiązać z draftId nawet po timeoucie |
+| **N-12** | **P2** | **Routing zależny od frazy.** „raport … użyj tabel" → Document z tabelami (OK, zweryfikowane: 4–5 tabel). Ale „tabela porównująca … Użyj tabeli" → **Table Studio (Excel Workbook proposal, Approve/Reject)** zamiast dokumentu-z-tabelą. | gdy rzeczownik „raport/dokument" + „tabela" → preferuj Document-z-tabelą; samo „zrób tabelę/arkusz" → Table Studio (`tableIntentDetector` vs `documentIntentDetector`) |
+| **N-13** | **P1** | **409 + stan nieaktualny po RELOADZIE w trakcie streamingu** — reload strony podczas generacji → panel pokazuje wersję częściową (draft w DB jest kompletny i `synced`). Rodzina N-1 (autosave podczas streamingu), NIE tknięta fixem N-8. | po reconnect/reload dociągać świeży draft; merge zamiast 409-clobber dla zapisów streamingu |
+
+> Środowisko POTWIERDZONE: backend `dev:backend:staging` (`DOTENV_IGNORE_LOCAL=1` → ignoruje `.env.local`=centerbeam/PROD; ładuje `.env.staging.local` = trolley/STAGING). Testy NIE dotykały prod. N-12→Fala1 (routing), N-13→Fala1 (kręgosłup/N-1, obok N-11).
+
+## Nie pokryte headless (→ wspólne przejście w Chromie)
+Response style modal (pełny), AI floating Tone/Explain/Actions/Ask-AI realne wyniki, eksporty (download), promote→encja (zapis), share→incognito. Reasoning trace wymaga zarejestrowania modelu reasoning (o-model, config DB) — kod gotowy. Persist-po-reload dla N-8 (czy zaakceptowana wersja trwała) nie re-zweryfikowany przez wolne DB — fix celuje dokładnie w tę ścieżkę.

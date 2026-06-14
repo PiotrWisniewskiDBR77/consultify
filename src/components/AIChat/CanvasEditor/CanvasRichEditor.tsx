@@ -17,6 +17,7 @@ import { AIAcceptRejectBar, CanvasAIFloatingMenu } from './CanvasAIFloatingMenu'
 import {
   acceptAiDiff,
   applyAiDiff,
+  hasPendingAiDiff,
   rejectAiDiff,
   snapRangeToBlockBoundaries,
 } from './canvasDiffOps';
@@ -122,7 +123,14 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
       // serializing now strips them silently — and the user can no longer
       // accept or reject the diff against the persisted markdown. Save
       // resumes after accept/reject (both call onContentChangeRef directly).
-      if (hasPendingDiffRef.current) return;
+      //
+      // N-8 — also check the LIVE document for diff marks, not just the React
+      // ref. The mutation that creates the diff (applyAiDiff / patch ops) fires
+      // this onUpdate synchronously, BEFORE setHasPendingDiff(true) has flipped
+      // the ref on the next render. Without the doc-state check that first
+      // onUpdate would schedule a save of the doubled (original + replacement)
+      // HTML, persisting the doubling once the marks are later stripped.
+      if (hasPendingDiffRef.current || hasPendingAiDiff(ed)) return;
 
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
@@ -272,6 +280,22 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         if (!replacement) {
           setAiProcessing(false);
           return null;
+        }
+
+        // N-8 — flip the pending-diff guard BEFORE mutating the editor. The
+        // diff transactions below fire `onUpdate` synchronously, and the
+        // autosave there reads `hasPendingDiffRef.current`. React's
+        // `setHasPendingDiff(true)` (below) only updates the ref on the NEXT
+        // render, so without this the `onUpdate` would still see `false` and
+        // schedule a save of the marked, DOUBLED HTML (original + replacement).
+        // Turndown drops the aiAdded/aiRemoved marks on serialize, so that
+        // snapshot persists the doubling and a subsequent external sync wipes
+        // the marks — Accept then has nothing to delete. (N-1 family.) Also
+        // cancel any save already queued from the pre-diff selection edit.
+        hasPendingDiffRef.current = true;
+        if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current);
+          saveTimerRef.current = null;
         }
 
         // Apply inline diff (mark original removed + insert replacement marked

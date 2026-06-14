@@ -51,6 +51,16 @@ Dla każdej:
 - **Bez capability:** przycisk nieaktywny, tytuł = `label: reason/status`, klik → `handleUnavailableAction` (komunikat zamiast akcji). Potwierdź, że NIE wysyła żądania.
 - **`create-table`/eksport tabel:** sensowne tylko dla treści tabelarycznej — sprawdź zachowanie dla dokumentu narracyjnego.
 
+### 1.3a Generowanie treści z TABELAMI (N-9) — OBOWIĄZKOWE
+Canvas MA tworzyć tabele, nie tylko prozę. Test E2E generacji tabelarycznej:
+- **Prompt A (po polsku):** „Przygotuj raport porównujący 3 scenariusze wdrożenia AI: koszty, czas wdrożenia i ROI. Dodaj macierz ryzyk oraz roadmapę kwartalną. Użyj tabel." → oczekiwane: w dokumencie ≥3 tabele Markdown GFM renderowane jako prawdziwe `<table>` w edytorze TipTap (nie tekst z `|`).
+- **Prompt B (po angielsku):** analogiczny request „use tables" → tabele + nagłówki w języku usera.
+- **Weryfikacja źródła prawdy:** `GET /api/work-canvas/drafts/:id` → pole `contentMd` MUSI zawierać wiersze nagłówka + separatora `|---|---|` + wiersze danych dla sekcji tabelarycznych (scenariusze/koszty/ROI, ryzyka, roadmapa, KPI, porównania). Policz `tableSeparators` ≥ liczby sekcji tabelarycznych.
+- **Render wizualny:** w panelu Canvas tabela ma być widoczna jako siatka (obramowania komórek), nie jako linia tekstu z pionowymi kreskami. Wymaga pustej linii nad tabelą (`ensureTableSpacing`) bo front `marked` ma `breaks:false`.
+- **Nagłówki sekcji (N-10):** dla promptu PL nagłówki po polsku (Streszczenie wykonawcze, Kontekst strategiczny, Fale roadmapy, Ryzyka i zależności, Ład/Governance, Załącznik…); dla EN — po angielsku.
+- **Edge — proza vs tabela:** dla sekcji czysto narracyjnej (np. Streszczenie) NIE wymuszać tabeli; tabele tylko tam, gdzie zwiększają czytelność.
+- **Antyregresja:** „append clobber" — podczas streamingu generacji autosave nie może zostawić częściowej wersji (409 → re-load pełnego draftu). Po zakończeniu reload strony = pełne 9 sekcji z tabelami, nie wersja skrócona.
+
 ### 1.4 PROMOTE strip (`canvas-promote-strip` → `canvas-workspace-actions`) — 5 ikon
 To wyróżnik produktu (ChatGPT/Claude/Gemini Canvas nie mają odpowiednika). `menuWorkspaceActionIds` = `send-to-idea` (Lightbulb), `save-as-note` (StickyNote), `create-initiative` (Rocket), `create-decision` (Gavel), `create-task` (CheckSquare). Mapują na `workspaceTargets` → `idea/note/initiative/decision/task`.
 Dla KAŻDEJ z 5:
@@ -204,7 +214,34 @@ Przetestuj każdą: **Rozwiń** (expand), **Skróć** (shorten), **Przepisz** (r
 
 ---
 
+## 7A. Generowanie dokumentów z TABELAMI i język treści (N-9 / N-10) — OBOWIĄZKOWE
+> Wymóg produktowy: Canvas ma generować dokumenty zawierające **realne tabele** (nie tylko prozę) i w **języku usera**. Dotyczy ścieżki czat → `planDocGeneration` → `runStreamingDocGeneration`/one-shot (`docGenerationRuntime.ts`) → render w edytorze (`canvasMarkdownConversion.markdownToHtml` → rozszerzenie Table TipTap).
+
+### 7A.1 Raport z tabelami (happy path) — PL
+- Prompt PL (dokumentowy, NIE „zrób tabelę"): „Przygotuj raport porównujący 3 scenariusze wdrożenia AI: zestaw koszty (PLN), czas (miesiące) i ROI po 3 latach. Dodaj sekcję rekomendacji."
+- **Oczekiwane:** intencja → **Document** (panel Canvas, NIE Table Studio); po generacji dokument zawiera ≥1 tabelę GFM wyrenderowaną jako siatka `<table>` (nagłówki + wiersze danych); liczby w komórkach (koszt/czas/ROI); proza + tabela współistnieją.
+- **Dowód (3 warstwy):** (a) DB `work_canvas_drafts.content_md` zawiera wiersz separatora `| --- |` i pustą linię przed każdą tabelą; (b) `markdownToHtml(content_md)` → `<table><thead><th>…`; (c) UI: tabela widoczna w panelu (screenshot).
+- **Edge:** sprawdź, że tabela ma pustą linię nad sobą (wymóg `marked` z `breaks:false`) — bez niej `marked` renderuje surowe `|` jako tekst. Helper `ensureTableSpacing` to gwarantuje.
+
+### 7A.2 Sekcje z natury tabelaryczne
+Dla raportu strategicznego (transformacja/roadmapa/ryzyka) potwierdź tabele w: porównaniu scenariuszy (koszt/ROI), **macierzy ryzyk**, **roadmapie kwartalnej/falowej** (kamienie milowe), zestawieniu KPI, porównaniu dostawców. Proza tam, gdzie tabela nie ma sensu (streszczenie, kontekst) — NIE wymuszaj tabel wszędzie.
+
+### 7A.3 Język treści i nagłówków (N-10)
+- Prompt PL → treść PL **oraz nagłówki sekcji PL** („Streszczenie wykonawcze”, „Kontekst strategiczny”, „Fale roadmapy”, „Ryzyka i zależności”, „Ład (Governance)”, „Załącznik”). Brak angielskich „Executive Summary/Governance/Appendix” przy treści PL.
+- Powtórz z promptem EN → treść + nagłówki EN.
+
+### 7A.4 Routing tabela vs dokument (N-12)
+- „raport … użyj tabel" → **Document z tabelami**. „zrób tabelę/arkusz porównujący…" → **Table Studio (Excel Workbook, Approve/Reject)**. Odnotuj, do czego trafia każda fraza; dwuznaczne („tabela porównująca … użyj tabeli") = znany niuans N-12.
+
+### 7A.5 Edycja AI a tabele
+- Zaznacz akapit obok tabeli → Condense/Expand → diff → Accept: tekst ZASTĄPIONY (nie podwojony, N-8), tabela NIENARUSZONA. Sprawdź też edycję AI na komórce/wewnątrz tabeli (odnotuj zachowanie).
+
+### 7A.6 Trwałość po reload (N-13)
+- Po zakończeniu generacji reload strony → dokument (z tabelami) ładuje się KOMPLETNY z DB. Reload W TRAKCIE streamingu = znany bug N-13 (panel pokazuje wersję częściową mimo kompletnego draftu w DB).
+
+---
+
 ## 8. Format raportu i DoD
 Per przycisk: **kroki → oczekiwane → faktyczne → PASS/FAIL → dowód** (screenshot + payload Network + ewentualny stan w module docelowym/`localStorage`/`saveState`). Dla FAIL: `plik:linia`, przyczyna, propozycja fixu.
 
-**Definition of Done:** wszystkie przyciski paska formatowania i górnego menu PASS; diff Accept/Reject + Esc + blokada autosave potwierdzone; każdy eksport pobiera poprawny plik; każda akcja promote tworzy realną encję; share generuje działający publiczny link; zero błędów w konsoli; PL+EN; light+dark; oba modele Canvasa (chat-shell i standalone) pokryte.
+**Definition of Done:** wszystkie przyciski paska formatowania i górnego menu PASS; diff Accept/Reject + Esc + blokada autosave potwierdzone; **dokument generuje realne tabele w sekcjach tabelarycznych (§7A) i renderuje je jako siatkę**; **treść + nagłówki w języku usera (§7A.3)**; każdy eksport pobiera poprawny plik; każda akcja promote tworzy realną encję; share generuje działający publiczny link; zero błędów w konsoli; PL+EN; light+dark; oba modele Canvasa (chat-shell i standalone) pokryte.

@@ -102,6 +102,9 @@ function buildSystemPrompt(schema: DocumentSchema): string {
     'Produce sharp, decision-oriented, MECE consulting prose — no filler, no hedging, no meta-commentary about being an AI.',
     'Ground every factual claim in the provided sources. When a claim is NOT supported by the sources, phrase it as an explicit assumption (e.g. prefix "Assumption:") rather than asserting it as fact.',
     'For "text" blocks return a single tight paragraph. For "items" blocks return 2-5 crisp bullet points.',
+    // N-9: tabelaryczne sekcje muszą dostać tabelę, nie samą prozę. Renderer
+    // oddaje "text" verbatim, więc tabela GFM w polu "text" trafia do edytora.
+    'TABLES: When a section is inherently tabular — scenario comparisons with costs/ROI, risk maps/matrices, quarterly roadmaps or schedules, KPI summaries, vendor/option comparisons, milestones — the "text" field MUST contain a valid GFM Markdown table (a header row like "| Col | Col |", a separator row "|---|---|", then data rows), optionally preceded by one short framing sentence. Use literal newlines inside the JSON string (\\n). Never wrap the table in code fences. Use prose for non-tabular sections.',
     'You MUST return strict JSON only, no markdown fence, in this exact shape: {"blocks":[{"blockId":"<id>","text":"<prose>"}|{"blockId":"<id>","items":["<bullet>", ...]}, ...]}.',
     'Return one entry per blockId you are given. Do not invent blockIds. Do not add commentary outside the JSON.',
   ].join(' ');
@@ -235,6 +238,13 @@ export async function generateBlockProse(
       // The block is now grounded in (or explicitly flagged against) the
       // source pack, so it is no longer a bare structural assumption.
       if (sourceRefs.length > 0) {
+        block.isAssumption = false;
+      }
+      // N-9: a paragraph carrying a GFM table must NOT get the inline
+      // "_[Assumption]_" suffix from the renderer — appended after the final
+      // "| … |" row it breaks the row's table membership in marked. Concrete
+      // table content is not a bare assumption, so clear the flag.
+      if (typeof content.text === 'string' && /^\s*\|.*\|\s*$/m.test(content.text)) {
         block.isAssumption = false;
       }
     }

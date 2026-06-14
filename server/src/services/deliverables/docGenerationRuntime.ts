@@ -59,6 +59,209 @@ function languageDirective(language: 'pl' | 'en'): string {
     : 'BEZWZGLĘDNIE WAŻNE: Całą treść pisz po POLSKU, niezależnie od języka kontekstu, faktów czy tytułów sekcji. Każde zdanie musi być po polsku.';
 }
 
+/**
+ * N-9: dyrektywa tabel. Deterministyczny planer (documentNarrativePlanner)
+ * tworzy tylko nieliczne sekcje tabelaryczne (risk_table), reszta to proza —
+ * więc model nigdy nie dostaje tabeli tam, gdzie sekcja jest z natury
+ * zestawieniem (scenariusze + koszty/ROI, KPI, roadmapa, porównania dostawców,
+ * kamienie milowe). Dopinamy jawną instrukcję, że treść takich sekcji MA
+ * zawierać poprawną tabelę Markdown GFM (nagłówek + wiersz separatora |---|).
+ * `reinforced` = intencja użytkownika wprost prosi o tabele/zestawienie.
+ */
+function tableDirective(language: 'pl' | 'en', reinforced: boolean): string {
+  const base =
+    language === 'en'
+      ? 'TABLES: When a section is inherently tabular — scenario comparisons with costs/ROI, risk maps/matrices, quarterly roadmaps or schedules, KPI summaries, vendor/option comparisons, milestones — the content MUST include a valid GFM Markdown table (a header row "| col | col |", a separator row "|---|---|", then data rows). Use prose AND a table where it adds clarity; do not force tables where prose is enough. Never wrap tables in code fences.'
+      : 'TABELE: Gdy sekcja jest z natury tabelaryczna — porównania scenariuszy z kosztami/ROI, mapy/macierze ryzyk, roadmapy lub harmonogramy kwartalne, zestawienia KPI, porównania dostawców/opcji, kamienie milowe — treść MUSI zawierać poprawną tabelę Markdown GFM (wiersz nagłówków "| kol | kol |", wiersz separatora "|---|---|", potem wiersze danych). Stosuj prozę ORAZ tabelę tam, gdzie zwiększa to czytelność; nie wymuszaj tabel tam, gdzie wystarczy proza. Nigdy nie owijaj tabel w bloki kodu.';
+  if (!reinforced) return base;
+  const reinforcement =
+    language === 'en'
+      ? 'The user explicitly asked for tables/comparisons — render every quantitative or comparative breakdown as a GFM Markdown table, not prose.'
+      : 'Użytkownik wprost poprosił o tabele/zestawienia — każde zestawienie liczbowe lub porównawcze przedstaw jako tabelę Markdown GFM, nie prozą.';
+  return `${base} ${reinforcement}`;
+}
+
+/** N-9: czy intencja/kontekst użytkownika wprost prosi o tabele/zestawienia? */
+const TABLE_INTENT_RE =
+  /\btabel|\btable\b|zestawieni|por[óo]wnani|comparison|compare|macierz|matrix|scenariusz|scenario|roadmap|mapa drogow|harmonogram|schedule|kamieni(?:e|ach|ami)? milow|milestone/i;
+
+function intentWantsTables(intent: string, conversationContext?: string): boolean {
+  return TABLE_INTENT_RE.test(`${intent}\n${conversationContext || ''}`);
+}
+
+/**
+ * N-10: deterministyczny planer (documentNarrativePlanner) zwraca tytuły sekcji
+ * twardo po angielsku (taksonomia typów) — przy polskim raporcie nagłówki są EN
+ * mimo polskiej treści. Lokalizujemy je na granicy deliverables-light (nie w
+ * samym planerze: tytuły EN są kluczem dyspozytora bloków w buildSectionBlocks
+ * — risk_table, listy „Next Steps" itd. — oraz bramek QA Document Studio).
+ * Dlatego EN-owy outline płynie do materializeDocumentArtifact bez zmian, a tu
+ * mapujemy nagłówki w finalnym markdownie / planie / szkielecie do języka usera.
+ */
+const SECTION_TITLE_PL: Record<string, string> = {
+  'AI Opportunities': 'Możliwości AI',
+  'Adoption KPIs': 'KPI adopcji',
+  Appendix: 'Załącznik',
+  Assumptions: 'Założenia',
+  'Audit Scope': 'Zakres audytu',
+  'Benefits Methodology': 'Metodyka korzyści',
+  'Benefits Snapshot': 'Migawka korzyści',
+  'Benefits and KPIs': 'Korzyści i KPI',
+  Capabilities: 'Zdolności',
+  'Client Context': 'Kontekst klienta',
+  'Communication Plan': 'Plan komunikacji',
+  Compliance: 'Zgodność',
+  Context: 'Kontekst',
+  Controls: 'Mechanizmy kontroli',
+  'Current State': 'Stan obecny',
+  'Decision in One Sentence': 'Decyzja w jednym zdaniu',
+  Decisions: 'Decyzje',
+  'Decisions Required': 'Wymagane decyzje',
+  Definitions: 'Definicje',
+  Dependencies: 'Zależności',
+  'Discovery Scope': 'Zakres rozpoznania',
+  'Economic Analysis': 'Analiza ekonomiczna',
+  Escalations: 'Eskalacje',
+  Exceptions: 'Wyjątki',
+  'Executive Summary': 'Streszczenie wykonawcze',
+  'Financial Snapshot': 'Migawka finansowa',
+  Findings: 'Ustalenia',
+  'For Information': 'Do wiadomości',
+  Governance: 'Ład (Governance)',
+  Hypotheses: 'Hipotezy',
+  'Implementation Outline': 'Zarys wdrożenia',
+  'Implementation Roadmap': 'Roadmapa wdrożenia',
+  Implications: 'Implikacje',
+  'Initiatives Progress': 'Postęp inicjatyw',
+  'Initiatives by Wave': 'Inicjatywy wg fal',
+  'Inputs and Outputs': 'Wejścia i wyjścia',
+  'Interview Coverage': 'Zakres wywiadów',
+  Investment: 'Inwestycja',
+  'KPI Evidence': 'Dowody KPI',
+  KPIs: 'KPI',
+  'Key Organizational Findings': 'Kluczowe ustalenia organizacyjne',
+  'Key Results': 'Kluczowe wyniki',
+  'Main Pain Points': 'Główne problemy',
+  Method: 'Metoda',
+  Methodology: 'Metodyka',
+  Milestones: 'Kamienie milowe',
+  'Mitigation Plans': 'Plany mitygacji',
+  'Next Review': 'Następny przegląd',
+  'Next Steps': 'Następne kroki',
+  'Open Questions': 'Pytania otwarte',
+  'Operational Snapshot': 'Migawka operacyjna',
+  Opportunities: 'Możliwości',
+  Options: 'Opcje',
+  Owners: 'Właściciele',
+  'Period and Scope': 'Okres i zakres',
+  'Plan Approach': 'Podejście do planu',
+  'Policy Statements': 'Zapisy polityki',
+  'Portfolio Health': 'Kondycja portfela',
+  'Portfolio Status': 'Status portfela',
+  Prioritization: 'Priorytetyzacja',
+  'Problem Statement': 'Sformułowanie problemu',
+  'Process Steps': 'Kroki procesu',
+  'Project Context': 'Kontekst projektu',
+  'Proposed Approach': 'Proponowane podejście',
+  'Proposed Initiative': 'Proponowana inicjatywa',
+  Purpose: 'Cel',
+  'RAG Heatmap': 'Mapa cieplna RAG',
+  Recommendation: 'Rekomendacja',
+  Recommendations: 'Rekomendacje',
+  'Recommended Actions': 'Rekomendowane działania',
+  'Recommended Adjustments': 'Rekomendowane korekty',
+  'Recommended Initiatives': 'Rekomendowane inicjatywy',
+  'Recommended Option': 'Rekomendowana opcja',
+  'Research Question': 'Pytanie badawcze',
+  'Revision History': 'Historia zmian',
+  'Risk Methodology': 'Metodyka ryzyka',
+  'Risk Register Table': 'Tabela rejestru ryzyk',
+  Risks: 'Ryzyka',
+  'Risks and Consequences': 'Ryzyka i konsekwencje',
+  'Risks and Constraints': 'Ryzyka i ograniczenia',
+  'Risks and Dependencies': 'Ryzyka i zależności',
+  'Risks and Issues': 'Ryzyka i problemy',
+  'Roadmap Waves': 'Fale roadmapy',
+  Roles: 'Role',
+  'Root Causes': 'Przyczyny źródłowe',
+  Scope: 'Zakres',
+  'Scope and Approach': 'Zakres i podejście',
+  'Scope and Methodology': 'Zakres i metodyka',
+  Sources: 'Źródła',
+  'Stakeholder Analysis': 'Analiza interesariuszy',
+  'Status Overview': 'Przegląd statusu',
+  'Strategic Context': 'Kontekst strategiczny',
+  'Strategic Fit': 'Dopasowanie strategiczne',
+  'Strategic Themes': 'Tematy strategiczne',
+  'Target Overview': 'Przegląd celu',
+  'Target State': 'Stan docelowy',
+  'Team and Credentials': 'Zespół i referencje',
+  Themes: 'Tematy',
+  Timeline: 'Harmonogram',
+  'Top Risks Detail': 'Szczegóły kluczowych ryzyk',
+  'Top Risks and Decisions': 'Kluczowe ryzyka i decyzje',
+  'Training Plan': 'Plan szkoleń',
+  Variances: 'Odchylenia',
+  Waves: 'Fale',
+  'Workshop Context': 'Kontekst warsztatu',
+};
+
+/**
+ * N-9: marked (canvasMarkdownConversion) parsuje tabele GFM tylko jako osobny
+ * blok — tabela wprost po zdaniu (bez pustej linii) NIE jest rozpoznana jako
+ * tabela i ląduje jako proza z surowymi „|". Tu wstawiamy pustą linię przed
+ * pierwszym wierszem tabeli, jeśli poprzedza go niepusty, nie-tabelowy wiersz.
+ * Nie ruszamy treści tabel — tylko odstęp, więc separatory/„|" przechodzą.
+ */
+function ensureTableSpacing(markdown: string): string {
+  const rows = markdown.split('\n');
+  const out: string[] = [];
+  const isTableRow = (l: string) => /^\s*\|.*\|\s*$/.test(l);
+  for (let i = 0; i < rows.length; i++) {
+    const line = rows[i];
+    const prev = out.length ? out[out.length - 1] : '';
+    if (isTableRow(line) && !isTableRow(prev) && prev.trim() !== '') {
+      out.push('');
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
+/** N-10: tytuł sekcji w języku usera (PL ⇒ mapa, brak wpisu ⇒ EN bez zmian). */
+function localizeSectionTitle(title: string, language: 'pl' | 'en'): string {
+  if (language !== 'pl') return title;
+  return SECTION_TITLE_PL[title.trim()] || title;
+}
+
+/**
+ * N-10: lokalizacja outline'u na potrzeby tego, co WIDZI użytkownik (plan +
+ * szkielet draftu). Outline przekazywany do materializeDocumentArtifact musi
+ * zachować tytuły EN (dyspozytor bloków), dlatego ta funkcja tworzy kopię tylko
+ * z przetłumaczonymi tytułami sekcji.
+ */
+function localizeOutlineTitles(outline: DocumentOutline, language: 'pl' | 'en'): DocumentOutline {
+  if (language !== 'pl') return outline;
+  return {
+    ...outline,
+    sections: outline.sections.map((s) => ({ ...s, title: localizeSectionTitle(s.title, language) })),
+  };
+}
+
+/**
+ * N-10: zamiana nagłówków sekcji (## Tytuł / ### Tytuł) w gotowym markdownie na
+ * język usera. Działa na outpucie renderera schematu (ścieżka one-shot), gdzie
+ * tytuły EN były kluczem dyspozytora — po renderze możemy je bezpiecznie
+ * zlokalizować bez wpływu na strukturę/bloki.
+ */
+function localizeMarkdownHeadings(markdown: string, language: 'pl' | 'en'): string {
+  if (language !== 'pl') return markdown;
+  return markdown.replace(/^(#{2,3})\s+(.+?)\s*$/gm, (full, hashes: string, title: string) => {
+    const localized = SECTION_TITLE_PL[title.trim()];
+    return localized ? `${hashes} ${localized}` : full;
+  });
+}
+
 interface DocRuntimeEntry {
   state: 'plan_ready' | 'generating' | 'validating' | 'draft' | 'error';
   error?: string;
@@ -322,13 +525,21 @@ function outlineToPlanItems(outline: DocumentOutline): GenerationPlanItem[] {
 }
 
 function applyPlanToOutline(outline: DocumentOutline, plan: GenerationPlanItem[]): DocumentOutline {
-  const byKey = new Map(plan.map((p) => [p.key, p]));
+  // N-10: plan items wracają z FE z tytułami zlokalizowanymi (PL), więc klucz
+  // `${index}:${title}` nie zrówna się z EN-owym outline. Dopasowujemy po
+  // prefiksie indeksu (stabilny), żeby enable/disable + rename z planu działały.
+  const byIndex = new Map(plan.map((p) => [String(p.key).split(':', 1)[0], p]));
   const sections = outline.sections
     .map((section, index) => {
-      const edit = byKey.get(`${index}:${section.title}`);
+      const edit = byIndex.get(String(index));
       if (!edit) return section;
       if (!edit.enabled) return null;
-      return { ...section, title: edit.title || section.title };
+      // Tytuł z planu (zlokalizowany lub przemianowany) wygrywa tylko gdy różny
+      // od domyślnego zlokalizowanego — inaczej zostaje EN (klucz dyspozytora).
+      const defaultLocalized = localizeSectionTitle(section.title, 'pl');
+      const fromPlan = edit.title?.trim();
+      const renamed = fromPlan && fromPlan !== defaultLocalized && fromPlan !== section.title;
+      return renamed ? { ...section, title: fromPlan } : section;
     })
     .filter((s): s is DocumentOutline['sections'][number] => s !== null);
   return { ...outline, sections: sections.length > 0 ? sections : outline.sections };
@@ -676,6 +887,10 @@ export async function planDoc(params: {
   const parsed = parseSetup(params.setup);
   const intake = buildIntake(parsed);
   const { outline } = planDocument({ intake });
+  const planLang = parsed.language === 'en' ? ('en' as const) : ('pl' as const);
+  // N-10: outline EN (klucz dyspozytora bloków) trafia do provenance/materialize;
+  // użytkownik widzi tytuły zlokalizowane (plan + szkielet draftu).
+  const localizedOutline = localizeOutlineTitles(outline, planLang);
   const title = parsed.title || outline.title;
 
   // B4: brak wskazanych źródeł ⇒ Teresa sama szuka w organizacji.
@@ -694,7 +909,7 @@ export async function planDoc(params: {
       conversationId: parsed.conversationId!,
       kind: 'document',
       title,
-      content: outlineSkeletonMarkdown(title, outline),
+      content: outlineSkeletonMarkdown(title, localizedOutline),
       sources: parsed.sourceRefs?.length ? parsed.sourceRefs : auto.refs,
       provenance: {
         deliverablesGeneration: {
@@ -728,7 +943,7 @@ export async function planDoc(params: {
     generationId: draft.id,
     format: 'doc',
     state: 'plan_ready',
-    plan: outlineToPlanItems(outline),
+    plan: outlineToPlanItems(localizedOutline),
     warnings: [],
     sources: usedRefs.map((r) => ({
       sourceType: r.sourceType,
@@ -752,6 +967,8 @@ async function runStreamingDocGeneration(params: {
   outline: DocumentOutline;
   language: 'pl' | 'en';
   groundingFacts: string | null;
+  /** N-9: intencja usera wprost prosi o tabele ⇒ wzmocniona dyrektywa. */
+  reinforceTables: boolean;
   onSectionDone: (index: number, total: number) => void;
 }): Promise<string | null> {
   const { generateChatResponse } = await import('../aiService.js');
@@ -760,20 +977,23 @@ async function runStreamingDocGeneration(params: {
   const total = sections.length;
 
   const docLang = pl ? ('pl' as const) : ('en' as const);
+  // N-9: dopuszczamy tabelę GFM obok prozy (dawniej „wyłącznie prozę" → model
+  // nigdy nie dawał tabel). Nagłówek sekcji nadal dokleja runtime, nie model.
   const systemPromptBase = pl
-    ? 'Jesteś starszym konsultantem w Consultify. Piszesz JEDNĄ sekcję dokumentu biznesowego — zwracasz wyłącznie prozę tej sekcji (bez nagłówka, bez markdownu nagłówków). 2–4 akapity, konkretnie, językiem konsultingowym. Jeśli twierdzenie wykracza poza dostarczone fakty, oznacz je w nawiasie „(założenie)". Bez bloków kodu, bez meta-komentarzy.'
-    : 'You are a senior consultant at Consultify. You write ONE section of a business document — return only that section prose (no heading, no markdown headings). 2–4 paragraphs, concrete, consulting register. If a claim goes beyond the provided facts, flag it inline as "(assumption)". No code fences, no meta-commentary.';
-  const systemPrompt = `${languageDirective(docLang)}\n\n${systemPromptBase}`;
+    ? 'Jesteś starszym konsultantem w Consultify. Piszesz JEDNĄ sekcję dokumentu biznesowego — zwracasz treść tej sekcji bez nagłówka (bez markdownu nagłówków #/##). Domyślnie 2–4 akapity prozy, konkretnie, językiem konsultingowym; gdy sekcja jest tabelaryczna z natury, dodaj tabelę Markdown GFM. Jeśli twierdzenie wykracza poza dostarczone fakty, oznacz je w nawiasie „(założenie)". Bez bloków kodu, bez meta-komentarzy.'
+    : 'You are a senior consultant at Consultify. You write ONE section of a business document — return the section content with no heading (no #/## markdown headings). By default 2–4 paragraphs of prose, concrete, consulting register; when the section is inherently tabular, add a GFM Markdown table. If a claim goes beyond the provided facts, flag it inline as "(assumption)". No code fences, no meta-commentary.';
+  const systemPrompt = `${languageDirective(docLang)}\n\n${tableDirective(docLang, params.reinforceTables)}\n\n${systemPromptBase}`;
 
   const lines = [`# ${params.title}`, ''];
   let anySucceeded = false;
 
   for (let i = 0; i < total; i++) {
     const section = sections[i];
-    const priorTitles = sections.slice(0, i).map((s) => s.title);
+    const localizedTitle = localizeSectionTitle(section.title, docLang);
+    const priorTitles = sections.slice(0, i).map((s) => localizeSectionTitle(s.title, docLang));
     const ctxParts = [
       pl ? `Dokument: „${params.title}"` : `Document: "${params.title}"`,
-      pl ? `Sekcja do napisania: „${section.title}"` : `Section to write: "${section.title}"`,
+      pl ? `Sekcja do napisania: „${localizedTitle}"` : `Section to write: "${localizedTitle}"`,
       section.purpose
         ? pl
           ? `Cel sekcji: ${section.purpose}`
@@ -808,11 +1028,11 @@ async function runStreamingDocGeneration(params: {
 
     if (prose && !isPlaceholderDocumentProse(prose)) {
       anySucceeded = true;
-      lines.push(`## ${section.title}`, '', prose, '');
+      lines.push(`## ${localizedTitle}`, '', prose, '');
     } else {
       // Sekcja padła — jawny znacznik, nie cisza (D-L2-3 w duchu).
       lines.push(
-        `## ${section.title}`,
+        `## ${localizedTitle}`,
         '',
         pl
           ? '_(Nie udało się wygenerować tej sekcji — spróbuj ponownie lub uzupełnij ręcznie.)_'
@@ -874,13 +1094,20 @@ export async function startDoc(params: {
       );
       const groundingFacts = explicitFacts || stored.autoGrounding?.facts || null;
       const docLangEarly = stored.intake.language === 'en' ? ('en' as const) : ('pl' as const);
+      // N-9: intencja usera (zaszyta w description przez buildIntake) decyduje o
+      // wzmocnieniu dyrektywy tabel — opis niesie intent + kontekst rozmowy.
+      const reinforceTables = intentWantsTables(String(stored.intake.description || ''));
       // N-6: ścieżka one-shot (materializeDocumentArtifact) wymusza język tylko
       // przez intake.language — przy mieszanym kontekście to za słabe. Dopinamy
       // twardą dyrektywę do description (jedyny lever na ten generator stąd).
+      // N-9: tą samą drogą wstrzykujemy dyrektywę tabel — silnik prozy
+      // (generateBlockProse) czyta intake.description do user-promptu, a tabelę
+      // GFM w tekście paragrafu renderer oddaje verbatim (przejdzie do edytora).
       const intakeDescription = [
         stored.intake.description,
         groundingFacts || '',
         languageDirective(docLangEarly),
+        tableDirective(docLangEarly, reinforceTables),
       ]
         .filter(Boolean)
         .join('\n\n');
@@ -904,6 +1131,7 @@ export async function startDoc(params: {
           outline,
           language: docLangEarly,
           groundingFacts,
+          reinforceTables,
           onSectionDone: (done, totalSections) =>
             setDocRuntime(draft.id, {
               state: done >= totalSections ? 'validating' : 'generating',
@@ -916,7 +1144,12 @@ export async function startDoc(params: {
             'Generacja treści nie powiodła się (LLM niedostępny) — dokument nie został wypełniony'
           );
         }
-        const withSources = appendSourcesSection(streamed, usedRefsEarly, docLangEarly);
+        // N-9: pewny odstęp przed tabelami GFM w sklejonym markdownie.
+        const withSources = appendSourcesSection(
+          ensureTableSpacing(streamed),
+          usedRefsEarly,
+          docLangEarly
+        );
         await updateDraft({
           organizationId: params.organizationId,
           draftId: draft.id,
@@ -966,11 +1199,13 @@ export async function startDoc(params: {
           'Generacja treści nie powiodła się (LLM niedostępny) — dokument nie został wypełniony'
         );
       }
-      const markdown = polishMarkdownForCanvas(
-        rendered,
-        stored.intake.language === 'en' ? 'en' : 'pl'
-      );
       const docLang = stored.intake.language === 'en' ? ('en' as const) : ('pl' as const);
+      // N-10: renderer zachowuje EN tytuły sekcji (klucz dyspozytora bloków) —
+      // po renderze lokalizujemy nagłówki do języka usera.
+      // N-9: ensureTableSpacing gwarantuje pustą linię przed tabelą GFM (marked).
+      const markdown = ensureTableSpacing(
+        localizeMarkdownHeadings(polishMarkdownForCanvas(rendered, docLang), docLang)
+      );
       const usedRefs = stored.intake.sourceHints?.length
         ? stored.intake.sourceHints
         : stored.autoGrounding?.refs;
