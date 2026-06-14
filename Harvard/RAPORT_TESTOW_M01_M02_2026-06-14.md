@@ -220,5 +220,10 @@ Naprawione lokalnie (branch Londyn, NIE deployowane) + zweryfikowane na żywo fr
 
 > Środowisko POTWIERDZONE: backend `dev:backend:staging` (`DOTENV_IGNORE_LOCAL=1` → ignoruje `.env.local`=centerbeam/PROD; ładuje `.env.staging.local` = trolley/STAGING). Testy NIE dotykały prod. N-12→Fala1 (routing), N-13→Fala1 (kręgosłup/N-1, obok N-11).
 
+**Status napraw (commity lokalne na Londyn, BEZ push/deploy):**
+- `be7d349db3` — N-8 + N-9 + N-10 (zweryfikowane live: 5 tabel w UI, nagłówki PL, Condense→Accept bez podwojenia).
+- `0043de47f1` — N-11 (fallback-GET przed timeoutem pollingu) + N-13 (re-poll draftu po reload gdy projekcja nie-`synced`, z antyklobberem). tsc czysty, 62/62 testy komponentowe; smoke regresji OK (synced draft z 5 tabelami ładuje się kompletnie, bez pętli/błędów konsoli). Weryfikacja czysto-czasowych ścieżek N-11/N-13 ograniczona (nie reprodukowalne klikiem bez sztucznego spowolnienia DB) — pokrycie testami komponentowymi.
+- **N-12 (routing) — ŚWIADOMIE NIE TKNIĘTE:** dotyka współdzielonych `tableIntentDetector`/`documentIntentDetector` (ryzyko regresji w innych modułach) i bywa poprawne (samo „zrób tabelę" → Table Studio). Do decyzji Piotra.
+
 ## Nie pokryte headless (→ wspólne przejście w Chromie)
 Response style modal (pełny), AI floating Tone/Explain/Actions/Ask-AI realne wyniki, eksporty (download), promote→encja (zapis), share→incognito. Reasoning trace wymaga zarejestrowania modelu reasoning (o-model, config DB) — kod gotowy. Persist-po-reload dla N-8 (czy zaakceptowana wersja trwała) nie re-zweryfikowany przez wolne DB — fix celuje dokładnie w tę ścieżkę.
