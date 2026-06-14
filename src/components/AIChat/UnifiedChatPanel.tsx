@@ -102,7 +102,11 @@ import { pushRecentAttachment } from './chatRecentAttachments';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
-import { detectDocumentIntent, detectPresentationIntent } from './documentIntentDetector';
+import {
+  detectDocumentIntent,
+  detectPresentationIntent,
+  hasStrongDocumentNoun,
+} from './documentIntentDetector';
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 import { detectMindmapIntent } from './mindmapIntentDetector';
@@ -2184,7 +2188,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Tables / workbook intents now land in the single canonical Table Studio module.
-      if (detectExceleIntent(text)) {
+      // N-12: a prompt with an explicit document noun ("raport … tabela") is a
+      // document-with-a-table, not a standalone workbook — let it fall through to
+      // the Document gate below.
+      if (detectExceleIntent(text) && !hasStrongDocumentNoun(text)) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',
@@ -2400,7 +2407,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Dokumenty: intercept document/report creation intents
-      if (detectDocumentIntent(text)) {
+      // N-12: also route here when an explicit document noun is present (even if
+      // it escapes the verb-adjacent documentIntentDetector regexes, e.g. the
+      // noun sits after a colon: "Zrób krótki raport: tabela …"). A document may
+      // contain a table; the document wins over standalone Table/Excel.
+      if (detectDocumentIntent(text) || hasStrongDocumentNoun(text)) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',
@@ -2853,7 +2864,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // Table Platform: intercept table creation/modification intents
       // Opens the AI Table Builder slide-over panel with the user's message
-      if (detectTableIntent(text)) {
+      // N-12: defensive — a document-noun prompt is already absorbed by the
+      // Document gate above; this guard keeps standalone-table routing correct
+      // even if gate ordering changes later.
+      if (detectTableIntent(text) && !hasStrongDocumentNoun(text)) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',

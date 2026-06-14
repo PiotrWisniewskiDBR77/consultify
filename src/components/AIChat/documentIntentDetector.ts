@@ -51,6 +51,35 @@ export function detectDocumentIntent(message: string): boolean {
   return DOCUMENT_INTENT_PATTERNS.some((pattern) => pattern.test(message));
 }
 
+// ── N-12: document-vs-table collision precedence ─────────────────────────────
+// When a prompt carries an explicit "document noun" (raport, dokument, analiza,
+// memo, report, …) together with a creation verb, the intent is a DOCUMENT that
+// MAY contain a table — the table is a content element, not the deliverable.
+// Chat orchestration uses this to (a) suppress standalone Table/Excel routing
+// and (b) let such prompts fall into the Document gate, even when the
+// document-noun sits after a colon and so escapes the verb-adjacent
+// DOCUMENT_INTENT_PATTERNS above (e.g. "Zrób krótki raport: tabela …").
+// Deliberately requires BOTH a creation verb AND a document noun anywhere, so
+// ordinary chat that merely mentions "raport" ("co sądzisz o tym raporcie?") is
+// NOT hijacked. Diacritic-tolerant: no trailing \b after Polish stems
+// (ó/ż/ą are non-word chars for JS \b). Document nouns only — presentation /
+// mindmap / spreadsheet nouns are intentionally excluded so those paths route
+// normally.
+const STRONG_DOCUMENT_CREATION_VERB =
+  /\b(create|write|generate|prepare|draft|make|build|compose|napisz|stw[óo]rz|sporz[ąa]d[źz]|przygotuj|wygeneruj|opracuj|zr[óo]b|sklej|z[łl][óo][żz])\w*/i;
+const STRONG_DOCUMENT_NOUN =
+  /\b(report|document|memo|brief|write-?up|analysis|raport|dokument|sprawozdani|analiz|notatk|opracowani|memo|brief)\w*/i;
+
+/**
+ * True when the prompt names an explicit document deliverable (creation verb +
+ * document noun). Used to give "document-with-a-table" precedence over
+ * standalone Table/Excel routing in chat orchestration.
+ */
+export function hasStrongDocumentNoun(message: string): boolean {
+  const text = String(message || '');
+  return STRONG_DOCUMENT_CREATION_VERB.test(text) && STRONG_DOCUMENT_NOUN.test(text);
+}
+
 export function detectPresentationIntent(message: string): boolean {
   return PRESENTATION_INTENT_PATTERNS.some((pattern) => pattern.test(message));
 }
