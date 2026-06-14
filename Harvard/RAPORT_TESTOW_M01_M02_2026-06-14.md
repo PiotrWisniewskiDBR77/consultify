@@ -234,5 +234,43 @@ Naprawione lokalnie (branch Londyn, NIE deployowane) + zweryfikowane na żywo fr
 
 > **FALA 1 ZAMKNIĘTA.** Następny krok: pełne testy wg `TESTY_M01_CZAT.md` + `TESTY_M02_CANVAS.md` (z §7A tabele+język).
 
+---
+
+# PRZEBIEG TESTOWY PO FALI 1 — M01 + M02 (przód + tył) — 2026-06-14
+
+Metoda: manualnie w przeglądarce (klik + DOM-extract + zrzuty), z analizą logów backendu i payloadu. Środowisko: front :3000 / backend :3001 → STAGING (trolley), OWNER DBR77.
+
+## M01 Czat
+| Sekcja | Wynik | Dowód przód | Dowód tył |
+|---|---|---|---|
+| §1 Composer (+/✎/👥/mic/voice/Send + output Auto/Doc/Table/Pres) | ✅ PASS | inwentarz kontrolek kompletny | — |
+| §2 ToolsMenu — 5 trybów + Response style | ✅ PASS | etykiety: Deep analysis/Show reasoning/Multi-agent/Private/Read responses + Response style(Standard) | — |
+| §2 Deep analysis (end-to-end) | ✅ PASS | po włączeniu → karta **„Confirm Understanding (Deep Thinking)"**: Goal/Context/Output:StructuredAnalysis/Horizon — po polsku | `POST /api/ai/chat/confirm` 200, ModelRouter→`openai/gpt-4o`, LLM call success (1083 tok) |
+| §2 Show reasoning | ⚠️ flaga leci, natywny ślad wymaga modelu reasoning (o-) zarejestrowanego w config DB; na gpt-4o brak natywnego trace (znane, model-config nie kod) | toggle działa | model = gpt-4o (nie-reasoning) |
+| §3 CoThinker — 6 person | ✅ PASS | Consultant/Idea Creator/Analyst/Auditor/Editor/Market Researcher; wybór Analyst | — |
+| §1 Send (front→back) | ✅ PASS | wiadomość wysłana | `POST /conversations/:id/messages` 201 → confirm → LLM 200 |
+| E2E flag payload | ✅ (z wcześniejszej weryfikacji STEER-DEBUG) deepResearch/showReasoning/coThinkerMode/responseStyle docierają; multiAgent/textToSpeech NIE; customInstructions naprawione | interceptor fetch zawiódł (klient bindował fetch przy imporcie) → weryfikacja behawioralna + log | confirm endpoint przetworzył |
+
+## M02 Canvas (zweryfikowane live w tej sesji po naprawach)
+| Sekcja | Wynik | Dowód |
+|---|---|---|
+| §1 Top bar (tytuł/+/output deck-table-doc/PROMOTE 5 celów/copy-share-save-close-history-…) | ✅ PASS | pełny inwentarz, zrzuty |
+| §2 Toolbar formatowania (16) | ✅ PASS | undo/redo/B/I/U/S/code/highlight/H1-3/listy/checklist/quote/table/link |
+| §3 AI floating menu + diff (N-8) | ✅ PASS | Ask AI/Condense/Expand/Tone/Explain/Actions; diff kolorowany; Accept zastępuje (244<326 zn.), DB persist potwierdzony |
+| §7A tabele (N-9) | ✅ PASS | 5 tabel renderowanych (scenariusze/ROI/ryzyka/roadmapa); DB content_md 4 tabele GFM; `markdownToHtml`→`<table>` |
+| §7A język PL (N-10) | ✅ PASS | nagłówki: Streszczenie wykonawcze/Kontekst strategiczny/… |
+| Routing (N-12) | ✅ PASS | „raport: tabela…" → Document (nie Excel) |
+| Pipeline deliverables (tył) | ✅ PASS | `[DeliverablesGen:doc] draft ready streamed sections=9`, gpt-4o, draft `saved`/`synced` |
+
+## Nowy finding środowiskowy
+| ID | Sev | Opis |
+|----|-----|------|
+| **N-14** | **P2** | **Pod bardzo wolnym DB (10–44 s/zapytanie) chat UI renderuje przyciemnione/nieaktualne klatki przejściowe** (stan aplikacji/DOM poprawny, ale warstwa wizualna pokazuje zamrożoną poprzednią rozmowę; zrzuty zawodne). Brak czytelnego stanu „ładowanie". Luka odporności UX + sygnał, że trzeba ogarnąć wydajność zapytań stagingu (liczne SLOW QUERY na user_sessions/access/effective/organizations). |
+
+## Pozostałe (manualne / wspólny Chrome — headless/slow-DB nie odda wiarygodnie)
+Eksporty z pobraniem pliku (pdf/docx/pptx/xlsx), share→incognito + revoke, promote→encja (zapis w module docelowym), dark mode, i18n per-etykieta EN, reasoning trace na modelu o- (po rejestracji w config DB), Response style modal (pełny), Tone/Explain/Actions realne wyniki.
+
+**Werdykt:** M01 + M02 — ścieżki krytyczne PASS (przód+tył). Fala 1 domknięta i potwierdzona. Do pełnego „zielono bez gwiazdek" zostają: rejestracja modelu reasoning (config), wydajność stagingu (N-14), oraz lista manualna do wspólnego przejścia.
+
 ## Nie pokryte headless (→ wspólne przejście w Chromie)
 Response style modal (pełny), AI floating Tone/Explain/Actions/Ask-AI realne wyniki, eksporty (download), promote→encja (zapis), share→incognito. Reasoning trace wymaga zarejestrowania modelu reasoning (o-model, config DB) — kod gotowy. Persist-po-reload dla N-8 (czy zaakceptowana wersja trwała) nie re-zweryfikowany przez wolne DB — fix celuje dokładnie w tę ścieżkę.
