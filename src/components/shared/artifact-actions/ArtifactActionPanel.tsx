@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
+import { TEXT_L1 } from '@/styles/typography';
 
 export type ArtifactActionTarget =
   | 'report'
@@ -817,7 +818,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             </div>
 
             <div className="mt-4 rounded-2xl bg-white/[0.04] p-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <div className={TEXT_L1}>
                 {isPolish ? 'Kontekst' : 'Context'}
               </div>
               <div className="mt-2 text-sm font-medium text-white">{source.title}</div>
@@ -946,7 +947,7 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
 
             <div className="mt-4 space-y-3 rounded-2xl bg-white/[0.04] p-4 text-sm text-slate-200">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <div className={TEXT_L1}>
                   {isPolish ? 'Źródło' : 'Source'}
                 </div>
                 <div className="mt-1 font-medium text-white">{source.title}</div>

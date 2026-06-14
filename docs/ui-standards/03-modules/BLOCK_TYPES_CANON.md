@@ -12,7 +12,7 @@ Wszystkie bloki dziedziczą z tej hierarchii. Nie ma innych rozmiarów czcionek 
 
 | Poziom | Użycie | Klasa Tailwind |
 |--------|--------|----------------|
-| **L1 — Nagłówek bloku** | Label nad grupą pól, nagłówek sekcji w karcie | `text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400` |
+| **L1 — Nagłówek bloku** | Label nad grupą pól, nagłówek sekcji w karcie | `text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500` |
 | **L2 — Tytuł elementu** | Nazwa karty w gridzie, tytuł hipotezy, temat | `text-[13px] font-semibold text-slate-800 dark:text-slate-100` |
 | **L3 — Treść główna** | Prose, opisy, definicje | `text-[13px] font-normal leading-[1.6] text-slate-700 dark:text-slate-300` |
 | **L4 — Treść wspierająca** | Atrybuty, metadane, opisy pola | `text-[12px] font-normal text-slate-500 dark:text-slate-400` |

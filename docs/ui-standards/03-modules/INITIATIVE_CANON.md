@@ -768,3 +768,36 @@ Genesis nigdy nie blokuje — użytkownik może edytować każde pole natychmias
 □ AI Consultant level 3: "Health check" — analizuje completed vs open sekcje
      i wskazuje luki w dokumentacji inicjatywy
 ```
+
+---
+
+## §Archiwizacja (cykl życia rekordu)
+
+> Wzorzec odziedziczony z TABLE_AND_PREVIEW_CANON §14. Pilot: Insights (wdrożony). Inicjatywy: do wdrożenia.
+
+### Reguły
+
+| Element | Specyfikacja |
+|---|---|
+| **Trigger archiwizacji** | Kebab → Archiwizuj (strefa FIXED BOTTOM). Potwierdzenie: toast z "Cofnij" (5s). |
+| **Trigger przywracania** | Kebab → Przywróć (gdy scope=archived). |
+| **Scope chip (Menu 3)** | Trzy wartości: `Active` (domyślny) · `Archived` · `All`. Chip widoczny zawsze gdy tabela obsługuje archiwizację. |
+| **Filtr SQL** | `WHERE archived_at IS NULL` (active) · `IS NOT NULL` (archived) · brak filtru (all). |
+| **Backend** | `PATCH /initiatives/:id { archived: true/false }` → serwer ustawia `archived_at = NOW()` / `NULL` + `archived_by`. |
+| **DB schema** | `archived_at TIMESTAMPTZ` + `archived_by TEXT` — lazy ALTER jeśli kolumny nie istnieją (wzorzec DatabaseInitializer). |
+| **Preview pane** | Zarchiwizowana inicjatywa: baner `Archived — [data]` w nagłówku preview (kolor: `bg-slate-100 dark:bg-navy-800`). Akcje edycji disabled. |
+| **Full view** | Zarchiwizowana inicjatywa otwiera się w trybie read-only. NModeToolbar: przycisk "Przywróć" zamiast normalnych akcji. |
+
+### Checklist wdrożenia
+
+```
+□ Kebab: Archiwizuj / Przywróć (toggle, FIXED BOTTOM slot 3)
+□ Scope chip w Menu 3 z 3 wartościami (Active / Archived / All)
+□ API: PATCH /initiatives/:id obsługuje archived: true/false
+□ lazy ALTER: archived_at TIMESTAMPTZ, archived_by TEXT
+□ SQL: filtr archived_at IS NULL / IS NOT NULL / brak wg scope
+□ Preview header: baner "Archived" gdy archived_at != null
+□ Full view: read-only guard + "Przywróć" CTA gdy archived
+□ NModeLeftNav: zarchiwizowane sekcje nie dostępne przez J/K (skip)
+□ Liczniki (Menu 3 badges): odzwierciedlają tylko active scope domyślnie
+```

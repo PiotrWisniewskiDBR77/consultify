@@ -21,6 +21,8 @@ import { MarketForcesLibraryGraphic } from './MarketForcesLibraryGraphic';
 import { PortfolioPriorityLibraryGraphic } from './PortfolioPriorityLibraryGraphic';
 import { RiskUncertaintyLibraryGraphic } from './RiskUncertaintyLibraryGraphic';
 
+import { TEXT_L1 } from '@/styles/typography';
+
 type KnownTool = Awaited<ReturnType<typeof Api.getKnownTool>>['tool'];
 
 export function KnownToolDetailView(props: {
@@ -215,7 +217,7 @@ export function KnownToolDetailView(props: {
             key={item.title}
             className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30"
           >
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+            <div className={TEXT_L1}>
               {isPolish ? 'Case' : 'Case'}
             </div>
             <h3 className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">

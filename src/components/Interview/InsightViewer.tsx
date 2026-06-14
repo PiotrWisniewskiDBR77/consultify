@@ -58,6 +58,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { TEXT_L1 } from '@/styles/typography';
+
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
@@ -3089,7 +3091,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className={TEXT_L1}>
                     {isPolish ? 'Co można twierdzić' : 'Safe claims'}
                   </div>
                   <div className="mt-3 space-y-2">
@@ -3127,7 +3129,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className={TEXT_L1}>
                       {isPolish ? 'Blokery publish/handoff' : 'Publish/handoff blockers'}
                     </div>
                     <button
@@ -3160,7 +3162,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                 <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                    <div className={TEXT_L1}>
                       {isPolish ? 'Sprzeczności' : 'Contradictions'}
                     </div>
                     <button
@@ -3287,7 +3289,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className={TEXT_L1}>
                     {isPolish ? 'Official Answers' : 'Official Answers'}
                   </div>
                   {officialAnswers.length > 0 ? (
@@ -4256,7 +4258,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className={TEXT_L1}>
                     {isPolish ? 'Consensus topics' : 'Consensus topics'}
                   </div>
                   {consensusTopics.length > 0 ? (
@@ -4285,7 +4287,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className={TEXT_L1}>
                     {isPolish ? 'Local-only signals' : 'Local-only signals'}
                   </div>
                   {localOnlyTopics.length > 0 ? (
@@ -4315,7 +4317,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className={TEXT_L1}>
                     {analysisLensMode === 'stakeholder'
                       ? isPolish
                         ? 'Stakeholder lenses'
@@ -5631,7 +5633,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3 space-y-3">
                             <div className="flex items-center justify-between gap-3">
                               <div>
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                                <div className={TEXT_L1}>
                                   {isPolish ? 'Client readback' : 'Client readback'}
                                 </div>
                                 <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
@@ -5924,7 +5926,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         )}
 
                         <div className="space-y-3">
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                          <div className={TEXT_L1}>
                             {isPolish ? 'Wspierane tematy' : 'Supported topics'}
                           </div>
                           {supportedTopics.length > 0 ? (
@@ -5986,7 +5988,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
                         {localSupportedTopics.length > 0 && (
                           <div className="space-y-2">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                            <div className={TEXT_L1}>
                               {isPolish ? 'Lokalne sygnały' : 'Local signals'}
                             </div>
                             <div className="flex flex-wrap gap-1.5">
@@ -6404,7 +6406,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
               {assumptionNarrative.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className={TEXT_L1}>
                     {isPolish ? 'Z narracji AI' : 'From AI narrative'}
                   </div>
                   <ul className="list-disc list-inside space-y-1">
@@ -6537,7 +6539,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               )}
               {evidenceQuotes.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                  <div className={TEXT_L1}>
                     {isPolish ? 'Cytaty z treści' : 'Quotes from content'}
                   </div>
                   {evidenceQuotes.map((quote, i) => (
@@ -6785,7 +6787,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     className={`rounded-2xl border bg-white/40 dark:bg-navy-900/20 px-3 py-3 space-y-2 ${col.tone}`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500">
+                      <div className={TEXT_L1}>
                         {col.title}
                       </div>
                       <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">

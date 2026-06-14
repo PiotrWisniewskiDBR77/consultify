@@ -9,7 +9,7 @@
 
 /** Section / block header — kicker label above a card */
 export const TEXT_L1 =
-  'text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400';
+  'text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-500';
 
 /** Element title — card heading, row title */
 export const TEXT_L2 = 'text-[13px] font-semibold text-slate-800 dark:text-slate-100';
