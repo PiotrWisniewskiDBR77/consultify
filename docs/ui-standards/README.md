@@ -1,6 +1,9 @@
 # UI/UX Standards — Consultify
 
-> **JEDYNE KANONICZNE ŹRÓDŁO** wytycznych UI/UX i specyfikacji komponentów.  
+> ⚠️ **AUTORYTET PRZENIESIONY → [CANON.md](CANON.md)** (od 2026-06-14, v3.0).
+> Ten plik pozostaje jako **pomocniczy indeks nawigacyjny**. Jedynym dokumentem, który *ogłasza* standard i rozstrzyga konflikty, jest `CANON.md` (§2 Hierarchia prawdy).
+
+> **Indeks wytycznych UI/UX i specyfikacji komponentów.**  
 > **Data konsolidacji:** 2026-05-01 (v2.1 — "DBR77 Tech Sexy 2027" Edition)
 >
 > **v2.1 Changelog:** Golden Standard jako najwyższy SSOT, DBR77 Tech Sexy 2027, Menu 2/3 bez improwizacji, segmented view controls, primary CTA bez plusa, AI actions po prawej stronie Menu 3.

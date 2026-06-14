@@ -1,6 +1,9 @@
 # Consultify UI/UX Golden Standard
 
-Status: `SSOT / GOLDEN STANDARD`
+> ⚠️ **AUTORYTET PRZENIESIONY → [CANON.md](CANON.md)** (od 2026-06-14, v3.0).
+> Ten dokument pozostaje **ważny jako szczegół** do końca Fazy 2 (dystrybucja treści do warstw `00–03`). Hierarchię prawdy i governance prowadzi `CANON.md`. „Hierarchy Of Truth" §2 poniżej została zastąpiona przez `CANON.md` §2 — nie traktuj jej jako wiążącej.
+
+Status: `szczegół podległy CANON.md (był: SSOT / GOLDEN STANDARD)`
 Date: 2026-05-01
 Visual direction: `DBR77 Tech Sexy 2027`
 Scope: all Consultify product UI, existing refactors and every new screen/module

@@ -1,6 +1,8 @@
 # UI/UX Canon v3 (Consultify MVP) — legacy consolidated canon
 
-> **Status:** Legacy / consolidated context, subordinate to `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`  
+> ⚠️ **SUPERSEDED → [CANON.md](CANON.md)** (od 2026-06-14, v3.0). Dokument historyczny, brak unikalnej treści ponad warstwy `00–03`. Kontekst, nie autorytet.
+
+> **Status:** Legacy / consolidated context, subordinate to `CANON.md`  
 > **Cel:** Spisać w jednym miejscu **wszystkie kanoniczne decyzje UI/UX v3**, wynikające z feedbacku i “Phase 3” MVP.  
 > Ten dokument nie zastępuje Golden Standard ani szczegółowych standardów — on historycznie konsoliduje decyzje v3 i wskazuje kontekst.
 

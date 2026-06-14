@@ -1,6 +1,9 @@
 # Consultify UI/UX Operating Standard
 
-Status: `v1 - approved migration baseline`
+> ⚠️ **AUTORYTET PRZENIESIONY → [CANON.md](CANON.md)** (od 2026-06-14, v3.0).
+> Governance i hierarchia prawdy z tego dokumentu zostały wcielone do `CANON.md` (§3 Governance, §4 Zachowania nienaruszalne). Pozostaje jako referencja szczegółowa do końca Fazy 2.
+
+Status: `referencja podległa CANON.md (był: v1 - approved migration baseline)`
 Date: 2026-05-01
 Owner decyzyjny: Product / CTO / Delivery Owner
 Repo: `DRD/consultify`
