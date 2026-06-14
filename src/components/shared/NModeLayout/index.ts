@@ -28,13 +28,15 @@
 
 // ── Layout Components ───────────────────────────────────────────────────────
 export { NModeActionBar } from './NModeActionBar';
+export { FieldAIButton } from './FieldAIButton';
+export type { FieldAIButtonProps } from './FieldAIButton';
 export { NModeCanvas } from './NModeCanvas';
 export { NModeCBoard } from './NModeCBoard';
 export { NModeHeader } from './NModeHeader';
 export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export { NModeSectionWrapper } from './NModeSectionWrapper';
-export { NModeShell } from './NModeShell';
+export { NModeShell, NMODE_TOOLBAR_SHELL_CLASS } from './NModeShell';
 export {
   NModeToolbar,
   ToolbarAISolidButton,

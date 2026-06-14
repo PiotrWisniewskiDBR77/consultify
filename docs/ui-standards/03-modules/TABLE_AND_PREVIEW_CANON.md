@@ -438,6 +438,18 @@ const rows = [{
 
 **MUST:** każda pozycja = ikona+label; ten sam verb = ta sama pozycja wszędzie; akcja z >2 wariantami → submenu inline (`▸`, np. Delay). Komponent SSOT: `RowActionsMenu.tsx` (`sections` + `submenu`). Wzorzec referencyjny: Interview Inbox/Assigned.
 
+**SSOT typów:** `src/components/shared/RowActionsMenu.tsx` eksportuje `RowAction`, `RowActionSection`, `RowActionSectionKind`.
+```tsx
+import { RowActionsMenu, type RowActionSection } from '@/components/shared/RowActionsMenu';
+
+const sections: RowActionSection[] = [
+  { id: 'context', kind: 'context', actions: [...] },  // GÓRA
+  { id: 'fixed',   kind: 'manage',  actions: [openPreview, edit, archive, delay] },  // DÓŁ FIXED
+  { id: 'danger',  kind: 'danger',  actions: [deleteAction] },
+];
+<RowActionsMenu sections={sections} />
+```
+
 ---
 
 ## 10) Stany: empty / loading / error

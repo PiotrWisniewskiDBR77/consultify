@@ -53,6 +53,10 @@ interface NModeShellExtraProps extends NModeShellProps {
   loading?: boolean;
 }
 
+/** Sticky toolbar host — import this when building a custom toolbar container outside NModeShell */
+export const NMODE_TOOLBAR_SHELL_CLASS =
+  'sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40';
+
 export const NModeShell: React.FC<NModeShellExtraProps> = ({
   header,
   properties,
@@ -102,7 +106,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
       </div>
 
       {/* ── Segment 2: Sticky toolbar ──────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40">
+      <div className={NMODE_TOOLBAR_SHELL_CLASS}>
         <div className="max-w-6xl mx-auto px-6 py-2">
           {renderActionBar
             ? renderActionBar()

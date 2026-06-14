@@ -22,6 +22,13 @@ Wszystkie bloki dziedziczą z tej hierarchii. Nie ma innych rozmiarów czcionek 
 
 **Zasada McKinsey:** hierarchy przez weight i color, nie przez rozmiar. Różnica między L2 a L3 to weight (semibold vs regular) — nie px. Duże skoki rozmiaru tylko dla liczb (N).
 
+**SSOT implementacji:** `src/styles/typography.ts` eksportuje stałe `TEXT_L1`…`TEXT_L5`, `TEXT_N`, `TEXT_Q`.  
+Import zamiast powtarzania raw Tailwind stringów:
+```tsx
+import { TEXT_L1, TEXT_L2 } from '@/styles/typography';
+<span className={TEXT_L1}>Nagłówek sekcji</span>
+```
+
 ---
 
 ## Fundament — Semantyka kolorów
@@ -58,6 +65,9 @@ Spójny system znaczeń — identyczny w canvas, PDF i PowerPoint.
 ### Zasada monochromatyzmu
 
 Każda wizualizacja używa **jednego koloru akcentu** poza neutralną paletą slate/navy. Wyjątek: macierze sentymentu (muszą rozróżniać ≥3 wartości). Nigdy dwa jasne kolory akcentu w jednym bloku.
+
+**SSOT implementacji:** `src/index.css` — CSS custom properties `--c-success`, `--c-warning`, `--c-danger`, `--c-info`, `--c-accent` są autorytatywne. Hex'y w tabelach powyżej służą do identyfikacji wizualnej; w razie rozbieżności token CSS wygrywa. Dostęp przez Tailwind: `text-c-info`, `bg-c-danger/10`, `border-c-success` itd.
+Runtime mapping statusów: `src/services/statusColors.ts` → `getStatusStyle(status)`.
 
 ---
 
@@ -911,11 +921,15 @@ Otwierasz widok i weryfikujesz każdy podsystem jako całość.
 
 **B4 — FieldAIButton (poziom pola)**
 
+**SSOT:** `src/components/shared/NModeLayout/FieldAIButton.tsx`  
+Import: `import { FieldAIButton } from '@/components/shared/NModeLayout';`
+
 ```
 □ ✨ pojawia się przy każdym polu oznaczonym AI w spec karty
 □ Loading state: Sparkles zastąpiony spinnerem (Loader2 animate-spin)
 □ Disabled gdy sekcja ma completed=true lub pole jest locked
 □ Wynik AI trafia do konkretnego pola (nie do clipboard, nie do toastu)
+□ Wrapper rodzica musi mieć className="group" (hover reveal przez group-hover:opacity-100)
 ```
 
 **B5 — Stany graniczne karty**
