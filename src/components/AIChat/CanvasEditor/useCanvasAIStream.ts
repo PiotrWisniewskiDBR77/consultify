@@ -10,7 +10,62 @@ import type { Editor } from '@tiptap/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { hasPendingAiDiff } from './canvasDiffOps';
-import { htmlToMarkdown } from './canvasMarkdownConversion';
+import { htmlToMarkdown, markdownToHtml } from './canvasMarkdownConversion';
+
+/**
+ * N-canvas-append fix — enforce real block separation in streamed markdown
+ * BEFORE it is parsed into TipTap nodes. The model streams chunks like
+ * "…rynku. ## Bariery 1. **Koszt**" where a heading/list opener is glued to
+ * the end of the previous block. Inserted as plain text it stayed inline, and
+ * Turndown then escaped the `##`/`1.` on save (→ literal "\## Bariery" that
+ * `marked` never renders as a heading on reload). This guarantees:
+ *  - a blank line BEFORE every ATX heading (`#`..`######`)
+ *  - a blank line BEFORE a list/table block that follows a non-list line
+ *  - headings/list/table markers always start their own line (never mid-line)
+ * so `markdownToHtml` produces proper <h2>/<ul>/<table> nodes instead of a
+ * single escaped paragraph.
+ */
+export function ensureBlockSpacing(markdown: string): string {
+  if (!markdown) return markdown;
+  // 1) Split a block opener that got glued onto the tail of a previous line,
+  //    e.g. "…rynku. ## Bariery" → "…rynku.\n\n## Bariery". Only when the
+  //    opener is NOT already at line start (^ excluded via the leading \S).
+  let out = markdown
+    // Heading glued mid-line: "text ## Title" → break before the hashes.
+    .replace(/(\S)[ \t]+(#{1,6}[ \t]+\S)/g, '$1\n\n$2')
+    // Ordered list item glued mid-line: "text 1. Foo" → break before it.
+    .replace(/(\S)[ \t]+(\d+\.[ \t]+\S)/g, '$1\n\n$2')
+    // Unordered list item glued mid-line: "text - foo" / "text * foo".
+    .replace(/(\S)[ \t]+([-*+][ \t]+\S)/g, '$1\n\n$2');
+
+  // 2) Ensure a BLANK line before headings and before a list/table block that
+  //    starts right after a non-blank, non-list line.
+  const lines = out.split('\n');
+  const result: string[] = [];
+  const isHeading = (l: string) => /^\s*#{1,6}\s+\S/.test(l);
+  const isListItem = (l: string) => /^\s*([-*+]|\d+\.)\s+\S/.test(l);
+  const isTableRow = (l: string) => /^\s*\|.*\|\s*$/.test(l);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const prev = result.length ? result[result.length - 1] : '';
+    const prevTrim = prev.trim();
+    const needsGapBefore =
+      prevTrim !== '' &&
+      ((isHeading(line) && !isHeading(prev)) ||
+        ((isListItem(line) || isTableRow(line)) &&
+          !isListItem(prev) &&
+          !isTableRow(prev)));
+    if (needsGapBefore) result.push('');
+    result.push(line);
+    // Blank line AFTER a heading so the following paragraph/list is its own block.
+    if (isHeading(line)) {
+      const next = lines[i + 1];
+      if (next !== undefined && next.trim() !== '') result.push('');
+    }
+  }
+  out = result.join('\n');
+  return out;
+}
 
 export interface UseCanvasAIStreamOptions {
   editor: Editor | null;
@@ -57,6 +112,13 @@ export function useCanvasAIStream({
   const insertPositionRef = useRef<number | null>(null);
   // C1.3: editor flag to restore on cleanup.
   const wasEditableRef = useRef<boolean | null>(null);
+  // N-canvas-append: the doc position where the streamed region BEGINS, and the
+  // raw markdown accumulated across chunks. On completion we delete the live
+  // plain-text projection [appendStart, insertPosition) and re-insert the
+  // accumulated markdown PARSED into real block nodes — so headings/lists render
+  // correctly and the original content BEFORE appendStart is never touched.
+  const appendStartRef = useRef<number | null>(null);
+  const accumulatedMdRef = useRef<string>('');
 
   const stopStream = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -203,6 +265,10 @@ export function useCanvasAIStream({
         }
       }
       insertPositionRef.current = editor.state.selection.to;
+      // N-canvas-append: remember where the streamed region starts so we can
+      // swap the live plain-text projection for parsed block nodes on complete.
+      appendStartRef.current = insertPositionRef.current;
+      accumulatedMdRef.current = '';
 
       // C1.2: lock the editor while Teresa is writing so user clicks can't move
       // the cursor between chunks. We track and restore the prior editable flag.
@@ -286,6 +352,7 @@ export function useCanvasAIStream({
                   const pos: number = insertPositionRef.current ?? editor.state.selection.to;
                   editor.commands.insertContentAt(pos, chunk);
                   insertPositionRef.current = pos + String(chunk).length;
+                  accumulatedMdRef.current += String(chunk);
                 }
               }
 
@@ -306,6 +373,7 @@ export function useCanvasAIStream({
                 const pos: number = insertPositionRef.current ?? editor.state.selection.to;
                 editor.commands.insertContentAt(pos, dataStr);
                 insertPositionRef.current = pos + dataStr.length;
+                accumulatedMdRef.current += dataStr;
               }
             }
           }
@@ -321,6 +389,35 @@ export function useCanvasAIStream({
         }
 
         if (!abortController.signal.aborted) {
+          // N-canvas-append: the chunks were streamed in as PLAIN TEXT for live
+          // "writing…" feedback, so any `## heading` / `1. list` markers sit
+          // inline inside one paragraph (Turndown would escape them to literal
+          // "\##" that never re-renders). Now that the full markdown is known,
+          // delete that plain-text projection and re-insert it PARSED into real
+          // block nodes, with block spacing enforced first. Everything BEFORE
+          // appendStart (the original document) is left untouched → append stays
+          // strictly additive and cannot shrink/replace the prior content.
+          const startPos = appendStartRef.current;
+          const rawStreamed = accumulatedMdRef.current.trim();
+          // Only reconcile additive streams (append/generate). 'replace' keeps
+          // its aiRemoved diff workflow untouched to avoid regressing the
+          // accept/reject selection-edit path.
+          if (streamMode !== 'replace' && startPos !== null && rawStreamed) {
+            const normalized = ensureBlockSpacing(rawStreamed);
+            const html = markdownToHtml(normalized);
+            const endPos = Math.min(
+              insertPositionRef.current ?? editor.state.doc.content.size,
+              editor.state.doc.content.size
+            );
+            editor
+              .chain()
+              .deleteRange({ from: Math.min(startPos, endPos), to: endPos })
+              .insertContentAt(Math.min(startPos, endPos), html, {
+                parseOptions: { preserveWhitespace: false },
+              })
+              .run();
+          }
+
           // 'replace' marked the original selection as aiRemoved and streamed the
           // new content right after it — now drop the original so the document
           // reflects a true replacement.

@@ -213,17 +213,46 @@ const SECTION_TITLE_PL: Record<string, string> = {
  * pierwszym wierszem tabeli, jeśli poprzedza go niepusty, nie-tabelowy wiersz.
  * Nie ruszamy treści tabel — tylko odstęp, więc separatory/„|" przechodzą.
  */
+/**
+ * N-9 + N-canvas-append: gwarantuje, że marked/turndown widzą każdy blok na
+ * własnej linii z pustą linią oddzielającą.
+ *  - tabela GFM: pusta linia przed pierwszym wierszem (oryginalny N-9),
+ *  - nagłówek ATX (#..######): pusta linia PRZED i PO,
+ *  - lista (-, *, +, 1.): pusta linia przed blokiem listy po linii nie-listowej,
+ *  - opener bloku sklejony w środku linii ("…rynku. ## Bariery 1. **Koszt**")
+ *    rozbijany na osobne bloki — inaczej marked renderuje surowy `##`/`1.`.
+ * Idempotentny i bezpieczny dla generacji nowego dokumentu (nie psuje formatu),
+ * stosowany TAKŻE na ścieżce scalania/edycji (nie tylko one-shot generacji).
+ */
 function ensureTableSpacing(markdown: string): string {
-  const rows = markdown.split('\n');
+  if (!markdown) return markdown;
+  // 1) Rozbij opener bloku sklejony na końcu poprzedniej linii.
+  let pre = markdown
+    .replace(/(\S)[ \t]+(#{1,6}[ \t]+\S)/g, '$1\n\n$2') // nagłówek mid-line
+    .replace(/(\S)[ \t]+(\d+\.[ \t]+\S)/g, '$1\n\n$2') // lista numerowana mid-line
+    .replace(/(\S)[ \t]+([-*+][ \t]+\S)/g, '$1\n\n$2'); // lista punktowana mid-line
+
+  const rows = pre.split('\n');
   const out: string[] = [];
   const isTableRow = (l: string) => /^\s*\|.*\|\s*$/.test(l);
+  const isHeading = (l: string) => /^\s*#{1,6}\s+\S/.test(l);
+  const isListItem = (l: string) => /^\s*([-*+]|\d+\.)\s+\S/.test(l);
   for (let i = 0; i < rows.length; i++) {
     const line = rows[i];
     const prev = out.length ? out[out.length - 1] : '';
-    if (isTableRow(line) && !isTableRow(prev) && prev.trim() !== '') {
-      out.push('');
-    }
+    const prevTrim = prev.trim();
+    const needsGapBefore =
+      prevTrim !== '' &&
+      ((isTableRow(line) && !isTableRow(prev)) ||
+        (isHeading(line) && !isHeading(prev)) ||
+        ((isListItem(line) || isTableRow(line)) && !isListItem(prev) && !isTableRow(prev)));
+    if (needsGapBefore) out.push('');
     out.push(line);
+    // Pusta linia PO nagłówku, jeśli następna linia nie jest pusta.
+    if (isHeading(line)) {
+      const next = rows[i + 1];
+      if (next !== undefined && next.trim() !== '') out.push('');
+    }
   }
   return out.join('\n');
 }
