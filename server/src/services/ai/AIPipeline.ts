@@ -363,10 +363,15 @@ export class AIPipeline {
         let streamResponse: Record<string, unknown> | null = null;
         let lastError: Error | null = null;
 
-        const reasoningBuffer: string[] = [];
+        // Sink presence is what ENABLES the reasoning path in llmService.callStream
+        // (wantsReasoning = !!onReasoning && !!reasoning). Reasoning deltas are now
+        // yielded INLINE on the returned stream as `{ reasoning }` objects in real
+        // arrival order, so this sink no longer needs to buffer anything — it's a
+        // no-op kept only to flip the reasoning path on. A defensive no-op body
+        // also guarantees a sink error can never break the answer stream.
         const onReasoningDelta = showReasoning
-          ? (delta: string) => {
-              if (typeof delta === 'string' && delta.length > 0) reasoningBuffer.push(delta);
+          ? (_delta: string) => {
+              /* reasoning is streamed inline; nothing to buffer here */
             }
           : undefined;
 
@@ -481,30 +486,25 @@ export class AIPipeline {
           }
         };
 
-        const innerStream = (streamResponse as { stream?: AsyncIterable<string> }).stream;
+        type StreamItem = string | { reasoning: string };
+        const innerStream = (streamResponse as { stream?: AsyncIterable<StreamItem> }).stream;
         if (innerStream) {
-          // Drain any reasoning deltas captured so far as tagged chunks. Reasoning
-          // is side-channeled by llmService.callStream's onReasoning during each
-          // text-chunk pull, so flushing before/after each text chunk interleaves
-          // it in arrival order. When showReasoning is off the buffer is always
-          // empty and only plain strings flow (unchanged contract).
-          const flushReasoning = function* () {
-            while (reasoningBuffer.length > 0) {
-              const delta = reasoningBuffer.shift() as string;
-              yield { reasoning: delta } as { reasoning: string };
-            }
-          };
+          // llmService.callStream now yields a MIXED stream when reasoning is on:
+          // visible answer text as plain strings interleaved with `{ reasoning }`
+          // objects, in real arrival order. We pass items straight through so the
+          // route emits SSE `{type:'reasoning'}` the moment each delta arrives —
+          // for DeepSeek-R1 (whole trace before text) this streams the trace live
+          // during the thinking phase instead of dumping it as one pre-answer
+          // block. No buffering. When showReasoning is off only strings flow
+          // (unchanged contract). streamedText accumulates ONLY text strings so
+          // finalizeStreamUsage's token estimate excludes reasoning.
           const wrapped = (async function* () {
             let streamedText = '';
             try {
-              yield* flushReasoning();
               for await (const chunk of innerStream) {
                 if (typeof chunk === 'string') streamedText += chunk;
                 yield chunk;
-                yield* flushReasoning();
               }
-              // Final drain — reasoning emitted after the last text chunk.
-              yield* flushReasoning();
             } finally {
               // Fires on normal completion AND consumer break/abort.
               // Fire-and-forget: never block or fail the stream teardown.

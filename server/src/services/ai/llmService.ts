@@ -1011,11 +1011,12 @@ export class LLMService {
       /**
        * Optional sink for the model's native reasoning / thinking deltas.
        * When provided AND the provider/model supports reasoning, callStream
-       * consumes the SDK fullStream and forwards reasoning text here as it
-       * arrives, while the returned `stream` continues to yield ONLY the
-       * visible answer text (string contract unchanged for existing consumers).
+       * consumes the SDK fullStream and (a) forwards reasoning text to this sink
+       * as it arrives AND (b) yields a MIXED `stream`: visible answer text as
+       * plain strings interleaved with reasoning deltas as `{ reasoning }`
+       * objects, both in real arrival order, so the trace can be streamed live.
        * When omitted, the legacy textStream path runs verbatim — normal chat
-       * is byte-for-byte unaffected.
+       * yields ONLY strings and is byte-for-byte unaffected.
        */
       onReasoning?: (delta: string) => void;
     }
@@ -1082,16 +1083,23 @@ export class LLMService {
           // for-await loop, AFTER process() has already returned, making the
           // provider-fallback mechanism in AIPipeline.process() useless.
           //
-          // Reasoning ON: iterate fullStream, route 'reasoning-delta' parts to
-          // onReasoning() and yield 'text-delta' parts as the visible string
-          // stream. Reasoning OFF: legacy textStream — string-for-string identical.
-          const rawIterator: AsyncIterator<string> = wantsReasoning
+          // Reasoning ON: iterate fullStream and yield a MIXED stream in arrival
+          // order — text-delta parts yield as plain strings (the visible answer),
+          // reasoning parts yield as `{ reasoning: delta }` objects so they flow
+          // to the SSE reasoning channel the INSTANT the model emits them (no
+          // buffering). DeepSeek-R1 emits its whole trace BEFORE any text, so this
+          // makes the trace stream live during the thinking phase instead of
+          // arriving in one block right before the answer. onReasoning is still
+          // invoked for any side-channel consumers. Reasoning OFF: legacy
+          // textStream — string-for-string identical, never yields objects.
+          type StreamItem = string | { reasoning: string };
+          const rawIterator: AsyncIterator<StreamItem> = wantsReasoning
             ? (function () {
                 const fs = result.fullStream[Symbol.asyncIterator]();
                 return {
-                  async next(): Promise<IteratorResult<string>> {
-                    // Skip non-text parts (reasoning is side-channeled) until we
-                    // hit a visible text-delta or the stream ends.
+                  async next(): Promise<IteratorResult<StreamItem>> {
+                    // Yield the next item (text or reasoning) in arrival order;
+                    // skip only structural parts (start/end, tool-*, source).
                     while (true) {
                       const part = await fs.next();
                       if (part.done) return { done: true, value: undefined };
@@ -1105,10 +1113,11 @@ export class LLMService {
                         // OpenAI Responses API reasoning summaries, etc.
                         if (typeof p.text === 'string' && p.text.length > 0) {
                           try {
-                            onReasoning!(p.text);
+                            onReasoning?.(p.text);
                           } catch {
                             /* never let a reasoning sink error break the answer stream */
                           }
+                          return { done: false, value: { reasoning: p.text } };
                         }
                         continue;
                       }
@@ -1118,17 +1127,17 @@ export class LLMService {
                         // chain-of-thought in fields the SDK's chat parser drops:
                         //   - DeepSeek:    choices[].delta.reasoning_content
                         //   - OpenRouter:  choices[].delta.reasoning
-                        // We recover them from the raw chunk and forward to the
-                        // reasoning sink. text-delta still carries the visible
-                        // answer, so we only side-channel here (no continue-vs-
-                        // return change for text).
+                        // We recover them from the raw chunk and yield inline so
+                        // they reach the FE in real time. text-delta still carries
+                        // the visible answer below.
                         const reasoningChunk = extractReasoningFromRawChunk(p.rawValue);
                         if (reasoningChunk) {
                           try {
-                            onReasoning!(reasoningChunk);
+                            onReasoning?.(reasoningChunk);
                           } catch {
                             /* never let a reasoning sink error break the answer stream */
                           }
+                          return { done: false, value: { reasoning: reasoningChunk } };
                         }
                         continue;
                       }
@@ -1141,8 +1150,8 @@ export class LLMService {
                   },
                 };
               })()
-            : result.textStream[Symbol.asyncIterator]();
-          let firstChunk: IteratorResult<string>;
+            : (result.textStream[Symbol.asyncIterator]() as AsyncIterator<StreamItem>);
+          let firstChunk: IteratorResult<StreamItem>;
           try {
             firstChunk = await rawIterator.next();
           } catch (firstChunkError: any) {
@@ -1166,13 +1175,15 @@ export class LLMService {
           }
 
           // Build a generator that yields the first chunk we already consumed,
-          // then delegates to the rest of the iterator.
-          async function* prependedStream(): AsyncGenerator<string> {
-            if (typeof firstChunk.value === 'string') yield firstChunk.value;
+          // then delegates to the rest of the iterator. With reasoning ON this
+          // may yield `{ reasoning }` objects interleaved with text strings (in
+          // arrival order); with reasoning OFF only strings flow (unchanged).
+          async function* prependedStream(): AsyncGenerator<StreamItem> {
+            if (firstChunk.value !== undefined) yield firstChunk.value;
             while (true) {
               const next = await rawIterator.next();
               if (next.done) break;
-              if (typeof next.value === 'string') yield next.value;
+              if (next.value !== undefined) yield next.value;
             }
           }
 
