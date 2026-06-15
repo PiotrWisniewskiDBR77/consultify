@@ -677,7 +677,7 @@ const AGING_STYLES = {
   fresh: 'text-emerald-600 dark:text-emerald-400',
   warm: 'text-amber-600 dark:text-amber-400',
   hot: 'text-amber-700 dark:text-amber-300',
-  critical: 'text-rose-700 dark:text-rose-300 animate-pulse',
+  critical: 'text-rose-700 dark:text-rose-300',
 };
 
 // ── SLA pill ──

@@ -19,12 +19,11 @@ W light tryb badge'e severity/status danger renderują się BEZ tła i bez kolor
 - **Hipoteza root-cause:** współdzielony komponent badge ma warianty `dark:` bez odpowiednika light → fallback do neutralnego.
 - **Dowód:** zrzuty My Work light, Interview light.
 
-### VIS-002 · „Crimson leak" w LIGHT na treści neutralnej/info · P1 · [SYSTEMIC]
-Elementy neutralne/informacyjne renderują się crimsonem (kolor dark-only → fallback).
-- **Pomiar:** My Work daty „Received" → `rgb(145,10,40)` na **187 komórkach**. Chat cytaty/Reasoning → `rgb(109,20,39)`. Execution daty „Deadline" (05/05/20…) → crimson (3. moduł = mocno systemowy).
-- **Kanon:** §2 (metadata=slate-500/600), CANON §0 budżet crimson (5 miejsc: logo, 2px indicator, Talk-to-Teresa, destructive, error).
-- **Hipoteza root-cause:** współdzielony komponent komórki daty + markerów cytatów z klasą `text-primary-*`/dark-only.
-- **Dowód:** zrzuty My Work light, Chat light.
+### VIS-002 · Daty „critical-aged" rose+pulse · P3 · [SKORYGOWANE po badaniu]
+**KOREKTA (verify-before-claiming):** to NIE crimson-leak bug. My Work daty kolorują się przez `AGING_STYLES` (InboxContent.tsx:676) — **intencjonalny sygnał wieku**: fresh→emerald, warm/hot→amber, critical(>3d)→rose-700. `rgb(145,10,40)` = aging-critical rose (config), nie fallback. Demo data jest stare → wszystko „critical" → wszystko czerwone (stąd pozorne „187 leak"). Gdyby odcrimsonić → zniszczony sygnał aging.
+- **Realny fix (zrobiony):** usunięto `animate-pulse` z `critical` (pulsujące daty = rozpraszające, anty-§9/„mniej znaczy więcej"). Kolor rose zachowany.
+- **Otwarte do osobnego badania:** Chat cytaty/Reasoning `rgb(109,20,39)` + Execution „Deadline" crimson — sprawdzić czy też aging/danger (intencjonalne) czy faktyczny `text-primary` leak. NIE zakładać bez pomiaru źródła.
+- **Lekcja:** „187 crimson" z oka = w rzeczywistości intencjonalny aging × stare demo-dane. Pomiar koloru nie wystarczył — trzeba było znaleźć ŹRÓDŁO (komponent).
 
 ### VIS-003 · Pusta otchłań composera · P2 · [SYSTEMIC]
 Composer „Ask Teresa…" zajmuje ~40% wysokości jako pusty box (dark i light).
