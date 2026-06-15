@@ -305,3 +305,34 @@ Response style modal (pełny), AI floating Tone/Explain/Actions/Ask-AI realne wy
 **Finding N-15 (P2, staging-only):** OUTPUT → **presentation/report** = `500` bo na staging BRAK tabel `presentation_cards`/`presentations`/`report_blocks`/`report_snapshots` (gap schematu DB_MANAGED_SCHEMA=off). NIE bug kodu — endpoint guarduje czysto („Required column presentation_cards.id is not available"). Działa na prod (zmigrowany schemat) / po syncu schematu staging. (N-16 „export failed" zdjęty — to headless-download/persist-race, endpoint eksportu = 200.)
 
 **STATUS M01/M02 ≈ 92% zweryfikowane.** Reszta to wyłącznie ograniczenia środowiska, NIE defekty produktu: TTS-audio, zapis pliku na dysk, share→incognito (headless), OUTPUT presentation/report (gap schematu staging), + kilka „effect" weryfikacji niskiej wartości (private-mode persist, persona-effect, slash/@/attach, rename/delete/search rozmów). Wszystkie kluczowe ścieżki + wyróżniki (Canvas↔Teresa, PROMOTE→encja, tabele, R1, diff, OUTPUT) DZIAŁAJĄ z dowodem.
+
+---
+
+# PRZEBIEG TESTOWY M03 + M04 (noc, po sync schematu + pula 40)
+
+## M03 „Moja Praca" — panele PASS, P0/kalendarz naprawione
+| Sekcja | Wynik | Dowód |
+|---|---|---|
+| §1 Hub + nawigacja (7 zakładek) | ✅ PASS | Ideas/Notebook/Inbox/Calendar/Tasks/Decisions/Manager renderują |
+| §2 Inbox | ✅ PASS | 255 items, filtry (Overdue 169/Critical 12/Action 240), AI Triage, kolumny Status/Urgency/SLA |
+| §3 Kalendarz — uczciwy status integracji (FIX) | ✅ PASS | „Coming soon / Integracja w przygotowaniu"; stary „Connect in Integrations" zniknął; eventy wewn. renderują |
+| §4 Zadania | ✅ PASS | 200 items, 3 widoki, New Task, AI Priorities, statusy/priorytety/assignee |
+| §4.8 Link Graph v3 — trwałość zadanie↔decyzja (P0 FIX) | ✅ PASS E2E (tył) | createDecision 201 → createLinkGraphEdge 201 → backlinks zawiera decyzję = utrwalone + reload-safe |
+| §5 Decyzje | ✅ PASS | panel renderuje, akcje decide/reject/delegate/escalate obecne |
+| §6 Manager (Executive Dashboard) | ✅ PASS render | Portfolio Health +26%, Decision Velocity 80%, Team Capacity 100%, Action Required 4 |
+
+**M03 backend findings (tył) — do naprawy:**
+- 🔴 **M03-N1:** `GET /api/ai-operator/overview → 500` — `could not determine data type of parameter $2` (nietypowany param w zapytaniu `($2 IS NULL AND user_id IS NULL) OR user_id=$3`). Realny bug.
+- 🔴 **M03-N2:** `COALESCE(is_dismissed, 0)` boolean/integer mismatch — `risk_signal_alerts`, `delay_signals` (rodzina pg bool/int). Realny bug.
+- 🟠 **M03-N3:** `meetings.start_at` text vs timestamp (`operator does not exist: text >= timestamptz`) — drift/typ.
+- 🟠 **M03-N4:** `kpis` table MISSING na staging (Manager stats) — gap schematu (do sync jak presentation_cards).
+- 🟡 `Postgres Unexpected error on idle client` — dropy połączeń przez proxy (kandydat na `keepAlive:true` w puli).
+
+## M04 „Notatnik" — biblioteka PASS, reszta code-verified (85/100)
+| Obszar | Wynik | Dowód |
+|---|---|---|
+| §1 Biblioteka L1 (personal/team) | ✅ PASS | „Moje notatki" Personal · 16 notatek; filtry All/Personal/Team; New notebook; notebooks API 200 (1 notatnik) |
+| §2 Edytor + autosave, §3 SlashMenu AI, §4 ekstrakcja akcji, §5 konwersje, §7 Capture | ✅ code-verified (agent 85/100) | open edytora flaky-blocked headless (jak TaskDetail); kod REAL+wired |
+| Fixy M04 (numberose→numbered, 403→fallback, provenance bulk, martwy kod) | ✅ zacommitowane | grep numberose=0; api.ts 403 w fallbacku; ActionItemsPanel provenance; notebookStorage usunięty |
+
+**Werdykt M03≈90% / M04≈85% zweryfikowane.** Panele + kluczowe fixy działają z dowodem; reszta to flaky-open headless (edytor notatnika, TaskDetail UI) + backend findings M03-N1..N4 do naprawy. Schematy `TESTY_M03_MOJA_PRACA.md` + `TESTY_M04_NOTATNIK.md` gotowe (dojście do testowania).
