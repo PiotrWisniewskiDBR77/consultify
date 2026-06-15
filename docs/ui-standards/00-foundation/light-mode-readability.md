@@ -488,3 +488,19 @@ Każdy nowy komponent musi konsumować te tokeny; każdy istniejący komponent r
 - **Dopuszczalne odstępstwa:** tylko dla ekranów marketingowych / landingów / print, i tylko po ujęciu w `canvas-mode.md`.
 - **Egzekwowanie:** review checklist (§14) w każdym PR zmieniającym UI.
 - **Aktualizacja:** co kwartał, razem ze sweepem regresyjnym light mode.
+
+---
+
+## 18. Reguły systemowe (z A1 sweep, 2026-06-14)
+
+> Wyprowadzone z `docs/qa/MASTER_VISUAL_QA_CATALOG.md`. To **MUST** dla Fazy C0 (współdzielone komponenty).
+> **Egzekwowanie koloru ≠ grep-lint.** W przeciwieństwie do motion (`transition-all` ~zawsze błąd, lintowalny), kolor jest w 99% legalny statycznie (green/slate-400/hex = poprawne warianty). Lint byłby cry-wolf. **Ratchetem koloru jest VISUAL SWEEP** (re-run katalogu) + istniejący `scripts/audit-ui-compliance.js` (dark-variant, deprecated patterns). Nie budujemy `lint:colors`.
+
+### 18.1 Zakaz kolorów „dark-only" (VIS-002)
+Każda klasa koloru tekstu/tła MUSI mieć poprawny odpowiednik light — nie wolno polegać na fallbacku. **Metadata (daty, timestampy, liczniki) NIGDY `text-primary-*`/crimson** — w light wygląda jak alarm. Metadata = `text-slate-500/600` (§2). Wykryte: 187 komórek dat `rgb(145,10,40)` w light.
+
+### 18.2 Badge danger MUSI mieć fill w light (VIS-001)
+Współdzielony komponent badge: wariant light **obowiązkowo** tło(100)+border(200)+tekst-danger(800) (§5). Zakaz dark-only wariantu z fallbackiem do `transparent`+`slate`. Wykryte: „Critical"/„overdue" = transparent bg + slate text w light (nie czyta się jako danger).
+
+### 18.3 Primary-CTA = navy token (VIS-006)
+Główny CTA modułu = navy token (po T2). Crimson **tylko** Talk-to-Teresa / destructive (budżet §0 CANON). Ujednolicić: Tools „Add", Initiatives „New initiative" (crimson) → navy, jak My Work / Results.

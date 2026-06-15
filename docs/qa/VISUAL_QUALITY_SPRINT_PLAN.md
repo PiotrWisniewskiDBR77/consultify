@@ -44,18 +44,16 @@
 
 ## Faza B — ZASADY (1 sprint)
 
-### Sprint B1 — Reguły + Egzekwowanie
-**Cel:** z wzorców w katalogu wyprowadzić twarde reguły + zautomatyzować bramki (wzór `lint:motion`/`docs:links`).
+### Sprint B1 — Reguły + Egzekwowanie ✅ (2026-06-14)
+**Cel:** z wzorców w katalogu wyprowadzić twarde reguły.
 
-**Zakres:**
-- `lint:colors` (nowy checker): raw `green`/`bg-*-500` poza tokenem, crimson na nie-brand/metadata, `text-slate-400` jako tekst roboczy, badge bez tła+border w light. Tryb raport + ratchet (baseline).
-- Dociągnięcie `light-mode-readability §9` jako egzekwowalnego (tokeny semantyczne §16, badge §5 tło+border+text-danger).
-- Decyzje kanoniczne dla systemowych wzorców (komponent daty/Received, komponent badge, cytaty/Reasoning, composer).
-- CANON §6 binding zaktualizowany o nowe l-inty.
+**Ustalenie kluczowe:** `lint:colors` **odrzucony** — kolor NIE jest static-lintowalny (raw green 3645, slate-400 12612, hex 97 = w 99% legalne: dark-variant/placeholder/brand). Lint byłby cry-wolf. W przeciwieństwie do motion (`transition-all` lintowalny), **ratchetem koloru jest VISUAL SWEEP** (re-run katalogu) + istniejący `audit-ui-compliance.js`.
 
-**Exit:** reguły w kanonie + skrypty + baselines (ratchety) + zielone na obecnym stanie.
+**Zrobione:**
+- Reguły systemowe → `light-mode-readability.md §18` (VIS-001 badge fill w light, VIS-002 zakaz dark-only/metadata≠crimson, VIS-006 primary-CTA=navy). MUST dla C0.
+- CANON §6 binding: wiersz „Kolor/light-mode" → sweep + audit-ui-compliance (nie lint).
 
-**Szacunek:** 1–2 dni.
+**Exit:** ✅ reguły w kanonie; model egzekwowania (sweep) udokumentowany.
 
 ---
 

@@ -109,6 +109,7 @@ Każda egzekwowalna reguła wskazuje swój **jedyny** plik implementacji:
 | Toolbar artefaktu (shell) | `NMODE_TOOLBAR_SHELL_CLASS` + `NModeToolbar.tsx` | `01-shell-layout/n-mode-card-standard.md` |
 | N-mode layout (cały kit) | `src/components/shared/NModeLayout/` | `01-shell-layout/presentation-modes.md` |
 | Motion (≤220ms, scoped, zero bounce) | `npm run lint:motion` / `:ci` (`server/scripts/check-motion-compliance.ts` + `.motion-baseline.json`) | `00-foundation/visual-language.md` §9 |
+| Kolor / light-mode (NIE grep-lint — patrz §18) | VISUAL SWEEP (`docs/qa/MASTER_VISUAL_QA_CATALOG.md`) + `scripts/audit-ui-compliance.js` | `00-foundation/light-mode-readability.md` §18 |
 
 **Reguła:** nowa egzekwowalna reguła w kanonie = musi wskazać (lub utworzyć) swój kod SSOT. Reguła bez bindingu jest tylko intencją.
 
