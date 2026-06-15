@@ -115,8 +115,17 @@ Month / Week / Day / List — przełącznik; każdy renderuje feed poprawnie, na
 ### 3.2 Zunifikowany feed — `GET /my-work/calendar/unified`
 Zawiera task/initiative/decision/consultify (+ google/outlook gdy podłączone). Filtr źródeł (checkboxy) + mini-kalendarz. Wyłącz źródło → znika z siatki.
 
-### 3.3 Integracje Google / Outlook
-Status connected/pending/reauth/error (zależny od konta). Obecnie 2-way „coming soon" — potwierdź, że UI pokazuje stan, a brak integracji degraduje się z komunikatem, nie crashem.
+### 3.3 ★ Uczciwy status integracji Google / Outlook (po fixie A — KRYTYCZNE) [MANUAL dla realnego OAuth]
+> **Kontekst:** OAuth Google/Outlook NIE jest zbudowany (osobny projekt). Legacy route `server/src/routes/calendarIntegrations.routes.ts` importował zgubiony w migracji JS (`../../routes/calendarIntegrations.js`) → crash przy imporcie. **Fix A** zamienił go w honest stub zwracający `status:'not_configured'` (NIE mountowany, ale defensywnie uczciwy). ŻYWY route to `server/src/routes/integrations/calendarIntegrations.routes.ts` (`/api/integrations/calendar`). FE przestał udawać „Connect".
+
+Mechanika FE: `buildExternalSourceState` (`CalendarView.tsx:102-161`) + stan początkowy (`:69-85`); status czytany z `Api.getIntegrations()` (`:225-273`); sidebar (`CalendarSidebar.tsx:62-70, :168-190, :198-232`).
+- **Oczekiwane po fixie A (brak OAuth = ścieżka domyślna):**
+  - Źródła Google/Outlook w sidebarze są **disabled**, z sub-labelem **„Integracja w przygotowaniu" / „Integration in preparation"** (`CalendarSidebar.tsx:189-190`).
+  - Status/callout: **„Wkrótce" / „Coming soon"** + helper „Integracja … jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne" + nextStep o subskrypcji kanału ICS.
+  - **ZERO udawania:** brak guzika „Connect/Podłącz", który nic nie robi albo sugeruje, że da się połączyć w Integracjach.
+- **Dowód:** screenshot sidebara (oba źródła „in preparation") + callout, w PL i EN. *(Zweryfikowane live 2026-06-14, EN — render OK.)*
+- **[FLAG]** Gdyby integracja kiedyś realnie podłączona (`status='connected'`) → źródło `available`, callout znika (`CalendarSidebar.tsx:208`). Statusy pending/reauth/error mają własne komunikaty (`CalendarView.tsx:114-146`).
+- **Backend honesty [Network]:** `GET /api/integrations/calendar` → `providers[].connected=false` + `ics.url`; brak 500. Legacy stub (gdyby kiedyś trafiony): `GET /` → `status:'not_configured'` 200, `/connect` → 501.
 
 ### 3.4 Dodaj wydarzenie — `POST /my-work/calendar/events` (`CalendarCreateEventModal`)
 Modal: tytuł, start/end, all-day, źródło. Walidacja (end ≥ start), zapis, pojawienie się w siatce. Pusty tytuł → blokada zapisu.
@@ -156,9 +165,19 @@ Otwiera się jako tab dokumentu; AI-text (`POST /my-work/tasks/ai-text`) generuj
 ### 4.7 Detal zadania (`TaskDetailView.tsx`) — 9 sekcji
 Basic, People (owner/assignee), Initiative parent, Checklist, Tags, Risks, Alternatives, Implementation Ideas, Dependencies. Properties strip: Save / Mark Complete / Share / Close. Edycja każdej sekcji → PATCH; checklist add/remove/toggle.
 
-### 4.8 ⚠️ ZNANY DEFEKT — linkowanie decyzji z zadania
-W `TaskDetailView` (`availableDecisions`, ok. linii 318–325) lista decyzji do podlinkowania jest **zaszyta na sztywno / inicjalizowana pusto** — możliwy race przy pierwszym otwarciu (dropdown pusty mimo istniejących decyzji).
-- **Test:** otwórz detal zadania, sekcja powiązań → sprawdź, czy lista decyzji to **realne dane z fetcha**, czy 4 mocki / pusto. Zaraportuj jako P1 (widoczne-ale-zepsute) z `plik:linia`.
+### 4.8 ★ „Powiązane decyzje" — Link Graph v3 (świeżo naprawiony P0 — GŁÓWNY TEST MODUŁU) [DB]
+> **Kontekst (audyt M03, raport linia ~290):** wcześniej linkowanie decyzji = **4 hardcodowane mocki** → powiązania „znikały" po reloadzie (P0). **Fix commit cc52075b8b = Link Graph v3:** realne krawędzie w `link_graph_edges` (source=decision, target=task). Ta pozycja MUSI być potwierdzona end-to-end jako naprawiona.
+
+Mechanika (`TaskDetailView.tsx`): krawędzie czytane jako backlinki zadania, filtr `sourceType='decision'` (`:625-665`); `RelatedDecision.linkId` = `link_graph_edges.id` (`:303`); status mapowany pending/approved/rejected/deferred/escalated (`:307`); ikona `Scale` dla source=decision (`:3703`). API: `Api.getLinkGraphBacklinks` (`api.ts:4996`), `Api.createLinkGraphEdge` (`api.ts:5022`).
+
+**Test krytyczny (utwórz → reload → trwałe):**
+1. Otwórz detal zadania → sekcja „Powiązane decyzje"; wyszukaj (`decisionSearchQuery`, `:313`) i podepnij decyzję (lub utwórz nową z poziomu zadania, `decisionId: taskId||'new'`, `:2944`).
+2. **Oczekiwane:** decyzja na liście z poprawnym tytułem + statusem.
+3. **Dowód mutacji:** Network `POST` createLinkGraphEdge 200 → **[DB]** nowy wiersz `link_graph_edges` (`source_type='decision'`, `target_type='task'`, właściwe id).
+4. **★ RELOAD (F5)** → ponownie otwórz zadanie → **powiązana decyzja NADAL widoczna** (z backlinków, nie mock) = dowód naprawy P0.
+5. Usuń powiązanie → krawędź znika z DB → reload → nie wraca.
+6. **Edge (backfill tytułu):** jeśli decyzji brak w `availableDecisions` przy ładowaniu, tytuł uzupełnia się po dociągnięciu listy (`:642-651, :665`) — sprawdź, że nie zostaje na stałe pusty/„Decyzja".
+- **[DB] Wymóg wstępny:** tabela `link_graph_edges` musi istnieć na środowisku (patrz §9.3 gapy schematu) — jej brak = regresja znikających powiązań.
 
 ---
 
@@ -226,7 +245,21 @@ Manual refresh + auto-poll (~60 s). Dane (`GET /my-work/dashboard/executive`) ś
 
 ---
 
-## 10. Format raportu i DoD
-Per przycisk/akcja: **kroki → oczekiwane → faktyczne → PASS/FAIL → dowód** (screenshot + payload+endpoint z Network + stan po reloadzie). Dla FAIL: `plik:linia`, przyczyna, propozycja fixu. Defekt `availableDecisions` (§4.8) i każde „widoczne-ale-zepsute" oznacz priorytetem.
+## 9A. Znane gapy schematu staging (M03)
+> Z audytu (raport M01/M02, finding N-15) + Module Map (`_MODULE_MAP_V2.md:110`). Na staging `DB_MANAGED_SCHEMA=off` → część tabel może brakować; objaw = `500` lub pusty panel BEZ komunikatu. To NIE bugi kodu — endpointy guardują czysto. **Sprawdź obecność tabel przed odpowiednimi testami.**
 
-**Definition of Done:** wszystkie quick actions, bulk bary, filtry, skróty i detale PASS z potwierdzeniem E2E w Network; gating Manager zweryfikowany na 2 kontach; spójność cross-tab potwierdzona; Timeline decyzji potwierdzony jako wyłączony (nie regresja); znany defekt linkowania decyzji zaraportowany; zero błędów w konsoli; PL+EN; light+dark.
+| Tabela | Używana przez | Ryzyko gdy brak | Migracja |
+|---|---|---|---|
+| `link_graph_edges` | §4.8 Powiązane decyzje (Link Graph v3), tworzenie decyzji z zadania | **KRYTYCZNE** — powiązania nie zapiszą się = regresja P0 znikających decyzji. Potwierdź obecność PRZED testem 4.8. | `server/src/database/DatabaseInitializer.ts` + `my-work.routes.ts` |
+| `calendar_feed_log` | §3 ICS log (best-effort) | Brak → log pomijany (`feedCols.length` guard); ICS dalej działa. | `server/migrations/610_calendar_feed_log_v3.sql` |
+| `integration_sync_log` | §3 audyt syncu ICS (best-effort) | Brak/stare kolumny → log pomijany (`tryLogIcsSyncAccess` guard). | `server/migrations/256_integrations_system.sql` |
+| `integrations` / `integration_providers` | §3.3 status connected | Brak `provider_id` → status zawsze „not connected / coming soon" (spójne z brakiem OAuth — nie blokuje). | `256_integrations_system.sql`, `105_user_integrations.sql`, `900_prod_missing_tables_hotfix.sql` |
+
+- **Inbox AI-assist / inbox kanoniczny (§2)** zależą od `ENABLE_V8_GLOBAL` + org-gate (`_MODULE_MAP_V2.md:110`). Przy OFF panel może wyglądać na pusty bez komunikatu — zgłoś jako UX gap, jeśli brak jawnego stanu.
+
+---
+
+## 10. Format raportu i DoD
+Per przycisk/akcja: **kroki → oczekiwane → faktyczne → PASS/FAIL → dowód** (screenshot + payload+endpoint z Network + [DB] wiersz/kolumna gdzie wskazano + stan po reloadzie). Dla FAIL: `plik:linia`, przyczyna, propozycja fixu. Każde „widoczne-ale-zepsute" oznacz priorytetem; pozycje [MANUAL]/[FLAG] domknij ręcznie lub odnotuj stan flagi.
+
+**Definition of Done:** wszystkie quick actions, bulk bary, filtry, skróty i detale PASS z potwierdzeniem E2E w Network; **§4.8 Link Graph v3 (utwórz→reload→trwałe) potwierdzony przód+tył+[DB]+reload jako naprawiony P0**; **§3.3 uczciwy status integracji potwierdzony (zero udawania „Connect", brak 500 z legacy route)**; gating Manager (§6.1) zweryfikowany na 2 kontach; spójność cross-tab potwierdzona; Timeline decyzji potwierdzony jako wyłączony (nie regresja); gapy schematu (§9A) sprawdzone przed testami zależnymi; zero błędów w konsoli; PL+EN; light+dark.
