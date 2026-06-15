@@ -325,7 +325,7 @@ Response style modal (pełny), AI floating Tone/Explain/Actions/Ask-AI realne wy
 - 🔴 **M03-N1:** `GET /api/ai-operator/overview → 500` — `could not determine data type of parameter $2` (nietypowany param w zapytaniu `($2 IS NULL AND user_id IS NULL) OR user_id=$3`). Realny bug.
 - 🔴 **M03-N2:** `COALESCE(is_dismissed, 0)` boolean/integer mismatch — `risk_signal_alerts`, `delay_signals` (rodzina pg bool/int). Realny bug.
 - 🟠 **M03-N3:** `meetings.start_at` text vs timestamp (`operator does not exist: text >= timestamptz`) — drift/typ.
-- 🟠 **M03-N4:** `kpis` table MISSING na staging (Manager stats) — gap schematu (do sync jak presentation_cards).
+- 🟠 **M03-N4 (skorygowane):** tabela `kpis` NIE istnieje w schemacie NIGDZIE (tylko project_kpis/initiative_kpis/kpi_templates) — **bug kodu**: 4 serwisy (`aiOperatorService:1026`, `contextPackBuilder:318`, `contextPackService:53`, `ideaAIGeneratorService:701`) wołają `FROM kpis` → ciche błędy (degradacja kontekstu AI, non-fatal). Fix = poprawić nazwę tabeli (project_kpis/initiative_kpis) lub dodać widok; NIE tworzyć fałszywej tabeli.
 - 🟡 `Postgres Unexpected error on idle client` — dropy połączeń przez proxy (kandydat na `keepAlive:true` w puli).
 
 ## M04 „Notatnik" — biblioteka PASS, reszta code-verified (85/100)
