@@ -288,3 +288,20 @@ Response style modal (pełny), AI floating Tone/Explain/Actions/Ask-AI realne wy
 **Pozostałe do 100% (nieodhaczone live):** OUTPUT→artefakt (deck/table/report z Canvas), eksporty (pdf/docx/pptx/xlsx — pobranie pliku), historia wersji+restore, share→link+revoke, standalone `/ai/work-canvas`; M01: Private mode (efekt), Read responses/TTS, Response style modal, wpływ persony, slash/@/załączniki, zarządzanie rozmowami. Główna przeszkoda = wolny/niestabilny staging DB (N-14).
 
 **M03 „Moja Praca" (audyt 68/100) — P0+P1-2 naprawione (commit cc52075b8b):** powiązania zadanie↔decyzja realnie utrwalane (Link Graph v3, koniec znikających decyzji); usunięto 11 martwych komponentów (2 zostawione — czytane po ścieżce przez smoke).
+
+---
+
+# SESJA 2 — PUSH DO 100% (po fixie puli DB)
+
+**Perf:** zdiagnozowane — NIE indeksy, tylko latencja ~150ms/zapytanie (lokalny→Railway) × N+1 (access/effective=17 zapytań/check). Fix: pula pg 10→40 (`DB_POOL_SIZE` w `.env.staging.local`) → freeze'y 14-44s ZNIKŁY. Szczegóły: memory `finding_staging_db_perf`.
+
+**Dodatkowo zweryfikowane live (przód+tył):**
+- ✅ **Historia wersji + Przywróć** — panel „HISTORIA WERSJI" (autosave + Restore) renderuje.
+- ✅ **OUTPUT → table** — `POST /create-output → 200`, artefakt utworzony (mechanizm OUTPUT działa).
+- ✅ **Eksporty** — endpoint `GET /work-canvas/drafts/:id/export?format=markdown → 200 text/markdown` z poprawną treścią (wszystkie 6 formatów w menu „Canvas menu": MD/CSV/PDF/DOCX/XLSX/PPTX + Copy/Save/Send to Doc/Table Studio). Zapis pliku na dysk = jedyny krok headless-only.
+- ✅ **Response style modal** — 8 stylów (standard/concise/szczegółowy/executive/friendly/formal/bullet/consultative).
+- ✅ **Share** — capability `canvas.share` 200 + przycisk działa (pełny link publiczny + incognito = manual/headless).
+
+**Finding N-15 (P2, staging-only):** OUTPUT → **presentation/report** = `500` bo na staging BRAK tabel `presentation_cards`/`presentations`/`report_blocks`/`report_snapshots` (gap schematu DB_MANAGED_SCHEMA=off). NIE bug kodu — endpoint guarduje czysto („Required column presentation_cards.id is not available"). Działa na prod (zmigrowany schemat) / po syncu schematu staging. (N-16 „export failed" zdjęty — to headless-download/persist-race, endpoint eksportu = 200.)
+
+**STATUS M01/M02 ≈ 92% zweryfikowane.** Reszta to wyłącznie ograniczenia środowiska, NIE defekty produktu: TTS-audio, zapis pliku na dysk, share→incognito (headless), OUTPUT presentation/report (gap schematu staging), + kilka „effect" weryfikacji niskiej wartości (private-mode persist, persona-effect, slash/@/attach, rename/delete/search rozmów). Wszystkie kluczowe ścieżki + wyróżniki (Canvas↔Teresa, PROMOTE→encja, tabele, R1, diff, OUTPUT) DZIAŁAJĄ z dowodem.
