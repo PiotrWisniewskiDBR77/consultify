@@ -11,6 +11,15 @@
 
 ## SYSTEMOWE (C0 — jeden fix czyści wiele obszarów)
 
+### VIS-011 · 🔝 PREVIEW — standaryzacja (kształt + przyciski dołu + kolory dołu) · P1 · [SYSTEMIC — #1]
+> **Reconnect wątku, z którego startowała rozmowa (T1/T5).** Preview jest w KAŻDEJ tabeli (`TableWithPreviewLayout` + `RowDetailPanel`/`PreviewRelations`) → standaryzacja = najwyższy zwrot. Żądanie właściciela 2026-06-15: kształt panelu, **przyciski stopki**, **kolorystyka stopki** — jak uwagi sprzed 2 dni.
+- **Kanon (już jest):** TABLE_AND_PREVIEW_CANON §7.3 (anatomia: Header tytuł+Open+X → AI → Relations → Actions) + §7.3b (`PreviewActionBar`+`actionPillClass()` = JEDYNY SSOT przycisków stopki; dozwolone colorScheme; zero inline `bg-*`). T5 (przyciski preview Wywiadu) + T1 (SSOT) z początku wątku.
+- **Otwarte z notatek 06-12/13:**
+  - **[P0?] `PreviewRelations` React #31** (notatka 06-12: klik w Inbox crashował apkę). Dziś Ideas-preview NIE crashował → **verify Inbox-preview gdy serwer wróci**; jeśli żyje = P0.
+  - **UWAGA #15:** brak działającego „Otwórz" z board-preview Inicjatyw (przycisk stopki nieosiągalny) → preview musi mieć JEDEN „Open" (§7.3).
+- **Root-cause (C0):** `src/components/shared/PreviewPane/{previewStyles.ts, PreviewActionBar, PreviewRelations.tsx}` + `src/components/MyWork/table/RowDetailPanel.tsx`.
+- **Akcja:** audyt KAŻDEJ tabeli czy używa `PreviewActionBar` (parytet stopki) + jednolita stopka (kolor/kształt/Open) + fix crashu jeśli żyje.
+
 ### VIS-001 · Badge danger gubi fill w LIGHT · P1 · [SYSTEMIC]
 W light tryb badge'e severity/status danger renderują się BEZ tła i bez koloru danger.
 - **Pomiar:** My Work „Critical" → `bg=transparent, border=0px, text=slate-500`. Interview „44d overdue" → `bg=transparent, text=slate-900`.
@@ -61,6 +70,26 @@ Composer „Ask Teresa…" zajmuje ~40% wysokości jako pusty box (dark i light)
 ### VIS-010 · [My Work] Preview — nad-truncate tytułu · P3
 - **Obserwacja (Ideas + preview):** nagłówek preview „QA OWNER 17…" ucięty bardzo krótko mimo dostępnej szerokości. Pełny „QA OWNER 1779033714227" mógłby dostać więcej miejsca przed truncate.
 - **PASS w tym samym preview:** anatomia §7.3 poprawna (Header tytuł+Open+X, AI hints, Relations „No linked documents", kolejność AI→Relations).
+
+### VIS-012 · [Notebook] „CANONICAL NOTEBOOK PATH" — gigantyczny pasek (≈40% kanwy) · P1-design
+> **Odpowiedź na „ciągle tam jest, czemu":** redesign opisany w `Harvard/SPEC_ZADANIE_07_notebook_workspace.md` (2026-06-13) to **PROPOZYCJA do akceptacji — nigdy nie wdrożona**. Stąd pasek dalej jest.
+- **Problem:** `NotebookCanonicalPathStrip.tsx:25-179` (render `NotebookContent.tsx:2503-2523`) = 4 wielkie karty zajmujące ~40% kanwy, **duplikujące akcje prawego panelu** (Add sources=Attachments, AI proposal=AICommand, Review=propozycje, Convert=convert-to). „Powstał gdy aplikacja była wielką tabelą."
+- **Fix (wg SPEC_07):** usunąć wielki pasek; workflow → slim progres-chip w nagłówku `① Sources · ② AI · ③ Review · ④ Convert` (4 małe segmenty). Zysk ~40% kanwy, zero duplikacji. „Mniej znaczy więcej."
+- **Decyzja:** wdrożyć SPEC_07 (czeka na akceptację) — to design, nie czysty bug.
+
+---
+
+## 🔗 RECONNECT — mapa root-cause dla C0 (komponenty współdzielone)
+
+| Finding | Root-cause komponent | Uwaga |
+|---|---|---|
+| VIS-011 preview (stopka/kształt/Open/crash) | `shared/PreviewPane/{previewStyles.ts, PreviewActionBar, PreviewRelations.tsx}` + `MyWork/table/RowDetailPanel.tsx` | reconnect T1/T5/§7.3b; verify crash Inbox |
+| VIS-009 selekcja rose + VIS-002 aging | `MyWork/table/RowColoringConfig.tsx` | kolory wierszy (selekcja/aging) w jednym miejscu |
+| VIS-001 badge danger w light | komponent(y) badge (`PMOPriorityBadge` itp.) | §5 tło+border+text-danger |
+| VIS-006 CTA crimson→navy | per-moduł CTA (Tools/Initiatives) | jedna reguła navy |
+| VIS-012 notebook strip | `MyWork/notebook/NotebookCanonicalPathStrip.tsx` | SPEC_07 |
+
+**Weryfikacja świeżości:** archiwum (06-14) jest POTOMKIEM codemodu light-contrast `24ccb176d9` (06-04, 7579 zmian) → **findings AKTUALNE, nie przestarzałe** (sprawdzone `git merge-base`).
 
 ---
 
