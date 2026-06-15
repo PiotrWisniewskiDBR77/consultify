@@ -274,3 +274,17 @@ Eksporty z pobraniem pliku (pdf/docx/pptx/xlsx), share→incognito + revoke, pro
 
 ## Nie pokryte headless (→ wspólne przejście w Chromie)
 Response style modal (pełny), AI floating Tone/Explain/Actions/Ask-AI realne wyniki, eksporty (download), promote→encja (zapis), share→incognito. Reasoning trace wymaga zarejestrowania modelu reasoning (o-model, config DB) — kod gotowy. Persist-po-reload dla N-8 (czy zaakceptowana wersja trwała) nie re-zweryfikowany przez wolne DB — fix celuje dokładnie w tę ścieżkę.
+
+---
+
+# SESJA 2 (hotel) — domykanie M01/M02 do 100% + M03
+
+**Element 3 (reasoning) — natywny R1 potwierdzony:** log „Starting stream with deepseek/deepseek-reasoner" + bogaty zwijany ślad. Root-cause odblokowania = bug `getProviderConfig` (appCache.get zwraca null na miss, kod sprawdzał `!==undefined` → DB nigdy nie odpytywane dla providerów z kluczem tylko-w-DB; fix `if(cached)`, commit 4fed01b9c3). Zarejestrowano `deepseek-reasoner-01` w llm_providers (staging).
+
+**M02 Canvas↔Teresa (task #8) — PASS + fix:** czat realnie modyfikuje OTWARTY dokument (APPEND). Bug: append wstawiał surowy markdown jako plain-text → Turndown escapował `\##` → nagłówki/listy nie renderowały się. Fix (commit 4e43833f39): akumulacja + rekoncyliacja regionu (markdownToHtml(ensureBlockSpacing(raw))), ściśle addytywnie. **Dowód live:** dopisana sekcja „Wnioski końcowe" = prawdziwy H2 + lista; oryginał zachowany; doc urósł 2058→2516 (zero utraty).
+
+**M02 PROMOTE → realna encja (task #9) — PASS E2E:** „Save as note" → `POST /work-canvas/drafts/:id/save-to-workspace 200` → realny wiersz w `notebook_pages` (id cc68ad8f, tytuł=tytuł docu, org DBR77) + `materializedTo` w provenance draftu. Materializer współdzielony dla 5 celów.
+
+**Pozostałe do 100% (nieodhaczone live):** OUTPUT→artefakt (deck/table/report z Canvas), eksporty (pdf/docx/pptx/xlsx — pobranie pliku), historia wersji+restore, share→link+revoke, standalone `/ai/work-canvas`; M01: Private mode (efekt), Read responses/TTS, Response style modal, wpływ persony, slash/@/załączniki, zarządzanie rozmowami. Główna przeszkoda = wolny/niestabilny staging DB (N-14).
+
+**M03 „Moja Praca" (audyt 68/100) — P0+P1-2 naprawione (commit cc52075b8b):** powiązania zadanie↔decyzja realnie utrwalane (Link Graph v3, koniec znikających decyzji); usunięto 11 martwych komponentów (2 zostawione — czytane po ścieżce przez smoke).
