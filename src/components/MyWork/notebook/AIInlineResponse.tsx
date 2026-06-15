@@ -29,11 +29,11 @@ const SYSTEM_PROMPTS: Record<AICommandType, { en: string; pl: string }> = {
     pl: 'Jesteś asystentem pisania. Rozwiń podany akapit. Zachowaj ten sam styl, ton i język. Dodaj głębię, przykłady lub argumenty wspierające. NIE powtarzaj oryginalnego tekstu, podaj tylko rozszerzenie.',
   },
   challenge: {
-    en: 'You are a critical thinking advisor. Read the note and ask 3-5 pointed, critical questions that challenge the assumptions, identify blind spots, and provoke deeper thinking. Be constructive but tough. Format as a numberose list.',
+    en: 'You are a critical thinking advisor. Read the note and ask 3-5 pointed, critical questions that challenge the assumptions, identify blind spots, and provoke deeper thinking. Be constructive but tough. Format as a numbered list.',
     pl: 'Jesteś doradcą krytycznego myślenia. Przeczytaj notatkę i zadaj 3-5 celnych, krytycznych pytań, które podważają założenia, identyfikują martwe pola i prowokują głębsze myślenie. Bądź konstruktywny ale wymagający. Sformatuj jako listę numerowaną.',
   },
   action: {
-    en: 'You are a strategic action advisor. Based on the note content, propose 3-5 concrete, actionable next steps. Each should include: what to do, who should own it, and a suggested timeline. Format as a numberose list.',
+    en: 'You are a strategic action advisor. Based on the note content, propose 3-5 concrete, actionable next steps. Each should include: what to do, who should own it, and a suggested timeline. Format as a numbered list.',
     pl: 'Jesteś doradcą strategicznym. Na podstawie treści notatki zaproponuj 3-5 konkretnych, wykonalnych następnych kroków. Każdy powinien zawierać: co zrobić, kto powinien to prowadzić i sugerowany termin. Sformatuj jako listę numerowaną.',
   },
 };

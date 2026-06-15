@@ -68,19 +68,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   >({
     google: {
       available: false,
-      statusLabel: isPolish ? 'Niepodłączone' : 'Not connected',
+      statusLabel: isPolish ? 'Wkrótce' : 'Coming soon',
       helper: isPolish
-        ? 'Google Calendar nie ma jeszcze aktywnego połączenia.'
-        : 'Google Calendar does not have an active connection yet.',
-      nextStep: isPolish ? 'Podłącz źródło w Integracjach.' : 'Connect the source in Integrations.',
+        ? 'Integracja Google Calendar jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.'
+        : 'Google Calendar integration is in preparation — two-way connection is not available yet.',
+      nextStep: isPolish
+        ? 'Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.'
+        : 'In the meantime, subscribe to the Consultify ICS feed in your calendar.',
     },
     outlook: {
       available: false,
-      statusLabel: isPolish ? 'Niepodłączone' : 'Not connected',
+      statusLabel: isPolish ? 'Wkrótce' : 'Coming soon',
       helper: isPolish
-        ? 'Outlook nie ma jeszcze aktywnego połączenia.'
-        : 'Outlook does not have an active connection yet.',
-      nextStep: isPolish ? 'Podłącz źródło w Integracjach.' : 'Connect the source in Integrations.',
+        ? 'Integracja Outlook jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.'
+        : 'Outlook integration is in preparation — two-way connection is not available yet.',
+      nextStep: isPolish
+        ? 'Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.'
+        : 'In the meantime, subscribe to the Consultify ICS feed in your calendar.',
     },
   });
   const [dayLoad, setDayLoad] = useState<CalendarConflictResponse | null>(null);
@@ -147,13 +151,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         default:
           return {
             available: false,
-            statusLabel: isPolish ? 'Niepodłączone' : 'Not connected',
+            statusLabel: isPolish ? 'Wkrótce' : 'Coming soon',
             helper: isPolish
-              ? `${providerLabel} nie ma jeszcze aktywnego połączenia.`
-              : `${providerLabel} does not have an active connection yet.`,
+              ? `Integracja ${providerLabel} jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.`
+              : `${providerLabel} integration is in preparation — two-way connection is not available yet.`,
             nextStep: isPolish
-              ? 'Podłącz źródło w Integracjach.'
-              : 'Connect the source in Integrations.',
+              ? 'Tymczasem subskrybuj kanał ICS Consultify w swoim kalendarzu.'
+              : 'In the meantime, subscribe to the Consultify ICS feed in your calendar.',
           };
       }
     },

@@ -105,6 +105,8 @@ export const ActionItemsPanel: React.FC<ActionItemsPanelProps> = ({
           status: 'todo',
           priority: items[i].priority || 'medium',
           tags: ['from-notebook', 'ai-extracted'],
+          sourceType: 'notebook_page',
+          sourceId: noteId,
         });
         setCreatedIds((prev) => new Set(prev).add(i));
         count++;

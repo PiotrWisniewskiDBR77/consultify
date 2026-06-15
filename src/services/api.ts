@@ -16283,7 +16283,7 @@ export const Api = {
   myWorkNotebookLegacyModeKey: 'consultify:notebook-legacy-mode',
   shouldFallbackToLegacyMyWorkNotebook: (error: any) => {
     const status = Number(error?.status);
-    return [400, 404, 405, 500, 501, 503].includes(status);
+    return [400, 403, 404, 405, 500, 501, 503].includes(status);
   },
   shouldLockLegacyMyWorkNotebookMode: (error: any) => {
     const status = Number(error?.status);

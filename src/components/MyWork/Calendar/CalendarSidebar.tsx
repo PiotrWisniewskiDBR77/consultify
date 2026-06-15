@@ -187,7 +187,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                   </span>
                   {!isAvailable && isExternalSource && (
                     <span className="block text-[10px] font-normal normal-case text-slate-600 dark:text-slate-500">
-                      {isPolish ? 'Podłącz w Integracjach' : 'Connect in Integrations'}
+                      {isPolish ? 'Integracja w przygotowaniu' : 'Integration in preparation'}
                     </span>
                   )}
                 </span>
