@@ -84,6 +84,11 @@ const plusDaysTimestampSql = (days: number) =>
   isPostgres ? `CURRENT_TIMESTAMP + INTERVAL '${days} day'` : `datetime('now', '+${days} day')`;
 const minusDaysTimestampSql = (days: number) =>
   isPostgres ? `CURRENT_TIMESTAMP - INTERVAL '${days} day'` : `datetime('now', '-${days} day')`;
+// meetings.start_at is TEXT; on Postgres it must be cast to compare against timestamps.
+// NULLIF guards against empty strings (would fail to parse). SQLite keeps lexicographic
+// ISO-string comparison, which already works there.
+const timestampColumnSql = (column: string) =>
+  isPostgres ? `NULLIF(${column}, '')::timestamptz` : column;
 
 class AIOperatorService {
   private schemaEnsured = false;
@@ -200,9 +205,9 @@ class AIOperatorService {
       `SELECT *
        FROM ai_operator_profiles
        WHERE organization_id = ?
-         AND ((? IS NULL AND user_id IS NULL) OR user_id = ?)
+         AND user_id IS NOT DISTINCT FROM ?::text
        LIMIT 1`,
-      [organizationId, userId || null, userId || null]
+      [organizationId, userId || null]
     );
   }
 
@@ -447,14 +452,14 @@ class AIOperatorService {
       this.safeFirst<any>(
         `SELECT COUNT(*) as open_count
          FROM risk_signal_alerts
-         WHERE organization_id = ? AND COALESCE(is_dismissed, 0) = 0`,
+         WHERE organization_id = ? AND is_dismissed IS NOT TRUE`,
         [organizationId],
         { open_count: 0 }
       ),
       this.safeFirst<any>(
         `SELECT COUNT(*) as open_count
          FROM delay_signals
-         WHERE organization_id = ? AND COALESCE(is_dismissed, 0) = 0`,
+         WHERE organization_id = ? AND is_dismissed IS NOT TRUE`,
         [organizationId],
         { open_count: 0 }
       ),
@@ -545,8 +550,8 @@ class AIOperatorService {
         `SELECT id, title, start_at
          FROM meetings
          WHERE organization_id = ?
-           AND start_at >= ${currentTimestampSql()}
-           AND start_at <= ${plusDaysTimestampSql(7)}
+           AND ${timestampColumnSql('start_at')} >= ${currentTimestampSql()}
+           AND ${timestampColumnSql('start_at')} <= ${plusDaysTimestampSql(7)}
          ORDER BY start_at ASC
          LIMIT 5`,
         [organizationId],
