@@ -4,6 +4,8 @@
 > **Zakres tej paczki:** hub + nawigacja, **Inbox** (landing), **Kalendarz**, **Zadania**, **Decyzje**, **Manager** — wszystkie przyciski, akcje wsadowe, skróty klawiaturowe, filtry, detale encji, oraz weryfikacja E2E przez endpointy backendu.
 > **Poza zakresem:** Pomysły/Ideas (osobne karty `Harvard/podzial/ideas/`, beta closed dla wszystkich) oraz Notatnik (paczka M04). Radar/Home są UKRYTE (flaga kompilacyjna) — patrz §9.
 > **Cel:** agent piszący i testujący moduł ma dogłębnie przetestować tworzenie i zmienianie zadań/decyzji/wydarzeń oraz cały triage Inboxa, z dowodem w Network.
+> **Wzór formatu:** `Harvard/TESTY_M01_CZAT.md` + `Harvard/TESTY_M02_CANVAS.md`. **Bazuje na:** audyt M03 w `Harvard/RAPORT_TESTOW_M01_M02_2026-06-14.md` (sekcja M03, ~linia 290: P0+P1-2 naprawione cc52075b8b — Link Graph v3, koniec znikających decyzji) + fix kalendarza A (uczciwy status integracji).
+> **Legenda:** **[MANUAL]** = wymaga ręcznej weryfikacji (drag&drop / audio / realny OAuth / incognito); **[FLAG]** = zależne od flagi/capability/roli (odnotuj stan); **[DB]** = dowód obejmuje wiersz/kolumnę w bazie.
 > **Data:** 2026-06-14
 
 ---
@@ -18,7 +20,8 @@
 | Zadania | `MyTasksListContent`, `TasksKanbanBoard`, `TaskDetailView` | `src/components/MyWork/MyTasksListContent.tsx` (~2483 l.), `TasksKanbanBoard.tsx`, `TaskDetailView.tsx` (~6574 l.) |
 | Decyzje | `DecisionsPanelContent`, `DecisionsKanbanBoard`, `DecisionDetailView` | `src/components/MyWork/DecisionsPanelContent.tsx`, `DecisionsKanbanBoard.tsx`, `DecisionDetailView.tsx` (~7801 l.) |
 | Manager | `ExecutiveDashboard` | `src/components/MyWork/Executive/ExecutiveDashboard.tsx` (~981 l.) |
-| Backend | monolit `my-work.routes.ts` (13k+ l.) + `my-work/{decisions,focus,stats,signals,notebook,calendar,radar,home}.routes.ts`, `inbox-enterprise.routes.ts`, `tasks.routes.ts`, `notifications*.routes.ts`, `calendarIntegrations.routes.ts` | `server/src/routes/` |
+| Backend | monolit `my-work.routes.ts` (13k+ l.) + `my-work/{decisions,focus,stats,signals,notebook,calendar,radar,home}.routes.ts`, `inbox-enterprise.routes.ts`, `tasks.routes.ts`, `notifications*.routes.ts` | `server/src/routes/` |
+| Backend kalendarz — integracje | ŻYWY: `routes/integrations/calendarIntegrations.routes.ts` (`/api/integrations/calendar`, ICS feed). Legacy `routes/calendarIntegrations.routes.ts` = NIE mountowany honest stub po fixie A (`status:'not_configured'`, NIE crash). | `server/src/routes/` |
 
 **Routing (parser `parseMyWorkPathIntent` w `MyWorkHub`):** `/my-work/inbox` (landing), `/my-work/calendar`, `/my-work/tasks[/:id]`, `/my-work/decisions[/:id]`, `/my-work/manager`, `/my-work/notebook[...]` (M04) + deep-linki query (`?taskId=`, `?decisionId=`, `?ideaId=`).
 
