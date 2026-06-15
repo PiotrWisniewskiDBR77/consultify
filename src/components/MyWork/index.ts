@@ -47,7 +47,6 @@ export {
 } from './layout/IdeaSmartLayout';
 export { MyIdeasListContent } from './MyIdeasListContent';
 export { MyTasksListContent } from './MyTasksListContent';
-export { NotificationsContent } from './NotificationsContent';
 export { ProcessKPIDashboard } from './ProcessKPIDashboard';
 export type { VSMDataFields, VSMFieldKey, VSMShape } from './VSMNodeComponent';
 export {
@@ -227,8 +226,5 @@ export { FocusView } from './Focus/FocusView';
 export { InboxTriage } from './Inbox/InboxTriage';
 export { NotificationSettings } from './NotificationSettings';
 export { PersonalExecutionBar } from './PersonalExecutionBar';
-export { ProgressView } from './ProgressView';
-export { TaskInbox } from './TaskInbox';
 export type { FilterPreset, TaskFilters, ViewMode } from './Tasks/TaskFiltersBar';
 export { TaskFiltersBar } from './Tasks/TaskFiltersBar';
-export { TodayDashboard } from './TodayDashboard';

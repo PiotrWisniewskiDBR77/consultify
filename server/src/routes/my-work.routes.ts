@@ -954,6 +954,51 @@ router.post(
 );
 
 /**
+ * DELETE /api/my-work/link-graph/edges/:edgeId
+ * Remove a single Link Graph v3 edge (org-scoped). Used e.g. when a user
+ * unlinks a related decision from a task. Idempotent: 200 even if already gone.
+ */
+router.delete(
+  '/link-graph/edges/:edgeId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+
+    if (!(await requireTables(res, ['link_graph_edges']))) return;
+
+    const edgeId = String(req.params.edgeId || '').trim();
+    if (!edgeId) {
+      res
+        .status(400)
+        .json(
+          buildMyWorkFailClosedError(
+            req,
+            400,
+            'MY_WORK_LINK_GRAPH_EDGE_ID_REQUIRED',
+            'edgeId path parameter is required.'
+          )
+        );
+      return;
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM link_graph_edges WHERE id = ? AND organization_id = ?`,
+      [edgeId, orgId]
+    );
+
+    await req.emitAuditEvent?.({
+      action: 'LINK_GRAPH_EDGE_DELETE',
+      resourceType: 'LINK_GRAPH_EDGE',
+      resourceId: edgeId,
+    });
+
+    res.json({ ok: true });
+  })
+);
+
+/**
  * GET /api/my-work/tasks
  * Lightweight list for Focus + My Work aggregations
  */

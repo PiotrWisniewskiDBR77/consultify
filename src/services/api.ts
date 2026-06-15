@@ -5033,6 +5033,17 @@ export const Api = {
     return handleResponse(res, 'Failed to create link edge');
   },
 
+  deleteLinkGraphEdge: async (edgeId: string): Promise<{ ok: boolean }> => {
+    const res = await fetch(
+      `${API_URL}/my-work/link-graph/edges/${encodeURIComponent(edgeId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to delete link edge');
+  },
+
   // V51-04: Artifact attachment API
   attachArtifactToObject: async (
     ideaId: string,

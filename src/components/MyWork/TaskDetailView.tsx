@@ -205,7 +205,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
 }) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse, setChatKickoffMessage, emitMyWorkEvent } =
+  const { isChatCollapsed, toggleChatCollapse, setChatKickoffMessage, emitMyWorkEvent, currentUser } =
     useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const [loading, setLoading] = useState(false);
@@ -300,6 +300,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // Related Decisions
   interface RelatedDecision {
     id: string;
+    /** Persisted Link Graph v3 edge id (link_graph_edges.id). Present once saved server-side. */
+    edgeId?: string | null;
     decisionId: string;
     decisionTitle: string;
     decisionStatus: 'pending' | 'approved' | 'rejected' | 'deferred' | 'escalated';
@@ -310,6 +312,8 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [showDecisionSearch, setShowDecisionSearch] = useState(false);
   const [decisionSearchQuery, setDecisionSearchQuery] = useState('');
   const [showCreateDecision, setShowCreateDecision] = useState(false);
+  const [creatingDecision, setCreatingDecision] = useState(false);
+  const [linkingDecisionId, setLinkingDecisionId] = useState<string | null>(null);
   const [newDecisionTitle, setNewDecisionTitle] = useState('');
   const [newDecisionDescription, setNewDecisionDescription] = useState('');
   const [newDecisionRelationType, setNewDecisionRelationType] = useState<
@@ -617,6 +621,49 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       cancelled = true;
     };
   }, [taskId, title]);
+
+  // Load persisted task↔decision links from the Link Graph (link_graph_edges).
+  // Edges are stored as source = decision, target = task, so we read the task's
+  // backlinks and keep only decision sources. Titles/statuses are resolved from
+  // availableDecisions when present (falls back to the id while that list loads).
+  useEffect(() => {
+    if (!taskId) {
+      setRelatedDecisions([]);
+      return;
+    }
+    let cancelled = false;
+    Api.getLinkGraphBacklinks({ type: 'task', id: taskId, limit: 100 })
+      .then((edges) => {
+        if (cancelled) return;
+        const decisionEdges = (Array.isArray(edges) ? edges : []).filter(
+          (e) => String(e.sourceType || '').toLowerCase() === 'decision'
+        );
+        const decisionById = new Map(availableDecisions.map((d) => [String(d.id), d]));
+        const hydrated: RelatedDecision[] = decisionEdges.map((e) => {
+          const match = decisionById.get(String(e.sourceId));
+          const status = String(match?.status || 'pending').toLowerCase();
+          const allowed = ['pending', 'approved', 'rejected', 'deferred', 'escalated'];
+          return {
+            id: String(e.id),
+            edgeId: String(e.id),
+            decisionId: String(e.sourceId),
+            decisionTitle: match?.title || (isPolish ? 'Decyzja' : 'Decision'),
+            decisionStatus: (allowed.includes(status)
+              ? status
+              : 'pending') as RelatedDecision['decisionStatus'],
+            relationshipType: 'requires',
+          };
+        });
+        setRelatedDecisions(hydrated);
+      })
+      .catch(() => {
+        if (!cancelled) setRelatedDecisions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // availableDecisions in deps so titles backfill once the decisions list arrives.
+  }, [taskId, availableDecisions, isPolish]);
 
   useEffect(() => {
     const q = `${title || ''} ${description || ''}`.trim();
@@ -5264,11 +5311,28 @@ Return ONLY the final comment text.`;
                                       </button>
                                     )}
                                     <button
-                                      onClick={() =>
+                                      onClick={async () => {
+                                        // Optimistically remove from UI, then persist the unlink.
+                                        const prev = relatedDecisions;
                                         setRelatedDecisions(
                                           relatedDecisions.filter((d) => d.id !== rel.id)
-                                        )
-                                      }
+                                        );
+                                        if (!rel.edgeId) return; // not yet persisted
+                                        try {
+                                          await Api.deleteLinkGraphEdge(rel.edgeId);
+                                        } catch (err) {
+                                          console.error(
+                                            '[TaskDetailView] Failed to unlink decision',
+                                            err
+                                          );
+                                          setRelatedDecisions(prev); // rollback
+                                          toast.error(
+                                            isPolish
+                                              ? 'Nie udało się usunąć powiązania'
+                                              : 'Failed to remove link'
+                                          );
+                                        }
+                                      }}
                                       className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-500 transition"
                                     >
                                       <X size={14} />
@@ -5393,45 +5457,97 @@ Return ONLY the final comment text.`;
                           {/* Action buttons */}
                           <div className="flex gap-2 pt-2">
                             <button
-                              onClick={() => {
+                              disabled={creatingDecision || !taskId}
+                              onClick={async () => {
                                 if (!newDecisionTitle.trim()) {
                                   toast.error(
                                     isPolish ? 'Podaj tytuł decyzji' : 'Enter decision title'
                                   );
                                   return;
                                 }
-                                const newDecisionId = Math.random().toString(36).substr(2, 9);
-                                const newDecision = {
-                                  id: newDecisionId,
-                                  title: newDecisionTitle,
-                                  status: 'pending',
-                                };
-                                setAvailableDecisions([...availableDecisions, newDecision]);
-                                const newRelation: RelatedDecision = {
-                                  id: Math.random().toString(36).substr(2, 9),
-                                  decisionId: newDecisionId,
-                                  decisionTitle: newDecisionTitle,
-                                  decisionStatus: 'pending',
-                                  relationshipType: newDecisionRelationType,
-                                };
-                                setRelatedDecisions([...relatedDecisions, newRelation]);
-                                setShowCreateDecision(false);
-                                setNewDecisionTitle('');
-                                setNewDecisionDescription('');
-                                setNewDecisionRelationType('requires');
-                                addActivityLogEntry(
-                                  'edit',
-                                  isPolish
-                                    ? `Utworzono decyzję: ${newDecisionTitle}`
-                                    : `Created decision: ${newDecisionTitle}`
-                                );
-                                toast.success(
-                                  isPolish
-                                    ? 'Decyzja utworzona i powiązana'
-                                    : 'Decision created and linked'
-                                );
+                                if (!taskId) {
+                                  toast.error(
+                                    isPolish
+                                      ? 'Najpierw zapisz zadanie, aby utworzyć decyzję'
+                                      : 'Save the task first to create a decision'
+                                  );
+                                  return;
+                                }
+                                const decisionMakerId = currentUser?.id || ownerId || assigneeId;
+                                if (!decisionMakerId) {
+                                  toast.error(
+                                    isPolish
+                                      ? 'Brak osoby decydującej — nie można utworzyć decyzji'
+                                      : 'No decision maker available — cannot create decision'
+                                  );
+                                  return;
+                                }
+                                try {
+                                  setCreatingDecision(true);
+                                  // 1) Persist the decision for real (no more fake Math.random ids).
+                                  const created = await Api.createDecision({
+                                    title: newDecisionTitle.trim(),
+                                    description: newDecisionDescription.trim() || undefined,
+                                    type: 'APPROVAL',
+                                    decisionMakerId,
+                                    taskId,
+                                    projectId: projectId || undefined,
+                                    initiativeId: initiativeId || undefined,
+                                  });
+                                  const createdDecision = created?.decision || created;
+                                  const realDecisionId = String(
+                                    createdDecision?.id || createdDecision?.decisionId || ''
+                                  );
+                                  if (!realDecisionId) {
+                                    throw new Error('Decision id missing in response');
+                                  }
+                                  // 2) Persist the task↔decision link (source=decision, target=task).
+                                  const edgeRes = await Api.createLinkGraphEdge({
+                                    source: { type: 'decision', id: realDecisionId },
+                                    target: { type: 'task', id: taskId },
+                                  });
+                                  const newDecision = {
+                                    id: realDecisionId,
+                                    title: newDecisionTitle.trim(),
+                                    status: 'pending',
+                                  };
+                                  setAvailableDecisions([...availableDecisions, newDecision]);
+                                  const newRelation: RelatedDecision = {
+                                    id: edgeRes?.edgeId || realDecisionId,
+                                    edgeId: edgeRes?.edgeId || null,
+                                    decisionId: realDecisionId,
+                                    decisionTitle: newDecisionTitle.trim(),
+                                    decisionStatus: 'pending',
+                                    relationshipType: newDecisionRelationType,
+                                  };
+                                  setRelatedDecisions([...relatedDecisions, newRelation]);
+                                  setShowCreateDecision(false);
+                                  setNewDecisionTitle('');
+                                  setNewDecisionDescription('');
+                                  setNewDecisionRelationType('requires');
+                                  addActivityLogEntry(
+                                    'edit',
+                                    isPolish
+                                      ? `Utworzono decyzję: ${newDecisionTitle}`
+                                      : `Created decision: ${newDecisionTitle}`
+                                  );
+                                  toast.success(
+                                    isPolish
+                                      ? 'Decyzja utworzona i powiązana'
+                                      : 'Decision created and linked'
+                                  );
+                                } catch (err) {
+                                  console.error('[TaskDetailView] Failed to create decision', err);
+                                  toast.error(
+                                    isPolish
+                                      ? 'Nie udało się utworzyć decyzji'
+                                      : 'Failed to create decision'
+                                  );
+                                } finally {
+                                  setCreatingDecision(false);
+                                }
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-medium hover:bg-amber-600 transition"
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-medium hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <Plus size={16} />
                               <span className="text-sm">
@@ -5497,26 +5613,56 @@ Return ONLY the final comment text.`;
                               .map((decision) => (
                                 <button
                                   key={decision.id}
-                                  onClick={() => {
-                                    const newRelation: RelatedDecision = {
-                                      id: Math.random().toString(36).substr(2, 9),
-                                      decisionId: decision.id,
-                                      decisionTitle: decision.title,
-                                      decisionStatus: decision.status as any,
-                                      relationshipType: 'requires',
-                                    };
-                                    setRelatedDecisions([...relatedDecisions, newRelation]);
-                                    setShowDecisionSearch(false);
-                                    setDecisionSearchQuery('');
-                                    addActivityLogEntry(
-                                      'edit',
-                                      isPolish ? 'Powiązano decyzję' : 'Linked decision'
-                                    );
-                                    toast.success(
-                                      isPolish ? 'Powiązano decyzję' : 'Decision linked'
-                                    );
+                                  disabled={linkingDecisionId === decision.id || !taskId}
+                                  onClick={async () => {
+                                    if (!taskId) {
+                                      toast.error(
+                                        isPolish
+                                          ? 'Najpierw zapisz zadanie, aby powiązać decyzję'
+                                          : 'Save the task first to link a decision'
+                                      );
+                                      return;
+                                    }
+                                    try {
+                                      setLinkingDecisionId(decision.id);
+                                      // Persist the link (source=decision, target=task).
+                                      const edgeRes = await Api.createLinkGraphEdge({
+                                        source: { type: 'decision', id: decision.id },
+                                        target: { type: 'task', id: taskId },
+                                      });
+                                      const newRelation: RelatedDecision = {
+                                        id: edgeRes?.edgeId || decision.id,
+                                        edgeId: edgeRes?.edgeId || null,
+                                        decisionId: decision.id,
+                                        decisionTitle: decision.title,
+                                        decisionStatus: decision.status as any,
+                                        relationshipType: 'requires',
+                                      };
+                                      setRelatedDecisions([...relatedDecisions, newRelation]);
+                                      setShowDecisionSearch(false);
+                                      setDecisionSearchQuery('');
+                                      addActivityLogEntry(
+                                        'edit',
+                                        isPolish ? 'Powiązano decyzję' : 'Linked decision'
+                                      );
+                                      toast.success(
+                                        isPolish ? 'Powiązano decyzję' : 'Decision linked'
+                                      );
+                                    } catch (err) {
+                                      console.error(
+                                        '[TaskDetailView] Failed to link decision',
+                                        err
+                                      );
+                                      toast.error(
+                                        isPolish
+                                          ? 'Nie udało się powiązać decyzji'
+                                          : 'Failed to link decision'
+                                      );
+                                    } finally {
+                                      setLinkingDecisionId(null);
+                                    }
                                   }}
-                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <div
                                     className={`w-2 h-2 rounded-full ${
