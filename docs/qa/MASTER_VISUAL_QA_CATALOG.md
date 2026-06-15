@@ -52,6 +52,16 @@ Composer „Ask Teresa…" zajmuje ~40% wysokości jako pusty box (dark i light)
 - **Obserwacja:** tabela Summary wygląda wyprana, separatory wierszy ledwo widoczne (light-mode-readability §3 — zakaz ultra-subtelnych borderów `*/10`).
 - **Do potwierdzenia:** mogło być nakładką loading; zmierzyć `border-color` wierszy przy załadowanym stanie.
 
+### VIS-009 · [My Work + global] Selekcja wiersza = crimson/rose tint · P2 · [SYSTEMIC?]
+- **Pomiar (My Work → Ideas, light):** zaznaczony wiersz `bg=rgba(251,221,224,0.95)` (pale rose, primary-100) **+ crimson lewy-border**. Podwójny crimson na selekcji.
+- **Kanon:** §6 mówi „selected=primary-50/100" — ale primary=crimson → selekcja czyta się **alarmowo** (różowy wiersz = „problem", nie „aktywny"). Konwencja enterprise: selekcja neutralna/info-blue.
+- **Rekomendacja:** zmienić tint selekcji na slate/info-blue; crimson left-border zostaw jako subtelny wskaźnik LUB też zneutralizuj. Potwierdzona intuicja Piotra.
+- **Do sprawdzenia:** czy to globalny komponent wiersza (wtedy SYSTEMIC, dotyka wszystkich tabel) czy lokalne dla Ideas.
+
+### VIS-010 · [My Work] Preview — nad-truncate tytułu · P3
+- **Obserwacja (Ideas + preview):** nagłówek preview „QA OWNER 17…" ucięty bardzo krótko mimo dostępnej szerokości. Pełny „QA OWNER 1779033714227" mógłby dostać więcej miejsca przed truncate.
+- **PASS w tym samym preview:** anatomia §7.3 poprawna (Header tytuł+Open+X, AI hints, Relations „No linked documents", kolejność AI→Relations).
+
 ---
 
 ## PASS (zweryfikowana zgodność — rejestrujemy, by nie „naprawiać" działającego)
