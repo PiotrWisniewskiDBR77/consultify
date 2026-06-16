@@ -99,9 +99,6 @@ const EconomicsView = lazyWithRetry(() =>
 const FullExecutionView = lazyWithRetry(() =>
   import('@/views/FullExecutionView').then((m) => ({ default: m.FullExecutionView }))
 );
-const ImplementationView = lazyWithRetry(() =>
-  import('@/views/ImplementationView').then((m) => ({ default: m.ImplementationView }))
-);
 const ReportBuilderView = lazyWithRetry(() =>
   import('@/views/ReportBuilderView').then((m) => ({ default: m.ReportBuilderView }))
 );
