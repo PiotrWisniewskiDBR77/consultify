@@ -279,3 +279,7 @@ docs/audit/2026-06-03/screenshots/
 
 # VTS wave-2 credentials (sensitive)
 vts-wave2-credentials*.csv
+
+# QA headless auth — NEVER commit (dev tokens)
+docs/qa/.auth.b64
+docs/qa/screens/review/
