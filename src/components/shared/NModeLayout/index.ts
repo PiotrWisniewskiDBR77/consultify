@@ -35,7 +35,8 @@ export { NModeCBoard } from './NModeCBoard';
 export { NModeHeader } from './NModeHeader';
 export { NModeLeftNav } from './NModeLeftNav';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
-export { NModeSectionWrapper } from './NModeSectionWrapper';
+export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
+export type { QuoteRequirementLevel } from './NModeSectionWrapper';
 export { NModeShell, NMODE_TOOLBAR_SHELL_CLASS } from './NModeShell';
 export {
   NModeToolbar,

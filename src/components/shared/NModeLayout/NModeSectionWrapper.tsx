@@ -15,9 +15,27 @@
  * @see docs/ui-standards/01-shell-layout/presentation-modes.md §2.5.3
  */
 
-import { CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+
+export type QuoteRequirementLevel = 'NONE' | 'EACH_ITEM' | 'STRONG_ITEMS';
+
+/**
+ * Amber badge indicating that the section's evidence requirement (canon §B4)
+ * is not yet satisfied. Exported for use in sections that don't use
+ * NModeSectionWrapper as their top-level wrapper.
+ */
+export const EvidenceBadge: React.FC = () => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-medium border border-amber-200 dark:border-amber-700/40 shrink-0">
+      <AlertTriangle size={10} />
+      {isPolish ? 'Brak dowodów' : 'Missing evidence'}
+    </span>
+  );
+};
 
 /** A single section-level AI affordance config. */
 export interface NModeSectionAIAction {
@@ -65,6 +83,19 @@ interface NModeSectionWrapperProps {
    * tint on the header and a ✓ chip. Fields remain editable.
    */
   completed?: boolean;
+  /**
+   * Evidence requirement level (canon §B4). When set to EACH_ITEM or
+   * STRONG_ITEMS and `quotesSatisfied` is false, renders an amber
+   * "Brak dowodów / Missing evidence" badge in the section header.
+   * Does not block saves — visual signal only.
+   */
+  quoteRequirementLevel?: QuoteRequirementLevel;
+  /**
+   * Whether the section's evidence requirement is currently met.
+   * When false (and quoteRequirementLevel is not NONE), the amber badge shows.
+   * Defaults to true so the badge only appears when explicitly opted in.
+   */
+  quotesSatisfied?: boolean;
   /** Section content */
   children: React.ReactNode;
 }
@@ -109,6 +140,8 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
   isEmpty = false,
   layout = 'default',
   completed = false,
+  quoteRequirementLevel,
+  quotesSatisfied = true,
   children,
 }) => {
   const { i18n } = useTranslation();
@@ -119,11 +152,15 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
     ...(aiActions ?? []),
   ];
   const hasSectionActions = sectionActions.length > 0;
+  const showEvidenceBadge =
+    quoteRequirementLevel != null &&
+    quoteRequirementLevel !== 'NONE' &&
+    !quotesSatisfied;
 
   return (
     <div className="space-y-6">
       {/* Heading + section-level AI action(s), top-right */}
-      {(heading || hasSectionActions || completed) && (
+      {(heading || hasSectionActions || completed || showEvidenceBadge) && (
         <div
           className={`flex items-center justify-between gap-3 -mx-1 px-1 py-1 rounded-lg transition-colors ${
             completed
@@ -149,6 +186,7 @@ export const NModeSectionWrapper: React.FC<NModeSectionWrapperProps> = ({
                 )}
               </span>
             )}
+            {showEvidenceBadge && <EvidenceBadge />}
           </h2>
           {hasSectionActions && (
             <div className="flex items-center gap-2">

@@ -67,7 +67,11 @@ import { ArtifactActionPanel } from '@/components/shared/artifact-actions/Artifa
 import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
-import { NModeSectionWrapper, ToolbarIconButton } from '@/components/shared/NModeLayout';
+import {
+  EvidenceBadge,
+  NModeSectionWrapper,
+  ToolbarIconButton,
+} from '@/components/shared/NModeLayout';
 import type { AIConsultantAction } from '@/components/shared/NModeLayout/AIConsultantPanel';
 import { AIConsultantPanel } from '@/components/shared/NModeLayout/AIConsultantPanel';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
@@ -589,6 +593,7 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     id: 'issues-risks',
     icon: ShieldAlert,
     label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' },
+    quoteRequirementLevel: 'STRONG_ITEMS',
   },
   {
     id: 'opportunities',
@@ -640,6 +645,7 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     icon: MapIcon,
     label: { en: 'Evidence Map', pl: 'Mapa dowodów' },
     cSpan: 2,
+    quoteRequirementLevel: 'STRONG_ITEMS',
   },
   {
     id: 'candidate-triage',
@@ -675,13 +681,24 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'activity-log', icon: History, label: { en: 'Activity Log', pl: 'Aktywność' }, cSpan: 2 },
 
   // ── Phase D: Canon sections → 23/23 ─────────────────────────────────────────
-  { id: 'key-findings', icon: Star, label: { en: 'Key Findings', pl: 'Kluczowe wnioski' } },
+  {
+    id: 'key-findings',
+    icon: Star,
+    label: { en: 'Key Findings', pl: 'Kluczowe wnioski' },
+    quoteRequirementLevel: 'EACH_ITEM',
+  },
   { id: 'recommendations', icon: Rocket, label: { en: 'Recommendations', pl: 'Rekomendacje' } },
   { id: 'tensions', icon: GitCompare, label: { en: 'Tensions', pl: 'Napięcia' } },
   { id: 'patterns', icon: Layers, label: { en: 'Patterns', pl: 'Wzorce' } },
   { id: 'mental-models', icon: Brain, label: { en: 'Mental Models', pl: 'Modele myślowe' } },
   { id: 'moments', icon: Quote, label: { en: 'Moments', pl: 'Momenty' } },
-  { id: 'quote-bank', icon: Quote, label: { en: 'Quote Bank', pl: 'Bank cytatów' }, cSpan: 2 },
+  {
+    id: 'quote-bank',
+    icon: Quote,
+    label: { en: 'Quote Bank', pl: 'Bank cytatów' },
+    cSpan: 2,
+    quoteRequirementLevel: 'EACH_ITEM',
+  },
   {
     id: 'stakeholder-map',
     icon: Users,
@@ -4758,6 +4775,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'issues-risks':
           component = (
             <div className="space-y-4">
+              {v6Issues.some((i) => i.severity === 'high') &&
+                !v6Issues
+                  .filter((i) => i.severity === 'high')
+                  .every((i) => i.evidence_refs.length >= 2) && <EvidenceBadge />}
               {v6Issues.length === 0 ? (
                 <EmptyStateInline
                   icon={ShieldAlert}
@@ -5335,8 +5356,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               (!e.evidence_pointers || e.evidence_pointers.length === 0) &&
               (sourcePackByAnswerId[e.answer_id]?.capturedPointers.length || 0) === 0
           );
+          const evidenceSatisfied =
+            v6EvidenceMap.length === 0 || entriesWithNoPointers.length === 0;
           component = (
             <div className="space-y-4">
+              {!evidenceSatisfied && <EvidenceBadge />}
               <Callout variant="purple" title={isPolish ? 'Mapa dowodów' : 'Evidence Map'} compact>
                 {isPolish
                   ? 'Tabela łączy odpowiedzi źródłowe z tematami i problemami. Kliknij wiersz, aby zobaczyć pełny cytat.'
@@ -6917,6 +6941,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           },
           cta: dRegenCta,
         }}
+        quoteRequirementLevel="EACH_ITEM"
+        quotesSatisfied={
+          v6Themes.length > 0 && v6Themes.every((t) => t.evidence_refs.length > 0)
+        }
       >
         <ol className="space-y-2 list-decimal list-inside">
           {v6Themes.slice(0, 6).map((t, i) => (
@@ -7085,6 +7113,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           },
           cta: dRegenCta,
         }}
+        quoteRequirementLevel="EACH_ITEM"
+        quotesSatisfied={evidenceQuotes.length > 0}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {evidenceQuotes.map((q, i) => (

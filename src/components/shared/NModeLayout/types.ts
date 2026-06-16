@@ -68,6 +68,16 @@ export interface NModeSection {
    */
   completed?: boolean;
   /**
+   * Evidence requirement level for this section (canon §B4 "Wymóg dowodu").
+   * Drives the amber "Brak dowodów" badge in NModeSectionWrapper when the
+   * requirement is not met. Client-side metadata only — not persisted to DB.
+   *
+   *   NONE         — no evidence requirement (default)
+   *   EACH_ITEM    — every item in the section must have ≥1 citation
+   *   STRONG_ITEMS — items with severity=high must have ≥2 citations from distinct sessions
+   */
+  quoteRequirementLevel?: 'NONE' | 'EACH_ITEM' | 'STRONG_ITEMS';
+  /**
    * Per-section export contract (canon "Eksport" field). Declares which export
    * destinations this section feeds and how it renders into each. Consumed by
    * the Smart Export pipeline; when omitted, a section is treated as
