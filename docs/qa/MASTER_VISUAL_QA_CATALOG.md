@@ -117,3 +117,26 @@ Composer „Ask Teresa…" zajmuje ~40% wysokości jako pusty box (dark i light)
 **Głębsze taby (opcjonalnie w razie potrzeby):** My Work (Tasks/Calendar/Decisions/Ideas/Notebook/Home/Manager), Interview (Sessions/Assigned/Templates/Insights/Initiatives), Execution (Rollout/Reporting/Management), Results (KPI/ROI/ROI Analysis) — domyślne widoki pokryte; sub-taby tylko jeśli A1 wymaga większej głębi.
 
 **Wniosek A1:** dominują **2 systemowe wzorce w LIGHT** (VIS-001 badge bez danger-fill, VIS-002 crimson-leak na datach/cytatach) + VIS-006 (CTA navy vs crimson). Dark głównie PASS. → Faza C0 (współdzielone komponenty) da największy zwrot.
+
+---
+
+## 🌙 Nocny przebieg 2026-06-15 — evidence + runbook poranny
+
+**Setup:** dev servers UP (FE :3000 / BE :3001, BE flaky — tsx-restart od równoległej sesji edytującej `server/src/routes/*`). Auth odświeżony przez `/api/auth/refresh` (token→11:16, refresh-token w `/tmp/consultify-refresh.txt`).
+
+**Evidence (read-only, bezpieczne):** `docs/qa/screens/preview/` — **28 PNG = 14 tabel in-scope × light+dark, preview-state** (klik 1. wiersza). 0 blanków. Pomiar w `_measure.txt`.
+
+**Sygnał „Open" w preview (`_measure.txt`):**
+- ✅ `open=true` (przycisk „Otwórz" obecny §7.3): My Work Decisions; Interview ×5; Tools Library; Execution Summary; Results KPI.
+- ⚠️ `open=false`: Inbox, Tasks, Calendar, **Initiatives Portfolio**, Results Initiatives. **Caveat:** Portfolio = kanban (brak wierszy → preview się nie otworzył w capture); reszta wymaga sprawdzenia rano: brak-Open (VIS-011 / UWAGA#15) vs preview-nie-otwarte. NIE zakładać bez oglądu.
+
+**Trace'y root-cause C0 (gotowe do naprawy rano):**
+| Finding | Locus | Fix |
+|---|---|---|
+| VIS-009 selekcja rose | `MyWork/MyTasksListContent.tsx:123` `TASK_SELECTED_ROW_CLASS=bg-primary-50 + inset primary.500 + ring-primary` (selekcja NIEscentralizowana — każda tabela własna) | jeden token selekcji neutral/blue + repoint |
+| VIS-001 badge danger light | `MyWork/shared/PMOPriorityBadge.tsx` | §5 tło+border+text-danger w light |
+| VIS-011 stopka preview | `PreviewActionBar` (22 użycia) — audyt parytetu: które tabele NIE używają | ujednolicić stopkę (Open/kolory/kształt) |
+
+**Bariera fixów = współdzielony worktree** (równoległa sesja edytuje pliki tu) → kod-fixy rano WSPÓLNIE (branch/commit kolidowałby teraz). Trace'y + evidence = naprawa rano błyskawiczna.
+
+**Runbook poranny:** (1) gdy wstaniesz — odświeżę token (mam refresh); (2) razem przez 28 preview-PNG + 72 archiwum; (3) klepiemy C0 z gotowych loci, before/after measure; (4) ratchet.
