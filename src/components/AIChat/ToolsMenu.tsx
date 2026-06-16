@@ -210,7 +210,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     privateMode,
   } = aiConfig as any;
 
-  const activeModeCount = [deepResearch, showReasoning, textToSpeech, privateMode].filter(
+  const activeModeCount = [deepResearch, showReasoning, textToSpeech, privateMode, aiConfig.multiAgent].filter(
     Boolean
   ).length;
 
@@ -256,8 +256,17 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsOpen(false);
     };
-    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen]);
 
   const toggleMode = (modeId: string) => {
@@ -304,6 +313,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       {/* Dropdown Menu */}
       {isOpen && (
         <div
+          role="menu"
+          aria-label="AI tools"
           className="
             absolute left-0 bottom-full mb-2 z-50
             w-[250px] py-1.5

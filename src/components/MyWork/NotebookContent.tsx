@@ -1648,11 +1648,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const handleHandoffInitiatives = useCallback(async () => {
     if (!activePage) return;
     try {
-      const description = activePage.contentText?.trim() || undefined;
-      await Api.post('/initiatives', {
+      await Api.convertNotebookPage(activePage.id, 'initiative', {
         title: activePage.title || (isPolish ? 'Inicjatywa z notatki' : 'Initiative from note'),
-        description,
-        status: 'DRAFT',
+        description: activePage.contentText?.trim() || undefined,
       });
       toast.success(isPolish ? 'Inicjatywa utworzona' : 'Initiative created');
       trackFunnelEvent('notebook_handoff', { target: 'initiatives', noteId: activePage.id });

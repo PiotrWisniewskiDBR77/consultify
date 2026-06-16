@@ -170,8 +170,17 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsOpen(false);
     };
-    if (isOpen) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handler);
+      document.addEventListener('keydown', keyHandler);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', keyHandler);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -310,6 +319,8 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div
+          role="menu"
+          aria-label="Add files"
           className="absolute left-0 bottom-full mb-2 z-50 w-[250px] py-1.5
             bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl
             border border-slate-200/40 dark:border-white/[0.08]

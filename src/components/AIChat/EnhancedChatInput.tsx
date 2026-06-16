@@ -35,7 +35,7 @@ import {
 import { filterSlashCommands, type SlashCommand } from './composer/slashCommands';
 import { useComposerCommands } from './composer/useComposerCommands';
 import { useMentionSources } from './composer/useMentionSources';
-import { CoThinkerMenu } from './CoThinkerMenu';
+import { CoThinkerMenu, CoThinkerActivePill } from './CoThinkerMenu';
 import { InputCharCounter } from './InputCharCounter';
 import { InputSoftLimitToast } from './InputSoftLimitToast';
 import { MoveToProjectModal } from './MoveToProjectModal';
@@ -1102,6 +1102,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             onClose={commands.close}
           />
         )}
+
+        {/* Co-Thinker active persona indicator */}
+        <CoThinkerActivePill className="mx-3 mb-1" />
 
         {/* Textarea */}
         <textarea

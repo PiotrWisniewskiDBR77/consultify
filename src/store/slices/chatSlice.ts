@@ -45,6 +45,8 @@ export interface ChatSlice {
     ttsVoice: string | null; // Wybrany głos (voice URI)
     ttsRate: number; // Szybkość czytania (0.5-2.0)
     ttsPitch: number; // Wysokość głosu (0.5-2.0)
+    // Custom instructions (overrides default persona prompt for this session)
+    customInstructions?: string;
   };
 
   aiFreezeStatus: {
