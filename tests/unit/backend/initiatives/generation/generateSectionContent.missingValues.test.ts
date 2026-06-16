@@ -35,6 +35,10 @@ describe('InitiativeGenerationService.generateSectionContent', () => {
       language: 'en',
     });
 
-    expect(result.content).toBe('Missing: [not provided]');
+    // Template interpolation replaces unknown keys with [not provided]. The service
+    // additionally appends CARD_CONTENT_FORMULA guidance to the prompt (L-04 / #16),
+    // so assert the interpolated fragment is present rather than exact-equality.
+    expect(result.content).toContain('Missing: [not provided]');
+    expect(result.content).toContain('KANON JAKOŚCI');
   });
 });

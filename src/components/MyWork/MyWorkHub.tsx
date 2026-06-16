@@ -698,6 +698,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [notebookOpenTitle, setNotebookOpenTitle] = useState<string>('');
   // Menu 2 "New notebook" CTA → opens the create-notebook modal inside the library (L1).
   const [notebookCreateNotebookReqId, setNotebookCreateNotebookReqId] = useState(0);
+  // Menu 3 (Command Row) page-status presets for the open notebook (L2).
+  const [notebookPageStatusFilter, setNotebookPageStatusFilter] = useState<
+    'all' | 'inbox' | 'active'
+  >('all');
   // Menu 3 (Command Row) scope presets for the notebook library (L1).
   const [notebookScopeFilter, setNotebookScopeFilter] = useState<'all' | 'personal' | 'team'>(
     'all'
@@ -2487,6 +2491,53 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
+    // Notebook L2 (open notebook, no open page): page-status filters.
+    if (activeTab === 'notebook' && notebookOpenId && !notebookOpenPageId) {
+      const statusPresets: Array<{
+        id: 'all' | 'inbox' | 'active';
+        label: string;
+        icon: React.ReactNode;
+      }> = [
+        {
+          id: 'all',
+          label: isPolish ? 'Wszystkie' : 'All',
+          icon: <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />,
+        },
+        {
+          id: 'inbox',
+          label: isPolish ? 'Inbox' : 'Inbox',
+          icon: <Inbox size={12} />,
+        },
+        {
+          id: 'active',
+          label: isPolish ? 'Aktywne' : 'Active',
+          icon: <Sparkles size={12} />,
+        },
+      ];
+      return (
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
+            <div className={MENU_3_LEFT_CLASS}>
+              {statusPresets.map((p) => {
+                const isActive = notebookPageStatusFilter === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setNotebookPageStatusFilter(p.id)}
+                    className={`${MENU_3_CHIP_BASE} ${isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}`}
+                    title={p.label}
+                  >
+                    {p.icon}
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Tasks: filters as a single Command Row (no extra toolbars/strips).
     if (activeTab === 'tasks') {
       const chipBase = MENU_3_CHIP_BASE;
@@ -3308,6 +3359,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               }}
               searchQuery={searchQuery}
               openPageId={notebookOpenPageId}
+              pageStatusFilter={notebookPageStatusFilter}
+              onPageStatusFilterChange={setNotebookPageStatusFilter}
               linkedIdeasOpen={notebookLinkedIdeasOpen}
               onLinkedIdeasOpenChange={(v) => {
                 setNotebookLinkedIdeasOpen(v);

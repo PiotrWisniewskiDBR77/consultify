@@ -555,6 +555,28 @@ export async function getTemplateForSource(
     throw err;
   }
 
+  if (!row) {
+    // Second pass: any is_default template for this source_type, ignoring specific report_type.
+    // Handles cases like TOOL where templates use named report_types (tool_evaluation, etc.)
+    // but the caller passes no framework so the exact match on report_type fails.
+    try {
+      row = await queryOne<{ id: string; sections_json: string }>(
+        `
+        SELECT id, sections_json
+        FROM report_builder_templates
+        WHERE (source_type = ? OR source_type = ?)
+          AND (organization_id IS NULL OR organization_id = ?)
+          AND is_default = 1
+        ORDER BY CASE WHEN source_type = ? THEN 0 ELSE 1 END
+        LIMIT 1
+      `,
+        [sourceType, fallbackSourceType, organizationId || null, sourceType]
+      );
+    } catch {
+      // ignore — outer null return handles missing templates gracefully
+    }
+  }
+
   if (!row) return null;
 
   return {

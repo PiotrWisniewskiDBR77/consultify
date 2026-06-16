@@ -105,6 +105,9 @@ interface NotebookContentProps {
   notebookTitle?: string;
   /** Return to the notebook library (L1). When set, a back button is shown. */
   onBackToLibrary?: () => void;
+  /** External page-status filter driven by Menu 3 in MyWorkHub (L2). */
+  pageStatusFilter?: 'all' | 'inbox' | 'active';
+  onPageStatusFilterChange?: (filter: 'all' | 'inbox' | 'active') => void;
 }
 
 type NotebookAIProposal = {
@@ -607,6 +610,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   notebookId,
   notebookTitle,
   onBackToLibrary,
+  pageStatusFilter,
+  onPageStatusFilterChange,
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -868,7 +873,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   }, [fetchPages, refreshTrigger]);
 
   // Sidebar filters & inbox state
-  const [sidebarTab, setSidebarTab] = useState<'inbox' | 'active' | 'all'>('all');
+  const [sidebarTab, setSidebarTab] = useState<'inbox' | 'active' | 'all'>(
+    pageStatusFilter ?? 'all'
+  );
+
+  // Keep sidebarTab in sync when parent (Menu 3 L2) drives the filter
+  useEffect(() => {
+    if (pageStatusFilter !== undefined) setSidebarTab(pageStatusFilter);
+  }, [pageStatusFilter]);
   const [sortBy, setSortBy] = useState<'updated' | 'created' | 'title'>('updated');
   const [maturityFilter, setMaturityFilter] = useState<NotebookMaturity | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -1852,7 +1864,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           ].map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setSidebarTab(tab.key)}
+              onClick={() => {
+                setSidebarTab(tab.key);
+                onPageStatusFilterChange?.(tab.key);
+              }}
               className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-semibold transition-all border-b-2 ${
                 sidebarTab === tab.key
                   ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'

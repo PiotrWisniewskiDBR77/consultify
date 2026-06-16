@@ -129,6 +129,9 @@ export const useAppStore = create<AppState>()(
         const next = { ...persisted };
         if (fromVersion < 2) {
           next.isChatCollapsed = true;
+          // aiConfig was absent from partialize in v1; re-added in v2 to persist
+          // AI mode toggles across reloads — only strip it for pre-v2 stores.
+          delete (next as any).aiConfig;
         }
         // Clean up legacy persisted blobs that cause jank on rehydrate.
         // (Older builds persisted large chat/session payloads.)
@@ -137,7 +140,6 @@ export const useAppStore = create<AppState>()(
         delete (next as any).freeSessionData;
         delete (next as any).fullSessionData;
         delete (next as any).notifications;
-        delete (next as any).aiConfig;
         return next;
       },
       partialize: (state) => ({
@@ -162,6 +164,9 @@ export const useAppStore = create<AppState>()(
         // - session data (freeSessionData, fullSessionData)
         // - notifications list
         // These should be fetched from the API and keeping them persisted causes UI jank.
+
+        // ChatSlice - persist AI configuration toggles across reloads
+        aiConfig: state.aiConfig,
 
         // DemoSlice - persist demo mode state
         isDemoMode: state.isDemoMode,

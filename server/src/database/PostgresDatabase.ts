@@ -138,7 +138,7 @@ function enforceReadOnly(sql: string): void {
 const BOOLEAN_IS_ACTIVE_TABLES = new Set<string>(['initiative_section_types', 'llm_providers']);
 
 // IMPORTANT: Only include tables whose `is_default` column is actually BOOLEAN in Postgres.
-const BOOLEAN_IS_DEFAULT_TABLES = new Set<string>(['llm_providers']);
+const BOOLEAN_IS_DEFAULT_TABLES = new Set<string>(['llm_providers', 'report_builder_templates']);
 
 function findPrimaryTableForBooleanFlags(sql: string): string | null {
   const cleaned = sql.trim();

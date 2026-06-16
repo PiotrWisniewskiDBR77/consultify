@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
@@ -56,10 +57,12 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const activeOwnership: OwnershipFilter = (filter.ownership as OwnershipFilter) || 'any';
+  const navigate = useNavigate();
 
   const toggleSource = (source: CalendarEventSource) => {
     const isExternalSource = source === 'google' || source === 'outlook';
     if (isExternalSource && !externalSourceStatus?.[source]?.available) {
+      navigate('/settings/integrations');
       return;
     }
     const current = filter.sources;
@@ -164,10 +167,9 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               <button
                 key={source}
                 onClick={() => toggleSource(source)}
-                disabled={!isAvailable}
                 className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  !isAvailable
-                    ? 'cursor-not-allowed text-slate-600 dark:text-slate-400 opacity-70'
+                  !isAvailable && isExternalSource
+                    ? 'cursor-pointer text-slate-500 dark:text-slate-400 opacity-70'
                     : active
                       ? 'text-slate-800 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 line-through'
@@ -186,8 +188,8 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                     {isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}
                   </span>
                   {!isAvailable && isExternalSource && (
-                    <span className="block text-[10px] font-normal normal-case text-slate-600 dark:text-slate-500">
-                      {isPolish ? 'Integracja w przygotowaniu' : 'Integration in preparation'}
+                    <span className="block text-[10px] font-normal normal-case text-primary-500 dark:text-primary-400">
+                      {isPolish ? 'Podłącz w Integracjach →' : 'Connect in Integrations →'}
                     </span>
                   )}
                 </span>

@@ -3314,7 +3314,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               )}
             </div>
           ) : (
-            <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
+            <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur">
               {viewMode === 'sections' ? renderSectionsView() : renderFlatView()}
             </div>
           )}
