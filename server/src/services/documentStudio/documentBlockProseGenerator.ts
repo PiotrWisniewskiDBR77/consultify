@@ -33,7 +33,7 @@ const PROSE_BLOCK_TYPES = new Set(['paragraph', 'callout', 'bullet_list', 'numbe
 // 'standard' = tier rozwiązywany przez LLMConfigService (llmService.resolveModelConfig);
 // dawne 'default' nie jest tierem, więc call padał natychmiast bez providera.
 const MODEL_DEFAULT = 'standard';
-const MAX_TOKENS_DEFAULT = 2400;
+const MAX_TOKENS_DEFAULT = 4096;
 
 export interface GenerateBlockProseOptions {
   enable?: boolean;
@@ -179,13 +179,18 @@ export async function generateBlockProse(
   const targets = collectTargets(schema);
   if (targets.length === 0) return schema;
 
+  // Scale token budget with block count: tables take ~400-600 tokens each.
+  // Cap at 8192 to stay within provider limits.
+  const dynamicMaxTokens = options.maxTokens
+    ?? Math.min(8192, Math.max(MAX_TOKENS_DEFAULT, targets.length * 550));
+
   let response: { content: string };
   try {
     response = await generateChatResponse({
       systemPrompt: buildSystemPrompt(schema),
       messages: [{ role: 'user', content: buildUserPrompt(schema, intake, sourceRefs, targets) }],
       model: options.model || MODEL_DEFAULT,
-      maxTokens: options.maxTokens ?? MAX_TOKENS_DEFAULT,
+      maxTokens: dynamicMaxTokens,
     });
   } catch (err) {
     // Kontrakt: nigdy nie rzucamy — ale porażka nie może być niewidzialna w logach
