@@ -1245,9 +1245,11 @@ router.post(
     );
     const hasCurrentValue = (kpiCols || []).some((column) => column?.name === 'current_value');
     if (hasCurrentValue) {
+      // SEC-3: org-scope the current_value write so a foreign-org kpiId cannot have its
+      // current_value overwritten (mirrors the benefits sibling route).
       await dbRun(
-        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [Number(value), kpiId]
+        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [Number(value), kpiId, organizationId]
       ).catch(() => null);
     }
 
@@ -1849,6 +1851,7 @@ router.get(
 router.post(
   '/workflow/kpi/:kpiId/next-action',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'create_next_action'))) return;
     const { organizationId, userId } = getV8Context(req);
     const { kpiId } = req.params;
     const { title, sourceType, sourceRef, assigneeId, dueDate } = req.body || {};
@@ -1865,6 +1868,31 @@ router.post(
       return res.status(400).json({
         error: `sourceType must be one of: ${validSourceTypes.join(', ')}`,
         code: 'KPI_NEXT_ACTION_INVALID_SOURCE_TYPE',
+      });
+    }
+
+    // SEC-3 (L-04): the INSERT below stores `sourceRef` directly as `case_id`, and
+    // `kpi_deviation_actions` has no org column. Verify the KPI belongs to the caller's
+    // org, and — when `sourceRef` resolves to an existing deviation case — that the case is
+    // org-owned, so a foreign-org caseId cannot have an action attached to it.
+    const ownedKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [String(kpiId), organizationId]
+    );
+    if (!ownedKpi?.id) {
+      return res.status(404).json({ error: 'KPI not found', code: 'KPI_NOT_FOUND' });
+    }
+    const existingCase = await dbGet<{ id: string; organization_id: string }>(
+      `SELECT id, organization_id FROM kpi_deviation_cases WHERE id = ?`,
+      [String(sourceRef)]
+    );
+    if (existingCase && existingCase.organization_id !== organizationId) {
+      return res.status(404).json({
+        error: 'Deviation case not found',
+        code: 'RESULTS_DEVIATION_CASE_NOT_FOUND',
       });
     }
 

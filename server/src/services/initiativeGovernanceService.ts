@@ -499,9 +499,11 @@ class InitiativeGovernanceService {
     const requiredRaidStatus = JSON.parse(gate.required_raid_status || '{}');
     const decisionsMet: boolean[] = [];
     for (const decId of requiredDecisions) {
+      // SECURITY (M13 cross-org): scope the decision lookup to the gate's org so
+      // evaluation cannot probe another org's decision publish status by id.
       const dec = await queryHelpers.queryFirst<{ workflow_status: string }>(
-        `SELECT workflow_status FROM decisions WHERE id=$1`,
-        [decId]
+        `SELECT workflow_status FROM decisions WHERE id=$1 AND organization_id=$2`,
+        [decId, orgId]
       );
       decisionsMet.push(dec?.workflow_status === 'published');
     }
@@ -565,6 +567,14 @@ class InitiativeGovernanceService {
       [initiativeId, orgId]
     );
     if (!init) throw Object.assign(new Error('Initiative not found'), { status: 404 });
+    // SECURITY (M13 cross-org): the decision being linked must also belong to the
+    // caller's org — otherwise org A could attach org B's decision id as a gate
+    // dependency (and later probe its status via evaluateGate).
+    const dec = await queryHelpers.queryFirst(
+      `SELECT id FROM decisions WHERE id=$1 AND organization_id=$2`,
+      [decisionId, orgId]
+    );
+    if (!dec) throw Object.assign(new Error('Decision not found'), { status: 404 });
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO initiative_decision_links (id, initiative_id, decision_id, link_type)

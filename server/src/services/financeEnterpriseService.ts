@@ -127,8 +127,8 @@ class FinanceEnterpriseService {
 
     if (data.parentVersionId) {
       const parent = await queryHelpers.queryOne<any>(
-        `SELECT assumptions_snapshot, events_snapshot, outputs_snapshot FROM financial_model_versions WHERE id = ?`,
-        [data.parentVersionId]
+        `SELECT assumptions_snapshot, events_snapshot, outputs_snapshot FROM financial_model_versions WHERE id = ? AND organization_id = ?`,
+        [data.parentVersionId, orgId]
       );
       if (parent) {
         assumptionsSnapshot = parent.assumptions_snapshot || '{}';

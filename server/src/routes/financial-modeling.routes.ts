@@ -337,7 +337,11 @@ router.post(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const result = await approveModel(String(req.params.id), userId);
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId, req.user?.organizationId);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
+
+    const result = await approveModel(modelId, userId);
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
@@ -426,7 +430,10 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const events = await listEvents(String(req.params.id));
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId, req.user?.organizationId);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
+    const events = await listEvents(modelId);
     res.json(events);
   })
 );
@@ -436,7 +443,16 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await updateEvent(String(req.params.eventId), req.body);
+    const eventId = String(req.params.eventId);
+    const owned = await dbGet(
+      `SELECT e.id
+       FROM financial_model_events e
+       INNER JOIN financial_models m ON m.id = e.model_id
+       WHERE e.id = ? AND m.organization_id = ?`,
+      [eventId, req.user?.organizationId]
+    );
+    if (!owned) return res.status(404).json({ error: 'Event not found' });
+    await updateEvent(eventId, req.body);
     res.json({ success: true });
   })
 );
@@ -446,7 +462,16 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    await deleteEvent(String(req.params.eventId));
+    const eventId = String(req.params.eventId);
+    const owned = await dbGet(
+      `SELECT e.id
+       FROM financial_model_events e
+       INNER JOIN financial_models m ON m.id = e.model_id
+       WHERE e.id = ? AND m.organization_id = ?`,
+      [eventId, req.user?.organizationId]
+    );
+    if (!owned) return res.status(404).json({ error: 'Event not found' });
+    await deleteEvent(eventId);
     res.json({ success: true });
   })
 );
@@ -460,8 +485,11 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId, req.user?.organizationId);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
     const scenario = req.query.scenario as string | undefined;
-    const outputs = await getOutputs(String(req.params.id), scenario);
+    const outputs = await getOutputs(modelId, scenario);
 
     // Group by period → statement type → lines
     const grouped: Record<
@@ -488,7 +516,10 @@ router.get(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const validations = await getValidations(String(req.params.id));
+    const modelId = String(req.params.id);
+    const model = await getModel(modelId, req.user?.organizationId);
+    if (!model) return res.status(404).json({ error: 'Model not found' });
+    const validations = await getValidations(modelId);
     const summary = {
       total: validations.length,
       pass: validations.filter((v: any) => v.status === 'pass').length,

@@ -80,7 +80,23 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(await initiativeGovernanceService.updateGoal(id.orgId, req.params.goalId, req.body));
+    // INPUT VALIDATION: previously req.body was passed raw. The service already
+    // whitelists + parameterizes columns (no injection), but validate the shape
+    // for parity with the other governance writes.
+    const s = z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      status: z.string().optional(),
+      progress: z.number().optional(),
+      currentValue: z.number().optional(),
+      ownerId: z.string().optional(),
+    });
+    const p = s.safeParse(req.body);
+    if (!p.success) {
+      res.status(400).json({ error: p.error.message });
+      return;
+    }
+    res.json(await initiativeGovernanceService.updateGoal(id.orgId, req.params.goalId, p.data));
   })
 );
 

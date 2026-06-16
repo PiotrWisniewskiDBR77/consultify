@@ -125,10 +125,14 @@ router.post(
 
     const { signalId } = req.body;
     await dbRun(
+      // Cross-org guard on DO UPDATE: risk-signal ids are deterministic
+      // (overdue-${initiativeId} etc.), so without the org WHERE an org-A caller
+      // could dismiss an org-B alert by guessing its id. Mirrors the v8 fix.
       `INSERT INTO risk_signal_alerts (id, organization_id, signal_type, severity, title, is_dismissed, dismissed_by, dismissed_at)
        VALUES (?, ?, 'DISMISSED', 'LOW', ?, TRUE, ?, NOW())
-       ON CONFLICT (id) DO UPDATE SET is_dismissed = TRUE, dismissed_by = ?, dismissed_at = NOW()`,
-      [signalId, orgId, `Dismissed: ${signalId}`, userId, userId]
+       ON CONFLICT (id) DO UPDATE SET is_dismissed = TRUE, dismissed_by = ?, dismissed_at = NOW()
+       WHERE risk_signal_alerts.organization_id = ?`,
+      [signalId, orgId, `Dismissed: ${signalId}`, userId, userId, orgId]
     );
     return res.json({ success: true });
   })
@@ -413,8 +417,9 @@ router.post(
             is_dismissed, dismissed_by, dismissed_at, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, 'WARNING', 0, TRUE, ?, NOW(), NOW(), NOW())
          ON CONFLICT (id)
-         DO UPDATE SET is_dismissed = TRUE, dismissed_by = EXCLUDED.dismissed_by, dismissed_at = NOW(), updated_at = NOW()`,
-        [signalId, orgId, entityType, entityId, entityName, deviationType, userId]
+         DO UPDATE SET is_dismissed = TRUE, dismissed_by = EXCLUDED.dismissed_by, dismissed_at = NOW(), updated_at = NOW()
+         WHERE delay_signals.organization_id = ?`,
+        [signalId, orgId, entityType, entityId, entityName, deviationType, userId, orgId]
       );
     }
     return res.json({ success: true });

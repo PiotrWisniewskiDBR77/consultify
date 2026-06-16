@@ -129,6 +129,16 @@ class ResultsEnterpriseService {
     const measurementId = uuidv4().replace(/-/g, '');
     const periodStart = String(data.period || '').slice(0, 10);
     const sourceLabel = `connector:${data.connectorId}`;
+    // SEC-3 (L-04): verify the connector belongs to the caller's org before ingesting.
+    // Without this, a foreign-org connectorId would still drive a kpi_time_series write
+    // and (below) a cross-org current_value overwrite. The route maps 'not found' → 404.
+    const ownedConnector = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM kpi_connectors WHERE id = ? AND organization_id = ?`,
+      [data.connectorId, orgId]
+    );
+    if (!ownedConnector?.id) {
+      throw new Error('Connector not found');
+    }
     await queryHelpers.queryRun(
       `INSERT INTO kpi_ingestion_log (id, organization_id, connector_id, kpi_id, ingested_value, period, provenance, quality_score)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -164,10 +174,12 @@ class ResultsEnterpriseService {
         data.actorUserId || null,
       ]
     );
+    // SEC-3: org-scope the current_value write so an org-owned connector cannot overwrite
+    // a foreign-org KPI's current_value by pointing at its id.
     await queryHelpers
       .queryRun(
-        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [data.value, data.kpiId]
+        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+        [data.value, data.kpiId, orgId]
       )
       .catch(() => null);
     await queryHelpers.queryRun(

@@ -1571,7 +1571,15 @@ router.get(
   '/financial-analyses/:id/ratios',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const ratios = await finAnalysisSvc.getAnalysisRatios(req.params.id);
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const analysisId = String(req.params.id);
+    const analysis = await dbGet<any>(
+      `SELECT id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [analysisId, orgId]
+    );
+    if (!analysis) return res.status(404).json({ error: 'Not found' });
+    const ratios = await finAnalysisSvc.getAnalysisRatios(analysisId);
     return res.json({ ratios });
   })
 );
@@ -1579,7 +1587,15 @@ router.get(
   '/financial-analyses/:id/insights',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const insights = await finAnalysisSvc.getAnalysisInsights(req.params.id);
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const analysisId = String(req.params.id);
+    const analysis = await dbGet<any>(
+      `SELECT id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [analysisId, orgId]
+    );
+    if (!analysis) return res.status(404).json({ error: 'Not found' });
+    const insights = await finAnalysisSvc.getAnalysisInsights(analysisId);
     return res.json({ insights });
   })
 );
@@ -2149,6 +2165,10 @@ router.put(
   '/budgets/:budgetId/lines/:lineId',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const budget = await budgetingSvc.getBudget(orgId, req.params.budgetId);
+    if (!budget) return res.status(404).json({ error: 'Budget not found' });
     await budgetingSvc.updateBudgetLine(req.params.budgetId, req.params.lineId, req.body);
     return res.json({ success: true });
   })
@@ -2171,6 +2191,10 @@ router.put(
   '/budgets/:budgetId/scenarios/:scenarioId/adjustments',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const budget = await budgetingSvc.getBudget(orgId, req.params.budgetId);
+    if (!budget) return res.status(404).json({ error: 'Budget not found' });
     await budgetingSvc.updateScenarioAdjustments(
       req.params.budgetId,
       req.params.scenarioId,

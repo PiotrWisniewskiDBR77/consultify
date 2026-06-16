@@ -77,12 +77,21 @@ router.post(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    res.status(201).json(
-      await resultsEnterpriseService.ingestKPIValue(id.orgId, {
-        connectorId: req.params.connectorId,
-        ...p.data,
-      })
-    );
+    try {
+      res.status(201).json(
+        await resultsEnterpriseService.ingestKPIValue(id.orgId, {
+          connectorId: req.params.connectorId,
+          ...p.data,
+        })
+      );
+    } catch (error: any) {
+      // SEC-3: a foreign-org (or missing) connector is rejected by the service → 404.
+      if (String(error?.message || '').includes('not found')) {
+        res.status(404).json({ error: 'Connector not found' });
+        return;
+      }
+      throw error;
+    }
   })
 );
 
