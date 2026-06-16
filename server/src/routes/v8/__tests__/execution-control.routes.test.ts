@@ -82,6 +82,15 @@ vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
   v8MetricsMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
+// The /manager surface is gated by requirePermission('manage_workstreams'),
+// which otherwise hits PermissionService/DB. Pass through in tests — these tests
+// validate handler-level same-org integrity, not the permission gate itself.
+vi.mock('../../../middleware/permission.middleware.js', () => ({
+  requirePermission: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireAnyPermission: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireAllPermissions: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 let mockUser: {
   id: string;
   role: string;
@@ -648,5 +657,111 @@ describe('V8 execution-control read-only routes', () => {
       String(c[0]).includes('INSERT OR IGNORE INTO initiative_dependencies')
     );
     expect(inserted).toBe(true);
+  });
+
+  // M14 same-org integrity: PATCH /raid/:id/mitigation must verify the RAID item
+  // exists in the caller's org before the org-scoped UPDATE — a bad/foreign id
+  // returns 404 and performs NO write.
+  it('PATCH /api/v8/execution-control/raid/:id/mitigation returns 404 for unknown/foreign RAID id (no write)', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .patch('/api/v8/execution-control/raid/raid-foreign/mitigation')
+      .send({ raidItemId: 'raid-foreign', mitigationStatus: 'IN_PROGRESS' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('EXECUTION_RAID_NOT_FOUND');
+    const ran = mockDbRun.mock.calls.some((c) => String(c[0]).includes('UPDATE raid_items'));
+    expect(ran).toBe(false);
+  });
+
+  // M14 same-org integrity: POST /interventions/escalate INITIATIVE branch must
+  // verify the initiative exists in the caller's org before inserting the raid_items
+  // row — an unknown/foreign initiative id returns 404 and performs NO write.
+  it('POST /api/v8/execution-control/interventions/escalate INITIATIVE returns 404 for unknown/foreign id (no write)', async () => {
+    // Existence lookup (dbAll) returns no in-org initiative.
+    mockDbAll.mockResolvedValueOnce([]);
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/interventions/escalate').send({
+      entityType: 'INITIATIVE',
+      entityId: 'init-foreign',
+      escalationType: 'RISK',
+      title: 'Escalate',
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('EXECUTION_ENTITY_NOT_FOUND');
+    const ran = mockDbRun.mock.calls.some((c) => String(c[0]).includes('INSERT INTO raid_items'));
+    expect(ran).toBe(false);
+  });
+
+  // M14 same-org integrity: escalate TASK branch returns 404 for unknown/foreign
+  // task id (was previously a silent escalate-against-null).
+  it('POST /api/v8/execution-control/interventions/escalate TASK returns 404 for unknown/foreign id (no write)', async () => {
+    mockDbAll.mockResolvedValueOnce([]);
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/interventions/escalate').send({
+      entityType: 'TASK',
+      entityId: 'task-foreign',
+      escalationType: 'ISSUE',
+      title: 'Escalate task',
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('EXECUTION_ENTITY_NOT_FOUND');
+    const ran = mockDbRun.mock.calls.some((c) => String(c[0]).includes('INSERT INTO raid_items'));
+    expect(ran).toBe(false);
+  });
+
+  // M14 same-org integrity: valid in-org INITIATIVE escalation proceeds to write.
+  it('POST /api/v8/execution-control/interventions/escalate INITIATIVE succeeds for in-org id', async () => {
+    mockDbAll.mockResolvedValueOnce([{ id: 'init-1' }]);
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/interventions/escalate').send({
+      entityType: 'INITIATIVE',
+      entityId: 'init-1',
+      escalationType: 'RISK',
+      title: 'Escalate',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.action).toBe('escalate');
+    expect(res.body.data?.raidItemId).toBeTruthy();
+    const ran = mockDbRun.mock.calls.some((c) => String(c[0]).includes('INSERT INTO raid_items'));
+    expect(ran).toBe(true);
+  });
+
+  // M14 same-org integrity: POST /manager/lanes/:laneId/execute must verify the
+  // referenced decision exists in the caller's org before creating an execution
+  // plan — an unknown/foreign decisionId returns 404 and performs NO plan INSERT.
+  it('POST /api/v8/execution-control/manager/lanes/:laneId/execute returns 404 for unknown/foreign decisionId (no write)', async () => {
+    mockDbGet.mockResolvedValueOnce(null);
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/execution-control/manager/lanes/decisions/execute')
+      .send({ decisionId: 'ldec-foreign' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('MANAGER_DECISION_NOT_FOUND');
+    const ran = mockDbRun.mock.calls.some((c) =>
+      String(c[0]).includes('INSERT INTO v8_lane_execution_plans')
+    );
+    expect(ran).toBe(false);
+  });
+
+  // M14 same-org integrity: valid in-org decision proceeds to plan creation.
+  it('POST /api/v8/execution-control/manager/lanes/:laneId/execute succeeds for in-org decision', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'ldec-1' });
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/execution-control/manager/lanes/decisions/execute')
+      .send({ decisionId: 'ldec-1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.planId).toBeTruthy();
+    const ran = mockDbRun.mock.calls.some((c) =>
+      String(c[0]).includes('INSERT INTO v8_lane_execution_plans')
+    );
+    expect(ran).toBe(true);
   });
 });

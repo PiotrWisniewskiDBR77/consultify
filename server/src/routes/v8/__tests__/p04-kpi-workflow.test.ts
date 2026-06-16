@@ -398,6 +398,12 @@ describe('P04 KPI Workflow Canon', () => {
 
   describe('POST /workflow/kpi/:kpiId/next-action — create next action', () => {
     it('creates a next action from a signal', async () => {
+      // Handler get sequence: KPI ownership → owned; v8_kpi_signals (org-scoped) → owned
+      // signal; existing-case collision check → null (sig-1 is not a deviation case id).
+      mockDbGet
+        .mockResolvedValueOnce({ id: KPI_ID })
+        .mockResolvedValueOnce({ id: 'sig-1' })
+        .mockResolvedValueOnce(null);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
       const res = await request(app)
@@ -656,7 +662,13 @@ describe('P04 KPI Workflow Canon', () => {
       expect(reportRes.status).toBe(200);
       expect(reportRes.body.data.status).toBe('draft');
 
-      // Step 4: Create next action from report
+      // Step 4: Create next action from report.
+      // Handler get sequence: KPI ownership → owned; results_kpi_report_snapshots
+      // (org-scoped) → owned report; existing-case collision check → null.
+      mockDbGet
+        .mockResolvedValueOnce({ id: KPI_ID })
+        .mockResolvedValueOnce({ id: reportRes.body.data.reportId })
+        .mockResolvedValueOnce(null);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
       const actionRes = await request(app)
         .post(`/api/v8/results/workflow/kpi/${KPI_ID}/next-action`)

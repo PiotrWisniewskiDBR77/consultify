@@ -1873,8 +1873,7 @@ router.post(
 
     // SEC-3 (L-04): the INSERT below stores `sourceRef` directly as `case_id`, and
     // `kpi_deviation_actions` has no org column. Verify the KPI belongs to the caller's
-    // org, and — when `sourceRef` resolves to an existing deviation case — that the case is
-    // org-owned, so a foreign-org caseId cannot have an action attached to it.
+    // org first.
     const ownedKpi = await dbGet<{ id: string }>(
       `SELECT k.id
        FROM initiative_kpis k
@@ -1885,9 +1884,72 @@ router.post(
     if (!ownedKpi?.id) {
       return res.status(404).json({ error: 'KPI not found', code: 'KPI_NOT_FOUND' });
     }
+
+    // SEC-3 (wave 5 follow-up): validate `sourceRef` against the backing table implied by
+    // `sourceType`, each org-scoped, so a foreign-org or nonexistent reference cannot be
+    // stored as a `case_id` (the prior guard only rejected a colliding foreign-org
+    // `kpi_deviation_cases` row, leaving signal/report/reconciliation refs unvalidated).
+    //
+    // Backing tables:
+    //   signal         → `v8_kpi_signals` (PK signal_id) OR `kpi_deviation_cases` (PK id):
+    //                     signals surface from BOTH the explicit signal store and derived
+    //                     deviation cases (see /workflow/signals + /workflow/kpi/:id/inspect),
+    //                     so either id is a legitimate org-owned reference.
+    //   report         → `results_kpi_report_snapshots` (PK id)
+    //   reconciliation → `v8_kpi_finance_reconciliations` (PK reconciliation_id)
+    //   manual         → free-form user reference; no backing table to validate against, so
+    //                     it is accepted as-is (documented intentional skip).
+    const ref = String(sourceRef);
+    if (sourceType === 'signal') {
+      const ownedSignal = await dbGet<{ id: string }>(
+        `SELECT signal_id AS id FROM v8_kpi_signals WHERE signal_id = ? AND organization_id = ?`,
+        [ref, organizationId],
+        { fallback: true }
+      ).catch(() => null);
+      const ownedCase = ownedSignal?.id
+        ? null
+        : await dbGet<{ id: string }>(
+            `SELECT id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
+            [ref, organizationId]
+          ).catch(() => null);
+      if (!ownedSignal?.id && !ownedCase?.id) {
+        return res.status(404).json({
+          error: 'Signal not found',
+          code: 'RESULTS_SIGNAL_NOT_FOUND',
+        });
+      }
+    } else if (sourceType === 'report') {
+      const ownedReport = await dbGet<{ id: string }>(
+        `SELECT id FROM results_kpi_report_snapshots WHERE id = ? AND organization_id = ?`,
+        [ref, organizationId],
+        { fallback: true }
+      ).catch(() => null);
+      if (!ownedReport?.id) {
+        return res.status(404).json({
+          error: 'Report not found',
+          code: 'RESULTS_REPORT_NOT_FOUND',
+        });
+      }
+    } else if (sourceType === 'reconciliation') {
+      const ownedReconciliation = await dbGet<{ id: string }>(
+        `SELECT reconciliation_id AS id FROM v8_kpi_finance_reconciliations
+         WHERE reconciliation_id = ? AND organization_id = ?`,
+        [ref, organizationId],
+        { fallback: true }
+      ).catch(() => null);
+      if (!ownedReconciliation?.id) {
+        return res.status(404).json({
+          error: 'Reconciliation not found',
+          code: 'RESULTS_RECONCILIATION_NOT_FOUND',
+        });
+      }
+    }
+
+    // Defense in depth: even for `manual` (or any type), if `sourceRef` happens to collide
+    // with a real foreign-org deviation case, reject — the value is stored as `case_id`.
     const existingCase = await dbGet<{ id: string; organization_id: string }>(
       `SELECT id, organization_id FROM kpi_deviation_cases WHERE id = ?`,
-      [String(sourceRef)]
+      [ref]
     );
     if (existingCase && existingCase.organization_id !== organizationId) {
       return res.status(404).json({

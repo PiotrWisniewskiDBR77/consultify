@@ -9,8 +9,10 @@ import { Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { validateBody } from '../middleware/validation.middleware.js';
 import * as budgetingSvc from '../services/budgetingService.js';
 import decisionService from '../services/decisionService.js';
 import {
@@ -61,6 +63,147 @@ const normalizeStatusForDb = (status?: string | null) => {
   if (upper === 'APPROVED') return 'completed';
   return 'draft';
 };
+
+// ════════════════════════════════════════════════
+// Zod validation schemas (defense-in-depth — Wave 5 M16 hardening)
+//
+// Scope note: only endpoints whose full body shape is determinable from
+// in-router SQL / economicsFinancials are validated here. Endpoints that
+// forward a raw body to external services (financialAnalysisService,
+// valuationService, budgetingService) are intentionally left unschema'd —
+// their column allowlists live in those services (out of M16 edit scope).
+//
+// `.strict()` rejects unexpected top-level keys with 400. Sub-objects that
+// feed `normalizeFinancialData` (which tolerates partials) are kept
+// permissive so no previously-accepted payload is now rejected.
+// ════════════════════════════════════════════════
+
+const idLike = z.string().max(64);
+
+// FinancialData sub-object — permissive (normalizeFinancialData spreads input
+// over defaults). Numeric fields are coerced/validated; assumptions is a list.
+const financialDataSchema = z
+  .object({
+    initialInvestment: z.number().optional(),
+    implementationCost: z.number().optional(),
+    annualOperatingCost: z.number().optional(),
+    trainingCost: z.number().optional(),
+    contingencyPercent: z.number().optional(),
+    annualCostSavings: z.number().optional(),
+    annualRevenueIncrease: z.number().optional(),
+    productivityGainsPercent: z.number().optional(),
+    riskReductionValue: z.number().optional(),
+    implementationMonths: z.number().optional(),
+    benefitRealizationMonths: z.number().optional(),
+    analysisHorizonYears: z.number().optional(),
+    discountRate: z.number().optional(),
+    currency: z.string().max(10).optional(),
+    assumptions: z.array(z.unknown()).optional(),
+  })
+  .passthrough();
+
+const createAnalysisSchema = z
+  .object({
+    name: z.string().trim().min(1).max(300),
+    description: z.string().max(10000).nullish(),
+    projectId: idLike.nullish(),
+    initiativeId: idLike.nullish(),
+    analysisType: z.string().max(60).optional(),
+  })
+  .strict();
+
+const updateAnalysisSchema = z
+  .object({
+    name: z.string().trim().min(1).max(300).optional(),
+    description: z.string().max(10000).nullish(),
+    status: z.string().max(40).optional(),
+    axisScores: z.record(z.string(), z.unknown()).optional(),
+    overallScore: z.number().nullish(),
+    completionPercent: z.number().optional(),
+    projectId: idLike.nullish(),
+    initiativeId: idLike.nullish(),
+    analysisType: z.string().max(60).optional(),
+  })
+  .strict();
+
+const linkInitiativeSchema = z
+  .object({
+    initiativeId: idLike,
+  })
+  .strict();
+
+const costBenefitItemSchema = z
+  .object({
+    description: z.string().max(500).optional(),
+    amount: z.number().optional(),
+    year: z.number().optional(),
+  })
+  .passthrough();
+
+const updateFinancialsSchema = z
+  .object({
+    financialData: financialDataSchema.optional(),
+    costs: z.array(costBenefitItemSchema).optional(),
+    benefits: z.array(costBenefitItemSchema).optional(),
+    discountRate: z.number().optional(),
+    investmentHorizon: z.number().optional(),
+  })
+  .strict();
+
+const upsertScenarioSchema = z
+  .object({
+    scenarioType: z.string().trim().min(1).max(40),
+    name: z.string().max(120).optional(),
+    financialData: financialDataSchema.optional(),
+  })
+  .strict();
+
+const updateBenefitsSchema = z
+  .object({
+    trackingPeriod: z.string().trim().min(1).max(40),
+    plannedBenefits: z.number().optional(),
+    actualBenefits: z.number().optional(),
+  })
+  .strict();
+
+const createDecisionSchema = z
+  .object({
+    decisionType: z.string().max(40).optional(),
+    decisionMakerId: idLike.nullish(),
+  })
+  .strict();
+
+const duplicateAnalysisSchema = z
+  .object({
+    name: z.string().trim().min(1).max(300).optional(),
+  })
+  .strict();
+
+const createAnalysisInitiativesSchema = z
+  .object({
+    acceptedProposalIds: z.array(z.string().max(64)).min(1),
+  })
+  .strict();
+
+const exportPptxSchema = z
+  .object({
+    language: z.string().max(10).optional(),
+    theme: z.string().max(40).optional(),
+    confidentiality: z.string().max(40).optional(),
+  })
+  .strict();
+
+const importBudgetDocumentSchema = z
+  .object({
+    documentText: z.string().min(1).max(2_000_000),
+  })
+  .strict();
+
+const linkBudgetInitiativeSchema = z
+  .object({
+    initiativeId: idLike,
+  })
+  .strict();
 
 /**
  * GET /api/economics/analyses
@@ -229,6 +372,7 @@ router.get(
 router.post(
   '/analyses',
   verifyToken,
+  validateBody(createAnalysisSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -238,10 +382,6 @@ router.post(
     }
 
     const { name, description, projectId, initiativeId, analysisType } = req.body;
-
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
 
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -367,6 +507,7 @@ router.get(
 router.put(
   '/analyses/:id',
   verifyToken,
+  validateBody(updateAnalysisSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const { id } = req.params;
@@ -457,6 +598,7 @@ router.put(
 router.post(
   '/analyses/:id/link-initiative',
   verifyToken,
+  validateBody(linkInitiativeSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -565,6 +707,7 @@ router.get(
 router.put(
   '/analyses/:id/financials',
   verifyToken,
+  validateBody(updateFinancialsSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -870,6 +1013,7 @@ router.get(
 router.post(
   '/analyses/:id/scenarios',
   verifyToken,
+  validateBody(upsertScenarioSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -1023,6 +1167,7 @@ router.get(
 router.put(
   '/analyses/:id/benefits',
   verifyToken,
+  validateBody(updateBenefitsSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -1301,6 +1446,7 @@ router.post(
 router.post(
   '/analyses/:id/decisions',
   verifyToken,
+  validateBody(createDecisionSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -1396,6 +1542,7 @@ router.delete(
 router.post(
   '/analyses/:id/duplicate',
   verifyToken,
+  validateBody(duplicateAnalysisSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -1648,6 +1795,7 @@ router.get(
 router.post(
   '/financial-analyses/:id/initiatives',
   verifyToken,
+  validateBody(createAnalysisInitiativesSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -2045,6 +2193,7 @@ router.post(
 router.post(
   '/valuations/:id/export/pptx',
   verifyToken,
+  validateBody(exportPptxSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2246,6 +2395,7 @@ router.delete(
 router.post(
   '/budgets/:id/import-document',
   verifyToken,
+  validateBody(importBudgetDocumentSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2388,6 +2538,7 @@ router.get(
 router.post(
   '/budgets/:id/initiatives',
   verifyToken,
+  validateBody(linkBudgetInitiativeSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });

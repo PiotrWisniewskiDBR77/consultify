@@ -21,8 +21,10 @@
  */
 
 import { Request, Response, Router } from 'express';
+import { z } from 'zod';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { validateBody } from '../middleware/validation.middleware.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -54,6 +56,104 @@ interface AuthRequest extends Request {
 }
 
 // ════════════════════════════════════════════════
+// Zod validation schemas (defense-in-depth — Wave 5 M16 hardening)
+// Fields mirror exactly what the route handlers / financialModelingService
+// consume. `.strict()` rejects unexpected/extra keys with 400.
+// ════════════════════════════════════════════════
+
+const EVENT_TYPES = [
+  'revenue',
+  'cogs',
+  'opex',
+  'capex_purchase',
+  'depreciation_run',
+  'debt_drawdown',
+  'debt_repayment',
+  'interest_accrual',
+  'tax_accrual',
+  'tax_payment',
+  'wc_change',
+  'equity_injection',
+  'dividend',
+] as const;
+
+const CF_CLASSIFICATIONS = ['operating', 'investing', 'financing', 'none'] as const;
+
+const RECURRENCES = ['one_time', 'monthly', 'quarterly', 'annual'] as const;
+
+const GRANULARITIES = ['monthly', 'quarterly', 'annual'] as const;
+
+const jsonRecordSchema = z.record(z.string(), z.unknown());
+
+const createModelSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    startDate: z.string().trim().min(1).max(40),
+    description: z.string().max(5000).nullish(),
+    currency: z.string().trim().max(10).optional(),
+    horizonMonths: z.number().int().positive().max(1200).optional(),
+    granularity: z.enum(GRANULARITIES).optional(),
+    scenario: z.string().trim().max(40).optional(),
+    assumptions: jsonRecordSchema.optional(),
+    projectId: z.string().max(64).nullish(),
+    initiativeId: z.string().max(64).nullish(),
+    sourceStatementId: z.string().max(64).nullish(),
+    sourceStatementPackId: z.string().max(64).nullish(),
+  })
+  .strict();
+
+// updateModel() allowlists these columns; assumptions handled separately.
+const updateModelSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    description: z.string().max(5000).nullish(),
+    currency: z.string().trim().max(10).optional(),
+    horizon_months: z.number().int().positive().max(1200).optional(),
+    start_date: z.string().trim().min(1).max(40).optional(),
+    granularity: z.enum(GRANULARITIES).optional(),
+    scenario: z.string().trim().max(40).optional(),
+    status: z.string().trim().max(40).optional(),
+    assumptions: jsonRecordSchema.optional(),
+  })
+  .strict();
+
+const createEventSchema = z
+  .object({
+    eventType: z.enum(EVENT_TYPES),
+    name: z.string().trim().min(1).max(200),
+    amount: z.number(),
+    periodStart: z.string().trim().min(1).max(40),
+    cfClassification: z.enum(CF_CLASSIFICATIONS),
+    description: z.string().max(5000).nullish(),
+    periodEnd: z.string().trim().max(40).nullish(),
+    recurrence: z.enum(RECURRENCES).optional(),
+    growthRate: z.number().optional(),
+    postingRules: jsonRecordSchema.optional(),
+    parameters: jsonRecordSchema.optional(),
+    sortOrder: z.number().int().optional(),
+  })
+  .strict();
+
+// updateEvent() allowlists these columns; posting_rules/parameters separate.
+const updateEventSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    description: z.string().max(5000).nullish(),
+    amount: z.number().optional(),
+    period_start: z.string().trim().min(1).max(40).optional(),
+    period_end: z.string().trim().max(40).nullish(),
+    recurrence: z.enum(RECURRENCES).optional(),
+    growth_rate: z.number().optional(),
+    cf_classification: z.enum(CF_CLASSIFICATIONS).optional(),
+    sort_order: z.number().int().optional(),
+    is_active: z.union([z.boolean(), z.number().int()]).optional(),
+    event_type: z.enum(EVENT_TYPES).optional(),
+    posting_rules: jsonRecordSchema.optional(),
+    parameters: jsonRecordSchema.optional(),
+  })
+  .strict();
+
+// ════════════════════════════════════════════════
 // Models CRUD
 // ════════════════════════════════════════════════
 
@@ -61,6 +161,7 @@ router.post(
   '/models',
   verifyToken,
   isAuthenticated,
+  validateBody(createModelSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
@@ -80,7 +181,6 @@ router.post(
       sourceStatementId,
       sourceStatementPackId,
     } = req.body;
-    if (!name || !startDate) return res.status(400).json({ error: 'name and startDate required' });
 
     logFinanceEvent('model.create.started', {
       traceId,
@@ -218,6 +318,7 @@ router.put(
   '/models/:id',
   verifyToken,
   isAuthenticated,
+  validateBody(updateModelSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
     const model = await getModel(modelId, req.user?.organizationId);
@@ -357,6 +458,7 @@ router.post(
   '/models/:id/events',
   verifyToken,
   isAuthenticated,
+  validateBody(createEventSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
     const model = await getModel(modelId, req.user?.organizationId);
@@ -377,11 +479,6 @@ router.post(
       parameters,
       sortOrder,
     } = req.body;
-    if (!eventType || !name || amount === undefined || !periodStart || !cfClassification) {
-      return res
-        .status(400)
-        .json({ error: 'eventType, name, amount, periodStart, cfClassification required' });
-    }
 
     logFinanceEvent('model.event.create.started', {
       traceId,
@@ -442,6 +539,7 @@ router.put(
   '/events/:eventId',
   verifyToken,
   isAuthenticated,
+  validateBody(updateEventSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const eventId = String(req.params.eventId);
     const owned = await dbGet(

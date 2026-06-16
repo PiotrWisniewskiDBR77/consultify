@@ -1574,9 +1574,19 @@ router.post(
   '/attribution/:kpiId/snapshot',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const kpiId = String(req.params.kpiId);
-    const { periodStart, periodEnd } = req.body;
-    const result = await computeAttribution(kpiId, orgId, String(periodStart), String(periodEnd));
+    const { periodStart, periodEnd } = req.body || {};
+    // Validate the period bounds before they are coerced and persisted: an absent value
+    // would be stored as the literal string "undefined", corrupting the snapshot row.
+    const safePeriodStart = typeof periodStart === 'string' ? periodStart.trim() : '';
+    const safePeriodEnd = typeof periodEnd === 'string' ? periodEnd.trim() : '';
+    if (!safePeriodStart || !safePeriodEnd) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'periodStart and periodEnd are required' });
+    }
+    const result = await computeAttribution(kpiId, orgId, safePeriodStart, safePeriodEnd);
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO kpi_attribution_snapshots (id, kpi_id, organization_id, period_start, period_end, kpi_delta, contributions, unexplained_remainder, unexplained_percent, overall_confidence, confidence_reasons, assumptions, algorithm_version, computed_by)
@@ -1585,8 +1595,8 @@ router.post(
         id,
         kpiId,
         orgId,
-        String(periodStart),
-        String(periodEnd),
+        safePeriodStart,
+        safePeriodEnd,
         result.kpiDelta,
         JSON.stringify(result.contributions),
         result.unexplainedRemainder,
@@ -1642,7 +1652,21 @@ router.post(
   '/financial/statement-lines',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
-    const { statementType, lineCode, lineName, lineNamePl, parentLineId, sortOrder } = req.body;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const { statementType, lineCode, lineName, lineNamePl, parentLineId, sortOrder } =
+      req.body || {};
+    // Required identity fields: without them the row is a junk statement line (NULL/undefined
+    // coerced into NOT NULL-ish columns), so reject before the INSERT.
+    const safeStatementType = typeof statementType === 'string' ? statementType.trim() : '';
+    const safeLineCode = typeof lineCode === 'string' ? lineCode.trim() : '';
+    const safeLineName = typeof lineName === 'string' ? lineName.trim() : '';
+    if (!safeStatementType || !safeLineCode || !safeLineName) {
+      return res.status(400).json({
+        success: false,
+        error: 'statementType, lineCode and lineName are required',
+      });
+    }
+    const safeSortOrder = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : 0;
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO financial_statement_lines (id, organization_id, statement_type, line_code, line_name, line_name_pl, parent_line_id, sort_order, is_system)
@@ -1650,12 +1674,12 @@ router.post(
       [
         id,
         orgId,
-        statementType,
-        lineCode,
-        lineName,
-        lineNamePl || null,
+        safeStatementType,
+        safeLineCode,
+        safeLineName,
+        lineNamePl ? String(lineNamePl).trim() : null,
         parentLineId || null,
-        sortOrder || 0,
+        safeSortOrder,
       ]
     );
     res.json({ success: true, data: { id } });
@@ -1690,6 +1714,7 @@ router.post(
   '/financial/kpi-mappings',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const {
       kpiId,
       statementLineId,
@@ -1700,7 +1725,24 @@ router.post(
       confidence,
       assumptionsText,
       assumptionsOwner,
-    } = req.body;
+    } = req.body || {};
+    // kpiId + statementLineId form the conflict key (with org); direction drives the impact
+    // sign. Without them the UPSERT writes a corrupt mapping, so reject malformed input.
+    const safeKpiId = typeof kpiId === 'string' ? kpiId.trim() : '';
+    const safeStatementLineId = typeof statementLineId === 'string' ? statementLineId.trim() : '';
+    const safeDirection = typeof direction === 'string' ? direction.trim() : '';
+    if (!safeKpiId || !safeStatementLineId || !safeDirection) {
+      return res.status(400).json({
+        success: false,
+        error: 'kpiId, statementLineId and direction are required',
+      });
+    }
+    // multiplier scales the estimated financial impact — guard against a non-numeric value
+    // poisoning the stored coefficient (fall back to the prior default of 1.0).
+    const safeMultiplier =
+      multiplier != null && multiplier !== '' && Number.isFinite(Number(multiplier))
+        ? Number(multiplier)
+        : 1.0;
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO kpi_financial_mappings (id, kpi_id, statement_line_id, organization_id, direction, relationship_type, multiplier, formula_params, confidence, assumptions_text, assumptions_owner, created_by)
@@ -1711,12 +1753,12 @@ router.post(
        assumptions_owner=excluded.assumptions_owner, updated_at=CURRENT_TIMESTAMP`,
       [
         id,
-        kpiId,
-        statementLineId,
+        safeKpiId,
+        safeStatementLineId,
         orgId,
-        direction,
+        safeDirection,
         relationshipType || 'linear',
-        multiplier || 1.0,
+        safeMultiplier,
         formulaParams ? JSON.stringify(formulaParams) : null,
         confidence || 'medium',
         assumptionsText || null,

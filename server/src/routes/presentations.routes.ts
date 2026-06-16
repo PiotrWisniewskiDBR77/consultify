@@ -5934,10 +5934,16 @@ function escapeXml(s: string): string {
 router.post(
   '/decks/:deckId/analytics/view',
   asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
     const { deckId } = req.params;
     const { viewerToken, cardIndex, durationMs } = req.body;
 
-    const deckOwner = await dbGet('SELECT id FROM presentation_decks WHERE id = ?', [deckId]);
+    // SEC (M17 wave-5): org-scope the deck lookup so org A cannot write
+    // analytics rows against (or probe the existence of) org B's deck by id.
+    const deckOwner = await dbGet(
+      'SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      [deckId, orgId]
+    );
     if (!deckOwner) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }

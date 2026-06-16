@@ -1982,6 +1982,20 @@ export class ToolController {
         return;
       }
 
+      // SEC (wave-5 parent-ownership pattern): the generated-initiative listing must be
+      // gated by the parent tool session's org. Without this, a foreign-org toolId would
+      // leak that org's generated-initiative titles/statuses (tool_initiative_links has no
+      // organization_id column of its own, so ownership is asserted via tool_sessions).
+      const ownedSession = (await queryHelpers.queryOne(
+        `SELECT id FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string } | null;
+
+      if (!ownedSession) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
       const initiatives = await queryHelpers.queryAll(
         `SELECT i.id, COALESCE(i.title, i.name) as title, i.status, l.batch_id
          FROM tool_initiative_links l

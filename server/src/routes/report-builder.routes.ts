@@ -2102,6 +2102,7 @@ router.put('/:id/config', async (req: Request, res: Response, next: NextFunction
 router.post('/:id/sections', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = paramStr(req.params.id);
+    const { organizationId } = getAuthContext(req);
     const {
       title,
       sectionType,
@@ -2115,6 +2116,14 @@ router.post('/:id/sections', async (req: Request, res: Response, next: NextFunct
 
     if (!title) {
       return res.status(400).json({ error: 'title is required' });
+    }
+
+    // SEC (M17 wave-5): verify the report belongs to the caller's org before
+    // mutating its sections — addCustomSection is keyed on report_id only, so an
+    // unscoped call would let org A insert sections into org B's report.
+    const owned = await ReportBuilderService.getReport(id, organizationId);
+    if (!owned) {
+      return res.status(404).json({ error: 'Report not found' });
     }
 
     const section = await ReportBuilderService.addCustomSection(id, {
@@ -2150,6 +2159,15 @@ router.delete(
     try {
       const id = paramStr(req.params.id);
       const sectionKey = paramStr(req.params.sectionKey);
+      const { organizationId } = getAuthContext(req);
+
+      // SEC (M17 wave-5): verify report ownership before deleting a section —
+      // removeSection is keyed on report_id only, so an unscoped call would let
+      // org A delete sections from org B's report.
+      const owned = await ReportBuilderService.getReport(id, organizationId);
+      if (!owned) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
 
       const success = await ReportBuilderService.removeSection(id, sectionKey);
 

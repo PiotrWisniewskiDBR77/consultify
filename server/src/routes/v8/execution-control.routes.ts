@@ -177,6 +177,22 @@ router.patch(
       mitigationDueDate,
       mitigationStatus,
     } = req.body;
+
+    // Same-org integrity (defense-in-depth): mirror the sibling intervention
+    // handlers — verify the RAID item exists in the caller's org before the
+    // org-scoped UPDATE. Without this, a bad/foreign id silently 200s as a 0-row
+    // no-op instead of surfacing 404.
+    const existingRaid = await dbGet<{ id: string }>(
+      `SELECT id FROM raid_items WHERE id = ? AND organization_id = ?`,
+      [String(req.params.id), organizationId],
+      { fallback: true }
+    );
+    if (!existingRaid?.id) {
+      return res
+        .status(404)
+        .json({ error: 'RAID item not found', code: 'EXECUTION_RAID_NOT_FOUND' });
+    }
+
     const updates: string[] = [];
     const params: unknown[] = [];
 
@@ -1061,15 +1077,36 @@ router.post(
     const { organizationId, userId } = getV8Context(req);
     const { entityType, entityId, escalationType, title, description, ownerId, dueDate } = req.body;
 
-    const initiativeId =
-      entityType === 'INITIATIVE'
-        ? entityId
-        : ((
-            (await dbAll(`SELECT initiative_id FROM tasks WHERE id = ? AND organization_id = ?`, [
-              entityId,
-              organizationId,
-            ])) as { initiative_id: string | null }[]
-          )?.[0]?.initiative_id ?? null);
+    // Same-org integrity (defense-in-depth): mirror the sibling reassign/smooth/
+    // replan handlers — verify the target entity exists in the caller's org before
+    // writing. Without this an unknown/foreign INITIATIVE id would stamp the
+    // caller's org onto a raid_items row referencing a non-existent (or cross-org)
+    // initiative_id, instead of failing fast. The TASK branch already org-scopes
+    // its lookup; make it 404 on a missing task rather than escalating against null.
+    let initiativeId: string | null;
+    if (entityType === 'INITIATIVE') {
+      const init = (await dbAll(
+        `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as { id: string }[];
+      if (!init?.length) {
+        return res
+          .status(404)
+          .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+      initiativeId = entityId;
+    } else {
+      const task = (await dbAll(
+        `SELECT initiative_id FROM tasks WHERE id = ? AND organization_id = ?`,
+        [entityId, organizationId]
+      )) as { initiative_id: string | null }[];
+      if (!task?.length) {
+        return res
+          .status(404)
+          .json({ error: 'Task not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
+      }
+      initiativeId = task[0].initiative_id ?? null;
+    }
 
     const raidId = `raid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -1680,6 +1717,28 @@ router.post(
     }
     const { decisionId } = req.body;
     const planId = `lep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    // Same-org integrity (defense-in-depth): mirror the sibling handlers — verify
+    // the referenced decision exists in the caller's org before creating an
+    // execution plan. Without this, an unknown/foreign decisionId would silently
+    // create an org-stamped plan referencing a non-existent (or cross-org) decision
+    // while the downstream state UPDATE is an org-scoped no-op. The decisions table
+    // may not exist on older DBs; treat a lookup failure as "table absent" and fall
+    // through (the INSERT itself is harmless and the UPDATE remains org-scoped).
+    try {
+      const decision = await dbGet<{ id: string }>(
+        `SELECT id FROM v8_lane_decisions WHERE id = ? AND organization_id = ?`,
+        [decisionId, organizationId],
+        { fallback: true }
+      );
+      if (!decision?.id) {
+        return res
+          .status(404)
+          .json({ error: 'Decision not found', code: 'MANAGER_DECISION_NOT_FOUND' });
+      }
+    } catch {
+      // v8_lane_decisions table may not exist yet — fall through to plan creation.
+    }
 
     try {
       await dbRun(

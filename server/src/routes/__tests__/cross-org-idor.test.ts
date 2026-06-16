@@ -508,6 +508,67 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
     expect(upsert?.[1]?.[3]).toBe(ORG_A);
   });
 
+  // ── Input validation: malformed body must not corrupt benefits rows ──
+
+  it('POST /benefits/attribution/:kpiId/snapshot → 400 when period bounds are missing (no INSERT)', async () => {
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/attribution/kpi-x/snapshot')
+      .send({ periodStart: '2026-01-01' }); // periodEnd missing
+
+    expect(res.status).toBe(400);
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_attribution_snapshots/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('POST /benefits/financial/statement-lines → 400 when identity fields are missing (no INSERT)', async () => {
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/financial/statement-lines')
+      .send({ lineName: 'Revenue' }); // statementType + lineCode missing
+
+    expect(res.status).toBe(400);
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+financial_statement_lines/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('POST /benefits/financial/kpi-mappings → 400 when key fields are missing (no UPSERT)', async () => {
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/financial/kpi-mappings')
+      .send({ kpiId: 'kpi-x' }); // statementLineId + direction missing
+
+    expect(res.status).toBe(400);
+    const upsert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_financial_mappings/i.test(String(c?.[0]))
+    );
+    expect(upsert).toBeFalsy();
+  });
+
+  it('POST /benefits/financial/kpi-mappings → 200 + UPSERT with a numeric multiplier fallback', async () => {
+    const app = await buildBenefitsApp();
+    const res = await request(app)
+      .post('/api/benefits/financial/kpi-mappings')
+      .send({
+        kpiId: 'kpi-x',
+        statementLineId: 'line-x',
+        direction: 'positive',
+        multiplier: 'not-a-number',
+      });
+
+    expect(res.status).toBe(200);
+    const upsert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_financial_mappings/i.test(String(c?.[0]))
+    );
+    expect(upsert).toBeTruthy();
+    // multiplier (7th positional) falls back to 1.0 rather than persisting NaN/junk.
+    expect(upsert?.[1]?.[6]).toBe(1.0);
+  });
+
   // ── HOLE-2: v8 POST /results/kpis/:kpiId/time-series current_value UPDATE org-scope ──
 
   it('v8 POST /results/kpis/:kpiId/time-series current_value UPDATE is org-scoped', async () => {
@@ -561,15 +622,37 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
     expect(insert).toBeFalsy();
   });
 
-  it('v8 next-action → 404 when sourceRef is a foreign-org deviation case (no INSERT)', async () => {
-    // 1st get (KPI ownership) → owned; 2nd get (existing case) → belongs to ORG_B.
+  it('v8 next-action → 404 when sourceRef is a foreign-org deviation case used as a signal (no INSERT)', async () => {
+    // 1st get (KPI ownership) → owned; 2nd (v8_kpi_signals org-scoped) → null;
+    // 3rd (kpi_deviation_cases org-scoped) → null. A foreign-org case is invisible to
+    // both org-scoped lookups, so the signal-ref guard rejects it before any INSERT.
+    mockDbGet
+      .mockResolvedValueOnce({ id: 'kpi-owned' })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/workflow/kpi/kpi-owned/next-action')
+      .send({ title: 'x', sourceType: 'signal', sourceRef: 'case-from-org-b' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_SIGNAL_NOT_FOUND');
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_deviation_actions/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('v8 next-action → 404 when a manual sourceRef collides with a foreign-org deviation case (no INSERT)', async () => {
+    // manual has no backing table, so it skips straight to the defense-in-depth
+    // existing-case collision check: 1st (KPI) → owned; 2nd (unscoped existing-case) → ORG_B.
     mockDbGet
       .mockResolvedValueOnce({ id: 'kpi-owned' })
       .mockResolvedValueOnce({ id: 'case-from-org-b', organization_id: ORG_B });
     const app = await buildV8App();
     const res = await request(app)
       .post('/api/v8/results/workflow/kpi/kpi-owned/next-action')
-      .send({ title: 'x', sourceType: 'signal', sourceRef: 'case-from-org-b' });
+      .send({ title: 'x', sourceType: 'manual', sourceRef: 'case-from-org-b' });
 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('RESULTS_DEVIATION_CASE_NOT_FOUND');
@@ -577,6 +660,102 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
       /INSERT\s+INTO\s+kpi_deviation_actions/i.test(String(c?.[0]))
     );
     expect(insert).toBeFalsy();
+  });
+
+  // ── HOLE-3b: v8 next-action sourceRef cross-table validation (wave-5 follow-up) ──
+
+  it('v8 next-action → 404 when signal sourceRef does not exist in the caller org (no INSERT)', async () => {
+    // 1st get (KPI ownership) → owned; 2nd (v8_kpi_signals) → null;
+    // 3rd (kpi_deviation_cases org-scoped) → null → neither backing row exists.
+    mockDbGet
+      .mockResolvedValueOnce({ id: 'kpi-owned' })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/workflow/kpi/kpi-owned/next-action')
+      .send({ title: 'x', sourceType: 'signal', sourceRef: 'signal-does-not-exist' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_SIGNAL_NOT_FOUND');
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_deviation_actions/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+    // The signal lookup ran org-scoped against the caller's org.
+    const signalLookup = mockDbGet.mock.calls.find(
+      (c) =>
+        /FROM\s+v8_kpi_signals/i.test(String(c?.[0])) &&
+        /AND\s+organization_id\s*=\s*\?/i.test(String(c?.[0]))
+    );
+    expect(signalLookup?.[1]).toEqual(['signal-does-not-exist', ORG_A]);
+  });
+
+  it('v8 next-action → 404 when report sourceRef does not exist in the caller org (no INSERT)', async () => {
+    // 1st get (KPI ownership) → owned; 2nd (results_kpi_report_snapshots) → null.
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-owned' }).mockResolvedValueOnce(null);
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/workflow/kpi/kpi-owned/next-action')
+      .send({ title: 'x', sourceType: 'report', sourceRef: 'report-from-org-b' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_REPORT_NOT_FOUND');
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_deviation_actions/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('v8 next-action → 404 when reconciliation sourceRef does not exist in the caller org (no INSERT)', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-owned' }).mockResolvedValueOnce(null);
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/workflow/kpi/kpi-owned/next-action')
+      .send({ title: 'x', sourceType: 'reconciliation', sourceRef: 'recon-from-org-b' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('RESULTS_RECONCILIATION_NOT_FOUND');
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_deviation_actions/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeFalsy();
+  });
+
+  it('v8 next-action → 200 + INSERT when signal sourceRef is owned by the caller org', async () => {
+    // 1st (KPI ownership) → owned; 2nd (v8_kpi_signals org-scoped) → owned signal;
+    // 3rd (existingCase collision check) → null (not a deviation case id).
+    mockDbGet
+      .mockResolvedValueOnce({ id: 'kpi-owned' })
+      .mockResolvedValueOnce({ id: 'signal-owned' })
+      .mockResolvedValueOnce(null);
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/workflow/kpi/kpi-owned/next-action')
+      .send({ title: 'fix it', sourceType: 'signal', sourceRef: 'signal-owned' });
+
+    expect(res.status).toBe(200);
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_deviation_actions/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeTruthy();
+    // case_id (2nd positional) is the validated, owned sourceRef.
+    expect(insert?.[1]?.[1]).toBe('signal-owned');
+  });
+
+  it('v8 next-action → 200 + INSERT for a manual sourceRef (no backing table to validate)', async () => {
+    // 1st (KPI ownership) → owned; 2nd (existingCase collision check) → null.
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-owned' }).mockResolvedValueOnce(null);
+    const app = await buildV8App();
+    const res = await request(app)
+      .post('/api/v8/results/workflow/kpi/kpi-owned/next-action')
+      .send({ title: 'manual followup', sourceType: 'manual', sourceRef: 'free-form-ref' });
+
+    expect(res.status).toBe(200);
+    const insert = mockDbRun.mock.calls.find((c) =>
+      /INSERT\s+INTO\s+kpi_deviation_actions/i.test(String(c?.[0]))
+    );
+    expect(insert).toBeTruthy();
   });
 
   // ── HOLE-4: results-v4 connector ingest (resultsEnterpriseService) ──
