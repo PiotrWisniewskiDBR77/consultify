@@ -614,7 +614,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
   const handleApprove = async (id: string) => {
     try {
-      await Api.put(`/decisions/${id}/decide`, { status: 'APPROVED', outcome: '' });
+      await Api.decideDecision(id, 'approved');
       toast.success(t('executive.decisions.approved', 'Decision approved'));
       onDecisionApprove?.(id);
       fetchDashboardData(true);
@@ -625,7 +625,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
 
   const handleReject = async (id: string) => {
     try {
-      await Api.put(`/decisions/${id}/decide`, { status: 'REJECTED', outcome: '' });
+      await Api.decideDecision(id, 'rejected');
       toast.success(t('executive.decisions.rejected', 'Decision rejected'));
       onDecisionReject?.(id);
       fetchDashboardData(true);
