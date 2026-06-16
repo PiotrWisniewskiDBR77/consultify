@@ -85,6 +85,7 @@ import {
 import { useConversationStore } from '@/store/useConversationStore';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 
 import { useAppStore } from '../../store/useAppStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
@@ -1625,6 +1626,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const clearSummarySelection = useCallback(() => setSummarySelectedIds(new Set()), []);
 
+  // #12 — confirm dialog for bulk mutations (canon, replaces native confirm()).
+  const { dialog: bulkConfirmDialog, confirm: confirmBulk } = useConfirmDialog();
+
   // Drop selections for rows that are no longer visible (filter/scope changes).
   useEffect(() => {
     setSummarySelectedIds((prev) => {
@@ -1840,6 +1844,108 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       }
     },
     [activeTab, initiatives, isPilotParticipant, t, viewMode]
+  );
+
+  // #12 — bulk status targets = INTERSECTION of governed transitions valid for
+  // EVERY selected initiative. A single bulk target is only offered when it is a
+  // legal next-status for all of them; the per-row PATCH stays server-validated
+  // (governance gate), so bulk never bypasses transition rules.
+  const bulkStatusTargets = useMemo(() => {
+    const selected = Array.from(summarySelectedIds)
+      .map((id) => initiatives.find((i) => i.id === id))
+      .filter((i): i is FullInitiative => Boolean(i));
+    if (selected.length === 0) return [] as { targetStatus: InitiativeStatus; label: string }[];
+    let common: string[] | null = null;
+    for (const init of selected) {
+      const targets = getStatusActions(init.status as InitiativeStatus).map((a) =>
+        String(a.targetStatus)
+      );
+      common = common === null ? targets : common.filter((x) => targets.includes(x));
+    }
+    // Dedupe by display label: two distinct target statuses can share a label
+    // (e.g. BLOCKED → both resume paths render as "Executing"); keep the first so
+    // the bar never shows two identical-looking buttons.
+    const seenLabels = new Set<string>();
+    return (common ?? [])
+      .map((ts) => ({
+        targetStatus: ts as InitiativeStatus,
+        label: STATUS_METADATA[ts as InitiativeStatus]?.label || ts,
+      }))
+      .filter((o) => {
+        if (seenLabels.has(o.label)) return false;
+        seenLabels.add(o.label);
+        return true;
+      });
+  }, [summarySelectedIds, initiatives]);
+
+  // #12 — apply one governed status to all selected initiatives (loops the live
+  // PATCH /initiatives/:id/status; one summary toast; honest partial-failure report).
+  const handleBulkStatusChange = useCallback(
+    async (newStatus: InitiativeStatus) => {
+      if (isPilotParticipant) {
+        dispatchPilotAccessBlocked({ href: '/implementation' });
+        return;
+      }
+      const ids = Array.from(summarySelectedIds);
+      if (ids.length === 0) return;
+      const meta = STATUS_METADATA[newStatus];
+      const ok = await confirmBulk({
+        title: t('execution.bulk.confirmStatusTitle', 'Zmienić status zaznaczonych inicjatyw?'),
+        description: t(
+          'execution.bulk.confirmStatusDesc',
+          'Nowy status „{{status}}" dla {{count}} inicjatyw. Każda zmiana podlega regułom governance.',
+          { status: meta?.label || String(newStatus), count: ids.length }
+        ),
+        confirmLabel: t('common.apply', 'Zastosuj'),
+        cancelLabel: t('common.cancel', 'Anuluj'),
+        variant: 'warning',
+      });
+      if (!ok) return;
+      let success = 0;
+      let failed = 0;
+      for (const id of ids) {
+        try {
+          await Api.patch(`/initiatives/${id}/status`, { status: newStatus });
+          setInitiatives((prev) =>
+            prev.map((i) => (i.id === id ? { ...i, status: newStatus } : i))
+          );
+          success += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      trackFunnelEvent('execution_status_updated', {
+        bulk: true,
+        count: ids.length,
+        to: newStatus,
+        success,
+        failed,
+        tab: activeTab,
+      });
+      clearSummarySelection();
+      if (failed === 0) {
+        toast.success(
+          t('execution.bulk.statusUpdated', 'Zaktualizowano status {{count}} inicjatyw', {
+            count: success,
+          })
+        );
+      } else {
+        toast.error(
+          t('execution.bulk.statusPartial', 'Zmieniono {{success}}, błędów: {{failed}}', {
+            success,
+            failed,
+          })
+        );
+      }
+    },
+    [
+      isPilotParticipant,
+      summarySelectedIds,
+      confirmBulk,
+      t,
+      activeTab,
+      clearSummarySelection,
+    ]
   );
 
   // Table columns
@@ -4968,21 +5074,48 @@ Please return:
                   only surfaces the selected-count + bulk actions when a selection
                   exists. */}
               {summarySelectedIds.size > 0 && (
-                <div className="flex items-center gap-3 px-4 pt-2">
+                <div className="flex flex-wrap items-center gap-2 px-4 pt-2">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 select-none">
                     {t('execution.table.selectedCount', '{{count}} selected', {
                       count: summarySelectedIds.size,
                     })}
                   </span>
+                  {!isPilotParticipant && bulkStatusTargets.length > 0 && (
+                    <>
+                      <span className="text-xs text-slate-300 dark:text-slate-600 select-none">·</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 select-none">
+                        {t('execution.bulk.setStatus', 'Zmień status:')}
+                      </span>
+                      {bulkStatusTargets.map((tg) => (
+                        <button
+                          key={tg.targetStatus}
+                          type="button"
+                          onClick={() => void handleBulkStatusChange(tg.targetStatus)}
+                          className="rounded-md border border-slate-200 dark:border-navy-600 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                        >
+                          {tg.label}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {!isPilotParticipant && bulkStatusTargets.length === 0 && (
+                    <span className="text-xs text-slate-400 dark:text-slate-500 select-none">
+                      {t(
+                        'execution.bulk.noCommonStatus',
+                        'Brak wspólnej akcji statusu dla zaznaczenia'
+                      )}
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={clearSummarySelection}
-                    className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                    className="ml-auto text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   >
                     {t('common.clear', 'Clear')}
                   </button>
                 </div>
               )}
+              {bulkConfirmDialog}
               <div className="min-h-0 flex-1">
                 <FilterableTable
                   columns={columns}
