@@ -29,6 +29,7 @@ import { getStatusMeta } from '@/services/initiativeLifecycle';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import { InitiativeGatesWorkflowTable } from './InitiativeGatesWorkflowTable';
+import { InitiativeStatusPipeline } from './InitiativeStatusPipeline';
 import type { InitiativeSectionProps } from './types';
 import { GATE_CONFIG, GATE_DEFINITIONS, getNextGateForStatus, getRoleLabel } from './types';
 
@@ -1693,6 +1694,13 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           </div>
         </div>
       )}
+
+      {/* Read-only happy-path status pipeline (L-03 / #14): "you are here + next gate".
+          Reveals the status×gate matrix as an overview; transitions stay in the
+          Properties Strip + workflow table below (existing endpoints). */}
+      <div className="mb-6">
+        <InitiativeStatusPipeline />
+      </div>
 
       {/* Full lifecycle gate workflow table (13 stages) */}
       <div className="mb-6">

@@ -21,6 +21,10 @@ import auditEventsService from '../services/AuditEventsService.js';
 import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
 import {
+  evaluateInitiativeGateAccess,
+  evaluateInitiativeWriteAccess,
+} from '../services/initiative/initiativeGovernanceGuard.js';
+import {
   deleteInitiativeKpiAssignment,
   listInitiativeKpiAssignments,
   updateInitiativeKpiAssignment,
@@ -541,6 +545,16 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // M13 SECURITY: pilot participants (USER/GUEST band) may not create
+      // initiatives via the API. Authoritative backend of the UI-only pilot gate.
+      const createAccess = evaluateInitiativeWriteAccess(req.user?.role, {
+        isSuperAdmin: req.user?.isSuperAdmin === true,
+      });
+      if (!createAccess.allowed) {
+        res.status(403).json({ error: createAccess.reason, code: createAccess.code });
         return;
       }
 
@@ -2822,6 +2836,22 @@ export class InitiativeController {
         return;
       }
 
+      // M13 SECURITY: governance gate role check (SUBMIT_REVIEW owned by
+      // Initiative Owner / PMO / Project Lead / Admin). A bare TEAM_MEMBER /
+      // pilot participant is rejected with 403.
+      const submitGate = await evaluateInitiativeGateAccess({
+        organizationId: String(orgId),
+        initiativeId: String(initiativeId),
+        userId: String(userId),
+        gate: 'SUBMIT_REVIEW',
+        systemRoleHint: req.user?.role,
+        isSuperAdmin: req.user?.isSuperAdmin === true,
+      });
+      if (!submitGate.allowed) {
+        res.status(403).json({ error: submitGate.reason, code: submitGate.code });
+        return;
+      }
+
       if (initiative.status !== 'planning') {
         res
           .status(400)
@@ -2874,6 +2904,21 @@ export class InitiativeController {
         return;
       }
 
+      // M13 SECURITY: APPROVE gate owned by Project Sponsor / Steering Committee
+      // (or PMO / Portfolio Owner / Admin). Pilot participants are rejected (403).
+      const approveGate = await evaluateInitiativeGateAccess({
+        organizationId: String(orgId),
+        initiativeId: String(initiativeId),
+        userId: String(userId),
+        gate: 'APPROVE',
+        systemRoleHint: req.user?.role,
+        isSuperAdmin: req.user?.isSuperAdmin === true,
+      });
+      if (!approveGate.allowed) {
+        res.status(403).json({ error: approveGate.reason, code: approveGate.code });
+        return;
+      }
+
       if (initiative.status !== 'review') {
         res.status(400).json({ error: `Cannot approve from status: ${initiative.status}` });
         return;
@@ -2923,6 +2968,21 @@ export class InitiativeController {
 
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      // M13 SECURITY: REJECT gate owned by Project Sponsor / Steering Committee
+      // (or PMO / Portfolio Owner / Admin). Pilot participants are rejected (403).
+      const rejectGate = await evaluateInitiativeGateAccess({
+        organizationId: String(orgId),
+        initiativeId: String(initiativeId),
+        userId: String(userId),
+        gate: 'REJECT',
+        systemRoleHint: req.user?.role,
+        isSuperAdmin: req.user?.isSuperAdmin === true,
+      });
+      if (!rejectGate.allowed) {
+        res.status(403).json({ error: rejectGate.reason, code: rejectGate.code });
         return;
       }
 

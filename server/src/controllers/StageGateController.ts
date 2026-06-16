@@ -122,12 +122,15 @@ export class StageGateController {
         return;
       }
 
-      // Pass the gate
+      // Pass the gate. Forward the actor role so the service can fail-closed on
+      // pilot-restricted (USER/GUEST) callers — defense-in-depth behind the
+      // `manage_stage_gates` capability check above.
       const result = await passGate(
         projectId,
         gateType as (typeof GATE_TYPES)[keyof typeof GATE_TYPES],
         userId,
-        notes
+        notes,
+        (req as any).userRole ?? req.user?.role ?? null
       );
 
       res.json(result);

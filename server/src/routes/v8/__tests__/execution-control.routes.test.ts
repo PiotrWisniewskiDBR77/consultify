@@ -417,6 +417,23 @@ describe('V8 execution-control read-only routes', () => {
     expect(mockDbRun).toHaveBeenCalled();
   });
 
+  // L-03: the dismiss UPSERT must guard the ON CONFLICT DO UPDATE with the
+  // existing row's organization_id, so a cross-org id collision is a no-op
+  // rather than dismissing another org's risk alert.
+  it('POST /api/v8/execution-control/risk-signals/dismiss org-guards the ON CONFLICT DO UPDATE', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/execution-control/risk-signals/dismiss')
+      .send({ signalId: 'overdue-cross-org-id' });
+
+    expect(res.status).toBe(200);
+    const [sql, params] = mockDbRun.mock.calls[0];
+    expect(String(sql)).toContain('ON CONFLICT (id) DO UPDATE');
+    // org guard present in the conflict update + bound as the final param
+    expect(String(sql)).toMatch(/WHERE\s+risk_signal_alerts\.organization_id\s*=\s*\?/);
+    expect(params[params.length - 1]).toBe(ORG);
+  });
+
   it('PATCH /api/v8/execution-control/raid/:id/mitigation updates org-scoped mitigation fields', async () => {
     const app = createApp();
     const res = await request(app).patch('/api/v8/execution-control/raid/raid-1/mitigation').send({
@@ -463,6 +480,39 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_EXECUTION_CONTROL_MUTATION_CONTRACT);
     expect(res.body.data?.signalId).toBe('delay-1');
     expect(mockDbRun).toHaveBeenCalled();
+  });
+
+  // L-03: delay-signal dismiss first UPDATEs org-scoped (WHERE organization_id),
+  // and only on a no-row fallback runs the INSERT … ON CONFLICT. That fallback
+  // must also org-guard its DO UPDATE so a cross-org id collision is a no-op.
+  it('POST /api/v8/execution-control/delay-signals/dismiss org-scopes the UPDATE and org-guards the ON CONFLICT fallback', async () => {
+    // Force the fallback INSERT … ON CONFLICT path (UPDATE matched no org row).
+    mockDbRun
+      .mockResolvedValueOnce({ changes: 0 }) // UPDATE delay_signals … WHERE org → no-op
+      .mockResolvedValueOnce({ changes: 1 }); // INSERT … ON CONFLICT fallback
+    mockDbAll.mockResolvedValueOnce([{ entity_name: 'Initiative A' }]);
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/delay-signals/dismiss').send({
+      signalId: 'overdue-cross-org-id',
+      entityType: 'INITIATIVE',
+      entityId: 'init-x',
+      deviationType: 'OVERDUE',
+    });
+
+    expect(res.status).toBe(200);
+
+    // 1st call: org-scoped UPDATE
+    const [updateSql, updateParams] = mockDbRun.mock.calls[0];
+    expect(String(updateSql)).toMatch(/UPDATE delay_signals/);
+    expect(String(updateSql)).toMatch(/WHERE id = \? AND organization_id = \?/);
+    expect(updateParams).toEqual(expect.arrayContaining([ORG]));
+
+    // 2nd call: ON CONFLICT fallback with org-guarded DO UPDATE
+    const [insertSql, insertParams] = mockDbRun.mock.calls[1];
+    expect(String(insertSql)).toContain('ON CONFLICT (id)');
+    expect(String(insertSql)).toMatch(/WHERE\s+delay_signals\.organization_id\s*=\s*\?/);
+    expect(insertParams[insertParams.length - 1]).toBe(ORG);
   });
 
   it('POST /api/v8/execution-control/timeline-update updates org-scoped initiative fields', async () => {
@@ -525,5 +575,78 @@ describe('V8 execution-control read-only routes', () => {
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
     expect(mockCreateBudgetEntry).not.toHaveBeenCalled();
+  });
+
+  // Wave-4 IDOR: the INITIATIVE↔INITIATIVE dependency link branch previously
+  // inserted from/to initiative ids (from the request body) without verifying
+  // those initiatives belong to the caller's org — only the TASK branch did.
+  // A foreign-org initiative id must now yield 403 and perform NO write.
+  it('POST /api/v8/execution-control/interventions/dependency org-guards INITIATIVE link (foreign id → 403, no write)', async () => {
+    // Both initiative org-ownership lookups resolve to a DIFFERENT org.
+    mockDbGet
+      .mockResolvedValueOnce({ organization_id: 'other-org-aaaa' })
+      .mockResolvedValueOnce({ organization_id: 'other-org-bbbb' });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/interventions/dependency').send({
+      action: 'link',
+      fromEntityType: 'INITIATIVE',
+      fromEntityId: 'init-foreign-from',
+      toEntityType: 'INITIATIVE',
+      toEntityId: 'init-foreign-to',
+      semantics: 'blocking',
+    });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('EXECUTION_INITIATIVE_ORG_MISMATCH');
+    // No INSERT into initiative_dependencies should have run.
+    const ran = mockDbRun.mock.calls.some((c) =>
+      String(c[0]).includes('initiative_dependencies')
+    );
+    expect(ran).toBe(false);
+  });
+
+  it('POST /api/v8/execution-control/interventions/dependency returns 403 when one initiative is missing', async () => {
+    // from-initiative belongs to caller org, to-initiative does not exist.
+    mockDbGet
+      .mockResolvedValueOnce({ organization_id: ORG })
+      .mockResolvedValueOnce(null);
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/interventions/dependency').send({
+      action: 'link',
+      fromEntityType: 'INITIATIVE',
+      fromEntityId: 'init-mine',
+      toEntityType: 'INITIATIVE',
+      toEntityId: 'init-missing',
+      semantics: 'blocking',
+    });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('EXECUTION_INITIATIVE_ORG_MISMATCH');
+  });
+
+  it('POST /api/v8/execution-control/interventions/dependency links INITIATIVE pair within same org', async () => {
+    // Both initiatives belong to the caller's org → write proceeds.
+    mockDbGet
+      .mockResolvedValueOnce({ organization_id: ORG })
+      .mockResolvedValueOnce({ organization_id: ORG });
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/execution-control/interventions/dependency').send({
+      action: 'link',
+      fromEntityType: 'INITIATIVE',
+      fromEntityId: 'init-a',
+      toEntityType: 'INITIATIVE',
+      toEntityId: 'init-b',
+      semantics: 'blocking',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.success).toBe(true);
+    const inserted = mockDbRun.mock.calls.some((c) =>
+      String(c[0]).includes('INSERT OR IGNORE INTO initiative_dependencies')
+    );
+    expect(inserted).toBe(true);
   });
 });

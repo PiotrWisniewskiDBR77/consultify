@@ -140,4 +140,41 @@ describe('findKpiReportFinalizationViolation', () => {
 
     expect(violation).toBeNull();
   });
+
+  it('org-scopes BOTH the KPI lock lookup and the finalized-snapshot lookup', async () => {
+    // SEC-3: the finalization guard must never evaluate a lock or a finalized
+    // snapshot from another org. Both queries carry organization_id = ? bound
+    // to the caller org, so org A cannot be blocked by — or peek at — org B's
+    // locked KPIs or finalized snapshots.
+    mockDbAll.mockResolvedValueOnce([{ id: 'kpi-1', status: 'active' }]);
+    mockDbAll.mockResolvedValueOnce([{ id: 'snap-draft', status: 'draft' }]);
+
+    await findKpiReportFinalizationViolation({ organizationId: ORG, kpiIds: ['kpi-1'] });
+
+    const lockSql = String(mockDbAll.mock.calls[0]?.[0] || '');
+    expect(lockSql).toContain('FROM initiative_kpis');
+    expect(lockSql).toContain('organization_id = ?');
+    expect(mockDbAll.mock.calls[0]?.[1]).toContain(ORG);
+
+    const snapshotSql = String(mockDbAll.mock.calls[1]?.[0] || '');
+    expect(snapshotSql).toContain('results_kpi_report_snapshots');
+    expect(snapshotSql).toContain('organization_id = ?');
+    expect(mockDbAll.mock.calls[1]?.[1]).toContain(ORG);
+  });
+
+  it('does not let one org’s finalized snapshot block a different org (no cross-org block)', async () => {
+    // org B has NO finalized snapshot of its own → the guard allows creation,
+    // proving the snapshot lookup is bound to the caller org rather than global.
+    const OTHER_ORG = '00000000-0000-4000-8000-000000000077';
+    mockDbAll.mockResolvedValueOnce([{ id: 'kpi-9', status: 'active' }]);
+    mockDbAll.mockResolvedValueOnce([]); // no snapshots in OTHER_ORG scope
+
+    const violation = await findKpiReportFinalizationViolation({
+      organizationId: OTHER_ORG,
+      kpiIds: ['kpi-9'],
+    });
+
+    expect(violation).toBeNull();
+    expect(mockDbAll.mock.calls[1]?.[1]).toContain(OTHER_ORG);
+  });
 });

@@ -142,6 +142,43 @@ describe('audit-programs CRUD org-scoping', () => {
     expect(Array.isArray(res.body.programs)).toBe(true);
   });
 
+  it('GET /programs?search&status applies server-side filter (L-02) while keeping org-scope', async () => {
+    mockDbGet.mockResolvedValueOnce({ total: 1 }); // count
+    mockDbAll.mockResolvedValueOnce([baseRow()]); // rows
+    const app = await makeApp();
+    const res = await request(app).get('/api/audit/programs?search=iso&status=active');
+    expect(res.status).toBe(200);
+
+    // Both the COUNT (dbGet) and the row SELECT (dbAll) must carry the search +
+    // status predicates AND keep organization_id as the leading bound param.
+    const countSql = String(mockDbGet.mock.calls[0][0]);
+    const countParams = mockDbGet.mock.calls[0][1] as unknown[];
+    expect(countSql).toContain('name LIKE ?');
+    expect(countSql).toContain('status = ?');
+    expect(countParams[0]).toBe(ORG_A); // org-scope stays first
+    expect(countParams).toContain('%iso%');
+    expect(countParams).toContain('active');
+
+    const rowsSql = String(mockDbAll.mock.calls[0][0]);
+    const rowsParams = mockDbAll.mock.calls[0][1] as unknown[];
+    expect(rowsSql).toContain('name LIKE ?');
+    expect(rowsSql).toContain('status = ?');
+    expect(rowsParams[0]).toBe(ORG_A);
+    expect(rowsParams).toContain('%iso%');
+    expect(rowsParams).toContain('active');
+  });
+
+  it('GET /programs without filters keeps a bare org-scoped query (no search predicate)', async () => {
+    mockDbGet.mockResolvedValueOnce({ total: 0 });
+    mockDbAll.mockResolvedValueOnce([]);
+    const app = await makeApp();
+    const res = await request(app).get('/api/audit/programs');
+    expect(res.status).toBe(200);
+    const countSql = String(mockDbGet.mock.calls[0][0]);
+    expect(countSql).not.toContain('LIKE');
+    expect(countSql).not.toContain('status = ?');
+  });
+
   it('POST /programs creates with org scope', async () => {
     mockDbGet.mockResolvedValueOnce(baseRow()); // createProgram → getProgram returns created row
     const app = await makeApp();

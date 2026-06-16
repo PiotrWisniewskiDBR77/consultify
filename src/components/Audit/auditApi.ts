@@ -120,12 +120,18 @@ export interface ProgramCompletion {
 export interface ListProgramsParams {
   limit?: number;
   offset?: number;
+  /** Free-text search (server-side, L-02). Matched over name/objective/description. */
+  search?: string;
+  /** Status filter ('all' or omitted = no filter). */
+  status?: AuditProgramStatus | 'all';
 }
 
 export async function listPrograms(params: ListProgramsParams = {}): Promise<ListProgramsResult> {
   const search = new URLSearchParams();
   if (params.limit !== undefined) search.set('limit', String(params.limit));
   if (params.offset !== undefined) search.set('offset', String(params.offset));
+  if (params.search && params.search.trim()) search.set('search', params.search.trim());
+  if (params.status && params.status !== 'all') search.set('status', params.status);
   const qs = search.toString();
   const res = await Api.get(`/audit/programs${qs ? `?${qs}` : ''}`);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,6 +155,15 @@ export async function createProgram(input: CreateProgramInput): Promise<AuditPro
   return res?.data?.program as AuditProgram;
 }
 
+/**
+ * Edit a program (PATCH /audit/programs/:id). The backend is real and working
+ * (org-scoped; also called internally by the server's generateSurveys to persist
+ * config). However there is intentionally NO user-facing "Edit program" screen
+ * yet — DP-5 hides the edit surface behind a flag rather than half-building a
+ * modal. Any FE caller of this wrapper MUST guard rendering with
+ * `isAuditProgramEditEnabled()` from '@/utils/auditProgramEditStubFlag'. Until
+ * the edit screen ships, this remains an unwired client wrapper by design.
+ */
 export async function updateProgram(id: string, input: UpdateProgramInput): Promise<AuditProgram> {
   const res = await Api.patch(`/audit/programs/${id}`, input);
   return res?.data?.program as AuditProgram;

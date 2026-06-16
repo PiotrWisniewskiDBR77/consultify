@@ -113,9 +113,6 @@ const AssessmentReportBuilderView = lazyWithRetry(() =>
     default: m.AssessmentReportBuilderView,
   }))
 );
-const BenefitsRealizationView = lazyWithRetry(() =>
-  import('@/views/BenefitsRealizationView').then((m) => ({ default: m.BenefitsRealizationView }))
-);
 const SharedPresentationView = lazyWithRetry(() =>
   import('@/components/Presentations/SharedPresentationView').then((m) => ({
     default: m.SharedPresentationView,

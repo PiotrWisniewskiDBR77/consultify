@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
+import { normalizeApplicationRole } from '../utils/roleNormalization.js';
 
 // ==========================================
 // TYPES
@@ -373,14 +374,41 @@ async function countKPIs(projectId: string): Promise<number> {
 }
 
 /**
- * Record gate passage
+ * Roles permitted to record a stage-gate passage. Stage gates are governance
+ * transitions (PMO / sponsor / admin band). The pilot-restricted USER/GUEST band
+ * is never permitted to record a passage.
+ */
+const STAGE_GATE_FORBIDDEN_ROLE_BANDS = new Set(['USER', 'GUEST']);
+
+export class StageGateForbiddenError extends Error {
+  readonly code = 'STAGE_GATE_ROLE_FORBIDDEN';
+  readonly statusCode = 403;
+  constructor(message = 'Role not permitted to record a stage gate passage') {
+    super(message);
+    this.name = 'StageGateForbiddenError';
+  }
+}
+
+/**
+ * Record gate passage.
+ *
+ * M13 SECURITY: when `actorRole` is provided, a pilot-restricted (USER/GUEST)
+ * role is rejected fail-closed before any write. This is defense-in-depth behind
+ * the controller's `manage_stage_gates` capability check, so a direct service
+ * call cannot bypass governance. `actorRole` is optional to preserve existing
+ * callers/tests; omit it only for trusted internal callers.
  */
 export async function passGate(
   projectId: string,
   gateType: GateType,
   userId: string,
-  notes?: string
+  notes?: string,
+  actorRole?: string | null
 ): Promise<GatePassageResult> {
+  if (actorRole != null && STAGE_GATE_FORBIDDEN_ROLE_BANDS.has(normalizeApplicationRole(actorRole))) {
+    throw new StageGateForbiddenError();
+  }
+
   const id = uuidv4();
   const gateKey = Object.keys(GATE_MAP).find((k) => GATE_MAP[k] === gateType);
   const fromPhase = gateKey?.split('_')[0] as Phase | undefined;

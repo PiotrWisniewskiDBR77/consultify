@@ -256,6 +256,420 @@ describe('InterviewController assignments', () => {
     );
   });
 
+  // L-07 / SPEC_13 §5.1 — hard submit floor (objective insufficiency).
+  it('submitAssignment: HARD-BLOCKS (422) when a required question is unanswered, without flipping status', async () => {
+    mockReq.params.id = 'a-block';
+    // queryAll #1 = updateSessionProgress (progress rows); #2 = submit gate questions.
+    mockQueryAll
+      .mockResolvedValueOnce([{ category: 'general', status: 'not_started' }])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'What is the core problem?',
+          is_required: 1,
+          status: 'not_started',
+          answer_text: '',
+        },
+        {
+          id: 'q2',
+          question_text: 'Optional context?',
+          is_required: 0,
+          status: 'answered',
+          answer_text: 'Some answer',
+        },
+      ]);
+
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-block',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-block',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'user-2',
+      })
+      .mockResolvedValueOnce({ id: 's-block', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 1, total_questions: 2 });
+
+    const { InterviewController } = await import(
+      '../../../../server/src/controllers/InterviewController.js'
+    );
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(422);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'OBJECTIVE_INSUFFICIENCY',
+        reason: 'required_missing',
+        requiredMissingCount: 1,
+        blockedItems: expect.arrayContaining([
+          expect.objectContaining({ questionId: 'q1' }),
+        ]),
+      })
+    );
+    // The status must NOT have been flipped to submitted.
+    expect(
+      mockQueryRun.mock.calls.some(
+        (call) =>
+          typeof call[0] === 'string' &&
+          String(call[0]).includes('UPDATE interview_assignments') &&
+          String(call[0]).includes("status = ?")
+      )
+    ).toBe(false);
+  });
+
+  // L-07 / SPEC_13 §5.1 — hard floor edge case (b):
+  // AI verdict "insufficient" WITH questions present (none required-missing) → 422.
+  it('submitAssignment: HARD-BLOCKS (422) when AI verdict is insufficient even with questions present', async () => {
+    mockReq.params.id = 'a-ai-insuff';
+    // AI returns an "insufficient" overall verdict with insufficient per-question
+    // evaluations. No required question is missing — the block comes from the AI floor.
+    mockLlmCall.mockResolvedValue({
+      object: {
+        overallScore: 1.4,
+        overallVerdict: 'insufficient',
+        recommendations: ['Provide concrete details.'],
+        questionEvaluations: [
+          {
+            questionId: 'q1',
+            score: 1,
+            verdict: 'insufficient',
+            feedback: 'Too vague.',
+            fixType: 'make_specific',
+          },
+        ],
+      },
+    });
+    mockQueryAll
+      // #1 updateSessionProgress
+      .mockResolvedValueOnce([{ category: 'general', status: 'answered' }])
+      // #2 submit gate questions — answered but not required
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'What is the core problem?',
+          is_required: 0,
+          status: 'answered',
+          answer_text: 'idk',
+        },
+      ]);
+
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-ai-insuff',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-ai-insuff',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'user-2',
+      })
+      .mockResolvedValueOnce({ id: 's-ai-insuff', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 1, total_questions: 1 });
+
+    const { InterviewController } = await import(
+      '../../../../server/src/controllers/InterviewController.js'
+    );
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(422);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'OBJECTIVE_INSUFFICIENCY',
+        reason: 'ai_insufficient',
+        requiredMissingCount: 0,
+        blockedItems: expect.arrayContaining([
+          expect.objectContaining({ questionId: 'q1' }),
+        ]),
+      })
+    );
+    // Status must NOT flip — draft stays editable.
+    expect(
+      mockQueryRun.mock.calls.some(
+        (call) =>
+          typeof call[0] === 'string' &&
+          String(call[0]).includes('UPDATE interview_assignments') &&
+          String(call[0]).includes('status = ?')
+      )
+    ).toBe(false);
+  });
+
+  // L-07 / SPEC_13 §5.1 — hard floor edge case (c):
+  // A zero-question template/config session must NOT trap the respondent. The AI
+  // floor only applies when there are questions; submit is allowed.
+  it('submitAssignment: zero-question session is NOT trapped by the AI floor (allowed)', async () => {
+    mockReq.params.id = 'a-empty';
+    mockQueryAll
+      // #1 updateSessionProgress
+      .mockResolvedValueOnce([])
+      // #2 submit gate questions — none
+      .mockResolvedValueOnce([]);
+
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-empty',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-empty',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'user-2',
+      })
+      .mockResolvedValueOnce({ id: 's-empty', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 0, total_questions: 0 })
+      // updated assignment
+      .mockResolvedValueOnce({
+        id: 'a-empty',
+        status: 'submitted',
+        session_id: 's-empty',
+        created_by: 'user-2',
+      })
+      // updated session
+      .mockResolvedValueOnce({ id: 's-empty', status: 'submitted', assignment_id: 'a-empty' });
+
+    const { InterviewController } = await import(
+      '../../../../server/src/controllers/InterviewController.js'
+    );
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    // Not blocked.
+    expect(mockRes.status).not.toHaveBeenCalledWith(422);
+    // Status flipped to submitted.
+    expect(
+      mockQueryRun.mock.calls.some(
+        (call) =>
+          typeof call[0] === 'string' &&
+          String(call[0]).includes('UPDATE interview_assignments') &&
+          String(call[0]).includes('status = ?')
+      )
+    ).toBe(true);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({ entersContext: false })
+    );
+  });
+
+  // L-07 / SPEC_13 §5.1 — hard floor edge case (d):
+  // All-sufficient → 200, status flips to submitted, AI score is persisted.
+  it('submitAssignment: all-sufficient answers → 200, status flips, score persisted', async () => {
+    mockReq.params.id = 'a-ok';
+    mockLlmCall.mockResolvedValue({
+      object: {
+        overallScore: 4.2,
+        overallVerdict: 'ready_for_approval',
+        recommendations: [],
+        questionEvaluations: [
+          { questionId: 'q1', score: 4, verdict: 'sufficient', feedback: 'Good.' },
+        ],
+      },
+    });
+    mockQueryAll
+      .mockResolvedValueOnce([{ category: 'general', status: 'answered' }])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'What is the core problem?',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'A thorough, specific, and actionable answer.',
+        },
+      ]);
+
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-ok',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-ok',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'user-2',
+      })
+      .mockResolvedValueOnce({ id: 's-ok', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 1, total_questions: 1 })
+      .mockResolvedValueOnce({
+        id: 'a-ok',
+        status: 'submitted',
+        session_id: 's-ok',
+        created_by: 'user-2',
+        ai_review_snapshot_json: JSON.stringify({
+          overallScore: 4.2,
+          overallVerdict: 'ready_for_approval',
+          recommendations: [],
+          weakAnswerMap: [],
+          questionEvaluations: [],
+        }),
+      })
+      .mockResolvedValueOnce({ id: 's-ok', status: 'submitted', assignment_id: 'a-ok' });
+
+    const { InterviewController } = await import(
+      '../../../../server/src/controllers/InterviewController.js'
+    );
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    // Not blocked.
+    expect(mockRes.status).not.toHaveBeenCalledWith(422);
+    // Status flipped to submitted.
+    expect(
+      mockQueryRun.mock.calls.some(
+        (call) =>
+          typeof call[0] === 'string' &&
+          String(call[0]).includes('UPDATE interview_assignments') &&
+          String(call[0]).includes('status = ?')
+      )
+    ).toBe(true);
+    // AI score snapshot was persisted (separate UPDATE writing ai_review_snapshot_json
+    // with a JSON payload carrying the score).
+    expect(
+      mockQueryRun.mock.calls.some(
+        (call) =>
+          typeof call[0] === 'string' &&
+          String(call[0]).includes('ai_review_snapshot_json = ?') &&
+          Array.isArray(call[1]) &&
+          call[1].some(
+            (arg: unknown) => typeof arg === 'string' && arg.includes('"overallScore":4.2')
+          )
+      )
+    ).toBe(true);
+    // Response surfaces the AI review.
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completenessPercent: 100,
+        aiReview: expect.objectContaining({ overallVerdict: 'ready_for_approval' }),
+      })
+    );
+  });
+
+  // L-07 / SPEC_13 §5.1 — hard floor edge case (e):
+  // AI eval failure (LLM throws) must NOT bypass the deterministic required-missing
+  // floor; the block is still enforced (best-effort AI, deterministic gate).
+  it('submitAssignment: required-missing floor still enforced when the AI eval throws', async () => {
+    mockReq.params.id = 'a-ai-throw';
+    mockLlmCall.mockRejectedValue(new Error('LLM provider unavailable'));
+    mockQueryAll
+      .mockResolvedValueOnce([{ category: 'general', status: 'not_started' }])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'What is the core problem?',
+          is_required: 1,
+          status: 'not_started',
+          answer_text: '',
+        },
+      ]);
+
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-ai-throw',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-ai-throw',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'user-2',
+      })
+      .mockResolvedValueOnce({ id: 's-ai-throw', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 0, total_questions: 1 });
+
+    const { InterviewController } = await import(
+      '../../../../server/src/controllers/InterviewController.js'
+    );
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(422);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'OBJECTIVE_INSUFFICIENCY',
+        reason: 'required_missing',
+        requiredMissingCount: 1,
+        // AI signal is absent but must not crash or relax the floor.
+        aiReview: null,
+      })
+    );
+    expect(
+      mockQueryRun.mock.calls.some(
+        (call) =>
+          typeof call[0] === 'string' &&
+          String(call[0]).includes('UPDATE interview_assignments') &&
+          String(call[0]).includes('status = ?')
+      )
+    ).toBe(false);
+  });
+
+  it('submitAssignment: notification to the sender carries the AI quality score', async () => {
+    mockReq.params.id = 'a-notify';
+    // AI verdict ready_for_approval (>= floor) so submit proceeds.
+    mockLlmCall.mockResolvedValue({
+      object: {
+        overallScore: 4,
+        overallVerdict: 'ready_for_approval',
+        recommendations: ['Tighten the second answer.'],
+        questionEvaluations: [],
+      },
+    });
+    mockQueryAll
+      .mockResolvedValueOnce([{ category: 'general', status: 'answered' }])
+      .mockResolvedValueOnce([
+        {
+          id: 'q1',
+          question_text: 'What is the core problem?',
+          is_required: 1,
+          status: 'answered',
+          answer_text: 'A detailed and sufficient answer about the core problem.',
+        },
+      ]);
+
+    mockQueryOne
+      .mockResolvedValueOnce({
+        id: 'a-notify',
+        organization_id: 'org-1',
+        assignee_user_id: 'user-1',
+        session_id: 's-notify',
+        task_id: null,
+        status: 'in_progress',
+        created_by: 'manager-9',
+      })
+      .mockResolvedValueOnce({ id: 's-notify', organization_id: 'org-1', status: 'active' })
+      .mockResolvedValueOnce({ answered_questions: 1, total_questions: 1 })
+      .mockResolvedValueOnce({
+        id: 'a-notify',
+        status: 'submitted',
+        session_id: 's-notify',
+        created_by: 'manager-9',
+        ai_review_snapshot_json: JSON.stringify({
+          overallScore: 4,
+          overallVerdict: 'ready_for_approval',
+          recommendations: ['Tighten the second answer.'],
+          weakAnswerMap: [],
+          questionEvaluations: [],
+        }),
+      })
+      .mockResolvedValueOnce({ id: 's-notify', status: 'submitted', assignment_id: 'a-notify' });
+
+    const { InterviewController } = await import(
+      '../../../../server/src/controllers/InterviewController.js'
+    );
+    await InterviewController.submitAssignment(mockReq, mockRes, mockNext);
+
+    // Not blocked.
+    expect(mockRes.status).not.toHaveBeenCalledWith(422);
+    // Status flipped to submitted.
+    expect(
+      mockQueryRun.mock.calls.some(
+        (call) =>
+          typeof call[0] === 'string' &&
+          String(call[0]).includes('UPDATE interview_assignments') &&
+          String(call[0]).includes("status = ?")
+      )
+    ).toBe(true);
+    // Response surfaces the persisted AI score.
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        aiReview: expect.objectContaining({ overallScore: 4 }),
+      })
+    );
+  });
+
   it('sendBackAssignment: reopens assignment as in_progress with feedback', async () => {
     mockReq.params.id = 'a4';
     mockReq.body = { reason: 'Add more detail', missingItems: [{ key: 'q1', label: 'Clarify answer' }] };

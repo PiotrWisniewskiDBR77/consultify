@@ -25,6 +25,7 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import {
+  type AuditProgramStatus,
   computeCompletion,
   createProgram,
   deleteProgram,
@@ -64,7 +65,15 @@ router.get('/programs', async (req: AuthRequest, res) => {
   try {
     const limit = req.query.limit !== undefined ? Number(req.query.limit) : undefined;
     const offset = req.query.offset !== undefined ? Number(req.query.offset) : undefined;
-    const result = await listPrograms(organizationId, { limit, offset });
+    // L-02: server-side search/filter. Accept ?search (alias ?q) + ?status so the
+    // hub filters the full org-scoped set instead of just the fetched page.
+    const searchRaw = req.query.search ?? req.query.q;
+    const search = searchRaw !== undefined ? String(searchRaw) : undefined;
+    const status =
+      req.query.status !== undefined
+        ? (String(req.query.status) as AuditProgramStatus | 'all')
+        : undefined;
+    const result = await listPrograms(organizationId, { limit, offset, search, status });
     return res.json(result);
   } catch (error) {
     logger.error('[audit-programs] list failed', { error });

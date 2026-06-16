@@ -20,6 +20,7 @@ import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middlewa
 import { validateBody } from '../../middleware/validation.middleware.js';
 import auditEventsService from '../../services/AuditEventsService.js';
 import blueprintService from '../../services/blueprintService.js';
+import { requireInitiativeWriteAccess } from '../../services/initiative/initiativeGovernanceGuard.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
 import {
   createWizardSession,
@@ -146,6 +147,7 @@ const WizardCandidateTriageSchema = z.object({
 router.post(
   '/wizard/sessions',
   requireOrgRole('user'),
+  requireInitiativeWriteAccess(),
   validateBody(WizardSessionSchema),
   async (req: any, res: any) => {
     const orgId = req.user?.organizationId;
@@ -170,6 +172,7 @@ router.get('/wizard/sessions/:sessionId', requireOrgRole('user'), async (req: an
 router.post(
   '/wizard/sessions/:sessionId/candidates/generate',
   requireOrgRole('user'),
+  requireInitiativeWriteAccess(),
   async (req: any, res: any) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -213,6 +216,7 @@ router.get(
 router.patch(
   '/wizard/candidates/:candidateId/triage',
   requireOrgRole('user'),
+  requireInitiativeWriteAccess(),
   validateBody(WizardCandidateTriageSchema),
   async (req: any, res: any) => {
     const orgId = req.user?.organizationId;
@@ -266,6 +270,7 @@ const WizardDraftsCreatedSchema = z.object({
 router.post(
   '/wizard/sessions/:sessionId/drafts-created',
   requireOrgRole('user'),
+  requireInitiativeWriteAccess(),
   validateBody(WizardDraftsCreatedSchema),
   async (req: any, res: any) => {
     const orgId = req.user?.organizationId;
@@ -1248,15 +1253,59 @@ router.post('/templates/:templateId/duplicate', async (req: any, res: any) => {
 // ==========================================
 
 /**
+ * SECURITY (M13 cross-org IDOR): the blueprint WBS sub-resource lives on
+ * `blueprint_wbs_items`, keyed ONLY by `template_id` — it carries no
+ * `organization_id`. The org boundary lives on the parent `initiative_templates`
+ * row. blueprintService.* therefore trusts the caller to have already verified
+ * the template's ownership. Without this guard, any authenticated user could
+ * read/add/update/delete/reorder another org's template WBS by id.
+ *
+ * Resolves the template and enforces visibility, mirroring the GET/PUT/DELETE
+ * `/templates/:templateId` guards:
+ *   - missing template            → 404
+ *   - foreign-org private template → 404 (do not leak existence)
+ *   - system/public template + write intent → 403 (immutable)
+ * Returns `true` when the request handler may proceed; otherwise it has already
+ * sent the response and the caller must `return`.
+ */
+async function ensureTemplateOrgAccess(
+  req: any,
+  res: any,
+  templateId: string,
+  intent: 'read' | 'write'
+): Promise<boolean> {
+  const orgId = req.user?.organizationId;
+  if (!orgId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return false;
+  }
+  const tpl = await initiativeTemplateService.getTemplateById(String(templateId));
+  if (!tpl) {
+    res.status(404).json({ error: 'Template not found' });
+    return false;
+  }
+  // Private template owned by another org → 404 (existence not leaked).
+  if (tpl.organizationId && tpl.organizationId !== String(orgId)) {
+    res.status(404).json({ error: 'Template not found' });
+    return false;
+  }
+  // System/public template (no owning org): readable by all, but immutable.
+  if (intent === 'write' && tpl.isPublic && !tpl.organizationId) {
+    res.status(403).json({ error: 'Cannot modify system templates' });
+    return false;
+  }
+  return true;
+}
+
+/**
  * GET /api/initiatives/templates/:templateId/wbs
  * Get WBS tree for a blueprint template
  */
 router.get('/templates/:templateId/wbs', async (req: any, res: any) => {
   try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
     const { templateId } = req.params;
+    if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'read'))) return;
+
     const tree = await blueprintService.getWbsTree(String(templateId));
     return res.json({ wbs: tree });
   } catch (err: any) {
@@ -1270,10 +1319,9 @@ router.get('/templates/:templateId/wbs', async (req: any, res: any) => {
  */
 router.post('/templates/:templateId/wbs', requireOrgRole('user'), async (req: any, res: any) => {
   try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
     const { templateId } = req.params;
+    if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'write'))) return;
+
     const {
       parentId,
       title,
@@ -1315,10 +1363,9 @@ router.put(
   requireOrgRole('user'),
   async (req: any, res: any) => {
     try {
-      const orgId = req.user?.organizationId;
-      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
       const { templateId, itemId } = req.params;
+      if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'write'))) return;
+
       const item = await blueprintService.updateWbsItem(
         String(templateId),
         String(itemId),
@@ -1341,10 +1388,9 @@ router.delete(
   requireOrgRole('user'),
   async (req: any, res: any) => {
     try {
-      const orgId = req.user?.organizationId;
-      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
       const { templateId, itemId } = req.params;
+      if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'write'))) return;
+
       const deleted = await blueprintService.deleteWbsItem(String(templateId), String(itemId));
       if (!deleted) return res.status(404).json({ error: 'WBS item not found' });
       return res.json({ success: true });
@@ -1363,10 +1409,9 @@ router.post(
   requireOrgRole('user'),
   async (req: any, res: any) => {
     try {
-      const orgId = req.user?.organizationId;
-      if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
       const { templateId } = req.params;
+      if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'write'))) return;
+
       const { items } = req.body;
       if (!Array.isArray(items)) {
         return res.status(400).json({ error: 'items array is required' });
@@ -1386,10 +1431,9 @@ router.post(
  */
 router.get('/templates/:templateId/validate', async (req: any, res: any) => {
   try {
-    const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
     const { templateId } = req.params;
+    if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'read'))) return;
+
     const validation = await blueprintService.validateBlueprint(String(templateId));
     return res.json(validation);
   } catch (err: any) {
@@ -1408,6 +1452,10 @@ router.post('/templates/:templateId/clone', requireOrgRole('user'), async (req: 
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
     const { templateId } = req.params;
+    // Read intent: cloning a system/public OR own-org template into your org is
+    // allowed; a foreign-org private source must 404 (no cross-org read).
+    if (!(await ensureTemplateOrgAccess(req, res, String(templateId), 'read'))) return;
+
     const result = await blueprintService.cloneBlueprint(
       String(templateId),
       String(orgId),
@@ -1805,8 +1853,16 @@ router.get('/section-types', async (req: any, res: any) => {
  */
 router.get('/section-types/:id', async (req: any, res: any) => {
   try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
     const sectionType = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
     if (!sectionType) return res.status(404).json({ error: 'Section type not found' });
+    // SECURITY (M13 cross-org IDOR): a private org section type is visible only
+    // to its owning org. System types (organizationId === null) are public.
+    if (sectionType.organizationId && sectionType.organizationId !== String(orgId)) {
+      return res.status(404).json({ error: 'Section type not found' });
+    }
     return res.json(sectionType);
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to fetch section type', message: err.message });
@@ -1839,6 +1895,21 @@ router.post('/section-types', async (req: any, res: any) => {
  */
 router.put('/section-types/:id', async (req: any, res: any) => {
   try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // SECURITY (M13 cross-org IDOR): the service updates by id only and never
+    // checks the owning org, so without this guard org A could rewrite org B's
+    // private section type. A foreign-org (non-system) row must 404, never write.
+    const existing = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Section type not found' });
+    if (existing.isSystem || !existing.organizationId) {
+      return res.status(403).json({ error: 'Cannot modify system section types' });
+    }
+    if (existing.organizationId !== String(orgId)) {
+      return res.status(404).json({ error: 'Section type not found' });
+    }
+
     const updated = await initiativeSectionTypeService.updateSectionType(req.params.id, req.body);
     return res.json(updated);
   } catch (err: any) {
@@ -1855,6 +1926,21 @@ router.put('/section-types/:id', async (req: any, res: any) => {
  */
 router.delete('/section-types/:id', async (req: any, res: any) => {
   try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // SECURITY (M13 cross-org IDOR): mirror the update guard — the service
+    // soft-deletes by id only. A foreign-org (non-system) row must 404, never
+    // be deactivated by another org.
+    const existing = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Section type not found' });
+    if (existing.isSystem || !existing.organizationId) {
+      return res.status(403).json({ error: 'Cannot delete system section types' });
+    }
+    if (existing.organizationId !== String(orgId)) {
+      return res.status(404).json({ error: 'Section type not found' });
+    }
+
     await initiativeSectionTypeService.deleteSectionType(req.params.id);
     return res.json({ success: true });
   } catch (err: any) {
@@ -1873,6 +1959,14 @@ router.post('/section-types/:id/duplicate', async (req: any, res: any) => {
   try {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // SECURITY (M13 cross-org IDOR): you may only duplicate a system section type
+    // or one your own org owns — never read a foreign org's private type.
+    const source = await initiativeSectionTypeService.getSectionTypeById(req.params.id);
+    if (!source) return res.status(404).json({ error: 'Source section type not found' });
+    if (source.organizationId && source.organizationId !== String(orgId)) {
+      return res.status(404).json({ error: 'Source section type not found' });
+    }
 
     const duplicated = await initiativeSectionTypeService.duplicateSectionType(
       req.params.id,
@@ -1896,12 +1990,12 @@ router.post('/section-types/:id/duplicate', async (req: any, res: any) => {
  * Generate AI content for a specific initiative section
  * Body: { sectionKey, initiativeId?, initiativeName, summary?, language?, ... }
  */
-router.post('/generate-section', async (req: any, res: any) => {
+router.post('/generate-section', requireInitiativeWriteAccess(), async (req: any, res: any) => {
   try {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { sectionKey, ...context } = req.body;
+    const { sectionKey, withReview, ...context } = req.body;
     if (!sectionKey) {
       return res.status(400).json({ error: 'sectionKey is required' });
     }
@@ -1909,7 +2003,10 @@ router.post('/generate-section', async (req: any, res: any) => {
     const result = await initiativeGenerationService.generateSectionContent(
       sectionKey,
       { ...context, language: context.language || 'en' },
-      String(orgId)
+      String(orgId),
+      // ADVISORY only: when the client opts in, attach a §B4/§B6 quality verdict
+      // to the response. Never auto-rejects — the human still reviews and saves.
+      { withReview: withReview === true }
     );
 
     return res.json(result);
@@ -1932,6 +2029,54 @@ router.post('/generate-section', async (req: any, res: any) => {
           statusCode,
           'PMO_INITIATIVES_SECTION_GENERATION_FAILED',
           'Failed to generate section content.'
+        )
+      );
+  }
+});
+
+/**
+ * POST /api/initiatives/review-section
+ * ADVERSARIAL REVIEWER (CARD_CONTENT_FORMULA §B4/§B6): score already-generated
+ * section content (0–100 + PASS/FAIL + deficiencies) so low-quality output is
+ * flagged BEFORE a human accepts it. ADVISORY — never auto-rejects/auto-submits.
+ * Body: { sectionKey, content, language?, sectionName? }
+ */
+router.post('/review-section', requireInitiativeWriteAccess(), async (req: any, res: any) => {
+  try {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { sectionKey, content, language, sectionName } = req.body;
+    if (!sectionKey) return res.status(400).json({ error: 'sectionKey is required' });
+    if (typeof content !== 'string' || !content.trim()) {
+      return res.status(400).json({ error: 'content is required' });
+    }
+
+    const review = await initiativeGenerationService.reviewSectionContent(sectionKey, content, {
+      language: language === 'pl' ? 'pl' : language === 'en' ? 'en' : undefined,
+      sectionName: typeof sectionName === 'string' ? sectionName : undefined,
+    });
+
+    return res.json({ review });
+  } catch (err: any) {
+    const statusCodeRaw = Number(err?.statusCode ?? err?.status ?? 500);
+    const statusCode =
+      Number.isFinite(statusCodeRaw) && statusCodeRaw >= 100 && statusCodeRaw <= 599
+        ? statusCodeRaw
+        : 500;
+
+    if (statusCode === 503 || err?.code === 'FEATURE_UNAVAILABLE') {
+      return notConfigured(req, res);
+    }
+
+    return res
+      .status(statusCode)
+      .json(
+        buildPmoInitiativesFailClosedError(
+          req,
+          statusCode,
+          'PMO_INITIATIVES_SECTION_REVIEW_FAILED',
+          'Failed to review section content.'
         )
       );
   }

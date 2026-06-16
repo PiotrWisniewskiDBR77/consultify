@@ -699,6 +699,14 @@ router.post(
       `SELECT kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
       [caseId, orgId]
     );
+    // SEC-3 (L-04): the INSERT below keys only on case_id (no org column on
+    // kpi_deviation_actions), so without this gate a foreign-org caseId would attach an
+    // action to another org's deviation case. Reject when the parent case is not owned.
+    if (!deviationCase) {
+      return res
+        .status(404)
+        .json({ success: false, error: 'Deviation case not found', code: 'RESULTS_DEVIATION_CASE_NOT_FOUND' });
+    }
 
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
@@ -1055,9 +1063,11 @@ router.post(
       );
       if (ikCols?.length) {
         const last = points[points.length - 1];
+        // SEC-3: org-scope the current_value write so a foreign-org kpiId cannot have its
+        // current_value overwritten via an org-owned IRIS provider.
         await dbRun(
-          `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-          [last.value, kpiId]
+          `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+          [last.value, kpiId, orgId]
         ).catch(() => null);
       }
 
@@ -1240,6 +1250,7 @@ router.post(
   '/kpi-mappings',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const {
       initiativeId,
       kpiId,
@@ -1250,7 +1261,41 @@ router.post(
       lagDays,
       confidence,
       notes,
-    } = req.body;
+    } = req.body || {};
+    if (!initiativeId || !kpiId) {
+      return res
+        .status(400)
+        .json({ success: false, error: 'initiativeId and kpiId are required' });
+    }
+    // SEC-3 (L-04): initiative_kpi_mappings is UNIQUE(initiative_id, kpi_id) (globally
+    // unique, not per-org), so the ON CONFLICT UPSERT below could overwrite another org's
+    // mapping row when handed a foreign-org (initiativeId, kpiId) pair. Verify both parents
+    // belong to the caller's org before writing — mirrors the v8 router which 404s here.
+    const parentInitiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [String(initiativeId), orgId]
+    );
+    if (!parentInitiative?.id) {
+      return res.status(404).json({
+        success: false,
+        error: 'Initiative not found',
+        code: 'RESULTS_INITIATIVE_NOT_FOUND',
+      });
+    }
+    const parentKpi = await dbGet<{ id: string }>(
+      `SELECT k.id
+       FROM initiative_kpis k
+       LEFT JOIN initiatives i ON i.id = k.initiative_id
+       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+      [String(kpiId), orgId]
+    );
+    if (!parentKpi?.id) {
+      return res.status(404).json({
+        success: false,
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO initiative_kpi_mappings (id, initiative_id, kpi_id, organization_id, impact_weight, impact_direction, expected_delta, expected_delta_unit, lag_days, confidence, notes, created_by)
@@ -1308,6 +1353,18 @@ router.put(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { initiativeId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    // SEC-3 (L-04): roi_assumptions is UNIQUE(initiative_id) (globally unique, not
+    // per-org), so an unscoped ON CONFLICT UPSERT could overwrite another org's
+    // assumptions row. Verify parent (initiative) ownership before writing — mirrors
+    // the already-fixed v8 router (v8/results.routes.ts) which 404s on a foreign-org id.
+    const parentInitiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    if (!parentInitiative?.id) {
+      return res.status(404).json({ success: false, error: 'Initiative not found' });
+    }
     const {
       capex,
       opexAnnual,
@@ -1382,6 +1439,17 @@ router.post(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const { initiativeId } = req.params;
+    if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    // SEC-3 (L-04): verify parent (initiative) ownership before recording a realized
+    // value, so a foreign-org id cannot attach realized data to another org's initiative
+    // (mirrors the v8 router which 404s on a foreign-org id).
+    const parentInitiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, orgId]
+    );
+    if (!parentInitiative?.id) {
+      return res.status(404).json({ success: false, error: 'Initiative not found' });
+    }
     const {
       periodMonth,
       realizedRevenueDelta,

@@ -646,6 +646,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [capacityAlerts, setCapacityAlerts] = useState<GovernedCapacityAlert[]>([]);
   const [capacityTimeline, setCapacityTimeline] = useState<GovernedCapacityWeek[]>([]);
   const [controlTowerFailed, setControlTowerFailed] = useState(false);
+  // L-02: surface degradation instead of silently falling back to []/empty
+  const [executiveHealthFailed, setExecutiveHealthFailed] = useState(false);
+  const [actionQueueFailed, setActionQueueFailed] = useState(false);
+  const [tasksFailed, setTasksFailed] = useState(false);
+  const [decisionsFailed, setDecisionsFailed] = useState(false);
+  const [healthSnapshotFailed, setHealthSnapshotFailed] = useState(false);
   const [executionTruthRefreshKey, setExecutionTruthRefreshKey] = useState(0);
   /** V4-EXEC-02: Action Queue — overdue decisions, high P×I risks, overdue tasks */
   const [actionQueueItems, setActionQueueItems] = useState<
@@ -1242,9 +1248,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       try {
         const data = await Api.getTasks({ projectId: currentProjectId });
         setTasks(normalizeExecutionArrayEnvelope<Task>(data, ['tasks']));
+        setTasksFailed(false);
       } catch (err) {
         console.error('[ExecutionHub] Failed to load tasks:', err);
         setTasks([]);
+        setTasksFailed(true);
       } finally {
         setIsLoadingTasks(false);
       }
@@ -1260,9 +1268,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         const response = await Api.get(`/decisions?projectId=${currentProjectId}`);
         const data = normalizeExecutionArrayEnvelope<any>(response, ['decisions']);
         setDecisions(data);
+        setDecisionsFailed(false);
       } catch (err) {
         console.error('[ExecutionHub] Failed to load decisions:', err);
         setDecisions([]);
+        setDecisionsFailed(true);
       } finally {
         setIsLoadingDecisions(false);
       }
@@ -1277,9 +1287,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       try {
         const snapshot = await Api.get(`/pmo/health/${currentProjectId}`);
         setHealthSnapshot(snapshot);
+        setHealthSnapshotFailed(false);
       } catch (err) {
         console.error('[ExecutionHub] Failed to load PMO health snapshot:', err);
         setHealthSnapshot(null);
+        setHealthSnapshotFailed(true);
       } finally {
         setIsLoadingHealth(false);
       }
@@ -1302,11 +1314,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const map = new Map<string, { health: string; whyRed?: any }>();
           items.forEach((item) => map.set(item.id, { health: item.health, whyRed: item.whyRed }));
           setInitiativeHealthMap(map);
+          setExecutiveHealthFailed(false);
         } else {
           setInitiativeHealthMap(new Map());
+          setExecutiveHealthFailed(false);
         }
       } catch {
         setInitiativeHealthMap(new Map());
+        setExecutiveHealthFailed(true);
       }
     };
     loadExecutionHealth();
@@ -1320,8 +1335,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       .then((data: any) => {
         const items = (data?.items as any[]) || [];
         setActionQueueItems(items);
+        setActionQueueFailed(false);
       })
-      .catch(() => setActionQueueItems([]))
+      .catch(() => {
+        setActionQueueItems([]);
+        setActionQueueFailed(true);
+      })
       .finally(() => setIsLoadingActionQueue(false));
   }, [currentProjectId, executionTruthRefreshKey]);
 
@@ -2831,7 +2850,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [refreshExecutionAfterWrite]);
 
   const renderPortfolioHealth = () => (
-    <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]" data-testid="portfolio-health">
+    <div className="space-y-3" data-testid="portfolio-health">
+      {healthSnapshotFailed && (
+        <Callout
+          variant="warning"
+          title={t('execution.healthSnapshot.failed', 'PMO health snapshot unavailable')}
+        >
+          {t(
+            'execution.healthSnapshot.failedDesc',
+            'The authoritative PMO health snapshot could not be loaded. The Health Score, decision and blocker counts below fall back to client-side estimates and may be incomplete — a degraded state, not a confirmed-healthy portfolio.'
+          )}
+        </Callout>
+      )}
+    <div className="grid gap-4 lg:grid-cols-[1.2fr_2fr]">
       <PortfolioHealthScore
         score={portfolioMetrics.healthScore}
         breakdown={portfolioMetrics.breakdown}
@@ -2948,6 +2979,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 
@@ -3100,6 +3132,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     return (
       <div className="p-4 space-y-4">
+        {tasksFailed && (
+          <Callout
+            variant="warning"
+            title={t('execution.tasks.failed', 'Tasks unavailable')}
+          >
+            {t(
+              'execution.tasks.failedDesc',
+              'Tasks could not be loaded. The buckets below are empty because of a load failure, not because there are no tasks — this is a degraded state.'
+            )}
+          </Callout>
+        )}
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -3270,6 +3313,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     return (
       <div className="p-4 space-y-4">
+        {decisionsFailed && (
+          <Callout
+            variant="warning"
+            title={t('execution.decisionsBuckets.failed', 'Decisions unavailable')}
+          >
+            {t(
+              'execution.decisionsBuckets.failedDesc',
+              'Decisions could not be loaded. The buckets below are empty because of a load failure, not because there are no pending decisions — this is a degraded state.'
+            )}
+          </Callout>
+        )}
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
           <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             {t('execution.tabs.decisions', 'Decisions')}
@@ -3554,27 +3608,40 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     ];
 
     return (
-      <div className="grid gap-3 md:grid-cols-3">
-        {rows.map((row) => (
-          <button
-            key={row.id}
-            type="button"
-            onClick={row.onClick}
-            className="text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 hover:border-primary-500/40 transition-colors"
+      <div className="space-y-3">
+        {actionQueueFailed && (
+          <Callout
+            variant="warning"
+            title={t('execution.actionQueue.failed', 'Action queue unavailable')}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {row.label}
+            {t(
+              'execution.actionQueue.failedDesc',
+              'The action queue (overdue decisions, risks, KPI deviations) could not be loaded. Counts shown may be incomplete — this is a degraded state, not an empty queue.'
+            )}
+          </Callout>
+        )}
+        <div className="grid gap-3 md:grid-cols-3">
+          {rows.map((row) => (
+            <button
+              key={row.id}
+              type="button"
+              onClick={row.onClick}
+              className="text-left rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3 hover:border-primary-500/40 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {row.label}
+                </div>
+                <span className="text-xs font-semibold rounded-full bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 px-2 py-0.5">
+                  {row.count}
+                </span>
               </div>
-              <span className="text-xs font-semibold rounded-full bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 px-2 py-0.5">
-                {row.count}
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              {row.description}
-            </p>
-          </button>
-        ))}
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {row.description}
+              </p>
+            </button>
+          ))}
+        </div>
       </div>
     );
   };
@@ -4586,6 +4653,18 @@ Please return:
             {t('execution.reportCatalog.openGlobal', 'Global Reports →')}
           </button>
         </div>
+
+        {executiveHealthFailed && (
+          <Callout
+            variant="warning"
+            title={t('execution.executiveHealth.failed', 'Executive health signals unavailable')}
+          >
+            {t(
+              'execution.executiveHealth.failedDesc',
+              'Per-initiative health (RAG status, why-red chains) could not be loaded. The dashboard is operating without execution-health overlays — a degraded state, not an all-healthy portfolio.'
+            )}
+          </Callout>
+        )}
 
         {renderActionCenter()}
 

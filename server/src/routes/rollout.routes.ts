@@ -26,8 +26,25 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 
 const router = Router();
 
-// All rollout routes require an authenticated org member.
+// All rollout routes require an authenticated org member (read access).
 router.use(verifyToken, isAuthenticated, requireOrgRole('user'));
+
+// L-01: Rollout mutations (create/update/delete) must be enforced server-side,
+// not only via the FE `readOnly` flag. Pilot/USER-level participants are
+// read-only on Rollout in the UI (isPilotParticipantRole → USER/GUEST); mirror
+// that on the server so a tampered request cannot persist register changes.
+// Reads stay at `user`; writes require the org-admin band. requireOrgRole is
+// hierarchical (superadmin/admin satisfy `admin`), so org admins keep full CRUD
+// while plain members / pilots receive a 403 instead of a silent 200.
+//
+// NOTE (decision 2026-06-16): the intended editor tier is project-manager / PMO,
+// not org-admin only. This codebase has no org-level PMO token role and no
+// execution-scoped permission key in the DB catalog (legacy ROLE_CAPABILITIES is
+// lowercase + admin=all; DB hasPermission uses UPPERCASE keys with none for
+// rollout). A true PMO-without-admin tier therefore needs a dedicated
+// `MANAGE_ROLLOUT` permission (migration + builtin_role_permissions seeding) —
+// tracked as a follow-up. Until then admin-band is the safe floor.
+const requireRolloutWrite = requireOrgRole('admin');
 
 const requireOrg = (req: AuthRequest, res: Response): string | null => {
   const orgId = req.user?.organizationId;
@@ -86,6 +103,7 @@ router.get(
 
 router.post(
   '/kpis',
+  requireRolloutWrite,
   validateBody(KpiCreateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -116,6 +134,7 @@ router.post(
 
 router.patch(
   '/kpis/:id',
+  requireRolloutWrite,
   validateBody(KpiUpdateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -165,6 +184,7 @@ router.patch(
 
 router.delete(
   '/kpis/:id',
+  requireRolloutWrite,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
     if (!orgId) return;
@@ -233,6 +253,7 @@ router.get(
 
 router.post(
   '/risks',
+  requireRolloutWrite,
   validateBody(RiskCreateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -262,6 +283,7 @@ router.post(
 
 router.patch(
   '/risks/:id',
+  requireRolloutWrite,
   validateBody(RiskUpdateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -302,6 +324,7 @@ router.patch(
 
 router.delete(
   '/risks/:id',
+  requireRolloutWrite,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
     if (!orgId) return;
@@ -349,6 +372,7 @@ router.get(
 
 router.post(
   '/changes',
+  requireRolloutWrite,
   validateBody(ChangeCreateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -376,6 +400,7 @@ router.post(
 
 router.patch(
   '/changes/:id',
+  requireRolloutWrite,
   validateBody(ChangeUpdateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -417,6 +442,7 @@ router.patch(
 
 router.delete(
   '/changes/:id',
+  requireRolloutWrite,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
     if (!orgId) return;
@@ -464,6 +490,7 @@ router.get(
 
 router.post(
   '/closures',
+  requireRolloutWrite,
   validateBody(ClosureCreateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -491,6 +518,7 @@ router.post(
 
 router.patch(
   '/closures/:id',
+  requireRolloutWrite,
   validateBody(ClosureUpdateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
@@ -530,6 +558,7 @@ router.patch(
 
 router.delete(
   '/closures/:id',
+  requireRolloutWrite,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = requireOrg(req, res);
     if (!orgId) return;

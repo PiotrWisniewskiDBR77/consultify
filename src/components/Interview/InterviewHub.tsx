@@ -2670,6 +2670,23 @@ export const InterviewHub: React.FC = () => {
   // break the role-scoped chip rows + bulk actions below. Keep them distinct.
   // Manager (PM/ADMIN): wszystkie zakładki
   const tabs = useMemo(() => {
+    // L-07 / SPEC_13 §5.4 — surface the module as a numbered pipeline ①–⑥ by
+    // prefixing each tab with its canonical stage number. The pipeline sequence
+    // is: ① Szablony → ② Przydzielone → ③ Inbox (wypełnienie) → ④ Dopuszczenie
+    // (review happens inside Przydzielone/Inbox) → ⑤ Wnioski → ⑥ Inicjatywy.
+    // PREVIEW: the numbering is an advisory ordering over the existing flat tabs;
+    // a dedicated ④ "Dopuszczenie" inbox is not yet a standalone backed view, so
+    // the review stage is reached via the Przydzielone tab's approve/send-back.
+    const PIPELINE_NUMERAL: Record<string, string> = {
+      templates: '①',
+      managed: '②',
+      my_assignments: '③',
+      insights: '⑤',
+      initiatives: '⑥',
+    };
+    const withStep = (id: string, label: string): string =>
+      PIPELINE_NUMERAL[id] ? `${PIPELINE_NUMERAL[id]} ${label}` : label;
+
     const baseTabs: Array<{
       id: ModuleTab;
       label: string;
@@ -2678,7 +2695,7 @@ export const InterviewHub: React.FC = () => {
     }> = [
       {
         id: 'my_assignments' as ModuleTab,
-        label: isPolish ? 'Inbox' : 'Inbox',
+        label: withStep('my_assignments', 'Inbox'),
         icon: <Inbox size={16} />,
         count: myAssignments.filter((a) => a.status !== 'approved' && a.status !== 'completed')
           .length,
@@ -2695,7 +2712,7 @@ export const InterviewHub: React.FC = () => {
 
       baseTabs.push({
         id: 'managed' as ModuleTab,
-        label: isPolish ? 'Przydzielone' : 'Assigned',
+        label: withStep('managed', isPolish ? 'Przydzielone' : 'Assigned'),
         icon: <ClipboardList size={16} />,
         count: managedAssignments.length,
       });
@@ -2704,7 +2721,7 @@ export const InterviewHub: React.FC = () => {
     if (canViewTemplates) {
       baseTabs.push({
         id: 'templates' as ModuleTab,
-        label: isPolish ? 'Szablony' : 'Templates',
+        label: withStep('templates', isPolish ? 'Szablony' : 'Templates'),
         icon: <FileText size={16} />,
         count: templates.length,
       });
@@ -2713,14 +2730,14 @@ export const InterviewHub: React.FC = () => {
     if (canViewInsights) {
       baseTabs.push({
         id: 'insights' as ModuleTab,
-        label: isPolish ? 'Wnioski' : 'Insights',
+        label: withStep('insights', isPolish ? 'Wnioski' : 'Insights'),
         icon: <Lightbulb size={16} />,
         count: insights.length,
       });
 
       baseTabs.push({
         id: 'initiatives' as ModuleTab,
-        label: isPolish ? 'Inicjatywy' : 'Initiatives',
+        label: withStep('initiatives', isPolish ? 'Inicjatywy' : 'Initiatives'),
         icon: <Rocket size={16} />,
         count: interviewInitiativeStats.total,
       });

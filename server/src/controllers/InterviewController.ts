@@ -3486,6 +3486,95 @@ export const InterviewController = {
     const completenessPercent = Math.round(completenessRatio * 100);
     const now = new Date().toISOString();
 
+    // ── L-07 / SPEC_13 §5.1 — hard submit floor (objective insufficiency) ──
+    // Compute the AI review BEFORE flipping status so we can block an objectively
+    // insufficient submission. The hard floor is deterministic + objective only:
+    //   (a) required questions with no answer, OR
+    //   (b) AI overall verdict 'empty' / 'insufficient' (e.g. nothing answered).
+    // This is a HARD gate with NO "submit anyway" escape (SPEC §5.1/§5.2) — the
+    // draft stays editable (status unchanged) so the respondent can fix and retry.
+    // Soft quality (needs_improvement / short answers) is NOT blocked here; it is
+    // escalated to the sender via score + recommendations (HITL).
+    const submitQuestions = await queryHelpers.queryAll(
+      `SELECT id, question_text, answer_type, is_required, expected_answer_shape, description,
+              status, answer_text, context_note, confidence_score
+       FROM interview_questions
+       WHERE session_id = ? AND organization_id = ?
+       ORDER BY sort_order`,
+      [sessionId, user.organizationId]
+    );
+
+    const requiredMissing = (submitQuestions as any[]).filter((q) => {
+      const isRequired = Boolean(q.is_required);
+      const hasAnswer =
+        String(q.status || '') === 'answered' && String(q.answer_text || '').trim().length > 0;
+      return isRequired && !hasAnswer;
+    });
+
+    let aiReview: InterviewAiReviewSnapshot | null = null;
+    try {
+      aiReview = await evaluateInterviewSessionAnswers({
+        session: { id: sessionId, name: (sessionRow as any)?.name || 'Interview session' },
+        questions: submitQuestions as any[],
+        language: req.body?.language,
+      });
+    } catch (error) {
+      // AI eval is best-effort: if it fails we still enforce the deterministic
+      // required-missing floor, but we never block on a missing AI signal.
+      logger.warn('[InterviewController] Failed to generate AI review on submit', error);
+    }
+
+    // The AI hard-floor only applies when there are questions to answer. A
+    // session with zero questions is a template/config artifact, not a respondent
+    // failure — don't trap the respondent on it (the deterministic required-missing
+    // check still governs the real "answered nothing" case).
+    const aiVerdict = aiReview?.overallVerdict;
+    const aiHardFloorBreached =
+      (submitQuestions as any[]).length > 0 &&
+      (aiVerdict === 'empty' || aiVerdict === 'insufficient');
+    const objectiveFloorBreached = requiredMissing.length > 0 || aiHardFloorBreached;
+
+    if (objectiveFloorBreached) {
+      const blockedItems: InterviewMissingItem[] = [
+        ...requiredMissing.map((q: any) => ({
+          key: `required_${q.id}`,
+          label: String(q.question_text || 'Required question')
+            .trim()
+            .slice(0, 160),
+          questionId: String(q.id),
+        })),
+        ...((aiReview?.weakAnswerMap || [])
+          .filter((w) => w.verdict === 'insufficient' || w.verdict === 'unanswered')
+          .map((w) => ({
+            key: w.key,
+            label: w.label,
+            questionId: w.questionId,
+          })) as InterviewMissingItem[]),
+      ];
+      // Deduplicate by questionId (a required-missing item may also surface in the AI map).
+      const seenQ = new Set<string>();
+      const dedupedBlockedItems = blockedItems.filter((item) => {
+        const qid = item.questionId || item.key;
+        if (seenQ.has(qid)) return false;
+        seenQ.add(qid);
+        return true;
+      });
+
+      res.status(422).json({
+        error:
+          requiredMissing.length > 0
+            ? 'Cannot submit: required questions are unanswered'
+            : 'Cannot submit: answers are insufficient',
+        code: 'OBJECTIVE_INSUFFICIENCY',
+        reason: requiredMissing.length > 0 ? 'required_missing' : 'ai_insufficient',
+        blockedItems: dedupedBlockedItems,
+        requiredMissingCount: requiredMissing.length,
+        aiReview,
+        completenessPercent,
+      });
+      return;
+    }
+
     const newAssignmentStatus = 'submitted';
 
     try {
@@ -3516,29 +3605,20 @@ export const InterviewController = {
       );
     }
 
-    let aiReview: InterviewAiReviewSnapshot | null = null;
-    try {
-      const questions = await queryHelpers.queryAll(
-        `SELECT id, question_text, answer_type, is_required, expected_answer_shape, description,
-                status, answer_text, context_note, confidence_score
-         FROM interview_questions
-         WHERE session_id = ? AND organization_id = ?
-         ORDER BY sort_order`,
-        [sessionId, user.organizationId]
-      );
-      aiReview = await evaluateInterviewSessionAnswers({
-        session: { id: sessionId, name: (sessionRow as any)?.name || 'Interview session' },
-        questions: questions as any[],
-        language: req.body?.language,
-      });
-      await queryHelpers.queryRun(
-        `UPDATE interview_assignments
-         SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
-         WHERE id = ?`,
-        [JSON.stringify(aiReview), now, now, id]
-      );
-    } catch (error) {
-      logger.warn('[InterviewController] Failed to generate AI review on submit', error);
+    // Persist the AI review snapshot computed above (score, verdict, weak answers,
+    // recommendations) so the sender's review panel shows the score (Z-04). Reuses
+    // the single evaluation from the hard-floor gate — no second LLM call.
+    if (aiReview) {
+      try {
+        await queryHelpers.queryRun(
+          `UPDATE interview_assignments
+           SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
+           WHERE id = ?`,
+          [JSON.stringify(aiReview), now, now, id]
+        );
+      } catch (error) {
+        logger.warn('[InterviewController] Failed to persist AI review on submit', error);
+      }
     }
 
     const updatedAssignment = await queryHelpers.queryOne(
@@ -3550,16 +3630,30 @@ export const InterviewController = {
       [(assignment as any).session_id]
     );
 
-    // Notify the assignment creator (manager/reviewer) that review is needed
+    // Notify the assignment creator (manager/reviewer) that review is needed.
+    // Z-06 / SPEC_13 §5 — carry the AI score + top recommendation so the sender
+    // sees the assessment in the notification, not just a generic "submitted".
     try {
       const createdBy = (assignment as any).created_by;
       if (createdBy) {
+        const scorePct =
+          typeof aiReview?.overallScore === 'number'
+            ? Math.round(aiReview.overallScore <= 1 ? aiReview.overallScore * 100 : aiReview.overallScore)
+            : null;
+        const topRecommendation = (aiReview?.recommendations || []).find((r) => r && r.trim());
+        const scorePart = scorePct !== null ? `AI quality score: ${scorePct}/100. ` : '';
+        const recPart = topRecommendation ? `Top note: ${topRecommendation.trim()}` : '';
+        const body =
+          `An interview assignment has been submitted and is awaiting your review. ${scorePart}${recPart}`.trim();
         await notificationService.send({
           userId: createdBy,
           organizationId: user.organizationId,
           type: 'interview_submitted',
-          title: 'Interview submitted for review',
-          body: `An interview assignment has been submitted and is awaiting your review.`,
+          title:
+            scorePct !== null
+              ? `Interview submitted (AI score ${scorePct}/100)`
+              : 'Interview submitted for review',
+          body,
           entityType: 'interview_assignment',
           entityId: id,
           actionUrl: `/interview?assignmentId=${id}&scope=managed`,
@@ -5598,6 +5692,19 @@ export const InterviewController = {
   deleteTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id, questionId } = req.params;
+
+    // SEC — cross-org/privilege IDOR guard. Mirror add/updateTemplateQuestion:
+    // load the parent template and enforce canManageTemplate BEFORE mutating, so
+    // a caller cannot delete questions from a foreign-org or system template by
+    // passing its id (INTERVIEW_TEMPLATE_MANAGE is org-local, not template-scoped).
+    const template = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
+    );
+    if (!template || !canManageTemplate(template, user)) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
 
     const existing = await queryHelpers.queryOne(
       `SELECT id FROM interview_library_template_questions WHERE id = ? AND template_id = ?`,

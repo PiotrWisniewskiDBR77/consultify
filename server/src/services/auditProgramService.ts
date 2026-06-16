@@ -187,6 +187,14 @@ export interface ListProgramsOptions {
   limit?: number;
   /** Row offset (>= 0). Defaults to 0. */
   offset?: number;
+  /**
+   * Free-text search over name/objective/description (server-side, #19e / L-02).
+   * Matched case-insensitively against the FULL org-scoped set, not just the
+   * already-fetched page — mirrors initiativeTemplateService.searchTemplates.
+   */
+  search?: string;
+  /** Optional status filter ('all' or undefined = no filter). */
+  status?: AuditProgramStatus | 'all';
 }
 
 export interface ListProgramsResult {
@@ -223,19 +231,41 @@ export async function listPrograms(
   const limit = clampLimit(options.limit);
   const offset = clampOffset(options.offset);
 
+  // Build the org-scoped WHERE incrementally. The search + status predicates run
+  // against the FULL set (L-02), so filtering no longer misses unloaded rows.
+  // org-scope stays the leading, mandatory predicate.
+  const where: string[] = ['organization_id = ?'];
+  const filterParams: unknown[] = [organizationId];
+
+  const search = typeof options.search === 'string' ? options.search.trim() : '';
+  if (search) {
+    // Mirror initiativeTemplateService.searchTemplates: case-insensitive LIKE
+    // over the human-facing columns, one %term% bound per column.
+    where.push('(name LIKE ? OR objective LIKE ? OR description LIKE ?)');
+    const term = `%${search}%`;
+    filterParams.push(term, term, term);
+  }
+
+  if (options.status && options.status !== 'all') {
+    where.push('status = ?');
+    filterParams.push(options.status);
+  }
+
+  const whereClause = where.join(' AND ');
+
   const countRow = await dbGet<{ total: number }>(
-    `SELECT COUNT(*) AS total FROM audit_programs WHERE organization_id = ?`,
-    [organizationId],
+    `SELECT COUNT(*) AS total FROM audit_programs WHERE ${whereClause}`,
+    [...filterParams],
     { fallback: false }
   );
   const total = Number(countRow?.total ?? 0);
 
   const rows = await dbAll<Record<string, unknown>>(
     `SELECT * FROM audit_programs
-       WHERE organization_id = ?
+       WHERE ${whereClause}
        ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC
        LIMIT ? OFFSET ?`,
-    [organizationId, limit, offset],
+    [...filterParams, limit, offset],
     { fallback: false }
   );
   const programs = (rows || []).map(mapRow).filter((p): p is AuditProgram => p !== null);

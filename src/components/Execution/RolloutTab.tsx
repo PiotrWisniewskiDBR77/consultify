@@ -992,6 +992,23 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               'Handover, sign-off, and project closure actions.'
             )}
           />
+          {/* L-05 / DP-6: feed-forward M14→M15 (Results) is preview-only this round.
+              No real sync is performed yet — surface a clear, honest label instead
+              of a dead "sync" affordance. Real export lands after the Results (M15)
+              beta opens. */}
+          <Callout
+            variant="info"
+            compact
+            title={t(
+              'execution.rollout.closure.resultsHandoff.title',
+              'Results hand-off — preview only'
+            )}
+          >
+            {t(
+              'execution.rollout.closure.resultsHandoff.body',
+              'Closure outcomes (value delivered, ROI, KPI deltas) are not yet synced to the Results module. This hand-off is a preview for this release; automatic sync to Results will be enabled in an upcoming phase.'
+            )}
+          </Callout>
           {showDerivedClosures ? (
             <div className="space-y-3">
               <DerivedNote

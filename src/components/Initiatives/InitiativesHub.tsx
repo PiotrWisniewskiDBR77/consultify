@@ -52,6 +52,7 @@ import {
 import { useConversationStore } from '@/store/useConversationStore';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
+import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
 import { usePortfolioStore } from '../../store/portfolioSlice';
@@ -75,6 +76,7 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { Banner } from '../shared/Banner';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
@@ -229,6 +231,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadErrorCode, setLoadErrorCode] = useState<string | null>(null);
+  // L-05: governed V8 Planning runtime degraded (env-off / org not V8-enabled).
+  // Set when the V8 portfolio read fails and we silently fall back to legacy
+  // reads — surfaces an honest degraded banner instead of a silent fallback.
+  const [v8PlanningDegraded, setV8PlanningDegraded] = useState(false);
   const fetchRetryRef = useRef(0);
   const [v8PendingDecisionChains, setV8PendingDecisionChains] = useState<V8PlanningDecisionChain[]>(
     []
@@ -386,8 +392,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             priority: filters.priority?.length ? filters.priority : undefined,
             search: searchQuery || undefined,
           });
+          // Governed V8 Planning read succeeded — clear any degraded state.
+          setV8PlanningDegraded(false);
         } catch {
-          // Fallback to regular initiatives endpoint
+          // L-05: governed V8 Planning is unavailable (env-off / org not
+          // V8-enabled / 404). Surface a degraded banner instead of silently
+          // falling back, then read the legacy initiatives endpoint.
+          setV8PlanningDegraded(true);
           const fallbackResponse = await Api.getInitiatives(currentProjectId || undefined);
           response = {
             initiatives: Array.isArray(fallbackResponse)
@@ -1765,6 +1776,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // "Coming soon" affordance for features that are not yet functional (task #11).
   const comingSoonPrep = t('common.comingSoonPrep', 'Coming soon');
   const bulkButtonBase = `${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`;
+  // DP-5: bulk Tag / Change due date / Delete have no backend endpoint. Hide
+  // the stub behind a flag (default OFF) instead of shipping dead CTAs.
+  const showBulkStubActions = isInitiativesBulkStubEnabled();
 
   const bulkBarContent = (
     <div className="flex items-center justify-between gap-2">
@@ -1790,21 +1804,25 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <Download className="h-3.5 w-3.5" />
           {t('initiatives.bulk.exportCsv', 'Export CSV')}
         </button>
-        {/* Tag — no backend endpoint */}
-        <button type="button" disabled className={bulkButtonBase} title={comingSoonBackend}>
-          <Tag className="h-3.5 w-3.5" />
-          {t('initiatives.bulk.tag', 'Tag')}
-        </button>
+        {/* Tag — no backend endpoint (DP-5: hidden unless stub flag is on) */}
+        {showBulkStubActions && (
+          <button type="button" disabled className={bulkButtonBase} title={comingSoonBackend}>
+            <Tag className="h-3.5 w-3.5" />
+            {t('initiatives.bulk.tag', 'Tag')}
+          </button>
+        )}
         {/* Assign / Reassign — wired via bulk modal (owner change) */}
         <button type="button" onClick={() => setShowBulkModal(true)} className={bulkButtonBase}>
           <UserPlus className="h-3.5 w-3.5" />
           {t('initiatives.bulk.assign', 'Assign')}
         </button>
-        {/* Change due date — no backend endpoint */}
-        <button type="button" disabled className={bulkButtonBase} title={comingSoonBackend}>
-          <CalendarClock className="h-3.5 w-3.5" />
-          {t('initiatives.bulk.changeDueDate', 'Change due date')}
-        </button>
+        {/* Change due date — no backend endpoint (DP-5: hidden unless stub flag on) */}
+        {showBulkStubActions && (
+          <button type="button" disabled className={bulkButtonBase} title={comingSoonBackend}>
+            <CalendarClock className="h-3.5 w-3.5" />
+            {t('initiatives.bulk.changeDueDate', 'Change due date')}
+          </button>
+        )}
         {/* Archive — wired (only DONE/CANCELLED eligible per backend rule) */}
         <button
           type="button"
@@ -1844,16 +1862,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           <Sparkles className="h-3.5 w-3.5" />
           {t('portfolio.ai.analyzeSelection', 'AI: Analizuj zaznaczenie')}
         </button>
-        {/* Delete — danger, end, no backend endpoint */}
-        <button
-          type="button"
-          disabled
-          className={`${MENU_3_ACTION_DANGER} disabled:opacity-50 disabled:cursor-not-allowed`}
-          title={comingSoonBackend}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          {t('common.delete', 'Delete')}
-        </button>
+        {/* Delete — danger, no backend endpoint (DP-5: hidden unless stub flag on) */}
+        {showBulkStubActions && (
+          <button
+            type="button"
+            disabled
+            className={`${MENU_3_ACTION_DANGER} disabled:opacity-50 disabled:cursor-not-allowed`}
+            title={comingSoonBackend}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {t('common.delete', 'Delete')}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1955,7 +1975,24 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
         availableViewModes={availableViewModes}
       >
-        <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
+        <div className="flex h-full min-h-0 flex-col overflow-hidden">
+          {v8PlanningDegraded && (
+            <div className="flex-shrink-0 px-4 pt-3">
+              <Banner
+                variant="degraded"
+                title={t(
+                  'initiatives.v8Degraded.title',
+                  'Planning runtime is in degraded mode'
+                )}
+                message={t(
+                  'initiatives.v8Degraded.message',
+                  'The governed V8 Planning service is unavailable, so initiatives are shown from the legacy data source. Some governed features (gates, decision chains, portfolio rollups) may be limited until it is restored.'
+                )}
+              />
+            </div>
+          )}
+          <div className="min-h-0 flex-1 overflow-hidden">{renderContent()}</div>
+        </div>
       </ModuleHub>
 
       <InitiativeWizardModal

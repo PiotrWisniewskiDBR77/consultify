@@ -5,6 +5,7 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { requireInitiativeWriteAccess } from '../services/initiative/initiativeGovernanceGuard.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 
@@ -33,6 +34,7 @@ router.post(
   '/generate',
   verifyToken,
   isAuthenticated,
+  requireInitiativeWriteAccess(),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
@@ -137,7 +139,22 @@ router.put(
   '/:id',
   verifyToken,
   isAuthenticated,
+  requireInitiativeWriteAccess(),
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // SECURITY (M13 cross-org IDOR): confirm the row exists in the caller's org
+    // before mutating. Without this the UPDATE (`WHERE id = ?`) would edit ANY
+    // org's generated initiative by id. A foreign-org id must 404, never write.
+    const existing = await dbAll(
+      `SELECT id FROM generated_initiatives WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    );
+    if (!existing || existing.length === 0) {
+      return res.status(404).json({ error: 'Initiative not found' });
+    }
+
     const { title, description, priority, status } = req.body;
     const updates: string[] = [];
     const params: any[] = [];
@@ -158,8 +175,12 @@ router.put(
       params.push(status);
     }
     if (!updates.length) return res.status(400).json({ error: 'No updates' });
-    params.push(req.params.id);
-    await dbRun(`UPDATE generated_initiatives SET ${updates.join(', ')} WHERE id = ?`, params);
+    // Org-scope the UPDATE itself too (defense-in-depth alongside the read above).
+    params.push(req.params.id, orgId);
+    await dbRun(
+      `UPDATE generated_initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`,
+      params
+    );
     res.json({ success: true });
   })
 );

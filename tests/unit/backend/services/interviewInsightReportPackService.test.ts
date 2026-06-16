@@ -10,6 +10,15 @@ vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
   queryRun: (...args: unknown[]) => queryRunMock(...args),
 }));
 
+// createInterviewReportPackDraft dynamically imports listFindings (D3 — findings_p10
+// worksheet). Without this stub, listFindings issues its own queryAll/queryOne calls
+// that consume the shared mock queue out of order and starve the existing-draft path's
+// worksheet lookup (drift introduced by commit bd72066f26). Stub it to a no-op so the
+// query mocks model only the report-pack persistence path the test asserts on.
+vi.mock('../../../../server/src/services/v8/interviewInsightFindingsService.js', () => ({
+  listFindings: vi.fn(async () => []),
+}));
+
 import {
   buildInterviewReportPackExportManifest,
   buildInterviewReportPackMarkdownExport,

@@ -195,12 +195,17 @@ vi.mock('../../services/staffingPlanService.js', () => ({
 import initiativesRoutes from '../pmo/initiatives.routes.js';
 
 let app: Express;
+// Initiative creation requires a non-pilot role (ADMIN/OWNER). The USER/GUEST
+// band is the pilot tier, blocked from create server-side to match the FE
+// (isPilotParticipantRole). Default the CRUD persistence tests to an authorized
+// creator; the pilot-block is asserted explicitly in its own test below.
+let currentRole = 'admin';
 
 beforeAll(() => {
   app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any).user = { id: UID, organizationId: ORG, role: 'user' };
+    (req as any).user = { id: UID, organizationId: ORG, role: currentRole };
     next();
   });
   app.use('/api/initiatives', initiativesRoutes);
@@ -208,6 +213,7 @@ beforeAll(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
+  currentRole = 'admin';
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -222,6 +228,18 @@ describe('initiatives CRUD routes', () => {
 
     expect([200, 201]).toContain(res.status);
     expect(res.body.id).toBeTruthy();
+  });
+
+  it('POST / is blocked (403) for the pilot USER/GUEST band', async () => {
+    currentRole = 'user';
+    mockQueryRun.mockResolvedValue({ changes: 1, lastID: 1 });
+
+    const res = await request(app)
+      .post('/api/initiatives')
+      .send({ title: 'Pilot tries to create', priority: 'HIGH' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('INITIATIVE_PILOT_WRITE_FORBIDDEN');
   });
 
   it('GET /:id returns 200 when initiative exists', async () => {

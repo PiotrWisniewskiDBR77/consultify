@@ -4204,6 +4204,98 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   };
 
+  // Financial sections (financial-analysis / financial-impact) AI-fill.
+  // Propose → review → persist, mirroring the other section handlers. The backend
+  // prompt/guidance for these section keys already exists; the canonical
+  // persistence target for sizing/ROI prose is `market_context` (saved by the
+  // existing dirty/save flow via marketContextDraft — see the initiative PATCH
+  // payload `market_context: marketContextDraft`). We never auto-submit: the
+  // generated text lands in the editable draft and the user reviews + saves it.
+  const handleGenerateFinancial = useCallback(
+    async (section: 'financial-analysis' | 'financial-impact'): Promise<void> => {
+      if (!canUseAi) {
+        toast.error(
+          isPolish
+            ? 'AI jest niedostępne, ponieważ nie masz uprawnień edycji w tym kontekście.'
+            : 'AI is unavailable because you have no edit permissions in this context.'
+        );
+        return;
+      }
+      setIsGeneratingAI(section);
+      try {
+        const aiLanguage = isPolish ? 'pl' : 'en';
+        const result = await Api.post('/initiatives/generate-section', {
+          sectionKey: section,
+          initiativeId,
+          initiativeName: initiative?.name || '',
+          summary: summary || initiative?.description || '',
+          problemStatement: initiative?.problem_statement || '',
+          category: initiative?.category || '',
+          module: initiative?.module || '',
+          status: getWorkflowStatusForInitiative(initiative as any),
+          language: aiLanguage,
+        });
+
+        // Normalize: financial prompts may return JSON (sizing object) or prose.
+        let text = '';
+        if (result?.parsedContent && typeof result.parsedContent === 'object') {
+          const p = result.parsedContent as Record<string, any>;
+          const parts: string[] = [];
+          const pick = (...keys: string[]) => {
+            for (const k of keys) {
+              const v = p[k];
+              if (typeof v === 'string' && v.trim()) return v.trim();
+            }
+            return '';
+          };
+          const sizing = pick('sizing', 'roiAnalysis', 'roi', 'marketContext', 'market_context');
+          const revenue = pick('revenueImpact', 'revenue_impact');
+          const cost = pick('costSavings', 'cost_savings');
+          const benefits = pick('benefitsRealization', 'benefits_realization');
+          if (sizing) parts.push(sizing);
+          if (revenue) parts.push(`${isPolish ? 'Wpływ na przychody' : 'Revenue impact'}: ${revenue}`);
+          if (cost) parts.push(`${isPolish ? 'Oszczędności' : 'Cost savings'}: ${cost}`);
+          if (benefits)
+            parts.push(`${isPolish ? 'Realizacja korzyści' : 'Benefits realization'}: ${benefits}`);
+          text = parts.join('\n\n').trim() || JSON.stringify(result.parsedContent, null, 2);
+        } else {
+          text = String(result?.content || '').trim();
+        }
+
+        if (!text) {
+          toast.error(isPolish ? 'AI nie zwróciło wyników' : 'AI returned no results');
+          return;
+        }
+
+        // PROPOSE → REVIEW: surface in the editable draft. If the section already
+        // had content, prepend the proposal so the human compares, not clobbers.
+        setMarketContextDraft((prev) => {
+          const existing = String(prev || '').trim();
+          return existing ? `${text}\n\n${existing}` : text;
+        });
+        toast.success(
+          isPolish
+            ? 'AI wygenerował propozycję finansową — przejrzyj i zapisz.'
+            : 'AI generated a financial draft — review and save.'
+        );
+      } catch (e: any) {
+        toast.error(
+          e?.message || t('initiatives.toast.aiGenerationError', 'Generowanie AI nie powiodło się')
+        );
+      } finally {
+        setIsGeneratingAI(null);
+      }
+    },
+    [
+      canUseAi,
+      isPolish,
+      initiativeId,
+      initiative,
+      summary,
+      t,
+    ]
+  );
+
   const handleRequestApproval = async (role: 'owner' | 'sponsor', gateType: string) => {
     setIsMutating(true);
     try {
@@ -7089,59 +7181,83 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           break;
         }
 
-        case 'financial-analysis': {
-          // Canon empty-state (BLOCK_TYPES_CANON §1044: no gradient, no emoji).
-          // Mirrors NModeSectionWrapper's empty-state markup exactly so the card
-          // reads as "empty, ready to fill" rather than "coming soon / broken".
-          component = (
-            <div className="text-center py-12">
-              <Calculator size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
-              <p className="text-sm text-slate-700 dark:text-slate-300">
-                {isPolish
-                  ? 'Analiza finansowa nie została jeszcze przygotowana.'
-                  : "Financial analysis isn't set up yet."}
-              </p>
-              <button
-                type="button"
-                disabled
-                title={
-                  isPolish
-                    ? 'Generowanie AI niedostępne dla tej sekcji'
-                    : 'AI generation not available for this section yet'
-                }
-                className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-600/60 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/40 cursor-not-allowed"
-              >
-                <Sparkles size={13} />
-                {isPolish ? 'Wygeneruj z AI' : 'Generate with AI'}
-              </button>
-            </div>
-          );
-          break;
-        }
-
+        case 'financial-analysis':
         case 'financial-impact': {
-          // Canon empty-state (BLOCK_TYPES_CANON §1044: no gradient, no emoji).
+          // Financial sizing/ROI prose persists into `market_context`
+          // (marketContextDraft → saved by the existing dirty/save flow). The
+          // editable narrative IS the persistence target, so this section both
+          // renders + edits that draft and offers a real AI-fill button.
+          const isAnalysis = section.id === 'financial-analysis';
+          const FinIcon = isAnalysis ? Calculator : TrendingUp;
+          const busy = isGeneratingAI === section.id;
+          const heading = isAnalysis
+            ? isPolish
+              ? 'Analiza finansowa (sizing + ROI)'
+              : 'Financial analysis (sizing + ROI)'
+            : isPolish
+              ? 'Wpływ finansowy'
+              : 'Financial impact';
           component = (
-            <div className="text-center py-12">
-              <TrendingUp size={32} className="mx-auto text-slate-600 dark:text-slate-400 mb-3" />
-              <p className="text-sm text-slate-700 dark:text-slate-300">
-                {isPolish
-                  ? 'Wpływ finansowy nie został jeszcze przygotowany.'
-                  : "Financial impact isn't set up yet."}
-              </p>
-              <button
-                type="button"
-                disabled
-                title={
-                  isPolish
-                    ? 'Generowanie AI niedostępne dla tej sekcji'
-                    : 'AI generation not available for this section yet'
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FinIcon size={16} className="text-slate-600 dark:text-slate-400" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    {heading}
+                  </span>
+                </div>
+                {canUseAi && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      void handleGenerateFinancial(
+                        section.id as 'financial-analysis' | 'financial-impact'
+                      )
+                    }
+                    title={
+                      isPolish
+                        ? 'Wygeneruj propozycję AI (sizing + ROI) — przejrzyj i zapisz'
+                        : 'Generate an AI draft (sizing + ROI) — review and save'
+                    }
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-500/40 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Sparkles size={13} />
+                    {busy
+                      ? isPolish
+                        ? 'Generowanie…'
+                        : 'Generating…'
+                      : isPolish
+                        ? 'Wygeneruj z AI'
+                        : 'Generate with AI'}
+                  </button>
+                )}
+              </div>
+              {!marketContextDraft.trim() && !busy && (
+                <p className="text-xs text-slate-600 dark:text-slate-500">
+                  {isAnalysis
+                    ? isPolish
+                      ? 'Brak treści. Użyj „Wygeneruj z AI" lub wpisz sizing, założenia i ROI.'
+                      : 'Empty. Use “Generate with AI”, or type sizing, assumptions and ROI.'
+                    : isPolish
+                      ? 'Brak treści. Użyj „Wygeneruj z AI" lub opisz wpływ na przychody/koszty.'
+                      : 'Empty. Use “Generate with AI”, or describe revenue/cost impact.'}
+                </p>
+              )}
+              <ExpandableNarrativeField
+                value={marketContextDraft}
+                onChange={setMarketContextDraft}
+                isPolish={isPolish}
+                placeholder={
+                  isAnalysis
+                    ? isPolish
+                      ? 'Sizing (zł/%/dni) + jawne założenie + ROI…'
+                      : 'Sizing (currency/%/days) + explicit assumption + ROI…'
+                    : isPolish
+                      ? 'Wpływ na przychody, oszczędności, realizacja korzyści…'
+                      : 'Revenue impact, cost savings, benefits realization…'
                 }
-                className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-navy-600/60 text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-navy-800/40 cursor-not-allowed"
-              >
-                <Sparkles size={13} />
-                {isPolish ? 'Wygeneruj z AI' : 'Generate with AI'}
-              </button>
+              />
             </div>
           );
           break;
@@ -9239,8 +9355,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   const SECTION_AI_NOOP = useMemo(
     () =>
       new Set<string>([
-        'financial-analysis',
-        'financial-impact',
+        // financial-analysis / financial-impact are now wired to real AI-fill
+        // (handleGenerateFinancial → market_context persist) — NOT in this no-op set.
         'raci',
         'okr',
         'hypothesis',
@@ -9301,6 +9417,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       case 'initiative-definition':
         await handleGenerateScopeCard();
         return;
+      case 'financial-analysis':
+      case 'financial-impact':
+        await handleGenerateFinancial(activeNSection);
+        return;
       default:
         await handleGenerateAI(activeNSection);
     }
@@ -9308,6 +9428,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     canUseAi,
     isPolish,
     activeNSection,
+    handleGenerateFinancial,
     requestTasksAi,
     requestDecisionsAi,
     requestCommentsAi,

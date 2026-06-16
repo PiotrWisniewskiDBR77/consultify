@@ -97,7 +97,9 @@ describe('InitiativeController interview insight lineage', () => {
 
   it('persists action contract, source pack, and evidence refs on create', async () => {
     const req = {
-      user: { organizationId: 'org-1', id: 'user-1' },
+      // ADMIN: creation is blocked for the pilot USER/GUEST band, so the
+      // lineage-persistence path must run as an authorized (non-pilot) creator.
+      user: { organizationId: 'org-1', id: 'user-1', role: 'admin' },
       ip: '127.0.0.1',
       get: vi.fn(),
       body: {

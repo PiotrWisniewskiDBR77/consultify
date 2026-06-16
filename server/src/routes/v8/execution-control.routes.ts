@@ -144,11 +144,18 @@ router.post(
     const { organizationId, userId } = getV8Context(req);
     const { signalId } = req.body;
 
+    // L-03: signalId is free-form user input and risk_signal_alert ids are
+    // deterministic (e.g. `overdue-<initiativeId>`), so a tampered request could
+    // target another org's alert id. The conflict target is (id) only, so without
+    // an org guard the DO UPDATE would dismiss a cross-org row. Guarding the
+    // UPDATE with the existing row's organization_id turns a cross-org collision
+    // into a no-op (the INSERT still supplies this org's id for the create path).
     await dbRun(
       `INSERT INTO risk_signal_alerts (id, organization_id, signal_type, severity, title, is_dismissed, dismissed_by, dismissed_at)
        VALUES (?, ?, 'DISMISSED', 'LOW', ?, TRUE, ?, NOW())
-       ON CONFLICT (id) DO UPDATE SET is_dismissed = TRUE, dismissed_by = ?, dismissed_at = NOW()`,
-      [signalId, organizationId, `Dismissed: ${signalId}`, userId, userId]
+       ON CONFLICT (id) DO UPDATE SET is_dismissed = TRUE, dismissed_by = ?, dismissed_at = NOW()
+         WHERE risk_signal_alerts.organization_id = ?`,
+      [signalId, organizationId, `Dismissed: ${signalId}`, userId, userId, organizationId]
     );
 
     return res.json({
@@ -386,14 +393,20 @@ router.post(
         // Non-blocking fallback to signal id if lookup fails.
       }
 
+      // L-03: defense-in-depth. The prior UPDATE already org-scopes the common
+      // path (changes === 0 here means no row for this org), but the ON CONFLICT
+      // fallback resolves on (id) alone — without an org guard a cross-org id
+      // collision would still flip another org's signal. Guard the DO UPDATE with
+      // the existing row's organization_id so a cross-org conflict is a no-op.
       await dbRun(
         `INSERT INTO delay_signals
            (id, organization_id, entity_type, entity_id, entity_name, deviation_type, severity, days_deviation,
             is_dismissed, dismissed_by, dismissed_at, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, 'WARNING', 0, TRUE, ?, NOW(), NOW(), NOW())
          ON CONFLICT (id)
-         DO UPDATE SET is_dismissed = TRUE, dismissed_by = EXCLUDED.dismissed_by, dismissed_at = NOW(), updated_at = NOW()`,
-        [signalId, organizationId, entityType, entityId, entityName, deviationType, userId]
+         DO UPDATE SET is_dismissed = TRUE, dismissed_by = EXCLUDED.dismissed_by, dismissed_at = NOW(), updated_at = NOW()
+           WHERE delay_signals.organization_id = ?`,
+        [signalId, organizationId, entityType, entityId, entityName, deviationType, userId, organizationId]
       );
     }
 
@@ -1164,6 +1177,32 @@ router.post(
         ]);
       }
     } else if (fromEntityType === 'INITIATIVE' && toEntityType === 'INITIATIVE') {
+      // Wave-4 IDOR: mirror the TASK branch's org guard. `initiative_dependencies`
+      // stamps the caller's organization_id, but without verifying that both
+      // initiative ids actually belong to this org a tampered request could create
+      // (or, via DELETE, target) a dependency edge that references another org's
+      // initiatives. The FK to initiatives(id) does NOT validate org ownership, so
+      // a foreign-org id is still a valid initiatives.id and passes the FK while
+      // the row is mis-attributed to the caller's org. Verify both ids are in-org
+      // first → a cross-org id becomes a 403 instead of a silent cross-org write.
+      const fromInit = await dbGet<{ organization_id: string }>(
+        `SELECT organization_id FROM initiatives WHERE id = ?`,
+        [fromEntityId]
+      );
+      const toInit = await dbGet<{ organization_id: string }>(
+        `SELECT organization_id FROM initiatives WHERE id = ?`,
+        [toEntityId]
+      );
+      if (
+        !fromInit ||
+        !toInit ||
+        String(fromInit.organization_id) !== organizationId ||
+        String(toInit.organization_id) !== organizationId
+      ) {
+        return res
+          .status(403)
+          .json({ error: 'Forbidden', code: 'EXECUTION_INITIATIVE_ORG_MISMATCH' });
+      }
       if (action === 'link') {
         const depId = `dep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         await dbRun(
@@ -1570,11 +1609,17 @@ router.post(
         decisionId = existing[0].id;
       }
 
+      // Wave-4 defense-in-depth: decisionId is either freshly server-generated or
+      // fetched from an org-scoped lookup above, so an exploitable cross-org id
+      // collision is not practically reachable — but consistent with the fixed
+      // wave-3 ON CONFLICT pattern, guard the DO UPDATE with the existing row's
+      // organization_id so any (id) collision against another org is a no-op.
       await dbRun(
         `INSERT INTO v8_lane_decisions (id, organization_id, lane_id, suggestion_id, state, decided_by, notes, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-         ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()`,
-        [decisionId, organizationId, laneId, suggestionId, state, userId, notes || null]
+         ON CONFLICT (id) DO UPDATE SET state = EXCLUDED.state, decided_by = EXCLUDED.decided_by, notes = EXCLUDED.notes, decided_at = NOW(), updated_at = NOW()
+           WHERE v8_lane_decisions.organization_id = ?`,
+        [decisionId, organizationId, laneId, suggestionId, state, userId, notes || null, organizationId]
       );
     } catch {
       // table may not exist — create it on the fly

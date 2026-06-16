@@ -16,6 +16,7 @@ import {
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { decryptSecret, encryptSecret } from '../utils/secretEncryption.js';
 
 const router = Router();
 interface AuthRequest extends Request {
@@ -34,6 +35,121 @@ function parseJsonObject(raw: unknown): Record<string, unknown> {
     }
   }
   return {};
+}
+
+/**
+ * Connector secrets live inside the provider `config` JSON blob (IRIS MES token,
+ * marketplace token, and arbitrary auth headers). These keys hold credentials and
+ * must be encrypted at rest (L-02). Encryption reuses the shared AES-256-GCM helper
+ * (utils/secretEncryption.ts), which degrades gracefully when no key is configured
+ * and transparently reads legacy plaintext values (read-compat — no migration needed).
+ */
+const SECRET_CONFIG_KEYS = new Set([
+  'mes_api_token',
+  'MES_API_TOKEN',
+  'marketplace_token',
+  'token',
+  'apiKey',
+  'api_key',
+  'secret',
+  'clientSecret',
+  'client_secret',
+  'password',
+]);
+
+/** Encrypt secret-bearing keys (and all header values) within a provider config. */
+function encryptProviderConfig(config: unknown): Record<string, unknown> {
+  const obj = { ...parseJsonObject(config) };
+  for (const key of Object.keys(obj)) {
+    if (SECRET_CONFIG_KEYS.has(key) && typeof obj[key] === 'string') {
+      obj[key] = encryptSecret(obj[key] as string);
+    }
+  }
+  // Auth headers (e.g. Authorization: Bearer …) are secrets too.
+  if (obj.headers && typeof obj.headers === 'object' && !Array.isArray(obj.headers)) {
+    const headers = { ...(obj.headers as Record<string, unknown>) };
+    for (const hk of Object.keys(headers)) {
+      if (typeof headers[hk] === 'string') headers[hk] = encryptSecret(headers[hk] as string);
+    }
+    obj.headers = headers;
+  }
+  return obj;
+}
+
+/** Decrypt secret-bearing keys within a provider config (for actual connector use). */
+function decryptProviderConfig(config: unknown): Record<string, unknown> {
+  const obj = { ...parseJsonObject(config) };
+  for (const key of Object.keys(obj)) {
+    if (SECRET_CONFIG_KEYS.has(key) && typeof obj[key] === 'string') {
+      obj[key] = decryptSecret(obj[key] as string);
+    }
+  }
+  if (obj.headers && typeof obj.headers === 'object' && !Array.isArray(obj.headers)) {
+    const headers = { ...(obj.headers as Record<string, unknown>) };
+    for (const hk of Object.keys(headers)) {
+      if (typeof headers[hk] === 'string') headers[hk] = decryptSecret(headers[hk] as string);
+    }
+    obj.headers = headers;
+  }
+  return obj;
+}
+
+const REDACTION_PLACEHOLDER = '__set__';
+
+/**
+ * Merge an incoming config (which may carry the redaction placeholder for secrets
+ * the admin did not retype) with the existing stored (encrypted) config. Returns a
+ * plaintext config: placeholder secrets are replaced with the decrypted existing
+ * value so the subsequent encryptProviderConfig() re-encrypts them cleanly and no
+ * credential is lost on a partial edit.
+ */
+function mergeRedactedSecrets(incoming: unknown, existingStored: unknown): Record<string, unknown> {
+  const next = { ...parseJsonObject(incoming) };
+  const prev = decryptProviderConfig(existingStored);
+  for (const key of Object.keys(next)) {
+    if (SECRET_CONFIG_KEYS.has(key) && next[key] === REDACTION_PLACEHOLDER) {
+      if (typeof prev[key] === 'string') next[key] = prev[key];
+      else delete next[key];
+    }
+  }
+  if (next.headers && typeof next.headers === 'object' && !Array.isArray(next.headers)) {
+    const headers = { ...(next.headers as Record<string, unknown>) };
+    const prevHeaders =
+      prev.headers && typeof prev.headers === 'object' && !Array.isArray(prev.headers)
+        ? (prev.headers as Record<string, unknown>)
+        : {};
+    for (const hk of Object.keys(headers)) {
+      if (headers[hk] === REDACTION_PLACEHOLDER) {
+        if (typeof prevHeaders[hk] === 'string') headers[hk] = prevHeaders[hk];
+        else delete headers[hk];
+      }
+    }
+    next.headers = headers;
+  }
+  return next;
+}
+
+/**
+ * Redact secret-bearing keys for client-facing responses. Even admins should not
+ * receive raw credentials over the wire — replace with a placeholder so the UI can
+ * show "configured" without exposing the value. Non-secret config (baseUrl, mcpPath)
+ * passes through unchanged.
+ */
+function redactProviderConfig(config: unknown): Record<string, unknown> {
+  const obj = { ...parseJsonObject(config) };
+  for (const key of Object.keys(obj)) {
+    if (SECRET_CONFIG_KEYS.has(key) && typeof obj[key] === 'string' && obj[key]) {
+      obj[key] = REDACTION_PLACEHOLDER;
+    }
+  }
+  if (obj.headers && typeof obj.headers === 'object' && !Array.isArray(obj.headers)) {
+    const headers = { ...(obj.headers as Record<string, unknown>) };
+    for (const hk of Object.keys(headers)) {
+      if (typeof headers[hk] === 'string' && headers[hk]) headers[hk] = REDACTION_PLACEHOLDER;
+    }
+    obj.headers = headers;
+  }
+  return obj;
 }
 
 async function getMarketplaceProvider(orgId: string): Promise<any | null> {
@@ -65,12 +181,18 @@ router.get(
     const orgId = req.user?.organizationId;
     const cols = await tryGetColumns('mcp_providers');
     if (!cols.size) return res.json([]);
-    const providers = await dbAll(
+    const providers = await dbAll<any>(
       `SELECT id, name, type, status, config, created_at
     FROM mcp_providers WHERE organization_id = ? ORDER BY name`,
       [orgId]
     );
-    res.json(providers);
+    // Redact connector secrets before sending to the client (L-02): even admins
+    // never receive raw credentials over the wire — the UI shows "__set__".
+    const safe = (providers || []).map((p: any) => ({
+      ...p,
+      config: redactProviderConfig(p.config),
+    }));
+    res.json(safe);
   })
 );
 
@@ -90,7 +212,14 @@ router.post(
     await dbRun(
       `INSERT INTO mcp_providers (id, organization_id, name, type, status, config, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-      [id, orgId, providerName, providerType, providerStatus, JSON.stringify(config || {})]
+      [
+        id,
+        orgId,
+        providerName,
+        providerType,
+        providerStatus,
+        JSON.stringify(encryptProviderConfig(config || {})),
+      ]
     );
 
     // Default allowlist: allow all (can be tightened later)
@@ -126,8 +255,17 @@ router.put(
       params.push(String(status));
     }
     if (config !== undefined) {
+      // The client receives redacted secrets ("__set__") from GET and may send them
+      // back unchanged on edit. Preserve the existing stored (encrypted) secret when
+      // the incoming value is still the placeholder, so a config edit never clobbers
+      // a credential the admin didn't actually retype.
+      const existing = await dbGet<any>(
+        `SELECT config FROM mcp_providers WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      const merged = mergeRedactedSecrets(config || {}, existing?.config);
       updates.push('config = ?');
-      params.push(JSON.stringify(config || {}));
+      params.push(JSON.stringify(encryptProviderConfig(merged)));
     }
     if (!updates.length) return res.status(400).json({ error: 'No updates provided' });
     updates.push("updated_at = datetime('now')");
@@ -204,7 +342,8 @@ router.post(
     );
     if (!provider) return res.status(404).json({ error: 'Provider not found' });
 
-    const cfg = parseStreamableHttpConfig(provider.config);
+    const decryptedConfig = decryptProviderConfig(provider.config);
+    const cfg = parseStreamableHttpConfig(decryptedConfig);
     if (!cfg) return res.status(400).json({ error: 'Invalid provider config (baseUrl required)' });
 
     try {
@@ -305,8 +444,8 @@ router.post(
     if (!isAllowed)
       return res.status(403).json({ error: 'Tool not allowed by provider allowlist' });
 
-    const cfgObj = parseJsonObject(provider.config);
-    const cfg = parseStreamableHttpConfig(provider.config);
+    const cfgObj = decryptProviderConfig(provider.config);
+    const cfg = parseStreamableHttpConfig(cfgObj);
     if (!cfg) return res.status(400).json({ error: 'Invalid provider config' });
 
     const extraHeaders =
@@ -423,8 +562,8 @@ router.get(
     const provider = await getMarketplaceProvider(orgId);
     if (!provider) return res.status(404).json({ error: 'Marketplace provider not configured' });
 
-    const cfgObj = parseJsonObject(provider.config);
-    const cfg = parseStreamableHttpConfig(provider.config);
+    const cfgObj = decryptProviderConfig(provider.config);
+    const cfg = parseStreamableHttpConfig(cfgObj);
     if (!cfg) return res.status(400).json({ error: 'Invalid provider config (baseUrl required)' });
 
     const result = await callRemoteTool({
@@ -453,8 +592,8 @@ router.get(
     const provider = await getMarketplaceProvider(orgId);
     if (!provider) return res.status(404).json({ error: 'Marketplace provider not configured' });
 
-    const cfgObj = parseJsonObject(provider.config);
-    const cfg = parseStreamableHttpConfig(provider.config);
+    const cfgObj = decryptProviderConfig(provider.config);
+    const cfg = parseStreamableHttpConfig(cfgObj);
     if (!cfg) return res.status(400).json({ error: 'Invalid provider config (baseUrl required)' });
 
     const result = await callRemoteTool({
@@ -485,8 +624,8 @@ router.post(
     const provider = await getMarketplaceProvider(orgId);
     if (!provider) return res.status(404).json({ error: 'Marketplace provider not configured' });
 
-    const cfgObj = parseJsonObject(provider.config);
-    const cfg = parseStreamableHttpConfig(provider.config);
+    const cfgObj = decryptProviderConfig(provider.config);
+    const cfg = parseStreamableHttpConfig(cfgObj);
     if (!cfg) return res.status(400).json({ error: 'Invalid provider config (baseUrl required)' });
 
     const asset = await callRemoteTool({

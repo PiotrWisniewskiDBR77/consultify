@@ -15,9 +15,12 @@
  *
  * On create it POSTs the program (name, objective, preset, config{templateIds,
  * assigneeIds, plan, surveysGenerated:false}). The program record persists
- * end-to-end. Bulk creation of the underlying surveys/assignments is the
- * documented MVP boundary — surfaced as a disabled "Generate surveys" note on
- * the review step and `surveysGenerated:false` in config.
+ * end-to-end. Bulk creation of the underlying surveys/assignments is a separate,
+ * working step taken from the program page after creation: the hub's "Generate
+ * surveys" action fans out templates × assignees into real interview assignments
+ * (server-side `generateSurveys` → shared interviewAssignmentService) and flips
+ * `surveysGenerated:true`. It is initialized to `false` here purely as the
+ * idempotency guard for that later fan-out — NOT an unbuilt MVP boundary.
  *
  * Bilingual (pl/en) throughout.
  */
@@ -176,7 +179,8 @@ export const AuditOrchestratorWizard: React.FC<AuditOrchestratorWizardProps> = (
           assigneeIds: selectedAssigneeIds,
           // Advisory plan rows from the preset (#19b/#19c). Purely metadata.
           plan,
-          // MVP boundary: surveys/assignments are NOT generated yet.
+          // Idempotency guard for the later fan-out (hub "Generate surveys").
+          // Surveys are generated on demand from the program page, not here.
           surveysGenerated: false,
         },
       });

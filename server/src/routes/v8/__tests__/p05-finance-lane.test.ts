@@ -729,6 +729,13 @@ describe('P05 Concurrent Lane Run Prevention', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // vi.clearAllMocks() resets call history but does NOT flush queued
+    // mockResolvedValueOnce values left over from earlier describe blocks
+    // (e.g. the E2E workflow). mockReset() drains that once-queue so these
+    // assertions see exactly the values they enqueue.
+    mockDbGet.mockReset();
+    mockDbRun.mockReset();
+    mockDbAll.mockReset();
     mockUser = { id: USER, role: 'admin', organizationId: ORG, isSuperAdmin: false };
     app = createApp();
     mockDbGet.mockResolvedValue(null);
@@ -769,6 +776,13 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // vi.clearAllMocks() resets call history but does NOT flush queued
+    // mockResolvedValueOnce values left over from earlier describe blocks
+    // (e.g. the E2E workflow). mockReset() drains that once-queue so these
+    // assertions see exactly the values they enqueue.
+    mockDbGet.mockReset();
+    mockDbRun.mockReset();
+    mockDbAll.mockReset();
     mockUser = { id: USER, role: 'admin', organizationId: ORG, isSuperAdmin: false };
     app = createApp();
     mockDbGet.mockResolvedValue(null);

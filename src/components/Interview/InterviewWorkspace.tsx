@@ -219,12 +219,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // #11 — Pre-submit AI quality gate
   const MIN_ANSWER_CHARS = 20;
+  // L-07 / SPEC_13 §5.1 — 'hard' = objective insufficiency (required question with
+  // no answer); these BLOCK submit with no "submit anyway" escape. 'soft' = quality
+  // hints (too short / AI needs_improvement); these stay skippable.
   type QualityGateItem = {
     questionId: string;
     index: number;
     label: string;
     reason: string;
     category?: InterviewCategory;
+    severity: 'hard' | 'soft';
   };
   const [qualityGate, setQualityGate] = useState<{
     open: boolean;
@@ -562,6 +566,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         q.questionText.length > 90 ? `${q.questionText.slice(0, 87)}…` : q.questionText;
 
       // Local heuristic — never relies on the AI backend being available.
+      // required-but-empty = HARD floor (objective); too-short = SOFT hint.
       for (const q of orderedQuestions) {
         const answer = (q.answerText || '').trim();
         const tooShort = answer.length > 0 && answer.length < MIN_ANSWER_CHARS;
@@ -572,6 +577,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           index: indexById.get(q.id) || 0,
           label: labelFor(q),
           category: q.category,
+          severity: requiredEmpty ? 'hard' : 'soft',
           reason: requiredEmpty
             ? isPolish
               ? 'Pytanie wymagane — brak odpowiedzi'
@@ -583,24 +589,33 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       }
 
       // AI signal (optional) — augments / overrides reason text where present.
+      // verdict 'insufficient'/'unanswered' = HARD floor; 'needs_improvement' = SOFT.
       const weakMap = evaluation?.weakAnswerMap || [];
       for (const weak of weakMap) {
         if (!weak.questionId) continue;
         if (weak.verdict === 'sufficient') continue;
         const q = questions.find((item) => item.id === weak.questionId);
         if (!q) continue;
+        const aiHard = weak.verdict === 'insufficient' || weak.verdict === 'unanswered';
+        const existing = items.get(weak.questionId);
         items.set(weak.questionId, {
           questionId: weak.questionId,
           index: indexById.get(weak.questionId) || 0,
           label: labelFor(q),
           category: q.category,
+          // never downgrade an item the local heuristic already flagged as hard.
+          severity: existing?.severity === 'hard' || aiHard ? 'hard' : 'soft',
           reason:
             weak.feedback?.trim() ||
             (isPolish ? 'AI: wymaga doprecyzowania' : 'AI: needs improvement'),
         });
       }
 
-      return Array.from(items.values()).sort((a, b) => a.index - b.index);
+      return Array.from(items.values()).sort((a, b) => {
+        // hard items first, then by order
+        if (a.severity !== b.severity) return a.severity === 'hard' ? -1 : 1;
+        return a.index - b.index;
+      });
     },
     [questions, isPolish]
   );
@@ -1298,8 +1313,39 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       onClose?.();
     } catch (error: any) {
       console.error('[InterviewWorkspace] Failed to submit session:', error);
-      const apiMsg =
-        error?.response?.data?.error || error?.response?.data?.message || error?.message;
+      const data = error?.response?.data;
+      const apiMsg = data?.error || data?.message || error?.message;
+
+      // L-07 / SPEC_13 §5.1 — server enforced the objective-insufficiency floor.
+      // Re-open the gate as a HARD block listing the server's blocked items, so a
+      // stale client bypass still results in no escape hatch.
+      if (data?.code === 'OBJECTIVE_INSUFFICIENCY') {
+        const blocked = Array.isArray(data.blockedItems) ? data.blockedItems : [];
+        const indexById = new Map<string, number>();
+        [...questions]
+          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+          .forEach((q, i) => indexById.set(q.id, i + 1));
+        const items = blocked.map((b: any, i: number) => ({
+          questionId: String(b.questionId || b.key || `blocked_${i}`),
+          index: b.questionId ? indexById.get(String(b.questionId)) || 0 : 0,
+          label: String(b.label || (isPolish ? 'Wymagana odpowiedź' : 'Required answer')),
+          reason: isPolish ? 'Pytanie wymagane — brak odpowiedzi' : 'Required — no answer yet',
+          severity: 'hard' as const,
+        }));
+        setQualityGate({
+          open: true,
+          items: items.length > 0 ? items : [],
+          checking: false,
+        });
+        toast.error(
+          isPolish
+            ? 'Nie można wysłać: uzupełnij wymagane odpowiedzi.'
+            : 'Cannot submit: complete the required answers.',
+          { id: toastId }
+        );
+        return;
+      }
+
       toast.error(
         apiMsg
           ? isPolish
@@ -1319,6 +1365,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     isSubmittingSession,
     onComplete,
     onSessionChange,
+    questions,
     runAiQualityReview,
     session,
   ]);
@@ -1336,7 +1383,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         return;
       }
 
+      // bypassGate only skips SOFT hints. Hard-floor items (objective
+      // insufficiency) can never be bypassed client-side (SPEC_13 §5.1); the
+      // server also enforces this with a 422, so a stale bypass is still rejected.
       if (opts?.bypassGate) {
+        const hardItems = computeWeakAnswers(aiEvaluation).filter((i) => i.severity === 'hard');
+        if (hardItems.length > 0) {
+          setQualityGate({ open: true, items: hardItems, checking: false });
+          return;
+        }
         setQualityGate({ open: false, items: [], checking: false });
         await performSubmit();
         return;
@@ -2620,6 +2675,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   })();
 
   // #11 — Pre-submit AI quality gate modal (shared across render branches).
+  // L-07 / SPEC_13 §5.1 — when any hard-floor item is present the gate is a HARD
+  // block: no "submit anyway" escape. Soft-only gates stay skippable.
+  const gateHasHardBlock = qualityGate.items.some((i) => i.severity === 'hard');
   const qualityGateModal = (
     <AnimatePresence>
       {qualityGate.open && (
@@ -2638,41 +2696,73 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             className="w-full max-w-lg rounded-2xl border border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-900 shadow-2xl overflow-hidden"
           >
             <div className="flex items-start gap-3 px-5 pt-5 pb-3">
-              <div className="p-2 rounded-xl bg-amber-500/15 text-amber-500 shrink-0">
+              <div
+                className={`p-2 rounded-xl shrink-0 ${
+                  gateHasHardBlock
+                    ? 'bg-rose-500/15 text-rose-500'
+                    : 'bg-amber-500/15 text-amber-500'
+                }`}
+              >
                 <AlertTriangle size={20} />
               </div>
               <div className="min-w-0">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                  {isPolish
-                    ? 'Niektóre odpowiedzi wyglądają na zbyt krótkie'
-                    : 'Some answers look too short'}
+                  {gateHasHardBlock
+                    ? isPolish
+                      ? 'Uzupełnij wymagane odpowiedzi, aby wysłać'
+                      : 'Complete the required answers before submitting'
+                    : isPolish
+                      ? 'Niektóre odpowiedzi wyglądają na zbyt krótkie'
+                      : 'Some answers look too short'}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish
-                    ? 'Możesz je poprawić teraz albo wysłać mimo to — to tylko podpowiedź, nie blokada.'
-                    : 'You can improve them now or submit anyway — this is a hint, not a hard block.'}
+                  {gateHasHardBlock
+                    ? isPolish
+                      ? 'Te pozycje są wymagane — wywiadu nie można wysłać, dopóki nie zostaną uzupełnione.'
+                      : 'These items are required — the interview cannot be submitted until they are completed.'
+                    : isPolish
+                      ? 'Możesz je poprawić teraz albo wysłać mimo to — to tylko podpowiedź, nie blokada.'
+                      : 'You can improve them now or submit anyway — this is a hint, not a hard block.'}
                 </p>
               </div>
             </div>
 
             <div className="px-5 pb-2 max-h-64 overflow-y-auto">
               <ul className="space-y-2">
-                {qualityGate.items.map((item) => (
-                  <li
-                    key={item.questionId}
-                    className="flex items-start gap-3 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-800/40 px-3 py-2"
-                  >
-                    <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-xs font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
-                      {item.index || '•'}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
-                        {item.label}
-                      </p>
-                      <p className="text-xs text-amber-600 dark:text-amber-400">{item.reason}</p>
-                    </div>
-                  </li>
-                ))}
+                {qualityGate.items.map((item) => {
+                  const hard = item.severity === 'hard';
+                  return (
+                    <li
+                      key={item.questionId}
+                      className="flex items-start gap-3 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-800/40 px-3 py-2"
+                    >
+                      <span
+                        className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${
+                          hard
+                            ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                            : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                        }`}
+                      >
+                        {item.index || '•'}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {item.label}
+                        </p>
+                        <p
+                          className={`text-xs ${
+                            hard
+                              ? 'text-rose-600 dark:text-rose-400'
+                              : 'text-amber-600 dark:text-amber-400'
+                          }`}
+                        >
+                          {item.reason}
+                          {hard ? (isPolish ? ' · wymagane' : ' · required') : ''}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
@@ -2683,23 +2773,31 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-navy-900/40 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors"
               >
                 <ChevronLeft size={16} />
-                {isPolish ? 'Wróć i popraw' : 'Go back and improve'}
+                {gateHasHardBlock
+                  ? isPolish
+                    ? 'Uzupełnij teraz'
+                    : 'Complete now'
+                  : isPolish
+                    ? 'Wróć i popraw'
+                    : 'Go back and improve'}
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  void handleSubmitSession({ bypassGate: true });
-                }}
-                disabled={isSubmittingSession}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 hover:bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
-              >
-                {isSubmittingSession ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Send size={16} />
-                )}
-                {isPolish ? 'Wyślij mimo to' : 'Submit anyway'}
-              </button>
+              {!gateHasHardBlock && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleSubmitSession({ bypassGate: true });
+                  }}
+                  disabled={isSubmittingSession}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary-500 hover:bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                >
+                  {isSubmittingSession ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Send size={16} />
+                  )}
+                  {isPolish ? 'Wyślij mimo to' : 'Submit anyway'}
+                </button>
+              )}
             </div>
           </motion.div>
         </motion.div>

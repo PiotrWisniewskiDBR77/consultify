@@ -15,6 +15,7 @@ import { updateInitiativeStatusWriteTruth } from '@/services/initiativeWriteTrut
 import { useAppStore } from '@/store/useAppStore';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 
+import { Banner } from '../shared/Banner';
 import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
@@ -1408,6 +1409,27 @@ export const ResultsHub: React.FC = () => {
         rightControls={rightControls}
         commandRowContent={commandRowContent}
       >
+        {resultsSource === 'legacy' && (
+          <Banner
+            className="mb-3"
+            variant="degraded"
+            title={t(
+              'results.runtime.degraded.title',
+              'Showing legacy KPI data (V8 Results runtime unavailable)'
+            )}
+            message={t(
+              'results.runtime.degraded.message',
+              'The canonical V8 Results service could not be reached, so KPIs are loaded from the deprecated /api/benefits/* paths. Some governed metrics (ROI, deviations, reconciliation) may be incomplete until the V8 runtime is restored.'
+            )}
+            action={{
+              label: t('results.hub.retry', 'Retry'),
+              onClick: () => {
+                void fetchKPIs();
+                void loadV8Snapshot();
+              },
+            }}
+          />
+        )}
         {activeDocumentId ? (
           <Suspense
             fallback={
