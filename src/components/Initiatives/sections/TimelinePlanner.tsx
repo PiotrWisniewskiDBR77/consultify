@@ -30,6 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -407,6 +408,7 @@ export function useTimelineRows({
   milestones,
   isPolish,
 }: UseTimelineRowsOptions) {
+  const { t } = useTranslation();
   const [extraRows, setExtraRows] = useState<TimelineRow[]>([]);
   const [rowOverrides, setRowOverrides] = useState<Record<string, Partial<TimelineRow>>>({});
   const [manualOrder, setManualOrder] = useState<string[]>([]);
@@ -418,7 +420,7 @@ export function useTimelineRows({
     result.push({
       id: '__start__',
       type: 'start',
-      name: isPolish ? 'Start inicjatywy' : 'Initiative Start',
+      name: t('initiatives.timelinePlanner.initiativeStart'),
       startDate: plannedStart,
       endDate: null,
       schedulingMode: 'fixed_date',
@@ -464,7 +466,7 @@ export function useTimelineRows({
     result.push({
       id: '__finish__',
       type: 'finish',
-      name: isPolish ? 'Koniec inicjatywy' : 'Initiative Finish',
+      name: t('initiatives.timelinePlanner.initiativeFinish'),
       startDate: plannedEnd,
       endDate: null,
       schedulingMode: 'fixed_date',
@@ -507,7 +509,7 @@ export function useTimelineRows({
     ordered.push(...middle);
     if (finishRow) ordered.push(finishRow);
     return ordered;
-  }, [plannedStart, plannedEnd, tasks, milestones, extraRows, isPolish, manualOrder, rowOverrides]);
+  }, [plannedStart, plannedEnd, tasks, milestones, extraRows, t, manualOrder, rowOverrides]);
 
   // Apply cascade recalculation
   const rows = useMemo(() => recalculateDates(rawRows), [rawRows]);
@@ -623,6 +625,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
   onAdd,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedType, setSelectedType] = useState<TimelineRowType | null>(null);
 
@@ -929,7 +932,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {isPolish ? 'Co chcesz dodać?' : 'What do you want to add?'}
+                  {t('initiatives.timelinePlanner.whatToAdd')}
                 </span>
                 <button
                   onClick={onClose}
@@ -973,7 +976,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     onClick={() => setStep(1)}
                     className="text-[10px] text-slate-600 hover:text-slate-600 transition-colors"
                   >
-                    ← {isPolish ? 'Wróć' : 'Back'}
+                    ← {t('initiatives.timelinePlanner.back')}
                   </button>
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     {isPolish
@@ -992,14 +995,14 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {/* Name */}
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Nazwa' : 'Name'} *
+                  {t('initiatives.timelinePlanner.name')} *
                 </label>
                 <input
                   ref={nameRef}
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={isPolish ? 'Nazwa elementu...' : 'Item name...'}
+                  placeholder={t('initiatives.timelinePlanner.itemNamePlaceholder')}
                   className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 focus:outline-none"
                   autoFocus
                 />
@@ -1009,10 +1012,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {selectedType === 'task' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish
-                      ? 'Wybierz zadanie z listy inicjatywy'
-                      : 'Select task from initiative task list'}{' '}
-                    *
+                    {t('initiatives.timelinePlanner.selectTaskFromList')} *
                   </label>
                   <select
                     value={selectedTaskId}
@@ -1027,7 +1027,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     }}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="">— {isPolish ? 'Wybierz zadanie' : 'Select task'} —</option>
+                    <option value="">— {t('initiatives.timelinePlanner.selectTask')} —</option>
                     {taskOptions.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.title}
@@ -1040,10 +1040,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {selectedType === 'decision' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish
-                      ? 'Wybierz decyzję z listy inicjatywy'
-                      : 'Select decision from initiative list'}{' '}
-                    *
+                    {t('initiatives.timelinePlanner.selectDecisionFromList')} *
                   </label>
                   <select
                     value={selectedDecisionId}
@@ -1055,7 +1052,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     }}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="">— {isPolish ? 'Wybierz decyzję' : 'Select decision'} —</option>
+                    <option value="">— {t('initiatives.timelinePlanner.selectDecision')} —</option>
                     {decisionOptions.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.title}
@@ -1068,7 +1065,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {selectedType === 'milestone' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Wybierz kamień milowy z listy' : 'Select milestone from list'} *
+                    {t('initiatives.timelinePlanner.selectMilestoneFromList')} *
                   </label>
                   <select
                     value={selectedMilestoneId}
@@ -1083,9 +1080,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     }}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="">
-                      — {isPolish ? 'Wybierz kamień milowy' : 'Select milestone'} —
-                    </option>
+                    <option value="">— {t('initiatives.timelinePlanner.selectMilestone')} —</option>
                     {milestoneOptions.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.name}
@@ -1098,7 +1093,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {/* Scheduling mode */}
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1.5">
-                  {isPolish ? 'Trigger startu' : 'Start trigger'}
+                  {t('initiatives.timelinePlanner.startTrigger')}
                 </label>
                 <div className="flex gap-2">
                   <button
@@ -1112,7 +1107,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
                     }`}
                   >
-                    {isPolish ? 'Z dependency (system)' : 'From dependency (system)'}
+                    {t('initiatives.timelinePlanner.fromDependencySystem')}
                   </button>
                   <button
                     onClick={() => {
@@ -1125,7 +1120,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
                     }`}
                   >
-                    {isPolish ? 'Data ręczna' : 'Manual date'}
+                    {t('initiatives.timelinePlanner.manualDate')}
                   </button>
                   <button
                     onClick={() => {
@@ -1138,7 +1133,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         : 'border-slate-200 dark:border-navy-600 text-slate-500 hover:border-slate-300'
                     }`}
                   >
-                    {isPolish ? 'Zdarzenie' : 'Event trigger'}
+                    {t('initiatives.timelinePlanner.eventTrigger')}
                   </button>
                 </div>
               </div>
@@ -1147,7 +1142,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {startTriggerType === 'dependency' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Zależy od' : 'Depends on'}
+                    {t('initiatives.timelinePlanner.dependsOn')}
                   </label>
                   <select
                     value={dependsOnId}
@@ -1167,7 +1162,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {startTriggerType === 'date' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Data' : 'Date'}
+                    {t('initiatives.timelinePlanner.date')}
                   </label>
                   <input
                     type="date"
@@ -1180,17 +1175,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {startTriggerType === 'event' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Nazwa zdarzenia' : 'Event name'}
+                    {t('initiatives.timelinePlanner.eventName')}
                   </label>
                   <input
                     type="text"
                     value={startTriggerEvent}
                     onChange={(e) => setStartTriggerEvent(e.target.value)}
-                    placeholder={
-                      isPolish
-                        ? 'np. Zatwierdzenie gate / sygnał z systemu'
-                        : 'e.g. Gate approval / system signal'
-                    }
+                    placeholder={t('initiatives.timelinePlanner.placeholderGateApproval')}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                   />
                 </div>
@@ -1202,7 +1193,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 selectedType === 'meeting') && (
                 <div className="space-y-1.5">
                   <label className="text-[10px] text-slate-500 block">
-                    {isPolish ? 'Trigger końca' : 'End trigger'}
+                    {t('initiatives.timelinePlanner.endTrigger')}
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <button
@@ -1214,7 +1205,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
-                      {isPolish ? 'Z czasu trwania' : 'From duration'}
+                      {t('initiatives.timelinePlanner.fromDuration')}
                     </button>
                     <button
                       type="button"
@@ -1225,7 +1216,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
-                      {isPolish ? 'Data ręczna' : 'Manual date'}
+                      {t('initiatives.timelinePlanner.manualDate')}
                     </button>
                     <button
                       type="button"
@@ -1236,7 +1227,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
-                      {isPolish ? 'Z sukcesora' : 'From successor'}
+                      {t('initiatives.timelinePlanner.fromSuccessor')}
                     </button>
                   </div>
                   {endSchedulingMode === 'manual_date' && (
@@ -1254,7 +1245,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">
-                        — {isPolish ? 'Wybierz sukcesora' : 'Select successor'} —
+                        — {t('initiatives.timelinePlanner.selectSuccessor')} —
                       </option>
                       {successorOptions.map((o) => (
                         <option key={o.id} value={o.id}>
@@ -1272,7 +1263,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'Okres realizacji (dni)' : 'Calendar window (days)'}
+                        {t('initiatives.timelinePlanner.calendarWindowDays')}
                       </label>
                       <input
                         type="number"
@@ -1285,7 +1276,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </div>
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'Nakład pracy zespołu (h)' : 'Team effort (h)'}
+                        {t('initiatives.timelinePlanner.teamEffortHours')}
                       </label>
                       <input
                         type="number"
@@ -1299,9 +1290,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     </div>
                   </div>
                   <p className="text-[10px] text-slate-600">
-                    {isPolish
-                      ? 'Okres wpływa na harmonogram i datę końca inicjatywy. Effort służy do heatmapy obciążenia zespołu.'
-                      : 'Calendar window affects schedule/end date. Effort is used for team workload heatmaps.'}
+                    {t('initiatives.timelinePlanner.calendarWindowHelp')}
                   </p>
                 </div>
               )}
@@ -1310,7 +1299,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {selectedType === 'decision' && (
                 <div className="flex items-center gap-3">
                   <label className="text-[10px] text-slate-500">
-                    {isPolish ? 'Blokuje następne zadania?' : 'Blocks next tasks?'}
+                    {t('initiatives.timelinePlanner.blocksNextTasks')}
                   </label>
                   <button
                     onClick={() => setDecisionBlocks(!decisionBlocks)}
@@ -1333,7 +1322,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'Tryb wydarzenia' : 'Event mode'}
+                        {t('initiatives.timelinePlanner.eventMode')}
                       </label>
                       <select
                         value={infoEventMode}
@@ -1345,55 +1334,53 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                       >
                         <option value="cyclical">
-                          {isPolish ? 'Spotkanie cykliczne' : 'Cyclical meeting'}
+                          {t('initiatives.timelinePlanner.cyclicalMeeting')}
                         </option>
                         <option value="specific_date">
-                          {isPolish ? 'W konkretnej dacie' : 'On specific date'}
+                          {t('initiatives.timelinePlanner.onSpecificDate')}
                         </option>
                         <option value="after_event">
-                          {isPolish ? 'Po zdarzeniu' : 'After event'}
+                          {t('initiatives.timelinePlanner.afterEvent')}
                         </option>
                       </select>
                     </div>
                     {infoEventMode === 'cyclical' && (
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-1">
-                          {isPolish ? 'Cykliczność' : 'Cadence'}
+                          {t('initiatives.timelinePlanner.cadence')}
                         </label>
                         <select
                           value={infoEventCadence}
                           onChange={(e) => setInfoEventCadence(e.target.value as any)}
                           className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                         >
-                          <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
-                          <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
+                          <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
+                          <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
                           <option value="biweekly">
-                            {isPolish ? 'Co 2 tygodnie' : 'Biweekly'}
+                            {t('initiatives.timelinePlanner.biweekly')}
                           </option>
-                          <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
-                          <option value="custom">{isPolish ? 'Niestandardowo' : 'Custom'}</option>
+                          <option value="monthly">
+                            {t('initiatives.timelinePlanner.monthly')}
+                          </option>
+                          <option value="custom">{t('initiatives.timelinePlanner.custom')}</option>
                         </select>
                       </div>
                     )}
                     {infoEventMode === 'after_event' && (
                       <div className="sm:col-span-2">
                         <label className="text-[10px] text-slate-500 block mb-1">
-                          {isPolish ? 'Po jakim zdarzeniu?' : 'After which event?'}
+                          {t('initiatives.timelinePlanner.afterWhichEvent')}
                         </label>
                         <input
                           type="text"
                           value={infoEventReferenceEvent}
                           onChange={(e) => setInfoEventReferenceEvent(e.target.value)}
-                          placeholder={
-                            isPolish ? 'np. Po akceptacji gate GO' : 'e.g. After GO gate approval'
-                          }
+                          placeholder={t('initiatives.timelinePlanner.placeholderAfterGoGate')}
                           className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                         />
                         {submitAttempted && !infoEventReferenceEventValid && (
                           <p className="mt-1 text-[10px] text-rose-500">
-                            {isPolish
-                              ? 'Uzupełnij nazwę zdarzenia, po którym ma wystąpić ten event.'
-                              : 'Provide the event name that should trigger this event.'}
+                            {t('initiatives.timelinePlanner.validationReferenceEvent')}
                           </p>
                         )}
                       </div>
@@ -1401,27 +1388,25 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   </div>
                   {submitAttempted && !infoEventDateModeValid && (
                     <p className="text-[10px] text-rose-500">
-                      {isPolish
-                        ? 'Dla trybu "W konkretnej dacie" wybierz datę startu.'
-                        : 'For "On specific date" mode, choose a start date.'}
+                      {t('initiatives.timelinePlanner.validationSpecificDate')}
                     </p>
                   )}
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Odbiorcy' : 'Audience'}
+                      {t('initiatives.timelinePlanner.audience')}
                     </label>
                     <input
                       type="text"
                       value={audience}
                       onChange={(e) => setAudience(e.target.value)}
-                      placeholder={isPolish ? 'np. Steering Committee' : 'e.g. Steering Committee'}
+                      placeholder={t('initiatives.timelinePlanner.placeholderSteeringCommittee')}
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'Kto powinien być?' : 'Who should attend?'}
+                        {t('initiatives.timelinePlanner.whoShouldAttend')}
                       </label>
                       <select
                         value={infoEventParticipantMode}
@@ -1430,8 +1415,8 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         }
                         className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                       >
-                        <option value="group">{isPolish ? 'Grupa' : 'Group'}</option>
-                        <option value="person">{isPolish ? 'Osoba' : 'Person'}</option>
+                        <option value="group">{t('initiatives.timelinePlanner.group')}</option>
+                        <option value="person">{t('initiatives.timelinePlanner.person')}</option>
                       </select>
                     </div>
                     <div>
@@ -1463,7 +1448,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
-                            — {isPolish ? 'Wybierz osobę' : 'Select person'} —
+                            — {t('initiatives.timelinePlanner.selectPerson')} —
                           </option>
                           {users.map((u) => (
                             <option key={u.id} value={u.id}>
@@ -1476,16 +1461,14 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       )}
                       {submitAttempted && !infoEventParticipantValid && (
                         <p className="mt-1 text-[10px] text-rose-500">
-                          {isPolish
-                            ? 'Wybierz osobę odpowiedzialną za udział w wydarzeniu.'
-                            : 'Select a person who should attend this event.'}
+                          {t('initiatives.timelinePlanner.validationParticipant')}
                         </p>
                       )}
                     </div>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Źródło materiału (wymagane)' : 'Material source (required)'}
+                      {t('initiatives.timelinePlanner.materialSourceRequired')}
                     </label>
                     <select
                       value={infoAssetType}
@@ -1493,28 +1476,24 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="internal_report">
-                        {isPolish ? 'Raport wewnętrzny' : 'Internal report'}
+                        {t('initiatives.timelinePlanner.internalReport')}
                       </option>
                       <option value="generated_presentation">
-                        {isPolish ? 'Prezentacja wygenerowana' : 'Generated presentation'}
+                        {t('initiatives.timelinePlanner.generatedPresentation')}
                       </option>
                       <option value="external_link">
-                        {isPolish ? 'Link zewnętrzny' : 'External link'}
+                        {t('initiatives.timelinePlanner.externalLink')}
                       </option>
-                      <option value="other">{isPolish ? 'Inne' : 'Other'}</option>
+                      <option value="other">{t('initiatives.timelinePlanner.otherNeut')}</option>
                     </select>
                     {infoAssetType === 'internal_report' && availableReports.length === 0 && (
                       <p className="mt-1 text-[10px] text-amber-500">
-                        {isPolish
-                          ? 'Brak raportów w bibliotece. Utwórz raport w module Raporty.'
-                          : 'No reports in library. Create a report in the Reports module.'}
+                        {t('initiatives.timelinePlanner.noReportsInLibrary')}
                       </p>
                     )}
                     {submitAttempted && !infoEventMaterialValid && (
                       <p className="mt-1 text-[10px] text-rose-500">
-                        {isPolish
-                          ? 'Uzupełnij wymagane źródło materiału dla tego wydarzenia.'
-                          : 'Provide the required material source for this event.'}
+                        {t('initiatives.timelinePlanner.validationMaterialSource')}
                       </p>
                     )}
                   </div>
@@ -1522,7 +1501,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   {infoAssetType === 'internal_report' && (
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'Wybierz raport' : 'Select report'}
+                        {t('initiatives.timelinePlanner.selectReport')}
                       </label>
                       <select
                         value={linkedReportPlaceholderId}
@@ -1535,7 +1514,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                       >
                         <option value="">
-                          — {isPolish ? 'Wybierz raport' : 'Select report'} —
+                          — {t('initiatives.timelinePlanner.selectReport')} —
                         </option>
                         {availableReports.map((r) => (
                           <option key={r.id} value={r.id}>
@@ -1549,7 +1528,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   {infoAssetType === 'external_link' && (
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'URL materiału' : 'Material URL'}
+                        {t('initiatives.timelinePlanner.materialUrl')}
                       </label>
                       <input
                         type="url"
@@ -1564,15 +1543,13 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   {(infoAssetType === 'generated_presentation' || infoAssetType === 'other') && (
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'Nazwa materiału' : 'Material label'}
+                        {t('initiatives.timelinePlanner.materialLabel')}
                       </label>
                       <input
                         type="text"
                         value={infoAssetLabel}
                         onChange={(e) => setInfoAssetLabel(e.target.value)}
-                        placeholder={
-                          isPolish ? 'np. Deck: Sprint Review' : 'e.g. Deck: Sprint Review'
-                        }
+                        placeholder={t('initiatives.timelinePlanner.placeholderDeckSprintReview')}
                         className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                       />
                     </div>
@@ -1585,7 +1562,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="sm:col-span-2">
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Szablony' : 'Templates'}
+                      {t('initiatives.timelinePlanner.templates')}
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {NOTIFICATION_PRESETS.map((preset) => (
@@ -1609,7 +1586,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Odbiorca' : 'Recipient type'}
+                      {t('initiatives.timelinePlanner.recipientType')}
                     </label>
                     <select
                       value={notificationRecipientMode}
@@ -1618,15 +1595,15 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       }
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
-                      <option value="group">{isPolish ? 'Grupa' : 'Group'}</option>
-                      <option value="person">{isPolish ? 'Osoba' : 'Person'}</option>
+                      <option value="group">{t('initiatives.timelinePlanner.group')}</option>
+                      <option value="person">{t('initiatives.timelinePlanner.person')}</option>
                     </select>
                   </div>
                   <div>
                     {notificationRecipientMode === 'group' ? (
                       <>
                         <label className="text-[10px] text-slate-500 block mb-1">
-                          {isPolish ? 'Wybierz grupę' : 'Select group'}
+                          {t('initiatives.timelinePlanner.selectGroup')}
                         </label>
                         <select
                           value={notificationRecipientGroupKey}
@@ -1652,7 +1629,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     ) : (
                       <>
                         <label className="text-[10px] text-slate-500 block mb-1">
-                          {isPolish ? 'Wybierz osobę' : 'Select person'}
+                          {t('initiatives.timelinePlanner.selectPerson')}
                         </label>
                         <select
                           value={notificationRecipientUserId}
@@ -1660,7 +1637,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                           className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                         >
                           <option value="">
-                            — {isPolish ? 'Wybierz osobę' : 'Select person'} —
+                            — {t('initiatives.timelinePlanner.selectPerson')} —
                           </option>
                           {users.map((u) => (
                             <option key={u.id} value={u.id}>
@@ -1675,7 +1652,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Tryb notyfikacji' : 'Notification mode'}
+                      {t('initiatives.timelinePlanner.notificationMode')}
                     </label>
                     <select
                       value={notificationTriggerMode}
@@ -1685,15 +1662,15 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="event_based">
-                        {isPolish ? 'Zdarzeniowa' : 'Event-based'}
+                        {t('initiatives.timelinePlanner.eventBased')}
                       </option>
-                      <option value="cyclical">{isPolish ? 'Cykliczna' : 'Cyclical'}</option>
+                      <option value="cyclical">{t('initiatives.timelinePlanner.cyclical')}</option>
                     </select>
                   </div>
                   {notificationTriggerMode === 'event_based' && (
                     <div>
                       <label className="text-[10px] text-slate-500 block mb-1">
-                        {isPolish ? 'Wyzwalacz zdarzenia' : 'Event trigger'}
+                        {t('initiatives.timelinePlanner.eventTriggerLabel')}
                       </label>
                       <select
                         value={notificationTriggerEvent}
@@ -1708,15 +1685,15 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         }
                         className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                       >
-                        <option value="on_start">{isPolish ? 'Przy starcie' : 'On start'}</option>
+                        <option value="on_start">{t('initiatives.timelinePlanner.onStart')}</option>
                         <option value="on_complete">
-                          {isPolish ? 'Przy zakończeniu' : 'On complete'}
+                          {t('initiatives.timelinePlanner.onComplete')}
                         </option>
                         <option value="before_next_action">
-                          {isPolish ? 'Przed kolejnym działaniem' : 'Before next action'}
+                          {t('initiatives.timelinePlanner.beforeNextAction')}
                         </option>
                         <option value="manual_gate">
-                          {isPolish ? 'Po ręcznym gate' : 'Manual gate event'}
+                          {t('initiatives.timelinePlanner.manualGateEvent')}
                         </option>
                       </select>
                     </div>
@@ -1725,7 +1702,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     notificationTriggerEvent === 'before_next_action' && (
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-1">
-                          {isPolish ? 'Wyprzedzenie (dni)' : 'Lead time (days)'}
+                          {t('initiatives.timelinePlanner.leadTimeDays')}
                         </label>
                         <input
                           type="number"
@@ -1738,23 +1715,23 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     )}
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Cykliczność' : 'Cadence'}
+                      {t('initiatives.timelinePlanner.cadence')}
                     </label>
                     <select
                       value={notificationCadence}
                       onChange={(e) => setNotificationCadence(e.target.value as any)}
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
-                      <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
-                      <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
-                      <option value="biweekly">{isPolish ? 'Co 2 tygodnie' : 'Biweekly'}</option>
-                      <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
-                      <option value="custom">{isPolish ? 'Niestandardowo' : 'Custom'}</option>
+                      <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
+                      <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
+                      <option value="biweekly">{t('initiatives.timelinePlanner.biweekly')}</option>
+                      <option value="monthly">{t('initiatives.timelinePlanner.monthly')}</option>
+                      <option value="custom">{t('initiatives.timelinePlanner.custom')}</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Kanał' : 'Channel'}
+                      {t('initiatives.timelinePlanner.channel')}
                     </label>
                     <select
                       value={notificationChannel}
@@ -1763,49 +1740,39 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                     >
                       <option value="email">Email</option>
                       <option value="slack">Slack</option>
-                      <option value="meeting">{isPolish ? 'Spotkanie' : 'Meeting'}</option>
+                      <option value="meeting">{t('initiatives.timelinePlanner.meeting')}</option>
                       <option value="dashboard">Dashboard</option>
-                      <option value="other">{isPolish ? 'Inny' : 'Other'}</option>
+                      <option value="other">{t('initiatives.timelinePlanner.otherMasc')}</option>
                     </select>
                   </div>
                   <div className="sm:col-span-2">
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Reguła komunikacji' : 'Communication rule'}
+                      {t('initiatives.timelinePlanner.communicationRule')}
                     </label>
                     <input
                       type="text"
                       value={notificationRule}
                       onChange={(e) => setNotificationRule(e.target.value)}
-                      placeholder={
-                        isPolish
-                          ? 'np. Co wtorek 09:00 do Steering Committee'
-                          : 'e.g. Every Tuesday 09:00 to Steering Committee'
-                      }
+                      placeholder={t('initiatives.timelinePlanner.placeholderCommunicationRule')}
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Treść notyfikacji' : 'Notification content'} *
+                      {t('initiatives.timelinePlanner.notificationContent')} *
                     </label>
                     <textarea
                       value={notificationMessage}
                       onChange={(e) => setNotificationMessage(e.target.value)}
                       rows={2}
-                      placeholder={
-                        isPolish
-                          ? 'Wpisz treść, która ma być wysłana do odbiorcy...'
-                          : 'Enter message content to be sent to recipient...'
-                      }
+                      placeholder={t('initiatives.timelinePlanner.placeholderNotificationContent')}
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2 space-y-1.5">
                     <div className="flex items-center gap-3">
                       <label className="text-[10px] text-slate-500">
-                        {isPolish
-                          ? 'Automatyczna wysyłka notyfikacji przez AI'
-                          : 'Automatic notification sending by AI'}
+                        {t('initiatives.timelinePlanner.aiAutoSendNotification')}
                       </label>
                       <button
                         type="button"
@@ -1826,11 +1793,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                         value={notificationAiInstruction}
                         onChange={(e) => setNotificationAiInstruction(e.target.value)}
                         rows={2}
-                        placeholder={
-                          isPolish
-                            ? 'Instrukcja dla AI: ton, długość, wymagane elementy wiadomości...'
-                            : 'AI instruction: tone, length, required message elements...'
-                        }
+                        placeholder={t('initiatives.timelinePlanner.placeholderAiInstruction')}
                         className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                       />
                     )}
@@ -1843,47 +1806,43 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Cykliczność spotkania' : 'Meeting cadence'}
+                      {t('initiatives.timelinePlanner.meetingCadence')}
                     </label>
                     <select
                       value={meetingCadence}
                       onChange={(e) => setMeetingCadence(e.target.value as any)}
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                     >
-                      <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
-                      <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
-                      <option value="biweekly">{isPolish ? 'Co 2 tygodnie' : 'Biweekly'}</option>
-                      <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
-                      <option value="custom">{isPolish ? 'Niestandardowo' : 'Custom'}</option>
+                      <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
+                      <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
+                      <option value="biweekly">{t('initiatives.timelinePlanner.biweekly')}</option>
+                      <option value="monthly">{t('initiatives.timelinePlanner.monthly')}</option>
+                      <option value="custom">{t('initiatives.timelinePlanner.custom')}</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Forma spotkania' : 'Meeting channel'}
+                      {t('initiatives.timelinePlanner.meetingChannel')}
                     </label>
                     <select
                       value={meetingChannel}
                       onChange={(e) => setMeetingChannel(e.target.value as any)}
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                     >
-                      <option value="online">{isPolish ? 'Online' : 'Online'}</option>
-                      <option value="onsite">{isPolish ? 'Stacjonarnie' : 'Onsite'}</option>
-                      <option value="hybrid">{isPolish ? 'Hybrydowo' : 'Hybrid'}</option>
+                      <option value="online">Online</option>
+                      <option value="onsite">{t('initiatives.timelinePlanner.onsite')}</option>
+                      <option value="hybrid">{t('initiatives.timelinePlanner.hybrid')}</option>
                     </select>
                   </div>
                   <div className="sm:col-span-2">
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Agenda spotkania' : 'Meeting agenda'}
+                      {t('initiatives.timelinePlanner.meetingAgenda')}
                     </label>
                     <textarea
                       rows={2}
                       value={meetingAgenda}
                       onChange={(e) => setMeetingAgenda(e.target.value)}
-                      placeholder={
-                        isPolish
-                          ? 'Krótki cel/agenda spotkania...'
-                          : 'Brief meeting purpose/agenda...'
-                      }
+                      placeholder={t('initiatives.timelinePlanner.placeholderMeetingAgenda')}
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   </div>
@@ -1895,7 +1854,7 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Okres realizacji (dni)' : 'Calendar window (days)'}
+                      {t('initiatives.timelinePlanner.calendarWindowDays')}
                     </label>
                     <input
                       type="number"
@@ -1908,23 +1867,17 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 block mb-1">
-                      {isPolish ? 'Powód pauzy' : 'Pause reason'}
+                      {t('initiatives.timelinePlanner.pauseReason')}
                     </label>
                     <input
                       type="text"
                       value={pauseReason}
                       onChange={(e) => setPauseReason(e.target.value)}
-                      placeholder={
-                        isPolish
-                          ? 'np. okno wdrożeniowe / freeze'
-                          : 'e.g. release freeze / maintenance'
-                      }
+                      placeholder={t('initiatives.timelinePlanner.placeholderPauseReason')}
                       className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                     <p className="mt-1 text-[10px] text-slate-600">
-                      {isPolish
-                        ? 'Wyjaśnij przyczynę postoju. Ta informacja będzie widoczna w harmonogramie i pomoże ocenić wpływ na kolejne kroki.'
-                        : 'Explain why execution is paused. This note is shown in the timeline and helps evaluate impact on next steps.'}
+                      {t('initiatives.timelinePlanner.pauseHelp')}
                     </p>
                   </div>
                 </div>
@@ -1934,18 +1887,18 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
               {selectedType === 'escalation' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Poziom eskalacji' : 'Escalation level'}
+                    {t('initiatives.timelinePlanner.escalationLevel')}
                   </label>
                   <select
                     value={escalationLevel}
                     onChange={(e) => setEscalationLevel(e.target.value)}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="">— {isPolish ? 'Wybierz' : 'Select'} —</option>
+                    <option value="">— {t('initiatives.timelinePlanner.select')} —</option>
                     <option value="Sponsor">Sponsor</option>
                     <option value="PMO">PMO</option>
-                    <option value="Board">{isPolish ? 'Zarząd' : 'Board'}</option>
-                    <option value="Other">{isPolish ? 'Inny' : 'Other'}</option>
+                    <option value="Board">{t('initiatives.timelinePlanner.board')}</option>
+                    <option value="Other">{t('initiatives.timelinePlanner.otherMasc')}</option>
                   </select>
                 </div>
               )}
@@ -1956,14 +1909,14 @@ const AddTimelineItemPanel: React.FC<AddItemPanelProps> = ({
                   onClick={onClose}
                   className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
                 >
-                  {isPolish ? 'Anuluj' : 'Cancel'}
+                  {t('initiatives.timelinePlanner.cancel')}
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={!name.trim()}
                   className="px-4 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 disabled:opacity-40 transition-colors"
                 >
-                  {isPolish ? 'Dodaj' : 'Add'}
+                  {t('initiatives.timelinePlanner.add')}
                 </button>
               </div>
             </div>
@@ -2007,6 +1960,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
   onSave,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(row.name);
   const [scheduling, setScheduling] = useState<SchedulingMode>(row.schedulingMode);
   const [fixedDate, setFixedDate] = useState(toISO(row.startDate));
@@ -2251,7 +2205,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           <div className="flex items-center gap-2">
             <Icon size={14} className={meta.color} />
             <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Edytuj element' : 'Edit item'}
+              {t('initiatives.timelinePlanner.editItem')}
             </span>
           </div>
           <button
@@ -2265,7 +2219,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {/* Name */}
         <div>
           <label className="text-[10px] text-slate-500 block mb-1">
-            {isPolish ? 'Nazwa' : 'Name'}
+            {t('initiatives.timelinePlanner.name')}
           </label>
           <input
             type="text"
@@ -2280,7 +2234,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {row.type === 'task' && (
           <div>
             <label className="text-[10px] text-slate-500 block mb-1">
-              {isPolish ? 'Zadanie źródłowe' : 'Source task'}
+              {t('initiatives.timelinePlanner.sourceTask')}
             </label>
             <select
               value={selectedTaskId}
@@ -2295,7 +2249,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               }}
               className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             >
-              <option value="">— {isPolish ? 'Wybierz zadanie' : 'Select task'} —</option>
+              <option value="">— {t('initiatives.timelinePlanner.selectTask')} —</option>
               {taskOptions.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.title}
@@ -2308,7 +2262,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {row.type === 'decision' && (
           <div>
             <label className="text-[10px] text-slate-500 block mb-1">
-              {isPolish ? 'Decyzja źródłowa' : 'Source decision'}
+              {t('initiatives.timelinePlanner.sourceDecision')}
             </label>
             <select
               value={selectedDecisionId}
@@ -2320,7 +2274,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               }}
               className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             >
-              <option value="">— {isPolish ? 'Wybierz decyzję' : 'Select decision'} —</option>
+              <option value="">— {t('initiatives.timelinePlanner.selectDecision')} —</option>
               {decisionOptions.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.title}
@@ -2333,7 +2287,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {row.type === 'milestone' && (
           <div>
             <label className="text-[10px] text-slate-500 block mb-1">
-              {isPolish ? 'Kamień milowy źródłowy' : 'Source milestone'}
+              {t('initiatives.timelinePlanner.sourceMilestone')}
             </label>
             <select
               value={selectedMilestoneId}
@@ -2348,9 +2302,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               }}
               className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
             >
-              <option value="">
-                — {isPolish ? 'Wybierz kamień milowy' : 'Select milestone'} —
-              </option>
+              <option value="">— {t('initiatives.timelinePlanner.selectMilestone')} —</option>
               {milestoneOptions.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}
@@ -2363,7 +2315,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {/* Start trigger */}
         <div>
           <label className="text-[10px] text-slate-500 block mb-1.5">
-            {isPolish ? 'Trigger startu' : 'Start trigger'}
+            {t('initiatives.timelinePlanner.startTrigger')}
           </label>
           <div className="flex gap-2">
             <button
@@ -2377,7 +2329,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   : 'border-slate-200 dark:border-navy-600 text-slate-500'
               }`}
             >
-              {isPolish ? 'Z dependency (system)' : 'From dependency (system)'}
+              {t('initiatives.timelinePlanner.fromDependencySystem')}
             </button>
             <button
               onClick={() => {
@@ -2390,7 +2342,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   : 'border-slate-200 dark:border-navy-600 text-slate-500'
               }`}
             >
-              {isPolish ? 'Data ręczna' : 'Manual date'}
+              {t('initiatives.timelinePlanner.manualDate')}
             </button>
             <button
               onClick={() => {
@@ -2403,7 +2355,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   : 'border-slate-200 dark:border-navy-600 text-slate-500'
               }`}
             >
-              {isPolish ? 'Zdarzenie' : 'Event trigger'}
+              {t('initiatives.timelinePlanner.eventTrigger')}
             </button>
           </div>
         </div>
@@ -2411,7 +2363,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {startTriggerType === 'dependency' && (
           <div>
             <label className="text-[10px] text-slate-500 block mb-1">
-              {isPolish ? 'Zależy od' : 'Depends on'}
+              {t('initiatives.timelinePlanner.dependsOn')}
             </label>
             <select
               value={dependsOnId}
@@ -2431,7 +2383,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {startTriggerType === 'date' && (
           <div>
             <label className="text-[10px] text-slate-500 block mb-1">
-              {isPolish ? 'Data' : 'Date'}
+              {t('initiatives.timelinePlanner.date')}
             </label>
             <input
               type="date"
@@ -2445,17 +2397,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {startTriggerType === 'event' && (
           <div>
             <label className="text-[10px] text-slate-500 block mb-1">
-              {isPolish ? 'Nazwa zdarzenia' : 'Event name'}
+              {t('initiatives.timelinePlanner.eventName')}
             </label>
             <input
               type="text"
               value={startTriggerEvent}
               onChange={(e) => setStartTriggerEvent(e.target.value)}
-              placeholder={
-                isPolish
-                  ? 'np. Zatwierdzenie gate / sygnał z systemu'
-                  : 'e.g. Gate approval / system signal'
-              }
+              placeholder={t('initiatives.timelinePlanner.placeholderGateApproval')}
               className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
             />
           </div>
@@ -2464,7 +2412,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {(row.type === 'task' || row.type === 'pause' || row.type === 'meeting') && (
           <div className="space-y-1.5">
             <label className="text-[10px] text-slate-500 block">
-              {isPolish ? 'Trigger końca' : 'End trigger'}
+              {t('initiatives.timelinePlanner.endTrigger')}
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
@@ -2472,21 +2420,21 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 onClick={() => setEndSchedulingMode('from_duration')}
                 className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_duration' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
               >
-                {isPolish ? 'Z czasu trwania' : 'From duration'}
+                {t('initiatives.timelinePlanner.fromDuration')}
               </button>
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('manual_date')}
                 className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'manual_date' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
               >
-                {isPolish ? 'Data ręczna' : 'Manual date'}
+                {t('initiatives.timelinePlanner.manualDate')}
               </button>
               <button
                 type="button"
                 onClick={() => setEndSchedulingMode('from_successor')}
                 className={`px-2 py-1.5 rounded-lg text-[11px] border transition-colors ${endSchedulingMode === 'from_successor' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
               >
-                {isPolish ? 'Z sukcesora' : 'From successor'}
+                {t('initiatives.timelinePlanner.fromSuccessor')}
               </button>
             </div>
             {endSchedulingMode === 'manual_date' && (
@@ -2503,7 +2451,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 onChange={(e) => setSuccessorId(e.target.value)}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
-                <option value="">— {isPolish ? 'Wybierz sukcesora' : 'Select successor'} —</option>
+                <option value="">— {t('initiatives.timelinePlanner.selectSuccessor')} —</option>
                 {successorOptions.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.label}
@@ -2520,7 +2468,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Okres (dni)' : 'Window (days)'}
+                  {t('initiatives.timelinePlanner.windowDays')}
                 </label>
                 <input
                   type="number"
@@ -2532,9 +2480,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Effort (h)' : 'Effort (h)'}
-                </label>
+                <label className="text-[10px] text-slate-500 block mb-1">Effort (h)</label>
                 <input
                   type="number"
                   min={0}
@@ -2547,9 +2493,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               </div>
             </div>
             <p className="text-[10px] text-slate-600">
-              {isPolish
-                ? 'Okres wpływa na harmonogram i datę końca inicjatywy. Effort służy do heatmapy obciążenia zespołu.'
-                : 'Calendar window affects schedule/end date. Effort is used for team workload heatmaps.'}
+              {t('initiatives.timelinePlanner.calendarWindowHelp')}
             </p>
           </div>
         )}
@@ -2559,7 +2503,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <label className="text-[10px] text-slate-500">
-                {isPolish ? 'Blokuje następne?' : 'Blocks next?'}
+                {t('initiatives.timelinePlanner.blocksNext')}
               </label>
               <button
                 onClick={() => setDecisionBlocks(!decisionBlocks)}
@@ -2572,7 +2516,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             </div>
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Wynik decyzji' : 'Decision outcome'}
+                {t('initiatives.timelinePlanner.decisionOutcome')}
               </label>
               <div className="flex gap-1.5">
                 {([null, 'GO', 'NO_GO', 'ESCALATE'] as const).map((val) => (
@@ -2582,16 +2526,12 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-colors ${decisionOutcome === val ? 'border-blue-500 bg-blue-500/10 text-blue-600' : 'border-slate-200 dark:border-navy-600 text-slate-500'}`}
                   >
                     {val === null
-                      ? isPolish
-                        ? 'Oczekuje'
-                        : 'Pending'
+                      ? t('initiatives.timelinePlanner.pending')
                       : val === 'GO'
                         ? 'GO'
                         : val === 'NO_GO'
                           ? 'NO-GO'
-                          : isPolish
-                            ? 'Eskalacja'
-                            : 'Escalate'}
+                          : t('initiatives.timelinePlanner.escalate')}
                   </button>
                 ))}
               </div>
@@ -2605,7 +2545,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Tryb wydarzenia' : 'Event mode'}
+                  {t('initiatives.timelinePlanner.eventMode')}
                 </label>
                 <select
                   value={infoEventMode}
@@ -2615,51 +2555,47 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 >
                   <option value="cyclical">
-                    {isPolish ? 'Spotkanie cykliczne' : 'Cyclical meeting'}
+                    {t('initiatives.timelinePlanner.cyclicalMeeting')}
                   </option>
                   <option value="specific_date">
-                    {isPolish ? 'W konkretnej dacie' : 'On specific date'}
+                    {t('initiatives.timelinePlanner.onSpecificDate')}
                   </option>
-                  <option value="after_event">{isPolish ? 'Po zdarzeniu' : 'After event'}</option>
+                  <option value="after_event">{t('initiatives.timelinePlanner.afterEvent')}</option>
                 </select>
               </div>
               {infoEventMode === 'cyclical' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Cykliczność' : 'Cadence'}
+                    {t('initiatives.timelinePlanner.cadence')}
                   </label>
                   <select
                     value={infoEventCadence}
                     onChange={(e) => setInfoEventCadence(e.target.value as any)}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
-                    <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
-                    <option value="biweekly">{isPolish ? 'Co 2 tygodnie' : 'Biweekly'}</option>
-                    <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
-                    <option value="custom">{isPolish ? 'Niestandardowo' : 'Custom'}</option>
+                    <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
+                    <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
+                    <option value="biweekly">{t('initiatives.timelinePlanner.biweekly')}</option>
+                    <option value="monthly">{t('initiatives.timelinePlanner.monthly')}</option>
+                    <option value="custom">{t('initiatives.timelinePlanner.custom')}</option>
                   </select>
                 </div>
               )}
               {infoEventMode === 'after_event' && (
                 <div className="sm:col-span-2">
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Po jakim zdarzeniu?' : 'After which event?'}
+                    {t('initiatives.timelinePlanner.afterWhichEvent')}
                   </label>
                   <input
                     type="text"
                     value={infoEventReferenceEvent}
                     onChange={(e) => setInfoEventReferenceEvent(e.target.value)}
-                    placeholder={
-                      isPolish ? 'np. Po akceptacji gate GO' : 'e.g. After GO gate approval'
-                    }
+                    placeholder={t('initiatives.timelinePlanner.placeholderAfterGoGate')}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                   />
                   {submitAttempted && !infoEventReferenceEventValid && (
                     <p className="mt-1 text-[10px] text-rose-500">
-                      {isPolish
-                        ? 'Uzupełnij nazwę zdarzenia, po którym ma wystąpić ten event.'
-                        : 'Provide the event name that should trigger this event.'}
+                      {t('initiatives.timelinePlanner.validationReferenceEvent')}
                     </p>
                   )}
                 </div>
@@ -2667,27 +2603,25 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             </div>
             {submitAttempted && !infoEventDateModeValid && (
               <p className="text-[10px] text-rose-500">
-                {isPolish
-                  ? 'Dla trybu "W konkretnej dacie" wybierz datę startu.'
-                  : 'For "On specific date" mode, choose a start date.'}
+                {t('initiatives.timelinePlanner.validationSpecificDate')}
               </p>
             )}
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Odbiorcy' : 'Audience'}
+                {t('initiatives.timelinePlanner.audience')}
               </label>
               <input
                 type="text"
                 value={audience}
                 onChange={(e) => setAudience(e.target.value)}
-                placeholder={isPolish ? 'np. Steering Committee' : 'e.g. Steering Committee'}
+                placeholder={t('initiatives.timelinePlanner.placeholderSteeringCommittee')}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Kto powinien być?' : 'Who should attend?'}
+                  {t('initiatives.timelinePlanner.whoShouldAttend')}
                 </label>
                 <select
                   value={infoEventParticipantMode}
@@ -2696,8 +2630,8 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   }
                   className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 >
-                  <option value="group">{isPolish ? 'Grupa' : 'Group'}</option>
-                  <option value="person">{isPolish ? 'Osoba' : 'Person'}</option>
+                  <option value="group">{t('initiatives.timelinePlanner.group')}</option>
+                  <option value="person">{t('initiatives.timelinePlanner.person')}</option>
                 </select>
               </div>
               <div>
@@ -2719,7 +2653,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                     onChange={(e) => setInfoEventParticipantUserId(e.target.value)}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="">— {isPolish ? 'Wybierz osobę' : 'Select person'} —</option>
+                    <option value="">— {t('initiatives.timelinePlanner.selectPerson')} —</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
                         {[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || u.id}
@@ -2729,16 +2663,14 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 )}
                 {submitAttempted && !infoEventParticipantValid && (
                   <p className="mt-1 text-[10px] text-rose-500">
-                    {isPolish
-                      ? 'Wybierz osobę odpowiedzialną za udział w wydarzeniu.'
-                      : 'Select a person who should attend this event.'}
+                    {t('initiatives.timelinePlanner.validationParticipant')}
                   </p>
                 )}
               </div>
             </div>
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Źródło materiału (wymagane)' : 'Material source (required)'}
+                {t('initiatives.timelinePlanner.materialSourceRequired')}
               </label>
               <select
                 value={infoAssetType}
@@ -2746,35 +2678,31 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
                 <option value="internal_report">
-                  {isPolish ? 'Raport wewnętrzny' : 'Internal report'}
+                  {t('initiatives.timelinePlanner.internalReport')}
                 </option>
                 <option value="generated_presentation">
-                  {isPolish ? 'Prezentacja wygenerowana' : 'Generated presentation'}
+                  {t('initiatives.timelinePlanner.generatedPresentation')}
                 </option>
                 <option value="external_link">
-                  {isPolish ? 'Link zewnętrzny' : 'External link'}
+                  {t('initiatives.timelinePlanner.externalLink')}
                 </option>
-                <option value="other">{isPolish ? 'Inne' : 'Other'}</option>
+                <option value="other">{t('initiatives.timelinePlanner.otherNeut')}</option>
               </select>
               {infoAssetType === 'internal_report' && availableReports.length === 0 && (
                 <p className="mt-1 text-[10px] text-amber-500">
-                  {isPolish
-                    ? 'Brak raportów w bibliotece. Utwórz raport w module Raporty.'
-                    : 'No reports in library. Create a report in the Reports module.'}
+                  {t('initiatives.timelinePlanner.noReportsInLibrary')}
                 </p>
               )}
               {submitAttempted && !infoEventMaterialValid && (
                 <p className="mt-1 text-[10px] text-rose-500">
-                  {isPolish
-                    ? 'Uzupełnij wymagane źródło materiału dla tego wydarzenia.'
-                    : 'Provide the required material source for this event.'}
+                  {t('initiatives.timelinePlanner.validationMaterialSource')}
                 </p>
               )}
             </div>
             {infoAssetType === 'internal_report' && (
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Wybierz raport' : 'Select report'}
+                  {t('initiatives.timelinePlanner.selectReport')}
                 </label>
                 <select
                   value={linkedReportPlaceholderId}
@@ -2786,7 +2714,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   }}
                   className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 >
-                  <option value="">— {isPolish ? 'Wybierz raport' : 'Select report'} —</option>
+                  <option value="">— {t('initiatives.timelinePlanner.selectReport')} —</option>
                   {availableReports.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.title}
@@ -2798,7 +2726,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             {infoAssetType === 'external_link' && (
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'URL materiału' : 'Material URL'}
+                  {t('initiatives.timelinePlanner.materialUrl')}
                 </label>
                 <input
                   type="url"
@@ -2812,13 +2740,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             {(infoAssetType === 'generated_presentation' || infoAssetType === 'other') && (
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Nazwa materiału' : 'Material label'}
+                  {t('initiatives.timelinePlanner.materialLabel')}
                 </label>
                 <input
                   type="text"
                   value={infoAssetLabel}
                   onChange={(e) => setInfoAssetLabel(e.target.value)}
-                  placeholder={isPolish ? 'np. Deck: Sprint Review' : 'e.g. Deck: Sprint Review'}
+                  placeholder={t('initiatives.timelinePlanner.placeholderDeckSprintReview')}
                   className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                 />
               </div>
@@ -2830,7 +2758,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="sm:col-span-2">
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Szablony' : 'Templates'}
+                {t('initiatives.timelinePlanner.templates')}
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {NOTIFICATION_PRESETS.map((preset) => (
@@ -2854,38 +2782,38 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             </div>
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Cykliczność' : 'Cadence'}
+                {t('initiatives.timelinePlanner.cadence')}
               </label>
               <select
                 value={notificationCadence}
                 onChange={(e) => setNotificationCadence(e.target.value as any)}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
-                <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
-                <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
-                <option value="biweekly">{isPolish ? 'Co 2 tygodnie' : 'Biweekly'}</option>
-                <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
-                <option value="custom">{isPolish ? 'Niestandardowo' : 'Custom'}</option>
+                <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
+                <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
+                <option value="biweekly">{t('initiatives.timelinePlanner.biweekly')}</option>
+                <option value="monthly">{t('initiatives.timelinePlanner.monthly')}</option>
+                <option value="custom">{t('initiatives.timelinePlanner.custom')}</option>
               </select>
             </div>
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Odbiorca' : 'Recipient type'}
+                {t('initiatives.timelinePlanner.recipientType')}
               </label>
               <select
                 value={notificationRecipientMode}
                 onChange={(e) => setNotificationRecipientMode(e.target.value as 'person' | 'group')}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
-                <option value="group">{isPolish ? 'Grupa' : 'Group'}</option>
-                <option value="person">{isPolish ? 'Osoba' : 'Person'}</option>
+                <option value="group">{t('initiatives.timelinePlanner.group')}</option>
+                <option value="person">{t('initiatives.timelinePlanner.person')}</option>
               </select>
             </div>
             <div className="sm:col-span-2">
               {notificationRecipientMode === 'group' ? (
                 <>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Wybierz grupę' : 'Select group'}
+                    {t('initiatives.timelinePlanner.selectGroup')}
                   </label>
                   <select
                     value={notificationRecipientGroupKey}
@@ -2902,14 +2830,14 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               ) : (
                 <>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Wybierz osobę' : 'Select person'}
+                    {t('initiatives.timelinePlanner.selectPerson')}
                   </label>
                   <select
                     value={notificationRecipientUserId}
                     onChange={(e) => setNotificationRecipientUserId(e.target.value)}
                     className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="">— {isPolish ? 'Wybierz osobę' : 'Select person'} —</option>
+                    <option value="">— {t('initiatives.timelinePlanner.selectPerson')} —</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
                         {[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || u.id}
@@ -2921,7 +2849,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             </div>
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Tryb notyfikacji' : 'Notification mode'}
+                {t('initiatives.timelinePlanner.notificationMode')}
               </label>
               <select
                 value={notificationTriggerMode}
@@ -2930,29 +2858,27 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                 }
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
-                <option value="event_based">{isPolish ? 'Zdarzeniowa' : 'Event-based'}</option>
-                <option value="cyclical">{isPolish ? 'Cykliczna' : 'Cyclical'}</option>
+                <option value="event_based">{t('initiatives.timelinePlanner.eventBased')}</option>
+                <option value="cyclical">{t('initiatives.timelinePlanner.cyclical')}</option>
               </select>
             </div>
             {notificationTriggerMode === 'event_based' && (
               <div>
                 <label className="text-[10px] text-slate-500 block mb-1">
-                  {isPolish ? 'Wyzwalacz zdarzenia' : 'Event trigger'}
+                  {t('initiatives.timelinePlanner.eventTriggerLabel')}
                 </label>
                 <select
                   value={notificationTriggerEvent}
                   onChange={(e) => setNotificationTriggerEvent(e.target.value as any)}
                   className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
                 >
-                  <option value="on_start">{isPolish ? 'Przy starcie' : 'On start'}</option>
-                  <option value="on_complete">
-                    {isPolish ? 'Przy zakończeniu' : 'On complete'}
-                  </option>
+                  <option value="on_start">{t('initiatives.timelinePlanner.onStart')}</option>
+                  <option value="on_complete">{t('initiatives.timelinePlanner.onComplete')}</option>
                   <option value="before_next_action">
-                    {isPolish ? 'Przed kolejnym działaniem' : 'Before next action'}
+                    {t('initiatives.timelinePlanner.beforeNextAction')}
                   </option>
                   <option value="manual_gate">
-                    {isPolish ? 'Po ręcznym gate' : 'Manual gate event'}
+                    {t('initiatives.timelinePlanner.manualGateEvent')}
                   </option>
                 </select>
               </div>
@@ -2961,7 +2887,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               notificationTriggerEvent === 'before_next_action' && (
                 <div>
                   <label className="text-[10px] text-slate-500 block mb-1">
-                    {isPolish ? 'Wyprzedzenie (dni)' : 'Lead time (days)'}
+                    {t('initiatives.timelinePlanner.leadTimeDays')}
                   </label>
                   <input
                     type="number"
@@ -2974,7 +2900,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               )}
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Kanał' : 'Channel'}
+                {t('initiatives.timelinePlanner.channel')}
               </label>
               <select
                 value={notificationChannel}
@@ -2983,45 +2909,39 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               >
                 <option value="email">Email</option>
                 <option value="slack">Slack</option>
-                <option value="meeting">{isPolish ? 'Spotkanie' : 'Meeting'}</option>
+                <option value="meeting">{t('initiatives.timelinePlanner.meeting')}</option>
                 <option value="dashboard">Dashboard</option>
-                <option value="other">{isPolish ? 'Inny' : 'Other'}</option>
+                <option value="other">{t('initiatives.timelinePlanner.otherMasc')}</option>
               </select>
             </div>
             <div className="sm:col-span-2">
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Reguła komunikacji' : 'Communication rule'}
+                {t('initiatives.timelinePlanner.communicationRule')}
               </label>
               <input
                 type="text"
                 value={notificationRule}
                 onChange={(e) => setNotificationRule(e.target.value)}
-                placeholder={
-                  isPolish
-                    ? 'np. Co wtorek 09:00 do Steering Committee'
-                    : 'e.g. Every Tuesday 09:00 to Steering Committee'
-                }
+                placeholder={t('initiatives.timelinePlanner.placeholderCommunicationRule')}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2">
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Treść notyfikacji' : 'Notification content'}
+                {t('initiatives.timelinePlanner.notificationContent')}
               </label>
               <textarea
                 value={notificationMessage}
                 onChange={(e) => setNotificationMessage(e.target.value)}
                 rows={2}
-                placeholder={
-                  isPolish ? 'Treść, która ma zostać wysłana...' : 'Message content to send...'
-                }
+                placeholder={t('initiatives.timelinePlanner.placeholderMessageContentShort')}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
             <div className="sm:col-span-2 space-y-1.5">
               <div className="flex items-center gap-3">
                 <label className="text-[10px] text-slate-500">
-                  {isPolish ? 'Automatyczna wysyłka przez AI' : 'Automatic sending by AI'}
+                  {t('initiatives.timelinePlanner.aiAutoSend')}
                 </label>
                 <button
                   type="button"
@@ -3038,7 +2958,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
                   value={notificationAiInstruction}
                   onChange={(e) => setNotificationAiInstruction(e.target.value)}
                   rows={2}
-                  placeholder={isPolish ? 'Instrukcja dla AI...' : 'Instruction for AI...'}
+                  placeholder={t('initiatives.timelinePlanner.placeholderAiInstructionShort')}
                   className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                 />
               )}
@@ -3050,45 +2970,43 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Cykliczność spotkania' : 'Meeting cadence'}
+                {t('initiatives.timelinePlanner.meetingCadence')}
               </label>
               <select
                 value={meetingCadence}
                 onChange={(e) => setMeetingCadence(e.target.value as any)}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
-                <option value="daily">{isPolish ? 'Codziennie' : 'Daily'}</option>
-                <option value="weekly">{isPolish ? 'Co tydzień' : 'Weekly'}</option>
-                <option value="biweekly">{isPolish ? 'Co 2 tygodnie' : 'Biweekly'}</option>
-                <option value="monthly">{isPolish ? 'Co miesiąc' : 'Monthly'}</option>
-                <option value="custom">{isPolish ? 'Niestandardowo' : 'Custom'}</option>
+                <option value="daily">{t('initiatives.timelinePlanner.daily')}</option>
+                <option value="weekly">{t('initiatives.timelinePlanner.weekly')}</option>
+                <option value="biweekly">{t('initiatives.timelinePlanner.biweekly')}</option>
+                <option value="monthly">{t('initiatives.timelinePlanner.monthly')}</option>
+                <option value="custom">{t('initiatives.timelinePlanner.custom')}</option>
               </select>
             </div>
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Forma spotkania' : 'Meeting channel'}
+                {t('initiatives.timelinePlanner.meetingChannel')}
               </label>
               <select
                 value={meetingChannel}
                 onChange={(e) => setMeetingChannel(e.target.value as any)}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm focus:border-blue-500 focus:outline-none"
               >
-                <option value="online">{isPolish ? 'Online' : 'Online'}</option>
-                <option value="onsite">{isPolish ? 'Stacjonarnie' : 'Onsite'}</option>
-                <option value="hybrid">{isPolish ? 'Hybrydowo' : 'Hybrid'}</option>
+                <option value="online">Online</option>
+                <option value="onsite">{t('initiatives.timelinePlanner.onsite')}</option>
+                <option value="hybrid">{t('initiatives.timelinePlanner.hybrid')}</option>
               </select>
             </div>
             <div className="sm:col-span-2">
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Agenda spotkania' : 'Meeting agenda'}
+                {t('initiatives.timelinePlanner.meetingAgenda')}
               </label>
               <textarea
                 rows={2}
                 value={meetingAgenda}
                 onChange={(e) => setMeetingAgenda(e.target.value)}
-                placeholder={
-                  isPolish ? 'Krótki cel/agenda spotkania...' : 'Brief meeting purpose/agenda...'
-                }
+                placeholder={t('initiatives.timelinePlanner.placeholderMeetingAgenda')}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
             </div>
@@ -3099,7 +3017,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Dni' : 'Days'}
+                {t('initiatives.timelinePlanner.days')}
               </label>
               <input
                 type="number"
@@ -3112,19 +3030,17 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             </div>
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">
-                {isPolish ? 'Powód pauzy' : 'Pause reason'}
+                {t('initiatives.timelinePlanner.pauseReason')}
               </label>
               <input
                 type="text"
                 value={pauseReason}
                 onChange={(e) => setPauseReason(e.target.value)}
-                placeholder={isPolish ? 'np. freeze wdrożeniowy' : 'e.g. deployment freeze'}
+                placeholder={t('initiatives.timelinePlanner.placeholderPauseReasonShort')}
                 className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
               />
               <p className="mt-1 text-[10px] text-slate-600">
-                {isPolish
-                  ? 'Wyjaśnij przyczynę postoju. Ta informacja będzie widoczna w harmonogramie i pomoże ocenić wpływ na kolejne kroki.'
-                  : 'Explain why execution is paused. This note is shown in the timeline and helps evaluate impact on next steps.'}
+                {t('initiatives.timelinePlanner.pauseHelp')}
               </p>
             </div>
           </div>
@@ -3134,7 +3050,7 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
         {row.type === 'escalation' && (
           <div>
             <label className="text-[10px] text-slate-500 block mb-1">
-              {isPolish ? 'Poziom' : 'Level'}
+              {t('initiatives.timelinePlanner.level')}
             </label>
             <select
               value={escalationLevel}
@@ -3144,8 +3060,8 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
               <option value="">—</option>
               <option value="Sponsor">Sponsor</option>
               <option value="PMO">PMO</option>
-              <option value="Board">{isPolish ? 'Zarząd' : 'Board'}</option>
-              <option value="Other">{isPolish ? 'Inny' : 'Other'}</option>
+              <option value="Board">{t('initiatives.timelinePlanner.board')}</option>
+              <option value="Other">{t('initiatives.timelinePlanner.otherMasc')}</option>
             </select>
           </div>
         )}
@@ -3156,13 +3072,13 @@ const EditRowPanel: React.FC<EditRowPanelProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
           >
-            {isPolish ? 'Anuluj' : 'Cancel'}
+            {t('initiatives.timelinePlanner.cancel')}
           </button>
           <button
             onClick={handleSave}
             className="px-4 py-1.5 rounded-lg text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 transition-colors"
           >
-            {isPolish ? 'Zapisz' : 'Save'}
+            {t('initiatives.timelinePlanner.save')}
           </button>
         </div>
       </div>
@@ -3207,6 +3123,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
   onDuplicateRow,
   onReorderRows,
 }) => {
+  const { t } = useTranslation();
   const [editingName, setEditingName] = useState<string | null>(null);
   const [editNameValue, setEditNameValue] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -3273,13 +3190,13 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
       {/* Header */}
       <div className="grid grid-cols-[52px_28px_1fr_82px_82px_42px_50px_70px_30px] gap-0 text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40">
         <div className="px-1 py-2.5 text-center">#</div>
-        <div className="px-0.5 py-2.5 text-center">{isPolish ? 'Typ' : 'Typ'}</div>
-        <div className="px-2 py-2.5">{isPolish ? 'Nazwa' : 'Name'}</div>
+        <div className="px-0.5 py-2.5 text-center">Typ</div>
+        <div className="px-2 py-2.5">{t('initiatives.timelinePlanner.name')}</div>
         <div className="px-1 py-2.5 text-center">Start</div>
-        <div className="px-1 py-2.5 text-center">{isPolish ? 'Koniec' : 'End'}</div>
-        <div className="px-1 py-2.5 text-center">{isPolish ? 'Okres' : 'Window'}</div>
-        <div className="px-1 py-2.5 text-center">{isPolish ? 'Effort h' : 'Effort h'}</div>
-        <div className="px-1 py-2.5 text-center">{isPolish ? 'Zależy' : 'Dep'}</div>
+        <div className="px-1 py-2.5 text-center">{t('initiatives.timelinePlanner.end')}</div>
+        <div className="px-1 py-2.5 text-center">{t('initiatives.timelinePlanner.window')}</div>
+        <div className="px-1 py-2.5 text-center">Effort h</div>
+        <div className="px-1 py-2.5 text-center">{t('initiatives.timelinePlanner.dep')}</div>
         <div className="px-0.5 py-2.5 text-center">⋮</div>
       </div>
 
@@ -3375,7 +3292,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               )}
               {row.type === 'decision' && !row.decisionOutcome && (
                 <span className="text-[8px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-600 font-medium">
-                  {isPolish ? 'Oczekuje' : 'Pending'}
+                  {t('initiatives.timelinePlanner.pending')}
                 </span>
               )}
 
@@ -3403,7 +3320,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                   } ${canEdit ? 'cursor-text' : ''}`}
                   onClick={() => startNameEdit(row)}
                 >
-                  {row.name || (isPolish ? 'Kliknij aby nazwać...' : 'Click to name...')}
+                  {row.name || t('initiatives.timelinePlanner.clickToName')}
                 </span>
               )}
 
@@ -3416,35 +3333,21 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               {row.type === 'info_event' && row.infoAssetType && (
                 <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 truncate max-w-[90px]">
                   {row.infoAssetType === 'internal_report'
-                    ? isPolish
-                      ? 'Raport'
-                      : 'Report'
+                    ? t('initiatives.timelinePlanner.chipReport')
                     : row.infoAssetType === 'external_link'
-                      ? isPolish
-                        ? 'Link zewn.'
-                        : 'External link'
+                      ? t('initiatives.timelinePlanner.chipExternalLink')
                       : row.infoAssetType === 'generated_presentation'
-                        ? isPolish
-                          ? 'Prezentacja'
-                          : 'Presentation'
-                        : isPolish
-                          ? 'Inne'
-                          : 'Other'}
+                        ? t('initiatives.timelinePlanner.chipPresentation')
+                        : t('initiatives.timelinePlanner.otherNeut')}
                 </span>
               )}
               {row.type === 'info_event' && row.infoEventMode && (
                 <span className="text-[8px] px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 truncate max-w-[80px]">
                   {row.infoEventMode === 'cyclical'
-                    ? isPolish
-                      ? 'Cykliczne'
-                      : 'Cyclical'
+                    ? t('initiatives.timelinePlanner.chipCyclical')
                     : row.infoEventMode === 'after_event'
-                      ? isPolish
-                        ? 'Po zdarzeniu'
-                        : 'After event'
-                      : isPolish
-                        ? 'W dacie'
-                        : 'On date'}
+                      ? t('initiatives.timelinePlanner.afterEvent')
+                      : t('initiatives.timelinePlanner.chipOnDate')}
                 </span>
               )}
               {row.type === 'info_event' &&
@@ -3456,28 +3359,16 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                             users.find((u) => u.id === row.infoEventParticipantUserId)?.lastName ||
                             ''
                           }`.trim()
-                        : isPolish
-                          ? 'Osoba'
-                          : 'Person'
+                        : t('initiatives.timelinePlanner.person')
                       : row.infoEventParticipantGroupKey === 'project_team'
-                        ? isPolish
-                          ? 'Zespół projektu'
-                          : 'Project team'
+                        ? t('initiatives.timelinePlanner.chipProjectTeam')
                         : row.infoEventParticipantGroupKey === 'steering_committee'
-                          ? isPolish
-                            ? 'Komitet'
-                            : 'Steering'
+                          ? t('initiatives.timelinePlanner.chipSteering')
                           : row.infoEventParticipantGroupKey === 'sponsor_group'
-                            ? isPolish
-                              ? 'Sponsorzy'
-                              : 'Sponsors'
+                            ? t('initiatives.timelinePlanner.chipSponsors')
                             : row.infoEventParticipantGroupKey === 'all_stakeholders'
-                              ? isPolish
-                                ? 'Stakeholderzy'
-                                : 'Stakeholders'
-                              : isPolish
-                                ? 'Grupa własna'
-                                : 'Custom group'}
+                              ? t('initiatives.timelinePlanner.chipStakeholders')
+                              : t('initiatives.timelinePlanner.chipCustomGroup')}
                   </span>
                 )}
               {row.escalationLevel && (
@@ -3496,35 +3387,21 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                     {row.notificationRecipientMode === 'person'
                       ? row.notificationRecipientUserName
                       : row.notificationRecipientGroupKey === 'project_team'
-                        ? isPolish
-                          ? 'Zespół projektu'
-                          : 'Project team'
+                        ? t('initiatives.timelinePlanner.chipProjectTeam')
                         : row.notificationRecipientGroupKey === 'steering_committee'
-                          ? isPolish
-                            ? 'Komitet'
-                            : 'Steering'
+                          ? t('initiatives.timelinePlanner.chipSteering')
                           : row.notificationRecipientGroupKey === 'sponsor_group'
-                            ? isPolish
-                              ? 'Sponsorzy'
-                              : 'Sponsors'
+                            ? t('initiatives.timelinePlanner.chipSponsors')
                             : row.notificationRecipientGroupKey === 'all_stakeholders'
-                              ? isPolish
-                                ? 'Stakeholderzy'
-                                : 'Stakeholders'
-                              : isPolish
-                                ? 'Grupa własna'
-                                : 'Custom group'}
+                              ? t('initiatives.timelinePlanner.chipStakeholders')
+                              : t('initiatives.timelinePlanner.chipCustomGroup')}
                   </span>
                 )}
               {row.type === 'notification' && row.notificationTriggerMode && (
                 <span className="text-[8px] px-1 py-0.5 rounded bg-indigo-500/10 text-indigo-600 truncate max-w-[70px]">
                   {row.notificationTriggerMode === 'cyclical'
-                    ? isPolish
-                      ? 'Cykliczna'
-                      : 'Cyclical'
-                    : isPolish
-                      ? 'Zdarzeniowa'
-                      : 'Event-based'}
+                    ? t('initiatives.timelinePlanner.cyclical')
+                    : t('initiatives.timelinePlanner.eventBased')}
                 </span>
               )}
               {row.pauseReason && (
@@ -3566,16 +3443,10 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       className={`inline-flex items-center rounded px-1 py-0.5 text-[8px] font-medium ${tone}`}
                       title={
                         mode === 'dependency'
-                          ? isPolish
-                            ? 'Start z dependency'
-                            : 'Start from dependency'
+                          ? t('initiatives.timelinePlanner.startFromDependency')
                           : mode === 'event'
-                            ? isPolish
-                              ? 'Start po zdarzeniu'
-                              : 'Start on event'
-                            : isPolish
-                              ? 'Start z daty'
-                              : 'Start from date'
+                            ? t('initiatives.timelinePlanner.startOnEvent')
+                            : t('initiatives.timelinePlanner.startFromDate')
                       }
                     >
                       {label}
@@ -3612,7 +3483,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       setStartMenuOpenId((curr) => (curr === row.id ? null : row.id));
                     }}
                     className="inline-flex items-center justify-center w-4 h-4 rounded text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                    aria-label={isPolish ? 'Ustawienia startu' : 'Start settings'}
+                    aria-label={t('initiatives.timelinePlanner.startSettings')}
                   >
                     <MoreVertical size={10} />
                   </button>
@@ -3621,7 +3492,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
               {canEdit && startMenuOpenId === row.id && (
                 <div className="absolute left-1 top-6 z-20 w-[200px] rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-lg p-2 space-y-2 text-left">
                   <div className="text-[10px] text-slate-500">
-                    {isPolish ? 'Jak wyznaczyć start' : 'How to determine start'}
+                    {t('initiatives.timelinePlanner.howToDetermineStart')}
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     <button
@@ -3642,7 +3513,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
-                      {isPolish ? 'Dependency' : 'Dependency'}
+                      Dependency
                     </button>
                     <button
                       type="button"
@@ -3660,7 +3531,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
-                      {isPolish ? 'Data' : 'Date'}
+                      {t('initiatives.timelinePlanner.date')}
                     </button>
                     <button
                       type="button"
@@ -3678,7 +3549,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           : 'border-slate-200 dark:border-navy-600 text-slate-500'
                       }`}
                     >
-                      {isPolish ? 'Zdarzenie' : 'Event'}
+                      {t('initiatives.timelinePlanner.event')}
                     </button>
                   </div>
                   {(row.startTriggerType === 'dependency' ||
@@ -3695,7 +3566,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">
-                        — {isPolish ? 'Wybierz dependency' : 'Select dependency'} —
+                        — {t('initiatives.timelinePlanner.selectDependency')} —
                       </option>
                       {depOptions
                         .filter((o) => o.id !== row.id)
@@ -3717,7 +3588,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                           startTriggerEvent: e.target.value,
                         })
                       }
-                      placeholder={isPolish ? 'Nazwa zdarzenia...' : 'Event name...'}
+                      placeholder={t('initiatives.timelinePlanner.eventNamePlaceholder')}
                       className="w-full px-2 py-1 rounded text-[10px] bg-transparent border border-slate-200 dark:border-navy-600 text-slate-600 dark:text-slate-400 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none"
                     />
                   )}
@@ -3848,7 +3719,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                       setMenuOpenId((curr) => (curr === row.id ? null : row.id));
                     }}
                     className="inline-flex items-center justify-center w-6 h-6 rounded-md text-slate-600 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                    aria-label={isPolish ? 'Opcje wiersza' : 'Row options'}
+                    aria-label={t('initiatives.timelinePlanner.rowOptions')}
                   >
                     <MoreVertical size={13} />
                   </button>
@@ -3862,7 +3733,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                       >
                         <Pencil size={12} />
-                        {isPolish ? 'Edytuj' : 'Edit'}
+                        {t('initiatives.timelinePlanner.edit')}
                       </button>
                       <button
                         onClick={() => {
@@ -3872,7 +3743,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                       >
                         <Copy size={12} />
-                        {isPolish ? 'Kopiuj' : 'Copy'}
+                        {t('initiatives.timelinePlanner.copy')}
                       </button>
                       <button
                         onClick={() => {
@@ -3882,7 +3753,7 @@ const TimelineTable: React.FC<TimelineTableProps> = ({
                         className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-rose-500 hover:bg-rose-500/5 transition-colors"
                       >
                         <Trash2 size={12} />
-                        {isPolish ? 'Usuń' : 'Delete'}
+                        {t('initiatives.timelinePlanner.delete')}
                       </button>
                     </div>
                   )}
@@ -3942,6 +3813,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   plannedStart,
   plannedEnd,
 }) => {
+  const { t } = useTranslation();
   const startMs = plannedStart ? new Date(plannedStart).getTime() : Date.now();
   const endMs = plannedEnd ? new Date(plannedEnd).getTime() : startMs + 180 * 24 * 60 * 60 * 1000;
   const rangeMs = Math.max(endMs - startMs, 1);
@@ -3996,7 +3868,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
         <div className="flex-shrink-0 w-[180px] border-r border-slate-200/40 dark:border-navy-700/40">
           <div className="h-7 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/40 flex items-center px-2">
             <span className="text-[10px] uppercase tracking-wide text-slate-500">
-              {isPolish ? 'Nazwa' : 'Name'}
+              {t('initiatives.timelinePlanner.name')}
             </span>
           </div>
           {rows.map((row) => {
@@ -4191,6 +4063,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
   onUpdateEnd,
   handleRef,
 }) => {
+  const { t } = useTranslation();
   const [view, setView] = useState<PlannerView>('table');
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [availableReports, setAvailableReports] = useState<ReportOption[]>([]);
@@ -4279,7 +4152,7 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
           }`}
         >
           <Table2 size={13} />
-          {isPolish ? 'Tabela' : 'Table'}
+          {t('initiatives.timelinePlanner.table')}
         </button>
         <button
           onClick={() => setView('gantt')}
@@ -4360,47 +4233,47 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 px-1 text-[10px] text-slate-600">
         <span className="flex items-center gap-1">
           <Play size={10} className="text-blue-500" />
-          {stats.tasks} {isPolish ? 'zadań' : 'tasks'}
+          {stats.tasks} {t('initiatives.timelinePlanner.tasksLabel')}
         </span>
         {stats.milestones > 0 && (
           <span className="flex items-center gap-1">
             <Flag size={10} className="text-primary-500" />
-            {stats.milestones} {isPolish ? 'kamieni' : 'milestones'}
+            {stats.milestones} {t('initiatives.timelinePlanner.milestonesLabel')}
           </span>
         )}
         {stats.decisions > 0 && (
           <span className="flex items-center gap-1">
             <Gavel size={10} className="text-amber-500" />
-            {stats.decisions} {isPolish ? 'decyzji' : 'decisions'}
+            {stats.decisions} {t('initiatives.timelinePlanner.decisionsLabel')}
           </span>
         )}
         {stats.events > 0 && (
           <span className="flex items-center gap-1">
             <Megaphone size={10} className="text-blue-500" />
-            {stats.events} {isPolish ? 'zdarzeń' : 'events'}
+            {stats.events} {t('initiatives.timelinePlanner.eventsLabel')}
           </span>
         )}
         {stats.notifications > 0 && (
           <span className="flex items-center gap-1">
             <Bell size={10} className="text-indigo-500" />
-            {stats.notifications} {isPolish ? 'notyfikacji' : 'notifications'}
+            {stats.notifications} {t('initiatives.timelinePlanner.notificationsLabel')}
           </span>
         )}
         {stats.pauses > 0 && (
           <span className="flex items-center gap-1">
             <PauseCircle size={10} className="text-slate-500" />
-            {stats.pauses} {isPolish ? 'pauz' : 'pauses'}
+            {stats.pauses} {t('initiatives.timelinePlanner.pausesLabel')}
           </span>
         )}
         {stats.totalHours > 0 && (
           <span className="flex items-center gap-1">
             <Clock size={10} className="text-slate-600" />
-            {stats.totalHours}h {isPolish ? 'planowane' : 'planned'}
+            {stats.totalHours}h {t('initiatives.timelinePlanner.planned')}
           </span>
         )}
         {stats.totalDays !== null && (
           <span>
-            {stats.totalDays} {isPolish ? 'dni łącznie' : 'total days'}
+            {stats.totalDays} {t('initiatives.timelinePlanner.totalDays')}
           </span>
         )}
       </div>

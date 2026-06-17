@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
@@ -294,6 +295,7 @@ const TimelineBar: React.FC<{
   isPolish: boolean;
   showProgress?: boolean;
 }> = ({ startDate, endDate, milestones, phases, isPolish, showProgress = false }) => {
+  const { t } = useTranslation();
   const startMs = new Date(startDate).getTime();
   const endMs = new Date(endDate).getTime();
   const rangeMs = endMs - startMs;
@@ -364,7 +366,7 @@ const TimelineBar: React.FC<{
           style={{ left: `${progressPercent}%` }}
         >
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-medium text-blue-500 whitespace-nowrap">
-            {isPolish ? 'Dziś' : 'Today'}
+            {t('initiatives.timelineSection.today')}
           </div>
         </div>
       )}
@@ -432,13 +434,12 @@ const HealthIndicators: React.FC<{
   openRisks: number;
   isPolish: boolean;
 }> = ({ startVariance, milestoneDone, milestoneTotal, openRisks, isPolish }) => {
+  const { t } = useTranslation();
   const spiLabel =
     startVariance === null
       ? '—'
       : startVariance <= 0
-        ? isPolish
-          ? 'W terminie'
-          : 'On time'
+        ? t('initiatives.timelineSection.onTime')
         : `+${startVariance}d`;
   const spiColor =
     startVariance === null
@@ -450,9 +451,9 @@ const HealthIndicators: React.FC<{
           : 'text-rose-500';
 
   const cards = [
-    { label: isPolish ? 'Odchylenie' : 'Variance', value: spiLabel, color: spiColor },
+    { label: t('initiatives.timelineSection.variance'), value: spiLabel, color: spiColor },
     {
-      label: isPolish ? 'Kamienie' : 'Milestones',
+      label: t('initiatives.timelineSection.milestonesShort'),
       value: `${milestoneDone}/${milestoneTotal}`,
       color:
         milestoneDone === milestoneTotal && milestoneTotal > 0
@@ -460,7 +461,7 @@ const HealthIndicators: React.FC<{
           : 'text-blue-500',
     },
     {
-      label: isPolish ? 'Otwarte ryzyka' : 'Open risks',
+      label: t('initiatives.timelineSection.openRisks'),
       value: String(openRisks),
       color:
         openRisks > 2 ? 'text-rose-500' : openRisks > 0 ? 'text-amber-500' : 'text-emerald-500',
@@ -491,6 +492,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
   expanded: _expanded,
   onToggle: _onToggle,
 }) => {
+  const { t } = useTranslation();
   const {
     initiative,
     isPolish,
@@ -938,9 +940,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
   const runTimelineAiAnalyze = useCallback(async () => {
     if (aiBusy) return;
     if (timelineLocked) {
-      toast.error(
-        isPolish ? 'Harmonogram jest zamrożony (baseline).' : 'Timeline is locked (baseline).'
-      );
+      toast.error(t('initiatives.timelineSection.timelineLocked'));
       return;
     }
     setAiBusy(true);
@@ -963,9 +963,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
 
       const parsed = safeJsonParse(String(res?.text || ''));
       if (!parsed) {
-        toast.error(
-          isPolish ? 'Nie udało się sparsować odpowiedzi AI.' : 'Failed to parse AI response.'
-        );
+        toast.error(t('initiatives.timelineSection.failedParseAi'));
         return;
       }
 
@@ -977,11 +975,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
         return p;
       })();
       if (!normalized) {
-        toast.error(
-          isPolish
-            ? 'AI zwróciło nieobsługiwany format (brak version=timeline_proposal_v1).'
-            : 'AI returned an unsupported format (missing version=timeline_proposal_v1).'
-        );
+        toast.error(t('initiatives.timelineSection.unsupportedAiFormat'));
         return;
       }
 
@@ -1026,16 +1020,16 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       setApplyRows(true);
       setShowAIModal(true);
     } catch (e: any) {
-      toast.error(e?.message || (isPolish ? 'Analiza AI nie powiodła się' : 'AI analysis failed'));
+      toast.error(e?.message || t('initiatives.timelineSection.aiAnalysisFailed'));
     } finally {
       setAiBusy(false);
     }
-  }, [aiBusy, buildAiContextText, initiative, isPolish, status, timelineLocked]);
+  }, [aiBusy, buildAiContextText, initiative, status, t, timelineLocked]);
 
   const applyTimelineAiProposal = useCallback(() => {
     const normalized = normalizeProposal();
     if (!normalized) {
-      toast.error(isPolish ? 'Brak poprawnej propozycji AI.' : 'No valid AI proposal.');
+      toast.error(t('initiatives.timelineSection.noValidProposal'));
       return;
     }
 
@@ -1259,14 +1253,13 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     }
 
     closeAIModal();
-    toast.success(isPolish ? 'Zastosowano propozycję AI' : 'Applied AI proposal');
+    toast.success(t('initiatives.timelineSection.appliedProposal'));
   }, [
     applyMilestones,
     applyPhases,
     applyRows,
     applyStartEnd,
     closeAIModal,
-    isPolish,
     normalizeProposal,
     plannedEnd,
     plannedStart,
@@ -1275,6 +1268,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
     setStartDate,
     setTimelineMilestones,
     setTimelinePhases,
+    t,
     users,
   ]);
 
@@ -1308,12 +1302,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Propozycja harmonogramu (AI)' : 'Proposed timeline plan (AI)'}
+                  {t('initiatives.timelineSection.proposedTimelinePlan')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish
-                    ? 'Zaznacz, co zastosować. Zależności/ścieżka krytyczna zostaną ustawione dopiero po akceptacji.'
-                    : 'Select what to apply. Dependencies / critical path are applied only after acceptance.'}
+                  {t('initiatives.timelineSection.selectWhatToApply')}
                 </p>
                 {(() => {
                   const n = normalizeProposal();
@@ -1328,7 +1320,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               <button
                 onClick={closeAIModal}
                 className="p-2 rounded-xl text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                aria-label={isPolish ? 'Zamknij' : 'Close'}
+                aria-label={t('initiatives.timelineSection.close')}
               >
                 <X size={16} />
               </button>
@@ -1340,9 +1332,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 if (!n) {
                   return (
                     <div className="text-sm text-rose-500">
-                      {isPolish
-                        ? 'Nieprawidłowy format propozycji AI.'
-                        : 'Invalid AI proposal format.'}
+                      {t('initiatives.timelineSection.invalidProposalFormat')}
                     </div>
                   );
                 }
@@ -1361,7 +1351,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           checked={applyStartEnd}
                           onChange={(e) => setApplyStartEnd(e.target.checked)}
                         />
-                        {isPolish ? 'Zastosuj daty start/koniec' : 'Apply start/end dates'}
+                        {t('initiatives.timelineSection.applyStartEndDates')}
                       </label>
                       <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                         <input
@@ -1370,7 +1360,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           checked={applyPhases}
                           onChange={(e) => setApplyPhases(e.target.checked)}
                         />
-                        {isPolish ? 'Zastosuj fazy' : 'Apply phases'}
+                        {t('initiatives.timelineSection.applyPhases')}
                       </label>
                       <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                         <input
@@ -1379,7 +1369,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           checked={applyMilestones}
                           onChange={(e) => setApplyMilestones(e.target.checked)}
                         />
-                        {isPolish ? 'Zastosuj kamienie milowe' : 'Apply milestones'}
+                        {t('initiatives.timelineSection.applyMilestones')}
                       </label>
                       <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                         <input
@@ -1388,9 +1378,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           checked={applyRows}
                           onChange={(e) => setApplyRows(e.target.checked)}
                         />
-                        {isPolish
-                          ? 'Zastosuj wiersze (kolejność + zależności)'
-                          : 'Apply rows (order + dependencies)'}
+                        {t('initiatives.timelineSection.applyRowsOrderDeps')}
                       </label>
                     </div>
 
@@ -1399,7 +1387,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                         <div className="flex flex-col">
                           <span className="text-[10px] text-slate-600">
-                            {isPolish ? 'Fazy' : 'Phases'}
+                            {t('initiatives.timelineSection.phases')}
                           </span>
                           <span className="font-semibold text-slate-700 dark:text-white">
                             {n.phases.length}
@@ -1407,7 +1395,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] text-slate-600">
-                            {isPolish ? 'Kamienie' : 'Milestones'}
+                            {t('initiatives.timelineSection.milestonesShort')}
                           </span>
                           <span className="font-semibold text-slate-700 dark:text-white">
                             {n.milestones.length}
@@ -1415,7 +1403,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] text-slate-600">
-                            {isPolish ? 'Wiersze' : 'Rows'}
+                            {t('initiatives.timelineSection.rows')}
                           </span>
                           <span className="font-semibold text-slate-700 dark:text-white">
                             {n.rows.length}
@@ -1423,7 +1411,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] text-slate-600">
-                            {isPolish ? 'Zależności' : 'Dependencies'}
+                            {t('initiatives.timelineSection.dependencies')}
                           </span>
                           <span className="font-semibold text-slate-700 dark:text-white">
                             {n.proposedDependencies.length}
@@ -1438,7 +1426,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 overflow-hidden">
                         <div className="px-5 py-3 border-b border-slate-200/40 dark:border-navy-700/40 flex items-center justify-between">
                           <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            {isPolish ? 'Ścieżka krytyczna (AI)' : 'Critical path (AI)'}
+                            {t('initiatives.timelineSection.criticalPathAi')}
                           </span>
                           <label className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                             <input
@@ -1448,7 +1436,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                               onChange={(e) => setLockCriticalPathChain(e.target.checked)}
                               disabled={!applyRows}
                             />
-                            {isPolish ? 'Zablokuj łańcuch' : 'Lock chain'}
+                            {t('initiatives.timelineSection.lockChain')}
                           </label>
                         </div>
                         <div className="max-h-[22vh] overflow-auto divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -1461,9 +1449,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                             if (visible.length === 0) {
                               return (
                                 <div className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">
-                                  {isPolish
-                                    ? 'Brak ścieżki krytycznej w propozycji.'
-                                    : 'No critical path provided.'}
+                                  {t('initiatives.timelineSection.noCriticalPath')}
                                 </div>
                               );
                             }
@@ -1499,12 +1485,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                                     </div>
                                     <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                                       {row.schedulingMode === 'fixed_date'
-                                        ? isPolish
-                                          ? `Data stała: ${row.startDate || '—'}`
-                                          : `Fixed date: ${row.startDate || '—'}`
-                                        : isPolish
-                                          ? 'Start po poprzednim'
-                                          : 'Starts after previous'}
+                                        ? t('initiatives.timelineSection.fixedDate', {
+                                            date: row.startDate || '—',
+                                          })
+                                        : t('initiatives.timelineSection.startsAfterPrevious')}
                                     </div>
                                   </div>
                                 </div>
@@ -1518,7 +1502,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 overflow-hidden">
                         <div className="px-5 py-3 border-b border-slate-200/40 dark:border-navy-700/40 flex items-center justify-between">
                           <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            {isPolish ? 'Zależności (Primary)' : 'Dependencies (Primary)'}
+                            {t('initiatives.timelineSection.dependenciesPrimary')}
                           </span>
                           <label className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                             <input
@@ -1528,7 +1512,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                               onChange={(e) => setApplyOnlyPrimaryDependencies(e.target.checked)}
                               disabled={!applyRows}
                             />
-                            {isPolish ? 'Tylko primary' : 'Primary only'}
+                            {t('initiatives.timelineSection.primaryOnly')}
                           </label>
                         </div>
 
@@ -1544,9 +1528,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                             if (selectedTo.length === 0) {
                               return (
                                 <div className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">
-                                  {isPolish
-                                    ? 'Brak kandydatów zależności w propozycji.'
-                                    : 'No dependency candidates provided.'}
+                                  {t('initiatives.timelineSection.noDependencyCandidates')}
                                 </div>
                               );
                             }
@@ -1580,7 +1562,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                                           }))
                                         }
                                       />
-                                      {isPolish ? 'Brak (None)' : 'None'}
+                                      {t('initiatives.timelineSection.none')}
                                     </label>
                                     {candidates.slice(0, 5).map((c) => {
                                       const fromRow = rowsByTempId.get(c.fromTempId);
@@ -1634,16 +1616,14 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       for (const [to, dep] of depsForTo.entries()) {
                         if (!selectedRowByTempId[to]) {
                           warnings.push(
-                            isPolish
-                              ? `Zależność wskazuje na odznaczony wiersz (to): ${to}`
-                              : `Dependency points to an unselected row (to): ${to}`
+                            t('initiatives.timelineSection.depPointsToUnselected', { to })
                           );
                         }
                         if (!selectedRowByTempId[dep.fromTempId]) {
                           warnings.push(
-                            isPolish
-                              ? `Zależność odwołuje się do odznaczonego wiersza (from): ${dep.fromTempId}`
-                              : `Dependency references an unselected row (from): ${dep.fromTempId}`
+                            t('initiatives.timelineSection.depRefsUnselected', {
+                              from: dep.fromTempId,
+                            })
                           );
                         }
                       }
@@ -1651,9 +1631,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       const cycle = detectCycles(depsForTo);
                       if (cycle && cycle.length > 0) {
                         warnings.push(
-                          isPolish
-                            ? `Wykryto cykl zależności: ${cycle.join(' → ')}`
-                            : `Dependency cycle detected: ${cycle.join(' → ')}`
+                          t('initiatives.timelineSection.cycleDetected', {
+                            cycle: cycle.join(' → '),
+                          })
                         );
                       }
 
@@ -1666,11 +1646,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           (tid) => criticalPathKeepByTempId[tid] === false
                         ).length;
                         if (unchecked > 0) {
-                          warnings.push(
-                            isPolish
-                              ? 'Część kroków ścieżki krytycznej jest odznaczona — łańcuch może być nieciągły.'
-                              : 'Some critical path steps are unchecked — the chain may be discontinuous.'
-                          );
+                          warnings.push(t('initiatives.timelineSection.cpStepsUnchecked'));
                         }
                       }
 
@@ -1678,7 +1654,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       return (
                         <div className="rounded-2xl border-l-4 border-l-amber-500 border border-amber-300/50 dark:border-amber-500/30 bg-amber-100 dark:bg-amber-500/5 p-4">
                           <div className="text-[11px] uppercase tracking-wide font-semibold text-amber-800 dark:text-amber-300 mb-2">
-                            {isPolish ? 'Ostrzeżenia' : 'Warnings'}
+                            {t('initiatives.timelineSection.warnings')}
                           </div>
                           <ul className="text-xs text-amber-700 dark:text-amber-200 space-y-1 list-disc pl-5">
                             {warnings.slice(0, 8).map((w, idx) => (
@@ -1694,7 +1670,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                       <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/60 dark:bg-navy-900/40 overflow-hidden">
                         <div className="px-5 py-3 border-b border-slate-200/40 dark:border-navy-700/40">
                           <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            {isPolish ? 'Wiersze harmonogramu (AI)' : 'Timeline rows (AI)'}
+                            {t('initiatives.timelineSection.timelineRowsAi')}
                           </span>
                         </div>
                         <div className="max-h-[46vh] overflow-auto divide-y divide-slate-200/40 dark:divide-navy-700/40">
@@ -1737,7 +1713,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                                     </span>
                                     {r.linkedTaskId ? (
                                       <span className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-navy-800 text-slate-500">
-                                        {isPolish ? 'powiązany task' : 'linked task'}
+                                        {t('initiatives.timelineSection.linkedTask')}
                                       </span>
                                     ) : null}
                                     <span className="text-xs font-medium text-slate-800 dark:text-white truncate">
@@ -1746,12 +1722,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                                   </div>
                                   <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                                     {r.schedulingMode === 'after_previous'
-                                      ? isPolish
-                                        ? 'Start po poprzednim'
-                                        : 'Starts after previous'
-                                      : isPolish
-                                        ? `Data stała: ${r.startDate || '—'}`
-                                        : `Fixed date: ${r.startDate || '—'}`}
+                                      ? t('initiatives.timelineSection.startsAfterPrevious')
+                                      : t('initiatives.timelineSection.fixedDate', {
+                                          date: r.startDate || '—',
+                                        })}
                                     {typeof r.durationDays === 'number' && r.durationDays > 0
                                       ? ` · ${r.durationDays}d`
                                       : ''}
@@ -1770,13 +1744,13 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                         onClick={closeAIModal}
                         className="px-3 py-2 rounded-xl text-xs font-medium border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
                       >
-                        {isPolish ? 'Anuluj' : 'Cancel'}
+                        {t('initiatives.timelineSection.cancel')}
                       </button>
                       <button
                         onClick={applyTimelineAiProposal}
                         className="px-3 py-2 rounded-xl text-xs font-medium bg-blue-500 hover:bg-blue-600 text-white"
                       >
-                        {isPolish ? 'Zastosuj' : 'Apply'}
+                        {t('initiatives.timelineSection.apply')}
                       </button>
                     </div>
                   </>
@@ -1791,7 +1765,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
-            {isPolish ? 'Harmonogram' : 'Timeline'}
+            {t('initiatives.timelineSection.timeline')}
           </h2>
           <span className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${modeMeta.color}`}>
             {isPolish ? modeMeta.labelPl : modeMeta.label}
@@ -1815,8 +1789,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 }`}
               >
                 {isOverdue
-                  ? `${Math.abs(daysRemaining)}d ${isPolish ? 'po terminie' : 'overdue'}`
-                  : `${daysRemaining}d ${isPolish ? 'do końca' : 'left'}`}
+                  ? t('initiatives.timelineSection.daysOverdue', {
+                      days: Math.abs(daysRemaining),
+                    })
+                  : t('initiatives.timelineSection.daysLeft', { days: daysRemaining })}
               </span>
             )}
           <button
@@ -1824,7 +1800,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-primary-500 transition-colors"
           >
             <Plus size={12} />
-            {isPolish ? 'Dodaj' : 'Add item'}
+            {t('initiatives.timelineSection.addItem')}
           </button>
         </div>
       </div>
@@ -1862,22 +1838,24 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 <div className="flex items-center gap-2">
                   <Clock size={13} className="text-slate-600" />
                   <span className="text-xs text-slate-500">
-                    {isPolish ? 'Czas trwania' : 'Duration'}
+                    {t('initiatives.timelineSection.duration')}
                   </span>
                 </div>
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {duration ? `${duration} ${isPolish ? 'dni' : 'days'}` : '—'}
+                  {duration ? t('initiatives.timelineSection.daysCount', { count: duration }) : '—'}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
-                <span className="text-xs text-slate-500">{isPolish ? 'Kwartał' : 'Quarter'}</span>
+                <span className="text-xs text-slate-500">
+                  {t('initiatives.timelineSection.quarter')}
+                </span>
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {initiative?.targetQuarter || initiative?.target_quarter || '—'}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
                 <span className="text-xs text-slate-500">
-                  {isPolish ? 'Kamienie' : 'Milestones'}
+                  {t('initiatives.timelineSection.milestonesShort')}
                 </span>
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {timelineMilestones.length}
@@ -1909,9 +1887,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       {mode === 'READY_TO_LOCK' && (
         <>
           <Callout variant="warning">
-            {isPolish
-              ? 'Harmonogram czeka na zatwierdzenie PMO (Schedule Lock). Po zatwierdzeniu daty zostaną zamrożone jako baseline.'
-              : 'Timeline awaiting PMO approval (Schedule Lock). After approval, dates will be frozen as baseline.'}
+            {t('initiatives.timelineSection.awaitingPmoApproval')}
           </Callout>
 
           {/* Read-only dates */}
@@ -1919,7 +1895,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
                 <span className="text-[10px] text-slate-600 block mb-0.5">
-                  {isPolish ? 'Data startu' : 'Start date'}
+                  {t('initiatives.timelineSection.startDate')}
                 </span>
                 <span className="text-sm font-medium text-slate-700 dark:text-white">
                   {formatDate(plannedStart, isPolish ? 'pl' : 'en')}
@@ -1927,7 +1903,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               </div>
               <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
                 <span className="text-[10px] text-slate-600 block mb-0.5">
-                  {isPolish ? 'Data końca' : 'End date'}
+                  {t('initiatives.timelineSection.endDate')}
                 </span>
                 <span className="text-sm font-medium text-slate-700 dark:text-white">
                   {formatDate(plannedEnd, isPolish ? 'pl' : 'en')}
@@ -1937,14 +1913,16 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="flex items-center justify-between rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
                 <span className="text-xs text-slate-500">
-                  {isPolish ? 'Czas trwania' : 'Duration'}
+                  {t('initiatives.timelineSection.duration')}
                 </span>
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {duration ? `${duration} ${isPolish ? 'dni' : 'days'}` : '—'}
+                  {duration ? t('initiatives.timelineSection.daysCount', { count: duration }) : '—'}
                 </span>
               </div>
               <div className="flex items-center justify-between rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-slate-50/60 dark:bg-navy-800/50 px-4 py-2.5">
-                <span className="text-xs text-slate-500">{isPolish ? 'Kwartał' : 'Quarter'}</span>
+                <span className="text-xs text-slate-500">
+                  {t('initiatives.timelineSection.quarter')}
+                </span>
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {initiative?.targetQuarter || initiative?.target_quarter || '—'}
                 </span>
@@ -1967,7 +1945,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
           {timelineMilestones.length > 0 && (
             <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-5">
               <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-3">
-                {isPolish ? 'Kamienie milowe' : 'Milestones'}
+                {t('initiatives.timelineSection.milestones')}
               </span>
               <div className="space-y-1.5">
                 {timelineMilestones.map((ms) => (
@@ -1991,7 +1969,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
           {/* Schedule Readiness Checklist */}
           <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-5">
             <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-3">
-              {isPolish ? 'Gotowość harmonogramu' : 'Schedule Readiness'}
+              {t('initiatives.timelineSection.scheduleReadiness')}
             </span>
             <div className="space-y-2">
               {[
@@ -2049,9 +2027,9 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
         <>
           {timelineLocked && (
             <Callout variant="success">
-              {isPolish
-                ? `Harmonogram zamrożony. Daty odzwierciedlają zatwierdzony baseline${baselineVersion ? ` v${baselineVersion}` : ''}.`
-                : `Timeline is locked. Dates reflect the approved baseline${baselineVersion ? ` v${baselineVersion}` : ''}.`}
+              {t('initiatives.timelineSection.timelineLockedBaseline', {
+                version: baselineVersion ? ` v${baselineVersion}` : '',
+              })}
             </Callout>
           )}
 
@@ -2059,7 +2037,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
           <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 overflow-hidden">
             <div className="px-5 pt-4 pb-2">
               <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Baseline vs Rzeczywistość' : 'Baseline vs Actual'}
+                {t('initiatives.timelineSection.baselineVsActual')}
               </span>
             </div>
             <table className="w-full text-xs">
@@ -2067,10 +2045,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40 bg-slate-50/40 dark:bg-navy-800/30">
                   <th className="text-left px-5 py-2 text-slate-500 font-medium"> </th>
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">
-                    {isPolish ? 'Planowane' : 'Planned'}
+                    {t('initiatives.timelineSection.planned')}
                   </th>
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">
-                    {isPolish ? 'Rzeczywiste' : 'Actual'}
+                    {t('initiatives.timelineSection.actual')}
                   </th>
                   <th className="text-right px-5 py-2 text-slate-500 font-medium">Δ</th>
                 </tr>
@@ -2078,7 +2056,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
               <tbody>
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40">
                   <td className="px-5 py-2.5 text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Początek' : 'Start'}
+                    {t('initiatives.timelineSection.start')}
                   </td>
                   <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300">
                     {formatDate(plannedStart, isPolish ? 'pl' : 'en')}
@@ -2107,7 +2085,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 </tr>
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40">
                   <td className="px-5 py-2.5 text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Koniec' : 'End'}
+                    {t('initiatives.timelineSection.end')}
                   </td>
                   <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300">
                     {formatDate(plannedEnd, isPolish ? 'pl' : 'en')}
@@ -2136,10 +2114,12 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 </tr>
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40">
                   <td className="px-5 py-2.5 text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Czas trwania' : 'Duration'}
+                    {t('initiatives.timelineSection.duration')}
                   </td>
                   <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300">
-                    {duration ? `${duration} ${isPolish ? 'dni' : 'days'}` : '—'}
+                    {duration
+                      ? t('initiatives.timelineSection.daysCount', { count: duration })
+                      : '—'}
                   </td>
                   <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300" colSpan={2}>
                     {actualStart
@@ -2147,7 +2127,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                           const endPoint = actualEnd || new Date().toISOString();
                           const d = daysBetween(actualStart, endPoint);
                           return d !== null
-                            ? `${d} ${isPolish ? 'dni' : 'days'}${!actualEnd ? (isPolish ? ' (w toku)' : ' (ongoing)') : ''}`
+                            ? `${t('initiatives.timelineSection.daysCount', { count: d })}${!actualEnd ? t('initiatives.timelineSection.ongoingSuffix') : ''}`
                             : '—';
                         })()
                       : '—'}
@@ -2162,7 +2142,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
             <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] uppercase tracking-wide text-slate-500">
-                  {isPolish ? 'Postęp czasu' : 'Time Progress'}
+                  {t('initiatives.timelineSection.timeProgress')}
                 </span>
                 <span
                   className={`text-xs font-medium ${isOverdue ? 'text-rose-500' : 'text-blue-500'}`}
@@ -2198,7 +2178,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
           {timelineMilestones.length > 0 && (
             <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-5">
               <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-3">
-                {isPolish ? 'Śledzenie kamieni milowych' : 'Milestone Tracking'}
+                {t('initiatives.timelineSection.milestoneTracking')}
               </span>
               <div className="space-y-1.5">
                 {timelineMilestones.map((ms) => {
@@ -2271,7 +2251,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
           <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 overflow-hidden">
             <div className="px-5 pt-4 pb-2">
               <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Podsumowanie realizacji' : 'Execution Summary'}
+                {t('initiatives.timelineSection.executionSummary')}
               </span>
             </div>
             <table className="w-full text-xs">
@@ -2279,10 +2259,10 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 <tr className="border-t border-slate-200/40 dark:border-navy-700/40 bg-slate-50/40 dark:bg-navy-800/30">
                   <th className="text-left px-5 py-2 text-slate-500 font-medium"> </th>
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">
-                    {isPolish ? 'Planowane' : 'Planned'}
+                    {t('initiatives.timelineSection.planned')}
                   </th>
                   <th className="text-left px-3 py-2 text-slate-500 font-medium">
-                    {isPolish ? 'Rzeczywiste' : 'Actual'}
+                    {t('initiatives.timelineSection.actual')}
                   </th>
                   <th className="text-right px-5 py-2 text-slate-500 font-medium">Δ</th>
                 </tr>
@@ -2348,7 +2328,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
           {timelineMilestones.length > 0 && (
             <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-5">
               <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 block mb-3">
-                {isPolish ? 'Kamienie milowe — wynik' : 'Milestones — Final'}
+                {t('initiatives.timelineSection.milestonesFinal')}
               </span>
               <div className="space-y-1.5">
                 {timelineMilestones.map((ms) => {
@@ -2416,23 +2396,26 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
                 <>
                   <CheckCircle2 size={28} className="mx-auto mb-2 text-emerald-500" />
                   <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    {isPolish ? 'W terminie' : 'On time'}
+                    {t('initiatives.timelineSection.onTime')}
                     {endVariance < 0 &&
-                      ` (${Math.abs(endVariance)} ${isPolish ? 'dni wcześniej' : 'days early'})`}
+                      ` ${t('initiatives.timelineSection.daysEarly', {
+                        days: Math.abs(endVariance),
+                      })}`}
                   </p>
                 </>
               ) : endVariance !== null ? (
                 <>
                   <AlertTriangle size={28} className="mx-auto mb-2 text-amber-500" />
                   <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                    {isPolish ? 'Opóźnione' : 'Delayed'} (+{endVariance} {isPolish ? 'dni' : 'days'}
-                    )
+                    {t('initiatives.timelineSection.delayedByDays', { days: endVariance })}
                   </p>
                 </>
               ) : (
                 <>
                   <CheckCircle2 size={28} className="mx-auto mb-2 text-emerald-500" />
-                  <p className="text-sm text-slate-500">{isPolish ? 'Zakończone' : 'Completed'}</p>
+                  <p className="text-sm text-slate-500">
+                    {t('initiatives.timelineSection.completed')}
+                  </p>
                 </>
               )}
             </div>

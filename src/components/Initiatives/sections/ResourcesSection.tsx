@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
 import { Api } from '@/services/api';
@@ -174,7 +175,7 @@ const TableAIMenu: React.FC<{
         }}
         disabled={busy}
         className="p-1 rounded-md text-primary-500 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
-        title={isPolish ? 'AI' : 'AI'}
+        title="AI"
       >
         {busy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
       </button>
@@ -244,6 +245,7 @@ const fmtCurrency = (amount: number, currency: string, isPolish: boolean) =>
 // ==========================================
 
 export const ResourcesSection: React.FC = () => {
+  const { t } = useTranslation();
   const {
     isPolish,
     initiative,
@@ -916,20 +918,12 @@ export const ResourcesSection: React.FC = () => {
           proposal.intangibleAdd.length > 0;
 
         if (!hasAny) {
-          toast(
-            isPolish
-              ? 'AI nie zaproponowało dodatków dla tej tabeli.'
-              : 'AI suggested no additions for this table.'
-          );
+          toast(t('initiatives.resourcesSection.noAdditionsForTable'));
           return;
         }
         const check = ResourcesAiProposalSchema.safeParse(proposal);
         if (!check.success) {
-          toast.error(
-            isPolish
-              ? 'Odpowiedź AI ma nieprawidłowy format (nie można zastosować).'
-              : 'AI response has invalid format (cannot apply).'
-          );
+          toast.error(t('initiatives.resourcesSection.invalidAiFormat'));
           return;
         }
         openProposal(proposal);
@@ -962,6 +956,7 @@ export const ResourcesSection: React.FC = () => {
       normalizeToolStatus,
       openProposal,
       resourceItems,
+      t,
       toolItems,
     ]
   );
@@ -1223,20 +1218,12 @@ export const ResourcesSection: React.FC = () => {
         proposal.toolsAdd.length > 0 ||
         proposal.intangibleAdd.length > 0;
       if (!hasAny) {
-        toast(
-          isPolish
-            ? 'AI nie zaproponowało brakujących zasobów do dodania.'
-            : 'AI suggested no missing resources to add.'
-        );
+        toast(t('initiatives.resourcesSection.noMissingResources'));
         return;
       }
       const check = ResourcesAiProposalSchema.safeParse(proposal);
       if (!check.success) {
-        toast.error(
-          isPolish
-            ? 'Odpowiedź AI ma nieprawidłowy format (nie można zastosować).'
-            : 'AI response has invalid format (cannot apply).'
-        );
+        toast.error(t('initiatives.resourcesSection.invalidAiFormat'));
         return;
       }
       openProposal(proposal);
@@ -1261,6 +1248,7 @@ export const ResourcesSection: React.FC = () => {
     normalizeToolStatus,
     openProposal,
     resourceItems,
+    t,
     toolItems,
   ]);
 
@@ -1435,12 +1423,10 @@ export const ResourcesSection: React.FC = () => {
             <div className="flex items-start justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isPolish ? 'Propozycje zasobów (AI)' : 'Proposed resources (AI)'}
+                  {t('initiatives.resourcesSection.proposedResourcesAi')}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isPolish
-                    ? 'Zaznacz elementy do dodania, a następnie kliknij „Zastosuj”. (AI nie usuwa pozycji w zasobach)'
-                    : 'Select items to add, then click “Apply”. (AI never removes resource rows)'}
+                  {t('initiatives.resourcesSection.selectItemsToAdd')}
                 </p>
                 {aiProposal.note ? (
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -1453,37 +1439,35 @@ export const ResourcesSection: React.FC = () => {
                   proposalQuality.missingProviders > 0) && (
                   <div className="mt-2 rounded-xl border border-amber-200/60 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/10 px-3 py-2">
                     <div className="text-[11px] font-semibold text-amber-800 dark:text-amber-200">
-                      {isPolish
-                        ? 'Kontrola jakości (przed dodaniem)'
-                        : 'Quality checks (before adding)'}
+                      {t('initiatives.resourcesSection.qualityChecks')}
                     </div>
                     <div className="mt-0.5 text-[11px] text-amber-700/90 dark:text-amber-200/80 space-y-0.5">
                       {proposalQuality.zeroAmounts > 0 ? (
                         <div>
-                          {isPolish
-                            ? `- Pola kosztowe = 0: ${proposalQuality.zeroAmounts} (wymaga potwierdzenia)`
-                            : `- Cost fields = 0: ${proposalQuality.zeroAmounts} (needs confirmation)`}
+                          {t('initiatives.resourcesSection.qualityZeroCost', {
+                            count: proposalQuality.zeroAmounts,
+                          })}
                         </div>
                       ) : null}
                       {proposalQuality.confirmPlaceholders > 0 ? (
                         <div>
-                          {isPolish
-                            ? `- Placeholdery “[confirm]”: ${proposalQuality.confirmPlaceholders}`
-                            : `- “[confirm]” placeholders: ${proposalQuality.confirmPlaceholders}`}
+                          {t('initiatives.resourcesSection.qualityConfirmPlaceholders', {
+                            count: proposalQuality.confirmPlaceholders,
+                          })}
                         </div>
                       ) : null}
                       {proposalQuality.missingVendors > 0 ? (
                         <div>
-                          {isPolish
-                            ? `- Brak vendor (Tools): ${proposalQuality.missingVendors}`
-                            : `- Missing vendor (Tools): ${proposalQuality.missingVendors}`}
+                          {t('initiatives.resourcesSection.qualityMissingVendors', {
+                            count: proposalQuality.missingVendors,
+                          })}
                         </div>
                       ) : null}
                       {proposalQuality.missingProviders > 0 ? (
                         <div>
-                          {isPolish
-                            ? `- Brak provider (Intangibles): ${proposalQuality.missingProviders}`
-                            : `- Missing provider (Intangibles): ${proposalQuality.missingProviders}`}
+                          {t('initiatives.resourcesSection.qualityMissingProviders', {
+                            count: proposalQuality.missingProviders,
+                          })}
                         </div>
                       ) : null}
                     </div>
@@ -1493,7 +1477,7 @@ export const ResourcesSection: React.FC = () => {
               <button
                 onClick={closeAIModal}
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPolish ? 'Zamknij' : 'Close'}
+                title={t('initiatives.resourcesSection.close')}
               >
                 <X size={16} />
               </button>
@@ -1504,8 +1488,8 @@ export const ResourcesSection: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Budżet — do dodania' : 'Budget — to add'} (
-                      {aiProposal.budgetAdd.length})
+                      {t('initiatives.resourcesSection.budgetToAdd')} ({aiProposal.budgetAdd.length}
+                      )
                     </span>
                     <button
                       onClick={() =>
@@ -1515,7 +1499,7 @@ export const ResourcesSection: React.FC = () => {
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.resourcesSection.selectAll')}
                     </button>
                   </div>
                   <div className="space-y-1.5">
@@ -1562,8 +1546,7 @@ export const ResourcesSection: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'FTE — do dodania' : 'Team / FTE — to add'} (
-                      {aiProposal.fteAdd.length})
+                      {t('initiatives.resourcesSection.fteToAdd')} ({aiProposal.fteAdd.length})
                     </span>
                     <button
                       onClick={() =>
@@ -1573,7 +1556,7 @@ export const ResourcesSection: React.FC = () => {
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.resourcesSection.selectAll')}
                     </button>
                   </div>
                   <div className="space-y-1.5">
@@ -1620,8 +1603,7 @@ export const ResourcesSection: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Narzędzia — do dodania' : 'Tools — to add'} (
-                      {aiProposal.toolsAdd.length})
+                      {t('initiatives.resourcesSection.toolsToAdd')} ({aiProposal.toolsAdd.length})
                     </span>
                     <button
                       onClick={() =>
@@ -1631,11 +1613,11 @@ export const ResourcesSection: React.FC = () => {
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.resourcesSection.selectAll')}
                     </button>
                   </div>
                   <div className="space-y-1.5">
-                    {aiProposal.toolsAdd.map((t, idx) => (
+                    {aiProposal.toolsAdd.map((tool, idx) => (
                       <label
                         key={idx}
                         className="flex items-start gap-2 p-2 rounded-xl border border-slate-200/60 dark:border-navy-700/50 bg-slate-50/40 dark:bg-navy-800/20 hover:bg-slate-50/70 dark:hover:bg-navy-800/30 transition-colors"
@@ -1651,25 +1633,25 @@ export const ResourcesSection: React.FC = () => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium text-slate-800 dark:text-white">
-                              {t.name}
+                              {tool.name}
                             </span>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                              {t.category} · {t.status}
+                              {tool.category} · {tool.status}
                             </span>
                           </div>
-                          {t.vendor ? (
+                          {tool.vendor ? (
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                              {isPolish ? 'Dostawca' : 'Vendor'}: {t.vendor}
+                              {t('initiatives.resourcesSection.vendor')}: {tool.vendor}
                             </p>
                           ) : null}
-                          {t.notes ? (
+                          {tool.notes ? (
                             <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
-                              {t.notes}
+                              {tool.notes}
                             </p>
                           ) : null}
-                          {t.rationale ? (
+                          {tool.rationale ? (
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                              {t.rationale}
+                              {tool.rationale}
                             </p>
                           ) : null}
                         </div>
@@ -1683,7 +1665,7 @@ export const ResourcesSection: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                      {isPolish ? 'Licencje/szkolenia — do dodania' : 'Intangibles — to add'} (
+                      {t('initiatives.resourcesSection.intangiblesToAdd')} (
                       {aiProposal.intangibleAdd.length})
                     </span>
                     <button
@@ -1694,7 +1676,7 @@ export const ResourcesSection: React.FC = () => {
                       }
                       className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                     >
-                      {isPolish ? 'Zaznacz wszystko' : 'Select all'}
+                      {t('initiatives.resourcesSection.selectAll')}
                     </button>
                   </div>
                   <div className="space-y-1.5">
@@ -1722,7 +1704,7 @@ export const ResourcesSection: React.FC = () => {
                           </div>
                           {a.provider ? (
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                              {isPolish ? 'Dostawca' : 'Provider'}: {a.provider}
+                              {t('initiatives.resourcesSection.provider')}: {a.provider}
                             </p>
                           ) : null}
                           {a.notes ? (
@@ -1749,7 +1731,7 @@ export const ResourcesSection: React.FC = () => {
                 disabled={aiBusy}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {t('initiatives.resourcesSection.cancel')}
               </button>
               <button
                 onClick={() => void applyProposal()}
@@ -1757,7 +1739,7 @@ export const ResourcesSection: React.FC = () => {
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary-400/50 text-primary-700 dark:text-primary-300 hover:bg-primary-500/10 transition-colors disabled:opacity-50"
               >
                 {aiBusy ? <Loader2 size={13} className="animate-spin" /> : null}
-                {isPolish ? 'Zastosuj' : 'Apply'}
+                {t('initiatives.resourcesSection.apply')}
               </button>
             </div>
           </div>
@@ -1839,6 +1821,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
   onAdd,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   const [showAdd, setShowAdd] = useState(false);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
@@ -1879,7 +1862,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
         <div className="flex items-center gap-2.5">
           <DollarSign size={16} className="text-emerald-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-            {isPolish ? 'Budżet' : 'Budget'}
+            {t('initiatives.resourcesSection.budget')}
           </h3>
           {items.length > 0 && (
             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
@@ -1897,7 +1880,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
           className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
         >
           <Plus size={12} />
-          {isPolish ? 'Dodaj' : 'Add item'}
+          {t('initiatives.resourcesSection.addItem')}
         </button>
       </div>
 
@@ -1915,11 +1898,17 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
           <thead className="sticky top-0 z-10">
             <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
-              <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Kategoria' : 'Category'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-              <th className="text-right py-2.5 pr-2">{isPolish ? 'Kwota' : 'Amount'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Waluta' : 'Currency'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Opis' : 'Description'}</th>
+              <th className="text-left py-2.5 pl-3 pr-2">
+                {t('initiatives.resourcesSection.category')}
+              </th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.type')}</th>
+              <th className="text-right py-2.5 pr-2">{t('initiatives.resourcesSection.amount')}</th>
+              <th className="text-left py-2.5 pr-2">
+                {t('initiatives.resourcesSection.currency')}
+              </th>
+              <th className="text-left py-2.5 pr-2">
+                {t('initiatives.resourcesSection.description')}
+              </th>
               <th className="py-2.5 pr-3 text-right">
                 <TableAIMenu
                   isPolish={isPolish}
@@ -1998,7 +1987,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                           className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 size={13} />
-                          {isPolish ? 'Usuń' : 'Delete'}
+                          {t('initiatives.resourcesSection.delete')}
                         </button>
                       </div>
                     )}
@@ -2048,7 +2037,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Kwota' : 'Amount'}
+                    placeholder={t('initiatives.resourcesSection.amount')}
                     className={INLINE_INPUT_CLS + ' text-right'}
                   />
                 </td>
@@ -2072,7 +2061,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Opis' : 'Description'}
+                    placeholder={t('initiatives.resourcesSection.description')}
                     className={INLINE_INPUT_CLS}
                   />
                 </td>
@@ -2082,14 +2071,14 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                       onClick={handleSubmit}
                       disabled={!newAmount}
                       className="p-1 rounded-md text-emerald-500 hover:bg-emerald-500/10 disabled:opacity-30 transition-colors"
-                      title={isPolish ? 'Zapisz' : 'Save'}
+                      title={t('initiatives.resourcesSection.save')}
                     >
                       <Check size={14} />
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
                       className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
-                      title={isPolish ? 'Anuluj' : 'Cancel'}
+                      title={t('initiatives.resourcesSection.cancel')}
                     >
                       <X size={14} />
                     </button>
@@ -2100,7 +2089,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             {items.length === 0 && !showAdd && (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-sm text-slate-600">
-                  {isPolish ? 'Brak pozycji budżetowych' : 'No budget items yet'}
+                  {t('initiatives.resourcesSection.noBudgetItems')}
                 </td>
               </tr>
             )}
@@ -2123,7 +2112,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             </span>
           </span>
           <span>
-            {isPolish ? 'Razem' : 'Total'}:{' '}
+            {t('initiatives.resourcesSection.total')}:{' '}
             <span className="font-semibold text-emerald-600 dark:text-emerald-400">
               {fmtCurrency(totalBudget, cur, isPolish)}
             </span>
@@ -2158,6 +2147,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
   onAdd,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   const [showAdd, setShowAdd] = useState(false);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
@@ -2195,7 +2185,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
         <div className="flex items-center gap-2.5">
           <Users size={16} className="text-blue-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-            {isPolish ? 'Zespół / Alokacja FTE' : 'Team / FTE Allocation'}
+            {t('initiatives.resourcesSection.teamFteAllocation')}
           </h3>
           {items.length > 0 && (
             <span className="text-[10px] font-medium text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
@@ -2213,7 +2203,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
           className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
         >
           <Plus size={12} />
-          {isPolish ? 'Dodaj' : 'Add item'}
+          {t('initiatives.resourcesSection.addItem')}
         </button>
       </div>
 
@@ -2232,12 +2222,16 @@ const TeamTable: React.FC<TeamTableProps> = ({
           <thead className="sticky top-0 z-10">
             <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
-              <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Nazwa' : 'Name'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Alokacja' : 'Alloc.'}</th>
+              <th className="text-left py-2.5 pl-3 pr-2">
+                {t('initiatives.resourcesSection.name')}
+              </th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.role')}</th>
+              <th className="text-left py-2.5 pr-2">
+                {t('initiatives.resourcesSection.allocation')}
+              </th>
               <th className="text-left py-2.5 pr-2">Start</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Koniec' : 'End'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Notatki' : 'Notes'}</th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.end')}</th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.notes')}</th>
               <th className="py-2.5 pr-3 text-right">
                 <TableAIMenu
                   isPolish={isPolish}
@@ -2321,7 +2315,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                           className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 size={13} />
-                          {isPolish ? 'Usuń' : 'Delete'}
+                          {t('initiatives.resourcesSection.delete')}
                         </button>
                       </div>
                     )}
@@ -2346,7 +2340,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Imię / Stanowisko' : 'Name / Position'}
+                    placeholder={t('initiatives.resourcesSection.namePosition')}
                     className={INLINE_INPUT_CLS}
                     autoFocus
                   />
@@ -2403,7 +2397,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Notatki' : 'Notes'}
+                    placeholder={t('initiatives.resourcesSection.notes')}
                     className={INLINE_INPUT_CLS}
                   />
                 </td>
@@ -2413,14 +2407,14 @@ const TeamTable: React.FC<TeamTableProps> = ({
                       onClick={handleSubmit}
                       disabled={!newName.trim()}
                       className="p-1 rounded-md text-blue-500 hover:bg-blue-500/10 disabled:opacity-30 transition-colors"
-                      title={isPolish ? 'Zapisz' : 'Save'}
+                      title={t('initiatives.resourcesSection.save')}
                     >
                       <Check size={14} />
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
                       className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
-                      title={isPolish ? 'Anuluj' : 'Cancel'}
+                      title={t('initiatives.resourcesSection.cancel')}
                     >
                       <X size={14} />
                     </button>
@@ -2431,7 +2425,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
             {items.length === 0 && !showAdd && (
               <tr>
                 <td colSpan={8} className="py-8 text-center text-sm text-slate-600">
-                  {isPolish ? 'Brak przypisanych zasobów' : 'No team members assigned'}
+                  {t('initiatives.resourcesSection.noTeamMembers')}
                 </td>
               </tr>
             )}
@@ -2441,7 +2435,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
 
       {items.length > 0 && (
         <div className="mt-2 flex items-center justify-end text-xs text-slate-500">
-          {isPolish ? 'Łączne FTE' : 'Total FTE'}:{' '}
+          {t('initiatives.resourcesSection.totalFte')}:{' '}
           <span className="ml-1 font-semibold text-blue-600 dark:text-blue-400">
             {totalFTE.toFixed(1)}
           </span>
@@ -2475,6 +2469,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
   onAdd,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   const [showAdd, setShowAdd] = useState(false);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
@@ -2515,7 +2510,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
         <div className="flex items-center gap-2.5">
           <Wrench size={16} className="text-indigo-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-            {isPolish ? 'Narzędzia i infrastruktura' : 'Tools & Infrastructure'}
+            {t('initiatives.resourcesSection.toolsInfrastructure')}
           </h3>
           {items.length > 0 && (
             <span className="text-[10px] font-medium text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
@@ -2528,7 +2523,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
           className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
         >
           <Plus size={12} />
-          {isPolish ? 'Dodaj' : 'Add item'}
+          {t('initiatives.resourcesSection.addItem')}
         </button>
       </div>
 
@@ -2547,11 +2542,15 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
           <thead className="sticky top-0 z-10">
             <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
-              <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Nazwa' : 'Name'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Kategoria' : 'Category'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Dostawca' : 'Vendor'}</th>
-              <th className="text-right py-2.5 pr-2">{isPolish ? 'Koszt' : 'Cost'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Licencja' : 'License'}</th>
+              <th className="text-left py-2.5 pl-3 pr-2">
+                {t('initiatives.resourcesSection.name')}
+              </th>
+              <th className="text-left py-2.5 pr-2">
+                {t('initiatives.resourcesSection.category')}
+              </th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.vendor')}</th>
+              <th className="text-right py-2.5 pr-2">{t('initiatives.resourcesSection.cost')}</th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.license')}</th>
               <th className="text-left py-2.5 pr-2">Status</th>
               <th className="py-2.5 pr-3 text-right">
                 <TableAIMenu
@@ -2635,7 +2634,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                           className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 size={13} />
-                          {isPolish ? 'Usuń' : 'Delete'}
+                          {t('initiatives.resourcesSection.delete')}
                         </button>
                       </div>
                     )}
@@ -2660,7 +2659,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Nazwa' : 'Name'}
+                    placeholder={t('initiatives.resourcesSection.name')}
                     className={INLINE_INPUT_CLS}
                     autoFocus
                   />
@@ -2686,7 +2685,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Dostawca' : 'Vendor'}
+                    placeholder={t('initiatives.resourcesSection.vendor')}
                     className={INLINE_INPUT_CLS}
                   />
                 </td>
@@ -2699,7 +2698,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Koszt' : 'Cost'}
+                    placeholder={t('initiatives.resourcesSection.cost')}
                     className={INLINE_INPUT_CLS + ' text-right'}
                   />
                 </td>
@@ -2735,14 +2734,14 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
                       onClick={handleSubmit}
                       disabled={!newName.trim()}
                       className="p-1 rounded-md text-indigo-500 hover:bg-indigo-500/10 disabled:opacity-30 transition-colors"
-                      title={isPolish ? 'Zapisz' : 'Save'}
+                      title={t('initiatives.resourcesSection.save')}
                     >
                       <Check size={14} />
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
                       className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
-                      title={isPolish ? 'Anuluj' : 'Cancel'}
+                      title={t('initiatives.resourcesSection.cancel')}
                     >
                       <X size={14} />
                     </button>
@@ -2753,7 +2752,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
             {items.length === 0 && !showAdd && (
               <tr>
                 <td colSpan={8} className="py-8 text-center text-sm text-slate-600">
-                  {isPolish ? 'Brak narzędzi' : 'No tools added yet'}
+                  {t('initiatives.resourcesSection.noTools')}
                 </td>
               </tr>
             )}
@@ -2763,7 +2762,7 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
 
       {items.length > 0 && totalCost > 0 && (
         <div className="mt-2 flex items-center justify-end text-xs text-slate-500">
-          {isPolish ? 'Łączny koszt licencji' : 'Total license cost'}:{' '}
+          {t('initiatives.resourcesSection.totalLicenseCost')}:{' '}
           <span className="ml-1 font-semibold text-indigo-600 dark:text-indigo-400">
             {fmtCurrency(totalCost, 'PLN', isPolish)}
           </span>
@@ -2797,6 +2796,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
   onAdd,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   const [showAdd, setShowAdd] = useState(false);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
@@ -2871,9 +2871,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
         <div className="flex items-center gap-2.5">
           <GraduationCap size={16} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
-            {isPolish
-              ? 'Licencje, szkolenia i wartości niematerialne'
-              : 'Licenses, Training & Intangible Assets'}
+            {t('initiatives.resourcesSection.licensesTrainingIntangibles')}
           </h3>
           {items.length > 0 && (
             <span className="text-[10px] font-medium text-slate-500 bg-slate-100 dark:bg-navy-800 px-2 py-0.5 rounded-full">
@@ -2891,7 +2889,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
           className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
         >
           <Plus size={12} />
-          {isPolish ? 'Dodaj' : 'Add item'}
+          {t('initiatives.resourcesSection.addItem')}
         </button>
       </div>
 
@@ -2911,12 +2909,18 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
           <thead className="sticky top-0 z-10">
             <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Nazwa' : 'Name'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Dostawca' : 'Provider'}</th>
-              <th className="text-right py-2.5 pr-2">{isPolish ? 'Koszt' : 'Cost'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Ważne od' : 'Valid from'}</th>
-              <th className="text-left py-2.5 pr-2">{isPolish ? 'Ważne do' : 'Valid until'}</th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.type')}</th>
+              <th className="text-left py-2.5 pr-2">{t('initiatives.resourcesSection.name')}</th>
+              <th className="text-left py-2.5 pr-2">
+                {t('initiatives.resourcesSection.provider')}
+              </th>
+              <th className="text-right py-2.5 pr-2">{t('initiatives.resourcesSection.cost')}</th>
+              <th className="text-left py-2.5 pr-2">
+                {t('initiatives.resourcesSection.validFrom')}
+              </th>
+              <th className="text-left py-2.5 pr-2">
+                {t('initiatives.resourcesSection.validUntil')}
+              </th>
               <th className="text-left py-2.5 pr-2">Status</th>
               <th className="py-2.5 pr-3 text-right">
                 <TableAIMenu
@@ -3004,7 +3008,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                           className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
                         >
                           <Trash2 size={13} />
-                          {isPolish ? 'Usuń' : 'Delete'}
+                          {t('initiatives.resourcesSection.delete')}
                         </button>
                       </div>
                     )}
@@ -3042,7 +3046,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Nazwa' : 'Name'}
+                    placeholder={t('initiatives.resourcesSection.name')}
                     className={INLINE_INPUT_CLS}
                     autoFocus
                   />
@@ -3055,7 +3059,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Dostawca' : 'Provider'}
+                    placeholder={t('initiatives.resourcesSection.provider')}
                     className={INLINE_INPUT_CLS}
                   />
                 </td>
@@ -3068,7 +3072,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                       if (e.key === 'Enter') void handleSubmit();
                       if (e.key === 'Escape') setShowAdd(false);
                     }}
-                    placeholder={isPolish ? 'Koszt' : 'Cost'}
+                    placeholder={t('initiatives.resourcesSection.cost')}
                     className={INLINE_INPUT_CLS + ' text-right'}
                   />
                 </td>
@@ -3107,14 +3111,14 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
                       onClick={handleSubmit}
                       disabled={!newName.trim()}
                       className="p-1 rounded-md text-primary-500 hover:bg-primary-500/10 disabled:opacity-30 transition-colors"
-                      title={isPolish ? 'Zapisz' : 'Save'}
+                      title={t('initiatives.resourcesSection.save')}
                     >
                       <Check size={14} />
                     </button>
                     <button
                       onClick={() => setShowAdd(false)}
                       className="p-1 rounded-md text-slate-600 hover:bg-slate-500/10 transition-colors"
-                      title={isPolish ? 'Anuluj' : 'Cancel'}
+                      title={t('initiatives.resourcesSection.cancel')}
                     >
                       <X size={14} />
                     </button>
@@ -3125,7 +3129,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
             {items.length === 0 && !showAdd && (
               <tr>
                 <td colSpan={9} className="py-8 text-center text-sm text-slate-600">
-                  {isPolish ? 'Brak wartości niematerialnych' : 'No intangible assets yet'}
+                  {t('initiatives.resourcesSection.noIntangibles')}
                 </td>
               </tr>
             )}
@@ -3135,7 +3139,7 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
 
       {items.length > 0 && totalCost > 0 && (
         <div className="mt-2 flex items-center justify-end text-xs text-slate-500">
-          {isPolish ? 'Łączny koszt' : 'Total cost'}:{' '}
+          {t('initiatives.resourcesSection.totalCost')}:{' '}
           <span className="ml-1 font-semibold text-primary-600 dark:text-primary-400">
             {fmtCurrency(totalCost, cur, isPolish)}
           </span>
