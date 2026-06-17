@@ -107,14 +107,14 @@ REALNE ~95% z 60+ zakładek (Tenant Ops, AI Operations 27 pod-zakł., System, Go
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | llm tiers/assign+priority bez gate (global AI hijack) | W-01,W-03,W-04 | `llm.routes.ts:793,799,805` → `verifySuperAdmin` | P0 sec | — | **STALE-zweryfikowane: NAPRAWIONE** `91c8245559` (kod 2026-06-13: `verifySuperAdmin` `:793/799/805`) |
-| L-02 | virtual-workers przepuszcza org-admina (global persony) | W-01,W-03,W-04 | `virtual-workers.routes.ts:22` → `requireRole('super_admin')` only | P0 sec | — | **STALE-zweryfikowane: NAPRAWIONE** `91c8245559` (kod 2026-06-13: `:22`) |
-| L-03 | llm purposes global writes (verifyAdmin) | W-01 | `POST /llm/purposes`, `/purposes/:purpose/assignments`, `PUT /llm/org/:id/policy` | P1 sec | 3 | otwarta (→ `verifySuperAdmin`) |
-| L-04 | llm market global writes (verifyToken) | W-01 | `POST /llm/market/openrouter/sync`, `PUT /llm/market/inbox/:id` | P1 sec | 3 | otwarta (→ `verifySuperAdmin`) |
+| L-01 | llm tiers/assign+priority bez gate (global AI hijack) | W-01,W-03,W-04 | `llm.routes.ts:793,799,805` → `verifySuperAdmin` | P0 sec | — | **ZAMKNIĘTA 2026-06-17 `91c8245559` — ZWERYFIKOWANE w kodzie 2026-06-17** |
+| L-02 | virtual-workers przepuszcza org-admina (global persony) | W-01,W-03,W-04 | `virtual-workers.routes.ts:22` → `requireRole('super_admin')` only | P0 sec | — | **ZAMKNIĘTA 2026-06-17 `91c8245559` — ZWERYFIKOWANE w kodzie 2026-06-17** |
+| L-03 | llm purposes global writes (verifyAdmin) | W-01 | `llm.routes.ts:1479` (`/purposes/:purpose/assignments`) + `:1704` (`/org/:id/policy`) | P1 sec | 3 | **ZAMKNIĘTA 2026-06-17 `698b004ff0` (verifyAdmin→verifySuperAdmin; POST /purposes już był OK)** |
+| L-04 | llm market global writes (verifyToken/verifyAdmin) | W-01 | `llm.routes.ts:1970` (`/market/openrouter/sync`) + `:2012` (`/market/inbox/:id`) | P1 sec | 3 | **ZAMKNIĘTA 2026-06-17 `698b004ff0` (verifyAdmin→verifySuperAdmin)** |
 | L-05 | martwy płaski `AIPlatformModule.tsx` + orphan `IAMModuleView` | W-01 | `views/superadmin/AIPlatformModule.tsx` (152 l., 0 importów); `iam/IAMModuleView.tsx` (70 l., 0 API) | P2 | 3 | otwarta |
 | L-06 | i18n hardkod EN ~114/124 plików | W-01,W-05 | ~150/165 tsx bez `t()` (zmierzone 2026-06-13) | P2 | 4 | otwarta → **DP-10 (świadomy dług internal, udokumentować)** |
 | L-07 | 70 hex literałów | W-01,W-05 | 70 w surface (zmierzone 2026-06-13) | P3 | 4 | otwarta (DP-8 palety legalne) |
-| L-08 | brak E2E non-superadmin→403; asercje `[401,403,404]` maskują | W-01 | route-testy; `superAdmin.middleware.test.ts` 42/42 | P0-test | 3 | otwarta (twarde `===403` + boczne routery) |
+| L-08 | brak E2E non-superadmin→403; asercje `[401,403,404]` maskują | W-01 | `tests/integration/llm-superadmin-gate.test.ts` 8/8 pass | P0-test | 3 | **ZAMKNIĘTA 2026-06-17 `698b004ff0` (8 testów: 4×org-admin→403, 4×superadmin→nie-403)** |
 | L-09 | FeedbackBacklog secret-path leak + SSO crash | W-03 | `SuperAdminFeedbackBacklogView`; `SSOConfigurationView.tsx:484` | P0-bug | — | **NAPRAWIONE** `69ffc1fd86` (live-verify 🟦 pending) |
 | L-10 | feedback 500 (pulse/feature) | W-06 | `feedback.routes.ts:158/177/466` | P1 | 3 | **NAPRAWIONE w kodzie** `36ceb52c60` (live-verify deploy pending) |
 | L-11 | realna persyst. testy maskowane (mock-gate/mock-DB) + stale-import + brak `<Router>` | W-01 | `*.test.js`; `OverviewModule.root-closure`; Feedback/Analytics | P1-test | 3/4 | otwarta |

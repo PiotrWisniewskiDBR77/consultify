@@ -105,13 +105,13 @@ Scenariusze S1–S7 + pokrycie: karta §0/§2. Bezpieczeństwo: karta §6.
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | read-IDOR `GET /settings/notifications` | W-01,W-05 | `settings.routes.ts:868` (guard `:904/:912`) | P1 | 2 | **NAPRAWIONE `b9f2dee9d2` — R3 ZWERYFIKOWANE (guard `req.user.id` w kodzie 2026-06-13)** |
-| L-02 | bezhasłowy duplikat usuwania konta | W-01 | `settings.routes.ts:2634`, `gdprService.ts:175` | P1 | 2 | otwarta |
+| L-01 | read-IDOR `GET /settings/notifications` | W-01,W-05 | `settings.routes.ts:868` (guard `:904/:912`) | P1 | 2 | **ZAMKNIĘTA 2026-06-17 `b9f2dee9d2` — ZWERYFIKOWANE w kodzie 2026-06-17** |
+| L-02 | bezhasłowy duplikat usuwania konta | W-01 | `settings.routes.ts:2634` usunięty; FE→`/gdpr/deletion-request`+hasło | P1 | 2 | **ZAMKNIĘTA 2026-06-17 `407ec5b1b5`** |
 | L-03 | pilot gating tylko FE (serwer nie zna pilota) | W-01 | `pilotAccess.ts:14`, `SettingsView.tsx:261-265` | P2 | 3 | otwarta |
 | L-04 | billing „Section not found" (route bez case) | W-01,W-04 | `routeConfig:149,415` | P1 | 2 | otwarta (D-01=DP-11) |
 | L-05 | Keyboard Shortcuts UI bez dispatchera (no-op) | W-01 | `:523` | P1 | 2 | otwarta (D-02) |
 | L-06 | Feature flags read-only viewer (brak write) | W-01 | `:157` | P2 | 2 | otwarta (D-03, DP-10) |
-| L-07 | sekrety integracji plaintext at rest | W-01 | CalDAV `:2000` base64, OAuth `integrationOAuthEngine.ts:623-648` | P2 | 2 | **NAPRAWIONE `9ef570ca1b` (R3: potwierdzić pokrycie CalDAV+OAuth)** |
+| L-07 | sekrety integracji plaintext at rest | W-01 | CalDAV `:2000` base64 = HTTP Basic (protokół), tokens AES-256-GCM via secretEncryption | P2 | 2 | **ZAMKNIĘTA 2026-06-17 `9ef570ca1b` — ZWERYFIKOWANE: CalDAV+OAuth przez encryptSecret/decryptSecret** |
 | L-08 | martwy kod (`layout/SettingsSidebar.tsx`, `VoiceSettingsPanel.tsx`→M22) | W-01,W-03 | 0 konsumentów / 0 importerów | P2 | 3 | otwarta |
 | L-09 | ~1650–2237 hardkodów palety + §27 N/D + i18n inline (53) | W-01 | `src/components/settings/` | P1/P2 | 4 | otwarta (DP-8 palety) |
 | L-10 | testy S3 (hasło) + S5 (GDPR bcrypt na właściwej trasie) brak; mock-drift ~34+14 FAIL | W-01 | f2_tests_report | P0-test | 2 | otwarta |

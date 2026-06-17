@@ -100,7 +100,7 @@ REALNE: connection/connect, referrals (tools/analytics/campaign-links), earnings
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | silent earnings fallback (hardcoded commissionRate:15) | W-01,W-03,W-04 | `partners.routes.ts:966-977` → 503 DB_ERROR (`:967`) | P2 | — | **STALE-zweryfikowane: NAPRAWIONE** `7cf315b4b9` (kod 2026-06-13: `:967` 503 DB_ERROR) |
+| L-01 | silent earnings fallback (hardcoded commissionRate:15) | W-01,W-03,W-04 | `partners.routes.ts:966-977` → 503 DB_ERROR (`:967`) | P2 | — | **ZAMKNIĘTA 2026-06-17 `7cf315b4b9` — ZWERYFIKOWANE w kodzie 2026-06-17** |
 | L-02 | brak E2E happy-path S1 connect→dashboard | W-01 | `tests/integration/partners/` brak | P1-test | 3 | otwarta |
 | L-03 | brak testu payout lifecycle S3 | W-01 | brak earn→payout transition | P1-test | 3 | otwarta |
 | L-04 | brak testu legacy earnings silent-fallback | W-01 | — | P2-test | 4 | otwarta |

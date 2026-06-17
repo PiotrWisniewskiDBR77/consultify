@@ -65,7 +65,7 @@ Brak luk technicznych do „dokończenia" — moduł nie ma funkcjonalności. Je
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | A1 Ecosystem/Affiliate — co dalej? | **wyciąć** (rekomendacja audytu) / budować od zera | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE = DP-4 WYCIĄĆ** (Ścieżka A: usunąć view + route + `referrals.routes.ts` + atrapy `api.ts` + warunek sidebar `ECOSYSTEM_NODE`; weryfikacja `grep` = 0 referencji) |
+| D-01 | A1 Ecosystem/Affiliate — co dalej? | **wyciąć** (rekomendacja audytu) / budować od zera | Piotr | 2026-06-13 | **WYKONANE Ścieżka A `b294bfb718` 2026-06-17** — usunięto view, referrals.routes.ts, referrals.validators.ts, Gateway import+mount, routes/index, AppRoutes redirect, ROUTES.AFFILIATE, AppView.AFFILIATE_DASHBOARD, useBreadcrumbs case, api.ts stubs, users.api.ts REFERRALS, TrialEntryView Ecosystem block, moduleHelpContent partner-referrals. grep = 0 referencji (pozostały: string 'AFFILIATE' w metrics = typ partnera M26, PartnerReferralService = live M26). |
 
 ### 05 · Flagi/rollout — brak; sidebar warunkowy `journeyState === 'ECOSYSTEM_NODE'`. Moduł poza fazami implementacyjnymi do czasu D-01.
 ### 06 · Ryzyka — Bez decyzji zakresu moduł trwa jako uczciwy, ale bezwartościowy stub zajmujący nawigację i kod; rekomendacja audytu: wyciąć, chyba że ekosystem/affiliate jest w roadmapie — wtedy budować od zera z org-scope/auth/role od początku.
