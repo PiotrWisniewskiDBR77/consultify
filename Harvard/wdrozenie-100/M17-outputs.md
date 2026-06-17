@@ -109,9 +109,9 @@ Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY 
 | L-03 | share decku bez rate-limit/revoke; expired→404 nie 410 | W-01 | `presentations.routes.ts` (viewer+mint+revoke) | P2 | 3 | **ZAMKNIĘTA** — rate-limit na publicznym viewerze `/shared/:token` (`publicViewerLimiter` 60/min) + mint (`shareRateLimiter` 30/min) + **revoke `DELETE /decks/:id/share`** (nuluje token→viewer 404). **expired→410 świadomie ODRZUCONE**: single-404 surface = anty-enumeracja (spójne z M18; 410 leakowałoby istnienie tokenu) | 2026-06-17 |
 | L-04 | brak testu serwerowej bramki aprobaty (T4) | W-01 | `evidence/f2_tests_report.md` (S3 quality-only) | P0-test | 2 | otwarta (zależna od L-01/D-02 — bez polityki nie ma czego testować; quality-gate 422 pokryty `export-quality-gate.regression.test.ts`) |  |
 | L-05 | 25 stale testów middleware + mock-drift i18n + viewer RAP | W-01 | `v8FeatureGate.middleware.test.ts` (vs cofnięty `9b794bb7f0`) | P0-test | 2 | otwarta (**D-01**) |  |
-| L-06 | §27 brak persistKey + sort-persist | W-01 | `OutputsAggregateTabContent.tsx:1020` | P3 | 4 | otwarta |  |
-| L-07 | §27 brak `EntityStatusChip` + klasy koloru + bulk nieużyty | W-01 | `OutputsAggregateTabContent.tsx:311-374` | P2 | 4 | otwarta |  |
-| L-08 | v8 OFF → komunikat generyczny (nie „moduł wyłączony") | W-01 | `useRapData.ts:807` | P3 | 4 | otwarta |  |
+| L-06 | §27 brak persistKey + sort-persist | W-01 | `OutputsAggregateTabContent.tsx:1020` | P3 | 4 | **ZAMKNIĘTA** — `FilterableTable` otrzymał `persistKey="rap.outputs.aggregate"` → szerokości kolumn i sortowanie przeżywają reload; commit `90bca8243a` | 2026-06-17 |
+| L-07 | §27 brak `EntityStatusChip` + klasy koloru + bulk nieużyty | W-01 | `OutputsAggregateTabContent.tsx:311-374` | P2 | 4 | **ZAMKNIĘTA** — kolumna status: `EntityStatusChip` (§27 kanon); ikony typów neutralne (`text-slate-400`) zgodne z visual standard; commit `90bca8243a` | 2026-06-17 |
+| L-08 | v8 OFF → komunikat generyczny (nie „moduł wyłączony") | W-01 | `useRapData.ts:807` | P3 | 4 | **ZAMKNIĘTA** — `useRapData.ts`: 404 → `moduleDisabled` flag; `ReportsAndPresentationsHub.tsx`: nowy prop `moduleDisabled` → dedykowany baner „moduł wyłączony" (zamiast generic error); commit `90bca8243a` | 2026-06-17 |
 | L-09 | i18n 96× `isPolish` (cały katalog, grep) | W-01 | `ReportsAndPresentations/*` (grep 2026-06-13=96) | P2 | 4 | otwarta |  |
 | L-10 | kręgosłup czat→deliverable (źródła artefaktów) | W-02 | `SPEC_ZADANIE_01` | P0-program | 0 | zależność (śledzona w SPEC_01) |  |
 | L-11 | public viewer over-disclosure | W-01 | `presentations.routes.ts:412,621` | P1 | — | **NAPRAWIONA `1b67579d7a`** | 2026-06-11 |
@@ -125,7 +125,7 @@ Rejestr org-scoped czysty (`:1891,1944`); 14/16 REALNE; DEMO_* martwy USUNIĘTY 
 
 ### 05 · Flagi / rollout — `ENABLE_V8_GLOBAL` OFF→404 (decyduje czy moduł żyje czy = panel błędu — udokumentować wartość na staging/prod); `ENABLE_DELIVERABLES_LIGHT`+`VITE_` dla Teresa→Outputs. Beta-guard route = nawigacyjny (direct URL omija plate; API org-gated).
 ### 06 · Ryzyka — krok 1 (bramka aprobaty) WYMAGA trwałego publish M18 → kolejność MASTER §5; 25 stale testów middleware = dług decyzyjny (D-01); `ENABLE_V8_GLOBAL` na prod nieznana (decyduje o życiu modułu); dev `.env` → Railway PROD.
-### 07 · Log — 2026-06-11: re-audit F:5→7 (`1b67579d7a` public viewer, `bc5579918d` beta-lock 3-warstwowy), 53→54. 2026-06-12: A:21→22 (`167b2757bf` DEMO_* usunięty). 2026-06-13 (teczka pogłębiona): L-01 potwierdzone (approval FE-only `:1000-1004`); INV_E 2 pkt STALE skorygowane; C rozbite na 2-warstwowy model bramek + enum 29 endpointów; F na Gherkin. Re-ocena D/G po Fazach 3/4 (zależne od M18).
+### 07 · Log — 2026-06-11: re-audit F:5→7 (`1b67579d7a` public viewer, `bc5579918d` beta-lock 3-warstwowy), 53→54. 2026-06-12: A:21→22 (`167b2757bf` DEMO_* usunięty). 2026-06-13 (teczka pogłębiona): L-01 potwierdzone (approval FE-only `:1000-1004`); INV_E 2 pkt STALE skorygowane; C rozbite na 2-warstwowy model bramek + enum 29 endpointów; F na Gherkin. Re-ocena D/G po Fazach 3/4 (zależne od M18). **2026-06-17 (Runda 2 FE): L-06 ZAMKNIĘTA (persistKey FilterableTable), L-07 ZAMKNIĘTA (EntityStatusChip + neutral ikony), L-08 ZAMKNIĘTA (moduleDisabled baner) — commit `90bca8243a`.**
 
 ---
 
