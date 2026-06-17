@@ -16,6 +16,7 @@ import {
   AlertOctagon,
   CheckSquare,
   ClipboardList,
+  Pencil,
   Sparkles,
   Target,
   Trash2,
@@ -25,11 +26,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { Button } from '@/components/ui/primitives';
 import { Api } from '@/services/api';
 
 import type { FullInitiative } from '../../types';
-import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
+import {
+  FilterableTable,
+  FilterChip,
+  HubWorkAreaLoadError,
+  HubWorkAreaLoading,
+  TableColumn,
+} from '../shared/ModuleHub';
 import {
   MENU_3_BADGE_ACTIVE,
   MENU_3_BADGE_INACTIVE,
@@ -38,7 +46,9 @@ import {
   MENU_3_LEFT_CLASS,
 } from '../shared/ModuleMenu3';
 import { Callout } from '../shared/NModeBlocks';
+import type { RowAction } from '../shared/RowActionsMenu';
 import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
+import { type RolloutEditTarget, RolloutRegisterEditModal } from './RolloutRegisterEditModal';
 
 // ── Resource shapes (mirror rollout.routes.ts response rows) ────────────────
 
@@ -343,7 +353,17 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
   onOpenChat,
 }) => {
   const { t } = useTranslation();
+  const { dialog: confirmDialog, confirm } = useConfirmDialog();
   const [subview, setSubview] = useState<RolloutSubview>('kpi');
+
+  // Canon §27 — registers are read-only rows; edits route through a modal opened
+  // from the FilterableTable kebab. One target at a time across all registers.
+  const [editTarget, setEditTarget] = useState<RolloutEditTarget | null>(null);
+  // Per-register FilterableTable filter state (column header dropdowns).
+  const [riskFilters, setRiskFilters] = useState<FilterChip[]>([]);
+  const [changeFilters, setChangeFilters] = useState<FilterChip[]>([]);
+  const [closureFilters, setClosureFilters] = useState<FilterChip[]>([]);
+  const [kpiFilters, setKpiFilters] = useState<FilterChip[]>([]);
 
   // #19 — broadcast the active rollout sub-view so the ExecutionHub host can pick
   // the right Menu-2 CTA (Add KPI / Add Risk / Add Item, or none for plan/change).
@@ -629,6 +649,352 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
     };
   }, [readOnly]);
 
+  // ── FilterableTable columns + row actions (canon §27) ──────────────────
+  // Rows are read-only; the kebab exposes Edit (→ modal) + Delete (→ confirm).
+  const confirmDelete = useCallback(
+    async (title: string, run: () => void) => {
+      const ok = await confirm({
+        title: t('execution.rollout.deleteConfirm.title', 'Delete this item?'),
+        description: t('execution.rollout.deleteConfirm.body', {
+          title,
+          defaultValue: '"{{title}}" will be permanently removed. This cannot be undone.',
+        }),
+        confirmLabel: t('common.delete', 'Delete'),
+        cancelLabel: t('common.cancel', 'Cancel'),
+        variant: 'danger',
+      });
+      if (ok) run();
+    },
+    [confirm, t]
+  );
+
+  // KPI rows: read-only progress + edit/delete actions. (KPI render stays a card
+  // grid below — its kebab actions live on each card via buildKpiRowActions.)
+  const kpiColumns = useMemo<TableColumn[]>(
+    () => [
+      { id: 'name', label: t('execution.rollout.kpi.col.name', 'Name') },
+      {
+        id: 'current_display',
+        label: t('execution.rollout.kpi.current', 'Current'),
+        width: '120px',
+        align: 'right',
+      },
+      {
+        id: 'baseline_display',
+        label: t('execution.rollout.kpi.baseline', 'Baseline'),
+        width: '110px',
+        align: 'right',
+      },
+      {
+        id: 'target_display',
+        label: t('execution.rollout.kpi.target', 'Target'),
+        width: '110px',
+        align: 'right',
+      },
+      {
+        id: 'progress_display',
+        label: t('execution.rollout.kpi.col.progress', 'Progress'),
+        width: '110px',
+        align: 'right',
+        render: (row: any) => {
+          const pct = Number(row.progress_pct);
+          const tone: SignalTone =
+            row.below_baseline === true ? 'danger' : pct >= 50 ? 'success' : 'warning';
+          return (
+            <span className="inline-flex items-center gap-1.5 justify-end tabular-nums text-sm text-slate-700 dark:text-slate-200">
+              <SignalDot tone={tone} />
+              {pct}%
+            </span>
+          );
+        },
+      },
+      {
+        id: 'trend',
+        label: t('execution.rollout.kpi.col.trend', 'Trend'),
+        width: '140px',
+        render: (row: any) => (
+          <KpiSparkline points={kpiHistory[String(row.id)] || []} target={Number(row.target)} />
+        ),
+      },
+    ],
+    [t, kpiHistory]
+  );
+
+  const kpiRows = useMemo(
+    () =>
+      kpis.map((k) => {
+        const pct = progressPct(k);
+        return {
+          ...k,
+          current_display: `${k.current_value}${k.unit}`,
+          baseline_display: `${k.baseline}${k.unit}`,
+          target_display: `${k.target}${k.unit}`,
+          progress_pct: pct,
+          below_baseline: k.current_value < k.baseline,
+        };
+      }),
+    [kpis]
+  );
+
+  const buildKpiRowActions = useCallback(
+    (id: string): RowAction[] => {
+      const row = kpis.find((k) => k.id === id);
+      if (!row) return [];
+      return [
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edit'),
+          icon: Pencil,
+          variant: 'primary',
+          onClick: () => setEditTarget({ kind: 'kpi', row }),
+        },
+        {
+          id: 'delete',
+          label: t('common.delete', 'Delete'),
+          icon: Trash2,
+          divider: true,
+          variant: 'danger',
+          onClick: () => void confirmDelete(row.name, () => void deleteKpi(id)),
+        },
+      ];
+    },
+    [kpis, t, confirmDelete]
+  );
+
+  // Risk rows
+  const riskColumns = useMemo<TableColumn[]>(
+    () => [
+      { id: 'title', label: t('execution.rollout.risks.col.title', 'Title') },
+      {
+        id: 'probability',
+        label: t('execution.rollout.risks.col.probability', 'Probability'),
+        width: '140px',
+        filterable: true,
+        filterOptions: [
+          { value: 'low', label: 'low' },
+          { value: 'medium', label: 'medium' },
+          { value: 'high', label: 'high' },
+        ],
+        render: (row: any) => (
+          <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
+            <SignalDot tone={levelTone(String(row.probability))} />
+            {row.probability}
+          </span>
+        ),
+      },
+      {
+        id: 'impact',
+        label: t('execution.rollout.risks.col.impact', 'Impact'),
+        width: '120px',
+        filterable: true,
+        filterOptions: [
+          { value: 'low', label: 'low' },
+          { value: 'medium', label: 'medium' },
+          { value: 'high', label: 'high' },
+        ],
+        render: (row: any) => (
+          <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
+            <SignalDot tone={levelTone(String(row.impact))} />
+            {row.impact}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('execution.rollout.risks.col.status', 'Status'),
+        width: '130px',
+        filterable: true,
+        filterOptions: [
+          { value: 'OPEN', label: t('execution.rollout.risks.status.open', 'Open') },
+          { value: 'MITIGATED', label: t('execution.rollout.risks.status.mitigated', 'Mitigated') },
+          { value: 'CLOSED', label: t('execution.rollout.risks.status.closed', 'Closed') },
+        ],
+        render: (row: any) => (
+          <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
+            <SignalDot tone={riskStatusTone(String(row.status))} />
+            {String(row.status).toLowerCase()}
+          </span>
+        ),
+      },
+    ],
+    [t]
+  );
+
+  const buildRiskRowActions = useCallback(
+    (id: string): RowAction[] => {
+      const row = risks.find((r) => r.id === id);
+      if (!row) return [];
+      return [
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edit'),
+          icon: Pencil,
+          variant: 'primary',
+          onClick: () => setEditTarget({ kind: 'risk', row }),
+        },
+        {
+          id: 'delete',
+          label: t('common.delete', 'Delete'),
+          icon: Trash2,
+          divider: true,
+          variant: 'danger',
+          onClick: () => void confirmDelete(row.title, () => void deleteRisk(id)),
+        },
+      ];
+    },
+    [risks, t, confirmDelete]
+  );
+
+  // Change rows
+  const changeColumns = useMemo<TableColumn[]>(
+    () => [
+      { id: 'title', label: t('execution.rollout.change.col.title', 'Title') },
+      {
+        id: 'type',
+        label: t('execution.rollout.change.col.type', 'Type'),
+        width: '160px',
+        render: (row: any) => (
+          <span className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 capitalize">
+            <SignalDot tone="neutral" />
+            {row.type || '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        label: t('execution.rollout.change.col.status', 'Status'),
+        width: '150px',
+        filterable: true,
+        filterOptions: [
+          { value: 'PROPOSED', label: t('execution.rollout.change.status.proposed', 'Proposed') },
+          { value: 'APPROVED', label: t('execution.rollout.change.status.approved', 'Approved') },
+          { value: 'REJECTED', label: t('execution.rollout.change.status.rejected', 'Rejected') },
+          {
+            value: 'IMPLEMENTED',
+            label: t('execution.rollout.change.status.implemented', 'Implemented'),
+          },
+        ],
+        render: (row: any) => (
+          <span className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 capitalize">
+            <SignalDot tone={changeStatusTone(String(row.status))} />
+            {String(row.status).toLowerCase()}
+          </span>
+        ),
+      },
+    ],
+    [t]
+  );
+
+  const buildChangeRowActions = useCallback(
+    (id: string): RowAction[] => {
+      const row = changes.find((c) => c.id === id);
+      if (!row) return [];
+      return [
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edit'),
+          icon: Pencil,
+          variant: 'primary',
+          onClick: () => setEditTarget({ kind: 'change', row }),
+        },
+        {
+          id: 'delete',
+          label: t('common.delete', 'Delete'),
+          icon: Trash2,
+          divider: true,
+          variant: 'danger',
+          onClick: () => void confirmDelete(row.title, () => void deleteChange(id)),
+        },
+      ];
+    },
+    [changes, t, confirmDelete]
+  );
+
+  // Closure rows — a "Done" toggle stays inline (cheap, single-field), but Edit
+  // (title/category/status) and Delete route through the canon kebab + modal.
+  const closureColumns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'done',
+        label: t('execution.rollout.closure.col.done', 'Done'),
+        width: '70px',
+        align: 'center',
+        render: (row: any) => {
+          const done = String(row.status).toUpperCase() === 'DONE';
+          return (
+            <input
+              type="checkbox"
+              checked={done}
+              disabled={readOnly}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                e.stopPropagation();
+                void patchClosure(String(row.id), { status: done ? 'OPEN' : 'DONE' });
+              }}
+              className="h-4 w-4 accent-crimson-600"
+              aria-label={t('execution.rollout.closure.col.done', 'Done')}
+            />
+          );
+        },
+      },
+      {
+        id: 'title',
+        label: t('execution.rollout.closure.col.title', 'Title'),
+        render: (row: any) => {
+          const done = String(row.status).toUpperCase() === 'DONE';
+          return (
+            <span
+              className={
+                done
+                  ? 'line-through text-slate-500 dark:text-slate-500'
+                  : 'text-slate-700 dark:text-slate-200'
+              }
+            >
+              {row.title}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'category',
+        label: t('execution.rollout.closure.col.category', 'Category'),
+        width: '160px',
+        filterable: true,
+        filterOptions: [
+          { value: 'Handover', label: 'Handover' },
+          { value: 'Sign-off', label: 'Sign-off' },
+          { value: 'Closure', label: 'Closure' },
+        ],
+      },
+    ],
+    [t, readOnly]
+  );
+
+  const buildClosureRowActions = useCallback(
+    (id: string): RowAction[] => {
+      const row = closures.find((c) => c.id === id);
+      if (!row) return [];
+      return [
+        {
+          id: 'edit',
+          label: t('common.edit', 'Edit'),
+          icon: Pencil,
+          variant: 'primary',
+          onClick: () => setEditTarget({ kind: 'closure', row }),
+        },
+        {
+          id: 'delete',
+          label: t('common.delete', 'Delete'),
+          icon: Trash2,
+          divider: true,
+          variant: 'danger',
+          onClick: () => void confirmDelete(row.title, () => void deleteClosure(id)),
+        },
+      ];
+    },
+    [closures, t, confirmDelete]
+  );
+
   // ── Teresa risk touchpoint ─────────────────────────────────────────────
   const activeSignalCount = riskSignals.length + delaySignals.length;
   const topSignal =
@@ -720,92 +1086,26 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               )}
             </EmptyBox>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {kpis.map((kpi) => {
-                const pct = progressPct(kpi);
-                const belowBaseline = kpi.current_value < kpi.baseline;
-                const kpiTone: SignalTone = belowBaseline
-                  ? 'danger'
-                  : pct >= 50
-                    ? 'success'
-                    : 'warning';
-                return (
-                  <div
-                    key={kpi.id}
-                    className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 p-5 rounded-xl shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <input
-                        value={kpi.name}
-                        disabled={readOnly}
-                        onChange={(e) =>
-                          setKpis((p) =>
-                            p.map((k) => (k.id === kpi.id ? { ...k, name: e.target.value } : k))
-                          )
-                        }
-                        onBlur={(e) => patchKpi(kpi.id, { name: e.target.value })}
-                        className="flex-1 bg-transparent font-bold text-slate-800 dark:text-white outline-none"
-                      />
-                      <span
-                        className={`shrink-0 inline-flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded ${
-                          kpiTone === 'danger'
-                            ? 'bg-crimson-50 text-crimson-700 dark:bg-crimson-900/30 dark:text-crimson-300'
-                            : kpiTone === 'warning'
-                              ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                        }`}
-                      >
-                        <SignalDot tone={kpiTone} />
-                        {pct}%
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-                      <KpiCell label={t('execution.rollout.kpi.baseline', 'Baseline')}>
-                        {kpi.baseline}
-                        {kpi.unit}
-                      </KpiCell>
-                      <div className="border-x border-slate-200 dark:border-navy-700">
-                        <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                          {t('execution.rollout.kpi.current', 'Current')}
-                        </div>
-                        <input
-                          type="number"
-                          value={kpi.current_value}
-                          disabled={readOnly}
-                          onChange={(e) =>
-                            setKpis((p) =>
-                              p.map((k) =>
-                                k.id === kpi.id
-                                  ? { ...k, current_value: Number(e.target.value) }
-                                  : k
-                              )
-                            )
-                          }
-                          onBlur={(e) => patchKpi(kpi.id, { currentValue: Number(e.target.value) })}
-                          className="w-full text-center bg-transparent font-mono font-bold text-xl text-slate-800 dark:text-white outline-none"
-                        />
-                      </div>
-                      <KpiCell label={t('execution.rollout.kpi.target', 'Target')}>
-                        {kpi.target}
-                        {kpi.unit}
-                      </KpiCell>
-                    </div>
-                    <KpiSparkline points={kpiHistory[kpi.id] || []} target={kpi.target} />
-                    {!readOnly && (
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => deleteKpi(kpi.id)}
-                          className="text-crimson-500 hover:text-crimson-600 text-xs font-medium flex items-center gap-1"
-                        >
-                          <Trash2 size={12} /> {t('common.delete', 'Delete')}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <FilterableTable
+              columns={kpiColumns}
+              data={kpiRows}
+              persistKey="rollout-kpis"
+              activeFilters={kpiFilters}
+              onFilterChange={setKpiFilters}
+              onRowDoubleClick={
+                readOnly
+                  ? undefined
+                  : (row) => {
+                      const k = kpis.find((x) => x.id === row.id);
+                      if (k) setEditTarget({ kind: 'kpi', row: k });
+                    }
+              }
+              getRowActions={readOnly ? () => [] : (row) => buildKpiRowActions(String(row.id))}
+              hideRowActions={readOnly}
+              emptyMessage={t('execution.rollout.kpi.empty', 'No KPIs tracked yet.')}
+              density="compact"
+              canvasClassName="p-0"
+            />
           )}
         </section>
       )}
@@ -838,68 +1138,26 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               message={t('execution.rollout.risks.empty', 'No risks logged.')}
             />
           ) : (
-            <RegisterTable
-              headers={[
-                t('execution.rollout.risks.col.title', 'Title'),
-                t('execution.rollout.risks.col.probability', 'Probability'),
-                t('execution.rollout.risks.col.impact', 'Impact'),
-                t('execution.rollout.risks.col.status', 'Status'),
-                '',
-              ]}
-            >
-              {risks.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                  <td className="p-3">
-                    <input
-                      value={r.title}
-                      disabled={readOnly}
-                      onChange={(e) =>
-                        setRisks((p) =>
-                          p.map((x) => (x.id === r.id ? { ...x, title: e.target.value } : x))
-                        )
-                      }
-                      onBlur={(e) => patchRisk(r.id, { title: e.target.value })}
-                      className="w-full bg-transparent font-medium text-slate-700 dark:text-slate-200 outline-none"
-                    />
-                  </td>
-                  <td className="p-3">
-                    <LevelSelect
-                      value={r.probability}
-                      disabled={readOnly}
-                      onChange={(v) => patchRisk(r.id, { probability: v })}
-                    />
-                  </td>
-                  <td className="p-3">
-                    <LevelSelect
-                      value={r.impact}
-                      disabled={readOnly}
-                      onChange={(v) => patchRisk(r.id, { impact: v })}
-                    />
-                  </td>
-                  <td className="p-3">
-                    <StatusSelect
-                      value={r.status}
-                      tone={riskStatusTone(r.status)}
-                      disabled={readOnly}
-                      onChange={(v) => patchRisk(r.id, { status: v })}
-                    >
-                      <option value="OPEN">
-                        {t('execution.rollout.risks.status.open', 'Open')}
-                      </option>
-                      <option value="MITIGATED">
-                        {t('execution.rollout.risks.status.mitigated', 'Mitigated')}
-                      </option>
-                      <option value="CLOSED">
-                        {t('execution.rollout.risks.status.closed', 'Closed')}
-                      </option>
-                    </StatusSelect>
-                  </td>
-                  <td className="p-3 text-right">
-                    {!readOnly && <DeleteBtn onClick={() => deleteRisk(r.id)} />}
-                  </td>
-                </tr>
-              ))}
-            </RegisterTable>
+            <FilterableTable
+              columns={riskColumns}
+              data={risks as any[]}
+              persistKey="rollout-risks"
+              activeFilters={riskFilters}
+              onFilterChange={setRiskFilters}
+              onRowDoubleClick={
+                readOnly
+                  ? undefined
+                  : (row) => {
+                      const r = risks.find((x) => x.id === row.id);
+                      if (r) setEditTarget({ kind: 'risk', row: r });
+                    }
+              }
+              getRowActions={readOnly ? () => [] : (row) => buildRiskRowActions(String(row.id))}
+              hideRowActions={readOnly}
+              emptyMessage={t('execution.rollout.risks.empty', 'No risks logged.')}
+              density="compact"
+              canvasClassName="p-0"
+            />
           )}
         </section>
       )}
@@ -921,62 +1179,26 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               message={t('execution.rollout.change.empty', 'No change requests logged.')}
             />
           ) : (
-            <RegisterTable
-              headers={[
-                t('execution.rollout.change.col.title', 'Title'),
-                t('execution.rollout.change.col.type', 'Type'),
-                t('execution.rollout.change.col.status', 'Status'),
-                '',
-              ]}
-            >
-              {changes.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                  <td className="p-3">
-                    <input
-                      value={c.title}
-                      disabled={readOnly}
-                      onChange={(e) =>
-                        setChanges((p) =>
-                          p.map((x) => (x.id === c.id ? { ...x, title: e.target.value } : x))
-                        )
-                      }
-                      onBlur={(e) => patchChange(c.id, { title: e.target.value })}
-                      className="w-full bg-transparent font-medium text-slate-700 dark:text-slate-200 outline-none"
-                    />
-                  </td>
-                  <td className="p-3">
-                    <span className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 capitalize">
-                      <SignalDot tone="neutral" />
-                      {c.type || '—'}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <StatusSelect
-                      value={c.status}
-                      tone={changeStatusTone(c.status)}
-                      disabled={readOnly}
-                      onChange={(v) => patchChange(c.id, { status: v })}
-                    >
-                      <option value="PROPOSED">
-                        {t('execution.rollout.change.status.proposed', 'Proposed')}
-                      </option>
-                      <option value="APPROVED">
-                        {t('execution.rollout.change.status.approved', 'Approved')}
-                      </option>
-                      <option value="REJECTED">
-                        {t('execution.rollout.change.status.rejected', 'Rejected')}
-                      </option>
-                      <option value="IMPLEMENTED">
-                        {t('execution.rollout.change.status.implemented', 'Implemented')}
-                      </option>
-                    </StatusSelect>
-                  </td>
-                  <td className="p-3 text-right">
-                    {!readOnly && <DeleteBtn onClick={() => deleteChange(c.id)} />}
-                  </td>
-                </tr>
-              ))}
-            </RegisterTable>
+            <FilterableTable
+              columns={changeColumns}
+              data={changes as any[]}
+              persistKey="rollout-changes"
+              activeFilters={changeFilters}
+              onFilterChange={setChangeFilters}
+              onRowDoubleClick={
+                readOnly
+                  ? undefined
+                  : (row) => {
+                      const c = changes.find((x) => x.id === row.id);
+                      if (c) setEditTarget({ kind: 'change', row: c });
+                    }
+              }
+              getRowActions={readOnly ? () => [] : (row) => buildChangeRowActions(String(row.id))}
+              hideRowActions={readOnly}
+              emptyMessage={t('execution.rollout.change.empty', 'No change requests logged.')}
+              density="compact"
+              canvasClassName="p-0"
+            />
           )}
         </section>
       )}
@@ -1025,44 +1247,43 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
               message={t('execution.rollout.closure.empty', 'No closure items yet.')}
             />
           ) : (
-            <div className="space-y-2">
-              {closures.map((c) => {
-                const done = c.status.toUpperCase() === 'DONE';
-                return (
-                  <div
-                    key={c.id}
-                    className="flex items-center gap-3 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-3"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={done}
-                      disabled={readOnly}
-                      onChange={() => patchClosure(c.id, { status: done ? 'OPEN' : 'DONE' })}
-                      className="h-4 w-4 accent-crimson-600"
-                    />
-                    <input
-                      value={c.title}
-                      disabled={readOnly}
-                      onChange={(e) =>
-                        setClosures((p) =>
-                          p.map((x) => (x.id === c.id ? { ...x, title: e.target.value } : x))
-                        )
-                      }
-                      onBlur={(e) => patchClosure(c.id, { title: e.target.value })}
-                      className={`flex-1 bg-transparent outline-none ${
-                        done
-                          ? 'line-through text-slate-600 dark:text-slate-500'
-                          : 'text-slate-700 dark:text-slate-200'
-                      }`}
-                    />
-                    {!readOnly && <DeleteBtn onClick={() => deleteClosure(c.id)} />}
-                  </div>
-                );
-              })}
-            </div>
+            <FilterableTable
+              columns={closureColumns}
+              data={closures as any[]}
+              persistKey="rollout-closures"
+              activeFilters={closureFilters}
+              onFilterChange={setClosureFilters}
+              onRowDoubleClick={
+                readOnly
+                  ? undefined
+                  : (row) => {
+                      const c = closures.find((x) => x.id === row.id);
+                      if (c) setEditTarget({ kind: 'closure', row: c });
+                    }
+              }
+              getRowActions={readOnly ? () => [] : (row) => buildClosureRowActions(String(row.id))}
+              hideRowActions={readOnly}
+              emptyMessage={t('execution.rollout.closure.empty', 'No closure items yet.')}
+              density="compact"
+              canvasClassName="p-0"
+            />
           )}
         </section>
       )}
+
+      {/* Canon §27 — register edit modal + delete confirmation (shared across
+          KPI / Risk / Change / Closure). Persistence routes back through the
+          existing patch + delete handlers (to /api/rollout/*). */}
+      <RolloutRegisterEditModal
+        target={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSaveKpi={(id, updates) => patchKpi(id, updates)}
+        onSaveRisk={(id, updates) => patchRisk(id, updates)}
+        onSaveChange={(id, updates) => patchChange(id, updates)}
+        onSaveClosure={(id, updates) => patchClosure(id, updates)}
+        busy={busy}
+      />
+      {confirmDialog}
     </div>
   );
 };
@@ -1321,57 +1542,6 @@ const changeStatusTone = (v: string): SignalTone => {
   if (k === 'REJECTED') return 'danger';
   return 'neutral';
 };
-
-const LevelSelect: React.FC<{
-  value: string;
-  disabled?: boolean;
-  onChange: (v: string) => void;
-}> = ({ value, disabled, onChange }) => (
-  <span className="inline-flex items-center gap-2">
-    <SignalDot tone={levelTone(value)} />
-    <select
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-      className="bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none capitalize"
-    >
-      <option value="low">low</option>
-      <option value="medium">medium</option>
-      <option value="high">high</option>
-    </select>
-  </span>
-);
-
-const StatusSelect: React.FC<{
-  value: string;
-  tone: SignalTone;
-  disabled?: boolean;
-  onChange: (v: string) => void;
-  children: React.ReactNode;
-}> = ({ value, tone, disabled, onChange, children }) => (
-  <span className="inline-flex items-center gap-2">
-    <SignalDot tone={tone} />
-    <select
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-      className="bg-transparent text-sm text-slate-600 dark:text-slate-300 outline-none"
-    >
-      {children}
-    </select>
-  </span>
-);
-
-const DeleteBtn: React.FC<{ onClick: () => void }> = ({ onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="text-crimson-500 hover:text-crimson-600 inline-flex items-center"
-    aria-label="Delete"
-  >
-    <Trash2 size={14} />
-  </button>
-);
 
 // ── Plan view: real initiatives grouped by quarter from plannedStartDate ────
 
