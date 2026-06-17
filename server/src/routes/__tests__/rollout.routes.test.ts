@@ -181,6 +181,9 @@ const ADMIN_A = { id: 'admin-a', organizationId: ORG_A, role: 'ADMIN' };
 const ADMIN_B = { id: 'admin-b', organizationId: ORG_B, role: 'ADMIN' };
 const USER_A = { id: 'user-a', organizationId: ORG_A, role: 'USER' };
 const GUEST_A = { id: 'guest-a', organizationId: ORG_A, role: 'GUEST' };
+// M14 PMO tier: project-manager gets MANAGE_ROLLOUT; a plain team member does not.
+const PM_A = { id: 'pm-a', organizationId: ORG_A, role: 'PROJECT_MANAGER' };
+const MEMBER_A = { id: 'member-a', organizationId: ORG_A, role: 'TEAM_MEMBER' };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -378,5 +381,22 @@ describe('Rollout registers — L-01 server-side write gating', () => {
     mockUser = ADMIN_A;
     const res = await request(app).post('/api/rollout/changes').send({ title: 'ok' });
     expect(res.status).toBe(201);
+  });
+
+  it('PROJECT_MANAGER (PMO tier) can write — MANAGE_ROLLOUT granted', async () => {
+    const app = await makeApp();
+    mockUser = PM_A;
+    const res = await request(app).post('/api/rollout/changes').send({ title: 'pmo' });
+    expect(res.status).toBe(201);
+  });
+
+  it('TEAM_MEMBER write is rejected with 403 (no MANAGE_ROLLOUT)', async () => {
+    const app = await makeApp();
+    mockUser = MEMBER_A;
+    const post = await request(app).post('/api/rollout/kpis').send({ name: 'x', target: 1 });
+    expect(post.status).toBe(403);
+    // ...but reads remain open to any org member.
+    const list = await request(app).get('/api/rollout/kpis');
+    expect(list.status).toBe(200);
   });
 });

@@ -19,6 +19,7 @@ import { Response, Router } from 'express';
 import { z } from 'zod';
 
 import { type AuthRequest, isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { requirePermission } from '../middleware/permissionMiddleware.js';
 import { requireOrgRole } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -27,24 +28,25 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 const router = Router();
 
 // All rollout routes require an authenticated org member (read access).
-router.use(verifyToken, isAuthenticated, requireOrgRole('user'));
+// `project_manager` is listed explicitly: toCanonicalRole leaves it as
+// 'project_manager' (not 'user'), and roleSatisfies only ranks admin/user, so a
+// bare requireOrgRole('user') would 403 the PMO tier out of reads entirely.
+router.use(verifyToken, isAuthenticated, requireOrgRole('user', 'project_manager'));
 
-// L-01: Rollout mutations (create/update/delete) must be enforced server-side,
-// not only via the FE `readOnly` flag. Pilot/USER-level participants are
-// read-only on Rollout in the UI (isPilotParticipantRole → USER/GUEST); mirror
-// that on the server so a tampered request cannot persist register changes.
-// Reads stay at `user`; writes require the org-admin band. requireOrgRole is
-// hierarchical (superadmin/admin satisfy `admin`), so org admins keep full CRUD
-// while plain members / pilots receive a 403 instead of a silent 200.
+// L-01 / M14 PMO tier: Rollout mutations (create/update/delete) are enforced
+// server-side, not only via the FE `readOnly` flag. Reads stay at `user`; writes
+// require the `MANAGE_ROLLOUT` permission.
 //
-// NOTE (decision 2026-06-16): the intended editor tier is project-manager / PMO,
-// not org-admin only. This codebase has no org-level PMO token role and no
-// execution-scoped permission key in the DB catalog (legacy ROLE_CAPABILITIES is
-// lowercase + admin=all; DB hasPermission uses UPPERCASE keys with none for
-// rollout). A true PMO-without-admin tier therefore needs a dedicated
-// `MANAGE_ROLLOUT` permission (migration + builtin_role_permissions seeding) —
-// tracked as a follow-up. Until then admin-band is the safe floor.
-const requireRolloutWrite = requireOrgRole('admin');
+// Decision 2026-06-17: the editor tier is project-manager / PMO, not org-admin
+// only. requireOrgRole can't express this — toCanonicalRole collapses
+// project_manager → 'user', so a role-list gate would over-grant every member.
+// MANAGE_ROLLOUT resolves through PermissionService.hasPermission:
+//   - SUPERADMIN / OWNER bypass; ADMIN + PROJECT_MANAGER granted via the role
+//     fallback (no regression vs the prior admin floor — admins keep full CRUD);
+//   - TEAM_MEMBER / VIEWER / pilots get a 403, not a silent 200;
+//   - per-user org overrides (org_user_permissions GRANT/REVOKE) still win, so an
+//     org can extend or withdraw rollout access for a specific user.
+const requireRolloutWrite = requirePermission('MANAGE_ROLLOUT');
 
 const requireOrg = (req: AuthRequest, res: Response): string | null => {
   const orgId = req.user?.organizationId;

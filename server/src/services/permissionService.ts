@@ -330,9 +330,10 @@ export async function hasPermission(
   // SUPERADMIN and OWNER bypass
   if (userRole === ROLES.SUPERADMIN || userRole === ROLES.OWNER) return true;
 
-  // Fallback role-permission mapping for environments where DB role_permissions
-  // aren't migrated/seeded yet. Keep this intentionally narrow (Interview module).
-  const FALLBACK_INTERVIEW_PERMISSIONS: Record<string, string[]> = {
+  // Fallback role→permission mapping for environments where DB role_permissions
+  // aren't migrated/seeded yet. Intentionally narrow — only permissions that are
+  // safe to grant by role without a per-org seed (Interview module + rollout).
+  const FALLBACK_ROLE_PERMISSIONS: Record<string, string[]> = {
     [ROLES.SUPERADMIN]: ['*'],
     [ROLES.OWNER]: ['*'],
     [ROLES.ADMIN]: [
@@ -348,6 +349,8 @@ export async function hasPermission(
       'INTERVIEW_INSIGHTS_REVIEW',
       'INTERVIEW_INSIGHTS_PUBLISH',
       'INTERVIEW_INSIGHTS_HANDOFF',
+      // M14 Wdrożenie — manage rollout registers (admins keep prior access).
+      'MANAGE_ROLLOUT',
     ],
     [ROLES.PROJECT_MANAGER]: [
       'INTERVIEW_TEMPLATE_VIEW',
@@ -358,12 +361,14 @@ export async function hasPermission(
       // PMs run analyses on their projects' interviews.
       'INTERVIEW_INSIGHTS_VIEW',
       'INTERVIEW_INSIGHTS_CREATE',
+      // M14 Wdrożenie — PMO/manager tier owns rollout execution.
+      'MANAGE_ROLLOUT',
     ],
     [ROLES.TEAM_MEMBER]: [],
     [ROLES.VIEWER]: [],
   };
-  const allowFallbackInterview = (key: string): boolean => {
-    const allowed = FALLBACK_INTERVIEW_PERMISSIONS[userRole] || [];
+  const allowFallbackPermission = (key: string): boolean => {
+    const allowed = FALLBACK_ROLE_PERMISSIONS[userRole] || [];
     return allowed.includes('*') || allowed.includes(key);
   };
 
@@ -393,14 +398,14 @@ export async function hasPermission(
     if (rolePermission) return true;
 
     // No explicit builtin grant for this specific permission. Apply the narrow
-    // Interview fallback map as a PER-PERMISSION safety net — not just when the
-    // role has zero rows. This fixes partial seeding (e.g. ADMIN seeded with some
+    // role-fallback map as a PER-PERMISSION safety net — not just when the role
+    // has zero rows. This fixes partial seeding (e.g. ADMIN seeded with some
     // INTERVIEW_* rows but missing INTERVIEW_INSIGHTS_CREATE), which previously
     // skipped the fallback entirely and denied intended permissions.
-    // allowFallbackInterview only ever returns true for INTERVIEW_* keys in the
-    // role's map; every other permission key still resolves to false here, and an
-    // explicit org-user DENY (checked above) always wins.
-    return allowFallbackInterview(permissionKey);
+    // allowFallbackPermission only ever returns true for keys explicitly listed in
+    // the role's map (INTERVIEW_* + MANAGE_ROLLOUT); every other permission key still
+    // resolves to false here, and an explicit org-user DENY (checked above) wins.
+    return allowFallbackPermission(permissionKey);
   } catch (err: any) {
     logger.error('[PermissionService] Permission query error:', err as Error);
     // If permissions tables are missing (migration not applied), use narrow fallback.
@@ -410,7 +415,7 @@ export async function hasPermission(
       msg.toLowerCase().includes('does not exist') ||
       (msg.toLowerCase().includes('relation') && msg.toLowerCase().includes('does not exist'));
     if (looksLikeMissingTable) {
-      return allowFallbackInterview(permissionKey);
+      return allowFallbackPermission(permissionKey);
     }
     return false;
   }
