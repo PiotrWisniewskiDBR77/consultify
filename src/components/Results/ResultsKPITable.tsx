@@ -2,7 +2,7 @@ import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
-  ChevronDown,
+  ArrowUpDown,
   Link2,
   Maximize2,
   MoreVertical,
@@ -14,7 +14,8 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import { FilterableTable, type FilterChip, type TableColumn } from '../shared/ModuleHub';
+import type { RowAction } from '../shared/RowActionsMenu';
 import type { KPIStatus, KPITrend, ResultsKPI } from './kpiDomain';
 
 // ---------------------------------------------------------------------------
@@ -123,99 +124,27 @@ function formatRelativeTime(date: string | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// Column filter dropdown (reused pattern from FilterableTable)
+// Owner cell (avatar initials + name)
 // ---------------------------------------------------------------------------
 
-interface FilterOption {
-  value: string;
-  label: string;
-  color?: string;
-}
-
-const ColumnFilterDropdown: React.FC<{
-  options: FilterOption[];
-  activeValues: string[];
-  onApply: (values: string[]) => void;
-}> = ({ options, activeValues, onApply }) => {
-  const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<string[]>(activeValues);
-
-  const toggle = (v: string) =>
-    setSelected((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
-
+const OwnerCell: React.FC<{ name?: string }> = ({ name }) => {
+  if (!name) return <span className="text-sm text-slate-500">—</span>;
   return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-600 transition-colors ${
-          activeValues.length > 0 ? 'text-primary-400' : 'text-slate-500'
-        }`}
-      >
-        <ChevronDown size={14} />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-            <div className="max-h-[200px] overflow-y-auto p-2">
-              {options.map((o) => (
-                <label
-                  key={o.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-700 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(o.value)}
-                    onChange={() => toggle(o.value)}
-                    className="rounded border-navy-600 bg-slate-200 dark:bg-navy-700 text-primary-500 focus:ring-primary-500"
-                  />
-                  {o.color && <span className={`w-2 h-2 rounded-full ${o.color}`} />}
-                  <span className="text-sm text-slate-700 dark:text-slate-300">{o.label}</span>
-                </label>
-              ))}
-            </div>
-            <div className="flex items-center justify-between p-2 border-t border-slate-300 dark:border-navy-600">
-              <button
-                onClick={() => {
-                  setSelected([]);
-                  onApply([]);
-                  setOpen(false);
-                }}
-                className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => {
-                  onApply(selected);
-                  setOpen(false);
-                }}
-                className="px-3 py-1 text-xs font-medium bg-primary-500 text-white rounded hover:bg-primary-400 transition-colors"
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-[10px] font-bold">
+        {name
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .slice(0, 2)}
+      </div>
+      <span className="text-sm text-slate-600 truncate max-w-[80px]">{name}</span>
     </div>
   );
 };
 
 // ---------------------------------------------------------------------------
-// Table columns definition
-// ---------------------------------------------------------------------------
-
-interface Column {
-  id: string;
-  label: string;
-  width?: string;
-  sortable?: boolean;
-  filterOptions?: FilterOption[];
-}
-
-// ---------------------------------------------------------------------------
-// ResultsKPITable
+// ResultsKPITable — canon §27: shared FilterableTable, no hand-rolled <table>.
 // ---------------------------------------------------------------------------
 
 interface ResultsKPITableProps {
@@ -226,6 +155,75 @@ interface ResultsKPITableProps {
   onRowAction?: (action: string, kpi: ResultsKPI) => void;
 }
 
+// ---------------------------------------------------------------------------
+// Sort (managed in-component) — canon §27 FilterableTable has no row-sort, so we
+// sort the `data` array here BEFORE handing it to FilterableTable (which renders
+// rows in the given order). The shared component is left untouched.
+//
+// Each sortable column maps to a key on the flattened TableRow. The numeric
+// value columns live under underscore-prefixed keys (render-only payload), so
+// the sort accessors target those.
+// ---------------------------------------------------------------------------
+
+type SortDir = 'asc' | 'desc';
+
+interface SortableCol {
+  id: string;
+  labelKey: string;
+  labelDefault: string;
+  accessor: (row: any) => string | number | null | undefined;
+  numeric?: boolean;
+}
+
+const SORTABLE_COLS: SortableCol[] = [
+  { id: 'name', labelKey: 'results.columns.name', labelDefault: 'Name', accessor: (r) => r.name },
+  {
+    id: 'initiative',
+    labelKey: 'results.columns.initiative',
+    labelDefault: 'Initiative',
+    accessor: (r) => r.initiative,
+  },
+  {
+    id: 'baseline',
+    labelKey: 'results.columns.baseline',
+    labelDefault: 'Baseline',
+    accessor: (r) => r._baseline,
+    numeric: true,
+  },
+  {
+    id: 'target',
+    labelKey: 'results.columns.target',
+    labelDefault: 'Target',
+    accessor: (r) => r._target,
+    numeric: true,
+  },
+  {
+    id: 'current',
+    labelKey: 'results.columns.current',
+    labelDefault: 'Current',
+    accessor: (r) => r._current,
+    numeric: true,
+  },
+  {
+    id: 'lastUpdated',
+    labelKey: 'results.columns.lastUpdated',
+    labelDefault: 'Updated',
+    accessor: (r) => r.lastUpdated,
+  },
+];
+
+// Initiative display label (primary name or "first +N" for multi-linked KPIs).
+function initiativeLabel(kpi: ResultsKPI): string | null {
+  return (
+    kpi.initiativeName ||
+    (kpi.linkedInitiativesCount && kpi.linkedInitiatives?.length
+      ? kpi.linkedInitiativesCount === 1
+        ? kpi.linkedInitiatives[0]?.name || null
+        : `${kpi.linkedInitiatives[0]?.name} +${kpi.linkedInitiativesCount - 1}`
+      : null)
+  );
+}
+
 export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
   kpis,
   activeFilters,
@@ -234,18 +232,57 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
   onRowAction,
 }) => {
   const { t } = useTranslation();
-  const [menuRowId, setMenuRowId] = useState<string | null>(null);
-  const [sortCol, setSortCol] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  const columns: Column[] = useMemo(
+  // Index KPIs by id so row callbacks (click / actions) can recover the full
+  // domain object from the canonical TableRow (which is a flattened projection).
+  const byId = useMemo(() => new Map(kpis.map((k) => [k.id, k])), [kpis]);
+
+  // In-component sort state (FilterableTable does not implement row-sort).
+  // null = original order (matches the pre-conversion default).
+  const [sortCol, setSortCol] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const handleSort = useCallback(
+    (colId: string) => {
+      setSortCol((prev) => {
+        if (prev === colId) {
+          setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+          return prev;
+        }
+        setSortDir('asc');
+        return colId;
+      });
+    },
+    []
+  );
+
+  // Canon §27 — column contract. Filterable columns carry `filterable` +
+  // `filterOptions`; FilterableTable owns the dropdown UI and the filtering
+  // (exact match on `row[column.id]`), replacing the hand-rolled dropdown.
+  const columns = useMemo<TableColumn[]>(
     () => [
-      { id: 'name', label: t('results.columns.name', 'Name'), width: '20%', sortable: true },
+      {
+        id: 'name',
+        label: t('results.columns.name', 'Name'),
+        render: (row: any) => {
+          const kpi = byId.get(row.id);
+          return (
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-slate-900 dark:text-white block truncate">
+                {row.name}
+              </span>
+              {kpi?.description && (
+                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{kpi.description}</p>
+              )}
+            </div>
+          );
+        },
+      },
       {
         id: 'initiative',
         label: t('results.columns.initiative', 'Initiative'),
-        width: '14%',
-        sortable: true,
+        width: '160px',
+        filterable: true,
         filterOptions: [
           ...new Set(
             kpis
@@ -253,321 +290,285 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
               .filter(Boolean) as string[]
           ),
         ].map((n) => ({ value: n, label: n })),
+        render: (row: any) =>
+          row.initiative ? (
+            <span className="text-sm text-primary-400 hover:underline">{row.initiative}</span>
+          ) : (
+            <span className="text-sm text-slate-500">—</span>
+          ),
       },
-      { id: 'baseline', label: t('results.columns.baseline', 'Baseline'), width: '8%' },
-      { id: 'target', label: t('results.columns.target', 'Target'), width: '8%' },
-      { id: 'current', label: t('results.columns.current', 'Current'), width: '8%' },
+      {
+        id: 'baseline',
+        label: t('results.columns.baseline', 'Baseline'),
+        width: '110px',
+        align: 'right',
+        render: (row: any) => <ValueCell value={row._baseline} unit={row._unit} />,
+      },
+      {
+        id: 'target',
+        label: t('results.columns.target', 'Target'),
+        width: '110px',
+        align: 'right',
+        render: (row: any) => <ValueCell value={row._target} unit={row._unit} />,
+      },
+      {
+        id: 'current',
+        label: t('results.columns.current', 'Current'),
+        width: '110px',
+        align: 'right',
+        render: (row: any) => (
+          <ValueCell value={row._current} unit={row._unit} colored status={row.status} />
+        ),
+      },
       {
         id: 'status',
         label: t('results.columns.status', 'Status'),
-        width: '10%',
+        width: '150px',
+        filterable: true,
         filterOptions: [
           { value: 'on-target', label: 'On Target', color: 'bg-emerald-500' },
           { value: 'below', label: 'Below Target', color: 'bg-rose-500' },
           { value: 'no-data', label: 'No Data', color: 'bg-slate-400' },
         ],
+        render: (row: any) => (
+          <div className="flex flex-col gap-1">
+            <StatusBadge status={row.status} />
+            {row._needsEntry ? <NeedsEntryBadge /> : null}
+          </div>
+        ),
       },
-      { id: 'trend', label: t('results.columns.trend', 'Trend'), width: '6%' },
+      {
+        id: 'trend',
+        label: t('results.columns.trend', 'Trend'),
+        width: '90px',
+        render: (row: any) => <TrendArrow trend={row._trend} />,
+      },
       {
         id: 'measurementFrequency',
         label: t('results.columns.frequency', 'Frequency'),
-        width: '8%',
+        width: '120px',
+        filterable: true,
         filterOptions: [
           { value: 'DAILY', label: 'Daily' },
           { value: 'WEEKLY', label: 'Weekly' },
           { value: 'MONTHLY', label: 'Monthly' },
           { value: 'QUARTERLY', label: 'Quarterly' },
         ],
+        render: (row: any) => <FrequencyBadge freq={row.measurementFrequency} />,
       },
-      { id: 'owner', label: t('results.columns.owner', 'Owner'), width: '10%' },
+      {
+        id: 'owner',
+        label: t('results.columns.owner', 'Owner'),
+        width: '140px',
+        render: (row: any) => <OwnerCell name={row.owner} />,
+      },
       {
         id: 'lastUpdated',
         label: t('results.columns.lastUpdated', 'Updated'),
-        width: '8%',
-        sortable: true,
+        width: '110px',
+        render: (row: any) => (
+          <span className="text-xs text-slate-500">{formatRelativeTime(row.lastUpdated)}</span>
+        ),
       },
     ],
-    [t, kpis]
+    [t, kpis, byId]
   );
 
-  const getFilterValues = useCallback(
-    (col: string) => activeFilters.filter((f) => f.column === col).map((f) => f.value),
-    [activeFilters]
+  // Flatten each KPI into a canonical TableRow. Keys used by column filters
+  // (`initiative`, `status`, `measurementFrequency`) hold the raw filterable
+  // value; underscore-prefixed keys carry render-only payload.
+  const rows = useMemo(
+    () =>
+      kpis.map((kpi) => ({
+        id: kpi.id,
+        name: kpi.name,
+        initiative: initiativeLabel(kpi) ?? '',
+        status: kpi.status,
+        measurementFrequency: kpi.measurementFrequency,
+        owner: kpi.ownerName ?? '',
+        lastUpdated: kpi.latestMeasurementDate || kpi.createdAt,
+        _baseline: kpi.baselineValue,
+        _target: kpi.targetValue,
+        _current: kpi.latestValue,
+        _unit: kpi.unit,
+        _trend: kpi.trend,
+        _needsEntry: kpi.needsEntry,
+      })),
+    [kpis]
   );
 
-  const applyColumnFilter = useCallback(
-    (col: Column, values: string[]) => {
-      const other = activeFilters.filter((f) => f.column !== col.id);
-      const added = values.map((v) => ({
-        id: `${col.id}-${v}`,
-        column: col.id,
-        value: v,
-        label: col.filterOptions?.find((o) => o.value === v)?.label || v,
-        color: col.filterOptions?.find((o) => o.value === v)?.color,
-      }));
-      onFilterChange([...other, ...added]);
-    },
-    [activeFilters, onFilterChange]
-  );
-
-  const handleSort = useCallback(
-    (colId: string) => {
-      if (sortCol === colId) {
-        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-      } else {
-        setSortCol(colId);
-        setSortDir('asc');
-      }
-    },
-    [sortCol]
-  );
-
-  const sorted = useMemo(() => {
-    if (!sortCol) return kpis;
-    const arr = [...kpis];
+  // Sort the flattened rows in-component BEFORE handing them to FilterableTable
+  // (which renders `data` in the given order). null sortCol = original order.
+  const sortedRows = useMemo(() => {
+    if (!sortCol) return rows;
+    const col = SORTABLE_COLS.find((c) => c.id === sortCol);
+    if (!col) return rows;
+    const arr = [...rows];
     arr.sort((a, b) => {
-      let va: any, vb: any;
-      if (sortCol === 'name') {
-        va = a.name;
-        vb = b.name;
-      } else if (sortCol === 'initiative') {
-        va = a.initiativeName || '';
-        vb = b.initiativeName || '';
-      } else if (sortCol === 'lastUpdated') {
-        va = a.latestMeasurementDate || a.createdAt;
-        vb = b.latestMeasurementDate || b.createdAt;
+      const va = col.accessor(a);
+      const vb = col.accessor(b);
+      // Nulls sort last regardless of direction.
+      const aNull = va == null || va === '';
+      const bNull = vb == null || vb === '';
+      if (aNull && bNull) return 0;
+      if (aNull) return 1;
+      if (bNull) return -1;
+      let cmp: number;
+      if (col.numeric) {
+        cmp = Number(va) - Number(vb);
       } else {
-        va = (a as any)[sortCol];
-        vb = (b as any)[sortCol];
+        cmp = String(va).localeCompare(String(vb));
       }
-      if (va < vb) return sortDir === 'asc' ? -1 : 1;
-      if (va > vb) return sortDir === 'asc' ? 1 : -1;
-      return 0;
+      return sortDir === 'asc' ? cmp : -cmp;
     });
     return arr;
-  }, [kpis, sortCol, sortDir]);
+  }, [rows, sortCol, sortDir]);
+
+  const activeSortLabel = useMemo(() => {
+    const col = SORTABLE_COLS.find((c) => c.id === sortCol);
+    return col ? t(col.labelKey, col.labelDefault) : null;
+  }, [sortCol, t]);
+
+  // Canon §27 — row actions live in the shared kebab menu (no hand-rolled menu).
+  const buildRowActions = useMemo(
+    () =>
+      (row: any): RowAction[] => {
+        const kpi = byId.get(row.id);
+        if (!kpi) return [];
+        return [
+          {
+            id: 'open',
+            label: t('results.actions.openDetail', 'Open detail'),
+            icon: Maximize2,
+            variant: 'primary',
+            onClick: () => onRowAction?.('open', kpi),
+          },
+          {
+            id: 'record',
+            label: t('results.actions.recordValue', 'Record value'),
+            icon: Target,
+            onClick: () => onRowAction?.('record', kpi),
+          },
+          {
+            id: 'edit',
+            label: t('results.drawer.definitionTitle', 'Definition'),
+            icon: Pencil,
+            onClick: () => onRowAction?.('edit', kpi),
+          },
+          {
+            id: 'links',
+            label: t('results.drawer.lineageTitle', 'Lineage'),
+            icon: Link2,
+            onClick: () => onRowAction?.('links', kpi),
+          },
+          {
+            id: 'delete',
+            label: t('common.delete', 'Delete'),
+            icon: Trash2,
+            divider: true,
+            variant: 'danger',
+            onClick: () => onRowAction?.('delete', kpi),
+          },
+        ];
+      },
+    [byId, t, onRowAction]
+  );
 
   return (
-    <div className="p-4">
-      <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-white/60 dark:bg-navy-900/60 border-b border-slate-200/70 dark:border-white/[0.06]">
-                {columns.map((col) => (
-                  <th
-                    key={col.id}
-                    className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                    style={{ width: col.width }}
-                  >
-                    <div className="flex items-center gap-1">
-                      {col.sortable ? (
-                        <button
-                          onClick={() => handleSort(col.id)}
-                          className="hover:text-slate-700 dark:hover:text-white transition-colors"
-                        >
-                          {col.label}
-                          {sortCol === col.id && (
-                            <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </button>
-                      ) : (
-                        <span>{col.label}</span>
-                      )}
-                      {col.filterOptions && (
-                        <ColumnFilterDropdown
-                          options={col.filterOptions}
-                          activeValues={getFilterValues(col.id)}
-                          onApply={(vals) => applyColumnFilter(col, vals)}
-                        />
-                      )}
-                    </div>
-                  </th>
+    <div className="flex flex-col gap-2">
+      {/* Sort control — FilterableTable headers don't trigger row-sort, so sort
+          is exposed here as a compact segmented control above the table. */}
+      <div
+        className="flex flex-wrap items-center gap-1.5"
+        role="group"
+        aria-label={t('results.sort.label', 'Sort by')}
+      >
+        <span className="inline-flex items-center gap-1 pr-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <ArrowUpDown size={13} aria-hidden="true" />
+          {t('results.sort.label', 'Sort by')}
+        </span>
+        {SORTABLE_COLS.map((col) => {
+          const active = sortCol === col.id;
+          return (
+            <button
+              key={col.id}
+              type="button"
+              onClick={() => handleSort(col.id)}
+              aria-pressed={active}
+              aria-label={
+                active
+                  ? t('results.sort.activeAria', {
+                      defaultValue: 'Sorted by {{col}} {{dir}}',
+                      col: t(col.labelKey, col.labelDefault),
+                      dir:
+                        sortDir === 'asc'
+                          ? t('results.sort.asc', 'ascending')
+                          : t('results.sort.desc', 'descending'),
+                    })
+                  : t('results.sort.byAria', {
+                      defaultValue: 'Sort by {{col}}',
+                      col: t(col.labelKey, col.labelDefault),
+                    })
+              }
+              className={[
+                'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors',
+                active
+                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-300 border border-primary-500/30'
+                  : 'text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-navy-800/60',
+              ].join(' ')}
+            >
+              {t(col.labelKey, col.labelDefault)}
+              {active &&
+                (sortDir === 'asc' ? (
+                  <ArrowUp size={12} aria-hidden="true" />
+                ) : (
+                  <ArrowDown size={12} aria-hidden="true" />
                 ))}
-                <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200/70 dark:divide-white/[0.06]">
-              {sorted.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={columns.length + 1}
-                    className="px-4 py-16 text-center text-slate-500"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <Target size={24} className="text-slate-600" />
-                      <span>{t('results.emptyState', 'No KPIs found')}</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                sorted.map((kpi) => (
-                  <tr
-                    key={kpi.id}
-                    onClick={() => onRowClick?.(kpi)}
-                    onDoubleClick={() => onRowAction?.('open', kpi)}
-                    className="group hover:bg-slate-50/70 dark:hover:bg-white/[0.03] cursor-pointer transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {kpi.name}
-                      </span>
-                      {kpi.description && (
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
-                          {kpi.description}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {(() => {
-                        const label =
-                          kpi.initiativeName ||
-                          (kpi.linkedInitiativesCount && kpi.linkedInitiatives?.length
-                            ? kpi.linkedInitiativesCount === 1
-                              ? kpi.linkedInitiatives[0]?.name
-                              : `${kpi.linkedInitiatives[0]?.name} +${kpi.linkedInitiativesCount - 1}`
-                            : null);
-                        return label ? (
-                          <span className="text-sm text-primary-400 hover:underline">{label}</span>
-                        ) : (
-                          <span className="text-sm text-slate-500">—</span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <ValueCell value={kpi.baselineValue} unit={kpi.unit} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <ValueCell value={kpi.targetValue} unit={kpi.unit} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <ValueCell
-                        value={kpi.latestValue}
-                        unit={kpi.unit}
-                        colored
-                        status={kpi.status}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col gap-1">
-                        <StatusBadge status={kpi.status} />
-                        {kpi.needsEntry ? <NeedsEntryBadge /> : null}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <TrendArrow trend={kpi.trend} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <FrequencyBadge freq={kpi.measurementFrequency} />
-                    </td>
-                    <td className="px-4 py-3">
-                      {kpi.ownerName ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-primary-500/20 text-primary-400 flex items-center justify-center text-[10px] font-bold">
-                            {kpi.ownerName
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')
-                              .slice(0, 2)}
-                          </div>
-                          <span className="text-sm text-slate-600 truncate max-w-[80px]">
-                            {kpi.ownerName}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-slate-500">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-slate-500">
-                        {formatRelativeTime(kpi.latestMeasurementDate || kpi.createdAt)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMenuRowId(menuRowId === kpi.id ? null : kpi.id);
-                          }}
-                          className="p-1.5 rounded hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-white transition-colors"
-                        >
-                          <MoreVertical size={14} />
-                        </button>
-                        {menuRowId === kpi.id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-40"
-                              onClick={() => setMenuRowId(null)}
-                            />
-                            <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onRowAction?.('open', kpi);
-                                  setMenuRowId(null);
-                                }}
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
-                              >
-                                <Maximize2 size={14} />
-                                {t('results.actions.openDetail', 'Open detail')}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onRowAction?.('record', kpi);
-                                  setMenuRowId(null);
-                                }}
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
-                              >
-                                <Target size={14} />
-                                {t('results.actions.recordValue', 'Record value')}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onRowAction?.('edit', kpi);
-                                  setMenuRowId(null);
-                                }}
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
-                              >
-                                <Pencil size={14} />
-                                {t('results.drawer.definitionTitle', 'Definition')}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onRowAction?.('links', kpi);
-                                  setMenuRowId(null);
-                                }}
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700"
-                              >
-                                <Link2 size={14} />
-                                {t('results.drawer.lineageTitle', 'Lineage')}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onRowAction?.('delete', kpi);
-                                  setMenuRowId(null);
-                                }}
-                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-600 dark:text-rose-300 hover:bg-rose-500/10"
-                              >
-                                <Trash2 size={14} />
-                                {t('common.delete', 'Delete')}
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+            </button>
+          );
+        })}
+        {sortCol && (
+          <button
+            type="button"
+            onClick={() => setSortCol(null)}
+            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            aria-label={t('results.sort.clear', 'Clear sort')}
+          >
+            {t('results.sort.clear', 'Clear sort')}
+          </button>
+        )}
+        {activeSortLabel && (
+          <span className="sr-only" aria-live="polite">
+            {t('results.sort.activeAria', {
+              defaultValue: 'Sorted by {{col}} {{dir}}',
+              col: activeSortLabel,
+              dir:
+                sortDir === 'asc'
+                  ? t('results.sort.asc', 'ascending')
+                  : t('results.sort.desc', 'descending'),
+            })}
+          </span>
+        )}
       </div>
+
+      <FilterableTable
+        columns={columns}
+        data={sortedRows}
+        activeFilters={activeFilters}
+        onFilterChange={onFilterChange}
+        onRowClick={(row) => {
+          const kpi = byId.get(row.id);
+          if (kpi) onRowClick?.(kpi);
+        }}
+        onRowDoubleClick={(row) => {
+          const kpi = byId.get(row.id);
+          if (kpi) onRowAction?.('open', kpi);
+        }}
+        getRowActions={onRowAction ? buildRowActions : undefined}
+        hideRowActions={!onRowAction}
+        emptyMessage={t('results.emptyState', 'No KPIs found')}
+        density="compact"
+      />
     </div>
   );
 };
