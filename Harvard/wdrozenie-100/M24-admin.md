@@ -110,7 +110,7 @@ REALNE 5 paneli (Team&Access, Billing 7 endp., AI Controls 9/9, Security 6/6, Au
 | L-06 | i18n hardkod EN (security/audit/scim/members) | W-01 | wzór BillingFinOps (24×`t()`) | P2 | 4 | otwarta |
 | L-07 | members bez route-level role middleware; PCI surowy `cardNumber`; martwy `/debug-memberships` | W-01 | `organizations.routes.ts:47-70` | P3 | 3 | otwarta |
 | L-08 | martwy kod FE (`AdminSidebar` + resztki `Admin/`) | W-01 | `layout/AdminSidebar.tsx` (0 importerów) | P3 | 3/4 | otwarta (D-02) |
-| L-09 | CI nie obejmuje `Londyn`; E2E admin smoke-fake | W-01 | `test-suite.yml` `[main,develop]` | P2 | 4 | otwarta |
+| L-09 | CI nie obejmuje `Londyn`; E2E admin smoke-fake | W-01 | `test-suite.yml` | P2 | 4 | **CZĘŚCIOWO ZAMKNIĘTA 2026-06-17 (Harvard 1, CI owner)** — `Londyn` JEST w triggerach `push`+`pull_request` (`test-suite.yml:5-7`); suity pod `tests/{unit,integration,components}` auto-globowane (l.314/519). POZOSTAJE: (a) E2E RBAC-by-role zamiast smoke-fake = praca testowa H4; (b) admin-suity colocated (`src/**/__tests__`, `server/src/routes/__tests__`) — H4 zgłasza ścieżki+zielony status, Harvard 1 wpina jawnie (wzór M08 `test-suite.yml:363-378`). |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
