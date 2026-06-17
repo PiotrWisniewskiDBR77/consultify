@@ -23,6 +23,7 @@ import {
   FileText,
   Filter,
   Inbox,
+  Layers,
   Lightbulb,
   Paperclip,
   Pen,
@@ -58,11 +59,9 @@ import type {
 } from '@/types/myWork';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
-import { ActionItemsPanel } from './notebook/ActionItemsPanel';
-import { AI_BLOCK_MIME, AIChatInlinePanel, type ConvertTarget } from './notebook/AIChatInlinePanel';
+import { AI_BLOCK_MIME, type ConvertTarget } from './notebook/AIChatInlinePanel';
 import { AICommandPrompt } from './notebook/AICommandPrompt';
 import { type AICommandType, AIInlineResponse } from './notebook/AIInlineResponse';
-import { AITopicsPanel } from './notebook/AITopicsPanel';
 import { ConvertChecklistModal } from './notebook/ConvertChecklistModal';
 import {
   CalloutNode,
@@ -73,9 +72,9 @@ import {
 } from './notebook/extensions';
 import { NewPageModal, type PageTemplate } from './notebook/NewPageModal';
 import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSection';
-import { NotebookCanonicalPathStrip } from './notebook/NotebookCanonicalPathStrip';
+import { NotebookProgressChip } from './notebook/NotebookProgressChip';
+import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
-import { NotebookContextPanel } from './notebook/NotebookContextPanel';
 import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookToolbar } from './notebook/NotebookToolbar';
@@ -616,8 +615,16 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = i18n.language === 'pl';
-  const { emitMyWorkEvent, setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } =
-    useAppStore();
+  const {
+    emitMyWorkEvent,
+    setChatKickoffMessage,
+    isChatCollapsed,
+    toggleChatCollapse,
+    notebookRailOpen,
+    notebookRailTab,
+    setNotebookRailOpen,
+    setNotebookRailTab,
+  } = useAppStore();
   const [pages, setPages] = useState<NotebookPage[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -1060,16 +1067,49 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [checklistModalOpen, setChecklistModalOpen] = useState(false);
-  const [actionItemsOpen, setActionItemsOpen] = useState(false);
+
+  // L-03: Rail replaces individual panel flags. Keep local flags for legacy event
+  // compatibility (notebook-extract-actions, keyboard shortcuts) but route them
+  // to open the rail at the appropriate tab.
+  const setActionItemsOpen = (open: boolean) => {
+    if (open) {
+      setNotebookRailOpen(true);
+      setNotebookRailTab('work');
+    }
+  };
+
   const [ideasOpenInternal, setIdeasOpenInternal] = useState(false);
+  // Ideas ("context" tab) can be driven externally (linkedIdeasOpen prop) or via the rail.
   const ideasOpen = linkedIdeasOpen ?? ideasOpenInternal;
-  const setIdeasOpen = onLinkedIdeasOpenChange ?? setIdeasOpenInternal;
-  const [topicsOpenInternal, setTopicsOpenInternal] = useState(false);
-  const topicsOpenResolved = topicsOpen ?? topicsOpenInternal;
-  const setTopicsOpen = onTopicsOpenChange ?? setTopicsOpenInternal;
-  const [chatOpenInternal, setChatOpenInternal] = useState(false);
-  const chatOpenResolved = chatOpen ?? chatOpenInternal;
-  const setChatOpen = onChatOpenChange ?? setChatOpenInternal;
+  const setIdeasOpen = (open: boolean) => {
+    if (onLinkedIdeasOpenChange) {
+      onLinkedIdeasOpenChange(open);
+    } else {
+      setIdeasOpenInternal(open);
+    }
+    if (open) {
+      setNotebookRailOpen(true);
+      setNotebookRailTab('context');
+    }
+  };
+
+  // Topics/chat panel: external props still honored (fire callbacks), but visually
+  // routed to the consolidated rail "work" tab.
+  const setTopicsOpen = (open: boolean) => {
+    if (onTopicsOpenChange) onTopicsOpenChange(open);
+    if (open) {
+      setNotebookRailOpen(true);
+      setNotebookRailTab('work');
+    }
+  };
+
+  const setChatOpen = (open: boolean) => {
+    if (onChatOpenChange) onChatOpenChange(open);
+    if (open) {
+      setNotebookRailOpen(true);
+      setNotebookRailTab('work');
+    }
+  };
   const aiCommandPromptInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleNewPage = useCallback(
@@ -2262,7 +2302,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         ? 'Utwórz dokument w Canvas z kopią tej notatki i rozwijaj go z Teresą'
                         : 'Create a Canvas document from a copy of this note and extend it with Teresa'
                     }
-                    className="ml-auto mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/60 dark:bg-indigo-950/30 px-2.5 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/40 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                    className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/60 dark:bg-indigo-950/30 px-2.5 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/40 transition-colors disabled:opacity-60 disabled:cursor-wait"
                   >
                     <FileText size={12} />
                     {isExpandingToDocument
@@ -2272,6 +2312,27 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       : isPolish
                         ? 'Rozwiń w dokument'
                         : 'Expand into document'}
+                  </button>
+                  {/* L-03: Rail toggle button */}
+                  <button
+                    type="button"
+                    onClick={() => setNotebookRailOpen(!notebookRailOpen)}
+                    title={
+                      notebookRailOpen
+                        ? isPolish
+                          ? 'Zamknij panel boczny'
+                          : 'Close side panel'
+                        : isPolish
+                          ? 'Otwórz panel boczny (narzędzia AI + kontekst)'
+                          : 'Open side panel (AI tools + context)'
+                    }
+                    className={`mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
+                      notebookRailOpen
+                        ? 'border-indigo-400/60 bg-indigo-600 text-white dark:border-indigo-400/40 dark:bg-indigo-600'
+                        : 'border-slate-200/60 bg-white/60 text-slate-500 hover:bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-400 dark:hover:bg-white/[0.08]'
+                    }`}
+                  >
+                    <Layers size={12} />
                   </button>
                 </div>
               </div>
@@ -2513,7 +2574,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                     {/* Subtle divider */}
                     <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-navy-700 to-transparent mt-3" />
 
-                    <NotebookCanonicalPathStrip
+                    <NotebookProgressChip
                       isPolish={isPolish}
                       hasPendingAIProposals={pendingAIProposals.length > 0}
                       canConvertDeliverable={canConvertDeliverable}
@@ -2740,89 +2801,58 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           )}
         </div>
 
-        {/* Unified context panel (Ideas + Initiatives + Tasks + Decisions + Notes) */}
-        {ideasOpen && activePage && (
-          <NotebookContextPanel
-            open={ideasOpen}
-            onClose={() => setIdeasOpen(false)}
-            editor={editor}
-            noteId={activePage.id}
-            noteTitle={title}
-            noteTags={pageTags}
-            allNotes={pages}
-            noteConvertedTo={activePage.convertedTo || []}
-          />
-        )}
-
-        {/* AI Action Items right panel */}
-        {actionItemsOpen && activePage && (
-          <ActionItemsPanel
-            open={actionItemsOpen}
-            onClose={() => setActionItemsOpen(false)}
-            noteId={activePage.id}
-            noteTitle={activePage.title}
-          />
-        )}
-
-        {/* AI Topics to analyze right panel */}
-        {topicsOpenResolved && activePage && editor && (
-          <AITopicsPanel
-            open={topicsOpenResolved}
-            onClose={() => setTopicsOpen(false)}
-            noteId={activePage.id}
-            noteTitle={title}
-            noteTags={pageTags}
-            contentText={activePage.contentText || extractText(activePage.contentJson)}
-            editor={editor}
-          />
-        )}
-
-        {/* AI Chat inline panel */}
-        {chatOpenResolved && activePage && editor && (
-          <AIChatInlinePanel
-            open={chatOpenResolved}
-            onClose={() => setChatOpen(false)}
-            editor={editor}
-            noteTitle={title}
-            noteContent={activePage.contentText || extractText(activePage.contentJson)}
-            noteTags={pageTags}
-            page={{
-              id: activePage.id,
-              maturity: (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
-              summary: activePage.summary,
-              updatedAt: activePage.updatedAt,
-              visibility: (activePage.visibility as NotebookVisibility) || 'private',
-              projectId: activePage.projectId,
-              wordCount: wordCount(activePage.contentText || extractText(activePage.contentJson)),
-            }}
-            onAskAI={handleAskAI}
-            onDeletePage={handleDeletePage}
-            onSetVisibility={(next) => {
-              if (!activePage) return;
-              if (next === 'private') {
-                scheduleSave({ projectId: null, visibility: 'private' });
-                setPages((prev) =>
-                  prev.map((p) =>
-                    p.id === activePage.id ? { ...p, projectId: null, visibility: 'private' } : p
-                  )
-                );
-                return;
-              }
-              if (activePage.projectId) {
-                scheduleSave({ visibility: 'project' });
-                setPages((prev) =>
-                  prev.map((p) => (p.id === activePage.id ? { ...p, visibility: 'project' } : p))
-                );
-              }
-            }}
-            getRelativeTime={(iso) => relativeTime(iso)}
-            onOpenAIChat={() => setChatOpen(true)}
-            onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
-            onConvert={handleConvertFromPanel}
-            canConvertDeliverable={canConvertDeliverable}
-            convertBlockedReason={deliverableGuardMessage}
-          />
-        )}
+        {/* L-03: Consolidated right rail — Tab A (Praca/Work) + Tab B (Kontekst/Context) */}
+        <NotebookRightRail
+          open={notebookRailOpen}
+          activeTab={notebookRailTab}
+          onTabChange={setNotebookRailTab}
+          onClose={() => setNotebookRailOpen(false)}
+          activePage={activePage}
+          allPages={pages}
+          editor={editor}
+          noteTitle={title}
+          noteContent={activePage ? (activePage.contentText || extractText(activePage.contentJson)) : ''}
+          noteTags={pageTags}
+          notePage={
+            activePage
+              ? {
+                  id: activePage.id,
+                  maturity: (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
+                  summary: activePage.summary,
+                  updatedAt: activePage.updatedAt,
+                  visibility: (activePage.visibility as NotebookVisibility) || 'private',
+                  projectId: activePage.projectId,
+                  wordCount: wordCount(activePage.contentText || extractText(activePage.contentJson)),
+                }
+              : undefined
+          }
+          onAskAI={handleAskAI}
+          onDeletePage={handleDeletePage}
+          onSetVisibility={(next) => {
+            if (!activePage) return;
+            if (next === 'private') {
+              scheduleSave({ projectId: null, visibility: 'private' });
+              setPages((prev) =>
+                prev.map((p) =>
+                  p.id === activePage.id ? { ...p, projectId: null, visibility: 'private' } : p
+                )
+              );
+              return;
+            }
+            if (activePage.projectId) {
+              scheduleSave({ visibility: 'project' });
+              setPages((prev) =>
+                prev.map((p) => (p.id === activePage.id ? { ...p, visibility: 'project' } : p))
+              );
+            }
+          }}
+          getRelativeTime={(iso) => relativeTime(iso)}
+          onOpenAIChat={() => setChatOpen(true)}
+          onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
+          onConvert={handleConvertFromPanel}
+          canConvertDeliverable={canConvertDeliverable}
+          convertBlockedReason={deliverableGuardMessage}
+        />
       </div>
 
       <NewPageModal

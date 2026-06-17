@@ -104,6 +104,12 @@ export interface UISlice {
   // Chat output tool selector (auto = intent detection, others = explicit routing)
   chatOutputTool: 'auto' | 'wordy' | 'excele' | 'prezentacje';
   setChatOutputTool: (tool: 'auto' | 'wordy' | 'excele' | 'prezentacje') => void;
+
+  // Notebook right rail (L-02: persistent across navigation)
+  notebookRailOpen: boolean;
+  notebookRailTab: 'work' | 'context';
+  setNotebookRailOpen: (open: boolean) => void;
+  setNotebookRailTab: (tab: 'work' | 'context') => void;
 }
 
 export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get) => ({
@@ -162,6 +168,11 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
 
   chatOutputTool: 'auto',
   setChatOutputTool: (tool) => set({ chatOutputTool: tool }),
+
+  notebookRailOpen: false,
+  notebookRailTab: 'work',
+  setNotebookRailOpen: (open) => set({ notebookRailOpen: open }),
+  setNotebookRailTab: (tab) => set({ notebookRailTab: tab }),
 
   setChatKickoffMessage: (message) => set({ chatKickoffMessage: message }),
   clearChatKickoffMessage: () => set({ chatKickoffMessage: null }),

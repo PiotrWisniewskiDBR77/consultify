@@ -156,6 +156,8 @@ export const useAppStore = create<AppState>()(
         isChatSlidingPanelOpen: state.isChatSlidingPanelOpen,
         previousView: state.previousView,
         theme: state.theme,
+        notebookRailOpen: state.notebookRailOpen,
+        notebookRailTab: state.notebookRailTab,
 
         // ProjectSlice
         currentProjectId: state.currentProjectId,
