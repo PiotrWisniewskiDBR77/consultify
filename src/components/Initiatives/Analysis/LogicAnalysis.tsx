@@ -1496,8 +1496,8 @@ export const LogicAnalysis: React.FC<LogicAnalysisProps> = ({
       {dependencies.length > 0 && (
         <div className="rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700">
                 <th className="w-8 px-4 py-2.5" />
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
                   <button

@@ -8011,7 +8011,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               )}
               <div className="rounded-2xl border border-slate-200 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-3">
                 <table className="w-full text-sm">
-                  <thead>
+                  {/* §27 — sticky header (KPI list has no sort/expand → kept custom;
+                      FilterableTable would drop the inline edit-form + AI-add). */}
+                  <thead className="sticky top-0 z-10 bg-white dark:bg-navy-900">
                     <tr className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-navy-700/60">
                       <th className="text-left py-2 pr-2">{isPolish ? 'KPI' : 'KPI'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Faza' : 'Phase'}</th>

@@ -1912,8 +1912,8 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             <col style={{ width: '27%' }} />
             <col style={{ width: '4%' }} />
           </colgroup>
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
+          <thead className="sticky top-0 z-10">
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
               <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Kategoria' : 'Category'}</th>
               <th className="text-left py-2.5 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
@@ -2229,8 +2229,8 @@ const TeamTable: React.FC<TeamTableProps> = ({
             <col style={{ width: '10%' }} />
             <col style={{ width: '4%' }} />
           </colgroup>
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
+          <thead className="sticky top-0 z-10">
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
               <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Nazwa' : 'Name'}</th>
               <th className="text-left py-2.5 pr-2">{isPolish ? 'Rola' : 'Role'}</th>
@@ -2544,8 +2544,8 @@ const ToolsTable: React.FC<ToolsTableProps> = ({
             <col style={{ width: '12%' }} />
             <col style={{ width: '4%' }} />
           </colgroup>
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
+          <thead className="sticky top-0 z-10">
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
               <th className="text-left py-2.5 pl-3 pr-2">{isPolish ? 'Nazwa' : 'Name'}</th>
               <th className="text-left py-2.5 pr-2">{isPolish ? 'Kategoria' : 'Category'}</th>
@@ -2908,8 +2908,8 @@ const IntangibleAssetsTable: React.FC<IntangibleAssetsTableProps> = ({
             <col style={{ width: '10%' }} />
             <col style={{ width: '4%' }} />
           </colgroup>
-          <thead>
-            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-navy-800/30 border-b border-slate-200 dark:border-navy-700/40">
+          <thead className="sticky top-0 z-10">
+            <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-navy-800 border-b border-slate-200 dark:border-navy-700/40">
               <th className="text-right py-2.5 pl-3 pr-2">#</th>
               <th className="text-left py-2.5 pr-2">{isPolish ? 'Typ' : 'Type'}</th>
               <th className="text-left py-2.5 pr-2">{isPolish ? 'Nazwa' : 'Name'}</th>

@@ -6,10 +6,16 @@
  */
 
 import { AlertCircle, BookOpen, Plus, Trash2 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type FilterChip } from '@/components/shared/ModuleHub/ActiveFilters';
+import {
+  FilterableTable,
+  type TableColumn,
+} from '@/components/shared/ModuleHub/FilterableTable';
+import { type RowAction } from '@/components/shared/RowActionsMenu';
 import { LoadingState } from '@/components/ui/primitives';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
@@ -166,6 +172,102 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
     return isPl && lvl.labelPl ? `${value} — ${lvl.labelPl}` : `${value} — ${lvl.label}`;
   };
 
+  // §27 — FilterableTable column filter chips (priority is the only filterable column).
+  const [tableFilters, setTableFilters] = useState<FilterChip[]>([]);
+
+  // §27 columns. Priority is filterable (required / nice_to_have); the `priority`
+  // raw value is exposed on each row so the shared filter engine can match it.
+  const columns = useMemo<TableColumn[]>(
+    () => [
+      {
+        id: 'name',
+        label: t('competency.table.name', 'Competency'),
+        render: (row: Requirement) => (
+          <div className="min-w-0">
+            <span className="font-medium text-navy-900 dark:text-white text-xs block truncate">
+              {row.capabilityName}
+            </span>
+            {row.justification && (
+              <div className="text-[10px] text-slate-600 mt-0.5 truncate max-w-[200px]">
+                {row.justification}
+              </div>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: 'category',
+        label: t('competency.table.category', 'Category'),
+        render: (row: Requirement) =>
+          row.categoryName ? (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
+              {row.categoryName}
+            </span>
+          ) : (
+            <span className="text-xs text-slate-600">—</span>
+          ),
+      },
+      {
+        id: 'minLevel',
+        label: t('competency.requirements.minLevel', 'Min Level'),
+        align: 'center',
+        render: (row: Requirement) => (
+          <span className="text-xs font-mono text-navy-900 dark:text-white">{row.minLevel}/5</span>
+        ),
+      },
+      {
+        id: 'priority',
+        label: t('competency.requirements.priority', 'Priority'),
+        align: 'center',
+        filterable: true,
+        filterOptions: [
+          { value: 'required', label: t('competency.requirements.mustHave', 'Must-have') },
+          { value: 'nice_to_have', label: t('competency.requirements.niceToHave', 'Nice-to-have') },
+        ],
+        render: (row: Requirement) => (
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+              row.priority === 'required'
+                ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
+            }`}
+          >
+            {row.priority === 'required'
+              ? t('competency.requirements.mustHave', 'Must-have')
+              : t('competency.requirements.niceToHave', 'Nice-to-have')}
+          </span>
+        ),
+      },
+      {
+        id: 'headcount',
+        label: t('competency.requirements.headcount', 'FTE'),
+        align: 'center',
+        render: (row: Requirement) => (
+          <span className="text-xs text-slate-600 dark:text-slate-400">
+            {row.headcount != null ? row.headcount : '—'}
+          </span>
+        ),
+      },
+    ],
+    [t]
+  );
+
+  const getRowActions = useCallback(
+    (row: Requirement): RowAction[] =>
+      isReadOnly
+        ? []
+        : [
+            {
+              id: 'delete',
+              label: t('common.delete', 'Delete'),
+              icon: Trash2,
+              variant: 'danger',
+              onClick: () => void handleDelete(row.id),
+            },
+          ],
+    [isReadOnly, handleDelete, t]
+  );
+
   if (loading) {
     return <LoadingState variant="spinner" className="py-8" />;
   }
@@ -311,89 +413,19 @@ export const CompetencyRequirementsSection: React.FC<InitiativeSectionProps> = (
       )}
 
       {requirements.length > 0 && (
-        <div className="bg-white dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50">
-                <th className="text-left px-3 py-2 text-xs font-semibold text-slate-500 uppercase">
-                  {t('competency.table.name', 'Competency')}
-                </th>
-                <th className="text-left px-3 py-2 text-xs font-semibold text-slate-500 uppercase">
-                  {t('competency.table.category', 'Category')}
-                </th>
-                <th className="text-center px-3 py-2 text-xs font-semibold text-slate-500 uppercase">
-                  {t('competency.requirements.minLevel', 'Min Level')}
-                </th>
-                <th className="text-center px-3 py-2 text-xs font-semibold text-slate-500 uppercase">
-                  {t('competency.requirements.priority', 'Priority')}
-                </th>
-                <th className="text-center px-3 py-2 text-xs font-semibold text-slate-500 uppercase">
-                  {t('competency.requirements.headcount', 'FTE')}
-                </th>
-                {!isReadOnly && <th className="w-8 px-3 py-2" />}
-              </tr>
-            </thead>
-            <tbody>
-              {requirements.map((req) => (
-                <tr
-                  key={req.id}
-                  className="border-b border-slate-200 dark:border-navy-800 last:border-0"
-                >
-                  <td className="px-3 py-2">
-                    <span className="font-medium text-navy-900 dark:text-white text-xs">
-                      {req.capabilityName}
-                    </span>
-                    {req.justification && (
-                      <div className="text-[10px] text-slate-600 mt-0.5 truncate max-w-[200px]">
-                        {req.justification}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">
-                    {req.categoryName ? (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
-                        {req.categoryName}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-600">—</span>
-                    )}
-                  </td>
-                  <td className="text-center px-3 py-2">
-                    <span className="text-xs font-mono text-navy-900 dark:text-white">
-                      {req.minLevel}/5
-                    </span>
-                  </td>
-                  <td className="text-center px-3 py-2">
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                        req.priority === 'required'
-                          ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'
-                          : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                      }`}
-                    >
-                      {req.priority === 'required'
-                        ? t('competency.requirements.mustHave', 'Must-have')
-                        : t('competency.requirements.niceToHave', 'Nice-to-have')}
-                    </span>
-                  </td>
-                  <td className="text-center px-3 py-2 text-xs text-slate-600 dark:text-slate-400">
-                    {req.headcount != null ? req.headcount : '—'}
-                  </td>
-                  {!isReadOnly && (
-                    <td className="px-3 py-2">
-                      <button
-                        onClick={() => handleDelete(req.id)}
-                        className="text-slate-600 hover:text-rose-500 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <FilterableTable
+          columns={columns}
+          data={requirements}
+          getRowActions={getRowActions}
+          hideRowActions={isReadOnly}
+          activeFilters={tableFilters}
+          onFilterChange={setTableFilters}
+          enableColumnSettings={false}
+          emptyMessage={t('competency.requirements.empty', 'No competency requirements defined')}
+          persistKey="initiative-competency-requirements"
+          density="compact"
+          canvasClassName="p-0"
+        />
       )}
     </div>
   );
