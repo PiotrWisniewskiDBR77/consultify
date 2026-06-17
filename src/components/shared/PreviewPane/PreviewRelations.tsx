@@ -34,7 +34,15 @@ export interface PreviewRelationsProps {
 const HOVER_DELAY = 300;
 
 const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx }) => {
-  const Icon = typeof item.icon === 'function' ? item.icon : null;
+  // Lucide ≥0.400 uses React.forwardRef → typeof === 'object', not 'function'.
+  // Accept both plain function components and forwardRef/memo objects ($$typeof).
+  const Icon =
+    item.icon != null &&
+    !React.isValidElement(item.icon) &&
+    (typeof item.icon === 'function' ||
+      (typeof item.icon === 'object' && '$$typeof' in (item.icon as object)))
+      ? (item.icon as React.ComponentType<{ size?: number }>)
+      : null;
   const tone = item.tone ?? 'text-slate-600 dark:text-slate-300';
   const Tag = item.onClick ? 'button' : 'span';
 

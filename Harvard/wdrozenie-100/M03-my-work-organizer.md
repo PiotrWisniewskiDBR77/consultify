@@ -5,8 +5,8 @@
 ## 00 · Nagłówek
 - **Moduł:** M03 Moja Praca (Inbox · Kalendarz · Zadania · Decyzje · Manager) · **Pula:** core — najbardziej rozbudowany moduł aplikacji
 - **Ocena audytu:** 54/100 · **Status:** FAZA 2/3 → FAZA 4 (sweepy) · **Rozmiar:** M (rdzeń) + **L** (i18n 2888 inline)
-- **Żywy bloker:** **#5 crash „Coś poszło nie tak" na My Work (P1 WIDOCZNE-ALE-ZEPSUTE)** + 1×P1 leak executive-analytics
-- **4 uwagi żywe:** #5 crash (P1) · #9 kalendarz Connect martwy (P2) · #10 otwarcie inicjatywy nawiguje (P1) · #11 paski multi-day (P2-design)
+- **Żywy bloker:** 1×P1 leak executive-analytics (L-01) — **#5 crash ZAMKNIĘTY** (2026-06-16, patrz L-06 poniżej)
+- **3 uwagi żywe:** #9 kalendarz Connect → Integracje (P2, fix w 952f309) · #10 otwarcie inicjatywy nawiguje (P1) · #11 paski multi-day (P2-design)
 - **Właściciel:** Piotr · **Daty:** karta 2026-06-11 (`ee4319b076`) · teczka 2026-06-13
 - **Karta:** `Harvard/modules/M03-my-work-organizer/KARTA_AUDYTU.md` · **Evidence:** `…/evidence/f1_code_truth.md`, `f2_tests_report.md`, `f56_kanon_sec.md`
 - **Kod:** `src/components/MyWork/` (MyWorkHub 9k+, Calendar/CalendarView+CalendarSidebar+CalendarGrid+CalendarCreateEventModal, table/MyTasksListContent, TaskDetailView 6.5k, DecisionsPanelContent+DecisionDetailView, InboxContent, ExecutiveDashboard) · `src/views/MyWorkView.tsx` · `server/src/routes/my-work.routes.ts` (9061 l.) · `server/src/routes/my-work/calendar.routes.ts` · `server/src/routes/decisions.routes.ts` · `server/src/controllers/DecisionController.ts` · `server/src/services/integrationOAuthEngine.ts` · `src/types/core.ts` (TaskStatus/DecisionStatus enums)
@@ -52,7 +52,7 @@
 - **Brak-uprawnień:** Manager → docelowo serwerowy `requireRole` (member→403, dziś leak L-01).
 
 **Delty żywe:**
-- **#5 crash My Work (P1 LOKALNE WIDOCZNE-ALE-ZEPSUTE):** wejście → error boundary „Coś poszło nie tak". Render-time wyjątek; kandydaci `MyWorkView.tsx`→`MyWorkHub.tsx`; haki `useV8MyWorkRoof.ts`, API `api/v8/my-work.ts`; historia `/home`+`/radar` 404 (Fala 14), brief+spark 500 (`f3724dbb2e`). **Przyczyna NIEustalona — brak stack-trace** (crash-diagnostics „sent successfully" → telemetria lub repro preview console). Docelowo: 0 crashy.
+- **#5 crash My Work (P1) → ✅ ZAMKNIĘTY 2026-06-16:** `RelationChip` w `PreviewRelations.tsx:37` sprawdzał `typeof icon === 'function'` → Lucide ≥0.400 zwraca `forwardRef` (object, nie function) → `Icon = null` → komponent renderowany jako `ReactNode` → `Objects are not valid as a React child`. Fix: warunek `typeof === 'function' || (typeof === 'object' && '$$typeof' in icon)`. Stack trace z `/tmp/consultify-be.log` (HeadlessChrome 2026-06-16 03:18 UTC).
 - **#9 kalendarz „Connect in Integrations" martwy (P2 LOKALNE):** „Podłącz w Integracjach" = `<span>` w `<button>` z `onClick=toggleSource` (`CalendarSidebar.tsx:166,184-192`) — NIE nawiguje. Docelowo: deep-link do `IntegrationsModule` + OAuth-connect kalendarza (provider `google_calendar` z właściwym scope; dziś `google` ma scope Gmail; `calendarIntegrations.routes.ts:132 „(future)"`).
 - **#11 paski multi-day (P2-design):** Month renderuje wielodniowe inicjatywy jako pełne paski powtarzane co tydzień + **gubią kolor źródła** (wszystko fioletowe vs legenda). Docelowo: inicjatywy WYJĄĆ z siatki do listwy Timeline/Roadmap; cap 2 wiersze/dzień + „+N" popover; przywrócić kolory źródła (`CalendarView.tsx:331`).
 
@@ -135,7 +135,7 @@ Pełna tabela: karta §1g. **←** cała apka (Inbox agreguje notifications `inb
 | L-03 | task-advisor stub 503, 0 konsumenta FE | W-01 | `task-advisor.routes.ts:12-20`, `Gateway.ts:483` | P1 | 3 | otwarta |
 | L-04 | `CalendarCreateEventModal` 3/4 FAIL (S5) | W-01 | onSubmit/conflict callbacks | P0-test | 2 | otwarta |
 | L-05 | ~15 martwych komponentów (łańcuch WorkCenter; NIE NudgeStrip) | W-01 | f1_code_truth | P2 | 3 | otwarta |
-| L-06 | crash render-time na landing My Work | W-02 | `MyWorkView.tsx`/`MyWorkHub.tsx` (stack nieznany) | P1 | 1 | **otwarta — przyczyna NIEustalona (R3: brak stack-trace)** |
+| L-06 | crash render-time na landing My Work | W-02 | `src/components/shared/PreviewPane/PreviewRelations.tsx:37` — `RelationChip` | P1 | 1 | **✅ ZAMKNIĘTA 2026-06-16** — fix `$$typeof` check w `RelationChip` |
 | L-07 | kalendarz Connect martwy CTA + OAuth niedopięty | W-03,W-07 | `CalendarSidebar.tsx:166,184-192`; `calendarIntegrations.routes.ts:132 „(future)"` | P2 | 2/3 | otwarta |
 | L-08 | initiative hard-nawiguje (in-context open) | W-04,W-07 | `MyWorkHub.tsx:1235-1251,3192-3194` | P1-design | 0.4 | **D-02 (DP-2)** |
 | L-09 | paski multi-day + utrata koloru źródła | W-05 | `CalendarView.tsx:331` | P2-design | 4 | otwarta |
