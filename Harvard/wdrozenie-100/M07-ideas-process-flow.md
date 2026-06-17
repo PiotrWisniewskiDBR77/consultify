@@ -127,12 +127,12 @@
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | V8 mirror ID mismatch (DELETE NOT_FOUND, GET martwy, wiszące krawędzie) | W-01,W-04 | `processFlowService.ts:390`, `IdeaProcessFlowTool.tsx:1008,1060,1383`; jedyny ext-konsument `my-work.routes.ts:36,6031-6089` (`develop` readback) | P0-B | 1 | otwarta — **D-01 → DP-7 rekom. CUT** (cut bezpieczny po przekierowaniu 1 call-site na blob) |
+| L-01 | V8 mirror ID mismatch (DELETE NOT_FOUND, GET martwy, wiszące krawędzie) | W-01,W-04 | `processFlowService.ts:390`, `IdeaProcessFlowTool.tsx:1008,1060,1383`; jedyny ext-konsument `my-work.routes.ts:36,6031-6089` (`develop` readback) | P0-B | 1 | **NAPRAWIONA — DP-7 CUT:** usunięto `processFlowService.ts`+`processFlowCanon.ts`+`processFlow.routes.ts`+3 testy (−2103 linii); `my-work.routes.ts` import pfService → blob `my_idea_maps.nodes_json`; `v8/index.ts` route wyrejestrowany | 2026-06-17 |
 | L-02 | WS resource-auth gap | W-01 | `ideaCollabWs.gateway.ts:237-242` | P1 | 1 | **NAPRAWIONA (zweryf. w kodzie 2026-06-13)** — domknąć testem |
-| L-03 | AI Proposal STUB; `MessageFlowEdge` martwy; `viewState` hardkod | W-01 | `processFlow.routes.ts:411-437`, `:748`, `:652` | INTEGR/P1/P2 | 3 | otwarta — **D-02** (Proposal) |
+| L-03 | AI Proposal STUB; `MessageFlowEdge` martwy; `viewState` hardkod | W-01 | `processFlow.routes.ts:411-437`, `:748`, `:652` | INTEGR/P1/P2 | 3 | NIEAKTUALNA po L-01 CUT (processFlow.routes.ts usunięty; FE AI Proposal = D-02 → DP-5 hidden) |
 | L-04 | Edge UX (orthogonal/waypoints/typy) + swimlane containers | W-01 | edytor diagramów | P2 | 3 | otwarta |
-| L-05 | Migracja V8 process_flow nie na staging | W-01,W-04 | `20260603_v8_process_flow.sql` | INTEGR | 1/5 | otwarta (zależna od D-01) |
-| L-06 | Brak testu kontraktu ID / call-site + E2E + CI bez `Londyn` | W-01 | `tests/*` (brak) | P0-test | 1+4 | otwarta |
+| L-05 | Migracja V8 process_flow nie na staging | W-01,W-04 | `20260603_v8_process_flow.sql` | INTEGR | 1/5 | NIEAKTUALNA — DP-7 CUT; migracja w repozytorium zachowana (może być apply na envach); usunięcie niepotrzebne |
+| L-06 | Brak testu kontraktu ID / call-site + E2E + CI bez `Londyn` | W-01 | `tests/*` (brak) | P0-test | 1+4 | NIEAKTUALNA po L-01 CUT (3 testy process flow usunięte razem z kodem) |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |

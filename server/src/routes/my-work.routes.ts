@@ -33,7 +33,6 @@ import {
   normalizeTaskStatus as normalizeWorkflowTaskStatus,
   validateTaskStatusTransition,
 } from '../services/taskWorkflowService.js';
-import * as pfService from '../services/v8/processFlowService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -6076,11 +6075,19 @@ router.post(
     let processFlowReadback = '';
     if (activeTool === 'process_flow') {
       try {
-        const readbackResult = await pfService.semanticReadback(ideaId, orgId);
-        processFlowReadback =
-          typeof readbackResult === 'string' ? readbackResult : (readbackResult as any)?.text || '';
+        const mapRow = await queryHelpers.queryOne<{ nodes_json: string | null }>(
+          `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+          [ideaId, userId, orgId]
+        );
+        if (mapRow?.nodes_json) {
+          const nodes: Array<{ data?: { label?: string } }> = JSON.parse(String(mapRow.nodes_json));
+          const labels = nodes
+            .map((n) => (n.data?.label ?? '').trim())
+            .filter(Boolean);
+          if (labels.length > 0) processFlowReadback = labels.join(' → ');
+        }
       } catch {
-        /* best-effort: readback unavailable */
+        /* best-effort: blob unavailable */
       }
     }
 

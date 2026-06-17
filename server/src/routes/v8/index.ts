@@ -27,7 +27,6 @@ import myWorkRoutes from './my-work.routes.js';
 import notebookRoutes from './notebook.routes.js';
 import partnerRoutes from './partner.routes.js';
 import planningRoutes from './planning.routes.js';
-import processFlowRoutes from './processFlow.routes.js';
 import promptOsRoutes from './prompt-os.routes.js';
 import radarTriageRoutes from './radar-triage.routes.js';
 import resultsRoutes from './results.routes.js';
@@ -79,7 +78,6 @@ v8Router.use('/interview', interviewInsightsRoutes);
 v8Router.use('/planning', planningRoutes);
 v8Router.use('/radar-triage', radarTriageRoutes);
 v8Router.use('/results', resultsRoutes);
-v8Router.use('/process-flow', processFlowRoutes);
 v8Router.use('/sync', syncRoutes);
 v8Router.use('/teresa', teresaRoutes);
 
