@@ -952,12 +952,21 @@ router.get('/attributions', async (req: Request, res: Response, next: NextFuncti
 
 /**
  * GET /api/partners/earnings
- * Get earnings summary for the partner
+ * @deprecated L-07 — DUPLIKAT v8. Kanon = `GET /api/v8/partner/earnings-summary`
+ * (`v8/partner.routes.ts`), który zwraca P29 `lifecyclePhase`+`balances`. Ten legacy
+ * endpoint zwraca uproszczone `commissionRate`-owe podsumowanie i jest utrzymany
+ * WYŁĄCZNIE dopóki FE nie zmigruje 2 callerów (`PartnerRuntimeSummaryStrip.tsx:86`,
+ * `EarningsSection.tsx:304`). Po migracji FE (grep `/api/partners/earnings` = 0) →
+ * usunąć. Emituje nagłówki `Deprecation`/`Link`, żeby zużycie było widoczne w logach.
  */
 router.get('/earnings', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const partnerOrgId = await requirePartnerOrgId(req, res);
     if (!partnerOrgId) return;
+
+    // L-07: oznacz legacy surface jako deprecated (RFC 8594) — kanon to v8.
+    res.setHeader('Deprecation', 'true');
+    res.setHeader('Link', '</api/v8/partner/earnings-summary>; rel="successor-version"');
 
     let earnings;
     try {
@@ -2107,6 +2116,13 @@ router.get(
 
       const { resourceId } = req.params;
       const db = getDatabase();
+      // L-06 (D-03): partner_resources to CELOWO współdzielony katalog (toolkit
+      // dla wszystkich partnerów) — SELECT bez `partner_org_id` jest zamierzony,
+      // NIE wyciek cross-partner. Dostęp bramkuje (1) `requirePartnerOrgId` wyżej
+      // (tylko połączony partner), (2) `min_partner_tier` niżej (tier-gate). Każde
+      // pobranie jest audytowane z `partner_org_id`+`user_id` (INSERT poniżej),
+      // więc kto-co-pobrał jest rozliczalne per partner. Gdyby kiedyś katalog miał
+      // być per-partner — dodać `partner_org_id` do tabeli i do tego WHERE.
       const resource = await DbPromise.get<any>(
         db,
         `SELECT id, title, category, min_partner_tier, file_key, file_name, mime_type, language,
