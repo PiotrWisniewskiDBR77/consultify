@@ -6,15 +6,16 @@ import {
 } from '../../src/components/MyWork/openItemRouting';
 
 /**
- * L-08 (DP-2 "global IDE-tabs doc") contract:
- * clicking an initiative opens IN-CONTEXT (document overlay / dynamic tab),
+ * DP-2 "global IDE-tabs doc" contract — closes BOTH M03 L-08 and M13 L-07
+ * (same feature: the #10 live note "opening an initiative hard-navigates").
+ * Clicking an initiative opens IN-CONTEXT (document overlay / dynamic tab),
  * NOT a hard navigate(). Heavy artifact types still navigate away.
  *
  * This guards the SSOT used by the MyWorkHub `mywork-open-item` handler and the
  * calendar `onInitiativeClick` wiring, without mounting the ~9k-line component.
  */
-describe('mywork-open-item routing (L-08 / DP-2)', () => {
-  it('routes initiative IN-CONTEXT, not navigate (the L-08 fix)', () => {
+describe('mywork-open-item routing (M03 L-08 / M13 L-07 / DP-2)', () => {
+  it('routes initiative IN-CONTEXT, not navigate (M03 L-08 + M13 L-07)', () => {
     expect(resolveOpenItemRoute('initiative')).toBe('in-context');
   });
 
