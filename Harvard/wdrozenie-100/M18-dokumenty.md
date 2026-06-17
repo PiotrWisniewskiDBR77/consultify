@@ -122,24 +122,24 @@ Karta wewnętrznie sprzeczna (§1c „fasada in-memory" vs re-audit „write-thr
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | trwałość 6/8 warstw in-memory → utrata po deployu | W-01,W-03,W-04 | mig. `780`+`781`; 6 DAO przepisane na Postgres (0 `new Map`, INSERT+UPSERT) | P1 | 1 | **NAPRAWIONA w kodzie 2026-06-13** (`953955bc2b`+`8d2b5d8cf4`; tsc czysty, eksporty 1:1) — **cold-start proof na staging pozostaje (R6)** | 2026-06-13 |
-| L-02 | S4 test mockuje DAO (nie dotyka PG) | W-01 | `evidence/f2_tests_report.md` (S4 `vi.mock`) | P0-test | 1 | otwarta |  |
-| L-03 | S6 bramka testowana na serwisie, nie route 403 | W-01 | `document-studio.routes.ts:3386,3394`, grep `qa_blocking` w testach=0 | P0-test | 1 | otwarta |  |
-| L-04 | Mode3 wymusza `useLlm:false` → placeholder | W-01 | `documentStudioService` | P2 | 2 | otwarta (**D-02**) |  |
-| L-05 | template approve/deprecate bez roli serwerowo | W-01 | `document-studio.routes.ts:616,642`→`documentTemplateService.ts:429-475` | P2 | 3 | otwarta |  |
-| L-06 | beta-lock nawigacyjny + brak rate-limit share + over-disclosure `organizationId` | W-01 | `AppRoutes.tsx:2082`; `/share-links/resolve`; consumer | P2/P3 | 3 | **CZĘŚCIOWO — beta-lock NAPRAWIONA: `<BetaGate moduleId="MODULE_DOCUMENT_STUDIO">` owija `/document-studio` (`AppRoutes.tsx:2105`); brak rate-limit/revoke + over-disclosure `organizationId` = pozostałe sub-luki Faza 3** | 2026-06-17 |
+| L-01 | trwałość 6/8 warstw in-memory → utrata po deployu | W-01,W-03,W-04 | mig. `780`+`781`; 6 DAO przepisane na Postgres (0 `new Map`, INSERT+UPSERT) | P1 | 1 | **NAPRAWIONA w kodzie** (`953955bc2b`+`8d2b5d8cf4`) + **cold-start proof CI** (real DAO+SQL test `approval-coldstart.contract.test.ts` 7/7 PASS — persist→cold load z realnego store, org-scope, upsert). **Live staging restart proof = pozostaje (wymaga deployu, R6)** | 2026-06-17 |
+| L-02 | S4 test mockuje DAO (nie dotyka PG) | W-01 | `evidence/f2_tests_report.md` (S4 `vi.mock`) | P0-test | 1 | **ZAMKNIĘTA** — `approval-coldstart.contract.test.ts` (7/7 PASS) uruchamia REALNY `documentApprovalRegistryDao` przeciw realnemu SQL (in-memory SQLite przez DbPromise seam), NIE `vi.mock`; demaskuje ew. nawrót do in-memory Map | 2026-06-17 |
+| L-03 | S6 bramka testowana na serwisie, nie route 403 | W-01 | `document-studio.routes.ts:3386,3394`, grep `qa_blocking` w testach=0 | P0-test | 1 | otwarta (route-403 harness ciężki — 96 EP; bramka QA `:672`/`:744` zweryfikowana w kodzie, test serwisowy istnieje) |  |
+| L-04 | Mode3 wymusza `useLlm:false` → placeholder | W-01 | `documentStudioService` | P2 | 2 | otwarta (**D-02** — decyzja Piotra) |  |
+| L-05 | template approve/deprecate bez roli serwerowo | W-01 | `document-studio.routes.ts:623,653` | P2 | 3 | **STALE/NAPRAWIONE** — oba endpointy mają server-side role-gate `if (!['admin','owner','superadmin'].includes(userRole.toLowerCase())) → 403` (`:623` approve, `:653` deprecate); teczka cytowała stary stan | 2026-06-17 |
+| L-06 | beta-lock nawigacyjny + brak rate-limit share + over-disclosure `organizationId` | W-01 | `AppRoutes.tsx:2105`; `document-studio.routes.ts:4225,4251` | P2/P3 | 3 | **ZAMKNIĘTA** — beta-lock (`<BetaGate MODULE_DOCUMENT_STUDIO>` `:2105`) + **rate-limit `publicShareLinkLimiter` 30/min** na `/share-links/resolve` (`:4225,4235`) + **over-disclosure usunięty** (`const { organizationId: _orgId, ...publicResult }` strip `:4251`) + 404 single-surface anty-enumeracja + revoke (`/share-links/:id/revoke`) | 2026-06-17 |
 | L-07 | `DocumentStudioView` nie używa MELS (ręczny header) | W-01 | `DocumentStudioView.tsx:193-219` | P2 | 3 | otwarta |  |
 | L-08 | lista szablonów ad-hoc `<ul>` + silent-fail | W-01 | `DocumentStudioTemplateArchitectView.tsx:302` | P3 | 4 | otwarta |  |
 | L-09 | i18n EN-only (`useTranslation` w 2 plikach) | W-01 | `DocumentStudio/*` (grep `useTranslation`=2) | P2 | 4 | otwarta |  |
 | L-10 | ~40 klas koloru Tailwind (sky/emerald/amber/rose) | W-01 | `DocumentStudio/*` (grep 2026-06-13) | P3 | 4 | otwarta |  |
 | L-11 | kręgosłup czat→doc (deliverable z czatu) | W-02 | `SPEC_ZADANIE_01` | P0-program | 0 | zależność (śledzona w SPEC_01) |  |
-| L-12 | duplikat migracji `776 … 2.sql` (byte-identyczny) | W-04 | `server/migrations/776…2.sql` (`diff -q`=IDENTICAL) | P3 | 4 | otwarta (**D-03**) | 2026-06-13 |
+| L-12 | duplikat migracji `776 … 2.sql` (byte-identyczny) | W-04 | `server/migrations/776…2.sql` (`diff -q`=IDENTICAL) | P3 | 4 | **ZAMKNIĘTA (D-03)** — duplikat był nietrackowany w git (kopia Findera, `git ls-files` count=0); usunięty z working-tree; oryginał `776_…persistence.sql` (tracked) pozostaje | 2026-06-17 |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
 | D-02 | Mode3 generate z szablonu | pozwolić `useLlm:true` (proza) / jawnie oznaczyć szkielet w UI | Piotr | TBD | otwarta (modułowa) |
-| D-03 | duplikat migracji `776 … 2.sql` | usunąć duplikat (byte-identyczny, bezpieczne) / zostawić | Piotr | TBD | otwarta (modułowa) |
+| D-03 | duplikat migracji `776 … 2.sql` | usunąć duplikat (byte-identyczny, bezpieczne) / zostawić | Piotr | 2026-06-17 | **ROZSTRZYGNIĘTE → usunięto** (nietrackowany w git, byte-identyczny, loader CREATE TABLE IF NOT EXISTS — zero ryzyka) |
 
 ### 05 · Flagi / rollout — beta-closed; mount BE bez `v8FeatureGate` (zawsze ON na BE — beta-lock tylko nawigacyjny). Override QA role-gated. Migracje 776/`20260603`/769 zastosować na staging; **migracja wave5 dla 6 warstw in-memory = warunek trwałości**.
 ### 06 · Ryzyka — cold-start proof to dowód live na trwałość 3/8 warstw (kod = poszlaka mocna); 6/8 warstw (approvals/content-blocks/brand-voice/audience/source-packs/share-links) realnie in-memory → utrata po deployu DO NAPRAWY (mig.wave5); duplikat mig.776 (D-03); 889 zielonych testów MASKUJE S4 (mockują DAO → nie wykryją 6/8 in-memory); dev `.env` → Railway PROD.
