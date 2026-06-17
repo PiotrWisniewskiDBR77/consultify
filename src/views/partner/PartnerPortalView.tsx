@@ -40,6 +40,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { FilterableTable, type FilterChip } from '../../components/shared/ModuleHub';
+import { EntityStatusChip } from '../../components/ui/primitives/chips';
 import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import {
   loadPartnerRuntimeSummary,
@@ -1046,6 +1048,8 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
   const [projects, setProjects] = useState<ClientProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Canon §5 — per-column filters (status). Source data unchanged.
+  const [orgFilters, setOrgFilters] = useState<FilterChip[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -1158,84 +1162,83 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
           </div>
         </div>
 
-        {organizations.length === 0 ? (
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">
-            <Building2 className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-600">
-              {t('partner.clients.noOrganizations', 'No client organizations yet')}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-slate-100 dark:bg-navy-700/50">
-                <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
-                    Organization
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
-                    Industry
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
-                    Users
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
-                    Projects
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
-                    Assessment
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-slate-600 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
-                {organizations.map((org) => (
-                  <tr key={org.id} className="hover:bg-slate-100/50 dark:hover:bg-navy-700/30">
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                          <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                        </div>
-                        <span className="font-medium text-slate-900 dark:text-white">
-                          {org.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-slate-600">{org.industry}</td>
-                    <td className="px-4 py-4 text-sm text-center text-slate-600">{org.users}</td>
-                    <td className="px-4 py-4 text-sm text-center text-slate-600">{org.projects}</td>
-                    <td className="px-4 py-4 text-center">
-                      <span className="px-2 py-1 text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded">
-                        {org.assessmentScore}/5
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <span
-                        className={cn(
-                          'px-2 py-1 text-xs font-medium rounded-full',
-                          org.status === 'active' &&
-                            'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
-                          org.status === 'onboarding' && 'bg-amber-900/30 text-amber-400',
-                          org.status === 'inactive' && 'bg-slate-900/30 text-slate-600'
-                        )}
-                      >
-                        {org.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <button className="text-slate-500 hover:text-primary-600 dark:hover:text-primary-400">
-                        <ChevronRight className="w-5 h-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <FilterableTable
+          canvasClassName="p-0"
+          persistKey="partner.clients.organizations"
+          columns={[
+            {
+              id: 'name',
+              label: t('partner.clients.col.organization', 'Organization'),
+              render: (org) => (
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 shrink-0 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <span className="font-medium text-slate-900 dark:text-white truncate">
+                    {org.name}
+                  </span>
+                </div>
+              ),
+            },
+            {
+              id: 'industry',
+              label: t('partner.clients.col.industry', 'Industry'),
+              width: '160px',
+              render: (org) => (
+                <span className="text-sm text-slate-600 dark:text-slate-400">{org.industry}</span>
+              ),
+            },
+            {
+              id: 'users',
+              label: t('partner.clients.col.users', 'Users'),
+              width: '90px',
+              align: 'right',
+              render: (org) => (
+                <span className="text-sm text-slate-600 dark:text-slate-400">{org.users}</span>
+              ),
+            },
+            {
+              id: 'projects',
+              label: t('partner.clients.col.projects', 'Projects'),
+              width: '90px',
+              align: 'right',
+              render: (org) => (
+                <span className="text-sm text-slate-600 dark:text-slate-400">{org.projects}</span>
+              ),
+            },
+            {
+              id: 'assessmentScore',
+              label: t('partner.clients.col.assessment', 'Assessment'),
+              width: '110px',
+              align: 'right',
+              render: (org) => (
+                <span className="text-sm text-slate-700 dark:text-slate-200">
+                  {org.assessmentScore}/5
+                </span>
+              ),
+            },
+            {
+              id: 'status',
+              label: t('partner.clients.col.status', 'Status'),
+              width: '130px',
+              filterable: true,
+              filterOptions: [
+                { value: 'active', label: t('partner.clients.status.active', 'Active') },
+                {
+                  value: 'onboarding',
+                  label: t('partner.clients.status.onboarding', 'Onboarding'),
+                },
+                { value: 'inactive', label: t('partner.clients.status.inactive', 'Inactive') },
+              ],
+              render: (org) => <EntityStatusChip status={String(org.status)} />,
+            },
+          ]}
+          data={organizations.map((org) => ({ ...org, id: org.id }))}
+          activeFilters={orgFilters}
+          onFilterChange={setOrgFilters}
+          hideRowActions
+          emptyMessage={t('partner.clients.noOrganizations', 'No client organizations yet')}
+        />
       </div>
     );
   }

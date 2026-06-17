@@ -25,6 +25,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { FilterableTable, type FilterChip } from '../../components/shared/ModuleHub';
+import { EntityStatusChip } from '../../components/ui/primitives/chips';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
@@ -141,6 +143,8 @@ export const ClientAccessView: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Canon §5 — per-column filters (status). Source data unchanged.
+  const [employeeFilters, setEmployeeFilters] = useState<FilterChip[]>([]);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [accessLink, setAccessLink] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -434,95 +438,104 @@ export const ClientAccessView: React.FC = () => {
           </div>
 
           {/* Employees Table */}
-          {employees.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500 uppercase">
-                      {t('partner.clientAccess.employeeName', 'Employee Name')}
-                    </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500 uppercase">
-                      {t('partner.clientAccess.permissionSet', 'Permission Set')}
-                    </th>
-                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-500 uppercase">
-                      {t('partner.clientAccess.totalClients', 'Total Clients')}
-                    </th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500 uppercase">
-                      {t('partner.clientAccess.lastActive', 'Last Active')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {employees.map((employee) => (
-                    <tr key={employee.id} className="hover:bg-white/5">
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={cn(
-                              'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
-                              employee.status === 'ACTIVE'
-                                ? 'bg-primary-500/20 text-primary-400'
-                                : 'bg-slate-700 text-slate-600'
-                            )}
-                          >
-                            {employee.employeeName.substring(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                              {employee.employeeName}
-                              <span
-                                className={cn(
-                                  'w-2 h-2 rounded-full',
-                                  employee.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-amber-400'
-                                )}
-                              />
-                            </p>
-                            <p className="text-xs text-slate-600">
-                              {employee.status === 'ACTIVE'
-                                ? t('partner.clientAccess.statusActive', 'Aktywny')
-                                : t('partner.clientAccess.statusDeactivated', 'Dezaktywowany')}{' '}
-                              | {employee.email}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="text-slate-500">
-                          {employee.permissionSet || employee.accessType?.replace('_', ' ') || '--'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span className="text-slate-900 dark:text-white">
-                          {typeof employee.clientCount === 'number'
-                            ? employee.clientCount
-                            : Array.isArray(employee.clients)
-                              ? employee.clients.length
-                              : '--'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="text-slate-500">{employee.lastActive || '--'}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <UserPlus className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">
-                {t('partner.clientAccess.noEmployees', 'No team members yet')}
-              </p>
-              <p className="text-sm text-slate-600 mt-1">
-                {t(
-                  'partner.clientAccess.noEmployeesDesc',
-                  'Add team members to manage client access.'
-                )}
-              </p>
-            </div>
-          )}
+          <FilterableTable
+            canvasClassName="p-0"
+            persistKey="partner.clientAccess.employees"
+            columns={[
+              {
+                id: 'employeeName',
+                label: t('partner.clientAccess.employeeName', 'Employee Name'),
+                render: (employee) => (
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={cn(
+                        'w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold',
+                        employee.status === 'ACTIVE'
+                          ? 'bg-primary-500/20 text-primary-400'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-600'
+                      )}
+                    >
+                      {String(employee.employeeName).substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                        {employee.employeeName}
+                        <span
+                          className={cn(
+                            'w-2 h-2 shrink-0 rounded-full',
+                            employee.status === 'ACTIVE' ? 'bg-c-success' : 'bg-c-warning'
+                          )}
+                        />
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                        {employee.status === 'ACTIVE'
+                          ? t('partner.clientAccess.statusActive', 'Aktywny')
+                          : t('partner.clientAccess.statusDeactivated', 'Dezaktywowany')}{' '}
+                        | {employee.email}
+                      </p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                id: 'permissionSet',
+                label: t('partner.clientAccess.permissionSet', 'Permission Set'),
+                width: '180px',
+                render: (employee) => (
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    {employee.permissionSet || employee.accessType?.replace('_', ' ') || '--'}
+                  </span>
+                ),
+              },
+              {
+                id: 'clientCount',
+                label: t('partner.clientAccess.totalClients', 'Total Clients'),
+                width: '120px',
+                align: 'right',
+                render: (employee) => (
+                  <span className="text-sm text-slate-900 dark:text-white">
+                    {typeof employee.clientCount === 'number'
+                      ? employee.clientCount
+                      : Array.isArray(employee.clients)
+                        ? employee.clients.length
+                        : '--'}
+                  </span>
+                ),
+              },
+              {
+                id: 'status',
+                label: t('partner.clientAccess.col.status', 'Status'),
+                width: '130px',
+                filterable: true,
+                filterOptions: [
+                  {
+                    value: 'ACTIVE',
+                    label: t('partner.clientAccess.statusActive', 'Aktywny'),
+                  },
+                  {
+                    value: 'DEACTIVATED',
+                    label: t('partner.clientAccess.statusDeactivated', 'Dezaktywowany'),
+                  },
+                ],
+                render: (employee) => <EntityStatusChip status={String(employee.status)} />,
+              },
+              {
+                id: 'lastActive',
+                label: t('partner.clientAccess.lastActive', 'Last Active'),
+                width: '140px',
+                render: (employee) => (
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    {employee.lastActive || '--'}
+                  </span>
+                ),
+              },
+            ]}
+            data={employees.map((employee) => ({ ...employee, id: employee.id }))}
+            activeFilters={employeeFilters}
+            onFilterChange={setEmployeeFilters}
+            hideRowActions
+            emptyMessage={t('partner.clientAccess.noEmployees', 'No team members yet')}
+          />
         </div>
       )}
 

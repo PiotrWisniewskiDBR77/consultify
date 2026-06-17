@@ -31,6 +31,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { FilterableTable, type FilterChip } from '@/components/shared/ModuleHub';
+import { EntityStatusChip } from '@/components/ui/primitives/chips';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
@@ -197,6 +199,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   const [v8Summary, setV8Summary] = useState<V8PartnerEarningsSummary | null>(null);
   const [programStatus, setProgramStatus] = useState<V8PartnerProgramStatus | null>(null);
   const [transactions, setTransactions] = useState<CommissionTransaction[]>([]);
+  // Canon §5 — per-column filters (status). Source data unchanged.
+  const [txFilters, setTxFilters] = useState<FilterChip[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -871,93 +875,88 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
               </button>
             </div>
 
-            {transactions.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-white/5">
-                      <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                        Customer
-                      </th>
-                      <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                        Type
-                      </th>
-                      <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                        Amount
-                      </th>
-                      <th className="text-right px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                        Commission
-                      </th>
-                      <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                        Status
-                      </th>
-                      <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                        Date
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {transactions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-white/5">
-                        <td className="px-3 py-3">
-                          <span className="font-medium text-slate-900 dark:text-white">
-                            {tx.organizationName}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className="text-sm text-slate-600 dark:text-slate-500 capitalize">
-                            {tx.transactionType.toLowerCase().replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <span className="text-slate-600 dark:text-slate-300">
-                            {formatCurrency(tx.grossAmount, tx.currency)}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <span className="font-medium text-emerald-400">
-                            {formatCurrency(tx.commissionAmount, tx.currency)}
-                          </span>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
-                            ({tx.commissionRate}%)
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          <span
-                            className={cn(
-                              'px-2 py-1 text-xs font-medium rounded-full',
-                              tx.status === 'PAID' && 'bg-emerald-500/20 text-emerald-400',
-                              tx.status === 'APPROVED' && 'bg-blue-500/20 text-blue-400',
-                              tx.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
-                            )}
-                          >
-                            {tx.status.toLowerCase()}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className="text-sm text-slate-600 dark:text-slate-500">
-                            {tx.transactionDate}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-                <p className="text-slate-600 dark:text-slate-500">
-                  {t('partner.earnings.noStatements', "We couldn't find any statements")}
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  {t(
-                    'partner.earnings.noStatementsDesc',
-                    'Once you make your first commission statement, it will appear here.'
-                  )}
-                </p>
-              </div>
-            )}
+            <FilterableTable
+              canvasClassName="p-0"
+              persistKey="partner.earnings.transactions"
+              columns={[
+                {
+                  id: 'organizationName',
+                  label: t('partner.earnings.col.customer', 'Customer'),
+                  render: (tx) => (
+                    <span className="font-medium text-slate-900 dark:text-white truncate block">
+                      {tx.organizationName}
+                    </span>
+                  ),
+                },
+                {
+                  id: 'transactionType',
+                  label: t('partner.earnings.col.type', 'Type'),
+                  width: '140px',
+                  render: (tx) => (
+                    <span className="text-sm text-slate-600 dark:text-slate-400 capitalize">
+                      {String(tx.transactionType).toLowerCase().replace('_', ' ')}
+                    </span>
+                  ),
+                },
+                {
+                  id: 'grossAmount',
+                  label: t('partner.earnings.col.amount', 'Amount'),
+                  width: '120px',
+                  align: 'right',
+                  render: (tx) => (
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      {formatCurrency(tx.grossAmount, tx.currency)}
+                    </span>
+                  ),
+                },
+                {
+                  id: 'commissionAmount',
+                  label: t('partner.earnings.col.commission', 'Commission'),
+                  width: '150px',
+                  align: 'right',
+                  render: (tx) => (
+                    <span>
+                      <span className="font-medium text-c-success">
+                        {formatCurrency(tx.commissionAmount, tx.currency)}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                        ({tx.commissionRate}%)
+                      </span>
+                    </span>
+                  ),
+                },
+                {
+                  id: 'status',
+                  label: t('partner.earnings.col.status', 'Status'),
+                  width: '130px',
+                  filterable: true,
+                  filterOptions: [
+                    { value: 'PAID', label: t('partner.earnings.status.paid', 'Paid') },
+                    {
+                      value: 'APPROVED',
+                      label: t('partner.earnings.status.approved', 'Approved'),
+                    },
+                    { value: 'PENDING', label: t('partner.earnings.status.pending', 'Pending') },
+                  ],
+                  render: (tx) => <EntityStatusChip status={String(tx.status)} />,
+                },
+                {
+                  id: 'transactionDate',
+                  label: t('partner.earnings.col.date', 'Date'),
+                  width: '130px',
+                  render: (tx) => (
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      {tx.transactionDate}
+                    </span>
+                  ),
+                },
+              ]}
+              data={transactions.map((tx) => ({ ...tx, id: tx.id }))}
+              activeFilters={txFilters}
+              onFilterChange={setTxFilters}
+              hideRowActions
+              emptyMessage={t('partner.earnings.noStatements', "We couldn't find any statements")}
+            />
           </div>
         ) : (
           /* Payments Tab - Payout History */

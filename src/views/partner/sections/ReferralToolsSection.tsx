@@ -27,6 +27,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { FilterableTable, type FilterChip } from '@/components/shared/ModuleHub';
+import { type RowAction } from '@/components/shared/RowActionsMenu';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
@@ -108,6 +110,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  // Canon §5 — per-column filters. Source data unchanged.
+  const [campaignFilters, setCampaignFilters] = useState<FilterChip[]>([]);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const campaignNameInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -875,106 +879,100 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         )}
 
         {/* Campaign Links Table */}
-        {tools?.campaignLinks && tools.campaignLinks.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                    {t('partner.referrals.campaign', 'Campaign')}
-                  </th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                    {t('partner.referrals.clicks', 'Clicks')}
-                  </th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                    {t('partner.referrals.signups', 'Signups')}
-                  </th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                    {t('partner.referrals.conversions', 'Paid')}
-                  </th>
-                  <th className="text-center px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-500 uppercase">
-                    {t('partner.referrals.convRate', 'Conv %')}
-                  </th>
-                  <th className="px-3 py-2"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {tools.campaignLinks.map((campaign) => (
-                  <tr key={campaign.id} className="hover:bg-white/5">
-                    <td className="px-3 py-3">
-                      <div>
-                        <p className="font-medium text-slate-900 dark:text-white">
-                          {campaign.name}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">
-                          {campaign.utmSource && `${campaign.utmSource}`}
-                          {campaign.utmMedium && ` / ${campaign.utmMedium}`}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <span className="text-slate-900 dark:text-white font-medium">
-                        {campaign.clickCount}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <span className="text-slate-900 dark:text-white">{campaign.signupCount}</span>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <span className="text-emerald-400 font-medium">
-                        {campaign.conversionCount}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <span className="text-slate-600 dark:text-slate-500">
-                        {campaign.clickCount > 0
-                          ? `${((campaign.conversionCount / campaign.clickCount) * 100).toFixed(1)}%`
-                          : '0%'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => copyToClipboard(campaign.fullUrl, campaign.id)}
-                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors"
-                          title="Copy link"
-                        >
-                          {copiedField === campaign.id ? (
-                            <Check className="w-4 h-4 text-emerald-400" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCampaign(campaign.id)}
-                          disabled={deleting === campaign.id}
-                          className="p-1.5 text-slate-600 dark:text-slate-500 hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded transition-colors disabled:opacity-50"
-                          title="Delete"
-                        >
-                          {deleting === campaign.id ? (
-                            <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <MousePointerClick className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
-            <p className="text-slate-600 dark:text-slate-500">
-              {t(
-                'partner.referrals.noCampaigns',
-                'No campaign links yet. Create one to start tracking!'
-              )}
-            </p>
-          </div>
-        )}
+        <FilterableTable
+          canvasClassName="p-0"
+          persistKey="partner.referrals.campaignLinks"
+          columns={[
+            {
+              id: 'name',
+              label: t('partner.referrals.campaign', 'Campaign'),
+              render: (campaign) => (
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 dark:text-white truncate">
+                    {campaign.name}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {campaign.utmSource && `${campaign.utmSource}`}
+                    {campaign.utmMedium && ` / ${campaign.utmMedium}`}
+                  </p>
+                </div>
+              ),
+            },
+            {
+              id: 'clickCount',
+              label: t('partner.referrals.clicks', 'Clicks'),
+              width: '90px',
+              align: 'right',
+              render: (campaign) => (
+                <span className="text-sm font-medium text-slate-900 dark:text-white">
+                  {campaign.clickCount}
+                </span>
+              ),
+            },
+            {
+              id: 'signupCount',
+              label: t('partner.referrals.signups', 'Signups'),
+              width: '90px',
+              align: 'right',
+              render: (campaign) => (
+                <span className="text-sm text-slate-900 dark:text-white">
+                  {campaign.signupCount}
+                </span>
+              ),
+            },
+            {
+              id: 'conversionCount',
+              label: t('partner.referrals.conversions', 'Paid'),
+              width: '90px',
+              align: 'right',
+              render: (campaign) => (
+                <span className="text-sm font-medium text-c-success">
+                  {campaign.conversionCount}
+                </span>
+              ),
+            },
+            {
+              id: 'convRate',
+              label: t('partner.referrals.convRate', 'Conv %'),
+              width: '90px',
+              align: 'right',
+              render: (campaign) => (
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  {campaign.clickCount > 0
+                    ? `${((campaign.conversionCount / campaign.clickCount) * 100).toFixed(1)}%`
+                    : '0%'}
+                </span>
+              ),
+            },
+          ]}
+          data={(tools?.campaignLinks ?? []).map((campaign) => ({ ...campaign, id: campaign.id }))}
+          activeFilters={campaignFilters}
+          onFilterChange={setCampaignFilters}
+          getRowActions={(row): RowAction[] => {
+            const campaign = row as unknown as CampaignLink;
+            return [
+              {
+                id: 'copy',
+                label: t('partner.referrals.copyLink', 'Copy link'),
+                icon: Copy,
+                onClick: () => copyToClipboard(campaign.fullUrl, campaign.id),
+              },
+              {
+                id: 'delete',
+                label: t('common.delete', 'Delete'),
+                icon: Trash2,
+                variant: 'danger',
+                divider: true,
+                disabled: deleting === campaign.id,
+                onClick: () => handleDeleteCampaign(campaign.id),
+              },
+            ];
+          }}
+          emptyMessage={t(
+            'partner.referrals.noCampaigns',
+            'No campaign links yet. Create one to start tracking!'
+          )}
+        />
       </div>
 
       {/* Tips Section */}
