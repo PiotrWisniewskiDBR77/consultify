@@ -62,6 +62,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -154,14 +155,14 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmEmail !== currentUser.email) {
+    if (deleteConfirmEmail !== currentUser.email || !deletePassword) {
       return;
     }
 
     try {
       setActionError(null);
-      const response = await Api.post('/settings/request-deletion', {
-        email: deleteConfirmEmail,
+      const response = await Api.post('/settings/gdpr/deletion-request', {
+        password: deletePassword,
         reason: 'user_requested',
       });
       confirmRequestAccepted(response, 'Account deletion request was not accepted by the server');
@@ -172,6 +173,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
         )
       );
       setShowDeleteConfirm(false);
+      setDeletePassword('');
     } catch (error: unknown) {
       setActionError(normalizeApiErrorMessage(error, 'Failed to request account deletion'));
       alert(t('settings.dataPrivacy.deleteFailed', 'Failed to request account deletion.'));
@@ -491,10 +493,18 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                   className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-rose-200 dark:border-rose-500/30 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-rose-500/50 outline-none"
                 />
 
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder={t('settings.dataPrivacy.passwordPlaceholder', 'Enter your password')}
+                  className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-rose-200 dark:border-rose-500/30 rounded-md text-navy-900 dark:text-white focus:ring-2 focus:ring-rose-500/50 outline-none"
+                />
+
                 <div className="flex gap-2">
                   <button
                     onClick={handleDeleteAccount}
-                    disabled={deleteConfirmEmail !== currentUser.email}
+                    disabled={deleteConfirmEmail !== currentUser.email || !deletePassword}
                     className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Trash2 size={16} />
@@ -504,6 +514,7 @@ export const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({
                     onClick={() => {
                       setShowDeleteConfirm(false);
                       setDeleteConfirmEmail('');
+                      setDeletePassword('');
                     }}
                     className="px-4 py-2 bg-slate-200 dark:bg-navy-800 text-slate-700 dark:text-slate-200 rounded-lg transition-colors hover:bg-slate-300 dark:hover:bg-navy-700"
                   >

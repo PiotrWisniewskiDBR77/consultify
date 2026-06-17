@@ -2627,36 +2627,6 @@ router.post(
   })
 );
 
-/**
- * POST /api/settings/request-deletion
- * Account deletion request
- */
-router.post(
-  '/request-deletion',
-  verifyToken,
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'User not authenticated' });
-
-    const { reason, password } = req.body || {};
-
-    // Verify the user's password before scheduling an irreversible account deletion.
-    // This mirrors POST /gdpr/deletion-request so no deletion route can be hit
-    // without proof of the password.
-    const passwordCheck = await verifyUserPassword(userId, password);
-    if (!passwordCheck.ok) {
-      return res.status(passwordCheck.status).json({ error: passwordCheck.error });
-    }
-
-    logger.warn(
-      `[settings] Account deletion requested by user ${userId}, reason=${reason || 'n/a'}`
-    );
-
-    const request = await createAccountDeletionRequest({ userId, reason });
-    return res.status(202).json({ success: true, request });
-  })
-);
-
 // ===========================================
 // GDPR CONSENTS & RETENTION
 // ===========================================
