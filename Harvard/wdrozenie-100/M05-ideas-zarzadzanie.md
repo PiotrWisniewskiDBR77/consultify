@@ -143,8 +143,8 @@ Scenariusze S1-S6 + plan + bezpieczeństwo: karta §0/§2/§6.
 |----|------|---------|--------------------|-------|------|--------|
 | L-01 | Conflict 409 silent-overwrite | W-01,W-03 | `IdeaMapWorkspace.tsx:449-473` | P0 | 1 | **NAPRAWIONA `0b81310448` (zweryf. w kodzie 2026-06-13)** — domknąć testem S3 |
 | L-02 | `my_idea_map_snapshots`/`activity` brak migracji→503 | W-01,W-03 | `my-work.routes.ts:4515,4563,4626` + mig. `20260611_…sql` | P0 | 1 | **migracja ISTNIEJE (plik); status DB do weryfikacji** [do weryfikacji w DB] |
-| L-03 | Wielu writerów / samowywołane 409 (4 narzędzia) | W-01 | `useTablePersistence.ts:111`, `IdeaProcessFlowTool.tsx:531`, `IdeaWhiteboardTool.tsx:645` | P1 | 3 | otwarta |
-| L-04 | Brak flusha przy unmount (<800ms utrata) | W-01 | `useIdeaMapSync.ts:375-381` | P1 | 3 | otwarta |
+| L-03 | Wielu writerów / samowywołane 409 (4 narzędzia) | W-01 | `useTablePersistence.ts:111`, `IdeaProcessFlowTool.tsx:531`, `IdeaWhiteboardTool.tsx:645` | P1 | 3 | **NAPRAWIONA `ab0eb2fb0c` (2026-06-17)** — `globalIdeaVersions` moduł-level Map; wszystkie tool-instancje dla tego samego ideaId dzielą wersję; L-03 test (1/1) |
+| L-04 | Brak flusha przy unmount (<800ms utrata) | W-01 | `useIdeaMapSync.ts:375-381` | P1 | 3 | **NAPRAWIONA `ab0eb2fb0c` (2026-06-17)** — cleanup useEffect persystuje `queuedPayloadRef.current` do localStorage; primeServerVersion() odczytuje przy mount; L-04 testy (2/2) |
 | L-05 | Eksport serwerowy = rejestr bez pliku (STUB) | W-01 | `final-batch.routes.ts:32`, `IdeaExportMenu.tsx:498-509` | INTEGRACJA | 3 | **D-01** |
 | L-06 | Szablon nadpisuje graf bez confirm; notatki efemeryczne; `canvasLocked` hardcode; 4× console.log | W-01 | `IdeaTemplateGallery.tsx:1886`, `IdeaContextPanel.tsx:141`, `IdeaMapWorkspace.tsx:373,433` | P2 | 3 | otwarta |
 | L-07 | Split-brain `versions` vs `snapshots` | W-01,W-04 | mig. 622 vs 20260611 | P2 | 3 | **D-02** |
