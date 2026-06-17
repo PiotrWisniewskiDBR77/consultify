@@ -452,43 +452,6 @@ Gentle guided steps to get started:
     relatedModules: ['partner', 'partner-dashboard', 'partner-earnings'],
     targetAudience: ['partner'],
   },
-  'partner-referrals': {
-    id: 'partner-referrals',
-    title: 'Referral Tools',
-    description: 'Generate and manage your referral codes and links.',
-    content: `Generate and track referral links to earn commissions:
-
-**Your Referral Code**
-• Unique code assigned to your partnership
-• Copy and share with potential clients
-• Code format: PARTNER123
-
-**Referral Link**
-• Direct link to registration with your attribution
-• One-click copy functionality
-• QR code generation available
-
-**Campaign Links**
-• Create UTM-tracked links for different campaigns
-• Track which marketing efforts perform best
-• Customize source, medium, and campaign name
-• Example: LinkedIn ads, email newsletters, blog posts
-
-**Analytics**
-• Click tracking per link
-• Signup conversions
-• Trial-to-paid conversion rates
-• Campaign performance comparison
-
-**Best Practices**
-• Use different campaign links for different channels
-• Track which content drives the most signups
-• Focus efforts on highest-converting sources`,
-    icon: 'Link',
-    translationKey: 'help.sidePanel.modules.partner-referrals',
-    relatedModules: ['partner', 'partner-earnings'],
-    targetAudience: ['partner'],
-  },
   'partner-earnings': {
     id: 'partner-earnings',
     title: 'Commission Earnings',
@@ -528,7 +491,7 @@ Gentle guided steps to get started:
 • Commissions approved after 30-day refund period`,
     icon: 'DollarSign',
     translationKey: 'help.sidePanel.modules.partner-earnings',
-    relatedModules: ['partner', 'partner-referrals'],
+    relatedModules: ['partner'],
     targetAudience: ['partner'],
   },
   'partner-clients': {

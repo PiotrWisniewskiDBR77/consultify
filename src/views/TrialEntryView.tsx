@@ -300,22 +300,6 @@ export const TrialEntryView: React.FC<TrialEntryViewProps> = ({ onStartTrial }) 
                 />
               </button>
             </div>
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5">
-              <div className="text-[10px] font-bold text-slate-600 dark:text-slate-500 uppercase tracking-widest mb-1">
-                Ecosystem
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.AFFILIATE)}
-                className="text-xs font-semibold hover:text-brand-500 transition-colors flex items-center gap-1 group"
-              >
-                Program poleceń Phase G
-                <ChevronRight
-                  size={14}
-                  className="group-hover:translate-x-0.5 transition-transform"
-                />
-              </button>
-            </div>
           </div>
         </div>
       </div>

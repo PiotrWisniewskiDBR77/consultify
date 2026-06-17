@@ -88,23 +88,6 @@ export const UserApi = {
   },
 
   // ==========================================
-  // REFERRALS
-  // ==========================================
-
-  getUserReferrals: async (): Promise<unknown> => {
-    const res = await fetch(`${API_URL}/referrals`, { headers: getHeaders() });
-    return handleResponse(res, 'Failed to fetch referrals');
-  },
-
-  generateReferralCode: async (): Promise<{ code: string }> => {
-    const res = await fetch(`${API_URL}/referrals/generate`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
-    return handleResponse(res, 'Failed to generate referral code');
-  },
-
-  // ==========================================
   // ONBOARDING
   // ==========================================
 

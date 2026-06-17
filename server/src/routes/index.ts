@@ -106,7 +106,6 @@ export { default as premiumReportsRoutes } from './premiumReports.routes.js';
 export { default as promptAssistantRoutes } from './prompt-assistant.routes.js';
 export { default as raidRoutes } from './raid.routes.js';
 export { default as rapidleanRoutes } from './rapidlean.routes.js';
-export { default as referralRoutes } from './referrals.routes.js';
 export { default as reportCommentsRoutes } from './report-comments.routes.js';
 export { default as reportsRoutes } from './reports.routes.js';
 export { default as scenariosRoutes } from './scenarios.routes.js';

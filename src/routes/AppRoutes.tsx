@@ -2355,12 +2355,6 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Affiliate/Ecosystem dropped from navigation (decision #1, Harvard).
-            The dashboard was UI-complete but backend-stubbed (always 503 / zeros) —
-            a lying surface. Route redirects to /chat; DB migrations + referrals
-            backend kept as dormant foundations for a future real build. */}
-        <Route path={ROUTES.AFFILIATE} element={<Navigate to={ROUTES.AI_CHAT} replace />} />
-
         {/* Legal Pages - Public */}
         <Route
           path={ROUTES.LEGAL.ABOUT}

@@ -12946,13 +12946,6 @@ export const Api = {
   // Project Details
   getProjectDetails: async (projectId: string) =>
     ({ id: projectId, name: '', description: '', goal: '', status: 'active' }) as any,
-  // Affiliate/Ecosystem
-  getUserReferrals: async () => ({ success: true, referrals: [] as any[] }),
-  getEcosystemStats: async () => ({
-    success: true,
-    stats: { totalReferrals: 0, activeUsers: 0, earnings: 0 },
-  }),
-  generateReferralCode: async () => ({ success: true, code: '', link: '' }),
   // AI Chat Feedback
   reportMessageFeedback: async (messageId: string, feedback: string) => ({ success: true }),
   reportMessage: async (messageId: string, reason: string) => ({ success: true }),

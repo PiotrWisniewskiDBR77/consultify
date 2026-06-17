@@ -336,13 +336,6 @@ export const useBreadcrumbs = (): string[] | null => {
   } else if (currentView === AppView.CONSULTANT_INVITES) {
     return null;
   }
-  // =====================================================
-  // AFFILIATE DASHBOARD
-  // =====================================================
-  else if (currentView === AppView.AFFILIATE_DASHBOARD) {
-    return null;
-  }
-
   // If we couldn't compute a meaningful override, fall back to route-provided crumbs.
   if (!section) return null;
   if (!sub) return [section];

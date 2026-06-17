@@ -215,9 +215,6 @@ export const ROUTES = {
   ONBOARDING_SEED_BASE: '/setup/onboarding/seed',
   TRIAL_ENTRY: '/trial',
 
-  // Affiliate
-  AFFILIATE: '/affiliate',
-
   // AI Actions
   AI_ACTIONS: '/ai-actions',
   AI_OS: {
@@ -507,9 +504,6 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.QUICK_STEP2_USER_CONTEXT]: ROUTES.CONTEXT_BUILDER.GOALS,
   [AppView.QUICK_STEP3_EXPECTATIONS]: ROUTES.CONTEXT_BUILDER.STRATEGY,
 
-  // Affiliate
-  [AppView.AFFILIATE_DASHBOARD]: ROUTES.AFFILIATE,
-
   // AI Actions
   [AppView.AI_ACTION_PROPOSALS]: ROUTES.AI_ACTIONS,
   [AppView.AI_OS_HOME]: ROUTES.AI_OS.ROOT,
@@ -674,7 +668,6 @@ export function getAppViewFromPath(path: string): AppView | null {
   if (normalized.startsWith(ROUTES.AI_ACTIONS)) return AppView.AI_ACTION_PROPOSALS;
   if (normalized.startsWith(ROUTES.CONSULTANT.PANEL)) return AppView.CONSULTANT_PANEL;
   if (normalized.startsWith(ROUTES.CONSULTANT.INVITES)) return AppView.CONSULTANT_INVITES;
-  if (normalized.startsWith(ROUTES.AFFILIATE)) return AppView.AFFILIATE_DASHBOARD;
   if (normalized.startsWith(ROUTES.ORG_SETUP)) return AppView.ORG_SETUP_WIZARD;
   if (normalized.startsWith(ROUTES.ONBOARDING)) return AppView.ONBOARDING_WIZARD;
   if (normalized.startsWith(ROUTES.ONBOARDING_ADMIN)) return AppView.ONBOARDING_WIZARD;

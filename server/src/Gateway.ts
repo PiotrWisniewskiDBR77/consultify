@@ -223,7 +223,6 @@ import publicApiV1Routes from './routes/publicApiV1.routes.js';
 import raidRoutes from './routes/raid.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import realtimePlatformRoutes from './routes/realtime-platform.routes.js';
-import referralRoutes from './routes/referrals.routes.js';
 import reportBuilderRoutes from './routes/report-builder.routes.js';
 import reportBuilderPublicRoutes from './routes/report-builder-public.routes.js';
 import reportCommentsRoutes from './routes/report-comments.routes.js';
@@ -717,7 +716,6 @@ export class ApiGateway {
       // User management routes
       app.use('/api/onboarding', onboardingRoutes);
       app.use('/api/analytics/journey', journeyAnalyticsRoutes);
-      mountStub('/api/referrals', referralRoutes, 'referralRoutes');
       mountStub('/api/consultants', consultantRoutes, 'consultantRoutes');
       app.use('/api/consultant-project-access', consultantProjectAccessRoutes);
       mountStub('/api/users', userOrgsRoutes, 'userOrgsRoutes');
