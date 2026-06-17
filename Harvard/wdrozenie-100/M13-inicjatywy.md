@@ -101,7 +101,7 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 | L-10 | 0 testów CRUD (stale import) | W-01 | `initiatives-crud.test.ts` | P0-test | — | naprawiona `ea77dc678c` |
 | L-11a | i18n inline ~1820× | W-01 | `Initiatives/` (`InitiativeDocumentView` 423+`sections/*`) | P1 | 4 | otwarta |
 | L-11b | 18 surowych `<table>` (§27)+RC-4 | W-01 | 13 plików `sections/*`,`Analysis/*` | P2 | 4 | otwarta |
-| L-11c | 13 hex (9=graf) | W-01 | `DependencyGraphCanvas.tsx` i in. | P2 | 4 | otwarta |
+| L-11c | 13 hex (9=graf) | W-01 | `DependencyGraphCanvas.tsx` i in. | P2 | 4 | **W WIĘKSZOŚCI LEGIT (zweryf. 2026-06-17): 9× `DependencyGraphCanvas.tsx` = paleta severity data-viz (CRITICAL/HIGH/MEDIUM/LOW) + SVG stroke/fill/Background — konwencjonalnie twarde; 3× `InitiativeDocumentView.tsx:10506-10526` = off-screen printable container dla `exportReportToPDF` (tokeny/CSS-vars NIE resolvują w przechwyconym DOM — MUSZĄ być twarde); 1× `InitiativeWizardModal.tsx:2484` `#8b5cf6` = INTENCJONALNY per-wizard accent (komentarz + `eslint-disable no-restricted-syntax`: initiative=violet vs insight=blue vs survey=emerald). Brak realnego hardkodu-do-tokenizacji → faktycznie FALSE-POSITIVE. (Ew. ujednolicenie palety severity do tokenów = osobna decyzja design-system, nie luka)** |
 | L-12 | governance router org-spoofable (`/api/initiatives-v4`) | W-01 | `Gateway.ts:906` | P1 | 1 | **FAŁSZYWY ALARM** — `requireUser()` czyta `req.user?.organizationId` z JWT (verifyToken), nie z req-params; nie można podszyć |
 
 ### 04 · Rejestr decyzji (R5)
