@@ -131,7 +131,7 @@ Pełna tabela: karta §1g. **WYJŚCIA →** (7 handoffów intencji, INV_A poz.53
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status |
 |----|------|---------|--------------------|-------|------|--------|
-| L-01 | rozjazd kliencka pamięć AI (`/api/ai-memory` za `internalToolsGuard`, 404) | W-01 | `OrganizationMemoryPanel.tsx` (0 importów) | P2 | 2 | otwarta (D-01) |
+| L-01 | rozjazd kliencka pamięć AI (`/api/ai-memory` za `internalToolsGuard`, 404) | W-01 | `Gateway.ts:386-388` + `UnifiedChatPanel.tsx:5393` | P2 | 2 | **ZAMKNIĘTA 2026-06-17** (DP-5 zrealizowane: `/api/ai-memory` za `internalToolsGuard`+`highRiskSurfaceGuard(['ai_memory'])` z flagą `TRIAL_AI_MEMORY_DISABLED`; FE panel usunięty z renderu → 0 client-CTA→404; test `tests/unit/backend/aiMemoryGating.test.ts` 4/4. Uwaga produktowa: feature wewn.-only → świadomie BEZ client-facing labelki „wkrótce" — Piotr może dodać teaser jeśli zechce wystawić go klientom) |
 | L-02 | F-3 leak `metadata` public viewer | W-01 | `share.routes.ts:451-565` | P2 | 3 | **ZAMKNIĘTA 2026-06-17** (R3 — już naprawione: cały `share.routes.ts` ma 0 tokenów `metadata` i 0 surowych spreadów; `GET /share/:token` whitelistuje pola jawnie; test guard `tests/unit/backend/shareMetadataWhitelist.test.ts` 3/3) |
 | L-03 | brak pokrycia S3/S4/S6 + smoke poza PR-gate | W-01 | `e2e-nightly.yml`/`weekly.yml` cron-only | P1-test | 2/4 | otwarta |
 | L-04 | SQLite-izm `datetime('now')` na PG (cleanup pamięci) | W-01 | adapter `PostgresDatabase.ts:383` | P3 | 3 | **FALSE POSITIVE 2026-06-17** (adapter `getDatabase()` przepisuje `datetime('now')`→`NOW()` w `PostgresDatabase.ts:383`; pozostałe wystąpienia np. `actionProposalEngine.ts` przechodzą przez ten sam adapter → nie pada na PG; lock: `v8-db-compatibility.test.ts:275`) |
@@ -145,7 +145,7 @@ Pełna tabela: karta §1g. **WYJŚCIA →** (7 handoffów intencji, INV_A poz.53
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
-| D-01 | kliencka pamięć AI: udostępnić czy wyciąć? | zdjąć `internalToolsGuard`+wepnąć panel / ukryć+wyciąć orphan | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce"** |
+| D-01 | kliencka pamięć AI: udostępnić czy wyciąć? | zdjąć `internalToolsGuard`+wepnąć panel / ukryć+wyciąć orphan | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-5: ukryj za flagą + label „wkrótce"** · **ZREALIZOWANE 2026-06-17** (flaga `TRIAL_AI_MEMORY_DISABLED`, panel usunięty; client-facing labelka „wkrótce" pominięta — feature wewn.-only, do wystawienia tylko na decyzję Piotra) |
 | D-02 | reasoning #3: który tier/provider wymusić? | per-provider param / wymuszony model thinking | Piotr | TBD | **ROZSTRZYGNIĘTE → DP-12: wymuś model thinking-capable per provider (fallback: ukryj przełącznik)** |
 | D-03 | §27 dla 13 `<table>` — render markdown czy lista encji? | potwierdzić N/D / część do FilterableTable | Piotr | TBD | otwarta |
 
