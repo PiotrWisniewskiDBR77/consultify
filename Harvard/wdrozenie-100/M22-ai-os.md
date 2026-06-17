@@ -121,14 +121,14 @@ REALNE 6 wave-service'ów (5–9 + research) + ActionCenter + AI Memory. STUB: A
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
 | L-01 | Artifacts panel widoczny przy 404 (V8 off) | W-01 | `Wave5ArtifactRuntimePanel.tsx` + `artifacts.routes.ts:38-40` + `Gateway.ts:380,749` | P1 UX | 1 | otwarta |
-| L-02 | `actionDecisions` governance (PolicyEngine/audit-export) | W-03,W-04,W-05 | `Gateway.ts` — **0 wystąpień** (grep 2026-06-13) | — | — | **STALE-zweryfikowane: USUNIĘTY** (`f35aa8d7c8`). Karta ma podwójny rozjazd (1d „martwy" vs nagłówek „zamontowany") — OBA nieaktualne; kod nie istnieje. **DP-7 = descope** chyba że roadmapa → D-01 |
-| L-03 | „7 guardów bez routerów" | W-01,W-04 | `Gateway.ts:388-395` (guard) + **`:486-512` (routery zamontowane)** | — | — | **STALE-zweryfikowane: NIE dotyczy** — 7 routerów JUŻ zamontowanych; co najwyżej duplikat `ai-prompts` guard `:389` (P3-kosmetyka) | 2026-06-13 |
-| L-04 | brak testu middleware security (T1) | W-01 | `internalTools.middleware.ts:72-76` | P0-test | 1 | otwarta |
+| L-02 | `actionDecisions` governance (PolicyEngine/audit-export) | W-03,W-04,W-05 | `Gateway.ts` — **0 wystąpień** (grep 2026-06-13) | — | — | **NIEAKTUALNA** — `_actionDecisionRoutes` USUNIĘTY `f35aa8d7c8`, DP-7 descope. Zweryfikowane kodem 2026-06-13 + 2026-06-17. |
+| L-03 | „7 guardów bez routerów" | W-01,W-04 | `Gateway.ts:388-395` (guard) + **`:486-512` (routery zamontowane)** | — | — | **NIEAKTUALNA** — wszystkie 7 routerów zamontowanych `Gateway.ts:486-512`. Zweryfikowane 2026-06-13 + 2026-06-17. |
+| L-04 | brak testu middleware security (T1) | W-01 | `internalTools.middleware.ts:72-76` | P0-test | 1 | **ZAMKNIĘTA 2026-06-17 8ca6d06028** — middleware hardened, 32/32 testów zielonych (`tests/unit/backend/middleware/internalTools.middleware.test.ts`) |
 | L-05 | OAuth Wave 7 symulowany | W-01 | `wave7-connectors.routes.ts:80-113` | P2 | 3 | otwarta (D-02) |
 | L-06 | i18n inline 5/9 plików | W-01,W-06 | `AIChat/Wave5-9*.tsx` (5/9 `isPolish`; grep 2026-06-13) | P2 | 4 | otwarta (**DP-10 = świadomy dług internal** → D-03) |
 | L-07 | §27 niezastosowany (1 `<table>` + divs) | W-01 | `AIOSWave0GateReport.tsx` (1×`<table>`); ActionCenter/ResearchSessions własne `divs` | P2 | 4 | otwarta |
 | L-08 | brak route-integration Wave 6–9 + unit Wave 6 (T2–T6) | W-01 | tylko service-unit | P1-test | 4 | otwarta |
-| L-09 | cross-org IDOR | W-01 | wszystkie serwisy `WHERE organization_id=?` | — | — | **STALE-zweryfikowane: BRAK** (karta §6, org-scope szczelny) |
+| L-09 | cross-org IDOR | W-01 | wszystkie serwisy `WHERE organization_id=?` | — | — | **NIEAKTUALNA** — org-scope szczelny we wszystkich serwisach (karta §6). Zweryfikowane 2026-06-13 + 2026-06-17. |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |

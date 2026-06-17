@@ -103,13 +103,13 @@ REALNE: profil firmy (org+role scoped), KG, Members, Domains, Branding, org-swit
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | Goals/Challenges/Strategy fasada localStorage (nie per-org, nie Teresa) | W-01,W-03 | `organization-context-store.routes.ts:15,64` + `Gateway.ts:700` | P1 fasada | 1/2 | **STALE-zweryfikowane: NAPRAWIONE** `d013ab7c4c` (backend per-org + PUT mount). Karta §1b/1e wciąż „localStorage-only" = rozjazd. Żywo: persystencja + Goals AI no-op (D-03) |
-| L-02 | `/api/competency/*` bez auth | W-01,W-03,W-04 | `competency.routes.ts:10` (`verifyToken`) `:14` (`requireRole admin,owner`) | P1 sec | 1 | **STALE-zweryfikowane: NAPRAWIONE** `fd8707c5b2`/`e3945bc7fc` (kod 2026-06-13) |
-| L-03 | org-data export bez role-gate | W-01,W-03,W-04 | `organization/organization-data.routes.ts:212,351` (`requireRole admin,owner`) | P1 sec | 1 | **STALE-zweryfikowane: NAPRAWIONE** `fd8707c5b2` (kod 2026-06-13) |
+| L-01 | Goals/Challenges/Strategy fasada localStorage (nie per-org, nie Teresa) | W-01,W-03 | `organization-context-store.routes.ts:15,64` + `Gateway.ts:700` | P1 fasada | 1/2 | **NIEAKTUALNA** — backend per-org naprawiony `d013ab7c4c`. Zweryfikowane kodem 2026-06-13 + 2026-06-17. |
+| L-02 | `/api/competency/*` bez auth | W-01,W-03,W-04 | `competency.routes.ts:10` (`verifyToken`) `:14` (`requireRole admin,owner`) | P1 sec | 1 | **NIEAKTUALNA** — `verifyToken+requireRole` naprawione `fd8707c5b2`/`e3945bc7fc`. Zweryfikowane 2026-06-13 + 2026-06-17. |
+| L-03 | org-data export bez role-gate | W-01,W-03,W-04 | `organization/organization-data.routes.ts:212,351` (`requireRole admin,owner`) | P1 sec | 1 | **NIEAKTUALNA** — `requireRole` naprawione `fd8707c5b2`. Zweryfikowane 2026-06-13 + 2026-06-17. |
 | L-04 | route `/organization/*` bez role-gate (deep-link member→admin) + drift admin | W-01 | `AppRoutes.tsx:2180` `requireAuth` bez roli; lokalny `OrganizationAdminPanel` (932 l.) | P2 | 3 | otwarta (koordynować z M24, D-02) |
 | L-05 | Billing/Limits CTA martwe | W-01,W-05 | `OrganizationAdminPanel.tsx:292,474` (tylko `trackFunnelEvent`) | P2 | 3 | otwarta → **DP-11 (label managed, bez checkout)** |
 | L-06 | i18n `isPl` + nieprzetłumaczone opcje ról | W-01 | `CompetencyCatalog.tsx:51`; `OrganizationAdminPanel.tsx:179` | P2 | 4 | otwarta |
-| L-07 | brak testów competency-auth/export-role/store-persist; 3 FAIL stale; 45 SKIP | W-01 | `organizationData.no-stubs.test.ts`; `orgContext.middleware.test.ts` | P1-test | 1 | otwarta |
+| L-07 | brak testów competency-auth/export-role/store-persist; 3 FAIL stale; 45 SKIP | W-01 | `organizationData.no-stubs.test.ts`; `orgContext.middleware.test.ts` | P1-test | 1 | **ZAMKNIĘTA 2026-06-17 8c077741a5** — 11/11 testów zielonych (`tests/integration/organization/competency-auth.test.ts`): 401 bez auth, 403 member na competency write + export, admin/owner pass |
 | L-08 | §27 (2 `<table>`) | W-01 | `src/components/Organization/` | P2 | 4 | otwarta |
 | L-09 | SVG branding stored-XSS; martwy `analyze` 404; KG orgId fallback | W-01 | branding upload; `organization-profiles:analyze`; KG `:20-32` | P2/P3 | 3 | otwarta |
 

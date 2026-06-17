@@ -102,10 +102,10 @@ REALNE 5 paneli (Team&Access, Billing 7 endp., AI Controls 9/9, Security 6/6, Au
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | cross-org leak+write `admin-data.routes.ts` | W-01,W-03,W-04 | router-level `requireRole`(:45)+`:orgId` org-scope | P0 sec | — | **STALE-zweryfikowane: NAPRAWIONE** `1f9ed50f05` (kod 2026-06-13: `:44/:45` mount-level guard) |
-| L-02 | cross-org R/W `ai-settings.routes.ts` | W-01,W-03,W-04 | admin/owner-only, `userOrgId===orgIdStr` (`:220,259,623,702,751`) | P0 sec | — | **STALE-zweryfikowane: NAPRAWIONE** `fd8707c5b2` (kod 2026-06-13) |
-| L-03 | brak testów cross-org IDOR + escalation (B1/B2) | W-01 | brak `tests/…cross-org` | P0-test | 3 | otwarta (zabezpiecza naprawione P0) |
-| L-04 | audit-logs globalny SELECT cap 1000 | W-01 | `adminAuditService.ts:71` | P2 | 3 | otwarta |
+| L-01 | cross-org leak+write `admin-data.routes.ts` | W-01,W-03,W-04 | router-level `requireRole`(:45)+`:orgId` org-scope | P0 sec | — | **NIEAKTUALNA** — naprawione `1f9ed50f05` (`:44/:45` mount-level guard). Zweryfikowane 2026-06-13 + 2026-06-17. |
+| L-02 | cross-org R/W `ai-settings.routes.ts` | W-01,W-03,W-04 | admin/owner-only, `userOrgId===orgIdStr` (`:220,259,623,702,751`) | P0 sec | — | **NIEAKTUALNA** — naprawione `fd8707c5b2`. Zweryfikowane 2026-06-13 + 2026-06-17. |
+| L-03 | brak testów cross-org IDOR + escalation (B1/B2) | W-01 | brak `tests/…cross-org` | P0-test | 3 | **ZAMKNIĘTA 2026-06-17 d5e46a5160** — 15/15 testów zielonych (`tests/integration/admin/admin-cross-org-idor.test.ts`): admin-data 403, escalation prevention, ai-settings 403 |
+| L-04 | audit-logs globalny SELECT cap 1000 | W-01 | `adminAuditService.ts:71` | P2 | 3 | **ZAMKNIĘTA 2026-06-17 206a7f8324** — getLogs() teraz filtruje po orgId z metadata_json; wszystkie 5 callerów w adminP32 zaktualizowane |
 | L-05 | §27 niezastosowany (10 `<table>`) | W-01 | 4 tabele admina | P2 | 4 | otwarta |
 | L-06 | i18n hardkod EN (security/audit/scim/members) | W-01 | wzór BillingFinOps (24×`t()`) | P2 | 4 | otwarta |
 | L-07 | members bez route-level role middleware; PCI surowy `cardNumber`; martwy `/debug-memberships` | W-01 | `organizations.routes.ts:47-70` | P3 | 3 | otwarta |
