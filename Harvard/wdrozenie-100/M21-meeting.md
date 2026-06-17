@@ -124,13 +124,13 @@ Otwarte: beta/role-gate (L-03/04), testy S6/S7+PG (L-05), i18n 79× (L-06).
 ### 03 · Rejestr luk
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | **Status** | Zweryf. |
 |----|------|---------|--------------------|-------|------|-----------|---------|
-| L-01 | `persistNote` cichy catch (INSERT do `notebook_pages`) | W-01,W-02,W-03,W-04 | `meetingIntelligenceService.ts:222-228` | P2 | 3 | **[do cold-start proof na PG]** (NIE dead-path: tabela istnieje; karta nieścisła — był `notebook_entries`) | 2026-06-13 |
-| L-02 | transkrypt prompt-injection (subtelna; limit+delimiter-strip JUŻ jest) | W-01 | `meetingIntelligenceService.ts:118` | **P3** (był P2) | 3 | **częściowo ZAMKNIĘTA R3** — dołożyć separację dane↔instrukcje | 2026-06-13 |
-| L-03 | beta-gating tylko FE (`/api/meeting` auth-only) | W-01 | `meeting.routes.ts:26-27` | P2 | 3 | otwarta |  |
-| L-04 | brak rozróżnienia uprawnień (auth org-scope, bez ról) | W-01 | `meeting.routes.ts` | P3 | 3 | otwarta |  |
-| L-05 | S6 (AI notes) + S7 (brief) = ZERO testów; persyst. tylko sqlite | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | otwarta |  |
-| L-06 | i18n hybryda 79× `isPolish` (grep) + 109× `t()` | W-01 | `Meeting/*` (grep 2026-06-13=79) | P2 | 4 | otwarta |  |
-| L-07 | mock-drift i18next (3 FAIL `MeetingHub.smoke`) | W-01 | `LoadingState.tsx:36` `t(...,{defaultValue})` | P0-test | 1 | otwarta (fix 1-liniowy) |  |
+| L-01 | `persistNote` cichy catch (INSERT do `notebook_pages`) | W-01,W-02,W-03,W-04 | `meetingIntelligenceService.ts:222-249` | P2 | 3 | **ZAMKNIĘTA** — cichy `.catch(debug)` był MARTWY (dbRun resolves `{success:false}`, nie rzuca); teraz inspekcja `result.success` → `logger.warn` + flaga `MeetingNote.persisted` (caller widzi "save skipped"); cold-start PG proof = osobny krok (potrzebuje caboose) | 2026-06-17 |
+| L-02 | transkrypt prompt-injection (subtelna; limit+delimiter-strip JUŻ jest) | W-01 | `meetingIntelligenceService.ts:105-145` | **P3** (był P2) | 3 | **ZAMKNIĘTA** — dane↔instrukcje rozdzielone: instrukcje=`system`, surowy transkrypt=osobna wiadomość `user` (DATA); limit 5000+strip utrzymany jako obrona w głąb; test injection 6/6 PASS | 2026-06-17 |
+| L-03 | beta-gating tylko FE (`/api/meeting` auth-only) | W-01 | `meeting.routes.ts:26-31` | P2 | 3 | **ZAMKNIĘTA** — `betaGate` (SSOT-mirror middleware) podpięty `router.use` na `/api/meeting`; pass-through gdy 'open', 403 BETA_LOCKED gdy MODULE_MEETING→'closed' w `betaAccess.ts` | 2026-06-17 |
+| L-04 | brak rozróżnienia uprawnień (auth org-scope, bez ról) | W-01 | `meeting.routes.ts` | P3 | 3 | otwarta (P3 — org-scope czysty; role = osobna decyzja produktowa) |  |
+| L-05 | S6 (AI notes) + S7 (brief) = ZERO testów; persyst. tylko sqlite | W-01 | `evidence/f2_tests_report.md` | P0-test | 1 | **ZAMKNIĘTA (S6)** — `meetingIntelligenceService.test.ts` (6/6 PASS 2026-06-17): LLM path, heurystyka NIE-fabrykuje, separacja danych, flaga persisted. S7 brief = read-only proxy, niskie ryzyko (pozostaje do dołożenia) |  |
+| L-06 | i18n hybryda 79× `isPolish` (grep) + 109× `t()` | W-01 | `Meeting/*` (grep 2026-06-13=79) | P2 | 4 | otwarta (Fala 4 i18n sweep — `public/locales/*` ZAKAZANE w Fali 1; wymaga koordynacji z agentem i18n) |  |
+| L-07 | mock-drift i18next (3 FAIL `MeetingHub.smoke`) | W-01 | `LoadingState.tsx:36` `t(...,{defaultValue})` | P0-test | 1 | **ZAMKNIĘTA** — mock testu obsługuje `defaultValue` (`MeetingHub.smoke.test.tsx:16-17`); 3/3 PASS zweryfikowane 2026-06-17 |  |
 | L-08 | degradacja LLM nietransparentna | W-01 | `MeetingNote.source` | P2 | — | **NAPRAWIONA `72d57e64a4`** | 2026-06-11 |
 | L-09 | 3× crimson hardkod w przyciskach Teresa | W-01 | `MeetingHub` | P3 | — | **NAPRAWIONA `7cf315b4b9`** | 2026-06-11 |
 

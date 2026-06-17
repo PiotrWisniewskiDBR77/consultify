@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { betaGate } from '../middleware/betaGate.middleware.js';
 import { meetingIntelligenceService } from '../services/ai/meetingIntelligenceService.js';
 import {
   addMeetingDecision,
@@ -25,6 +26,10 @@ interface AuthRequest extends Request {
 
 router.use(verifyToken);
 router.use(isAuthenticated);
+// L-03: server-side beta gate on /api/meeting (was FE-only). betaGate is the
+// SSOT-mirror middleware — currently pass-through ('open'); flips to 403
+// BETA_LOCKED when MODULE_MEETING is set 'closed' in betaAccess.ts.
+router.use(betaGate);
 router.use(async (_req, _res, next) => {
   await ensureMeetingTables();
   next();
