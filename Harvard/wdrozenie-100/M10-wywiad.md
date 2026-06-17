@@ -141,15 +141,15 @@ Scenariusze S1–S6 + pułapka CI (test-suite tylko main/develop): karta §0/§2
 | L-06 | RC-5 surowe `<table>` | W-01 | **7×** w `src/components/Interview/` (grep) | P2 | 4 | otwarta (Faza-4 §27 sweep) |
 | L-07 | flow + bramka oceny niewyegzekwowana/nieuwidoczniona | W-03,W-04 | `InterviewController.ts:3485,3536,3592,3682` | P1-design | 2 | **NAPRAWIONA (R3: audyt 2026-06-13 nieaktualny — overstate). Zweryfikowane 2026-06-17:** (1) hard gate submit `OBJECTIVE_INSUFFICIENCY` 422 + FE bypass-proof (`InterviewWorkspace.tsx:1386-1397`); (2) score persisted+shown (`InterviewWorkspace.tsx:2033`, `InterviewHub.tsx:10146`); (3) notyfikacja ze score+rekomendacją (`InterviewController.ts:3638-3664`); (4) pipeline ①-⑥ (`InterviewHub.tsx:2673-2688`); (5) Approve/SendBack buttons w reviewer-mode (`InterviewWorkspace.tsx:1888-1895`). Pozostaje: dedykowany inbox ④ Dopuszczenia (PREVIEW per komentarz `:2678`) = osobna fala |
 | L-08 | schema-drift `CREATE TABLE IF NOT EXISTS tool_sessions` runtime | W-01 | runtime eksportu | P2 | 3 | **NAPRAWIONA/FALSE-POSITIVE (R3, 2026-06-17): `tool_sessions` ma REALNĄ migrację `server/migrations/291_tools_initiatives.sql:8` (+ `641_v4_tool_runtime_contract.sql`, + indeksy + FK). Runtime `CREATE TABLE IF NOT EXISTS` (`InterviewController.ts:8255`) to defensywny pas bezpieczeństwa dla dev (komentarz `:8253`), NIE źródło driftu. Brak defektu kodu. (Potwierdzenie wykonania migracji na prod = jak L-01, wymaga dostępu do DB)** |
-| L-09 | stepper 4-krok niezbudowany / `pending_review` ukryty | W-01 | `InterviewHub.tsx:2631,2688` | P-design | 4 | D-03/D-04 |
+| L-09 | stepper 4-krok niezbudowany / `pending_review` ukryty | W-01 | `InterviewHub.tsx:2631,2688` | P-design | 4 | **ZAMKNIĘTA — D-03 + D-04 rozstrzygnięte przez Piotra i ZBUDOWANE: (D-04 `2ec855e820`) ④ pending-review tab za flagą DP-5 `isInterviewPendingReviewTabEnabled()` (default OFF); (D-03 `c6d29791d6`) top-level numerowany pipeline ①-⑥ `InterviewPipelineStepper` za flagą `isInterviewPipelineStepperEnabled()` (default OFF, render nad content). Oba flag-gated = prod VTS bez zmian; tsc clean, 19/19 testów (flagi + render). Default ON = osobny rollout** |
 
 ### 04 · Rejestr decyzji (R5)
 | ID | Pytanie | Opcje | Właściciel | Termin | Status |
 |----|---------|-------|------------|--------|--------|
 | D-01 | #13 próg twardego blocku respondenta | obiektywna niedostateczność+wymagane / min. score | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTA = obiektywna niedostateczność** (SPEC_13 §5.1) |
 | D-02 | #13 kto zatwierdza + „nie wypuszcza" | przydzielający / manager-permission · block submit / wyjścia | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTA = nadawca + `INTERVIEW_ASSIGN_MANAGE`; block SUBMIT** (SPEC_13 §5.2,§5.3) |
-| D-03 | stepper 4-krok: zbudować wg 2026-06-06 czy backlog? | zbudować / odłożyć | Piotr | TBD | otwarta (modułowa) |
-| D-04 | tab `pending_review`: feature-gate czy usunąć? | udokumentować gate / usunąć | Piotr | TBD | otwarta (modułowa) |
+| D-03 | stepper 4-krok: zbudować wg 2026-06-06 czy backlog? | zbudować / odłożyć | Piotr | 2026-06-17 | **ROZSTRZYGNIĘTA = ZBUDOWAĆ — zbudowane flag-gated `c6d29791d6` (pipeline ①-⑥)** |
+| D-04 | tab `pending_review`: feature-gate czy usunąć? | udokumentować gate / usunąć | Piotr | 2026-06-17 | **ROZSTRZYGNIĘTA = UDOKUMENTOWAĆ+UKRYĆ — flaga DP-5 `2ec855e820`** |
 | D-05 | server STT na prod: który provider klucz? | OPENAI / GROQ / oba | Piotr | 2026-06-13 | **ROZSTRZYGNIĘTE → DP-1: OPENAI/Whisper** (egzekucja env wymaga zgody/dostępu prod) |
 
 ### 05 · Flagi / rollout / beta-gating
