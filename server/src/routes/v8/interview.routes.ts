@@ -36,6 +36,10 @@ import {
   submitInterviewReportPackForReview,
   updateInterviewReportWorksheet,
 } from '../../services/interviewInsightReportPackService.js';
+import {
+  INSIGHT_GATED_STATUSES,
+  INSIGHT_PATCH_SETTABLE_STATUSES,
+} from '../../services/InterviewInsightService.js';
 import { resolveInterviewManagerScope } from '../../services/interviewManagerScope.js';
 import contextDocumentService from '../../services/organizationContext/ContextDocumentService.js';
 import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
@@ -573,8 +577,28 @@ router.patch(
       values.push(title.trim());
     }
     if (status !== undefined) {
+      // SEC — see InterviewController.updateInsight: the body must not forge a
+      // GATED review status (published/in_review/approved). Those transitions are
+      // owned by the lifecycle gate (POST /insights/:insightId/lifecycle) which
+      // enforces findings + canon + readback + INTERVIEW_INSIGHTS_PUBLISH and
+      // server-derives reviewed_by/published_at. Accepting them here would bypass
+      // the entire approval gate (mass-assignment / state-machine bypass).
+      const requested = String(status);
+      if (INSIGHT_GATED_STATUSES.has(requested)) {
+        return res.status(409).json({
+          data: null,
+          error:
+            'This status is managed by the review workflow. Use the insight lifecycle action (submit/approve/publish) instead of a direct status edit.',
+          code: 'INSIGHT_STATUS_GATED',
+        });
+      }
+      if (!INSIGHT_PATCH_SETTABLE_STATUSES.has(requested as never)) {
+        return res
+          .status(400)
+          .json({ data: null, error: 'Invalid status', code: 'INSIGHT_STATUS_INVALID' });
+      }
       updates.push('status = ?');
-      values.push(status);
+      values.push(requested);
     }
     if (exportedToTools !== undefined) {
       updates.push('exported_to_tools = ?');
@@ -1352,8 +1376,22 @@ router.patch(
       values.push(title.trim());
     }
     if (status !== undefined) {
+      // SEC — gated review statuses (published/in_review/approved) are owned by
+      // the lifecycle gate, never settable from a plain PATCH body. (This handler
+      // is shadowed by the earlier /insights/:id route, but kept consistent.)
+      const requested = String(status);
+      if (INSIGHT_GATED_STATUSES.has(requested)) {
+        return res.status(409).json({
+          error:
+            'This status is managed by the review workflow. Use the insight lifecycle action (submit/approve/publish) instead of a direct status edit.',
+          code: 'INSIGHT_STATUS_GATED',
+        });
+      }
+      if (!INSIGHT_PATCH_SETTABLE_STATUSES.has(requested as never)) {
+        return res.status(400).json({ error: 'Invalid status', code: 'INSIGHT_STATUS_INVALID' });
+      }
       updates.push('status = ?');
-      values.push(status);
+      values.push(requested);
     }
     if (exportedToTools !== undefined) {
       updates.push('exported_to_tools = ?');

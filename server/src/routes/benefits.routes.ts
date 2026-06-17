@@ -34,6 +34,19 @@ function getUserId(req: any): string {
   return req.user?.id || req.user?.userId || '';
 }
 
+/**
+ * KPI lifecycle statuses that represent a finalized / locked KPI set. Mirrors
+ * RESULTS_LOCKED_KPI_STATUSES in v8/results.routes.ts and the workflow doctrine
+ * (`getKpiWorkflowStatus` §8.1F): once a KPI moves into benefits realization or
+ * formal review its definition/targets are frozen and must not be edited
+ * directly — doing so would corrupt the baseline used for value reconciliation.
+ */
+const BENEFITS_LOCKED_KPI_STATUSES: readonly string[] = [
+  'benefits_realization',
+  'review',
+  'locked',
+];
+
 function deriveKpiPeriodKey(
   periodStart?: string | null,
   measurementFrequency?: string | null
@@ -258,7 +271,7 @@ router.put(
 
     const row = await dbGet<any>(
       `
-      SELECT k.id
+      SELECT k.id, k.status
       FROM initiative_kpis k
       LEFT JOIN initiatives i ON i.id = k.initiative_id
       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
@@ -266,6 +279,19 @@ router.put(
       [kpiId, orgId]
     );
     if (!row?.id) return res.status(404).json({ success: false, error: 'KPI not found' });
+
+    // State-machine guard: block definition/target mass-assignment when the KPI
+    // is in a finalized/locked lifecycle status. Mirrors the v8 results router so
+    // the legacy benefits surface cannot be used as a bypass.
+    const lockedStatus = String(row.status || '').toLowerCase();
+    if (lockedStatus && BENEFITS_LOCKED_KPI_STATUSES.includes(lockedStatus)) {
+      return res.status(409).json({
+        success: false,
+        error: `Cannot edit this KPI: it is in a finalized/locked status ('${lockedStatus}'). Transition its status before editing the definition or targets.`,
+        code: 'RESULTS_KPI_EDIT_LOCKED',
+        detail: { kpiId, status: lockedStatus },
+      });
+    }
 
     await dbRun(
       `

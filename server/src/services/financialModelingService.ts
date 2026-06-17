@@ -1139,13 +1139,21 @@ export async function updateModel(modelId: string, updates: Record<string, any>)
     'scenario',
     'status',
   ];
+  // Approval-state guard (mass-assignment defense): the `approved` lifecycle
+  // state may ONLY be reached via approveModel(), which recomputes + validates,
+  // writes the approved_snapshot, records approved_by, and bumps version. A
+  // generic metadata update must never forge it directly (that would persist an
+  // "approved" model with no validation gate, no snapshot, and no approver).
+  // Allowed self-service transitions remain draft↔review.
   const sets: string[] = [];
   const vals: any[] = [];
   for (const [k, v] of Object.entries(updates)) {
-    if (allowedFields.includes(k)) {
-      sets.push(`${k} = ?`);
-      vals.push(v);
+    if (!allowedFields.includes(k)) continue;
+    if (k === 'status' && String(v).trim().toLowerCase() === 'approved') {
+      continue; // forged approval — drop silently; use POST /:id/approve
     }
+    sets.push(`${k} = ?`);
+    vals.push(v);
   }
   if (updates.assumptions) {
     sets.push('assumptions_json = ?');

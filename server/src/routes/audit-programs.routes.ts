@@ -139,13 +139,35 @@ router.patch('/programs/:id', async (req: AuthRequest, res) => {
   }
 
   try {
+    // SEC (mass-assignment) — `config` is free-form wizard state, but a few keys
+    // on it are SERVER-MANAGED bookkeeping written only by generateSurveys():
+    // `surveysGenerated` (the fan-out idempotency flag), `generatedAssignmentIds`
+    // and `generation` (the completion-rollup denominator). A client PATCH must
+    // not forge them — otherwise a caller could flip surveysGenerated=true to
+    // permanently block their program's survey fan-out, or inflate completion %.
+    // Strip them from the incoming body and re-seed from the existing row so the
+    // wizard can still round-trip the rest of its config.
+    let sanitizedConfig = body.config;
+    if (body.config !== undefined && body.config && typeof body.config === 'object') {
+      const existing = await getProgram(organizationId, req.params.id);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { surveysGenerated, generatedAssignmentIds, generation, ...clientConfig } =
+        body.config as Record<string, unknown>;
+      sanitizedConfig = {
+        ...clientConfig,
+        surveysGenerated: existing?.config.surveysGenerated,
+        generatedAssignmentIds: existing?.config.generatedAssignmentIds,
+        generation: existing?.config.generation,
+      };
+    }
+
     const program = await updateProgram(organizationId, req.params.id, {
       name: body.name,
       description: body.description,
       objective: body.objective,
       status: body.status,
       preset: body.preset,
-      config: body.config,
+      config: sanitizedConfig,
     });
     if (!program) return res.status(404).json({ error: 'Audit program not found' });
     return res.json({ program });

@@ -11,10 +11,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockDbAll = vi.fn();
+const mockDbGet = vi.fn();
 
 vi.mock('../../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
-  get: vi.fn(),
+  get: (...args: unknown[]) => mockDbGet(...args),
   run: vi.fn(),
 }));
 
@@ -43,7 +44,10 @@ vi.mock('../../../services/resultsEnterpriseService.js', () => ({
   resultsEnterpriseService: {},
 }));
 
-import { findKpiReportFinalizationViolation } from '../results.routes.js';
+import {
+  findKpiEditLockViolation,
+  findKpiReportFinalizationViolation,
+} from '../results.routes.js';
 
 const ORG = '00000000-0000-4000-8000-000000000099';
 
@@ -53,6 +57,7 @@ describe('findKpiReportFinalizationViolation', () => {
     // Reset queued one-shot return values so a prior test's unused
     // `mockResolvedValueOnce` cannot leak into the next test's call sequence.
     mockDbAll.mockReset();
+    mockDbGet.mockReset();
   });
 
   it('blocks when a selected KPI is in a locked lifecycle status', async () => {
@@ -176,5 +181,72 @@ describe('findKpiReportFinalizationViolation', () => {
 
     expect(violation).toBeNull();
     expect(mockDbAll.mock.calls[1]?.[1]).toContain(OTHER_ORG);
+  });
+});
+
+describe('findKpiEditLockViolation (mass-assignment: locked KPI target/definition edit)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockReset();
+    mockDbGet.mockReset();
+  });
+
+  it.each(['benefits_realization', 'review', 'locked'])(
+    'blocks a definition/target edit when the KPI is in locked status "%s"',
+    async (status) => {
+      mockDbGet.mockResolvedValueOnce({ status });
+
+      const violation = await findKpiEditLockViolation({ organizationId: ORG, kpiId: 'kpi-1' });
+
+      expect(violation).not.toBeNull();
+      expect(violation?.code).toBe('RESULTS_KPI_EDIT_LOCKED');
+      expect(violation?.detail.status).toBe(status);
+      expect(violation?.detail.kpiId).toBe('kpi-1');
+    }
+  );
+
+  it('allows the edit when the KPI is in an active (unlocked) status', async () => {
+    mockDbGet.mockResolvedValueOnce({ status: 'active' });
+
+    const violation = await findKpiEditLockViolation({ organizationId: ORG, kpiId: 'kpi-1' });
+
+    expect(violation).toBeNull();
+  });
+
+  it('allows the edit when the KPI has no status (null)', async () => {
+    mockDbGet.mockResolvedValueOnce({ status: null });
+
+    const violation = await findKpiEditLockViolation({ organizationId: ORG, kpiId: 'kpi-1' });
+
+    expect(violation).toBeNull();
+  });
+
+  it('org-scopes the status lookup to the caller org', async () => {
+    mockDbGet.mockResolvedValueOnce({ status: 'active' });
+
+    await findKpiEditLockViolation({ organizationId: ORG, kpiId: 'kpi-1' });
+
+    const sql = String(mockDbGet.mock.calls[0]?.[0] || '');
+    expect(sql).toContain('FROM initiative_kpis');
+    expect(sql).toContain('organization_id');
+    expect(mockDbGet.mock.calls[0]?.[1]).toEqual(['kpi-1', ORG]);
+  });
+
+  it('degrades to no-violation (status uppercase tolerated) — case-insensitive lock match', async () => {
+    // Defense: a stored status persisted with different casing must still be
+    // recognised as locked so the guard cannot be sidestepped.
+    mockDbGet.mockResolvedValueOnce({ status: 'LOCKED' });
+
+    const violation = await findKpiEditLockViolation({ organizationId: ORG, kpiId: 'kpi-1' });
+
+    expect(violation?.code).toBe('RESULTS_KPI_EDIT_LOCKED');
+  });
+
+  it('degrades to no-violation when the status lookup rejects (schema-tolerant)', async () => {
+    mockDbGet.mockRejectedValueOnce(new Error('no such column: status'));
+
+    const violation = await findKpiEditLockViolation({ organizationId: ORG, kpiId: 'kpi-1' });
+
+    expect(violation).toBeNull();
   });
 });

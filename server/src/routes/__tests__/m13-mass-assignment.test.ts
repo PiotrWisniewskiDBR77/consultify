@@ -1,24 +1,41 @@
 /**
- * M13 (Inicjatywy) — Initiative CRUD route smoke tests.
+ * M13 (Inicjatywy) — MASS-ASSIGNMENT / PROTECTED-FIELD regression suite.
  *
- * Uses the queryHelpers mock pattern (no in-process DB); same approach as
- * cross-org-idor.test.ts. Covers create → read → list → update → 404-for-unknown.
+ * Different axis from the cross-org IDOR suites (org-scope is already hardened).
+ * Here we assert that — WITHIN the caller's own org — create/update handlers
+ * cannot write fields the client must not control:
+ *
+ *   V-1  PUT /:id (generic update) must NOT write `status` directly. Status is
+ *        gated by the central state machine (updateInitiativeStatus). A status
+ *        CHANGE through the generic path must 400 (no DRAFT→APPROVED jump) and
+ *        the stored row must keep its server-derived status. A same-value echo
+ *        is tolerated (and never emits `status = ?`).
+ *
+ *   V-2  PUT /:id/kpis/:kpiId must pin organizationId/initiativeId/kpiId/userId
+ *        from the route params + token, NOT from req.body. A body that tries to
+ *        override `organizationId` (or the ids) must be ignored — the service
+ *        receives the server-derived values.
+ *
+ * Uses the queryHelpers mock pattern (no in-process DB); same harness as
+ * initiatives-crud.test.ts / cross-org-idor.test.ts.
  */
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-// ── Top-level mock fns (declared before vi.mock factories) ────────────────────
+// ── Top-level mock fns ────────────────────────────────────────────────────────
 
 const mockQueryFirst = vi.fn();
 const mockQueryAll = vi.fn();
 const mockQueryRun = vi.fn();
 const mockGetTableColumns = vi.fn();
-const mockGetInitiativeDetailRead = vi.fn();
+const mockUpdateKpiAssignment = vi.fn();
 
-const ORG = 'org-crud-1';
-const UID = 'user-crud-1';
-const INITIATIVE_ID = 'init-test-123';
+const ORG = 'org-ma-1';
+const VICTIM_ORG = 'org-ma-victim';
+const UID = 'user-ma-1';
+const INITIATIVE_ID = 'init-ma-123';
+const KPI_ID = 'kpi-ma-1';
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
@@ -68,6 +85,7 @@ vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
 }));
 
 vi.mock('../../middleware/validation.middleware.js', () => ({
+  // Pass-through validation so we exercise the controller-level guards directly.
   validateBody:
     () =>
     (_req: any, _res: any, next: () => void) =>
@@ -101,7 +119,7 @@ vi.mock('../../utils/requestOrganization.js', () => ({
 // ── Service mocks ─────────────────────────────────────────────────────────────
 
 vi.mock('../../services/v8/planningPortfolioReadService.js', () => ({
-  getInitiativeDetailRead: (...a: unknown[]) => mockGetInitiativeDetailRead(...a),
+  getInitiativeDetailRead: vi.fn().mockResolvedValue(null),
   getPortfolioData: vi.fn().mockResolvedValue(null),
   getPortfolioRead: vi.fn().mockResolvedValue(null),
   getPortfolioRollups: vi.fn().mockResolvedValue([]),
@@ -121,11 +139,12 @@ vi.mock('../../services/notificationService.js', () => ({
   default: {
     notifyOwnerAssigned: vi.fn().mockResolvedValue(undefined),
     sendNotification: vi.fn().mockResolvedValue(undefined),
+    send: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
 vi.mock('../../services/initiative/initiativeAccessResolver.js', () => ({
-  resolveInitiativeAccessContext: vi.fn().mockResolvedValue({ effectiveRoles: ['user'] }),
+  resolveInitiativeAccessContext: vi.fn().mockResolvedValue({ effectiveRoles: ['ADMIN'] }),
 }));
 
 vi.mock('../../services/initiative/initiativeGateReadinessService.js', () => ({
@@ -135,7 +154,7 @@ vi.mock('../../services/initiative/initiativeGateReadinessService.js', () => ({
 vi.mock('../../services/initiative/initiativeKpiAssignmentService.js', () => ({
   upsertInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
   listInitiativeKpiAssignments: vi.fn().mockResolvedValue([]),
-  updateInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
+  updateInitiativeKpiAssignment: (...a: unknown[]) => mockUpdateKpiAssignment(...a),
   deleteInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -195,17 +214,12 @@ vi.mock('../../services/staffingPlanService.js', () => ({
 import initiativesRoutes from '../pmo/initiatives.routes.js';
 
 let app: Express;
-// Initiative creation requires a non-pilot role (ADMIN/OWNER). The USER/GUEST
-// band is the pilot tier, blocked from create server-side to match the FE
-// (isPilotParticipantRole). Default the CRUD persistence tests to an authorized
-// creator; the pilot-block is asserted explicitly in its own test below.
-let currentRole = 'admin';
 
 beforeAll(() => {
   app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any).user = { id: UID, organizationId: ORG, role: currentRole };
+    (req as any).user = { id: UID, organizationId: ORG, role: 'admin' };
     next();
   });
   app.use('/api/initiatives', initiativesRoutes);
@@ -213,86 +227,113 @@ beforeAll(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
-  currentRole = 'admin';
 });
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
+// ── V-1: status state-machine bypass via generic update ───────────────────────
 
-describe('initiatives CRUD routes', () => {
-  it('POST / creates an initiative (200)', async () => {
-    mockQueryRun.mockResolvedValue({ changes: 1, lastID: 1 });
+describe('M13 mass-assignment — V-1: generic update cannot jump status', () => {
+  const existingDraft = {
+    id: INITIATIVE_ID,
+    status: 'DRAFT',
+    title: 'Reduce cycle time',
+    organization_id: ORG,
+  };
 
-    const res = await request(app)
-      .post('/api/initiatives')
-      .send({ title: 'Reduce cycle time', description: 'Lean kaizen', priority: 'HIGH' });
-
-    expect([200, 201]).toContain(res.status);
-    expect(res.body.id).toBeTruthy();
-  });
-
-  it('POST / is blocked (403) for the pilot USER/GUEST band', async () => {
-    currentRole = 'user';
-    mockQueryRun.mockResolvedValue({ changes: 1, lastID: 1 });
-
-    const res = await request(app)
-      .post('/api/initiatives')
-      .send({ title: 'Pilot tries to create', priority: 'HIGH' });
-
-    expect(res.status).toBe(403);
-    expect(res.body.code).toBe('INITIATIVE_PILOT_WRITE_FORBIDDEN');
-  });
-
-  it('GET /:id returns 200 when initiative exists', async () => {
-    const fixture = {
-      id: INITIATIVE_ID,
-      title: 'Reduce cycle time',
-      organization_id: ORG,
-      status: 'DRAFT',
-    };
-    mockGetInitiativeDetailRead.mockResolvedValue(fixture);
-
-    const res = await request(app).get(`/api/initiatives/${INITIATIVE_ID}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.id).toBe(INITIATIVE_ID);
-  });
-
-  it('GET / lists initiatives for the org (200)', async () => {
-    mockGetTableColumns.mockResolvedValue([]);
-    mockQueryAll.mockResolvedValue([
-      { id: INITIATIVE_ID, title: 'Reduce cycle time', organization_id: ORG },
-    ]);
-
-    const res = await request(app).get('/api/initiatives');
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-
-  it('PUT /:id updates initiative fields (200)', async () => {
-    const existing = {
-      id: INITIATIVE_ID,
-      status: 'DRAFT',
-      title: 'Reduce cycle time',
-      organization_id: ORG,
-    };
-    mockQueryFirst.mockResolvedValue(existing);
+  it('PUT /:id with {status: APPROVED} is rejected 400 (no gate bypass)', async () => {
+    mockQueryFirst.mockResolvedValue(existingDraft);
     mockQueryRun.mockResolvedValue({ changes: 1 });
 
-    // Non-status field update through the generic PUT path. (Status changes are
-    // gated and rejected here — covered in the mass-assignment regression suite.)
     const res = await request(app)
       .put(`/api/initiatives/${INITIATIVE_ID}`)
-      .send({ summary: 'Updated executive summary' });
+      .send({ status: 'APPROVED' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.field).toBe('status');
+    expect(res.body.rule).toBe('STATUS_TRANSITION_REQUIRES_GATE');
+
+    // The protected column must never have been written via the generic path.
+    const wroteStatus = mockQueryRun.mock.calls.some(
+      (call) =>
+        typeof call[0] === 'string' &&
+        /UPDATE initiatives SET/i.test(call[0]) &&
+        /\bstatus\s*=/i.test(call[0])
+    );
+    expect(wroteStatus).toBe(false);
+  });
+
+  it('PATCH /:id with {status: APPROVED} routes to the gated status handler', async () => {
+    // The PATCH alias delegates status payloads to updateInitiativeStatus, whose
+    // transition matrix rejects DRAFT→APPROVED. Either way it must NOT 200.
+    mockQueryFirst.mockResolvedValue(existingDraft);
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const res = await request(app)
+      .patch(`/api/initiatives/${INITIATIVE_ID}`)
+      .send({ status: 'APPROVED' });
+
+    expect(res.status).not.toBe(200);
+    expect([400, 403]).toContain(res.status);
+  });
+
+  it('PUT /:id with a same-value status echo is tolerated and never emits status = ?', async () => {
+    mockQueryFirst.mockResolvedValue(existingDraft);
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const res = await request(app)
+      .put(`/api/initiatives/${INITIATIVE_ID}`)
+      .send({ status: 'DRAFT', summary: 'Refined summary' });
+
+    expect(res.status).toBe(200);
+
+    const updateCall = mockQueryRun.mock.calls.find(
+      (call) => typeof call[0] === 'string' && /UPDATE initiatives SET/i.test(call[0])
+    );
+    expect(updateCall).toBeTruthy();
+    // Status echo must be ignored — only the legitimate field is written.
+    expect(/\bstatus\s*=/i.test(String(updateCall?.[0]))).toBe(false);
+    expect(/\bsummary\s*=/i.test(String(updateCall?.[0]))).toBe(true);
+  });
+
+  it('PUT /:id with a non-status field still updates normally (200)', async () => {
+    mockQueryFirst.mockResolvedValue(existingDraft);
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const res = await request(app)
+      .put(`/api/initiatives/${INITIATIVE_ID}`)
+      .send({ summary: 'New executive summary' });
 
     expect(res.status).toBe(200);
   });
+});
 
-  it('GET /:id returns 404 for unknown ID', async () => {
-    mockGetInitiativeDetailRead.mockResolvedValue(null);
+// ── V-2: KPI update cannot be re-pointed via body mass-assignment ─────────────
 
-    const res = await request(app).get('/api/initiatives/non-existent-id-xyz');
+describe('M13 mass-assignment — V-2: KPI update pins tenant/identity from server', () => {
+  it('PUT /:id/kpis/:kpiId ignores body organizationId/ids (uses token + params)', async () => {
+    mockUpdateKpiAssignment.mockResolvedValue({ id: KPI_ID, name: 'On-time %' });
 
-    expect(res.status).toBe(404);
+    const res = await request(app)
+      .put(`/api/initiatives/${INITIATIVE_ID}/kpis/${KPI_ID}`)
+      .send({
+        // Attacker-controlled protected fields:
+        organizationId: VICTIM_ORG,
+        initiativeId: 'init-someone-else',
+        kpiId: 'kpi-someone-else',
+        userId: 'impersonated-user',
+        // Legitimate editable field:
+        targetValue: 95,
+      });
+
+    expect(res.status).toBe(200);
+    expect(mockUpdateKpiAssignment).toHaveBeenCalledTimes(1);
+
+    const arg = mockUpdateKpiAssignment.mock.calls[0][0] as Record<string, unknown>;
+    // Server-derived identity/tenant fields win — body values are discarded.
+    expect(arg.organizationId).toBe(ORG);
+    expect(arg.initiativeId).toBe(INITIATIVE_ID);
+    expect(arg.kpiId).toBe(KPI_ID);
+    expect(arg.userId).toBe(UID);
+    // The legitimate editable field still passes through.
+    expect(arg.targetValue).toBe(95);
   });
 });

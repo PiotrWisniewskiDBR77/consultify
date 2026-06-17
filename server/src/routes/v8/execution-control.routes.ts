@@ -560,7 +560,24 @@ router.post(
         code: 'INITIATIVE_NOT_FOUND',
       });
     }
-    const id = await createBudgetEntry(organizationId, { ...req.body, createdBy: userId });
+    // Mass-assignment guard: pass only schema-validated fields (no `...req.body`
+    // spread) so a client cannot smuggle protected/unknown columns toward the
+    // INSERT. `createdBy` is always the server-derived caller; `organization_id`
+    // and the row `id` are set server-side inside createBudgetEntry().
+    const body = req.body as z.infer<typeof CreateBudgetEntrySchema>;
+    const id = await createBudgetEntry(organizationId, {
+      initiativeId,
+      entryType: body.entryType,
+      costType: body.costType,
+      category: body.category,
+      amount: body.amount,
+      currency: body.currency,
+      description: body.description,
+      periodMonth: body.periodMonth,
+      periodYear: body.periodYear,
+      source: body.source,
+      createdBy: userId,
+    });
     return res.json({
       data: { success: true, id },
       meta: executionControlMutationMeta(),

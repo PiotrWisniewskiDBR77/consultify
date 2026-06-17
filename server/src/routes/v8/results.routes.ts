@@ -215,6 +215,45 @@ export async function findKpiReportFinalizationViolation(params: {
   return null;
 }
 
+/**
+ * Guards direct KPI definition/target edits (PUT /kpis/:kpiId) against a
+ * finalized/locked KPI lifecycle status. Mirrors the report-creation guard
+ * (`findKpiReportFinalizationViolation`) AND the workflow doctrine
+ * (`getKpiWorkflowStatus` §8.1F: "KPI is in '<status>' status — definition and
+ * target edits are blocked"). Without this, a caller within their own org could
+ * mass-assign `baseline_value` / `target_value` / `direction` / thresholds on a
+ * KPI that has moved into benefits realization or formal review, corrupting the
+ * baseline against which realized value is reconciled.
+ *
+ * Returns a structured violation when the KPI's current status is locked, or
+ * `null` when the edit is allowed. Schema-tolerant: degrades to no-violation
+ * when the status column is absent.
+ */
+export async function findKpiEditLockViolation(params: {
+  organizationId: string;
+  kpiId: string;
+}): Promise<{ code: string; error: string; detail: Record<string, unknown> } | null> {
+  const { organizationId, kpiId } = params;
+  const row = await dbGet<{ status: string | null }>(
+    `SELECT k.status
+     FROM initiative_kpis k
+     LEFT JOIN initiatives i ON i.id = k.initiative_id
+     WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
+    [kpiId, organizationId],
+    { fallback: true }
+  ).catch(() => null);
+
+  const status = String(row?.status || '').toLowerCase();
+  if (status && RESULTS_LOCKED_KPI_STATUSES.includes(status)) {
+    return {
+      code: 'RESULTS_KPI_EDIT_LOCKED',
+      error: `Cannot edit this KPI: it is in a finalized/locked status ('${status}'). Transition its status before editing the definition or targets.`,
+      detail: { kpiId, status },
+    };
+  }
+  return null;
+}
+
 function deriveKpiPeriodKey(
   periodStart?: string | null,
   measurementFrequency?: string | null
@@ -451,6 +490,19 @@ router.put(
       return res.status(404).json({
         error: 'KPI not found',
         code: 'RESULTS_KPI_NOT_FOUND',
+      });
+    }
+
+    // State-machine guard: block definition/target mass-assignment when the KPI
+    // is in a finalized/locked lifecycle status (benefits_realization/review/
+    // locked). The report-creation guard already blocks this path; the direct
+    // edit path must enforce the same lock or it is a hidden bypass.
+    const editLockViolation = await findKpiEditLockViolation({ organizationId, kpiId });
+    if (editLockViolation) {
+      return res.status(409).json({
+        error: editLockViolation.error,
+        code: editLockViolation.code,
+        detail: editLockViolation.detail,
       });
     }
 

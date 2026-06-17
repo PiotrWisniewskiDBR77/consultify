@@ -112,7 +112,11 @@ const updateModelSchema = z
     start_date: z.string().trim().min(1).max(40).optional(),
     granularity: z.enum(GRANULARITIES).optional(),
     scenario: z.string().trim().max(40).optional(),
-    status: z.string().trim().max(40).optional(),
+    // Approval-state guard: `approved` is reachable ONLY via POST /:id/approve
+    // (recompute + validation gate + snapshot + approver + version bump). A
+    // metadata update must not forge it. draft↔review self-service transitions
+    // stay open; the service layer (updateModel) drops `approved` defensively too.
+    status: z.enum(['draft', 'review']).optional(),
     assumptions: jsonRecordSchema.optional(),
   })
   .strict();

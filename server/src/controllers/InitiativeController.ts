@@ -786,6 +786,29 @@ export class InitiativeController {
       const effectiveRoles = accessCtx?.effectiveRoles || [];
       const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
       const body = req.body as Record<string, unknown>;
+
+      // M13 SECURITY (state-machine bypass): the generic update path is NOT a
+      // status-transition endpoint. `status` is gated by the central state machine
+      // (isValidTransition + gate RBAC + readiness + Go/No-Go decisions) in
+      // updateInitiativeStatus. Writing it here would let a client jump
+      // DRAFT → APPROVED directly, skipping every gate. Reject an attempted status
+      // CHANGE (a same-value echo is tolerated so clients can PUT the full object
+      // back). Status is also dropped from FIELD_MAP below as defense-in-depth.
+      if (body.status !== undefined) {
+        const requestedStatus = normalizeStatus(body.status as string);
+        if (requestedStatus && requestedStatus !== currentStatus) {
+          res.status(400).json({
+            error:
+              'Status cannot be changed via this endpoint. Use POST /initiatives/:id/status (or the transition actions) so gate validation is enforced.',
+            field: 'status',
+            rule: 'STATUS_TRANSITION_REQUIRES_GATE',
+            from: currentStatus,
+            to: requestedStatus,
+          });
+          return;
+        }
+      }
+
       const isOwnerUpdate =
         body.ownerId !== undefined ||
         body.ownerBusinessId !== undefined ||
@@ -851,7 +874,9 @@ export class InitiativeController {
         valueDriver: 'value_driver',
         confidenceLevel: 'confidence_level',
         valueTiming: 'value_timing',
-        status: 'status',
+        // NOTE: `status` is intentionally NOT in this allowlist. Status changes must
+        // go through updateInitiativeStatus (gate-validated). An attempted status
+        // change is rejected above with 400; a same-value echo is simply ignored.
         progress: 'progress',
         plannedStartDate: plannedStartCol,
         plannedEndDate: plannedEndCol,
@@ -3503,12 +3528,17 @@ export class InitiativeController {
       }
 
       try {
+        // M13 SECURITY (mass-assignment): server-derived identity/tenant fields MUST
+        // win over the request body. Spreading `...req.body` LAST would let a client
+        // override organizationId/initiativeId/kpiId/userId — defeating the
+        // org-scope assertions inside updateInitiativeKpiAssignment. Spread the body
+        // first, then pin the protected fields from the route params + token.
         const kpi = await updateInitiativeKpiAssignment({
+          ...req.body,
           initiativeId,
           organizationId: orgId,
           userId: req.user?.id || null,
           kpiId,
-          ...req.body,
         });
 
         res.json({ success: true, kpi });

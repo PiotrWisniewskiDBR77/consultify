@@ -1183,3 +1183,104 @@ describe('W2 — competency.routes POST mutations require auth', () => {
     expect(res.status).toBe(201);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// M15 mass-assignment — PUT /kpis/:kpiId cannot edit definition/targets on a
+// finalized/locked KPI (state-machine bypass). Within the caller's OWN org, a
+// kpi_owner could otherwise mass-assign baseline_value/target_value/direction on
+// a KPI that has moved into benefits_realization/review/locked, corrupting the
+// reconciliation baseline. The guard returns 409 with code RESULTS_KPI_EDIT_LOCKED
+// BEFORE any UPDATE runs; an unlocked KPI still updates normally.
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('M15 — PUT /benefits/kpis/:kpiId is blocked on a locked KPI', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbRun.mockResolvedValue({ changes: 1 });
+  });
+
+  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is in benefits_realization; no UPDATE runs', async () => {
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+    // Ownership+status SELECT: owned by caller org, but locked.
+    mockDbGet.mockResolvedValue({ id: 'kpi-locked', status: 'benefits_realization' });
+    const app = await buildBenefitsApp();
+
+    const res = await request(app)
+      .put('/api/benefits/kpis/kpi-locked')
+      .send({ targetValue: 999, baselineValue: 1 });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('RESULTS_KPI_EDIT_LOCKED');
+
+    // The locked guard must short-circuit before the UPDATE.
+    const updateCall = mockDbRun.mock.calls.find((c) =>
+      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    );
+    expect(updateCall).toBeFalsy();
+  });
+
+  it('→ 200 and an UPDATE runs when the owned KPI is in an unlocked (active) status', async () => {
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+    mockDbGet.mockResolvedValue({ id: 'kpi-active', status: 'active' });
+    const app = await buildBenefitsApp();
+
+    const res = await request(app)
+      .put('/api/benefits/kpis/kpi-active')
+      .send({ targetValue: 999 });
+
+    expect(res.status).toBe(200);
+    const updateCall = mockDbRun.mock.calls.find((c) =>
+      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    );
+    expect(updateCall).toBeTruthy();
+  });
+});
+
+describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbRun.mockResolvedValue({ changes: 1 });
+  });
+
+  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is locked; no UPDATE runs', async () => {
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+    // 1st dbGet: PUT ownership lookup (owned). 2nd dbGet: findKpiEditLockViolation
+    // status lookup (locked).
+    mockDbGet
+      .mockResolvedValueOnce({ id: 'kpi-locked', name: 'Locked KPI' })
+      .mockResolvedValueOnce({ status: 'locked' });
+    const app = await buildV8App();
+
+    const res = await request(app)
+      .put('/api/v8/results/kpis/kpi-locked')
+      .send({ targetValue: 999, baselineValue: 1 });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('RESULTS_KPI_EDIT_LOCKED');
+
+    const updateCall = mockDbRun.mock.calls.find((c) =>
+      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    );
+    expect(updateCall).toBeFalsy();
+  });
+
+  it('→ 200 and an UPDATE runs when the owned KPI is unlocked', async () => {
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+    mockDbGet
+      .mockResolvedValueOnce({ id: 'kpi-active', name: 'Active KPI' })
+      .mockResolvedValueOnce({ status: 'active' });
+    const app = await buildV8App();
+
+    const res = await request(app)
+      .put('/api/v8/results/kpis/kpi-active')
+      .send({ targetValue: 999 });
+
+    expect(res.status).toBe(200);
+    const updateCall = mockDbRun.mock.calls.find((c) =>
+      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    );
+    expect(updateCall).toBeTruthy();
+  });
+});

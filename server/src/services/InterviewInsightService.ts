@@ -40,6 +40,32 @@ export type InsightStatus =
   | 'in_review'
   | 'published';
 
+/**
+ * SEC — statuses that the plain PATCH /insights/:id endpoint is allowed to set
+ * directly from the request body. The GATED review states (`in_review`,
+ * `published`) MUST NOT be settable here: they are owned by the lifecycle gate
+ * (POST /insights/:insightId/lifecycle), which enforces the findings-required,
+ * canon-publishable, client-readback, and INTERVIEW_INSIGHTS_PUBLISH checks and
+ * server-derives reviewed_by / published_at + fires the publish signal bridge.
+ * Letting a body field forge `published`/`in_review` would bypass that whole
+ * approval gate (mass-assignment / state-machine bypass). `generating` is a
+ * system-only transient state and is excluded too. The remaining values are
+ * revert-/edit-style and safe to set ad hoc.
+ */
+export const INSIGHT_PATCH_SETTABLE_STATUSES: ReadonlySet<InsightStatus> = new Set<InsightStatus>([
+  'draft',
+  'completed',
+  'failed',
+]);
+
+/** Statuses reachable only via the lifecycle gate, never via plain PATCH. */
+export const INSIGHT_GATED_STATUSES: ReadonlySet<string> = new Set<string>([
+  'in_review',
+  'published',
+  // defensive: legacy/alias gate states that must also route through the gate
+  'approved',
+]);
+
 export const INTERVIEW_INSIGHT_GENERATION_SCHEMA_VERSION =
   'interview_insight_generation_v6_report_pack_2026_05_03';
 

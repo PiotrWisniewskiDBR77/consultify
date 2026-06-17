@@ -571,6 +571,43 @@ describe('V8 execution-control read-only routes', () => {
     );
   });
 
+  // Mass-assignment guard: the handler must NOT forward client-supplied protected
+  // fields (created_by impersonation, organization_id override, row id) toward the
+  // budget service. The route now passes only schema-validated fields plus the
+  // server-derived createdBy / initiativeId — so the spread vector is closed.
+  it('POST /api/v8/execution-control/budget/entries drops client-supplied protected fields', async () => {
+    mockCreateBudgetEntry.mockResolvedValue('be-2');
+
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/execution-control/budget/entries')
+      .send({
+        initiativeId: 'init-1',
+        entryType: 'ACTUAL',
+        costType: 'CAPEX',
+        amount: 1200,
+        // Attacker-controlled protected fields — must be ignored by the route.
+        createdBy: 'attacker-impersonated-user',
+        organizationId: 'org-victim',
+        organization_id: 'org-victim',
+        id: 'be-forced-id',
+        created_by: 'attacker-impersonated-user',
+      });
+
+    expect(res.status).toBe(200);
+    expect(mockCreateBudgetEntry).toHaveBeenCalledTimes(1);
+    const [orgArg, dataArg] = mockCreateBudgetEntry.mock.calls[0];
+    // org is server-derived from the v8 context, never the body.
+    expect(orgArg).toBe(ORG);
+    // createdBy is always the authenticated caller, never the body value.
+    expect(dataArg.createdBy).toBe(UID);
+    // No protected/unknown column smuggled through the spread.
+    expect(dataArg).not.toHaveProperty('organizationId');
+    expect(dataArg).not.toHaveProperty('organization_id');
+    expect(dataArg).not.toHaveProperty('id');
+    expect(dataArg).not.toHaveProperty('created_by');
+  });
+
   it('POST /api/v8/execution-control/budget/entries returns 404 when initiative is outside org scope', async () => {
     mockDbGet.mockResolvedValueOnce(null);
     const app = createApp();

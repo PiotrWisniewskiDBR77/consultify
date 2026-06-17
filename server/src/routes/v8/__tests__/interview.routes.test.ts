@@ -70,6 +70,9 @@ vi.mock('../../../services/InterviewInsightService.js', () => ({
   create: (...args: unknown[]) => mockInsightCreate(...args),
   regenerate: (...args: unknown[]) => mockInsightRegenerate(...args),
   deleteInsight: (...args: unknown[]) => mockInsightDelete(...args),
+  // SEC status-gate constants used by the PATCH /insights/:id mass-assignment guard.
+  INSIGHT_PATCH_SETTABLE_STATUSES: new Set(['draft', 'completed', 'failed']),
+  INSIGHT_GATED_STATUSES: new Set(['in_review', 'published', 'approved']),
 }));
 
 vi.mock('../../../services/interviewInsightReportPackService.js', () => ({
@@ -1321,6 +1324,80 @@ describe('V8 Interview insight routes', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INTERVIEW_INSIGHT_NO_FIELDS');
+  });
+
+  // ── Mass-assignment / state-machine bypass: forged insight status ────────────
+  // The plain PATCH must NOT let the body forge a GATED review status
+  // (published / in_review / approved). Those transitions are owned by the
+  // lifecycle gate (POST /insights/:insightId/lifecycle), which enforces
+  // findings-required + canon + client-readback + INTERVIEW_INSIGHTS_PUBLISH and
+  // server-derives reviewed_by / published_at. A forged status='published' here
+  // would publish an insight with NONE of those checks. The handler rejects it
+  // (409) and never writes status to the DB.
+  it('PATCH /api/v8/interview/insights/:id rejects forged status=published (gate bypass)', async () => {
+    mockInsightGetById.mockResolvedValueOnce({ id: 'ins-1', organizationId: ORG });
+    mockQueryRun.mockClear();
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1')
+      .set('Authorization', 'Bearer x')
+      .send({ status: 'published' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('INSIGHT_STATUS_GATED');
+    // No UPDATE may touch interview_insights.status
+    const wroteStatus = mockQueryRun.mock.calls.some(([sql]) =>
+      String(sql).includes('UPDATE interview_insights')
+    );
+    expect(wroteStatus).toBe(false);
+  });
+
+  it('PATCH /api/v8/interview/insights/:id rejects forged status=in_review (gate bypass)', async () => {
+    mockInsightGetById.mockResolvedValueOnce({ id: 'ins-1', organizationId: ORG });
+    mockQueryRun.mockClear();
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1')
+      .set('Authorization', 'Bearer x')
+      .send({ status: 'in_review' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('INSIGHT_STATUS_GATED');
+    expect(
+      mockQueryRun.mock.calls.some(([sql]) => String(sql).includes('UPDATE interview_insights'))
+    ).toBe(false);
+  });
+
+  it('PATCH /api/v8/interview/insights/:id rejects an unknown status value', async () => {
+    mockInsightGetById.mockResolvedValueOnce({ id: 'ins-1', organizationId: ORG });
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1')
+      .set('Authorization', 'Bearer x')
+      .send({ status: 'totally-made-up' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INSIGHT_STATUS_INVALID');
+  });
+
+  it('PATCH /api/v8/interview/insights/:id still allows an ungated status (draft) to be set', async () => {
+    mockInsightGetById.mockResolvedValueOnce({ id: 'ins-1', organizationId: ORG });
+    mockQueryRun.mockClear();
+    mockQueryRun.mockResolvedValue(undefined);
+
+    const res = await request(createApp())
+      .patch('/api/v8/interview/insights/ins-1')
+      .set('Authorization', 'Bearer x')
+      .send({ status: 'draft' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data?.success).toBe(true);
+    // The server value 'draft' (not a forged gated state) is persisted.
+    const updateCall = mockQueryRun.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE interview_insights')
+    );
+    expect(updateCall).toBeDefined();
+    expect((updateCall![1] as unknown[]).includes('draft')).toBe(true);
   });
 
   it('GET /api/v8/interview/insights/:id/activity returns activity in V8 envelope', async () => {

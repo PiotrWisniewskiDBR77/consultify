@@ -250,6 +250,60 @@ describe('audit-programs CRUD org-scoping', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
+
+  // ── Mass-assignment: server-managed `config` bookkeeping keys ─────────────────
+  // surveysGenerated / generatedAssignmentIds / generation are written ONLY by
+  // generateSurveys(). A client PATCH must not forge them (a forged
+  // surveysGenerated=true would permanently block the program's survey fan-out;
+  // a forged generatedAssignmentIds would inflate completion %). The route strips
+  // them from the incoming config and re-seeds them from the existing row.
+  it('PATCH /programs/:id ignores client-forged surveysGenerated/generatedAssignmentIds; server values win', async () => {
+    // Route flow when body.config is present:
+    //   1: getProgram (route sanitization — read existing server-owned keys)
+    //   2: updateProgram → getProgram (existence check)
+    //   3: updateProgram → dbRun (UPDATE)
+    //   4: updateProgram → getProgram (return)
+    const existing = baseRow({
+      // existing row has NOT generated surveys (server truth = false/empty)
+      config: JSON.stringify({ templateIds: [TMPL_ID], assigneeIds: [OWN_ASSIGNEE] }),
+    });
+    mockDbGet
+      .mockResolvedValueOnce(existing) // 1: route sanitization read
+      .mockResolvedValueOnce(existing) // 2: updateProgram exist-check
+      .mockResolvedValueOnce(existing); // 4: updateProgram return
+
+    const app = await makeApp(ORG_A);
+    const res = await request(app)
+      .patch(`/api/audit/programs/${PROG_ID}`)
+      .send({
+        config: {
+          templateIds: [TMPL_ID],
+          assigneeIds: [OWN_ASSIGNEE],
+          // forged server-managed keys — must be ignored
+          surveysGenerated: true,
+          generatedAssignmentIds: ['forged-1', 'forged-2'],
+          generation: { requested: 99, created: 99, failed: 0, at: 'forged' },
+        },
+      });
+
+    expect(res.status).toBe(200);
+    // The UPDATE dbRun must have persisted config WITHOUT the forged values.
+    const updateCall = mockDbRun.mock.calls.find((c) =>
+      String(c[0]).includes('UPDATE audit_programs')
+    );
+    expect(updateCall).toBeDefined();
+    const params = updateCall![1] as unknown[];
+    const persistedConfigJson = params.find(
+      (p) => typeof p === 'string' && p.includes('templateIds')
+    ) as string;
+    const persistedConfig = JSON.parse(persistedConfigJson);
+    // client wizard state preserved
+    expect(persistedConfig.templateIds).toEqual([TMPL_ID]);
+    // forged server-owned keys stripped → fall back to existing (undefined/false)
+    expect(persistedConfig.surveysGenerated).toBeUndefined();
+    expect(persistedConfig.generatedAssignmentIds).toBeUndefined();
+    expect(persistedConfig.generation).toBeUndefined();
+  });
 });
 
 describe('audit-programs generate-surveys fan-out', () => {

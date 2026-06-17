@@ -17,6 +17,10 @@ import { z } from 'zod';
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
 import {
+  INSIGHT_GATED_STATUSES,
+  INSIGHT_PATCH_SETTABLE_STATUSES,
+} from '../services/InterviewInsightService.js';
+import {
   buildAssignmentManagerScopeClause,
   buildSessionManagerScopeClause,
   type InterviewManagerScope,
@@ -7927,8 +7931,29 @@ ${JSON.stringify(questions || [], null, 2)}
       values.push(title.trim());
     }
     if (status !== undefined) {
+      // SEC — never let the body forge a GATED review status here. The
+      // published/in_review (+approved alias) transitions are owned by the
+      // lifecycle gate (POST /interview/insights/:insightId/lifecycle), which
+      // enforces findings-required + canon + client-readback + the
+      // INTERVIEW_INSIGHTS_PUBLISH permission and server-derives reviewed_by /
+      // published_at. Accepting status='published' from the body would publish
+      // an insight without ANY of those checks (mass-assignment / state-machine
+      // bypass). Only the ungated, revert-/edit-style statuses are settable here.
+      const requested = String(status);
+      if (INSIGHT_GATED_STATUSES.has(requested)) {
+        res.status(409).json({
+          error:
+            'This status is managed by the review workflow. Use the insight lifecycle action (submit/approve/publish) instead of a direct status edit.',
+          code: 'INSIGHT_STATUS_GATED',
+        });
+        return;
+      }
+      if (!INSIGHT_PATCH_SETTABLE_STATUSES.has(requested as never)) {
+        res.status(400).json({ error: 'Invalid status', code: 'INSIGHT_STATUS_INVALID' });
+        return;
+      }
       updates.push('status = ?');
-      values.push(status);
+      values.push(requested);
     }
     if (exportedToTools !== undefined) {
       updates.push('exported_to_tools = ?');

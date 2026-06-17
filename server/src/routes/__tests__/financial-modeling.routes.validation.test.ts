@@ -141,6 +141,25 @@ describe('financial-modeling routes — input validation', () => {
     expect(mockUpdateModel).not.toHaveBeenCalled();
   });
 
+  // Approval-state mass-assignment guard: a generic metadata update must not be
+  // able to forge `status: 'approved'` (bypassing the recompute/validation gate
+  // and snapshot in approveModel). draft↔review remain allowed (asserted above).
+  it('PUT /models/:id — status=approved → 400, updateModel NOT called', async () => {
+    const res = await request(createApp())
+      .put(`/api/financial-modeling/models/${OWNED_MODEL}`)
+      .send({ status: 'approved' });
+    expect(res.status).toBe(400);
+    expect(mockUpdateModel).not.toHaveBeenCalled();
+  });
+
+  it('PUT /models/:id — status=draft (de-escalation) → 200, updateModel called', async () => {
+    const res = await request(createApp())
+      .put(`/api/financial-modeling/models/${OWNED_MODEL}`)
+      .send({ status: 'draft' });
+    expect(res.status).toBe(200);
+    expect(mockUpdateModel).toHaveBeenCalledTimes(1);
+  });
+
   // ── POST /models/:id/events ──
   it('POST /models/:id/events — valid body → 201 and calls addEvent', async () => {
     const res = await request(createApp())
