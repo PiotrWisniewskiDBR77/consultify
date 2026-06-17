@@ -91,13 +91,13 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 |----|------|---------|-------|-------|------|--------|
 | L-01 | create-from-hub disabled | W-01 | `InitiativesHub.tsx:1985-1997,1943-1952,1953-1962` | P1 | 2 | **ZAMKNIĘTA 2026-06-16** — pilot dostaje locked CTA (grayed button + pilotAccessBlocked) zamiast undefined; server guard dopięty (L-06) |
 | L-02 | bulk Tag/Due/Delete (brak BE) | W-01 | hub bulk-bar | P3 | 4 | **NAPRAWIONA — DP-5 zrealizowane: `showBulkStubActions = isInitiativesBulkStubEnabled()` (OFF default); Tag/ChangeDueDate ukryte (`InitiativesHub.tsx:1781,1808,1820`)** | 2026-06-16 |
-| L-03 | system statusów/bramek/preview/menu (#14) | W-04,W-06 | `stageGateService.ts` + `STATUS_ROLE_CTA_MATRIX.md` + UI | P1-design | 2 | otwarta |
+| L-03 | system statusów/bramek/preview/menu (#14) | W-04,W-06 | `stageGateService.ts` + `STATUS_ROLE_CTA_MATRIX.md` + UI | P1-design | 2 | **CZĘŚCIOWO — SSOT statusów POGODZONY `53daa3e227` (2026-06-17): enum 13 / `VALID_TRANSITIONS` / `GATE_PERMISSIONS` (14×role) / `GATE_TRANSITIONS` zgodne 1:1 FE `initiativeLifecycle.ts` ↔ serwer `initiativeStatuses.ts` ↔ docs; brak string-mismatch. 2 rozbieżności tylko-tekstowe, ZERO bug runtime (serwer `MODULES.initiatives`=5 NIEUŻYWANY; `getLifecycleOrder` BLOCKED/CANCELLED). Pozostaje OTWARTE: UI #14 (pipeline/CTA per status×rola) — design-blocked przez D-02** |
 | L-04 | AI-fill wg formuły McKinsey (#16) | W-05,W-07 | `initiativeGenerationService.ts`, `InitiativeDocumentView.tsx` | P1-design | 2 | otwarta |
 | L-05 | cicha degradacja V8 bez banera | W-01 | chip V8 (vs Finance/Results) | P1 | 2 | **ZAMKNIĘTA** — `v8PlanningDegraded` state + Banner już w InitiativesHub.tsx:234,1979-1993 (L-05 comment in code) |
 | L-06 | gating pilota tylko klient | W-01,W-08 | `createInitiative`/bulk/generator | P1 | 2 | **ZAMKNIĘTA 2026-06-16** — `requireInitiativeWriteAccess()` dodane do POST/PUT/DELETE `/api/initiatives` (initiatives.routes.ts); PMO routes i generator już miały guard |
 | L-07 | in-context open (nawiguje do modułu) | W-03 | `MyWorkHub.tsx:1249,3193` | P1-design | 0.4 | **D-01** |
 | L-08 | brak CTA „Otwórz" board-preview | W-02 | `InitiativePreviewV3.tsx:399` | P1-TOP | — | **NAPRAWIONA `18ed3e44f7`** |
-| L-09 | cross-org governance IDOR | W-01 | `initiativeGovernanceService` | P0 | — | naprawiona `b9f2dee9d2` (R3: test) |
+| L-09 | cross-org governance IDOR | W-01 | `initiativeGovernanceService` | P0 | — | **ZAMKNIĘTA — naprawa `b9f2dee9d2`; R3 test cross-org `be0dd36d88` (`initiativeGovernanceService.crossorg.test.ts`, 10/10 PASS: link/read/probe goals↔init↔decisions + evaluateGate odrzucają obcą org 404/[] bez mutacji; same-org positive control; queryHelpers mock = brak realnej DB)** |
 | L-10 | 0 testów CRUD (stale import) | W-01 | `initiatives-crud.test.ts` | P0-test | — | naprawiona `ea77dc678c` |
 | L-11a | i18n inline ~1820× | W-01 | `Initiatives/` (`InitiativeDocumentView` 423+`sections/*`) | P1 | 4 | otwarta |
 | L-11b | 18 surowych `<table>` (§27)+RC-4 | W-01 | 13 plików `sections/*`,`Analysis/*` | P2 | 4 | otwarta |
@@ -113,7 +113,9 @@ Scenariusze S1–S6 + pokrycie + pułapka CI: karta §0/§2. Bezpieczeństwo: ka
 
 ### 05 · Flagi/rollout — V8 Planning (env, degraduje); pilot VTS (rola, gating→serwer); beta core (otwarty); demo Atelier Toys (jawny toggle).
 ### 06 · Ryzyka — SSOT statusów (~15 dok.) może być rozjechany z `stageGateService.ts` → #14 najpierw pogodzić docs↔kod. Governance IDOR (`b9f2dee9d2`) wymaga testu cross-org. Dev `.env` → Railway PROD.
-### 07 · Log — 2026-06-16: L-01+L-05+L-06 zamknięte (EPIK 1 gotowy). 2026-06-13: L-08 (`18ed3e44f7`). Audyt 2026-06-11/12: L-09/L-10 naprawione; ocena 54/100. Re-ocena D po Fazie 2/4.
+### 07 · Log
+- **2026-06-17 (Harvard 3): L-09 R3 + L-03 SSOT reconciliation.** L-09: dopisany test cross-org IDOR `be0dd36d88` (10/10). L-03: pełna reconciliation SSOT statusów (subagent extract 7 źródeł + weryfikacja kodu) → enum/transitions/gate-perms/gate-transitions zgodne 1:1 FE↔serwer↔docs; 2 rozbieżności tekstowe nie-runtime (serwer `MODULES.initiatives` nieużywany — adnotacja `53daa3e227`; `getLifecycleOrder` BLOCKED/CANCELLED). UI #14 nadal design-blocked (D-02). Agent-flagged „KPI-validation/auto-start cron" = poza ekstraktem, należą do L-04/#14 (design-blocked) — nie potwierdzone jako luki. Pozostają OTWARTE design-blocked: L-03(UI #14)/L-04(#16). L-07 in-context open = strefa MyWork (Harvard 2). Faza-4 sweep: L-11a/b/c (i18n/§27/hex).
+- 2026-06-16: L-01+L-05+L-06 zamknięte (EPIK 1 gotowy). 2026-06-13: L-08 (`18ed3e44f7`). Audyt 2026-06-11/12: L-09/L-10 naprawione; ocena 54/100. Re-ocena D po Fazie 2/4.
 
 ---
 
