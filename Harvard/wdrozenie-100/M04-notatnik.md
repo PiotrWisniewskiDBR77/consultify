@@ -119,11 +119,11 @@ Pełna tabela: karta §1g. **→** M03 (task/decision, checklist→zadania), M13
 ### 03 · Rejestr luk (= docelowy − obecny)
 | ID | Opis | Wejście | Dowód `plik:linia` | Klasa | Faza | Status | Zweryf. |
 |----|------|---------|--------------------|-------|------|--------|---------|
-| L-01 | handoff Radar/Inicjatywy PÓŁ-MARTWY (toast vs 0 INSERT) | W-01,W-07 | `notebookHandoffService.ts:429`; toast `NotebookContent.tsx:1655,1671` | P1 (WSPÓLNE M21) | 3 | otwarta (D-03) | — |
+| L-01 | handoff Radar/Inicjatywy PÓŁ-MARTWY (toast vs 0 INSERT) | W-01,W-07 | `notebookHandoffService.ts:429`; toast `NotebookContent.tsx:1655,1671` | P1 (WSPÓLNE M21) | 3 | **✅ ZAMKNIĘTA 2026-06-16** (commit `952f309eed` — INSERT+toast+fix) | — |
 | L-02 | brak trwałego wielo-instancyjnego „trzeciego panelu" | W-02,W-05,W-06 | powłoka (`RightRail`/`SplitLayout`/`useTabeleRightRailPanels`) | P1-design-program | 0 | **D-01→DP-2** | 2026-06-13 |
 | L-03 | ciężki Canonical Path + rozproszony prawy panel | W-03 | `NotebookCanonicalPathStrip.tsx:25-179` | P1-design | 3 | **D-02** | 2026-06-13 |
-| L-04 | Menu 3 L2 = filtry zadań (Overdue/Urgent/Inbox) | W-04 | `MyWorkHub.tsx:2443` (gałąź tylko L1) | P2 | 3 | otwarta | 2026-06-13 |
-| L-05 | v8 search project-leak (brak `project_members`) | W-01 | `notebookSearchService.ts:188-196` | P2 | 3 | otwarta | — |
+| L-04 | Menu 3 L2 = filtry zadań (Overdue/Urgent/Inbox) | W-04 | `MyWorkHub.tsx:2443` (gałąź tylko L1) | P2 | 3 | **✅ ZAMKNIĘTA 2026-06-16** (commit `952f309eed` — `notebookPageStatusFilter` + `NotebookContent` props) | 2026-06-13 |
+| L-05 | v8 search project-leak (brak `project_members`) | W-01 | `notebookSearchService.ts:188-196` | P2 | 3 | **✅ ZAMKNIĘTA 2026-06-16** (commit `952f309eed` — `project_members` guard) | — |
 | L-06 | auto-klasyfikacja (#9) mylnie „AI" = keyword-scoring | W-01 | `notebook.routes.ts:1633-1692` | P2 | 3 | otwarta | — |
 | L-07 | `/handoff/validate` bez autoryzacji obiektu | W-01 | `v8/notebook.routes.ts:179` | P3 | 3 | otwarta | — |
 | L-08 | martwy `KnowledgePulse.tsx`, `notebook/InsertMenu.tsx` (0 importerów) | W-01 | grep importerów | MARTWY | 4 | otwarta | — |

@@ -136,10 +136,10 @@ Pełna tabela: karta §1g. **←** cała apka (Inbox agreguje notifications `inb
 | L-04 | `CalendarCreateEventModal` 3/4 FAIL (S5) | W-01 | onSubmit/conflict callbacks | P0-test | 2 | otwarta |
 | L-05 | ~15 martwych komponentów (łańcuch WorkCenter; NIE NudgeStrip) | W-01 | f1_code_truth | P2 | 3 | otwarta |
 | L-06 | crash render-time na landing My Work | W-02 | `src/components/shared/PreviewPane/PreviewRelations.tsx:37` — `RelationChip` | P1 | 1 | **✅ ZAMKNIĘTA 2026-06-16** — fix `$$typeof` check w `RelationChip` |
-| L-07 | kalendarz Connect martwy CTA + OAuth niedopięty | W-03,W-07 | `CalendarSidebar.tsx:166,184-192`; `calendarIntegrations.routes.ts:132 „(future)"` | P2 | 2/3 | otwarta |
+| L-07 | kalendarz Connect martwy CTA + OAuth niedopięty | W-03,W-07 | `CalendarSidebar.tsx:166,184-192`; `calendarIntegrations.routes.ts:132 „(future)"` | P2 | 2/3 | **CZĘŚCIOWO** — CTA navigate→Integracje (commit `952f309eed`); OAuth backend nadal niedopięty |
 | L-08 | initiative hard-nawiguje (in-context open) | W-04,W-07 | `MyWorkHub.tsx:1235-1251,3192-3194` | P1-design | 0.4 | **D-02 (DP-2)** |
 | L-09 | paski multi-day + utrata koloru źródła | W-05 | `CalendarView.tsx:331` | P2-design | 4 | otwarta |
-| L-10 | RC-4 sticky thead + brak persistKey (3 tabele) | W-06,W-07 | `MyTasksListContent.tsx:2173,1467`, `DecisionsPanelContent.tsx:1873`, `InboxContent.tsx:3316` | P1 | 4 | otwarta |
+| L-10 | RC-4 sticky thead + brak persistKey (3 tabele) | W-06,W-07 | `MyTasksListContent.tsx:2173,1467`, `DecisionsPanelContent.tsx:1873`, `InboxContent.tsx:3316` | P1 | 4 | **CZĘŚCIOWO** — `overflow-hidden` usunięte z 3 wrapperów (commit `952f309eed`); persistKey nadal brak |
 | L-11 | i18n inline 2888× | W-01 | `src/components/MyWork/` | P1 | 4 | otwarta |
 
 ### 04 · Rejestr decyzji (R5)
