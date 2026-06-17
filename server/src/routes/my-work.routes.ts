@@ -6773,8 +6773,9 @@ router.post(
 
       // Save expansion to DB
       await queryHelpers.queryRun(
-        `UPDATE my_ideas SET seed_text = ?, ai_expansion = ?, stage = 'expanding', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`,
-        [seedText, aiExpansion, id, userId]
+        // M08 L-03: full org+user scope (defense-in-depth; id already verified owned above).
+        `UPDATE my_ideas SET seed_text = ?, ai_expansion = ?, stage = 'expanding', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND organization_id = ?`,
+        [seedText, aiExpansion, id, userId, orgId]
       );
 
       // STAGE 2: Web Research
@@ -6810,8 +6811,9 @@ router.post(
 
       // Save research
       await queryHelpers.queryRun(
-        `UPDATE my_ideas SET research_data = ?, stage = 'researching', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [JSON.stringify(researchResults), id]
+        // M08 L-03: full org+user scope (defense-in-depth).
+        `UPDATE my_ideas SET research_data = ?, stage = 'researching', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND organization_id = ?`,
+        [JSON.stringify(researchResults), id, userId, orgId]
       );
 
       // STAGE 3: Creative Proposals
@@ -6846,8 +6848,9 @@ router.post(
       emit('proposals', { proposals });
 
       await queryHelpers.queryRun(
-        `UPDATE my_ideas SET creative_proposals = ?, stage = 'proposing', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [JSON.stringify(proposals), id]
+        // M08 L-03: full org+user scope (defense-in-depth).
+        `UPDATE my_ideas SET creative_proposals = ?, stage = 'proposing', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND organization_id = ?`,
+        [JSON.stringify(proposals), id, userId, orgId]
       );
 
       // STAGE 4: Summary
@@ -6909,10 +6912,11 @@ router.post(
       else if (/growth|market|sales|revenue|customer|acqui/.test(allText)) autoArea = 'growth';
 
       await queryHelpers.queryRun(
+        // M08 L-03: full org+user scope (defense-in-depth).
         `UPDATE my_ideas
          SET summary_data = ?, potential = ?, complexity = ?, stage = 'ready', priority = ?, area = COALESCE(area, ?), updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [JSON.stringify(summary), pot, cmplx, autoPriority, autoArea, id]
+         WHERE id = ? AND user_id = ? AND organization_id = ?`,
+        [JSON.stringify(summary), pot, cmplx, autoPriority, autoArea, id, userId, orgId]
       );
 
       emit('done', { stage: 'ready', priority: autoPriority, area: autoArea });
@@ -8844,6 +8848,13 @@ router.post(
     const ideaId = String(req.params.id || '').trim();
     if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
 
+    // M08 L-03: verify the idea is owned by this user+org before spending LLM budget.
+    const ownsSuggest = await queryHelpers.queryOne<any>(
+      `SELECT 1 AS ok FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!ownsSuggest) return res.status(404).json({ error: 'Idea not found' });
+
     const context = req.body?.context || {};
     const mode = String(req.body?.mode || 'passive');
     const prompt = req.body?.prompt ? String(req.body.prompt) : undefined;
@@ -8886,8 +8897,18 @@ router.post(
     if (!identity) return;
     const { userId, orgId } = identity;
 
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
     const command = String(req.body?.command || '').trim();
     if (!command) return res.status(400).json({ error: 'Command required' });
+
+    // M08 L-03: verify ownership before spending LLM budget.
+    const ownsAction = await queryHelpers.queryOne<any>(
+      `SELECT 1 AS ok FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!ownsAction) return res.status(404).json({ error: 'Idea not found' });
 
     const tableSchema = Array.isArray(req.body?.schema) ? req.body.schema : [];
     const language = String(req.body?.language || 'en');
@@ -8895,7 +8916,7 @@ router.post(
     try {
       const { generateTableAction } = await import('../services/ideaAISuggestionsService.js');
       const action = await generateTableAction(
-        String(req.params.id),
+        ideaId,
         command,
         tableSchema,
         userId,
@@ -8921,8 +8942,18 @@ router.post(
     if (!identity) return;
     const { userId, orgId } = identity;
 
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
     const columnPrompt = String(req.body?.prompt || '').trim();
     if (!columnPrompt) return res.status(400).json({ error: 'Prompt required' });
+
+    // M08 L-03: verify ownership before spending LLM budget.
+    const ownsFill = await queryHelpers.queryOne<any>(
+      `SELECT 1 AS ok FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!ownsFill) return res.status(404).json({ error: 'Idea not found' });
 
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
     const language = String(req.body?.language || 'en');
